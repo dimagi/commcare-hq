@@ -380,6 +380,7 @@ var GraphViewModel = function(moduleOptions){
 };
 GraphViewModel.prototype = new PairConfiguration();
 
+// TODO: Annotations are actually supposed to be localizable!!
 var Annotation = function(original){
     var self = this;
     original = original || {};

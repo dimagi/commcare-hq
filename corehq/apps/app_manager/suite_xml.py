@@ -99,6 +99,48 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
+# TODO: Jenny said these should actually be in the "function" form...
+class ConfigurationItem(Text):
+     ROOT_NAME = "text"
+     id = StringField("@id")
+     value = StringField('value')
+
+
+class ConfigurationGroup(XmlObject):
+    ROOT_NAME = 'configuration'
+    pairs = NodeListField('text', Text)
+
+
+class Series(XmlObject):
+    ROOT_NAME = 'series'
+
+    nodeset = StringField('@nodeset')
+    configuration = NodeField('configuration', ConfigurationGroup)
+    x_function = StringField('x/@function')
+    y_function = StringField('y/@function')
+    radius = StringField("radius/@function")
+
+
+class Annotation(XmlObject):
+    ROOT_NAME = 'annotation'
+
+    # TODO: Specify the xpath without specifying "text" for the child (we want the Text class to specify the tag)
+    x = NodeField('x/text', Text)
+    y = NodeField('y/text', Text)
+    text = NodeField('.', Text)
+
+
+class Graph(XmlObject):
+    #TODO: Write doc string
+
+    ROOT_NAME = 'graph'
+
+    type = StringField("@type", choices=["xy", "bubble"])
+    series = NodeListField('series', Series)
+    configuration = NodeField('configuration', ConfigurationGroup)
+    annotations = NodeListField('annotation', Annotation)
+
+
 class AbstractResource(OrderedXmlObject):
     ORDER = ('id', 'version', 'local', 'remote')
     LOCATION_TEMPLATE = 'resource/location[@authority="%s"]'
@@ -311,6 +353,12 @@ class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
 
+class GraphTemplate(Template):
+    # TODO: Since form is always the same, I imagine I don't need to do it this way...?
+    form = StringField('@form', choices=['graph'])
+    graph = NodeField('graph', Graph)
+
+
 class Header(AbstractTemplate):
     ROOT_NAME = 'header'
 
@@ -352,6 +400,7 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
+# mark
 class Detail(IdNode):
     """
     <detail id="">
@@ -392,8 +441,11 @@ class Detail(IdNode):
             for variable in self.variables:
                 result.add(variable.function)
         for field in self.fields:
-            result.add(field.header.text.xpath_function)
-            result.add(field.template.text.xpath_function)
+            try:
+                result.add(field.header.text.xpath_function)
+                result.add(field.template.text.xpath_function)
+            except AttributeError as e:
+                pass # Its a Graph detail
         result.discard(None)
         return result
 
@@ -766,6 +818,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     self.app, module, detail,
                                     detail_type=detail_type, *column_info
                                 ).fields
+                                #import ipdb; ipdb.set_trace()
                                 d.fields.extend(fields)
 
                             try:

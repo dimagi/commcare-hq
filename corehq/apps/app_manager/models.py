@@ -1000,6 +1000,7 @@ class GraphSeries(DocumentSchema):
     data_path = StringProperty()
     x_function = StringProperty()
     y_function = StringProperty()
+    radius = StringProperty()
 
 
 class GraphConfiguration(DocumentSchema):

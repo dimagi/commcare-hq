@@ -363,6 +363,55 @@ class Audio(FormattedDetailColumn):
     template_form = 'audio'
 
 
+@register_format_type('graph')
+class Graph(FormattedDetailColumn):
+    template_form = "graph"
+
+    @property
+    def template(self):
+        template = sx.GraphTemplate(
+            form=self.template_form,
+            graph=sx.Graph(
+                type=self.column.graph_configuration.graph_type,
+                series=[
+                    sx.Series(
+                        nodeset=s.data_path,
+                        x_function=s.x_function,
+                        y_function=s.y_function,
+                        radius=s.radius,
+                        configuration=sx.ConfigurationGroup(
+                            pairs=[
+                                sx.ConfigurationItem(id=k, value=v)
+                                for k, v in s.config.iteritems()]
+                        )
+                    )
+                    for s in self.column.graph_configuration.series],
+                configuration=sx.ConfigurationGroup(
+                    pairs=[
+                        sx.ConfigurationItem(id=k, value=v)
+                        for k, v
+                        in self.column.graph_configuration.config.iteritems()
+                    ]
+                ),
+                # TODO: Add localized configuration in here somehow
+                annotations=[
+                    sx.Annotation(
+                        # TODO: x and y aren't right... They should be localize text
+                        x=sx.Text(xpath_function=a.x),
+                        y=sx.Text(xpath_function=a.y)
+                    )
+                    for a in self.column.graph_configuration.annotations]
+            )
+        )
+
+        # TODO: what are self.variables and do I need to care about them here?
+        # (see FormattedDetailColumn.template)
+
+        print template.serializeDocument(pretty=True)
+
+        return template
+
+
 @register_type_processor(sx.FIELD_TYPE_ATTACHMENT)
 class AttachmentXpathGenerator(BaseXpathGenerator):
     @property
