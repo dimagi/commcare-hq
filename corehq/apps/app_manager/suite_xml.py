@@ -99,12 +99,9 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
-# TODO: Jenny said these should actually be in the "function" form...
 class ConfigurationItem(Text):
      ROOT_NAME = "text"
      id = StringField("@id")
-     value = StringField('value')
-
 
 class ConfigurationGroup(XmlObject):
     ROOT_NAME = 'configuration'
@@ -127,7 +124,7 @@ class Annotation(XmlObject):
     # TODO: Specify the xpath without specifying "text" for the child (we want the Text class to specify the tag)
     x = NodeField('x/text', Text)
     y = NodeField('y/text', Text)
-    text = NodeField('.', Text)
+    text = NodeField('text', Text)
 
 
 class Graph(XmlObject):

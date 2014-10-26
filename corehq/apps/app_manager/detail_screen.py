@@ -381,14 +381,15 @@ class Graph(FormattedDetailColumn):
                         radius=s.radius,
                         configuration=sx.ConfigurationGroup(
                             pairs=[
-                                sx.ConfigurationItem(id=k, value=v)
+                                # TODO: We probably want to wrap the values in quotes or change the hints on the front end to include quotes
+                                sx.ConfigurationItem(id=k, xpath_function=v)
                                 for k, v in s.config.iteritems()]
                         )
                     )
                     for s in self.column.graph_configuration.series],
                 configuration=sx.ConfigurationGroup(
                     pairs=[
-                        sx.ConfigurationItem(id=k, value=v)
+                        sx.ConfigurationItem(id=k, xpath_function=v)
                         for k, v
                         in self.column.graph_configuration.config.iteritems()
                     ]
@@ -396,9 +397,10 @@ class Graph(FormattedDetailColumn):
                 # TODO: Add localized configuration in here somehow
                 annotations=[
                     sx.Annotation(
-                        # TODO: x and y aren't right... They should be localize text
                         x=sx.Text(xpath_function=a.x),
-                        y=sx.Text(xpath_function=a.y)
+                        y=sx.Text(xpath_function=a.y),
+                        # TODO: Annotations are actually supposed to be localizeable
+                        text=sx.Text(xpath_function=a.display_text)
                     )
                     for a in self.column.graph_configuration.annotations]
             )
