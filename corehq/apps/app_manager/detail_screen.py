@@ -399,8 +399,7 @@ class Graph(FormattedDetailColumn):
                     sx.Annotation(
                         x=sx.Text(xpath_function=a.x),
                         y=sx.Text(xpath_function=a.y),
-                        # TODO: Annotations are actually supposed to be localizeable
-                        text=sx.Text(xpath_function=a.display_text)
+                        # TODO: Figure out how to handle localize text dictionary
                     )
                     for a in self.column.graph_configuration.annotations]
             )

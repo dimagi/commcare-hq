@@ -111,21 +111,9 @@
                                 &rarr;
                                 <input type="text" class="input" data-bind="
                                     value: values[$parent.lang],
-                                    attr: {placeholder: getBackup($parent.lang, $parent.langs).value}
+                                    attr: {placeholder: getBackup().value}
                                 ">
-
-                                {# TODO: The following markup is pretty similar to the markup #}
-                                {#       on the key_value_mapping page... consider making it DRYer #}
-                                {#       ex: there could be a single class for language badges #}
-                                {# backup language badge: #}
-                                <a href="#" class="btn btn-inverse btn-mini lang-text"
-                                   style="color:#ffffff; text-decoration: none;"
-                                   data-bind="
-                                    text: getBackup($parent.lang, $parent.langs).lang,
-                                    {# language badge is only visible if the field is empty and a backup was found #}
-                                    visible: !_([$parent.lang, null]).contains(getBackup($parent.lang, $parent.langs).lang) && values[$parent.lang]() === null
-                                "></a>
-
+                                <span data-bind="template: 'backup_language_badge'"></span>
 
                             </form>
                         </div>
@@ -157,7 +145,11 @@
                                     <input type="text" class="input-mini" placeholder="y" data-bind="value: y">
                                 </td>
                                 <td>
-                                    <input type="text" class="input" placeholder="Display Text" data-bind="value: displayText">
+                                    <input type="text" class="input" placeholder="Display Text" data-bind="
+                                        value: values[$parent.lang],
+                                        attr: {placeholder: getBackup().value}
+                                    ">
+                                    <span data-bind="template: 'backup_language_badge'"></span>
                                 </td>
                                 <td>
                                     <a class="btn btn-small btn-danger" href="#" data-bind="
@@ -195,3 +187,16 @@
         <i class="icon-remove"></i> Delete
     </a>
 </div>
+
+<script type="text/html" id="backup_language_badge">
+    {# TODO: The following markup is pretty similar to the markup #}
+    {#       on the key_value_mapping page... consider making it DRYer #}
+    {#       ex: there could be a single class for language badges #}
+    <span class="btn btn-inverse btn-mini lang-text"
+        style="color:#ffffff; text-decoration: none;"
+        data-bind="
+            text: getBackup().lang,
+            {# language badge is only visible if the field is empty and a backup was found #}
+            visible: !_([$parent.lang, null]).contains(getBackup().lang) && values[$parent.lang]() === null
+    "></span>
+</script>

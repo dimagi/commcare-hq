@@ -102,7 +102,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             return series;
         });
         ret['annotations'] = _.map(graphViewModelAsPOJS['annotations'], function(obj){
-            obj['display_text'] = obj['displayText'];
+            obj['display_text'] = omitNulls(obj['values']);
             delete obj['displayText'];
             return obj;
         });
@@ -154,8 +154,10 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             return series;
         });
         ret['annotations'] = _.map(serverGraphObject['annotations'], function(obj){
-            obj['displayText'] = obj['display_text'];
+            obj['values'] = obj['display_text'];
             delete obj['display_text'];
+            obj['lang'] = moduleOptions['lang'];
+            obj['langs'] = moduleOptions['langs'];
             return obj;
         });
         ret['axisTitleConfigurations'] = _.map(_.pairs(serverGraphObject['locale_specific_config']), function(pair){
@@ -204,20 +206,19 @@ var ConfigPropertyValuePair = function(original){
     self.value = ko.observable(original.value === undefined ? "" : original.value);
 };
 
-var LocalizedConfigPropertyValuePair = function(original){
+var LocalizableValue = function(original){
     var self = this;
     original = original || {};
 
-    // These value should always be provided
+    // These values should always be provided
     self.lang = original.lang;
     self.langs = original.langs;
-    self.property = original.property;
 
     self.values = original.values || {};
-    // Make the value for the current language observable:
-    self.values[self.lang] =
-        ko.observable(self.values[self.lang] === undefined ? null : ko.unwrap(
-            self.values[self.lang])
+    // Make the value for the current language observable
+    self.values[self.lang] = ko.observable(
+            self.values[self.lang] === undefined ? null :
+            ko.unwrap(self.values[self.lang])
         );
 
     /**
@@ -248,8 +249,18 @@ var LocalizedConfigPropertyValuePair = function(original){
         }
         return backup;
     };
-
 };
+
+var LocalizedConfigPropertyValuePair = function(original){
+    LocalizableValue.apply(this,[original]);
+    var self = this;
+    original = original || {};
+
+    // This should always be provided
+    self.property = original.property;
+};
+LocalizedConfigPropertyValuePair.prototype = new LocalizableValue();
+LocalizedConfigPropertyValuePair.prototype.constructor = LocalizedConfigPropertyValuePair;
 
 var GraphViewModel = function(moduleOptions){
     PairConfiguration.apply(this);
@@ -375,21 +386,24 @@ var GraphViewModel = function(moduleOptions){
         self.annotations.remove(annotation);
     };
     self.addAnnotation = function (){
-        self.annotations.push(new Annotation());
+        self.annotations.push(new Annotation({
+            lang: self.lang,
+            langs: self.langs
+        }));
     };
 };
 GraphViewModel.prototype = new PairConfiguration();
 
-// TODO: Annotations are actually supposed to be localizable!!
 var Annotation = function(original){
+    LocalizableValue.apply(this, [original]);
     var self = this;
     original = original || {};
 
     self.x = ko.observable(original.x === undefined ? undefined : original.x);
     self.y = ko.observable(original.y === undefined ? undefined : original.y);
-    self.displayText = ko.observable(original.displayText === "" ? undefined : original.displayText);
-
 };
+Annotation.prototype = new LocalizableValue();
+Annotation.prototype.constructor = Annotation;
 
 var GraphSeries = function (original, childCaseTypes){
     PairConfiguration.apply(this, [original]);

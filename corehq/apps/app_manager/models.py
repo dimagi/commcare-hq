@@ -990,7 +990,7 @@ class MappingItem(DocumentSchema):
 
 
 class GraphAnnotations(DocumentSchema):
-    display_text = StringProperty()
+    display_text = DictProperty()
     x = StringProperty()
     y = StringProperty()
 
