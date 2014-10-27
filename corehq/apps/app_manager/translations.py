@@ -425,10 +425,45 @@ def update_case_list_translations(sheet, rows, app):
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
 
+    # Check length of lists
+    for expected_list, received_list, word in [
+        (short_details, list_rows, "list"),
+        (long_details, detail_rows, "detail")
+    ]:
+        if len(expected_list) != len(received_list):
+            msgs.append((
+                messages.error,
+                "Expected {0} case {3} properties in sheet {2}, found {1}. "
+                "No case list or detail properties for sheet {2} were "
+                "updated".format(
+                    len(expected_list),
+                    len(received_list),
+                    sheet.worksheet.title,
+                    word
+                )
+            ))
+    if msgs:
+        return msgs
+
     # Update the translations
 
     for row, detail in \
             zip(list_rows, short_details) + zip(detail_rows, long_details):
+
+        # Check that names match (user is not allowed to change property in the
+        # upload). Mismatched names indicate the user probably botched the sheet.
+        if row.get('case_property', None) != detail.field:
+            msgs.append((
+                messages.error,
+                'A row in sheet {sheet} has an unexpected value of "{field}" '
+                'in the case_property column. Case properties must appear in '
+                'the same order as they do in the bulk app translation '
+                'download. No translations updated for this row.'.format(
+                    sheet=sheet.worksheet.title,
+                    field=row.get('case_property', "")
+                )
+            ))
+            continue
 
         # The logic for updating a mapping and updating a MappingItem and a
         # DetailColumn is almost the same. So, we smush the two together.
