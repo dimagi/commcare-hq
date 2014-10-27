@@ -108,13 +108,14 @@ def self_starter_email():
     """
     domains = incomplete_self_started_domains()
 
-    email_content = render_to_string(
+    if len(domains) > 0:
+        email_content = render_to_string(
                 'domain/email/self_starter.html', {'domains': domains})
-    email_content_plaintext = render_to_string(
+        email_content_plaintext = render_to_string(
                 'domain/email/self_starter.txt', {'domains': domains})
-    send_HTML_email(
-        "Incomplete Self Started Domains",
-        settings.MASTER_LIST_EMAIL,
-        email_content,
-        text_content=email_content_plaintext,
-    )
+        send_HTML_email(
+            "Incomplete Self Started Domains",
+            settings.MASTER_LIST_EMAIL,
+            email_content,
+            text_content=email_content_plaintext,
+        )
