@@ -16,6 +16,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.app_manager.models import get_app
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
@@ -593,8 +594,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     @property
     def available_case_types(self):
         case_types = []
-        for app_doc in iter_docs(Application.get_db(), self.app_ids):
-            app = Application.wrap(app_doc)
+        for app in self.apps:
             case_types.extend([m.case_type for m in app.modules])
         return set(case_types)
 
@@ -607,6 +607,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return self.request.POST.get('caseType')
 
     @property
+    @memoized
     def app_ids(self):
         data = Application.get_db().view(
             'app_manager/applications_brief',
@@ -615,6 +616,16 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             endkey=[self.domain, {}],
         ).all()
         return [d['id'] for d in data]
+
+    @property
+    @memoized
+    def apps(self):
+        result = []
+        for app_id in self.app_ids:
+            app = get_app(self.domain, app_id)
+            if not app.is_remote_app():
+                result.append(app)
+        return result
 
     @property
     def search_term(self):
@@ -640,8 +651,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         Returns a dict of {case type: [case properties...]}
         """
         result = {}
-        for app_doc in iter_docs(Application.get_db(), self.app_ids):
-            app = Application.wrap(app_doc)
+        for app in self.apps:
             case_types = list(set([m.case_type for m in app.modules]))
             for case_type in case_types:
                 if case_type not in result:
@@ -655,8 +665,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         Returns a dict of {parent case type: [subcase types...]}
         """
         parent_child_types = {}
-        for app_doc in iter_docs(Application.get_db(), self.app_ids):
-            app = Application.wrap(app_doc)
+        for app in self.apps:
             for module in app.get_modules():
                 case_type = module.case_type
                 if case_type not in parent_child_types:
@@ -689,8 +698,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     @property
     def search_forms_response(self):
         forms = []
-        for app_doc in iter_docs(Application.get_db(), self.app_ids):
-            app = Application.wrap(app_doc)
+        for app in self.apps:
             for module in app.get_modules():
                 for form in module.get_forms():
                     forms.append({
