@@ -45,6 +45,7 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -187,7 +188,7 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
         if 0 == len(domains) and not req.user.is_superuser:
-            return redirect('registration_domain')
+            return redirect('registration_domain', domain_type=get_domain_type(None, req))
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
