@@ -374,17 +374,16 @@
                                                             into the application install screen:
                                                         {% endblocktrans %}
                                                         <code class="bitly"><a data-bind="
-                                                            attr: {href: get_short_odk_url()},
+                                                            attr: {
+                                                                href: get_short_odk_url(),
+                                                                title: get_short_odk_url_phonetic()
+                                                            },
                                                             text: get_short_odk_url()
                                                         "></a></code>
                                                     </span>
                                                     <span class="text-warning" data-bind="visible: !get_short_odk_url()">
                                                         {% trans "No short code available; try making another version." %}
                                                     </span>
-                                                </p>
-                                                <p data-bind="visible: get_short_odk_url()">
-                                                    {% trans 'Above Code Reads' %}:
-                                                    <strong data-bind="text: get_short_odk_url_phonetic()"></strong>
                                                 </p>
                                                 <p>
                                                     {% trans "Or" %}
