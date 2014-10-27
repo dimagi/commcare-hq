@@ -351,7 +351,7 @@ class Template(AbstractTemplate):
 
 
 class GraphTemplate(Template):
-    # TODO: Since form is always the same, I imagine I don't need to do it this way...?
+    # TODO: Is there a way to specify a default/static value for form?
     form = StringField('@form', choices=['graph'])
     graph = NodeField('graph', Graph)
 
@@ -397,7 +397,6 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
-# mark
 class Detail(IdNode):
     """
     <detail id="">
@@ -815,7 +814,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     self.app, module, detail,
                                     detail_type=detail_type, *column_info
                                 ).fields
-                                #import ipdb; ipdb.set_trace()
                                 d.fields.extend(fields)
 
                             try:
