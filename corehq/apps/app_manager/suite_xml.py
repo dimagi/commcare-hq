@@ -105,7 +105,8 @@ class ConfigurationItem(Text):
 
 class ConfigurationGroup(XmlObject):
     ROOT_NAME = 'configuration'
-    pairs = NodeListField('text', Text)
+    pairs = NodeListField('text', ConfigurationItem)
+    locale_specific = NodeListField('text', ConfigurationItem)
 
 
 class Series(XmlObject):

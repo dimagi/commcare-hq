@@ -206,6 +206,7 @@ var ConfigPropertyValuePair = function(original){
     self.value = ko.observable(original.value === undefined ? "" : original.value);
 };
 
+// TODO: Rename values to value (throughout the stack) to maintain consistency with enums!!
 var LocalizableValue = function(original){
     var self = this;
     original = original || {};

@@ -989,7 +989,7 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
 
-class GraphAnnotations(DocumentSchema):
+class GraphAnnotations(IndexedSchema):
     display_text = DictProperty()
     x = StringProperty()
     y = StringProperty()
@@ -1004,6 +1004,8 @@ class GraphSeries(DocumentSchema):
 
 
 class GraphConfiguration(DocumentSchema):
+    config = DictProperty()
+    locale_specific_config = DictProperty()
     annotations = SchemaListProperty(GraphAnnotations)
     graph_type = StringProperty()
     series = SchemaListProperty(GraphSeries)
@@ -2971,6 +2973,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def create_app_strings(self, lang):
         gen = app_strings.CHOICES[self.translation_strategy]
+        #import ipdb; ipdb.set_trace()
         if lang == 'default':
             return gen.create_default_app_strings(self)
         else:

@@ -392,23 +392,44 @@ class Graph(FormattedDetailColumn):
                         sx.ConfigurationItem(id=k, xpath_function=v)
                         for k, v
                         in self.column.graph_configuration.config.iteritems()
+                    ],
+                    locale_specific=[
+                        sx.ConfigurationItem(
+                            id=k,
+                            locale_id=self.id_strings.graph_configuration(
+                                self.module,
+                                self.detail_type,
+                                self.column,
+                                k
+                            )
+                        )
+                        for k, v
+                        in self.column.graph_configuration.locale_specific_config.iteritems()
                     ]
                 ),
-                # TODO: Add localized configuration in here somehow
                 annotations=[
                     sx.Annotation(
                         x=sx.Text(xpath_function=a.x),
                         y=sx.Text(xpath_function=a.y),
-                        # TODO: Figure out how to handle localize text dictionary
+                        text=sx.Text(
+                            locale_id=self.id_strings.graph_annotation(
+                                self.module,
+                                self.detail_type,
+                                self.column,
+                                i
+                            )
+                        )
                     )
-                    for a in self.column.graph_configuration.annotations]
+                    for i, a in enumerate(
+                        self.column.graph_configuration.annotations
+                    )]
             )
         )
 
         # TODO: what are self.variables and do I need to care about them here?
         # (see FormattedDetailColumn.template)
 
-        print template.serializeDocument(pretty=True)
+        #print template.serializeDocument(pretty=True)
 
         return template
 
