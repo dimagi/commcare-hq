@@ -4,11 +4,9 @@ import datetime
 import logging
 
 from StringIO import StringIO
-from django.conf import settings
 from django.test.client import Client
 
-from couchdbkit import ResourceConflict, ResourceNotFound, resource, \
-    BulkSaveError
+from couchdbkit import ResourceNotFound, BulkSaveError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -19,7 +17,7 @@ from redis import ConnectionError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch import uid, LockManager, ReleaseOnError, release_lock
+from dimagi.utils.couch import uid, LockManager, ReleaseOnError
 import xml2json
 
 import couchforms
