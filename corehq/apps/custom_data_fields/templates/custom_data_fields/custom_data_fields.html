@@ -71,8 +71,28 @@
                                     {% blocktrans with entity_string=view.entity_string %}
                                         {{ entity_string }} Property
                                     {% endblocktrans %}
+                                    <span class="hq-help-template"
+                                          data-title="
+                                              {% blocktrans with entity_string=view.entity_string %}
+                                                  {{ entity_string }} Property
+                                              {% endblocktrans %}"
+                                          data-content="{% blocktrans %}
+                                              The unique ID you can use to reference this property
+                                              in the application builder. The property may not
+                                              contain spaces.
+                                          {% endblocktrans %}">
+                                    </span>
                                 </th>
-                                <th>{% trans "Label" %}</th>
+                                <th>
+                                    {% trans "Label" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Label" %}"
+                                          data-content="{% blocktrans with entity_string=view.entity_string %}
+                                              The field label that users will see when adding or editing
+                                              a {{ entity_string }} in CommCareHQ.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
                                 <th>{% trans "Required" %}</th>
                                 <th>{% trans "Delete" %}</th>
                             </tr>
