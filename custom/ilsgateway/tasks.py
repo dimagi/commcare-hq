@@ -45,8 +45,7 @@ def get_locations(domain, endpoint):
         sync_ilsgateway_location(domain, endpoint, Location.from_json(location))
 
 
-@task
-def product_stock_task(domain, endpoint):
+def get_product_stock(domain, endpoint):
     for facility in FACILITIES:
         has_next = True
         next_url = ""
@@ -77,8 +76,7 @@ def product_stock_task(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-@task
-def stock_transaction_task(domain, endpoint):
+def get_stock_transaction(domain, endpoint):
     # Faking xform
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
@@ -124,8 +122,7 @@ def stock_transaction_task(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-@task
-def supply_point_statuses_task(domain, endpoint):
+def get_supply_point_statuses(domain, endpoint):
     for facility in FACILITIES:
         has_next = True
         next_url = ""
@@ -147,8 +144,7 @@ def supply_point_statuses_task(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-@task
-def delivery_group_reports_task(domain, endpoint):
+def get_delivery_group_reports(domain, endpoint):
     for facility in FACILITIES:
         has_next = True
         next_url = ""
@@ -178,10 +174,10 @@ def stock_data_task(domain):
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
     get_locations(domain, endpoint)
-    product_stock_task(domain, endpoint)
-    stock_transaction_task(domain, endpoint)
-    supply_point_statuses_task(domain, endpoint)
-    delivery_group_reports_task(domain, endpoint)
+    get_product_stock(domain, endpoint)
+    get_stock_transaction(domain, endpoint)
+    get_supply_point_statuses(domain, endpoint)
+    get_delivery_group_reports(domain, endpoint)
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
