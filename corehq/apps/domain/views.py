@@ -27,6 +27,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -99,7 +100,7 @@ accounting_logger = logging.getLogger('accounting')
 def select(request, domain_select_template='domain/select.html'):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
-        return redirect('registration_domain')
+        return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
     open_invitations = DomainInvitation.by_email(email)
