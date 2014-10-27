@@ -99,7 +99,11 @@ var SaveButton = {
                 return options;
             },
             ajax: function (options) {
-                $.ajax(button.ajaxOptions(options));
+                var jqXHR = $.ajax(button.ajaxOptions(options));
+                if (!jqXHR) {
+                    // request was aborted
+                    this.setState('save');
+                }
             }
         };
         eventize(button);

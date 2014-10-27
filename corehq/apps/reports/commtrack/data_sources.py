@@ -220,7 +220,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 )
                 product['months_remaining'] = months_of_stock_remaining(
                     product['current_stock'],
-                    product['consumption']
+                    product['consumption'] / 30 if product['consumption'] is not None else None
                 )
             else:
                 product = Product.get(state.product_id)
@@ -242,7 +242,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                     ),
                     'months_remaining': months_of_stock_remaining(
                         state.stock_on_hand,
-                        consumption
+                        consumption / 30 if consumption is not None else None
                     )
                 }
 

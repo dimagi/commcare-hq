@@ -59,7 +59,10 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             cesarean_delivery = 'cesarean',
             unknown_delivery = 'unknown',
             abortion = 'abortion',
-            weight_birth_25 = '2.5'
+            weight_birth_25='2.5',
+            newborn_death='newborn_death',
+            infant_death='infant_death',
+            child_death='child_death'
         )
 
         if 'startdate' in self.request.GET and self.request.GET['startdate']:
@@ -133,28 +136,40 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             charts=charts,
             chart_span=12
         )
-
+        if hasattr(data_provider, 'width'):
+            context['report_table']['width'] = data_provider.width
         return context
 
     def get_chart(self, rows, x_label, y_label, data_provider):
         def _get_label_with_percentage(row):
-            return "%s [%s%%]" %(row[0]['html'], str(float(row[-1]['html'][:-1])))
+            return "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1])))
 
         if isinstance(data_provider, NutritionBirthWeightDetails):
-            chart = PieChart('BirthWeight', '', [{'label': "%s [%s%%]" %(row[0]['html'], str(float(row[-1]['html'][:-1]))),
-                                                  'value':float(row[-1]['html'][:-1])} for row in rows[1:]], ['red', 'green'])
+            chart = PieChart('BirthWeight', '',
+                             [{'label': "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1]))),
+                               'value': int(row[-1]['html'][:-1])} for row in rows[2:]], ['red', 'green'])
+            chart.showLabels = False
         elif isinstance(data_provider, DeliveryPlaceDetailsExtended):
-            chart = PieChart('', '', [{'label': _get_label_with_percentage(row), 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart = PieChart('', '', [{'label': _get_label_with_percentage(row),
+                                       'value': int(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart.showLabels = False
         elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             if isinstance(data_provider, ImmunizationOverview):
                 chart.stacked = True
-                chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[3]['html'][:-1])/100} for row in rows], color='green')
-                chart.add_dataset('Dropout Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows], color='red')
+                chart.add_dataset('Percentage',
+                                  [{'x': row[0]['html'],
+                                    'y': int(row[3]['html'][:-1]) / 100} for row in rows],
+                                  color='green')
+                chart.add_dataset('Dropout Percentage',
+                                  [{'x': row[0]['html'],
+                                    'y': int(row[-1]['html'][:-1]) / 100} for row in rows],
+                                  color='red')
             else:
-                chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+                chart.add_dataset('Percentage',
+                                  [{'x': row[0]['html'], 'y':int(row[-1]['html'][:-1]) / 100} for row in rows])
         elif isinstance(data_provider, AnteNatalCareServiceOverviewExtended):
             chart1 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart2 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
@@ -162,19 +177,23 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart2.rotateLabels = -45
             chart1.marginBottom = 120
             chart2.marginBottom = 120
-            chart1.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[1:6]])
-            chart2.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[6:12]])
+            chart1.add_dataset('Percentage', [{'x': row[0]['html'],
+                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[1:6]])
+            chart2.add_dataset('Percentage', [{'x': row[0]['html'],
+                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[6:12]])
             return [chart1, chart2]
         elif isinstance(data_provider, ChildrenDeathsByMonth):
-            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"), y_axis=Axis(y_label, '.2%'))
+            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"),
+                              y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             months_mapping = dict((v,k) for k,v in enumerate(calendar.month_abbr))
             chart.add_dataset('Percentage', [{'x': datetime.date(1, months_mapping[row[0][:3]], 1),
-                                              'y':float(row[-1]['html'][:-1])/100} for row in rows])
+                                              'y': int(row[-1]['html'][:-1]) / 100} for row in rows])
         else:
-            chart = PieChart('', '', [{'label': "%s [%s%%]" %(row[0]['html'], str(float(row[-1]['html'][:-1]))),
-                                       'value':float(row[-1]['html'][:-1])} for row in rows])
+            chart = PieChart('', '', [{'label': "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1]))),
+                                       'value': int(row[-1]['html'][:-1])} for row in rows])
+            chart.showLabels = False
         return [chart]
 
     @property
@@ -202,3 +221,6 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
 
         return [export_sheet_name, table]
 
+    @property
+    def email_response(self):
+        return super(TTCReport, self).email_response
