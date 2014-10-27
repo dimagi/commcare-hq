@@ -35,3 +35,6 @@ class CommTrackSettingsTest(TestCase):
         restore_settings = ct_settings.get_ota_restore_settings()
         self.assertTrue(restore_settings.force_consumption_case_filter(CommCareCase(type='force-type')))
         self.assertEqual(3, len(restore_settings.default_product_list))
+
+        # make sure this tests domain (and related settings) are cleaned up
+        domain.delete()
