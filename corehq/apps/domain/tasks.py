@@ -88,7 +88,7 @@ def incomplete_self_started_domains():
     project information
     """
     domains = _real_incomplete_domains()
-    domains = list(_domains_over_x_forms(domains=domains))
+    domains = _domains_over_x_forms(domains=list(domains))
 
     email_domains = []
     for domain in domains:
@@ -109,9 +109,9 @@ def self_starter_email():
     domains = incomplete_self_started_domains()
 
     email_content = render_to_string(
-            'domain/email/self_starter.html', domains)
+                'domain/email/self_starter.html', {'domains': domains})
     email_content_plaintext = render_to_string(
-            'domain/email/self_starter.txt', domains)
+                'domain/email/self_starter.txt', {'domains': domains})
     send_HTML_email(
         "Incomplete Self Started Domains",
         settings.MASTER_LIST_EMAIL,
