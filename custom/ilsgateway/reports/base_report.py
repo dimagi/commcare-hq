@@ -45,16 +45,11 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMi
 
         total_row = []
         self.data_source = data_provider
-        if self.needs_filters:
-            headers = []
-            rows = []
-        else:
-
-            headers = []
-            rows = []
-            if data_provider.show_table:
-                headers = data_provider.headers
-                rows = data_provider.rows
+        headers = []
+        rows = []
+        if not self.needs_filters and data_provider.show_table:
+            headers = data_provider.headers
+            rows = data_provider.rows
 
         context = dict(
             report_table=dict(

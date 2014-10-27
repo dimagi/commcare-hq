@@ -74,7 +74,7 @@ def product_stock_task(domain, endpoint):
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
 @task
@@ -121,7 +121,7 @@ def stock_transaction_task(domain, endpoint):
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
 @task
@@ -144,7 +144,7 @@ def supply_point_statuses_task(domain, endpoint):
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
 @task
@@ -166,7 +166,7 @@ def delivery_group_reports_task(domain, endpoint):
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
 @task
@@ -178,10 +178,10 @@ def stock_data_task(domain):
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
     get_locations(domain, endpoint)
-    product_stock_task.delay(domain, endpoint)
-    stock_transaction_task.delay(domain, endpoint)
-    supply_point_statuses_task.delay(domain, endpoint)
-    delivery_group_reports_task.delay(domain, endpoint)
+    product_stock_task(domain, endpoint)
+    stock_transaction_task(domain, endpoint)
+    supply_point_statuses_task(domain, endpoint)
+    delivery_group_reports_task(domain, endpoint)
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
