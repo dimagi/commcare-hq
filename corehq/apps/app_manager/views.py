@@ -10,7 +10,7 @@ import json
 from collections import defaultdict
 from xml.dom.minidom import parseString
 
-from diff_match_patch import diff_match_patch
+from diff_match_patch import *
 from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language
@@ -430,7 +430,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
         for module in app.get_modules():
             for case_type in module.get_case_types():
                 module_case_types.append({'id': module.unique_id,
-                                          'module_name': trans(module.name, langs),
+                            'module_name': trans(module.name, langs),
                     'case_type': case_type,
                     'module_type': module.doc_type
                 })
