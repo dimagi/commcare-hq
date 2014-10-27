@@ -13,7 +13,6 @@ def fallback_handler(v, text, msg):
     if domain_obj.use_default_sms_response and domain_obj.default_sms_response:
         send_sms_to_verified_number(v, domain_obj.default_sms_response,
                                     metadata=default_workflow_meta)
-    else:
-        add_msg_tags(msg, default_workflow_meta)
+    add_msg_tags(msg, default_workflow_meta)
     return True
 
