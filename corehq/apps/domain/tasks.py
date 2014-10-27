@@ -64,7 +64,7 @@ def fm_reminder_email():
     """
     Reminds FMs to update their domains with up to date information
     """
-    email_domains = _domains_to_email()
+    email_domains = incomplete_domains_to_email()
 
     for domain in email_domains:
         email_content = render_to_string(
@@ -106,7 +106,7 @@ def self_starter_email():
 
     Doesn't actually look at self-started attribute.
     """
-    domains = _self_started_domains()
+    domains = incomplete_self_started_domains()
 
     email_content = render_to_string(
             'domain/email/self_starter.html', domains)
