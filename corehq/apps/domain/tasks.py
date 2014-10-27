@@ -16,7 +16,7 @@ from dimagi.utils.web import get_url_base
 
 def _domains_over_x_forms(num_forms=200, domains=None):
     form_domains = FormES().domain_facet().size(0)
-    if not domains:
+    if domains:
         form_domains = form_domains.domain(domains)
     form_domains = form_domains.run().facet('domain', 'terms')
 
