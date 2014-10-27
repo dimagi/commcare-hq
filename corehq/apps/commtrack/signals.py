@@ -126,4 +126,3 @@ def bootstrap_commtrack_settings_if_necessary_signal(sender, **kwargs):
     bootstrap_commtrack_settings_if_necessary(kwargs['domain'])
 
 commcare_domain_post_save.connect(bootstrap_commtrack_settings_if_necessary_signal)
-

@@ -18,7 +18,6 @@ from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml.parser import case_update_from_block
-from casexml.apps.phone.models import SyncLog
 from dimagi.utils.logging import notify_exception
 
 
@@ -40,7 +39,7 @@ def process_cases(xform, config=None):
     now = datetime.datetime.utcnow()
     for case in cases:
         case.server_modified_on = now
-    result = XFormInstance.get_db().bulk_save(docs)
+    XFormInstance.get_db().bulk_save(docs)
     for case in cases:
         case_post_save.send(CommCareCase, case=case)
     return cases
