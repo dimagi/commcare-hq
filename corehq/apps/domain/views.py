@@ -483,7 +483,11 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    form = GenericRepeaterForm({"url": url})
+    form = GenericRepeaterForm(
+        {"url": url},
+        domain=domain,
+        repeater_class=receiverwrapper.models.repeater_types[repeater_type]
+    )
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
@@ -1769,8 +1773,15 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return self.repeater_form_class(self.request.POST)
-        return self.repeater_form_class()
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
+        return self.repeater_form_class(
+            domain=self.domain,
+            repeater_class=self.repeater_class
+        )
 
     @property
     def page_context(self):
@@ -1783,6 +1794,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
+            format=self.add_repeater_form.cleaned_data['format']
         )
         return repeater
 
