@@ -192,14 +192,14 @@ class MessageLogReport(BaseCommConnectLogReport):
     exportable = True
 
     def get_message_type_filter(self):
-        message_types = MessageTypeFilter.get_value(self.request, self.domain)
-        if message_types:
-            message_types = [mt.lower() for mt in message_types]
-            return lambda message_type: message_type in message_types
-        return lambda message_type: True
+        filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
+        if filtered_types:
+            filtered_types = set([mt.lower() for mt in filtered_types])
+            return lambda message_types: len(filtered_types.intersection(message_types)) > 0
+        return lambda message_types: True
 
     @staticmethod
-    def _get_message_type(message):
+    def _get_message_types(message):
         relevant_workflows = [
             WORKFLOW_REMINDER,
             WORKFLOW_KEYWORD,
@@ -207,13 +207,14 @@ class MessageLogReport(BaseCommConnectLogReport):
             WORKFLOW_CALLBACK,
             WORKFLOW_DEFAULT,
         ]
+        types = []
         if message.workflow in relevant_workflows:
-            message_type = message.workflow
-        elif message.xforms_session_couch_id is not None:
-            message_type = MessageTypeFilter.OPTION_SURVEY
-        else:
-            message_type = MessageTypeFilter.OPTION_OTHER
-        return message_type.lower()
+            types.append(message.workflow.lower())
+        if message.xforms_session_couch_id is not None:
+            types.append(MessageTypeFilter.OPTION_SURVEY.lower())
+        if not types:
+            types.append(MessageTypeFilter.OPTION_OTHER.lower())
+        return types
 
     @property
     def headers(self):
@@ -252,8 +253,8 @@ class MessageLogReport(BaseCommConnectLogReport):
             if message.direction == OUTGOING and not message.processed:
                 continue
 
-            message_type = self._get_message_type(message)
-            if not message_type_filter(message_type):
+            message_types = self._get_message_types(message)
+            if not message_type_filter(message_types):
                 continue
 
             doc_info = self.get_recipient_info(message, contact_cache)
@@ -269,7 +270,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(message.direction,"-")),
                 self._fmt(message.text),
-                self._fmt(message_type),
+                self._fmt(", ".join(message_types)),
             ])
 
         return result
