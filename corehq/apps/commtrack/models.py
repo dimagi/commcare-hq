@@ -1610,8 +1610,6 @@ def update_stock_state_for_transaction(instance):
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
-            sql_product=sql_product,
-            sql_location=sql_location,
         )
     except StockState.DoesNotExist:
         state = StockState(
