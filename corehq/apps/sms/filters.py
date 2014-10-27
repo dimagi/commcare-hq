@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
@@ -9,7 +9,7 @@ from corehq.apps.sms.models import (
 )
 
 
-class MessageTypeFilter(BaseSingleOptionFilter):
+class MessageTypeFilter(BaseMultipleOptionFilter):
     label = ugettext_noop("Message Type")
     default_text = ugettext_noop("Select Message Type...")
     slug = 'log_type'

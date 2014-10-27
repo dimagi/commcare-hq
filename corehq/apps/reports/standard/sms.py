@@ -192,7 +192,15 @@ class MessageLogReport(BaseCommConnectLogReport):
     ]
     exportable = True
 
-    def get_correct_message_type_filter(self):
+    def get_message_type_filter(self):
+        message_types = MessageTypeFilter.get_value(self.request, self.domain)
+        if message_types:
+            message_types = [mt.lower() for mt in message_types]
+            return lambda message_type: message_type in message_types
+        return lambda message_type: True
+
+    @staticmethod
+    def _get_message_type(message):
         relevant_workflows = [
             WORKFLOW_REMINDER,
             WORKFLOW_KEYWORD,
@@ -200,17 +208,13 @@ class MessageLogReport(BaseCommConnectLogReport):
             WORKFLOW_CALLBACK,
             WORKFLOW_DEFAULT,
         ]
-        message_type = MessageTypeFilter.get_value(self.request, self.domain)
-        if message_type is MessageTypeFilter.OPTION_SURVEY:
-            return lambda message: message.xforms_session_couch_id is not None
-        if message_type is MessageTypeFilter.OPTION_OTHER:
-            return lambda message: (
-                message.xforms_session_couch_id is None
-                and message.workflow not in relevant_workflows
-            )
-        if message_type in relevant_workflows:
-            return lambda message: message.workflow == message_type
-        return lambda message: True
+        if message.workflow in relevant_workflows:
+            message_type = message.workflow
+        elif message.xforms_session_couch_id is not None:
+            message_type = MessageTypeFilter.OPTION_SURVEY
+        else:
+            message_type = MessageTypeFilter.OPTION_OTHER
+        return message_type.lower()
 
     @property
     def headers(self):
@@ -220,6 +224,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
+            DataTablesColumn(_("Type")),
         )
         header.custom_sort = [[0, 'desc']]
         return header
@@ -242,13 +247,14 @@ class MessageLogReport(BaseCommConnectLogReport):
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
 
         contact_cache = {}
+        message_type_filter = self.get_message_type_filter()
 
         for message in data:
             if message.direction == OUTGOING and not message.processed:
                 continue
 
-            is_relevant_message = self.get_correct_message_type_filter()
-            if not is_relevant_message(message):
+            message_type = self._get_message_type(message)
+            if not message_type_filter(message_type):
                 continue
 
             doc_info = self.get_recipient_info(message, contact_cache)
@@ -264,6 +270,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(message.direction,"-")),
                 self._fmt(message.text),
+                self._fmt(message_type),
             ])
 
         return result
