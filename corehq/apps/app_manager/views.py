@@ -28,7 +28,7 @@ from corehq.apps.app_manager.exceptions import (
     RearrangeError,
 )
 
-from corehq.apps.app_manager.forms import CopyApplicationForm
+from corehq.apps.app_manager.forms import *
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.commtrack.models import Program
@@ -429,8 +429,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
     else:
         for module in app.get_modules():
             for case_type in module.get_case_types():
-                module_case_types.append({
-                    'id': module.unique_id,
+                module_case_types.append({'id': module.unique_id,
                     'module_name': trans(module.name, langs),
                     'case_type': case_type,
                     'module_type': module.doc_type
