@@ -7,10 +7,9 @@ from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_fo
 
 
 class CommTrackSettingsTest(TestCase):
-
     def testOTASettings(self):
-        domain = bootstrap_domain()
-        ct_settings = CommtrackConfig.for_domain(domain.name)
+        self.domain = bootstrap_domain()
+        ct_settings = CommtrackConfig.for_domain(self.domain.name)
         ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=10,
             min_window=20,
@@ -19,7 +18,7 @@ class CommTrackSettingsTest(TestCase):
         ct_settings.ota_restore_config = StockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'},
         )
-        set_default_monthly_consumption_for_domain(domain.name, 5 * DAYS_IN_MONTH)
+        set_default_monthly_consumption_for_domain(self.domain.name, 5 * DAYS_IN_MONTH)
         restore_settings = ct_settings.get_ota_restore_settings()
         self.assertEqual(1, len(restore_settings.section_to_consumption_types))
         self.assertEqual('consumption', restore_settings.section_to_consumption_types['stock'])
@@ -35,3 +34,7 @@ class CommTrackSettingsTest(TestCase):
         restore_settings = ct_settings.get_ota_restore_settings()
         self.assertTrue(restore_settings.force_consumption_case_filter(CommCareCase(type='force-type')))
         self.assertEqual(3, len(restore_settings.default_product_list))
+
+    def tearDown(self):
+        # make sure this tests domain (and related settings) are cleaned up
+        self.domain.delete()
