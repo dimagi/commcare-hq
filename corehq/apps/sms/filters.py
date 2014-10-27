@@ -1,11 +1,11 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.app_manager.models import WORKFLOW_DEFAULT
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
     WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK,
+    WORKFLOW_DEFAULT,
 )
 
 

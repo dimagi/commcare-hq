@@ -1,16 +1,15 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.models import WORKFLOW_DEFAULT
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
 from corehq.apps.sms.filters import MessageTypeFilter
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -20,12 +19,15 @@ import pytz
 from corehq.apps.users.views import EditWebUserView
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.hqwebapp.doc_info import get_doc_info
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
     WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK,
+    WORKFLOW_DEFAULT,
+    INCOMING,
+    OUTGOING,
+    SMSLog,
 )
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
