@@ -32,6 +32,7 @@ class AnteNatalCareServiceOverview(BaseSqlData):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
+                           {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
                            {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug],
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i+4].slug)},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),

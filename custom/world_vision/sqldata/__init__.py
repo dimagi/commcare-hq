@@ -35,7 +35,7 @@ class BaseSqlData(SqlData):
     custom_total_calculate = False
 
     def percent_fn(self, x, y):
-        return "%.2f%%" % (100 * float(y or 0) / (x or 1))
+        return "%.0f%%" % (100 * float(y or 0) / (x or 1))
 
     def get_tooltip(self, mapping, key):
         return mapping.get(key, '')

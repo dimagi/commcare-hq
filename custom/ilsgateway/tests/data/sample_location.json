@@ -1,7 +1,7 @@
 {
     "id" : 1,
     "name": "MOHSW",
-    "location_type": "MOHSW",
+    "type": "MOHSW",
     "parent_id": null,
     "latitude": -10.6676087700,
     "longitude": 39.1621900200,
