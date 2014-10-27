@@ -424,10 +424,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                                  'saved_reports', args=[request.domain])),
                      }, None
         except Exception:
-            notify_exception(None, "Error generating report", details={
+            notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,
                 'user': self.owner.username,
-                'report': self.report_slug
+                'report': self.report_slug,
+                'report config': self.get_id
             })
             return _("An error occurred while generating this report."), None
 
