@@ -1,7 +1,5 @@
-from corehq.apps.callcenter.indicator_sets import CallCenter, AAROHI_MOTHER_FORM
 from corehq.apps.callcenter.utils import sync_user_cases
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase

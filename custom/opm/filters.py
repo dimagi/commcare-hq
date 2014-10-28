@@ -1,10 +1,11 @@
+from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.columns import SimpleColumn
-from corehq.apps.reports.filters.base import (
-    BaseSingleOptionFilter, CheckboxFilter, BaseDrilldownOptionFilter)
 
-from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
+                                              BaseDrilldownOptionFilter)
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -26,6 +27,7 @@ class HierarchySqlData(SqlData):
             DatabaseColumn('Gram Panchayat', SimpleColumn('gp')),
             DatabaseColumn('AWC', SimpleColumn('awc'))
         ]
+
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
@@ -123,7 +125,8 @@ class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         hierarchy = super(MetHierarchyFilter, self).drilldown_map
-        met_hierarchy = [x for x in hierarchy if x['val'].lower() in ['atri', 'wazirganj']]
+        met_hierarchy = [x for x in hierarchy
+                         if x['val'].lower() in ['atri', 'wazirganj']]
         return met_hierarchy
 
 
@@ -138,8 +141,24 @@ class SelectBlockFilter(BaseSingleOptionFilter):
 
 
 class OPMSelectOpenCloseFilter(SelectOpenCloseFilter):
+    default_text = None
+
+    @property
+    def options(self):
+        return [
+            ('all', _("Show All")),
+            ('open', _("Only Open")),
+            ('closed', _("Only Closed")),
+        ]
 
     @property
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or "open"
+
+    @classmethod
+    def case_status(cls, request_params):
+        """
+        returns either "all", "open", or "closed"
+        """
+        return request_params.get(cls.slug) or 'open'

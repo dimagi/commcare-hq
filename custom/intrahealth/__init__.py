@@ -1,5 +1,7 @@
+import logging
 import re
 from dimagi.utils.dates import force_to_datetime
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
@@ -66,15 +68,23 @@ def get_rupture_products(form):
     return result
 
 def _get_location(form):
+    loc = None
     if 'location_id' in form.form:
         loc_id = form.form['location_id']
-        loc = Location.get(loc_id)
+        try:
+            loc = Location.get(loc_id)
+        except ResourceNotFound:
+            logging.info('Location %s Not Found.' % loc_id)
     else:
         user_id = form['auth_context']['user_id']
         if not user_id:
             return None
         user = CommTrackUser.get(user_id)
-        loc = user.location
+        try:
+            loc = user.location
+        except ResourceNotFound:
+            logging.info('Location %s Not Found.' % loc)
+
     return loc
 
 def get_domain(form):
@@ -84,7 +94,10 @@ def get_prod_info(prod, property):
     return prod[property]
 
 def get_location_id(form):
-    return _get_location(form)._id
+    loc = _get_location(form)
+    if not loc:
+        return None
+    return loc._id
 
 def get_location_id_by_type(form, type):
     loc = get_location_by_type(form, type)
