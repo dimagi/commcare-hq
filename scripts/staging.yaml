@@ -44,7 +44,7 @@ trunk: master
 name: autostaging
 branches:
   - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
-  - double-managment+staging # SK 10/28
+  - double-managment+schedule # SK 10/28
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
