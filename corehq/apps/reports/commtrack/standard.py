@@ -1,5 +1,5 @@
 from corehq.apps.api.es import CaseES
-from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
+from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, SimplifiedInventoryDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState
@@ -14,6 +14,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from corehq.apps.commtrack.models import SQLProduct
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -217,6 +218,55 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             chart = MultiBarChart(None, Axis(_('Products')), Axis(_('% of Facilities'), ',.1d'))
             chart.data = self.get_data_for_graph()
             return [chart]
+
+
+class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
+    name = 'Simple Inventory'
+    slug = SimplifiedInventoryDataSource.slug
+    exportable = True
+    emailable = True
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super(SimplifiedInventoryReport, self).__init__(*args, **kwargs)
+        products = SQLProduct.objects.filter(domain=self.domain)
+
+        if self.program_id:
+            products = products.filter(program_id=self.program_id)
+
+        self.product_dict = {
+            p: None for p in products.values_list('name', flat=True)
+        }
+
+    @property
+    def headers(self):
+        columns = [
+            DataTablesColumn(_('Location')),
+        ]
+
+        columns += [
+            DataTablesColumn(product_name) for product_name in
+            sorted(self.product_dict.keys())
+        ]
+
+        return DataTablesHeader(*columns)
+
+    @property
+    def rows(self):
+        config = {
+            'domain': self.domain,
+            'location_id': self.request.GET.get('location_id'),
+            'program_id': self.program_id
+        }
+
+        data = SimplifiedInventoryDataSource(config).get_data()
+
+        for loc_name, loc_data in data:
+            row_dict = dict(self.product_dict, **dict(loc_data))
+            yield [loc_name] + [v for k, v in sorted(row_dict.items(), key=lambda(k, v): k)]
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):

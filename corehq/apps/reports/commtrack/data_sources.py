@@ -1,7 +1,7 @@
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
+from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState, SQLLocation
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
@@ -54,6 +54,32 @@ class CommtrackDataSourceMixin(object):
         if request:
             return request
 
+
+class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
+    slug = 'simple_inventory'
+
+    def get_data(self, slugs=None):
+        if self.active_location:
+            current_location = self.active_location.sql_location
+            locations = [current_location] + list(current_location.get_descendants())
+        else:
+            locations = SQLLocation.objects.filter(domain=self.domain)
+
+        for loc in locations:
+            stock_states = loc.stockstate_set.all()
+
+            if self.program_id:
+                stock_states = stock_states.filter(
+                    sql_product__program_id=self.program_id
+                )
+
+            yield (
+                loc.name,
+                stock_states.values_list(
+                    'sql_product__name',
+                    'stock_on_hand'
+                )
+            )
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
