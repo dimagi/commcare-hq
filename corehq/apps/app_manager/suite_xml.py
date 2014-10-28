@@ -119,7 +119,8 @@ class Series(XmlObject):
     radius = StringField("radius/@function")
 
 
-class Annotation(XmlObject):
+class Annotation(OrderedXmlObject):
+    ORDER = ("x","y","text")
     ROOT_NAME = 'annotation'
 
     # TODO: Specify the xpath without specifying "text" for the child (we want the Text class to specify the tag)
