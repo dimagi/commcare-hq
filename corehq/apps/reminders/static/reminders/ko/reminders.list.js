@@ -84,7 +84,7 @@ var Reminder = function (o, parentModel) {
                 reminderId: self.id
             },
             error: function (data) {
-                // todo: not needed for demo
+                $(target_button).button('error');
             },
             success: function (data) {
                 if (data.success) {

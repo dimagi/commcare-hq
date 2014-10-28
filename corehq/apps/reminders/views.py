@@ -1645,16 +1645,13 @@ class RemindersListView(BaseMessagingSectionView):
         except Exception as e:
             return {
                 'success': False,
-                'error': e,
             }
 
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action in ['activate', 'deactivate']:
             return HttpResponse(json.dumps(self.get_action_response(action == 'activate')))
-        raise {
-            'success': False,
-        }
+        return HttpResponse(status=400)
 
 
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
