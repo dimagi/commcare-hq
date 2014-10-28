@@ -82,7 +82,7 @@
                 }
             });
 
-            if (!_.isEmpty($('#case-list-form'))) {
+            if ($('#case-list-form').length) {
                 var CaseListForm = function (data, options) {
                     var self = this,
                         initial_option = data.form_id ? data.form_id : 'disabled';
