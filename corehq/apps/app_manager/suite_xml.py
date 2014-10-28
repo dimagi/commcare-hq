@@ -109,7 +109,13 @@ class ConfigurationGroup(XmlObject):
     text = NodeListField('text', ConfigurationItem)
 
 
-class Series(XmlObject):
+class Series(OrderedXmlObject):
+    ORDER = (
+        "x_function",
+        "y_function",
+        "radius_function",
+        "configuration",
+    )
     ROOT_NAME = 'series'
 
     nodeset = StringField('@nodeset')
