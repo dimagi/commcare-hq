@@ -1,3 +1,6 @@
+import re
+
+
 class FacetResult(object):
     def __init__(self, raw, facet):
         self.facet = facet
@@ -28,7 +31,7 @@ class TermsFacet(Facet):
     result_class = TermsResult
 
     def __init__(self, term, name, size=None):
-        assert name.isalnum(), "name must be a valid python variable name"
+        assert re.match(r'\w+$', name), "name must be a valid python variable name"
         self.name = name
         self.params = {
             "field": term,
