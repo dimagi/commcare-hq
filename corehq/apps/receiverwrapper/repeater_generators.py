@@ -44,7 +44,6 @@ class AppStructureGenerator(BasePayloadGenerator):
 @RegisterGenerator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
 class ShortFormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, form):
-        form = payload_doc
         cases = CommCareCase.get_by_xform_id(form.get_id)
         return json.dumps({'form_id': form._id,
                            'received_on': json_format_datetime(form.received_on),
