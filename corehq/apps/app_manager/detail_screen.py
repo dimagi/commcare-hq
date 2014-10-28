@@ -388,24 +388,25 @@ class Graph(FormattedDetailColumn):
                     )
                     for s in self.column.graph_configuration.series],
                 configuration=sx.ConfigurationGroup(
-                    pairs=[
-                        sx.ConfigurationItem(id=k, xpath_function=v)
-                        for k, v
-                        in self.column.graph_configuration.config.iteritems()
-                    ],
-                    locale_specific=[
-                        sx.ConfigurationItem(
-                            id=k,
-                            locale_id=self.id_strings.graph_configuration(
-                                self.module,
-                                self.detail_type,
-                                self.column,
-                                k
+                    text=(
+                        [
+                            sx.ConfigurationItem(id=k, xpath_function=v)
+                            for k, v
+                            in self.column.graph_configuration.config.iteritems()
+                        ] + [
+                            sx.ConfigurationItem(
+                                id=k,
+                                locale_id=self.id_strings.graph_configuration(
+                                    self.module,
+                                    self.detail_type,
+                                    self.column,
+                                    k
+                                )
                             )
-                        )
-                        for k, v
-                        in self.column.graph_configuration.locale_specific_config.iteritems()
-                    ]
+                            for k, v
+                            in self.column.graph_configuration.locale_specific_config.iteritems()
+                        ]
+                    )
                 ),
                 annotations=[
                     sx.Annotation(
