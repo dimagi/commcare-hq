@@ -106,7 +106,7 @@ class ConfigurationItem(Text):
 
 class ConfigurationGroup(XmlObject):
     ROOT_NAME = 'configuration'
-    text = NodeListField('text', ConfigurationItem)
+    configs = NodeListField('text', ConfigurationItem)
 
 
 class Series(OrderedXmlObject):

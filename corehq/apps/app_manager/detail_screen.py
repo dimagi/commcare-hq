@@ -380,7 +380,7 @@ class Graph(FormattedDetailColumn):
                         y_function=s.y_function,
                         radius_function=s.radius_function,
                         configuration=sx.ConfigurationGroup(
-                            pairs=[
+                            configs=[
                                 # TODO: We probably want to wrap the values in quotes or change the hints on the front end to include quotes
                                 sx.ConfigurationItem(id=k, xpath_function=v)
                                 for k, v in s.config.iteritems()]
@@ -388,7 +388,7 @@ class Graph(FormattedDetailColumn):
                     )
                     for s in self.column.graph_configuration.series],
                 configuration=sx.ConfigurationGroup(
-                    text=(
+                    configs=(
                         [
                             sx.ConfigurationItem(id=k, value=v)
                             for k, v
