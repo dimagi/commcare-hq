@@ -3,7 +3,7 @@ from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory, ReportFilterFactory
+from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
