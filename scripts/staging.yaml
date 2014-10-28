@@ -57,13 +57,13 @@ branches:
   - lwyszomi:better_date_filters_improvment
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - bulk-app-translate # Noah 9/18
   - reduce-location_ # tw 10/6
   - archive-location # tw 10/23
   - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
+  - bulk-app-translate # Noah 9/18
   - graphing # Nick P 10/27
 submodules:
   submodules/couchlog-src:
