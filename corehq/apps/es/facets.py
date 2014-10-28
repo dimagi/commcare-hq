@@ -28,7 +28,7 @@ class TermsFacet(Facet):
     result_class = TermsResult
 
     def __init__(self, term, name, size=None):
-        assert(name.isalnum(), "name must be a valid python variable name")
+        assert name.isalnum(), "name must be a valid python variable name"
         self.name = name
         self.params = {
             "field": term,
