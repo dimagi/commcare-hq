@@ -29,7 +29,7 @@
     caseConfig.init();
     {% endif %}
 
-    {% if module.has_schedule and request|toggle_enabled:"VISIT_SCHEDULER" %}
+    {% if module.has_schedule  %}
     var visitScheduler = new VisitScheduler.Scheduler({
         home: $('#visit-scheduler'),
         questions: {{ xform_questions|JSON }},
