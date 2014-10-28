@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (Application, AutoSelectCase,
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
