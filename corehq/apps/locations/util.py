@@ -50,7 +50,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
             this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
             this_loc['children'] = [
                 loc_to_json(loc) for loc in
-                loc.child_locations(include_archived_ancestors=include_archived)
+                loc.child_locations(include_archive_ancestors=include_archived)
             ]
             parent = this_loc
 
