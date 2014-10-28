@@ -378,7 +378,7 @@ class Graph(FormattedDetailColumn):
                         nodeset=s.data_path,
                         x_function=s.x_function,
                         y_function=s.y_function,
-                        radius=s.radius,
+                        radius_function=s.radius_function,
                         configuration=sx.ConfigurationGroup(
                             pairs=[
                                 # TODO: We probably want to wrap the values in quotes or change the hints on the front end to include quotes

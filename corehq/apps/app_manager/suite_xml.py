@@ -116,7 +116,7 @@ class Series(XmlObject):
     configuration = NodeField('configuration', ConfigurationGroup)
     x_function = StringField('x/@function')
     y_function = StringField('y/@function')
-    radius = StringField("radius/@function")
+    radius_function = StringField("radius/@function")
 
 
 class Annotation(OrderedXmlObject):
