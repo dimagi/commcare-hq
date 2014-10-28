@@ -160,10 +160,12 @@ def populate_no_primary_alerts(org, date):
     alert = Alert.objects.filter(supply_point=org._id, date=date, type='no_primary_contact')
     alert.delete()
     # create no primary alerts
-
+    # TODO Too slow. Figure out better solution.
+    """
     if not filter(lambda user: user.is_active and user.location and user.location._id == org._id,
                   CommTrackUser.by_domain(org.domain)):
         create_multilevel_alert(org, date, 'no_primary_contact', {'org': org})
+    """
 
 
 def populate_facility_stockout_alerts(org, date):
