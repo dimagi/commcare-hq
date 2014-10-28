@@ -64,7 +64,7 @@ branches:
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
   - bulk-app-translate # Noah 9/18
   - graphing # Nick P 10/27
-  - graphing-debugging # Nick P 10/28
+#  - graphing-debugging # Nick P 10/28
   - lwyszomi:ilsgateway-productstock
 submodules:
   submodules/couchlog-src:
