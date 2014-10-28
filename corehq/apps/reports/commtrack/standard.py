@@ -228,6 +228,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.SingleDateFilter',
     ]
 
     def __init__(self, *args, **kwargs):
