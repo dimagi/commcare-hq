@@ -170,6 +170,16 @@ def add_prefix(field_dict):
     }
 
 
+def _make_field(field):
+    if field.choices:
+        return forms.ChoiceField(
+            label=field.label,
+            required=field.is_required,
+            choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+        )
+    return forms.CharField(label=field.label, required=field.is_required)
+
+
 class CustomDataEditor(object):
     """
     Tool to edit the data for a particular entity, like for an individual user.
@@ -202,9 +212,6 @@ class CustomDataEditor(object):
         return cleaned_data
 
     def init_form(self, post_dict=None):
-        def _make_field(field):
-            return forms.CharField(label=field.label, required=field.is_required)
-
         fields = {
             field.slug: _make_field(field) for field in self.model.fields
             if not self.required_only or field.is_required
