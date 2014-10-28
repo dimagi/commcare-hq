@@ -141,7 +141,7 @@ ko.bindingHandlers.numericValue = {
                 }
             }
         });
-        ko.bindingHandlers.value.init(element, function() { return interceptor }, allBindingsAccessor);
+        ko.bindingHandlers.value.init(element, function() { return interceptor; }, allBindingsAccessor);
     },
     update : ko.bindingHandlers.value.update
 };

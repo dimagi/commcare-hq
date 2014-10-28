@@ -1451,7 +1451,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ))
             for i, visit in enumerate(schedule.visits):
                 f.schedule.visits.append(ScheduleVisit(
-                    id=i+1,
+                    id=i + 1,
                     due=visit.due,
                     late_window=visit.late_window
                 ))

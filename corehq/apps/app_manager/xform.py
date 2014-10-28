@@ -403,6 +403,8 @@ class CaseBlock(object):
                 self.xform.add_bind(nodeset=nodeset, relevant=("count(%s) = 1" % resolved_path))
                 self.xform.add_bind(nodeset=nodeset + "/@src", calculate=resolved_path)
 
+        return update_block
+
     def is_attachment(self, ref):
         """Return true if there is an upload node with the given ref """
         try:
@@ -411,8 +413,6 @@ class CaseBlock(object):
             itr = self.xform.find('{h}body').iterfind(".//{f}upload[@ref]")
             uploads = self.xform.__upload_refs = set(node.attrib["ref"] for node in itr)
         return ref in uploads
-
-        return update_block
 
     def add_close_block(self, relevance):
         self.elem.append(make_case_elem('close'))
@@ -1293,7 +1293,10 @@ class XForm(WrappedNode):
 
         last_real_action = None
         try:
-            last_real_action = next(action for action in reversed(form.actions.load_update_cases) if not action.auto_select)
+            last_real_action = next(
+                action for action in reversed(form.actions.load_update_cases)
+                if not action.auto_select
+            )
         except StopIteration:
             pass
 
