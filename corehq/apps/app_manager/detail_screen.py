@@ -390,7 +390,7 @@ class Graph(FormattedDetailColumn):
                 configuration=sx.ConfigurationGroup(
                     text=(
                         [
-                            sx.ConfigurationItem(id=k, xpath_function=v)
+                            sx.ConfigurationItem(id=k, value=v)
                             for k, v
                             in self.column.graph_configuration.config.iteritems()
                         ] + [

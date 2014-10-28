@@ -102,6 +102,7 @@ class Text(XmlObject):
 class ConfigurationItem(Text):
      ROOT_NAME = "text"
      id = StringField("@id")
+     value = StringField("value")
 
 class ConfigurationGroup(XmlObject):
     ROOT_NAME = 'configuration'
