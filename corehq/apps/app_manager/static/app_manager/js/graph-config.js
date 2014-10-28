@@ -93,6 +93,9 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             series['data_path'] = s['dataPath'];
             series['x_function'] = s['xFunction'];
             series['y_function'] = s['yFunction'];
+            if (s['radiusFunction'] !== undefined){
+                series['radius_function'] = s['radiusFunction'];
+            }
             // convert the list of config objects to a single object (since
             // order no longer matters)
             series['config'] = _.reduce(s['configPairs'], function(memo, pair){
@@ -145,6 +148,9 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             series['dataPath'] = s['data_path'];
             series['xFunction'] = s['x_function'];
             series['yFunction'] = s['y_function'];
+            if (s['radius_function'] !== undefined){
+                series['radiusFunction'] = s['radius_function'];
+            }
             series['configPairs'] = _.map(_.pairs(s['config']), function(pair){
                 return {
                     'property': pair[0],
