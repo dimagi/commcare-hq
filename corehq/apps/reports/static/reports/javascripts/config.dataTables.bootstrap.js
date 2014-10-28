@@ -21,6 +21,7 @@ function HQReportDataTables(options) {
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
     self.datatable = null;
+    self.rendered = false;
 
     this.render_footer_row = (function() {
         var $dataTableElem = $(self.dataTableElem);
@@ -36,10 +37,18 @@ function HQReportDataTables(options) {
                     $row.append('<td>' + row[i] + '</td>');
                 }
             }
-        }
+        };
     })();
 
     this.render = function () {
+        if (self.rendered) {
+            $(self.dataTableElem).each(function () {
+                $(this).dataTable().fnReloadAjax();
+            });
+            return;
+        }
+        
+        self.rendered = true;
 
         $('[data-datatable-highlight-closest]').each(function () {
            $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
@@ -71,17 +80,20 @@ function HQReportDataTables(options) {
                 params.sAjaxSource = self.ajaxSource;
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
-                    for (var p in self.ajaxParams) {
-                        var currentParam = self.ajaxParams[p];
-                        if(_.isObject(currentParam.value)) {
-                            for (var j=0; j < currentParam.value.length; j++) {
-                                aoData.push({
-                                    name: currentParam.name,
-                                    value: currentParam.value[j]
-                                });
+                    var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
+                    for (var p in ajaxParams) {
+                        if (ajaxParams.hasOwnProperty(p)) {
+                            var currentParam = ajaxParams[p];
+                            if(_.isObject(currentParam.value)) {
+                                for (var j=0; j < currentParam.value.length; j++) {
+                                    aoData.push({
+                                        name: currentParam.name,
+                                        value: currentParam.value[j]
+                                    });
+                                }
+                            } else {
+                                aoData.push(currentParam);
                             }
-                        } else {
-                            aoData.push(currentParam);
                         }
                     }
                 };

@@ -1,0 +1,59 @@
+{
+    "_id": "c7f10caeafbe25bb787440133dec0d28",
+    "domain": "gsid",
+    "doc_type": "IndicatorConfiguration",
+    "referenced_doc_type": "XFormInstance",
+    "table_id": "hiv_test",
+    "display_name": "HIV Tests",
+    "configured_filter": {
+        "type": "property_match",
+        "property_name": "xmlns",
+        "property_value": "http://openrosa.org/formdesigner/a3477838a9ede4f6d110632327c64845ded6d155"
+    },
+    "configured_indicators": [
+        {
+            "column_id": "user",
+            "type": "raw",
+            "display_name": "User",
+            "datatype": "string",
+            "property_path": ["form", "meta", "username"]
+        },
+        {
+            "column_id": "date",
+            "type": "raw",
+            "display_name": "Date",
+            "datatype": "date",
+            "property_name": "received_on"
+        },
+        {
+            "column_id": "count",
+            "type": "count",
+            "display_name": "Count"
+        },
+        {
+            "column_id": "clinic",
+            "type": "raw",
+            "display_name": "Clinic",
+            "datatype": "string",
+            "property_path": ["form", "clinic"]
+        },
+        {
+            "column_id": "visual_diagnosis",
+            "type": "raw",
+            "display_name": "Visual Diagnosis",
+            "datatype": "string",
+            "property_path": ["form", "visual_diagnosis"]
+        },
+        {
+            "column_id": "diagnoses_match",
+            "type": "choice_list",
+            "display_name": "hiv diagnoses match",
+            "property_path": ["form", "diagnoses_match"],
+            "choices": [
+                "yes",
+                "no"
+            ],
+            "select_style": "single"
+        }
+    ]
+}
