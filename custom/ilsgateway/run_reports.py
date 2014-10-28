@@ -60,7 +60,7 @@ def is_on_time(sp, status_date, warehouse_date, type):
 def average_lead_time(fac, window_date):
     end_date = datetime(window_date.year, window_date.month % 12 + 1, 1)
     received = SupplyPointStatus.objects.filter(
-        supply_point=fac,
+        supply_point=fac._id,
         status_date__lt=end_date,
         status_value=SupplyPointStatusValues.RECEIVED,
         status_type=SupplyPointStatusTypes.DELIVERY_FACILITY).order_by('status_date')
@@ -75,7 +75,7 @@ def average_lead_time(fac, window_date):
             continue
         last_receipt = receipt.status_date
         last_submitted = SupplyPointStatus.objects.filter(
-            supply_point=fac,
+            supply_point=fac._id,
             status_date__lt=receipt.status_date,
             status_value=SupplyPointStatusValues.SUBMITTED,
             status_type=SupplyPointStatusTypes.R_AND_R_FACILITY).order_by('-status_date')
