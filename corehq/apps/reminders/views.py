@@ -607,7 +607,6 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return self.request.POST.get('caseType')
 
     @property
-    @memoized
     def app_ids(self):
         data = Application.get_db().view(
             'app_manager/applications_brief',
