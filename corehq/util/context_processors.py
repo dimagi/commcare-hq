@@ -7,7 +7,14 @@ from corehq import privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
+COMMCARE = 'commcare'
+
+COMMCONNECT = 'commconnect'
+
+COMMTRACK = 'commtrack'
+
 RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
+
 
 def base_template(request):
     """This sticks the base_template variable defined in the settings
@@ -30,21 +37,33 @@ def is_commtrack(project, request):
         return False
 
 
-def get_per_domain_context(project, request=None):
+def is_commconnect(project):
+    return project and project.commconnect_enabled
+
+
+def get_domain_type(project, request):
     if is_commtrack(project, request):
-        domain_type = 'commtrack'
+        return COMMTRACK
+    elif is_commconnect(project):
+        return COMMCONNECT
+    else:
+        return COMMCARE
+
+
+def get_per_domain_context(project, request=None):
+    domain_type = get_domain_type(project, request)
+    if domain_type == COMMTRACK:
         logo_url = static('hqstyle/img/commtrack-logo.png')
         site_name = "CommTrack"
         public_site = "http://www.commtrack.org"
         can_be_your = _("mobile logistics solution")
-    elif project and project.commconnect_enabled:
+    elif domain_type == COMMCONNECT:
         domain_type = 'commconnect'
         logo_url = static('hqstyle/img/commconnect-logo.png')
         site_name = "CommConnect"
         public_site = "http://www.commcarehq.org"
         can_be_your = _("mobile solution for your frontline workforce")
     else:
-        domain_type = 'commcare'
         logo_url = static('hqstyle/img/commcare-logo.png')
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"

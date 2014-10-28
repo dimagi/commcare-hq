@@ -3,16 +3,19 @@ import json
 import logging
 import socket
 import time
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
+from couchdbkit.exceptions import ResourceNotFound
+import dateutil
+from django.utils.datastructures import SortedDict
 
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.core import management
+from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
@@ -32,6 +35,7 @@ from django.http import (
 from restkit import Resource
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
@@ -1013,3 +1017,51 @@ def doc_in_es(request):
         "index": index_found
     }
     return render(request, "hqadmin/doc_in_es.html", context)
+
+
+@require_superuser
+def callcenter_test(request):
+    user_id = request.GET.get("user_id")
+    date_param = request.GET.get("date")
+
+    if not user_id:
+        return render(request, "hqadmin/callcenter_test.html", {})
+
+    error = None
+    try:
+        user = CommCareUser.get(user_id)
+    except ResourceNotFound:
+        user = None
+        error = "User Not Found"
+
+    try:
+        query_date = dateutil.parser.parse(date_param)
+    except ValueError:
+        error = "Unable to parse date, using today"
+        query_date = date.today()
+
+    def view_data(case_id, indicators):
+        new_dict = SortedDict()
+        key_list = sorted(indicators.keys())
+        for key in key_list:
+            new_dict[key] = indicators[key]
+        return {
+            'indicators': new_dict,
+            'case': CommCareCase.get(case_id),
+        }
+
+    if user:
+        domain = user.project
+        dummy_cache = cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        cci = CallCenterIndicators(domain, user, custom_cache=dummy_cache, override_date=query_date)
+        data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
+    else:
+        data = {}
+
+    context = {
+        "error": error,
+        "mobile_user": user,
+        "date": query_date.strftime("%Y-%m-%d"),
+        "data": data,
+    }
+    return render(request, "hqadmin/callcenter_test.html", context)

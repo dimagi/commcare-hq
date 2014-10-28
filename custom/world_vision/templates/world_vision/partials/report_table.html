@@ -2,7 +2,9 @@
 {% load report_tags %}
 {% load i18n %}
 
-<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}
+        {% if report_table.width %} style="width: {{ report_table.width }}%" {% endif %}
+        >
     <thead>
         {%  if report_table.headers.complex %}
             {{ report_table.headers.render_html|safe }}
@@ -48,6 +50,7 @@
         </tfoot>
     {% endif %}
 </table>
+
 
 {% if charts %}
     <div class="row">

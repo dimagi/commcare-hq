@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import base64
 
 import datetime
 import hashlib
@@ -207,6 +208,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, **kwargs):
+        # default to encode_attachments=False
+        if 'encode_attachments' not in kwargs:
+            kwargs['encode_attachments'] = False
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
@@ -248,6 +252,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return None
 
     def get_xml(self):
+        if ATTACHMENT_NAME in self._attachments and 'data' in self._attachments[ATTACHMENT_NAME]:
+            return base64.b64decode(self._attachments[ATTACHMENT_NAME]['data'])
         try:
             return self.fetch_attachment(ATTACHMENT_NAME)
         except ResourceNotFound:
@@ -408,3 +414,12 @@ class DefaultAuthContext(DocumentSchema):
 
     def is_valid(self):
         return True
+
+from django.db import models
+
+
+class UnfinishedSubmissionStub(models.Model):
+    xform_id = models.CharField(max_length=200)
+    timestamp = models.DateTimeField()
+    saved = models.BooleanField()
+    domain = models.CharField(max_length=256)
