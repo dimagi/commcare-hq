@@ -79,7 +79,9 @@ def render_case(case, options):
     actions = case.to_json()['actions']
     actions.reverse()
 
-    tz_abbrev = timezone.localize(datetime.datetime.now()).tzname()
+    the_time_is_now = datetime.datetime.now()
+    tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
+    tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
     # ledgers
     def _product_name(product_id):
@@ -114,6 +116,7 @@ def render_case(case, options):
             "timezone": timezone
         },
         "ledgers": ledgers,
+        "timezone_offset": tz_offset_ms,
     })
 
 
