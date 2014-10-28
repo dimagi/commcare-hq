@@ -65,7 +65,8 @@ $("body").on('click', '.touchforms-link', function () {
         appId = $this.data('app-id'),
         moduleId = $this.data('module-id'),
         formId = $this.data('form-id'),
-        formUrl = getFormUrl($this.data('form-url-root'), appId, moduleId, formId),
+        instanceId = $this.data('instance-id') || null,
+        formUrl = getFormUrl($this.data('form-url-root'), appId, moduleId, formId, instanceId),
         submitUrl = getSubmitUrl($this.data('submit-url-root'), appId),
         sessionData = $this.data('session-data') || {};
 

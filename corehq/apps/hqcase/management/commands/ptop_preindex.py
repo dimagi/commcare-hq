@@ -33,7 +33,6 @@ def get_reindex_commands(pillow_class_name):
         'AppPillow': ['ptop_fast_reindex_apps'],
         'GroupPillow': ['ptop_fast_reindex_groups'],
         'SMSPillow': ['ptop_fast_reindex_smslogs'],
-        'TCSMSPillow': ['ptop_fast_reindex_tc_smslogs'],
         'ReportXFormPillow': ['ptop_fast_reindex_reportxforms'],
         'ReportCasePillow': ['ptop_fast_reindex_reportcases'],
     }

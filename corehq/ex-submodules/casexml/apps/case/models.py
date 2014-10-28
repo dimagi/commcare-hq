@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from StringIO import StringIO
+import base64
 import re
 from datetime import datetime
 import logging
@@ -14,6 +15,7 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
@@ -688,16 +690,16 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                                                                   case_update.user_id,
                                                                   xformdoc,
                                                                   case_update.get_update_action())
-            self._apply_action(update_action)
+            self._apply_action(update_action, None)
             self.actions.append(update_action)
-        
+
         if case_update.closes_case():
             close_action = CommCareCaseAction.from_parsed_action(mod_date,
                                                                  case_update.user_id,
                                                                  xformdoc,
                                                                  case_update.get_close_action())
             self.closed_by = case_update.user_id
-            self._apply_action(close_action)
+            self._apply_action(close_action, None)
             self.actions.append(close_action)
 
         if case_update.has_referrals():
@@ -727,7 +729,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                                                                  xformdoc,
                                                                  case_update.get_index_action())
             self.actions.append(index_action)
-            self._apply_action(index_action)
+            self._apply_action(index_action, None)
 
         if case_update.has_attachments():
             attachment_action = CommCareCaseAction.from_parsed_action(mod_date,
@@ -735,7 +737,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                                                                       xformdoc,
                                                                       case_update.get_attachment_action())
             self.actions.append(attachment_action)
-            self._apply_action(attachment_action)
+            self._apply_action(attachment_action, xformdoc)
 
         # finally override any explicit properties from the update
         if case_update.user_id:     self.user_id = case_update.user_id
@@ -757,7 +759,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 )
                 self.actions.append(case_action)
 
-        self.rebuild(strict=False)
+        self.rebuild(strict=False, xforms={xformdoc._id: xformdoc})
 
         # override any explicit properties from the update
         if self.modified_on is None or mod_date > self.modified_on:
@@ -778,7 +780,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if case_update.version:
             self.version = case_update.version
 
-    def _apply_action(self, action):
+    def _apply_action(self, action, xform):
         if action.action_type == const.CASE_ACTION_UPDATE:
             self.apply_updates(action)
         elif action.action_type == const.CASE_ACTION_INDEX:
@@ -786,7 +788,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         elif action.action_type == const.CASE_ACTION_CLOSE:
             self.apply_close(action)
         elif action.action_type == const.CASE_ACTION_ATTACHMENT:
-            self.apply_attachments(action)
+            self.apply_attachments(action, xform)
         elif action.action_type == const.CASE_ACTION_COMMTRACK:
             pass  # no action needed here, it's just a placeholder stub
         elif action.action_type == const.CASE_ACTION_REBUILD:
@@ -812,16 +814,29 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                     value = unicode(value)
                 self[item] = value
 
-    def apply_attachments(self, attachment_action):
+    def apply_attachments(self, attachment_action, xform=None):
+        """
+
+        if xform is provided, attachments will be looked for
+        in the xform's _attachments.
+        They should be base64 encoded under _attachments[name]['data']
+
+        """
         # the actions and _attachment must be added before the first saves can happen
         # todo attach cached attachment info
+        def fetch_attachment(name):
+            if xform:
+                assert xform._id == attachment_action.xform_id
+                return base64.b64decode(xform._attachments[name]['data'])
+            else:
+                return XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, name)
 
         stream_dict = {}
         # cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
             if v.is_present:
                 # fetch attachment, update metadata, get the stream
-                attach_data = XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, v.attachment_src)
+                attach_data = fetch_attachment(v.attachment_src)
                 stream_dict[k] = attach_data
                 v.attachment_size = len(attach_data)
 
@@ -831,25 +846,34 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                     props = dict(width=img_size[0], height=img_size[1])
                     v.attachment_properties = props
 
-        self.force_save()
         update_attachments = {}
         for k, v in self.case_attachments.items():
             if v.is_present:
                 update_attachments[k] = v
 
+        if self._attachments:
+            attachment_builder = CouchAttachmentsBuilder(
+                self['_attachments'])
+        else:
+            attachment_builder = CouchAttachmentsBuilder()
+
         for k, v in attachment_action.attachments.items():
-            #grab xform_attachments
-            #copy over attachments from form onto case
+            # grab xform_attachments
+            # copy over attachments from form onto case
             update_attachments[k] = v
             if v.is_present:
                 #fetch attachment from xform
                 attachment_key = v.attachment_key
                 attach = stream_dict[attachment_key]
-                self.put_attachment(attach, name=attachment_key, content_type=v.server_mime)
+                attachment_builder.add(name=k, content=attach,
+                                       content_type=v.server_mime)
             else:
-                self.delete_attachment(k)
-                del(update_attachments[k])
-
+                try:
+                    attachment_builder.remove(k)
+                except KeyError:
+                    pass
+                del update_attachments[k]
+        self._attachments = attachment_builder.to_json()
         self.case_attachments = update_attachments
 
     def apply_close(self, close_action):
@@ -860,7 +884,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         action_dates = [a.server_date for a in self.actions if a.server_date]
         return action_dates == sorted(action_dates)
 
-    def reconcile_actions(self, rebuild=False):
+    def reconcile_actions(self, rebuild=False, xforms=None):
         """
         Runs through the action list and tries to reconcile things that seem
         off (for example, out-of-order submissions, duplicate actions, etc.).
@@ -928,9 +952,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if rebuild:
             # it's pretty important not to block new case changes
             # just because previous case changes have been bad
-            self.rebuild(strict=False)
+            self.rebuild(strict=False, xforms=xforms)
 
-    def rebuild(self, strict=True):
+    def rebuild(self, strict=True, xforms=None):
         """
         Rebuilds the case state from its actions.
 
@@ -944,6 +968,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             it does not apply their changes.
 
         """
+        xforms = xforms or {}
         # try to re-sort actions if necessary
         try:
             self.actions = sorted(self.actions, key=_action_sort_key_function(self))
@@ -964,7 +989,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             actions = [a for a in actions if a.action_type != const.CASE_ACTION_CREATE]
 
         for a in actions:
-            self._apply_action(a)
+            self._apply_action(a, xforms.get(a.xform_id))
 
         self.xform_ids = []
         for a in self.actions:
@@ -973,7 +998,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
-        return sorted([(key, value) for key, value in self.dynamic_properties().items() if re.search(r'^[a-zA-Z]', key)])
+        json = self.to_json()
+        return sorted([(key, json[key]) for key in self.dynamic_properties()
+                       if re.search(r'^[a-zA-Z]', key)])
 
     def save(self, **params):
         self.server_modified_on = datetime.utcnow()
@@ -1191,6 +1218,3 @@ def _type_sort(action_type):
     Consistent ordering for action types
     """
     return const.CASE_ACTIONS.index(action_type)
-
-
-

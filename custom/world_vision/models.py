@@ -26,7 +26,8 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     lvl_3 = case_property('block')
     lvl_2 = case_property('district')
     lvl_1 = case_property('state')
-    reason_for_mother_closure = case_property('reason_for_mother_closure')
+    reason_for_mother_closure = flat_field(lambda case: case.reason_for_mother_closure if hasattr(case, 'reason_for_mother_closure')
+                                                                                          and case.reason_for_mother_closure else 'unknown')
     mother_state = case_property('mother_state')
     fp_method = case_property('fp_method')
 
@@ -42,7 +43,7 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     anemia_signs = case_property('anemia_signs')
     currently_referred = case_property('currently_referred')
     knows_closest_facility = case_property('knows_closest_facility')
-    lmp = case_property('lmp')
+    edd = case_property('edd')
     previous_tetanus = case_property('previous_tetanus')
     pp_1_done = case_property('pp_1_done')
     pp_2_done = case_property('pp_2_done')
@@ -53,14 +54,15 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
     place_of_birth = case_property('place_of_birth')
     birth_attendant_during_delivery = case_property('birth_attendant_during_delivery')
     type_of_delivery = case_property('type_of_delivery')
+    date_of_mother_death = case_property('date_of_mother_death')
 
     number_of_children = user_calcs.NumberChildren()
     number_of_boys = user_calcs.NumberBoys()
     number_of_girls = user_calcs.NumberGirls()
     number_of_children_born_dead = user_calcs.StillBirth()
 
-    opened_on = flat_field(lambda case: case.opened_on)
-    closed_on = flat_field(lambda case: case.closed_on)
+    opened_on = flat_field(lambda case: case.opened_on.date() if case.opened_on else None)
+    closed_on = flat_field(lambda case: case.closed_on.date() if case.closed_on else None)
 
     women_registered = user_calcs.MotherRegistered()
 
@@ -131,6 +133,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     name = flat_field(lambda case: case.name)
+    mother_id = flat_field(lambda case: case.indices[0]['referenced_id'])
     lvl_4 = flat_field(partial(referenced_case_attribute, field_name='phc'))
     lvl_3 = flat_field(partial(referenced_case_attribute, field_name='block'))
     lvl_2 = flat_field(partial(referenced_case_attribute, field_name='district'))
@@ -167,6 +170,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     supplementary_feeding_baby = case_property('supplementary_feeding_baby')
     deworm = case_property('deworm')
     ebf_stop_age_month = case_property('ebf_stop_age_month')
+    gender = case_property('gender')
 
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)

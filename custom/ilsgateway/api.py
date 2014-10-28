@@ -2,6 +2,10 @@ import requests
 from custom.api.utils import EndpointMixin
 
 
+class MigrationException(Exception):
+    pass
+
+
 class Product(object):
 
     def __init__(self, name, units, sms_code, description, is_active):
@@ -92,10 +96,10 @@ class SMSUser(object):
 
 
 class Location(object):
-    def __init__(self, id, name, type, parent, latitude, longitude, code, groups):
+    def __init__(self, id, name, location_type, parent, latitude, longitude, code, groups):
         self.id = id
         self.name = name
-        self.type = type
+        self.location_type = location_type
         self.parent = parent
         self.latitude = latitude
         self.longitude = longitude
@@ -107,7 +111,7 @@ class Location(object):
         return cls(
             id=json_rep['id'],
             name=json_rep['name'],
-            type=json_rep['type'],
+            location_type=json_rep['type'],
             parent=json_rep['parent_id'],
             latitude=json_rep['latitude'],
             longitude=json_rep['longitude'],
@@ -130,10 +134,15 @@ class ILSGatewayEndpoint(EndpointMixin):
         self.smsusers_url = self._urlcombine(self.base_uri, '/smsusers/')
         self.locations_url = self._urlcombine(self.base_uri, '/locations/')
 
-    def get_objects(self, url, params=None, **kwargs):
+    def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
         params = params if params else {}
-        if 'date' in kwargs:
-            params.update({'date': kwargs['date']})
+        if filters:
+            params.update(filters)
+
+        params.update({
+            'limit': limit,
+            'offset': offset
+        })
 
         if 'next_url_params' in kwargs and kwargs['next_url_params']:
             url = url + "?" + kwargs['next_url_params']
@@ -141,11 +150,15 @@ class ILSGatewayEndpoint(EndpointMixin):
 
         response = requests.get(url, params=params,
                                 auth=self._auth())
-        objects = []
-        meta = {}
+
         if response.status_code == 200 and 'objects' in response.json():
             meta = response.json()['meta']
             objects = response.json()['objects']
+        elif response.status_code == 401:
+            raise MigrationException('Invalid credentials.')
+        else:
+            raise MigrationException('Something went wrong during migration.')
+
         return meta, objects
 
     def get_products(self, **kwargs):
@@ -166,10 +179,7 @@ class ILSGatewayEndpoint(EndpointMixin):
         response = requests.get(self.locations_url + str(id) + "/", auth=self._auth())
         return response.json()
 
-    def get_locations(self, type=None, **kwargs):
-        params = {}
-        if type:
-            params['loc_type'] = type
-        meta, locations = self.get_objects(self.locations_url, params=params, **kwargs)
+    def get_locations(self, **kwargs):
+        meta, locations = self.get_objects(self.locations_url, **kwargs)
         return meta, [Location.from_json(location) for location in locations]
 

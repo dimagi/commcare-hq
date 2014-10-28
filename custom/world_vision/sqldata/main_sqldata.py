@@ -1,5 +1,5 @@
 from sqlagg import CountUniqueColumn
-from sqlagg.filters import LTE, AND, EQ, NOTEQ, OR
+from sqlagg.filters import LTE, AND, EQ, OR, GTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.world_vision.sqldata import BaseSqlData
@@ -23,14 +23,18 @@ class AnteNatalCareServiceOverview(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header},
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
                   {'sort_key': 'n/a', 'html': 'n/a'},
                   {'sort_key': 'n/a', 'html': 'n/a'}]]
         for i in range(1,5):
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
-                           {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug]},
+                           {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
+                           {'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug],
+                            'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i+4].slug)},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug]),
                             'html': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug])}])
         return result
@@ -57,7 +61,7 @@ class AnteNatalCareServiceOverview(BaseSqlData):
             ),
             DatabaseColumn("ANC3 Total Eligible",
                 CountUniqueColumn('doc_id', alias="anc_3_eligible",
-                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('lmp', 'days_224')])]),
+                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('edd', 'today_plus_56')])]),
             ),
             DatabaseColumn("TT Completed (TT2 or Booster) Total Eligible",
                 CountUniqueColumn('doc_id', alias="tt_completed_eligible",
@@ -67,7 +71,7 @@ class AnteNatalCareServiceOverview(BaseSqlData):
                 CountUniqueColumn('doc_id', alias="ifa_tablets_eligible"),
             ),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
-                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('lmp', 'days_195')]),
+                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('edd', 'today_plus_85')]),
             )
         ]
 
@@ -83,7 +87,12 @@ class DeliveryPlaceDetails(BaseSqlData):
 
     @property
     def filters(self):
-        return super(DeliveryPlaceDetails, self).filters + [NOTEQ('delivery_date', 'empty')]
+        filter =  super(DeliveryPlaceDetails, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('delivery_date', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('delivery_date', 'stred'))
+        return filter
 
     @property
     def columns(self):
@@ -100,6 +109,7 @@ class DeliveryPlaceDetails(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
         for idx, column in enumerate(self.columns):
             if idx == 0:
@@ -107,7 +117,8 @@ class DeliveryPlaceDetails(BaseSqlData):
             else:
                 percent = self.percent_fn(self.data['total_delivery'], self.data[column.slug])
 
-            result.append([{'sort_key': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header,
+                            'tootip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['delivery_details'], column.slug)},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
                            {'sort_key': 'percentage', 'html': percent}]
             )
@@ -130,13 +141,16 @@ class ImmunizationOverview(BaseSqlData):
 
     @property
     def rows(self):
+        from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         result = []
         rg = len(self.columns) / 2
         for i in range(0, rg):
             dropout = self.data[self.columns[i + rg].slug] - self.data[self.columns[i].slug]
-            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header},
+            result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['immunization_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
-                           {'sort_key': self.data[self.columns[i + rg].slug], 'html': self.data[self.columns[i + rg].slug]},
+                           {'sort_key': self.data[self.columns[i + rg].slug], 'html': self.data[self.columns[i + rg].slug],
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['immunization_details'], self.columns[i + rg].slug)},
                            {'sort_key': self.percent_fn(self.data[self.columns[i + rg].slug], self.data[self.columns[i].slug]),
                             'html': self.percent_fn(self.data[self.columns[i + rg].slug], self.data[self.columns[i].slug])},
                            {'sort_key': dropout, 'html': dropout},
@@ -179,24 +193,24 @@ class ImmunizationOverview(BaseSqlData):
                 CountUniqueColumn('doc_id', alias="bcg_eligible"),
             ),
             DatabaseColumn("OPV3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="opv3_eligible", filters=self.filters + [LTE('dob', 'days_106')])
+                CountUniqueColumn('doc_id', alias="opv3_eligible", filters=self.filters + [LTE('dob', 'today_minus_106')])
             ),
             DatabaseColumn("HEP3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="hep3_eligible", filters=self.filters + [LTE('dob', 'days_106')])
+                CountUniqueColumn('doc_id', alias="hep3_eligible", filters=self.filters + [LTE('dob', 'today_minus_106')])
             ),
             DatabaseColumn("DPT3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt3_eligible", filters=self.filters + [LTE('dob', 'days_106')])
+                CountUniqueColumn('doc_id', alias="dpt3_eligible", filters=self.filters + [LTE('dob', 'today_minus_106')])
             ),
             DatabaseColumn("Measles Total Eligible",
-                CountUniqueColumn('doc_id', alias="measles_eligible", filters=self.filters + [LTE('dob', 'days_273')])
+                CountUniqueColumn('doc_id', alias="measles_eligible", filters=self.filters + [LTE('dob', 'today_minus_273')])
             ),
             DatabaseColumn("Fully Immunized Total Eligible",
-                CountUniqueColumn('doc_id', alias="fully_immunized_eligible", filters=self.filters + [LTE('dob', 'days_273')])
+                CountUniqueColumn('doc_id', alias="fully_immunized_eligible", filters=self.filters + [LTE('dob', 'today_minus_273')])
             ),
             DatabaseColumn("DPT-OPT Booster Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt_opv_booster_eligible", filters=self.filters + [LTE('dob', 'days_548')])
+                CountUniqueColumn('doc_id', alias="dpt_opv_booster_eligible", filters=self.filters + [LTE('dob', 'today_minus_548')])
             ),
             DatabaseColumn("VitA3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="vita3_eligible", filters=self.filters + [LTE('dob', 'days_700')])
+                CountUniqueColumn('doc_id', alias="vita3_eligible", filters=self.filters + [LTE('dob', 'today_minus_700')])
             )
         ]

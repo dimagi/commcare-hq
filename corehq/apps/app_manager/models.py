@@ -377,7 +377,7 @@ class AdvancedFormActions(DocumentSchema):
             else:
                 parent = self.actions_meta_by_tag[action.parent_tag]['action']
                 if parent.case_type == parent_case_type:
-                    yield parent
+                    yield action
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -533,7 +533,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty()
+    name = DictProperty(unicode)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -1181,7 +1181,7 @@ class DetailPair(DocumentSchema):
 
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
-    name = DictProperty()
+    name = DictProperty(unicode)
     unique_id = StringProperty()
     case_type = StringProperty()
 

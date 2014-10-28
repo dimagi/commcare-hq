@@ -193,7 +193,6 @@ class Domain(Document, SnapshotMixin):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
-    ota_restore_caching = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization

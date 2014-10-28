@@ -791,7 +791,11 @@ class Subscription(models.Model):
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
         self.subscriber.apply_upgrades_and_downgrades(web_user=web_user)
+
         self.date_end = today
+        if self.date_start > today:
+            self.date_start = today
+
         self.is_active = False
         self.save()
 
@@ -1170,13 +1174,13 @@ class Subscription(models.Model):
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
             raise NewSubscriptionError(_(
-                "There is already a subscription '%s' that has an end date "
+                "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
-                "subscription %s - %s." % (
-                    future_subscriptions.latest('date_created'),
-                    date_start,
-                    date_end
-                )
+                "subscription %(start)s - %(end)s." % {
+                    'sub': future_subscriptions.latest('date_created'),
+                    'start': date_start,
+                    'end': date_end
+                }
             ))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(

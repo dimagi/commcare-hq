@@ -1,5 +1,5 @@
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import IN
+from sqlagg.filters import IN, AND, GTE, OR
 from sqlagg.filters import EQ, BETWEEN, LTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
@@ -35,24 +35,22 @@ class BaseSqlData(SqlData):
     custom_total_calculate = False
 
     def percent_fn(self, x, y):
-        return "%.2f%%" % (100 * float(y or 0) / (x or 1))
+        return "%.0f%%" % (100 * float(y or 0) / (x or 1))
+
+    def get_tooltip(self, mapping, key):
+        return mapping.get(key, '')
 
     @property
     def filters(self):
         filters = None
-
-        if 'startdate' in self.config and 'enddate' in self.config:
-            filters = [BETWEEN("date", "startdate", "enddate")]
-        elif 'startdate' not in self.config and 'enddate' not in self.config:
-            filters =  []
-        elif 'startdate' in self.config and 'enddate' not in self.config:
-            filters = [BETWEEN("date", "startdate", "enddate")]
-        elif 'startdate' not in self.config and 'enddate' in self.config:
-            filters = [LTE("date", 'enddate')]
-
-        if 'enddate' not in self.config and len(filters) > 1:
+        if 'enddate' not in self.config:
             self.config['enddate'] = self.config['today']
             self.config['stred'] = self.config['today']
+
+        if 'startdate' in self.config:
+            filters = [AND([LTE("date", "enddate"), OR([GTE('closed_on', "startdate"), EQ('closed_on', 'empty')])])]
+        elif 'startdate' not in self.config:
+            filters = [LTE("date", "enddate")]
 
         for k, v in LOCATION_HIERARCHY.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:

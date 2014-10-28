@@ -261,7 +261,7 @@
                                     <a href="#" class="btn btn-warning"
                                        data-unsuccessful-text="{% if show_inactive %}Reactivation{% else %}Deactivation{% endif %} unsuccessful. Try Again?"
                                        data-loading-text="{% if show_inactive %}Reactivating User...{% else %}Deactivating User...{% endif %}"
-                                       data-bind="text: archive_action_text, click: function (data, event) { $parent.take_user_action(archive_action_url, event.currentTarget, $index) }"></a>
+                                       data-bind="text: archive_action_text, click: function (data, event) { $parent.take_archive_action(archive_action_url, event.currentTarget, $index) }"></a>
                                     <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
                                 </div>
                             </div>

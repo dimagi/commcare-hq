@@ -2,13 +2,12 @@ import calendar
 import datetime
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart, LineChart
 from corehq.apps.reports.sqlreport import calculate_total_row
-from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from custom.world_vision.sqldata import LOCATION_HIERARCHY
-from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails, ClosedChildCasesBreakdown, \
-    ChildrenDeathsByMonth
+from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetails,  ChildrenDeathsByMonth
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
-from custom.world_vision.sqldata.mother_sqldata import ClosedMotherCasesBreakdown, DeliveryLiveBirthDetails, \
-    PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, DeliveryPlaceDetailsExtended
+from custom.world_vision.sqldata.mother_sqldata import PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, \
+    DeliveryPlaceDetailsExtended
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -52,13 +51,18 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             home = 'home',
             on_route = 'on_route',
             other = 'other',
+            male  = 'male',
+            female = 'female',
             health_center_worker = 'health_center_worker',
             trained_traditional_birth_attendant = 'trained_traditional_birth_attendant',
             normal_delivery = 'normal',
             cesarean_delivery = 'cesarean',
             unknown_delivery = 'unknown',
             abortion = 'abortion',
-            weight_birth_25 = '2.5'
+            weight_birth_25='2.5',
+            newborn_death='newborn_death',
+            infant_death='infant_death',
+            child_death='child_death'
         )
 
         if 'startdate' in self.request.GET and self.request.GET['startdate']:
@@ -71,17 +75,16 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
         today = datetime.date.today()
         config['today'] = today.strftime("%Y-%m-%d")
 
-        for d in [2, 5, 21, 40, 75, 84, 106, 168, 182, 183, 195, 224, 245, 273, 365, 547, 548, 700, 730]:
-            config['days_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+        for d in [35, 56, 84, 85, 112, 196]:
+            config['today_plus_%d' % d] = (today + datetime.timedelta(days=d)).strftime("%Y-%m-%d")
+
+        for d in [2, 4, 21, 25, 40, 75, 106, 182, 183, 273, 365, 547, 548, 700, 730]:
+            config['today_minus_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
 
         for d in [1, 3, 5, 6]:
             config['%d' % d] = '%d' % d
 
         config['last_month'] = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        config['first_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
-        config['second_trimester_start_date'] = (today - datetime.timedelta(days=84)).strftime("%Y-%m-%d")
-        config['second_trimester_end_date'] = (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
-        config['third_trimester_start_date'] =  (today - datetime.timedelta(days=196)).strftime("%Y-%m-%d")
 
         for k, v in sorted(LOCATION_HIERARCHY.iteritems(), reverse=True):
             req_prop = 'location_%s' % v['prop']
@@ -133,26 +136,40 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             charts=charts,
             chart_span=12
         )
-
+        if hasattr(data_provider, 'width'):
+            context['report_table']['width'] = data_provider.width
         return context
 
     def get_chart(self, rows, x_label, y_label, data_provider):
-        if isinstance(data_provider, (ClosedMotherCasesBreakdown, ClosedChildCasesBreakdown)):
-            chart = PieChart('', '', [{'label': row[0], 'value':float(row[-1]['html'][:-1])} for row in rows])
-        elif isinstance(data_provider, NutritionBirthWeightDetails):
-            chart = PieChart('BirthWeight', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+        def _get_label_with_percentage(row):
+            return "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1])))
+
+        if isinstance(data_provider, NutritionBirthWeightDetails):
+            chart = PieChart('BirthWeight', '',
+                             [{'label': "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1]))),
+                               'value': int(row[-1]['html'][:-1])} for row in rows[2:]], ['red', 'green'])
+            chart.showLabels = False
         elif isinstance(data_provider, DeliveryPlaceDetailsExtended):
-            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart = PieChart('', '', [{'label': _get_label_with_percentage(row),
+                                       'value': int(row[-1]['html'][:-1])} for row in rows[1:]])
+            chart.showLabels = False
         elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             if isinstance(data_provider, ImmunizationOverview):
                 chart.stacked = True
-                chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[3]['html'][:-1])/100} for row in rows])
-                chart.add_dataset('Dropout Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+                chart.add_dataset('Percentage',
+                                  [{'x': row[0]['html'],
+                                    'y': int(row[3]['html'][:-1]) / 100} for row in rows],
+                                  color='green')
+                chart.add_dataset('Dropout Percentage',
+                                  [{'x': row[0]['html'],
+                                    'y': int(row[-1]['html'][:-1]) / 100} for row in rows],
+                                  color='red')
             else:
-                chart.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows])
+                chart.add_dataset('Percentage',
+                                  [{'x': row[0]['html'], 'y':int(row[-1]['html'][:-1]) / 100} for row in rows])
         elif isinstance(data_provider, AnteNatalCareServiceOverviewExtended):
             chart1 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart2 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
@@ -160,18 +177,23 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart2.rotateLabels = -45
             chart1.marginBottom = 120
             chart2.marginBottom = 120
-            chart1.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[1:6]])
-            chart2.add_dataset('Percentage', [{'x': row[0]['html'], 'y':float(row[-1]['html'][:-1])/100} for row in rows[6:12]])
+            chart1.add_dataset('Percentage', [{'x': row[0]['html'],
+                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[1:6]])
+            chart2.add_dataset('Percentage', [{'x': row[0]['html'],
+                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[6:12]])
             return [chart1, chart2]
         elif isinstance(data_provider, ChildrenDeathsByMonth):
-            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"), y_axis=Axis(y_label, '.2%'))
+            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"),
+                              y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             months_mapping = dict((v,k) for k,v in enumerate(calendar.month_abbr))
             chart.add_dataset('Percentage', [{'x': datetime.date(1, months_mapping[row[0][:3]], 1),
-                                              'y':float(row[-1]['html'][:-1])/100} for row in rows])
+                                              'y': int(row[-1]['html'][:-1]) / 100} for row in rows])
         else:
-            chart = PieChart('', '', [{'label': row[0]['html'], 'value':float(row[-1]['html'][:-1])} for row in rows])
+            chart = PieChart('', '', [{'label': "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1]))),
+                                       'value': int(row[-1]['html'][:-1])} for row in rows])
+            chart.showLabels = False
         return [chart]
 
     @property
@@ -199,3 +221,6 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
 
         return [export_sheet_name, table]
 
+    @property
+    def email_response(self):
+        return super(TTCReport, self).email_response

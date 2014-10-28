@@ -2,7 +2,8 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 # Django imports
-from django.test import TestCase
+import os
+from django.test import TestCase, SimpleTestCase
 
 # External imports
 from django_prbac.models import Grant, Role
@@ -54,7 +55,7 @@ class TestCchqPrbacBootstrap(TestCase):
         self.assertEquals(Grant.objects.count(), grant_count)
 
 
-class TestPillowTopFiltering(TestCase):
+class TestPillowTopFiltering(SimpleTestCase):
     """
     Tests the function that excludes certain pillows from running on staging.
     """
@@ -79,6 +80,8 @@ class TestPillowTopFiltering(TestCase):
             ],
         }
 
+        self.here = os.path.dirname(os.path.realpath(__file__))
+
     def test_no_blacklist_items(self):
         expected_pillows = [u'corehq.pillows.case.CasePillow',
                             u'corehq.pillows.xform.XFormPillow',
@@ -93,7 +96,7 @@ class TestPillowTopFiltering(TestCase):
                             u'corehq.pillows.sofabed.CaseDataPillow',
                             u'corehq.pillows.log.PhoneLogPillow', ]
 
-        self.assertEqual(expected_pillows, Command.get_pillows_from_settings(Command, self.pillowtops))
+        self.assertEqual(expected_pillows, Command.get_pillows_from_settings(self.pillowtops))
 
     def test_with_blacklist_items(self):
         expected_pillows = [u'corehq.pillows.case.CasePillow',
@@ -108,5 +111,33 @@ class TestPillowTopFiltering(TestCase):
                             u'corehq.pillows.sofabed.FormDataPillow',
                             u'corehq.pillows.sofabed.CaseDataPillow', ]
 
-        self.assertEqual(expected_pillows, Command.get_pillows_from_settings(Command, self.pillowtops, ['phonelog']))
+        self.assertEqual(expected_pillows, Command.get_pillows_from_settings(self.pillowtops,
+                                                                             {'pillowtop_blacklist': ['phonelog']}))
 
+    def test_loading_existing_conf_file(self):
+        expected_reject = {'pillowtop_blacklist': ['fluff']}
+
+        reject = Command.get_rejected_pillow_types(os.path.join(self.here, '..', '..', '..'), 'staging')
+        self.assertEqual(reject, expected_reject)
+
+    def test_loading_no_existing_conf_file(self):
+        expected_reject = {}
+
+        reject = Command.get_rejected_pillow_types(os.path.join(self.here, '..', '..', '..'), 'production')
+        self.assertEqual(reject, expected_reject)
+
+    def test_india_server_exclusions(self):
+        self.pillowtops['fluff'] = [
+            'custom.bihar.models.CareBiharFluffPillow',
+            'custom.opm.models.OpmCaseFluffPillow',
+            'custom.opm.models.OpmUserFluffPillow',
+        ]
+
+        reject = Command.get_rejected_pillow_types(os.path.join(self.here, '..', '..', '..'), 'india')
+        pillows = Command.get_pillows_from_settings(self.pillowtops, reject)
+        has_bihar_pillow = False
+        for pillow in pillows:
+            assert pillow != 'custom.opm.models.OpmCaseFluffPillow'
+            if pillow == 'custom.bihar.models.CareBiharFluffPillow':
+                has_bihar_pillow = True
+        assert has_bihar_pillow

@@ -403,6 +403,16 @@ INDICATOR_DATA = {
         "is_cumulative": False,
         "xaxis_label": "# cases",
     },
+    "total_products": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "total_products",
+        "chart_title": "Number of Products",
+        "hide_cumulative_charts": False,
+        "histogram_type": "total_products",
+        "interval": "month",
+        "is_cumulative": False,
+        "xaxis_label": "# products",
+    },
     "stock_transactions": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "stock_transactions",
@@ -974,5 +984,6 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'active_users_mobile',
         'commtrack_users_web',
         'active_supply_points',
+        'total_products',
         'stock_transactions',
     ]

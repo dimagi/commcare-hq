@@ -10,6 +10,7 @@
         });
         ga('set', 'dimension1', '{% if request.couch_user and request.couch_user.is_dimagi %}yes{% else %}no{% endif %}');
         ga('set', 'dimension2', '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}');
+        ga('set', 'dimension3', '{% if request.couch_user.is_commcare_user %}yes{% else %}no{% endif %}');
         ga('send', 'pageview');
 
     </script>

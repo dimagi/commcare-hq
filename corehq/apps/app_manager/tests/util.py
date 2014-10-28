@@ -29,6 +29,8 @@ class TestFileMixin(object):
     def assertXmlPartialEqual(self, expected, actual, xpath):
         """
         Extracts a section of XML using the xpath and compares it to the expected
+
+        Extracted XML is placed inside a <partial/> element prior to comparison.
         """
         expected = parse_normalize(expected)
         actual = extract_xml_partial(actual, xpath)

@@ -168,7 +168,8 @@ class PieChart(Chart):
 
     template_partial = 'reports/partials/graphs/pie_chart.html'
 
-    def __init__(self, title, key, values):
+    def __init__(self, title, key, values, color=None):
+        if not color: color = []
         self.title = title
         self.data = [dict(key=key, values=values)]
         self.marginTop = 30
@@ -178,6 +179,7 @@ class PieChart(Chart):
         self.showLabels = True
         self.donut = False
         self.tooltips = True
+        self.color = color
 
     def config_dict(self):
         return dict(margin={'top': self.marginTop,
@@ -186,4 +188,5 @@ class PieChart(Chart):
                             'left': self.marginLeft},
                     showLabels=self.showLabels,
                     tooltips=self.tooltips,
-                    donut=self.donut)
+                    donut=self.donut,
+                    color=self.color)

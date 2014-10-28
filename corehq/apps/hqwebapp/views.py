@@ -29,6 +29,7 @@ from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
 from restkit import Resource
+from corehq import toggles
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.announcements.models import Notification
@@ -44,6 +45,7 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -186,11 +188,19 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
         if 0 == len(domains) and not req.user.is_superuser:
-            return redirect('registration_domain')
+            return redirect('registration_domain', domain_type=get_domain_type(None, req))
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
-                if req.couch_user.is_commcare_user():
+
+                if toggles.DASHBOARD_PREVIEW.enabled(req.couch_user.username):
+                    url = reverse('dashboard_default', args=[domain])
+                    if (req.couch_user.is_commcare_user()
+                        and not is_mobile_worker_with_report_access(
+                            req.couch_user, domain)):
+                        url = reverse("cloudcare_main", args=[domain, ""])
+
+                elif req.couch_user.is_commcare_user():
                     if not is_mobile_worker_with_report_access(
                             req.couch_user, domain):
                         url = reverse("cloudcare_main", args=[domain, ""])

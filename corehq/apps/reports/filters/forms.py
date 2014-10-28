@@ -502,6 +502,16 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 return val
         return obj.get(obj.keys()[0], _('Untitled'))
 
+    @classmethod
+    def has_selections(cls, request):
+        params, instance = super(cls, cls).get_value(request, request.domain)
+        if instance.show_unknown:
+            return True
+        for param in params:
+            if param['slug'] == 'app_id':
+                return True
+        return False
+
     def get_filtered_data(self, filter_results):
         """
         Returns the raw form data based on the current filter selection.

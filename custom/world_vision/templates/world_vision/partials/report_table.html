@@ -2,7 +2,9 @@
 {% load report_tags %}
 {% load i18n %}
 
-<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}
+        {% if report_table.width %} style="width: {{ report_table.width }}%" {% endif %}
+        >
     <thead>
         {%  if report_table.headers.complex %}
             {{ report_table.headers.render_html|safe }}
@@ -32,7 +34,7 @@
     {% for row in report_table.rows %}
         <tr>
             {% for col in row %}
-                {% include 'reports/async/partials/tabular_cell.html' %}
+                {% include 'world_vision/partials/tabular_cell.html' %}
             {% endfor %}
         </tr>
     {% endfor %}
@@ -49,6 +51,7 @@
     {% endif %}
 </table>
 
+
 {% if charts %}
     <div class="row">
         {% for chart in charts %}
@@ -61,7 +64,10 @@
 {% endif %}
 
 <script type="text/javascript">
-   {% if report_table and report_table.datatables %}
+    $(function () {
+        $("[data-trigger='hover']").popover({ trigger: "hover" });
+    });
+    {% if report_table and report_table.datatables %}
         var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
 
         var params = {

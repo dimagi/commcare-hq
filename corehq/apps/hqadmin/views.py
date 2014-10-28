@@ -3,16 +3,19 @@ import json
 import logging
 import socket
 import time
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
+from couchdbkit.exceptions import ResourceNotFound
+import dateutil
+from django.utils.datastructures import SortedDict
 
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.core import management
+from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
@@ -32,6 +35,7 @@ from django.http import (
 from restkit import Resource
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
@@ -988,26 +992,76 @@ def doc_in_es(request):
         return render(request, "hqadmin/doc_in_es.html", {})
     try:
         couch_doc = get_db().get(doc_id)
-        doc_type = couch_doc.get('doc_type')
     except ResourceNotFound:
-        couch_doc = "NOT FOUND!"
-        doc_type = "Unknown"
+        couch_doc = {}
     query = {"filter":
                 {"ids": {
                     "values": [doc_id]}}}
-    es_doc = "NOT FOUND!"
-    status = "NOT FOUND!"
-    for url in ES_URLS.values():
+    es_doc = {}
+    index_found = ''
+    for index, url in ES_URLS.items():
         res = run_query(url, query)
         if res['hits']['total'] == 1:
-            status = "found"
             es_doc = res['hits']['hits'][0]['_source']
+            index_found = index
             break
+    doc_type = couch_doc.get('doc_type') or es_doc.get('doc_type', "Unknown")
+    def to_json(doc):
+        return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
     context = {
         "doc_id": doc_id,
-        "status": status,
+        "status": "found" if es_doc else "NOT FOUND!",
         "doc_type": doc_type,
-        "couch_doc": json.dumps(couch_doc, indent=4),
-        "es_doc": json.dumps(es_doc, indent=4),
+        "couch_doc": to_json(couch_doc),
+        "es_doc": to_json(es_doc),
+        "index": index_found
     }
     return render(request, "hqadmin/doc_in_es.html", context)
+
+
+@require_superuser
+def callcenter_test(request):
+    user_id = request.GET.get("user_id")
+    date_param = request.GET.get("date")
+
+    if not user_id:
+        return render(request, "hqadmin/callcenter_test.html", {})
+
+    error = None
+    try:
+        user = CommCareUser.get(user_id)
+    except ResourceNotFound:
+        user = None
+        error = "User Not Found"
+
+    try:
+        query_date = dateutil.parser.parse(date_param)
+    except ValueError:
+        error = "Unable to parse date, using today"
+        query_date = date.today()
+
+    def view_data(case_id, indicators):
+        new_dict = SortedDict()
+        key_list = sorted(indicators.keys())
+        for key in key_list:
+            new_dict[key] = indicators[key]
+        return {
+            'indicators': new_dict,
+            'case': CommCareCase.get(case_id),
+        }
+
+    if user:
+        domain = user.project
+        dummy_cache = cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        cci = CallCenterIndicators(domain, user, custom_cache=dummy_cache, override_date=query_date)
+        data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
+    else:
+        data = {}
+
+    context = {
+        "error": error,
+        "mobile_user": user,
+        "date": query_date.strftime("%Y-%m-%d"),
+        "data": data,
+    }
+    return render(request, "hqadmin/callcenter_test.html", context)

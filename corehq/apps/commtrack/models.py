@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
-    compute_consumption)
+    compute_daily_consumption)
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -74,9 +74,12 @@ class Program(Document):
     name = StringProperty()
     code = StringProperty()
     last_modified = DateTimeProperty()
+    default = BooleanProperty(default=False)
+    is_archived = BooleanProperty(default=False)
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.now()
+
         return super(Program, self).save(*args, **kwargs)
 
     @classmethod
@@ -94,6 +97,51 @@ class Program(Document):
             return Program.view(**kwargs)
         else:
             return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
+
+    @classmethod
+    def default_for_domain(cls, domain):
+        programs = cls.by_domain(domain)
+        for p in programs:
+            if p.default:
+                return p
+
+    def delete(self):
+        # you cannot delete the default program
+        if self.default:
+            raise Exception(_('You cannot delete the default program'))
+
+        default = Program.default_for_domain(self.domain)
+
+        products = Product.by_program_id(
+            self.domain,
+            self._id,
+            wrap=False
+        )
+        to_save = []
+
+        for product in products:
+            product['program_id'] = default._id
+            to_save.append(product)
+
+            # break up saving in case there are many products
+            if to_save > 500:
+                Product.get_db().bulk_save(to_save)
+                to_save = []
+
+        Product.get_db().bulk_save(to_save)
+
+        # bulk update sqlproducts
+        SQLProduct.objects.filter(program_id=self._id).update(program_id=default._id)
+
+        return super(Program, self).delete()
+
+    def unarchive(self):
+        """
+        Unarchive a program, causing it (and its data) to show
+        up in Couch and SQL views again.
+        """
+        self.is_archived = False
+        self.save()
 
     @classmethod
     def get_by_code(cls, domain, code):
@@ -120,12 +168,7 @@ class Product(Document):
     is_archived = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
 
-    def save(self, *args, **kwargs):
-        """
-        Saving a couch version of Product will trigger
-        one way syncing to the SQLProduct version of this
-        product.
-        """
+    def _sync_product(self):
         properties_to_sync = [
             ('product_id', '_id'),
             'domain',
@@ -139,11 +182,6 @@ class Product(Document):
             ('units', 'unit'),
             'product_data',
         ]
-
-        # mark modified time stamp for selective syncing
-        self.last_modified = datetime.now()
-
-        result = super(Product, self).save(*args, **kwargs)
 
         # sync properties to SQL version
         sql_product, _ = SQLProduct.objects.get_or_create(
@@ -160,6 +198,30 @@ class Product(Document):
                 setattr(sql_product, sql_prop, getattr(self, couch_prop))
 
         sql_product.save()
+
+    def save(self, *args, **kwargs):
+        """
+        Saving a couch version of Product will trigger
+        one way syncing to the SQLProduct version of this
+        product.
+        """
+        # mark modified time stamp for selective syncing
+        self.last_modified = datetime.now()
+
+        # generate code if user didn't specify one
+        if not self.code:
+            from corehq.apps.commtrack.util import generate_code
+            self.code = generate_code(
+                self.name,
+                SQLProduct.objects
+                    .filter(domain=self.domain)
+                    .values_list('code', flat=True)
+                    .distinct()
+            )
+
+        result = super(Product, self).save(*args, **kwargs)
+
+        self._sync_product()
 
         return result
 
@@ -184,8 +246,7 @@ class Product(Document):
     def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
         kwargs.update(dict(
             view_name='commtrack/product_by_program_id',
-            startkey=[domain, prog_id],
-            endkey=[domain, {}],
+            key=[domain, prog_id],
             include_docs=True
         ))
         if wrap:
@@ -423,8 +484,11 @@ class CommtrackRequisitionConfig(DocumentSchema):
     def get_next_action(self, previous_action_type):
         sorted_actions = self.get_sorted_actions()
         sorted_types = [a.action for a in sorted_actions]
-        next_index = sorted_types.index(previous_action_type) + 1
-        return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        if previous_action_type in sorted_types:
+            next_index = sorted_types.index(previous_action_type) + 1
+            return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        else:
+            return None
 
 
 class ConsumptionConfig(DocumentSchema):
@@ -655,7 +719,7 @@ class NewStockReport(object):
         return cls(form, timestamp, tag, transactions)
 
     @transaction.commit_on_success
-    def create_models(self):
+    def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
@@ -672,6 +736,9 @@ class NewStockReport(object):
                 section_id=txn.section_id,
                 product_id=txn.product_id,
             )
+            if domain:
+                # set this as a shortcut for post save signal receivers
+                db_txn.domain = domain
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
             db_txn.subtype = txn.subaction
@@ -1349,6 +1416,8 @@ class SQLProduct(models.Model):
     product_data = json_field.JSONField(
         default={},
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     def __repr__(self):
         return "<SQLProduct(domain=%s, name=%s)>" % (
@@ -1518,9 +1587,12 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 
 def update_stock_state_for_transaction(instance):
-    domain = Domain.get_by_name(
-        CommCareCase.get(instance.case_id).domain
-    )
+    try:
+        domain_name = instance.domain
+    except AttributeError:
+        domain_name = CommCareCase.get(instance.case_id).domain
+
+    domain = Domain.get_by_name(domain_name)
 
     sql_product = SQLProduct.objects.get(product_id=instance.product_id)
 
@@ -1547,13 +1619,15 @@ def update_stock_state_for_transaction(instance):
     else:
         consumption_calc = None
 
-    state.daily_consumption = compute_consumption(
+    state.daily_consumption = compute_daily_consumption(
         instance.case_id,
         instance.product_id,
         instance.report.date,
         'stock',
         consumption_calc
     )
+    # so you don't have to look it up again in the signal receivers
+    state.domain = domain
     state.save()
 
 
@@ -1577,11 +1651,17 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
+    try:
+        domain_name = instance.domain
+        if not domain_name:
+            raise ValueError()
+    except (AttributeError, ValueError):
+        domain_name = CommCareCase.get(case_id).domain
     if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
         mapping = DocDomainMapping(
             doc_id=case_id,
             doc_type='CommCareCase',
-            domain_name=CommCareCase.get(case_id).domain
+            domain_name=domain_name,
         )
         mapping.save()
 
@@ -1604,7 +1684,8 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    process_stock(xform)
+    for case in process_stock(xform):
+        case.save()
 
 
 # import signals

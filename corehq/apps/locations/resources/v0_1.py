@@ -2,9 +2,10 @@ from tastypie import fields
 from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import JsonResource
+from corehq.apps.api.resources import HqBaseResource
 
-class LocationResource(JsonResource):
+
+class LocationResource(HqBaseResource):
     type = "location"
     uuid = fields.CharField(attribute='_id', readonly=True, unique=True)
     location_type = fields.CharField(attribute='location_type', readonly=True)

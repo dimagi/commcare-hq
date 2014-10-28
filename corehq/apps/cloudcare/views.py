@@ -1,20 +1,26 @@
 from couchdbkit import ResourceConflict
 from django.utils.decorators import method_decorator
+from casexml.apps.stock.models import StockTransaction
+from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.exceptions import FormNotFoundException, \
     ModuleNotFoundException
+from corehq.util.couch import get_document_or_404
+from couchforms.const import ATTACHMENT_NAME
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.views.decorators.cache import cache_page
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, privileges
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
+from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE, SessionDataHelper
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
-from dimagi.utils.web import json_response, get_url_base
+from dimagi.utils.web import json_response, get_url_base, json_handler
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404,\
     HttpResponseServerError
 from django.shortcuts import render
@@ -24,7 +30,6 @@ from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
-from corehq.apps.cloudcare import touchforms_api
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
@@ -48,8 +53,8 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
     return render(request, "cloudcare/insufficient_privilege.html", context)
 
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @require_cloudcare_access
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def cloudcare_main(request, domain, urlPath):
     try:
         preview = string_to_boolean(request.REQUEST.get("preview", "false"))
@@ -159,13 +164,13 @@ def cloudcare_main(request, domain, urlPath):
     context.update(_url_context())
     return render(request, "cloudcare/cloudcare_home.html", context)
 
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @login_and_domain_required
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
     case_id = request.GET.get('case_id')
-
+    instance_id = request.GET.get('instance_id')
     try:
         form = app.get_module(module_id).get_form(form_id).name.values()[0]
     except (FormNotFoundException, ModuleNotFoundException):
@@ -179,19 +184,26 @@ def form_context(request, domain, app_id, module_id, form_id):
     if case_id:
         session_name = u'{0} - {1}'.format(session_name, CommCareCase.get(case_id).name)
 
+    root_context = {
+        'form_url': form_url,
+    }
+    if instance_id:
+        root_context['instance_xml'] = XFormInstance.get_db().fetch_attachment(
+            instance_id, ATTACHMENT_NAME
+        )
     delegation = request.GET.get('task-list') == 'true'
     offline = request.GET.get('offline') == 'true'
     session_helper = SessionDataHelper(domain, request.couch_user, case_id, delegation=delegation, offline=offline)
     return json_response(session_helper.get_full_context(
-        {'form_url': form_url,},
+        root_context,
         {'session_name': session_name, 'app_id': app._id}
     ))
 
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @login_and_domain_required
+@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def view_case(request, domain, case_id=None):
     context = {}
     case_json = CommCareCase.get(case_id).get_json() if case_id else None
@@ -293,7 +305,8 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             status=CASE_STATUS_OPEN,
             case_type=case_type,
             user_id=request.couch_user._id,
-            ids_only=True
+            footprint=True,
+            ids_only=True,
         )]
 
     cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
@@ -324,7 +337,11 @@ def get_apps_api(request, domain):
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):
-    return json_response(look_up_app_json(domain, app_id))
+    try:
+        return json_response(look_up_app_json(domain, app_id))
+    except RemoteAppError:
+        raise Http404()
+
 
 @cloudcare_api
 @cache_page(60 * 30)
@@ -377,6 +394,42 @@ def get_session_context(request, domain, session_id):
             'session_id': session_id,
             'app_id': session.app_id if session else None
         }))
+
+
+@cloudcare_api
+def get_ledgers(request, domain):
+    """
+    Returns ledgers associated with a case in the format:
+    {
+        "section_id": {
+            "product_id": amount,
+            "product_id": amount,
+            ...
+        },
+        ...
+    }
+    """
+    case_id = request.REQUEST.get('case_id')
+    if not case_id:
+        return json_response(
+            {'message': 'You must specify a case id to make this query.'},
+            status_code=400
+        )
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    ledger_map = get_current_ledger_transactions(case._id)
+    def custom_json_handler(obj):
+        if isinstance(obj, StockTransaction):
+            return obj.stock_on_hand
+        return json_handler(obj)
+
+    return json_response(
+        {
+            'entity_id': case_id,
+            'ledger': ledger_map,
+        },
+        default=custom_json_handler,
+    )
+
 
 class HttpResponseConflict(HttpResponse):
     status_code = 409

@@ -5,6 +5,9 @@
             <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
             <h3 data-bind="text: modalTitle"></h3>
         </div>
+        <div class="alert alert-error" data-bind="visible: error">
+            {% trans "Some required fields are missing. Please complete them before saving." %}
+        </div>
         <form class="form-horizontal">
             <div class="modal-body">
                 <div class="control-group">
@@ -37,27 +40,32 @@
                             </select>
                         </div>
                     </div>
-                    <div class="control-group" data-bind="visible: date_range() == 'lastn'">
+                    <div class="control-group" data-bind="visible: date_range() === 'lastn'">
                         <label class="control-label" for="days">{% trans "Number of Days" %}</label>
                         <div class="controls">
                             <input type="number" name="days" min="1" step="1" data-bind="value: days"/>
+                            <span class="help-inline">
+                                <small class="label">{% trans "Required" %}</small>
+                            </span>
                         </div>
                     </div>
                     <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
                         <label class="control-label" for="start_date">{% trans "Begin Date" %}</label>
                         <div class="controls">
-                            <input type="text" class="date-picker" name="start_date" data-bind="value: start_date"/>
+                            <input type="text" class="date-picker save-date-picker" name="start_date" data-bind="value: start_date"/>
                             <span class="help-inline">
                                 <small class="label">{% trans "YYYY-MM-DD" %}</small>
+                                <small class="label">{% trans "Required" %}</small>
                             </span>
                         </div>
                     </div>
                     <div class="control-group" data-bind="visible: date_range() == 'range'">
                         <label class="control-label" for="end_date">{% trans "End Date" %}</label>
                         <div class="controls">
-                            <input type="text" class="date-picker" name="end_date" data-bind="value: end_date"/>
+                            <input type="text" id="save-end" class="date-picker save-date-picker" name="end_date" data-bind="value: end_date"/>
                             <span class="help-inline">
                                 <small class="label">{% trans "YYYY-MM-DD" %}</small>
+                                <small class="label">{% trans "Required" %}</small>
                             </span>
                         </div>
                     </div>

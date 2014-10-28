@@ -5,3 +5,4 @@
 # Add to this to prevent groups of pillows from running
 pillowtop_blacklist:
   - fluff
+

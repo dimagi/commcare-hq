@@ -1,0 +1,10 @@
+# See https://github.com/markstory/lint-review
+[files]
+
+[tools]
+linters = flake8, jshint
+
+[tool_flake8]
+max-line-length = 115
+# http://pep8.readthedocs.org/en/latest/intro.html#error-codes
+ignore = E128,F403

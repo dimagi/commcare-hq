@@ -7,7 +7,14 @@ from corehq import privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
+COMMCARE = 'commcare'
+
+COMMCONNECT = 'commconnect'
+
+COMMTRACK = 'commtrack'
+
 RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
+
 
 def base_template(request):
     """This sticks the base_template variable defined in the settings
@@ -16,35 +23,51 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
+        'less_watch': settings.LESS_WATCH,
     }
 
 
+def is_commtrack(project, request):
+    if project:
+        return project.commtrack_enabled
+    try:
+        return 'commtrack.org' in request.get_host()
+    except Exception:
+        # get_host might fail for bad requests, e.g. scheduled reports
+        return False
+
+
+def is_commconnect(project):
+    return project and project.commconnect_enabled
+
+
+def get_domain_type(project, request):
+    if is_commtrack(project, request):
+        return COMMTRACK
+    elif is_commconnect(project):
+        return COMMCONNECT
+    else:
+        return COMMCARE
+
+
 def get_per_domain_context(project, request=None):
-    if project and project.commtrack_enabled:
-        domain_type = 'commtrack'
+    domain_type = get_domain_type(project, request)
+    if domain_type == COMMTRACK:
         logo_url = static('hqstyle/img/commtrack-logo.png')
         site_name = "CommTrack"
         public_site = "http://www.commtrack.org"
         can_be_your = _("mobile logistics solution")
-    elif project and project.commconnect_enabled:
+    elif domain_type == COMMCONNECT:
         domain_type = 'commconnect'
         logo_url = static('hqstyle/img/commconnect-logo.png')
         site_name = "CommConnect"
         public_site = "http://www.commcarehq.org"
         can_be_your = _("mobile solution for your frontline workforce")
     else:
-        domain_type = 'commcare'
         logo_url = static('hqstyle/img/commcare-logo.png')
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"
         can_be_your = _("mobile solution for your frontline workforce")
-
-    try:
-        if 'commtrack.org' in request.get_host():
-            logo_url = static('hqstyle/img/commtrack-logo.png')
-    except Exception:
-        # get_host might fail for bad requests, e.g. scheduled reports
-        pass
 
     if (project and project.has_custom_logo
         and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)

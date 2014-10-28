@@ -17,6 +17,10 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
+# Enable LESS_WATCH if you want less.js to constantly recompile.
+# Useful if you're making changes to the less files and don't want to refresh
+# your page.
+LESS_WATCH = False
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -180,6 +184,7 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djkombu',
+    'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',
@@ -308,7 +313,6 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
-    'custom.trialconnect',
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
@@ -338,7 +342,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
     'corehq.apps.megamobile',
@@ -459,7 +462,7 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.callcenter.fixturegenerators.indicators",
+    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
@@ -764,7 +767,7 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
+            'class': 'corehq.util.log.HqAdminEmailHandler',
         },
         'sentry': {
             'level': 'ERROR',
@@ -980,7 +983,6 @@ COUCHDB_APPS = [
     'pathindia',
     'pact',
     'psi',
-    'trialconnect',
     'accounting',
     'succeed',
     'ilsgateway',
@@ -1162,9 +1164,6 @@ PILLOWTOPS = {
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
         'corehq.apps.indicators.pillows.CaseIndicatorPillow',
     ],
-    'trialconnect': [
-        'custom.trialconnect.smspillow.TCSMSPillow',
-    ],
 }
 
 for k, v in LOCAL_PILLOWTOPS.items():
@@ -1251,9 +1250,6 @@ DOMAIN_MODULE_MAP = {
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
-    'gc': 'custom.trialconnect',
-    'tc-test': 'custom.trialconnect',
-    'trialconnect': 'custom.trialconnect',
     'ipm-senegal': 'custom.intrahealth',
     'testing-ipm-senegal': 'custom.intrahealth',
 
@@ -1300,4 +1296,5 @@ COMPRESS_OFFLINE_CONTEXT = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
+    'less_watch': LESS_WATCH,
 }

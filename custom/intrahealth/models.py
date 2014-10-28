@@ -9,6 +9,7 @@ from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLN
 
 from custom.utils.utils import flat_field
 
+IH_DELETED_TYPES = ('XFormArchived', 'XFormDuplicate', 'XFormDeprecated', 'XFormError')
 
 def _get_all_forms():
     form_filters = []
@@ -24,6 +25,7 @@ class CouvertureFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     group_by = ('domain', fluff.AttributeGetter('location_id', get_location_id))
     save_direct_to_sql = True
+    deleted_types = IH_DELETED_TYPES
 
     location_id = flat_field(get_location_id)
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
@@ -41,6 +43,7 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
         FormPropertyFilter(xmlns=COMMANDE_XMLNSES[0]),
         FormPropertyFilter(xmlns=COMMANDE_XMLNSES[1])
         ])
+    deleted_types = IH_DELETED_TYPES
 
     domains = INTRAHEALTH_DOMAINS
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),)
@@ -59,6 +62,7 @@ class IntraHealthFluff(fluff.IndicatorDocument):
         IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='PPS_name')
     ])
     domains = INTRAHEALTH_DOMAINS
+    deleted_types = IH_DELETED_TYPES
     save_direct_to_sql = True
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
 
@@ -83,6 +87,7 @@ class RecapPassageFluff(fluff.IndicatorDocument):
     ])
 
     domains = INTRAHEALTH_DOMAINS
+    deleted_types = IH_DELETED_TYPES
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
     save_direct_to_sql = True
 
@@ -102,6 +107,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
         IsExistFormPropertyFilter(xmlns=RAPTURE_XMLNSES[0], property_path="form", property_value='district')
     ])
     domains = INTRAHEALTH_DOMAINS
+    deleted_types = IH_DELETED_TYPES
     save_direct_to_sql = True
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),)
 
@@ -120,6 +126,7 @@ class LivraisonFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     group_by = ('domain', )
     save_direct_to_sql = True
+    deleted_types = IH_DELETED_TYPES
 
     month = flat_field(lambda f: get_month(f, 'mois_visite'))
     duree_moyenne_livraison = report_calcs.DureeMoyenneLivraison()

@@ -27,6 +27,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -99,7 +100,7 @@ accounting_logger = logging.getLogger('accounting')
 def select(request, domain_select_template='domain/select.html'):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
-        return redirect('registration_domain')
+        return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
     open_invitations = DomainInvitation.by_email(email)
@@ -276,7 +277,6 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
                 # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
-            'ota_restore_caching': self.domain_object.ota_restore_caching,
             'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
@@ -314,7 +314,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
-            'commtrack_enabled': self.domain_object.commtrack_enabled
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'secure_submissions': self.domain_object.secure_submissions,
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -343,7 +344,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
                 'restrict_superusers',
-                'ota_restore_caching',
                 'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
@@ -484,7 +484,11 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    form = GenericRepeaterForm({"url": url})
+    form = GenericRepeaterForm(
+        {"url": url},
+        domain=domain,
+        repeater_class=receiverwrapper.models.repeater_types[repeater_type]
+    )
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
@@ -1770,8 +1774,15 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return self.repeater_form_class(self.request.POST)
-        return self.repeater_form_class()
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
+        return self.repeater_form_class(
+            domain=self.domain,
+            repeater_class=self.repeater_class
+        )
 
     @property
     def page_context(self):
@@ -1784,6 +1795,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
+            format=self.add_repeater_form.cleaned_data['format']
         )
         return repeater
 
