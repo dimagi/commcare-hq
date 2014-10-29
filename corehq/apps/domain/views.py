@@ -115,8 +115,8 @@ def select(request, domain_select_template='domain/select.html'):
 def incomplete_email(request,
                      incomplete_email_template='domain/incomplete_email.html'):
     from corehq.apps.domain.tasks import (
-            incomplete_self_started_domains,
-            incomplete_domains_to_email
+        incomplete_self_started_domains,
+        incomplete_domains_to_email
     )
     context = {
         'self_started': incomplete_self_started_domains,

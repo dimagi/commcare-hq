@@ -1,5 +1,5 @@
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import periodic_task
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -25,7 +25,7 @@ def _domains_over_x_forms(num_forms=200, domains=None):
 
 def _real_incomplete_domains():
     incomplete_domains = (
-            DomainES()
+        DomainES()
             .fields(["name"])
             .non_test_domains()
             .incomplete_domains()
@@ -48,11 +48,10 @@ def incomplete_domains_to_email():
                 {
                     "domain_name": domain,
                     "email_to": users,
-                    "settings_link": get_url_base() +
-                                     reverse(
-                                         EditInternalDomainInfoView.urlname,
-                                         args=[domain]
-                                     )
+                    "settings_link": get_url_base() + reverse(
+                        EditInternalDomainInfoView.urlname,
+                        args=[domain]
+                    )
                 }
             )
 
@@ -68,9 +67,9 @@ def fm_reminder_email():
 
     for domain in email_domains:
         email_content = render_to_string(
-                'domain/email/fm_outreach.html', domain)
+            'domain/email/fm_outreach.html', domain)
         email_content_plaintext = render_to_string(
-                'domain/email/fm_outreach.txt', domain)
+            'domain/email/fm_outreach.txt', domain)
         for email in domain['email_to']:
             send_HTML_email(
                 "Please update your domain",
@@ -110,9 +109,9 @@ def self_starter_email():
 
     if len(domains) > 0:
         email_content = render_to_string(
-                'domain/email/self_starter.html', {'domains': domains})
+            'domain/email/self_starter.html', {'domains': domains})
         email_content_plaintext = render_to_string(
-                'domain/email/self_starter.txt', {'domains': domains})
+            'domain/email/self_starter.txt', {'domains': domains})
         send_HTML_email(
             "Incomplete Self Started Domains",
             settings.MASTER_LIST_EMAIL,
