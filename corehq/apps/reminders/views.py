@@ -14,7 +14,8 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.app_manager.util import (get_case_properties,
+    get_correct_app_class)
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.app_manager.models import get_app
 
@@ -620,8 +621,8 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     @memoized
     def apps(self):
         result = []
-        for app_id in self.app_ids:
-            app = get_app(self.domain, app_id)
+        for app_doc in iter_docs(Application.get_db(), self.app_ids):
+            app = get_correct_app_class(app_doc).wrap(app_doc)
             if not app.is_remote_app():
                 result.append(app)
         return result
