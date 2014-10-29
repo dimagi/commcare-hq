@@ -764,10 +764,15 @@ var DetailScreenConfig = (function () {
                             $('<li class="add-calculation-item"><a>Calculation</a></li>')
                         );
                     }
+                    if (this.config.graphEnabled){
+                        buttonDropdownItems.push(
+                            $('<li class="add-graph-item"><a>Graph</a></li>')
+                        );
+                    }
                     $addButton = $(
                         '<div class="btn-group"> \
                             <button class="btn add-property-item">Add Property</button> \
-                        </div>'
+                        </div> '
                     );
                     if (buttonDropdownItems.length > 1){
                         // Add the caret
@@ -908,6 +913,7 @@ var DetailScreenConfig = (function () {
             }
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
+            this.graphEnabled = spec.graphEnabled;
             this.calculationEnabled = spec.calculationEnabled;
 
             var filter_xpath = spec.state.short.filter;

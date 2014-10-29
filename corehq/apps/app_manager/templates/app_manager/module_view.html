@@ -54,6 +54,7 @@
                     parentModules: {{ parent_modules|JSON }},
                     childCaseTypes: detail.child_case_types,
                     parentSelect: detail.parent_select,
+                    graphEnabled: {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }},
                     calculationEnabled: {{ enable_calc_xpaths|BOOL }}
                 });
 
