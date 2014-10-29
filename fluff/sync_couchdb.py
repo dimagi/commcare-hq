@@ -17,27 +17,29 @@ class FluffPreindexPlugin(PreindexPlugin):
             if hasattr(pillow, 'indicator_class'):
                 app_label = pillow.indicator_class._meta.app_label
                 db = get_db(app_label)
-                key = (self.dir, app_label, db)
-                if key not in synced:
+                if db not in synced:
                     sync_docs.sync_design_docs(
                         db=db,
                         design_dir=os.path.join(self.dir, "_design"),
                         design_name=self.app_label,
                         temp=temp,
                     )
-                    synced.add(key)
+                    synced.add(db)
 
     def copy_designs(self, temp=None, delete=True):
+        copied = set()
         for pillow in get_all_pillows(instantiate=False):
             if hasattr(pillow, 'indicator_class'):
                 app_label = pillow.indicator_class._meta.app_label
                 db = get_db(app_label)
-                sync_docs.copy_designs(
-                    db=db,
-                    design_name=self.app_label,
-                    temp=temp,
-                    delete=delete,
-                )
+                if db not in copied:
+                    sync_docs.copy_designs(
+                        db=db,
+                        design_name=self.app_label,
+                        temp=temp,
+                        delete=delete,
+                    )
+                    copied.add(db)
 
 
 FluffPreindexPlugin.register('fluff', __file__)
