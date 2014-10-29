@@ -31,29 +31,20 @@
             "type": "pie",
             "title": "Remote status",
             "aggregation_column": "remote",
-            "value_column": "count",
-            "display_params": {
-
-            }
+            "value_column": "count"
         },
         {
             "type": "pie",
             "title": "Team",
             "aggregation_column": "applicant_type",
-            "value_column": "count",
-            "display_params": {
-
-            }
+            "value_column": "count"
         },
         {
             "type": "multibar-aggregate",
             "title": "Applicants by type and location",
             "primary_aggregation": "remote",
             "secondary_aggregation": "applicant_type",
-            "value_column": "count",
-            "display_params": {
-
-            }
+            "value_column": "count"
         }
     ]
 }

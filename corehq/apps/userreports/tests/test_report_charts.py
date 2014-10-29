@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+from corehq import ReportConfiguration
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ChartFactory
 from corehq.apps.userreports.reports.specs import PieChartSpec, MultibarChartSpec, MultibarAggregateChartSpec
@@ -108,3 +109,20 @@ class MultibarAggregateTestCase(SimpleTestCase):
                 "primary_aggregation": "remote",
                 "value_column": "count",
             })
+
+
+class ChartJsonTest(SimpleTestCase):
+
+    def test_charts_to_json(self):
+        # this tests a regression - namely that calling to_json on a chart config
+        # when accessed via a report would crash.
+        report = ReportConfiguration(configured_charts=[
+            dict(
+                type=u'pie',
+                value_column=u'count',
+                aggregation_column=u'remote',
+                title=u'Remote status'
+            )
+        ])
+        chart = report.charts[0]
+        chart.to_json()  # this is the line that used to crash
