@@ -21,8 +21,14 @@
             return base_url;
         }
 
-    $(function(){
-
+    $(function() {
+        var chartSpecs = {{ report.spec.charts|JSON }};
+        var updateCharts = function (data) {
+            if (chartSpecs !== null && chartSpecs.length > 0) {
+                // draw graph
+                charts.render(chartSpecs, data.aaData, $("#chart-container"));
+            }
+        };
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
             defaultRows: {{ report_table.default_rows|default:10 }},
@@ -37,14 +43,13 @@
             ajaxParams: function() {
                 return $('#report-filters').serializeArray();
             },
-
             {% if report_table.left_col.is_fixed %}
                 fixColumns: true,
                 fixColsNumLeft: {{ report_table.left_col.fixed.num }},
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
+            extraCallbacks: [updateCharts]
         });
-        var chartSpecs = {{ report.spec.charts|JSON }};
         $('#report-filters').submit(function(event) {
             var postData = $(this).serialize();
             $.ajax({
@@ -53,10 +58,7 @@
                 data: postData,
                 headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
                 success: function(data, textStatus, jqXHR) {
-                    if (chartSpecs !== null && chartSpecs.length > 0) {
-                        // draw graph
-                        charts.render(chartSpecs, data.aaData, $("#chart-container"));
-                    }
+                    updateCharts(data);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log("wah waaaah");
