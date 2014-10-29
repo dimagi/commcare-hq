@@ -33,6 +33,7 @@ from corehq.apps.app_manager.models import Application, FormBase, ApplicationBas
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, Domain)
+from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -139,6 +140,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
     share_reminders = BooleanField(label=ugettext_noop("Share Reminders?"), required=False,
         help_text=ugettext_noop("This will publish reminders along with this project"))
+    share_lookup_tables = BooleanField(label=ugettext_noop("Share lookup tables?"), required=False,
+        help_text=ugettext_noop("This will publish lookup tables along with this project"))
     image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
@@ -156,6 +159,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'video',
             'share_multimedia',
             'share_reminders',
+            'share_lookup_tables',
             'license',
             'cda_confirmed',]
         self.fields['license'].help_text = \
