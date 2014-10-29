@@ -58,7 +58,7 @@ class OPMCaseRow(object):
         self.year = report.year
 
         if not report.is_rendered_as_email:
-            self.img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+            self.img_elem = '<div style="width:140px !important;"><img src="/static/opm/img/%s"></div>'
         else:
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
