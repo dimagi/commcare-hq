@@ -1,7 +1,7 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block stylesheets %}{{ block.super }}
+{% block uncompressed-stylesheets %}{{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
 {% endblock %}
 {% block js %}{{ block.super }}
