@@ -108,8 +108,8 @@ function HQReportDataTables(options) {
                             self.render_footer_row('ajax_total_row', data['total_row']);
                         }
                         if ('statistics_rows' in data) {
-                            for (i = 0; i < data['statistics_rows'].length; i++){
-                               self.render_footer_row('ajax_stat_row-' + i, data['statistics_rows'][i]);
+                            for (i = 0; i < data.statistics_rows.length; i++){
+                               self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                             }
                         }
                         applyBootstrapMagic();
