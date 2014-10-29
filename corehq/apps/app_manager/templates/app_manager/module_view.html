@@ -49,7 +49,8 @@
                     edit: {{ edit|JSON }},
                     saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
                     parentModules: {{ parent_modules|JSON }},
-                    parentSelect: detail.parent_select
+                    parentSelect: detail.parent_select,
+                    calculationEnabled: {{ enable_calc_xpaths|BOOL }}
                 });
 
                 if (detail.sort_elements) {

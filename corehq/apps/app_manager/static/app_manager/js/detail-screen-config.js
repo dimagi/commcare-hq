@@ -728,20 +728,40 @@ var DetailScreenConfig = (function () {
                                 .prependTo($box);
                         }
                     }
-
                     this.$columns = $('</tbody>');
+
+                    // Add the "Add Property" button
+
+                    var buttonDropdownItems = [
+                        $('<li class="add-property-item"><a>Property</a></li>')
+                    ];
+                    if (this.config.calculationEnabled){
+                        buttonDropdownItems.push(
+                            $('<li class="add-calculation-item"><a>Calculation</a></li>')
+                        );
+                    }
                     $addButton = $(
                         '<div class="btn-group"> \
                             <button class="btn add-property-item">Add Property</button> \
+                        </div>'
+                    );
+                    if (buttonDropdownItems.length > 1){
+                        // Add the caret
+                        $addButton.append($('\
                             <button class="btn dropdown-toggle" data-toggle="dropdown"> \
                                 <span class="caret"></span> \
-                            </button> \
-                            <ul class="dropdown-menu">\
-                               <li class="add-property-item"><a>Property</a></li>\
-                               <li class="add-calculation-item"><a>Calculation</a></li>\
-                            </ul> \
-                        </div> '
-                    );
+                            </button>'
+                        ));
+                        // Add the drop down
+                        var $dropdownList = $(
+                            '<ul class="dropdown-menu"></ul>'
+                        ).appendTo($addButton);
+                        // Add the drop down items
+                        for (var i=0; i < buttonDropdownItems.length; i++){
+                            $dropdownList.append(buttonDropdownItems[i]);
+                        }
+                    }
+
                     var addItem = function(autocomplete) {
                         var col;
                         var redraw = false;
@@ -853,6 +873,7 @@ var DetailScreenConfig = (function () {
             }
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
+            this.calculationEnabled = spec.calculationEnabled;
 
             var filter_xpath = spec.state.short.filter;
             this.filter = new filterViewModel(filter_xpath ? filter_xpath : null);
