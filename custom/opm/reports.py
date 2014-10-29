@@ -768,6 +768,7 @@ class MetReport(CaseReportMixin, BaseReport):
     fix_left_col = True
     model = ConditionsMet
     exportable = False
+    default_rows = 5
 
     @property
     def headers(self):
