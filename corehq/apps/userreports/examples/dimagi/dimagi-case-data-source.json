@@ -1,7 +1,7 @@
 {
     "_id": "1266a770e2895afc1f30d7495edde63c",
     "domain": "dimagi",
-    "doc_type": "IndicatorConfiguration",
+    "doc_type": "DataSourceConfiguration",
     "referenced_doc_type": "CommCareCase",
     "table_id": "all_candidates",
     "display_name": "Candidates",
