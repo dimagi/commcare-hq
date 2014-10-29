@@ -33,7 +33,7 @@ class TestReportData(ReportDataSource):
 
     @property
     def total_days(self):
-        return int((self.datespan.enddate - self.datespan.startdate).days)
+        return int((self.config['datespan'].enddate - self.config['datespan'].startdate).days)
 
     def daterange(self):
         p = self.config['pagination']
@@ -43,9 +43,9 @@ class TestReportData(ReportDataSource):
         desc = order and order.desc
         for n in days:
             if desc:
-                yield self.datespan.enddate - timedelta(n)
+                yield self.config['datespan'].enddate - timedelta(n)
             else:
-                yield self.datespan.startdate + timedelta(n)
+                yield self.config['datespan'].startdate + timedelta(n)
 
     def get_data(self):
         # replace this with a generic has_parameter method
