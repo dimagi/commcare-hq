@@ -238,8 +238,15 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         if self.program_id:
             products = products.filter(program_id=self.program_id)
 
+        # product names used for columns are sorted by product_id
+        # since that is the easiest way to sort the data later
+        self.product_names = [p.name for p in sorted(
+            products,
+            key=lambda(p): p.product_id
+        )]
+
         self.product_dict = {
-            p: None for p in products.values_list('name', flat=True)
+            p: None for p in products.values_list('product_id', flat=True)
         }
 
     @property
@@ -248,10 +255,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn(_('Location')),
         ]
 
-        columns += [
-            DataTablesColumn(product_name) for product_name in
-            sorted(self.product_dict.keys())
-        ]
+        columns += [DataTablesColumn(p) for p in self.product_names]
 
         return DataTablesHeader(*columns)
 
@@ -260,7 +264,8 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
-            'program_id': self.program_id
+            'program_id': self.program_id,
+            'date': self.request.GET.get('date', None)
         }
 
         data = SimplifiedInventoryDataSource(config).get_data()

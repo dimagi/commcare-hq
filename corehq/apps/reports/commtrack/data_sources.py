@@ -6,6 +6,7 @@ from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
+from dateutil import parser
 from casexml.apps.stock.models import StockTransaction
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
@@ -58,6 +59,20 @@ class CommtrackDataSourceMixin(object):
 class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
     slug = 'simple_inventory'
 
+    def datetime(self):
+        """
+        Returns a datetime object at the end of the selected
+        (or current) date. This is needed to properly filter
+        transactions that occur during the day we are filtering
+        for
+        """
+        date = self.config.get('date')
+        if date:
+            date = parser.parse(date).date()
+        else:
+            date = datetime.now().date()
+        return datetime(date.year, date.month, date.day, 23, 59, 59)
+
     def get_data(self, slugs=None):
         if self.active_location:
             current_location = self.active_location.sql_location
@@ -66,20 +81,26 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
             locations = SQLLocation.objects.filter(domain=self.domain)
 
         for loc in locations:
-            stock_states = loc.stockstate_set.all()
+            transactions = StockTransaction.objects.filter(
+                case_id=loc.supply_point_id,
+            )
 
             if self.program_id:
-                stock_states = stock_states.filter(
+                transactions = transactions.filter(
                     sql_product__program_id=self.program_id
                 )
 
-            yield (
-                loc.name,
-                stock_states.values_list(
-                    'sql_product__name',
-                    'stock_on_hand'
-                )
+            stock_results = transactions.exclude(
+                report__date__gt=self.datetime
+            ).order_by(
+                'product_id', '-report__date'
+            ).values_list(
+                'product_id', 'stock_on_hand'
+            ).distinct(
+                'product_id'
             )
+
+            yield (loc.name, stock_results)
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
