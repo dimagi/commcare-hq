@@ -450,21 +450,27 @@ class PostnatalCareOverview(BaseSqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn("PNC 1 visit in 0-2 days",
+            DatabaseColumn(
+                "PNC visits in 48 hours of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_1", filters=self.filters + [EQ('pp_1_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 2 visit in 2-4 days",
+            DatabaseColumn(
+                "PNC visits within 2-4 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_2", filters=self.filters + [EQ('pp_2_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 3 visit in 5-7 days",
+            DatabaseColumn(
+                "PNC visits within 5-7 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_3", filters=self.filters + [EQ('pp_3_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 4 visit in 21-42 days",
+            DatabaseColumn(
+                "PNC visits within 21-42 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_4", filters=self.filters + [EQ('pp_4_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 1 visits Total Eligible",
+            DatabaseColumn(
+                "PNC 1 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_1_eligible",
-                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today')])]),
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'),
+                                                               LTE('delivery_date', 'today')])]),
             ),
             DatabaseColumn("PNC 2 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_2_eligible",
