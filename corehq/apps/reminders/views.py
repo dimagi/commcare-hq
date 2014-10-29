@@ -17,7 +17,6 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.app_manager.models import get_app
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
