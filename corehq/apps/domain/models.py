@@ -620,6 +620,7 @@ class Domain(Document, SnapshotMixin):
     def save_copy(self, new_domain_name=None, user=None, ignore=None):
         from corehq.apps.app_manager.models import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.fixtures.models import FixtureDataItem
 
         ignore = ignore if ignore is not None else []
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
@@ -651,6 +652,7 @@ class Domain(Document, SnapshotMixin):
                 delattr(new_domain, field)
 
         new_comps = {}  # a mapping of component's id to it's copy
+        old_to_new_fixture_types = dict() # fixture items reference the types
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()
@@ -660,8 +662,11 @@ class Domain(Document, SnapshotMixin):
                     comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
             elif res['value']['doc_type'] not in ignore:
                 comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                if res['value']['doc_type'] == 'FixtureDataType':
+                    old_to_new_fixture_types[res['value']['_id']] = comp
             else:
                 comp = None
+
             if comp:
                 new_comps[res['value']['_id']] = comp
 
@@ -694,6 +699,11 @@ class Domain(Document, SnapshotMixin):
             for handler in CaseReminderHandler.get_handlers(new_domain_name):
                 apply_update(handler, update_for_copy)
 
+        if 'FixtureDataItem' not in ignore:
+            for fixture in FixtureDataItem.by_domain(new_domain_name):
+                fixture.data_type_id = old_to_new_fixture_types[fixture.data_type_id]._id
+                fixture.save()
+
         return new_domain
 
     def reminder_should_be_copied(self, handler):
@@ -705,10 +715,13 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
         from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
         str_to_cls = {
             'UserRole': UserRole,
             'CaseReminderHandler': CaseReminderHandler,
+            'FixtureDataType': FixtureDataType,
+            'FixtureDataItem': FixtureDataItem,
         }
         db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
