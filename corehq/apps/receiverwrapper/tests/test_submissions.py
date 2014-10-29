@@ -63,7 +63,7 @@ class SubmissionTest(TestCase):
             "build_id": None,
             "computed_": {},
             "computed_modified_on_": None,
-            "date_header": '2011-04-11T18:24:43.000000Z',
+            "date_header": '2011-04-11T18:24:43.000000Z +00:00',
             "doc_type": "XFormInstance",
             "domain": "submit",
             "history": [],
