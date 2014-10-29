@@ -56,10 +56,12 @@ class UTCDateTime(datetime.datetime):
             self.__tz_string = self.tz_offset_to_string(original_offset)
         return self
 
-    @property
-    def tzinfo(self):
-        # we can't actually del this attribute, so doing the next best thing
-        raise AttributeError("'UTCDateTime' object has no attribute 'tzinfo'")
+    def __copy__(self):
+        return UTCDateTime(**{attr: getattr(self, attr)
+                              for attr in self.__ATTRS})
+
+    def __deepcopy__(self, memo):
+        return self.__copy__()
 
     @property
     def original_offset(self):
@@ -84,22 +86,46 @@ class UTCDateTime(datetime.datetime):
                    original_offset=original_offset)
         return self
 
+    def replace(self, **kwargs):
+        unknown_kwargs = set(kwargs.keys()) - set(self.__ATTRS) - {'tzinfo'}
+        if unknown_kwargs:
+            raise TypeError(
+                "'{}' is an invalid keyword argument for this function".format(
+                    next(iter(unknown_kwargs)))
+            )
+        if 'tzinfo' in kwargs and 'original_offset' in kwargs:
+            raise ValueError("only one of 'tzinfo' and 'original_offset' may "
+                             "be passed as keyword arguments to this function")
+
+        if 'tzinfo' in kwargs:
+            return datetime.datetime(tzinfo=kwargs['tzinfo'], **{
+                attr: kwargs[attr] if attr in kwargs else getattr(self, attr)
+                for attr in self.__ATTRS if attr != 'original_offset'
+            })
+        else:
+            return UTCDateTime(**{
+                attr: kwargs[attr] if attr in kwargs else getattr(self, attr)
+                for attr in self.__ATTRS
+            })
+
     def to_datetime(self):
         """
         convert to a timezone-aware datetime
 
         """
+        tz_naive_datetime = datetime.datetime(
+            self.year, self.month, self.day,
+            self.hour, self.minute, self.second,
+            self.microsecond, tzinfo=None
+        )
         if self.original_offset is not None:
             # this should have been checked at creation time
             assert self.original_offset.total_seconds() % 60 == 0
-            return self.replace(tzinfo=pytz.UTC).astimezone(
+            return tz_naive_datetime.replace(tzinfo=pytz.UTC).astimezone(
                 pytz.FixedOffset(self.original_offset.total_seconds() / 60)
             )
         else:
-            # make a datetime copy of self
-            return datetime.datetime(self.year, self.month, self.day,
-                                     self.hour, self.minute, self.second,
-                                     self.microsecond, tzinfo=None)
+            return tz_naive_datetime
 
     @property
     def tz_string(self):

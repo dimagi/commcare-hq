@@ -1,3 +1,4 @@
+import copy
 import datetime
 from django.test import SimpleTestCase
 from pytz import FixedOffset
@@ -231,3 +232,38 @@ class UTCDateTimeTest(SimpleTestCase):
             False
         )
     })
+
+    @classmethod
+    def setUpClass(cls):
+        cls.dt = UTCDateTime(2014, 12, 10, 19, 5, 17, original_offset='+03:00')
+
+    def test_tzinfo_immutable(self):
+        with self.assertRaises(AttributeError):
+            self.dt.tzinfo = FixedOffset(3 * 60)
+
+    def test_copy(self):
+        copy.copy(self.dt)
+
+    def test_deepcopy(self):
+        copy.deepcopy(self.dt)
+
+    def test_replace_tzinfo(self):
+        with self.assertRaisesRegexp(TypeError,
+                                     "'foo' is an invalid keyword argument "
+                                     "for this function"):
+            self.dt.replace(foo=None)
+
+        with self.assertRaises(ValueError):
+            self.dt.replace(tzinfo=None, original_offset='+04:00')
+
+        dt = self.dt.replace(tzinfo=None)
+        self.assertIsInstance(dt, datetime.datetime)
+        self.assertEqual(dt, self.dt)
+
+        dt = self.dt.replace(original_offset='+05:00')
+        self.assertIsInstance(dt, UTCDateTime)
+        self.assertNotEqual(dt.original_offset, self.dt.original_offset)
+
+    def test_to_datetime(self):
+        # assertIsInstance isn't strong enough since UTCDateTime is a subclass
+        self.assertIs(type(self.dt.to_datetime()), datetime.datetime)
