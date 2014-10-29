@@ -50,9 +50,7 @@
             "y_axis_columns": [
                 "diagnoses_match_no",
                 "diagnoses_match_yes"
-            ],
-            "display_params": {
-            }
+            ]
         }
     ]
 }
