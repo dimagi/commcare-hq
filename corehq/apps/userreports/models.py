@@ -118,7 +118,6 @@ class ReportConfiguration(UnicodeMixIn, Document):
         return u'{} - {}'.format(self.domain, self.title)
 
     @property
-    @property
     @memoized
     def config(self):
         try:
