@@ -33,7 +33,6 @@ from corehq.apps.app_manager.models import Application, FormBase, ApplicationBas
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, Domain)
-from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
