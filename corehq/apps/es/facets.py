@@ -31,8 +31,8 @@ class TermsFacet(Facet):
     result_class = TermsResult
 
     def __init__(self, term, name, size=None):
-        # todo: should fix this. at a minimum periods are also allowed.
-        # assert re.match(r'\w+$', name), "name must be a valid python variable name, was {}".format(name)
+        assert re.match(r'\w+$', name), \
+            "Facet names must be valid python variable names, was {}".format(name)
         self.name = name
         self.params = {
             "field": term,
