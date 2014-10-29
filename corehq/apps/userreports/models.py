@@ -134,7 +134,7 @@ class ReportConfiguration(UnicodeMixIn, Document):
     @property
     @memoized
     def charts(self):
-        return [ChartFactory.from_spec(g) for g in self.configured_charts]
+        return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
 
     @property
     def table_id(self):
