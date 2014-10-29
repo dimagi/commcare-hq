@@ -53,7 +53,8 @@
                     saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
                     parentModules: {{ parent_modules|JSON }},
                     childCaseTypes: detail.child_case_types,
-                    parentSelect: detail.parent_select
+                    parentSelect: detail.parent_select,
+                    calculationEnabled: {{ enable_calc_xpaths|BOOL }}
                 });
 
                 if (detail.sort_elements) {
@@ -278,10 +279,18 @@
                             Filter
                         </label>
                         <span class="hq-help-template"
-                            data-title="{% trans "Filters" %}"
+                            data-title="{% trans "Filter" %}"
                             data-content=
                             "{% blocktrans %}
-                                Filter help text goes here
+                                This XPath expression specifies which cases
+                                should appear in the case list. It can refer to
+                                any case properties and should return true if a
+                                record should be shown and false otherwise. The
+                                same functions are available as when writing
+                                Display or Validation conditions. Refer to case
+                                properties using their name (there's no need to
+                                include a &quot;/data/&quot; in front of the
+                                case property).
                             {% endblocktrans %}"
                         >
 

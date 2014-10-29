@@ -22,7 +22,8 @@ from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CouchUser, Permissions
 
-from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
+from corehq.apps.api.resources import v0_1, v0_3, HqBaseResource, DomainSpecificResourceMixin, \
+    SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
@@ -84,7 +85,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         list_allowed_methods = ['get']
 
 
-class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
+class RepeaterResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id', readonly=True, unique=True)
     type = fields.CharField(attribute='doc_type')
@@ -139,7 +140,6 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
-
 
 
 def group_by_dict(objs, fn):
@@ -207,7 +207,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         ordering = ['server_date_modified', 'date_modified']
 
 
-class GroupResource(JsonResource, DomainSpecificResourceMixin):
+class GroupResource(HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
     domain = fields.CharField(attribute='domain')
     name = fields.CharField(attribute='name')
@@ -235,7 +235,7 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         resource_name = 'group'
 
 
-class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
+class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     This resource does not require "authorization" per se, but
     rather allows a POST of username and password and returns
@@ -287,7 +287,7 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['post']
 
 
-class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
+class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')

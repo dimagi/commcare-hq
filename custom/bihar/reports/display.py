@@ -1,7 +1,6 @@
 from datetime import date, timedelta
 import re
 import dateutil
-from jsonobject.base import JsonArray
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from casexml.apps.case.models import CommCareCase
 from django.utils.translation import ugettext as _
@@ -160,7 +159,7 @@ class MCHMotherDisplay(MCHDisplay):
             elif PNC in form_xmlns:
 
                 child_list = []
-                if type(form_dict["child_info"]) is JsonArray:
+                if isinstance(form_dict["child_info"], list):
                     child_list.extend(form_dict["child_info"])
                 else:
                     child_list.append(form_dict["child_info"])

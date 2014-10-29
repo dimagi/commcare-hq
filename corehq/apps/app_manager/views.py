@@ -1349,7 +1349,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         detail.short.columns = map(DetailColumn.wrap, short)
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
-    if filter is not ():
+    if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter

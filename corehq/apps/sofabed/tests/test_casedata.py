@@ -3,11 +3,12 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
-from corehq.apps.sofabed.models import CaseData
+from corehq.apps.sofabed.models import CaseData, CASE_NAME_LEN
 from datetime import date, datetime, timedelta
 from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
 
 TEST_DOMAIN = 'test'
+TEST_NAME_LEN = CASE_NAME_LEN-8
 
 
 class CaseDataTests(TestCase):
@@ -35,7 +36,7 @@ class CaseDataTests(TestCase):
                 owner_id="owner",
                 user_id='user',
                 case_type='c_type',
-                case_name='c_name',
+                case_name=('a' * TEST_NAME_LEN) + '123456789',
                 external_id='external_id',
                 date_modified=self.date_modified,
                 version=V2,
@@ -52,7 +53,7 @@ class CaseDataTests(TestCase):
         self.assertEqual(self.date_modified, self.casedata.modified_on)
         self.assertEqual(False, self.casedata.closed)
         self.assertEqual('c_type', self.casedata.type)
-        self.assertEqual('c_name', self.casedata.name)
+        self.assertEqual(('a' * TEST_NAME_LEN) + '12345...', self.casedata.name)
         self.assertEqual('external_id', self.casedata.external_id)
         self.assertEqual(V2, self.casedata.version)
         self.assertEqual('owner', self.casedata.owner_id)
@@ -124,3 +125,19 @@ class CaseDataTests(TestCase):
         self.assertEqual('mom', indices[1].identifier)
         self.assertEqual('mother-case', indices[1].referenced_type)
         self.assertEqual('mother_case_id', indices[1].referenced_id)
+
+    def test_empty_name(self):
+        case_id = 'case_with_no_name'
+        post_case_blocks([
+            CaseBlock(
+                create=True,
+                case_id=case_id,
+                case_type='nameless',
+                version=V2,
+            ).as_xml(format_datetime=None)
+        ], {'domain': TEST_DOMAIN})
+
+        instance = CommCareCase.get(case_id)
+        casedata = CaseData.create_or_update_from_instance(instance)
+        self.assertIsNotNone(casedata)
+        self.assertIsNone(casedata.name)

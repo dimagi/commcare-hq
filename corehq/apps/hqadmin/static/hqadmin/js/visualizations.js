@@ -35,6 +35,8 @@ var HQVisualizations = function (options) {
     self.should_update_url = options.should_update_url === undefined ? false : options.should_update_url;
     self.interval = options.interval || "day";
     self.datefield = options.datefield;
+    self.is_cumulative = options.is_cumulative || null;
+    self.get_request_params = options.get_request_params || {};
 
     self.charts = { "bar-chart": null, "cumulative-chart": null, "stacked-cumulative-chart": null };
     self.charts_id = '#' + self.chart_name + '-charts';
@@ -132,6 +134,14 @@ var HQVisualizations = function (options) {
         }
         if (startdate) {
             data["startdate"] = startdate;
+        }
+
+        if(!jQuery.isEmptyObject(self.get_request_params)) {
+            data['get_request_params'] = self.get_request_params;
+        }
+
+        if(self.is_cumulative != null) {
+            data['is_cumulative'] = self.is_cumulative;
         }
 
         self.data = merge_options(self.data, data);

@@ -57,9 +57,11 @@ function(doc) {
                     diarrhea_only = true;
                 }
 
-                if ((referral_type && valid_referrals.indexOf(referral_type) >= 0) &&
-                    danger_signs.length > 0 || emergency_signs.length > 0) {
+                if (danger_signs.length > 0 || emergency_signs.length > 0) {
                     indicator_keys.push("under5_danger_signs");
+                    if (referral_type && valid_referrals.indexOf(referral_type)) {
+                        indicator_keys.push("under5_danger_signs_referred");
+                    }
                 }
 
                 var category = "",

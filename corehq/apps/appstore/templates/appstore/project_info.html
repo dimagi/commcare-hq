@@ -70,11 +70,15 @@
         });
 
         $('#download-new-project').click(function() {
-            ga('send', 'event', 'Exchange', 'Download As New Project', '{{ project }}');
+            if (typeof(ga) !== 'undefined') {
+                ga('send', 'event', 'Exchange', 'Download As New Project', '{{ project }}');
+            }
         });
 
         $('#import-app-button').click(function() {
-            ga('send', 'event', 'Exchange', 'Download to Existing Project', '{{ project }}');
+            if (typeof(ga) !== 'undefined') {
+                ga('send', 'event', 'Exchange', 'Download to Existing Project', '{{ project }}');
+            }
         });
     </script>
 {% endblock %}
@@ -294,7 +298,13 @@
                     </div>
                     {% endif %}
                 {% else %}
-                    {% trans "Please" %} <a href="{% url "login" %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url "register_user" %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}
+                    {% url "login" DOMAIN_TYPE as login_url %}
+                    {% url "register_user" DOMAIN_TYPE as register_url %}
+                    {% blocktrans %}
+                        Please <a href="{{ login_url }}">sign in</a>
+                        or <a href="{{ register_url }}">register</a>
+                        to download an app from Exchange
+                    {% endblocktrans %}
                 {% endif %}
             </fieldset>
         </form>

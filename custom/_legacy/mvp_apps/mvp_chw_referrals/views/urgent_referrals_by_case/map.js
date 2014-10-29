@@ -44,8 +44,12 @@ function(doc) {
 
             var referrals = indicators.referral_type.value,
                 visit_dates = [],
-                urgent_dates = [],
-                condition_improved = indicators.condition_improved.value;
+                urgent_dates = [];
+                if (indicators.condition_improved && indicators.condition_improved.value) {
+                    var condition_improved = indicators.condition_improved.value;
+                } else {
+                    var condition_improved = false;
+                }
 
             for (var r in referrals) {
                 if (referrals.hasOwnProperty(r)) {

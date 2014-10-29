@@ -114,6 +114,38 @@ def format_date_string(value):
         return format(force_to_datetime(value), 'd E')
 
 
+def get_pps_name(form):
+    pps_name = form.form.get('PPS_name', None)
+
+    if not pps_name:
+        loc = _get_location(form)
+        if not loc:
+            return None
+        return loc.name
+    else:
+        return pps_name
+
+
+def get_district_name(form):
+    district_name = form.form.get('district_name', None)
+    if not district_name:
+        loc = get_location_by_type(form, 'district')
+        if not loc:
+            return None
+        return loc.name
+    else:
+        return district_name
+
+
+def get_month(form, prop):
+    value = form.form.get(prop, '')
+    if value:
+        with localize('fr'):
+            return format(force_to_datetime(value), 'E')
+    else:
+        return value
+
+
 class IsExistFormPropertyFilter(FormPropertyFilter):
 
     def __init__(self, xmlns=None, property_path=None, property_value=None):

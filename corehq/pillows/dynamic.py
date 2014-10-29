@@ -94,7 +94,7 @@ domain_special_types = {
     "project_type": {"type": "string", "analyzer": "comma"},
     "__sub_types": {
         "deployment": {
-            "country": type_exact_match_string("country", dual=True),
+            "countries": type_exact_match_string("countries", dual=True),
             "region": type_exact_match_string("region", dual=True),
             "city": type_exact_match_string("city", dual=True),
             "description": type_exact_match_string("description", dual=True),

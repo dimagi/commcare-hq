@@ -2,15 +2,18 @@ class BaseMixin(object):
 
     @property
     def blocks(self):
-        return self.request.GET.getlist('hierarchy_block', [])
+        hierarchy_block = self.request.GET.getlist('hierarchy_block', [])
+        return [] if hierarchy_block and hierarchy_block[0] == '0' else hierarchy_block
 
     @property
     def awcs(self):
-        return self.request.GET.getlist('hierarchy_awc', [])
+        hierarchy_awc = self.request.GET.getlist('hierarchy_awc', [])
+        return [] if hierarchy_awc and hierarchy_awc[0] == '0' else hierarchy_awc
 
     @property
     def gp(self):
-        return self.request.GET.getlist('hierarchy_gp', None)
+        hierarchy_gp = self.request.GET.getlist('hierarchy_gp', [])
+        return [] if hierarchy_gp and hierarchy_gp[0] == '0' else hierarchy_gp
 
 
 def _safeint(value):

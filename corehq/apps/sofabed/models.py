@@ -5,6 +5,8 @@ from corehq.apps.sofabed.exceptions import (
     InvalidCaseUpdateException
 )
 
+CASE_NAME_LEN = 512
+
 MISSING_APP_ID = '_MISSING_APP_ID'
 
 
@@ -160,7 +162,7 @@ class CaseData(BaseDataIndex):
     modified_on = models.DateTimeField(db_index=True)
     modified_by = models.CharField(max_length=128, db_index=True, null=True)
     server_modified_on = models.DateTimeField(db_index=True, null=True)
-    name = models.CharField(max_length=128, null=True)
+    name = models.CharField(max_length=CASE_NAME_LEN, null=True)
     external_id = models.CharField(max_length=128, null=True)
 
     @classmethod
@@ -180,6 +182,11 @@ class CaseData(BaseDataIndex):
                 "case id %s!" % (self.case_id, case_id)
             )
 
+        if case.name and len(case.name) > CASE_NAME_LEN:
+            name = case.name[:CASE_NAME_LEN-3] + '...'
+        else:
+            name = case.name
+
         self.case_id = case_id
         self.doc_type = case.doc_type
         self.domain = case.domain
@@ -195,7 +202,7 @@ class CaseData(BaseDataIndex):
         self.modified_on = case.modified_on
         self.modified_by = case.user_id
         self.server_modified_on = case.server_modified_on
-        self.name = case.name
+        self.name = name
         self.external_id = case.external_id
 
         if not is_new:

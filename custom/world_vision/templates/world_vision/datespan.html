@@ -1,0 +1,51 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+    <label for="{{ css_id }}_startdate" class="sub-label">{% trans 'From' %}</label>
+    <input type="text"
+           id="{{ css_id }}_startdate"
+           name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}startdate"
+           class="date-picker input-small"
+           value="{{ datespan.startdate }}">
+
+    <span class="helptext help-inline">
+        <button id="{{ css_id }}_startdate_clear_button" type="button" class="close">&times;</button>
+    </span>
+
+    <label for="{{ css_id }}_enddate" class="sub-label">{% trans 'To' %}</label>
+    <input type="text"
+           id="{{ css_id }}_enddate"
+           name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}enddate"
+           class="date-picker input-small"
+           value="{{ datespan.enddate }}">
+
+    <span class="helptext help-inline">
+        <button id="{{ css_id }}_enddate_clear_button"  type="button" class="close">&times;</button>
+    </span>
+
+    <span class="helptext help-inline" style="margin-left: 1.5em;">
+        {% if timezone %}
+        {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
+        {% endif %}
+    </span>
+{% endblock %}
+{% block filter_js %}
+{% ifequal slug 'datespan'  %}
+<script type="text/javascript">
+    $(function () {
+        $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', '');
+        $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', '');
+
+        $('#{{ css_id }}_startdate_clear_button').click(
+            function(){
+                $('#{{ css_id }}_startdate').val('');
+        });
+        $('#{{ css_id }}_enddate_clear_button').click(
+            function(){
+                $('#{{ css_id }}_enddate').val('');
+        });
+    });
+</script>
+{% endifequal %}
+{% endblock %}

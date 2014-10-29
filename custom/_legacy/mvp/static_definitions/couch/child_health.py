@@ -10,9 +10,14 @@ CHILD_HEALTH_INDICATORS = dict(
                 indicator_key="under5"
             ),
             under5_danger_signs=dict(
+                description="No. of Under-5s with Danger Signs",
+                title="# Under-5s with Danger Signs",
+                indicator_key="under5_danger_signs"
+            ),
+            under5_danger_signs_referred=dict(
                 description="No. of Under-5s Referred for Danger Signs",
                 title="# Under-5s Referred for Danger Signs",
-                indicator_key="under5_danger_signs"
+                indicator_key="under5_danger_signs_referred"
             ),
             under5_fever=dict(
                 description="No. of Under-5s with uncomplicated Fever",

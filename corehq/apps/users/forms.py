@@ -169,7 +169,13 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-
+    email_opt_out = forms.BooleanField(
+        required=False,
+        label="",
+        help_text=ugettext_lazy(
+            "Opt out of emails about CommCare updates."
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)

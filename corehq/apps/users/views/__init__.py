@@ -529,10 +529,20 @@ def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
         invitation = DomainInvitation.get(invitation_id)
+        invitation.invited_on = datetime.now()
+        invitation.save()
         invitation.send_activation_email()
         return json_response({'response': _("Invitation resent"), 'status': 'ok'})
     except ResourceNotFound:
         return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
+
+@require_POST
+@require_can_edit_web_users
+def delete_invitation(request, domain):
+    invitation_id = request.POST['invite']
+    invitation = DomainInvitation.get(invitation_id)
+    invitation.delete()
+    return json_response({'status': 'ok'})
 
 
 class BaseManageWebUserView(BaseUserSettingsView):
