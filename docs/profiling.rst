@@ -177,22 +177,22 @@ data to individual lines of code as opposed to function names.
 Example output:
 
     File: /home/skelly/dev/projects/commcare-hq/corehq/apps/app_manager/views.py
-          Function: view_app at line 781
-          Total time: 2.10091 s
-
-          Line #      Hits         Time  Per Hit   % Time  Line Contents
-          ==============================================================
-             781                                           @login_and_domain_required
-             782                                           @devserver_profile(follow=[view_generic])
-             783                                           def view_app(req, domain, app_id=None):
-             784                                               # redirect old m=&f= urls
-             785         1           58     58.0      0.0      module_id = req.GET.get('m', None)
-             786         1           12     12.0      0.0      form_id = req.GET.get('f', None)
-             787         1            1      1.0      0.0      if module_id or form_id:
-             788                                                   return back_to_main(req, domain, app_id=app_id, module_id=module_id,
-             789                                                                       form_id=form_id)
-             790
-             791         1      2100843 2100843.0    100.0      return view_generic(req, domain, app_id)
+        Function: view_app at line 781
+        Total time: 2.10091 s
+        
+        Line #      Hits         Time  Per Hit   % Time  Line Contents
+        ==============================================================
+        781                                           @login_and_domain_required
+        782                                           @devserver_profile(follow=[view_generic])
+        783                                           def view_app(req, domain, app_id=None):
+        784                                               # redirect old m=&f= urls
+        785         1           58     58.0      0.0      module_id = req.GET.get('m', None)
+        786         1           12     12.0      0.0      form_id = req.GET.get('f', None)
+        787         1            1      1.0      0.0      if module_id or form_id:
+        788                                                   return back_to_main(req, domain, app_id=app_id, module_id=module_id,
+        789                                                                       form_id=form_id)
+        790
+        791         1      2100843 2100843.0    100.0      return view_generic(req, domain, app_id)
 
 TODO: give more detailed info
 
