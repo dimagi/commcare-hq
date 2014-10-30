@@ -368,42 +368,6 @@ def location_export(request, domain):
     return response
 
 
-@domain_admin_required  # TODO: will probably want less restrictive permission
-def location_edit(request, domain, loc_id=None):
-    parent_id = request.GET.get('parent')
-
-    if loc_id:
-        try:
-            location = Location.get(loc_id)
-        except ResourceNotFound:
-            raise Http404()
-    else:
-        location = Location(domain=domain, parent=parent_id)
-
-    if request.method == "POST":
-        form = LocationForm(location, request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Location saved!')
-            return HttpResponseRedirect('%s?%s' % (
-                    reverse('manage_locations', kwargs={'domain': domain}),
-                    urllib.urlencode({'selected': form.location._id})
-                ))
-    else:
-        form = LocationForm(location)
-
-    context = {
-        'domain': domain,
-        'api_root': reverse('api_dispatch_list', kwargs={'domain': domain,
-                                                         'resource_name': 'location',
-                                                         'api_name': 'v0.3'}),
-        'location': location,
-        'hierarchy': location_hierarchy_config(domain),
-        'form': form,
-    }
-    return render(request, 'locations/manage/location.html', context)
-
-
 @domain_admin_required
 @require_POST
 def sync_facilities(request, domain):
