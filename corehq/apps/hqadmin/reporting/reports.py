@@ -59,6 +59,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.util.dates import get_timestamp_millis
 
 LARGE_ES_NUMBER = 10 ** 6
+USER_COUNT_UPPER_BOUND = 1000 * 1000 * 10
 
 
 def add_params_to_query(query, params):
@@ -725,11 +726,12 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
         existing_users = get_user_ids(user_type_mobile)
 
         if require_submissions:
-            LARGE_NUMBER = 1000 * 1000 * 10
             real_form_users = {
                 user_count['term'] for user_count in (
                     FormES()
-                    .user_facet()
+                    .terms_facet(
+                        'form.meta.userID', 'user', USER_COUNT_UPPER_BOUND
+                    )
                     .size(0)
                     .run()
                     .facets.user.result
@@ -739,7 +741,9 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
             real_sms_users = {
                 user_count['term'] for user_count in (
                     SMSES()
-                    .terms_facet('couch_recipient', 'user', LARGE_NUMBER)
+                    .terms_facet(
+                        'couch_recipient', 'user', USER_COUNT_UPPER_BOUND
+                    )
                     .incoming_messages()
                     .size(0)
                     .run()
