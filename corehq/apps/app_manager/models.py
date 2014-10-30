@@ -3018,7 +3018,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if self.case_sharing:
             app_profile['properties']['server-tether'] = {
-                'force': False,
+                'force': True,
                 'value': 'sync',
             }
 
