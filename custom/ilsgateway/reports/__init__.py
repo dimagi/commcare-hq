@@ -3,6 +3,18 @@ from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, DeliveryGroups, \
     ProductAvailabilityData, ProductAvailabilityDashboardChart
+from django.utils.translation import ugettext as _
+
+
+def format_percent(float_number):
+    if float_number:
+        return '%.2f%%' % float_number
+    else:
+        return _('No Data')
+
+
+def link_format(text, url):
+    return '<a href=%s>%s</a>' % (url, text)
 
 
 class ILSData(object):
@@ -56,7 +68,7 @@ class ILSData(object):
 
     @property
     def headers(self):
-        raise []
+        return []
 
     @property
     def rows(self):

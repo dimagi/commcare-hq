@@ -32,6 +32,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             org_summary=org_summary[0] if len(org_summary) > 0 else None,
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
+            month=self.request_params['month'] if 'month' in self.request_params else '',
+            year=self.request_params['year'] if 'year' in self.request_params else '',
             location_id=self.request.GET.get('location_id'),
         )
 

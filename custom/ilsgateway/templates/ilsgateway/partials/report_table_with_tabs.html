@@ -7,7 +7,7 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <div style="float: left;">
-        <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable"  {% if pagination.filter %} data-filter="true"{% endif %}>
+        <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable">
             <thead>
                 <tr>
                     {% for header in report_table.headers %}
@@ -22,15 +22,15 @@
                 </tr>
             </thead>
             <tbody>
-            {% block tabular-body %}
-                {% for row in report_table.rows %}
-                    <tr>
-                        {% for col in row %}
-                            {% include 'reports/async/partials/tabular_cell.html' %}
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            {% endblock %}
+                {% block tabular-body %}
+                    {% for row in report_table.rows %}
+                        <tr>
+                            {% for col in row %}
+                                {% include 'reports/async/partials/tabular_cell.html' %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endblock %}
             </tbody>
         </table>
     </div>
@@ -40,7 +40,8 @@
     <script type="text/javascript">
 
         {% if report_table and report_table.datatables and thisreport.show_table %}
-            var reportTables = new HQReportDataTables({
+
+           var reportTables = new HQReportDataTables({
                 dataTableElem: '#report_table_{{ report_table.slug }}',
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},
@@ -85,7 +86,7 @@
     </script>
 
     {% for chart in thisreport.charts %}
-        {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
+        {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=thisreport.slug %}
             {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
         {% endwith %}
     {% endfor %}
