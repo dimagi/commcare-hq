@@ -763,10 +763,10 @@ def get_module_view_context_and_template(app, module):
         return [prop.values() for prop in details.sort_elements]
 
     def case_list_form_options(case_type):
-        forms = [form for form in module.get_forms() if form.is_registration_form(case_type)]
         options = OrderedDict()
-        if forms:
-            options['disabled'] = _('Disabled')
+        forms = [form for form in module.get_forms() if form.is_registration_form(case_type)]
+        if forms or module.case_list_form.form_id:
+            options['disabled'] = _("Don't show")
             options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
 
         return options
@@ -841,7 +841,8 @@ def get_module_view_context_and_template(app, module):
                     'parent_select': module.parent_select,
                 },
             ],
-            'case_list_form_options': case_list_form_options(case_type)
+            'case_list_form_options': case_list_form_options(case_type),
+            'case_list_form_allowed': not module.parent_select.active
         }
 
 

@@ -83,34 +83,64 @@
             });
 
             if ($('#case-list-form').length) {
-                var CaseListForm = function (data, options) {
+                var CaseListForm = function (data, formOptions, allowed) {
                     var self = this,
-                        initial_option = data.form_id ? data.form_id : 'disabled';
+                        initialOption = data.form_id ? data.form_id : 'disabled',
+                        formSet = !!data.form_id,
+                        formMissing = formSet && !formOptions[data.form_id];
 
-                    self.toggle_state = function(active) {
+                    self.toggleState = function(active) {
+                        active = active && allowed;
                         $('#case_list_form-label').toggle(active);
                         $('#case_list_media').toggle(active);
                     };
 
-                    self.toggle_state(!!data.form_id);
+                    self.toggleMessage = function() {
+                        self.messageVisible(!self.messageVisible());
+                    };
 
-                    self.case_list_form = ko.observable(data.form_id ? data.form_id : null);
-                    self.case_list_form_proxy = ko.observable(initial_option);
-                    self.case_list_form_optstr = _.map(options, function (label, value) {
-                        return {value: value, label: label};
+                    self.buildOptstr = function(extra) {
+                        self.caseListFormOptstr = _.map(formOptions, function (label, value) {
+                            return {value: value, label: label};
+                        });
+                        if (extra) {
+                            self.caseListFormOptstr.push({value: extra, label: '{% trans "Unknown Form (missing)" %}'});
+                        }
+                    };
+
+                    self.allowed = allowed;
+                    self.formMissing = ko.observable(formMissing);
+                    self.messageVisible = ko.observable(false);
+                    self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
+                    self.caseListFormProxy = ko.observable(initialOption);
+                    self.caseListFormDisplay = formOptions[initialOption];
+
+                    self.caseListFormProxy.subscribe(function (form_id) {
+                        var disabled = form_id === 'disabled' || !formOptions[form_id];
+                        self.caseListForm(disabled ? null : form_id);
+                        self.toggleState(!disabled);
                     });
-                    self.case_list_form_proxy.subscribe(function (form_id) {
-                        var disabled = form_id === 'disabled';
-                        self.case_list_form(disabled ? null : form_id);
-                        self.toggle_state(!disabled);
-                    });
-                    self.case_list_form_display = options[initial_option];
+
+                    if (formMissing) {
+                        var removeOld = self.caseListFormProxy.subscribe(function (oldValue) {
+                            if (formMissing && oldValue === initialOption) {
+                                // remove the missing form from the options once the user select a real form
+                                self.buildOptstr();
+                                removeOld.dispose();
+                                self.formMissing(false);
+                            }
+                        }, null, "beforeChange");
+                    }
+
+                    self.toggleState(formSet && !formMissing);
+                    self.buildOptstr(formMissing ? data.form_id : false);
                 };
-                var case_list_form = new CaseListForm(
-                        {{ module.case_list_form|JSON }},
-                        {{ case_list_form_options|JSON }}
+                var caseListForm = new CaseListForm(
+                    {{ module.case_list_form|JSON }},
+                    {{ case_list_form_options|JSON }},
+                    {{ case_list_form_allowed|JSON }}
                 );
-                ko.applyBindings(case_list_form, $('#case-list-form').get(0));
+                ko.applyBindings(caseListForm, $('#case-list-form').get(0));
             }
         });
         $(function () {

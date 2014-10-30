@@ -75,7 +75,7 @@
                             does not update an existing case. Please select a different form.
                             {% endblocktrans %}
                         {% endif %}
-                         {% if error.type == "case list form workflow" %}
+                        {% if error.type == "case list form workflow" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
                             {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
@@ -83,6 +83,14 @@
                             as the case registration form for the <a href="{{ module_url }}">{{ module_name }}</a> module.
                             This form also has its end of form navigation set. These two settings are incompatible.
                             Please disable one or the other.
+                            {% endblocktrans %}
+                        {% endif %}
+                        {% if error.type == "case list form missing" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                            The form you have selected form as the case registration form for the
+                            <a href="{{ module_url }}">{{ module_name }}</a> module does not exist.
+                            Please select another form.
                             {% endblocktrans %}
                         {% endif %}
                         {% if error.type == "invalid filter xpath" %}

@@ -777,7 +777,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 ).fields
                                 d.fields.extend(fields)
 
-                            if module.case_list_form.form_id and detail_type.endswith('short'):
+                            if module.module_type == 'basic' and not module.parent_select.active and \
+                                    module.case_list_form.form_id and detail_type.endswith('short'):
                                 # add form action to detail
                                 form = module.get_form_by_unique_id(module.case_list_form.form_id)
                                 d.action = Action(
