@@ -39,15 +39,14 @@ ko.bindingHandlers.select2 = {
             });
             converted = _.uniq(converted, function(obj) {return obj.id});
             var data = $(el).select2('data');
-            if (_.indexOf(_.pluck(data, 'id'), "0") === 0 && data.length > 1) {
+            if (_.indexOf(_.pluck(data, 'id'), '0') === 0 && data.length > 1) {
                 converted.splice(0, 1)
-            } else if ((_.indexOf(_.pluck(data, 'id'), "0") + 1) === data.length && converted.length > 1) {
-                console.log("aaaaaa")
-                converted = converted[_.indexOf(_.pluck(converted, 'id'), "0")];
+            } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === data.length && converted.length > 1) {
+                converted = converted[_.indexOf(_.pluck(converted, 'id'), '0')];
                 var tmplist = allBindings.selectedOptions().slice();
                 $.each(tmplist, function (key, value) {
-                    if (textAccessor(value) !== '' && value !== "0") {
-                       allBindings.selectedOptions().pop()
+                    if (textAccessor(value) !== '' && value !== '0') {
+                        allBindings.selectedOptions().pop()
                     }
                 });
             }

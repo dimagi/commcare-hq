@@ -65,7 +65,7 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
                         break
                 if not exist:
                     if not hierarchy:
-                        hierarchy.append(dict(val=0, text='All', next=[]))
+                        hierarchy.append(dict(val='0', text='All', next=[]))
                     hierarchy.append(tmp)
                     hierarchy = tmp['next']
                 else:
