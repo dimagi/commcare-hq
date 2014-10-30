@@ -1,6 +1,6 @@
-#from django.conf.urls.defaults import patterns, url
-from django.conf.urls.defaults import *
-from corehq.apps.locations.views import (
+from django.conf.urls.defaults import patterns, url
+
+from .views import (
     LocationsListView,
     NewLocationView,
     EditLocationView,

@@ -1,31 +1,33 @@
 import copy
-from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.utils.safestring import mark_safe
-from django.views.decorators.http import require_POST
-from corehq.apps.commtrack.views import BaseCommTrackManageView
-
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.models import Location
-from corehq.apps.locations.forms import LocationForm
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
-from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
-from corehq.apps.commtrack.util import unicode_slug
-from corehq.apps.facilities.models import FacilityRegistry
-from django.core.urlresolvers import reverse
-from django.shortcuts import render
-from django.contrib import messages
-from couchdbkit import ResourceNotFound
-import urllib
 import json
+import urllib
 
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.shortcuts import render
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
-from dimagi.utils.decorators.memoized import memoized
-from custom.openlmis.tasks import bootstrap_domain_task
-from soil.util import expose_download, get_download_context
-from corehq.apps.commtrack.tasks import import_locations_async
+from django.views.decorators.http import require_POST
+
+from couchdbkit import ResourceNotFound
 from couchexport.models import Format
+from dimagi.utils.decorators.memoized import memoized
+from soil.util import expose_download, get_download_context
+
+from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
+from corehq.apps.commtrack.tasks import import_locations_async
+from corehq.apps.commtrack.util import unicode_slug
+from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.facilities.models import FacilityRegistry
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from custom.openlmis.tasks import bootstrap_domain_task
+
+from .models import Location
+from .forms import LocationForm
+from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
 @domain_admin_required
@@ -356,7 +358,7 @@ def location_export(request, domain):
     return response
 
 
-@domain_admin_required # TODO: will probably want less restrictive permission
+@domain_admin_required  # TODO: will probably want less restrictive permission
 def location_edit(request, domain, loc_id=None):
     parent_id = request.GET.get('parent')
 
@@ -398,7 +400,7 @@ def sync_facilities(request, domain):
     commtrack_settings = request.project.commtrack_settings
 
     # create Facility Registry and Facility LocationTypes if they don't exist
-    if not any(lt.name == 'Facility Registry' 
+    if not any(lt.name == 'Facility Registry'
                for lt in commtrack_settings.location_types):
         commtrack_settings.location_types.extend([
             LocationType(name='Facility Registry', allowed_parents=['']),
@@ -406,8 +408,10 @@ def sync_facilities(request, domain):
         ])
         commtrack_settings.save()
 
-    registry_locs = dict((l.external_id, l) for l in
-            Location.filter_by_type(domain, 'Facility Registry'))
+    registry_locs = {
+        l.external_id: l
+        for l in Location.filter_by_type(domain, 'Facility Registry')
+    }
 
     # sync each registry and add/update Locations for each Facility
     for registry in FacilityRegistry.by_domain(domain):
@@ -423,9 +427,11 @@ def sync_facilities(request, domain):
         registry_loc.save()
         registry_loc._seen = True
 
-        facility_locs = dict((l.external_id, l) for l in
-                Location.filter_by_type(domain, 'Facility', registry_loc))
-        
+        facility_locs = {
+            l.external_id: l
+            for l in Location.filter_by_type(domain, 'Facility', registry_loc)
+        }
+
         for facility in registry.get_facilities():
             uuid = facility.data['uuid']
             try:
@@ -455,4 +461,3 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
-
