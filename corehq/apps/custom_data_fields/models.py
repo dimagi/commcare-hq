@@ -38,7 +38,11 @@ class CustomDataFieldsDefinition(Document):
             return new
 
 
+    # TODO use this in the CustomDataEditor too?
     def get_validator(self, data_field_class):
+        """
+        Returns a validator to be used in bulk import
+        """
         def validate_custom_fields(custom_fields):
             errors = []
             missing_keys = []

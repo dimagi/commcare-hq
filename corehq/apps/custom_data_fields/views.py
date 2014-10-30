@@ -18,6 +18,9 @@ from .models import CustomDataFieldsDefinition, CustomDataField, CUSTOM_DATA_FIE
 
 
 class CustomDataFieldsForm(forms.Form):
+    """
+    The main form for editing a custom data definition
+    """
     data_fields = forms.CharField(widget=forms.HiddenInput)
 
     def verify_no_duplicates(self, data_fields):
@@ -59,6 +62,9 @@ class XmlSlugField(forms.SlugField):
 
 
 class CustomDataFieldForm(forms.Form):
+    """
+    Sub-form for editing an individual field's definition.
+    """
     label = forms.CharField(
         required=True,
         error_messages={'required': _('All fields are required')}
@@ -74,6 +80,11 @@ class CustomDataFieldForm(forms.Form):
 
 
 class CustomDataFieldsMixin(object):
+    """
+    Provides the interface for editing the ``CustomDataFieldsDefinition``
+    for each entity type.
+    Each entity type must provide a subclass of this mixin.
+    """
     urlname = None
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
@@ -150,6 +161,9 @@ def add_prefix(field_dict):
 
 
 class CustomDataEditor(object):
+    """
+    Tool to edit the data for a particular entity, like for an individual user.
+    """
     def __init__(self, field_view, domain, existing_custom_data=None,
             post_dict=None, required_only=False):
         self.field_view = field_view
