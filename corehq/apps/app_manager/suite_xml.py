@@ -1437,26 +1437,25 @@ class SuiteGenerator(SuiteGeneratorBase):
             f.set_content(groups)
             yield f
 
-        schedule_modules = (module for module in self.modules if hasattr(module, 'has_schedule') and
-                            module.has_schedule and
+        schedule_modules = (module for module in self.modules if getattr(module, 'has_schedule', False) and
                             module.all_forms_require_a_case)
         schedule_forms = (form for module in schedule_modules for form in module.get_forms())
         for form in schedule_forms:
             schedule = form.schedule
-            f = ScheduleFixture(
+            fx = ScheduleFixture(
                 id=self.id_strings.schedule_fixture(form),
                 schedule=Schedule(
                     expires=schedule.expires,
                     post_schedule_increment=schedule.post_schedule_increment
                 ))
             for i, visit in enumerate(schedule.visits):
-                f.schedule.visits.append(ScheduleVisit(
+                fx.schedule.visits.append(ScheduleVisit(
                     id=i + 1,
                     due=visit.due,
                     late_window=visit.late_window
                 ))
 
-            yield f
+            yield fx
 
 
 class MediaSuiteGenerator(SuiteGeneratorBase):

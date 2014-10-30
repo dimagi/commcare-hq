@@ -1289,16 +1289,15 @@ class XForm(WrappedNode):
 
         def check_case_type(action):
             if not form.get_app().case_type_exists(action.case_type):
-                raise CaseError("Case type (%s) for form (%s) does not exist" % (action.case_type, form.default_name()))
+                raise CaseError("Case type (%s) for form (%s) does not exist" % (
+                    action.case_type,
+                    form.default_name())
+                )
 
-        last_real_action = None
-        try:
-            last_real_action = next(
-                action for action in reversed(form.actions.load_update_cases)
-                if not action.auto_select
-            )
-        except StopIteration:
-            pass
+        last_real_action = next(
+            (action for action in reversed(form.actions.load_update_cases) if not action.auto_select),
+            None
+        )
 
         has_schedule = form.get_module().has_schedule and form.schedule and form.schedule.anchor
 
