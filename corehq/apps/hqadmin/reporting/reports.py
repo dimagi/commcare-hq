@@ -729,9 +729,7 @@ def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
             real_form_users = {
                 user_count['term'] for user_count in (
                     FormES()
-                    .terms_facet(
-                        'form.meta.userID', 'user', USER_COUNT_UPPER_BOUND
-                    )
+                    .user_facet(size=USER_COUNT_UPPER_BOUND)
                     .size(0)
                     .run()
                     .facets.user.result
