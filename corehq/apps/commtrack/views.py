@@ -560,15 +560,19 @@ def api_query_supply_point(request, domain):
             q = query.lower()
             startkey = [domain, type, q]
             endkey = [domain, type, q + 'zzzzzz']
-            return Location.view('locations/by_name',
+            return [loc for loc in Location.view(
+                'locations/by_name',
                 startkey=startkey,
                 endkey=endkey,
                 limit=LIMIT,
                 reduce=False,
                 include_docs=True,
-            )
+            ) if not loc.is_archived]
 
-        locs = sorted(itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)), key=lambda e: e.name)[:LIMIT]
+        locs = sorted(
+            itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)),
+            key=lambda e: e.name
+        )[:LIMIT]
         return HttpResponse(json.dumps(map(loc_to_payload, locs)), 'text/json')
 
 
