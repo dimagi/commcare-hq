@@ -356,7 +356,8 @@ class XFormDeprecated(XFormError):
     After an edit, the old versions go here.
     """
     deprecated_date = DateTimeProperty(default=datetime.datetime.utcnow)
-    
+    orig_id = StringProperty()
+
     def save(self, *args, **kwargs):
         # we put this here, in case the doc hasn't been modified from an original 
         # XFormInstance we'll force the doc_type to change. 
