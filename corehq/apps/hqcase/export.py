@@ -3,10 +3,14 @@ from corehq.apps.users.cases import get_owner_id
 from soil import DownloadBase
 
 
-def export_cases_and_referrals(domain, cases, workbook, users=None, groups=None,
+def export_cases_and_referrals(domain, cases, workbook, group=None, users=None, groups=None,
                                process=None):
     by_user_id = dict([(user.user_id, user) for user in users]) if users else {}
     by_group_id = dict([(g.get_id, g) for g in groups]) if groups else {}
+    if group:
+        owner_ids = set(by_user_id.keys())
+        owner_ids.add(group.get_id)
+
     case_static_keys = (
         "case_id",
         "username",
@@ -54,7 +58,10 @@ def export_cases_and_referrals(domain, cases, workbook, users=None, groups=None,
             return get_owner_id(case)
 
     def might_be_relevant(case):
-        return not users or (users and get_matching_owner(case))
+        if group:
+            return get_owner_id(case) in owner_ids
+        else:
+            return not users or get_matching_owner(case)
 
     for i, case in enumerate(cases):
         if process:

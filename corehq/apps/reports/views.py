@@ -914,6 +914,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
             return len(self.all_case_ids)
 
     # todo deal with cached user dict here
+    group = Group.get(group) if group else None
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
     groups = Group.get_case_sharing_groups(domain)
 
@@ -924,6 +925,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
             domain,
             stream_cases(case_ids),
             workbook,
+            group=group,
             users=users,
             groups=groups,
             process=process
