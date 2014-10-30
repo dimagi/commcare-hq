@@ -240,7 +240,10 @@ class Location(CachedCouchDocumentMixin, Document):
             startkey=[domain, loc_type, loc_id],
             endkey=[domain, loc_type, loc_id, {}],
         ).all()]
-        return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
+        return (
+            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+            if not l.get('is_archived', False)
+        )
 
     @classmethod
     def filter_by_type_count(cls, domain, loc_type, root_loc=None):
