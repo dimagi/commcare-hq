@@ -197,6 +197,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             }
 
     def aggregated_data(self, stock_states):
+        def _convert_to_daily(consumption):
+            return consumption / 30 if consumption is not None else None
+
         product_aggregation = {}
         for state in stock_states:
             if state.product_id in product_aggregation:
@@ -215,12 +218,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
                 product['category'] = stock_category(
                     product['current_stock'],
-                    product['consumption'],
+                    _convert_to_daily(product['consumption']),
                     Domain.get_by_name(self.domain)
                 )
                 product['months_remaining'] = months_of_stock_remaining(
                     product['current_stock'],
-                    product['consumption'] / 30 if product['consumption'] is not None else None
+                    _convert_to_daily(product['consumption'])
                 )
             else:
                 product = Product.get(state.product_id)
@@ -237,12 +240,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                     'consumption': consumption,
                     'category': stock_category(
                         state.stock_on_hand,
-                        consumption,
+                        _convert_to_daily(consumption),
                         Domain.get_by_name(self.domain)
                     ),
                     'months_remaining': months_of_stock_remaining(
                         state.stock_on_hand,
-                        consumption / 30 if consumption is not None else None
+                        _convert_to_daily(consumption)
                     )
                 }
 
