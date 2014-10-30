@@ -43,7 +43,7 @@ var VisitScheduler = (function () {
         self.formSchedule = FormSchedule.wrap(params.schedule, self);
 
         self.init = function () {
-            _.delay(function () {
+            _.defer(function () {
                 ko.applyBindings(self, self.home.get(0));
                 self.home.on('textchange', 'input', self.change)
                      // all select2's are represented by an input[type="hidden"]
@@ -112,8 +112,8 @@ var VisitScheduler = (function () {
                 }
             };
 
-            self.transition = ko.computed(FormSchedule.condition_computed(self.config, self.transition_condition));
-            self.terminate = ko.computed(FormSchedule.condition_computed(self.config, self.termination_condition));
+            self.transition = ko.computed(FormSchedule.conditionComputed(self.config, self.transition_condition));
+            self.terminate = ko.computed(FormSchedule.conditionComputed(self.config, self.termination_condition));
 
             self.allowExpiry = ko.computed(function () {
                  return self.transition_condition.type() === 'never' &&
@@ -150,7 +150,7 @@ var VisitScheduler = (function () {
             return self;
         },
 
-        condition_computed: function(config, condition) {
+        conditionComputed: function(config, condition) {
             return {
                 read: function () {
                     if (condition) {
@@ -167,7 +167,7 @@ var VisitScheduler = (function () {
             };
         },
 
-        clean_condition: function (condition) {
+        cleanCondition: function (condition) {
             if (condition.type() !== 'if') {
                 condition.question(null);
                 condition.answer(null);
@@ -176,8 +176,8 @@ var VisitScheduler = (function () {
         },
 
         unwrap: function (self) {
-            FormSchedule.clean_condition(self.transition_condition);
-            FormSchedule.clean_condition(self.termination_condition);
+            FormSchedule.cleanCondition(self.transition_condition);
+            FormSchedule.cleanCondition(self.termination_condition);
             var schedule = ko.mapping.toJS(self, FormSchedule.mapping(self));
             if (!self.allowExpiry()) {
                 schedule.expires = null;
