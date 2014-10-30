@@ -284,7 +284,7 @@ var GraphViewModel = function(moduleOptions){
     self.annotations = ko.observableArray([]);
     self.axisTitleConfigurations = ko.observableArray(_.map(
         // If you add to this list, don't forget to update theOrder in populate() (I know this is gross)
-        ['x-axis-title', 'y-axis-title', 'secondary-y-title'],
+        ['x-title', 'y-title', 'secondary-y-title'],
         function(s){return new LocalizedConfigPropertyValuePair({
             'property': s,
             'lang': self.lang,
@@ -357,7 +357,7 @@ var GraphViewModel = function(moduleOptions){
         }
         // This is dumb:
         // might make more sense to sort this in getGraphViewModelJS. Either way it's annoying.
-        var theOrder = {'x-axis-title':0, 'y-axis-title':1, 'secondary-y-title': 2};
+        var theOrder = {'x-title':0, 'y-title':1, 'secondary-y-title': 2};
         self.axisTitleConfigurations.sort(function(a, b){
             return theOrder[a.property] - theOrder[b.property];
         });
