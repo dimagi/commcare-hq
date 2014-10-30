@@ -101,7 +101,11 @@ class ClosedChildCasesBreakdown(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(ClosedChildCasesBreakdown, self).filters
+        filter = super(ClosedChildCasesBreakdown, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('closed_on', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('closed_on', 'stred'))
         filter.append(NOTEQ('reason_for_child_closure', 'empty'))
         return filter
 
