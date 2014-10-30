@@ -43,8 +43,9 @@
 trunk: master
 name: autostaging
 branches:
-  - explicit_case_processing # danny (been here a while, still relevant as of 10/10)
-  - double-management+staging # SK 10/28
+  - remove-hutch  # DR 10/28
+  - double-managment+schedule # SK 10/28
+  - schedule+bulk-app-translate # Noah 10/30
   - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
@@ -52,7 +53,6 @@ branches:
   # - logos # Nick P 5/28
 #  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
-  - custom_user_data  # tw+Ethan 9/9
   - lwyszomi:better_date_filters_improvment
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -63,7 +63,11 @@ branches:
   - double-management # SK 10/15
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
   - bulk-app-translate # Noah 9/18
+  - custom_user_data  # tw+Ethan 9/9
   - graphing # Nick P 10/27
+  - graphing-debugging # Nick P 10/28
+  - share-fixtures # j$ 10/29
+  - lwyszomi:ilsgateway-productstock
 submodules:
   submodules/couchlog-src:
     branches:

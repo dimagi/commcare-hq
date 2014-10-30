@@ -255,3 +255,8 @@ class TestESFacet(ElasticTestMixin, TestCase):
         res = ESQuerySet(example_response, query)
         output = res.facets.user.counts_by_term()
         self.assertEqual(output, expected_output)
+
+    def test_bad_facet_name(self):
+        with self.assertRaises(AssertionError):
+            HQESQuery('forms')\
+                .terms_facet('form.meta.userID', 'form.meta.userID', size=10)

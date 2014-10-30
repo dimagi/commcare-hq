@@ -120,7 +120,7 @@ MOTHER_INDICATOR_TOOLTIPS = {
         "abortions": "Number of reported abortions"
     },
     "postnatal_care_details": {
-        "pnc_1": "delivery within 48 hrs",
+        "pnc_1": "Mothers visited by Front Line Worker within 48 hours of delivery",
         "pnc_2": "Mothers visited by Front Line Worker within 2-4 days of delivery",
         "pnc_3": "Mothers visited by Front Line Worker within 5-7 days of delivery",
         "pnc_4": "Mothers visited by Front Line Worker within 21-42 days of delivery",

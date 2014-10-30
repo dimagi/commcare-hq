@@ -124,3 +124,8 @@ EDIT_SUBMISSIONS = StaticToggle(
     'edit_submissions',
     'Submission Editing on HQ'
 )
+
+USER_CONFIGURABLE_REPORTS = StaticToggle(
+    'user_reports',
+    'User configurable reports UI'
+)

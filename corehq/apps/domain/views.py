@@ -1589,7 +1589,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                     m_file.save()
 
             ignore = []
-            if request.POST.get('share_reminders', False):
+            if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 
             old = self.domain_object.published_snapshot()

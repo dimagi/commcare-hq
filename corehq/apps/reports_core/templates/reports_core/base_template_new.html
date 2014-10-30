@@ -1,0 +1,147 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block uncompressed-stylesheets %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+{% endblock %}
+{% block js %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
+    <script src="{% static 'reports_core/js/charts.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        var base_url = "{{ url }}";
+        function get_report_url() {
+            return base_url;
+        }
+
+    $(function() {
+        var chartSpecs = {{ report.spec.charts|JSON }};
+        var updateCharts = function (data) {
+            if (chartSpecs !== null && chartSpecs.length > 0) {
+                // draw graph
+                charts.render(chartSpecs, data.aaData, $("#chart-container"));
+            }
+        };
+        var reportTables = new HQReportDataTables({
+            dataTableElem: '#report_table_{{ report.slug }}',
+            defaultRows: {{ report_table.default_rows|default:10 }},
+            startAtRowNum: {{ report_table.start_at_row|default:0 }},
+            showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+
+            {% if headers.render_aoColumns %}aoColumns: {{ headers.render_aoColumns|JSON }},{% endif %}
+            autoWidth: {{ headers.auto_width|JSON }},
+            {% if headers.custom_sort %}customSort: {{ headers.custom_sort|JSON }},{% endif %}
+
+            ajaxSource: '{{ url }}',
+            ajaxParams: function() {
+                return $('#report-filters').serializeArray();
+            },
+            {% if report_table.left_col.is_fixed %}
+                fixColumns: true,
+                fixColsNumLeft: {{ report_table.left_col.fixed.num }},
+                fixColsWidth: {{ report_table.left_col.fixed.width }},
+            {% endif %}
+            extraCallbacks: [updateCharts]
+        });
+        $('#report-filters').submit(function(event) {
+            var postData = $(this).serialize();
+            $.ajax({
+                url: $(this).attr("action"),
+                type: $(this).attr("method"),
+                data: postData,
+                headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
+                success: function(data, textStatus, jqXHR) {
+                    updateCharts(data);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log("wah waaaah");
+                }
+            });
+            event.preventDefault();
+            reportTables.render();
+        });
+
+    });
+    </script>
+{% endblock %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+
+{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+
+{% block page-title %}
+<div class="breadcrumb">
+    <div id="report-title">{{ report.title }}</div>
+</div>
+{% endblock %}
+
+{% block main_column %}
+<div class="report-controls">
+    <form id="report-filters" class="form-horizontal" method="GET" action="">
+        <fieldset>
+            <legend><span>{% trans "Report Filters" %}</span></legend>
+            <input type="hidden" name="format" value="json"/>
+            {% for filter in report.filters %}
+                {% include filter.template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+            {% endfor %}
+        </fieldset>
+
+        <div class="report-filter-actions">
+            {% block report_filter_actions %}
+            <button type="submit" class="btn btn-primary"
+                    data-loading-text="{% trans "Generating Report..." %}"
+                    data-standard-text="{% trans "Apply" %}">
+                {% trans "Apply" %}
+            </button>
+            {% endblock %}
+        </div>
+    </form>
+
+    <div class="report-actions">
+        {% if report.show_filters %}
+            <a href="#reportFilters" class="btn" id="toggle-report-filters"
+                data-toggle="collapse" data-open-text="{% trans "Show Filter Options" %}"
+                data-close-text="{% trans "Hide Filter Options" %}">
+                {% trans "Filter Options" %}
+            </a>
+        {% endif %}
+        {% if report.is_exportable %}
+            <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+            </a>
+        {% endif %}
+        {% if report.is_emailable %}
+            <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+                <i class="icon icon-envelope"></i> {% trans "Email report" %}
+            </a>
+        {% endif %}
+        {% if report.is_printable %}
+            <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+                <i class="icon icon-print"></i> {% trans "Print" %}
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% block reportcharts %}
+<section id="chart-container" style="display: none;">
+</section>
+{% endblock %}
+{% block reporttable %}
+<table id="report_table_{{ report.slug }}" class="table table-striped datatable">
+    <thead>
+    {{ headers.render_html|safe }}
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+{% endblock reporttable %}
+{% endblock %}

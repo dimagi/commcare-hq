@@ -92,7 +92,6 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                 location_list = self.request.GET.getlist(req_prop, [])
                 if location_list and location_list[0] != '0':
                     config.update({k: tuple(location_list)})
-                    break
         return config
 
     def get_report_context(self, data_provider):
@@ -161,15 +160,15 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                 chart.stacked = True
                 chart.add_dataset('Percentage',
                                   [{'x': row[0]['html'],
-                                    'y': int(row[3]['html'][:-1]) / 100} for row in rows],
+                                    'y': int(row[3]['html'][:-1]) / 100.0} for row in rows],
                                   color='green')
                 chart.add_dataset('Dropout Percentage',
                                   [{'x': row[0]['html'],
-                                    'y': int(row[-1]['html'][:-1]) / 100} for row in rows],
+                                    'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows],
                                   color='red')
             else:
                 chart.add_dataset('Percentage',
-                                  [{'x': row[0]['html'], 'y':int(row[-1]['html'][:-1]) / 100} for row in rows])
+                                  [{'x': row[0]['html'], 'y':int(row[-1]['html'][:-1]) / 100.0} for row in rows])
         elif isinstance(data_provider, AnteNatalCareServiceOverviewExtended):
             chart1 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart2 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
@@ -178,18 +177,18 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart1.marginBottom = 120
             chart2.marginBottom = 120
             chart1.add_dataset('Percentage', [{'x': row[0]['html'],
-                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[1:6]])
+                                               'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows[1:6]])
             chart2.add_dataset('Percentage', [{'x': row[0]['html'],
-                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[6:12]])
+                                               'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows[6:12]])
             return [chart1, chart2]
         elif isinstance(data_provider, ChildrenDeathsByMonth):
             chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"),
                               y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
-            months_mapping = dict((v,k) for k,v in enumerate(calendar.month_abbr))
+            months_mapping = dict((v, k) for k, v in enumerate(calendar.month_abbr))
             chart.add_dataset('Percentage', [{'x': datetime.date(1, months_mapping[row[0][:3]], 1),
-                                              'y': int(row[-1]['html'][:-1]) / 100} for row in rows])
+                                              'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows])
         else:
             chart = PieChart('', '', [{'label': "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1]))),
                                        'value': int(row[-1]['html'][:-1])} for row in rows])

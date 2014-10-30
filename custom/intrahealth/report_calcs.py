@@ -50,26 +50,42 @@ class PPSPlaned(fluff.Calculator):
 class Commandes(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
-        products = form.form['products']
-        for product in products:
-            if 'productName' in product and 'receivedMonthInner' in product and product['receivedMonthInner']:
-                yield {
-                    'date': product['receivedMonthInner'],
-                    'value': product['amountOrdered'],
-                    'group_by': [product['productName']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            products = form.form['products']
+            for product in products:
+                if 'productName' in product and 'receivedMonthInner' in product and product['receivedMonthInner']:
+                    yield {
+                        'date': product['receivedMonthInner'],
+                        'value': product['amountOrdered'],
+                        'group_by': [product['productName']]
+                    }
+        elif 'productName' in form.form['products'] and 'receivedMonthInner' in form.form['products']\
+            and form.form['products']['receivedMonthInner']:
+            yield {
+                'date': form.form['products']['receivedMonthInner'],
+                'value': form.form['products']['amountOrdered'],
+                'group_by': [form.form['products']['productName']]
+            }
 
 class Recus(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
-        products = form.form['products']
-        for product in products:
-            if 'productName' in product and 'receivedMonthInner' in product and product['receivedMonthInner']:
-                yield {
-                    'date': product['receivedMonthInner'],
-                    'value': product['amountReceived'],
-                    'group_by': [product['productName']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            products = form.form['products']
+            for product in products:
+                if 'productName' in product and 'receivedMonthInner' in product and product['receivedMonthInner']:
+                    yield {
+                        'date': product['receivedMonthInner'],
+                        'value': product['amountReceived'],
+                        'group_by': [product['productName']]
+                    }
+        elif 'productName' in form.form['products'] and 'receivedMonthInner' in form.form['products']\
+            and form.form['products']['receivedMonthInner']:
+            yield {
+                'date': form.form['products']['receivedMonthInner'],
+                'value': form.form['products']['amountOrdered'],
+                'group_by': [form.form['products']['productName']]
+            }
 
 class PPSConsumption(fluff.Calculator):
 
@@ -79,13 +95,21 @@ class PPSConsumption(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                yield {
-                    'date': real_date(form),
-                    'value': product[self.field],
-                    'group_by': [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    yield {
+                        'date': real_date(form),
+                        'value': product[self.field],
+                        'group_by': [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products'][self.field],
+                'group_by': [form.form['products']['product_name']]
+            }
+
 
 
 class RupturesDeStocks(fluff.Calculator):
@@ -110,115 +134,184 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def old_stock_total(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['old_stock_total'])
-                yield {
-                    'date': real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['old_stock_total'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['old_stock_total'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def total_stock(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['total_stock'])
-                yield {
-                    'date': real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['total_stock'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['total_stock'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def livraison(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['top_up']['transfer']['entry']['value']['@quantity'])
-                yield {
-                    'date': real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['top_up']['transfer']['entry']['value']['@quantity'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
                 }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            val = numeric_value(form.form['products']['top_up']['transfer']['entry']['value']['@quantity'])
+            yield {
+                'date': real_date(form),
+                'value': val,
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def display_total_stock(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['display_total_stock'])
-                yield {
-                    'date': real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['display_total_stock'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['display_total_stock'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def old_stock_pps(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['old_stock_pps'])
-                yield {
-                    'date': real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
-                }
-
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['old_stock_pps'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['old_stock_pps'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def outside_receipts_amount(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['outside_receipts_amt'])
-                yield {
-                    "date": real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['outside_receipts_amt'])
+                    yield {
+                        "date": real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['outside_receipts_amt'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def actual_consumption(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['actual_consumption'])
-                yield {
-                    'date': real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['actual_consumption'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['actual_consumption'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def billed_consumption(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['billed_consumption'])
-                yield {
-                    'date': real_date(form),
-                    "value": val,
-                    "group_by": [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['billed_consumption'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['billed_consumption'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def pps_restant(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                val = numeric_value(product['pps_stock'])
-                yield {
-                    'date': real_date(form),
-                    "value": val if val >= 0 else 0,
-                    "group_by": [product['product_name']]
-                }
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                    val = numeric_value(product['pps_stock'])
+                    yield {
+                        'date': real_date(form),
+                        "value": val if val >= 0 else 0,
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['pps_stock'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
     @fluff.date_emitter
     def loss_amt(self, form):
-        for product in form.form['products']:
-            if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product\
-                    and product['loss_amt']:
-                yield {
-                    'date': real_date(form),
-                    "value": int(product['loss_amt']),
-                    "group_by": [product['product_name']]
-                }
-
+        if 'num_products' in form.form and form.form['num_products'] > 1:
+            for product in form.form['products']:
+                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product\
+                        and product['loss_amt']:
+                    yield {
+                        'date': real_date(form),
+                        "value": int(product['loss_amt']),
+                        "group_by": [product['product_name']]
+                    }
+        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+            yield {
+                'date': real_date(form),
+                'value': form.form['products']['loss_amt'],
+                'group_by': [form.form['products']['product_name']]
+            }
 
 class DureeMoyenneLivraison(fluff.Calculator):
 

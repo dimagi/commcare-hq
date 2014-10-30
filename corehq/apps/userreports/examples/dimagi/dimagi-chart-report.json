@@ -1,0 +1,50 @@
+{
+    "domain": "dimagi",
+    "doc_type": "ReportConfiguration",
+    "title": "Candidates by Team Multi Chart",
+    "config_id": "1266a770e2895afc1f30d7495edde63c",
+    "filters": [
+    ],
+    "aggregation_columns": ["remote", "applicant_type"],
+    "columns": [
+        {
+            "type": "field",
+            "field": "remote",
+            "display": "remote status",
+            "aggregation": "simple"
+        },
+        {
+            "type": "field",
+            "field": "applicant_type",
+            "display": "Applicant type",
+            "aggregation": "simple"
+        },
+        {
+            "type": "field",
+            "field": "count",
+            "display": "Count",
+            "aggregation": "sum"
+        }
+    ],
+    "configured_charts": [
+        {
+            "type": "pie",
+            "title": "Remote status",
+            "aggregation_column": "remote",
+            "value_column": "count"
+        },
+        {
+            "type": "pie",
+            "title": "Team",
+            "aggregation_column": "applicant_type",
+            "value_column": "count"
+        },
+        {
+            "type": "multibar-aggregate",
+            "title": "Applicants by type and location",
+            "primary_aggregation": "remote",
+            "secondary_aggregation": "applicant_type",
+            "value_column": "count"
+        }
+    ]
+}
