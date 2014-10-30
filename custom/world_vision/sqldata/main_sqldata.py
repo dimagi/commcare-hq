@@ -28,28 +28,6 @@ class AnteNatalCareServiceOverview(BaseSqlData):
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
                   {'sort_key': 'n/a', 'html': 'n/a'},
                   {'sort_key': 'n/a', 'html': 'n/a'}]]
-        for i in range(1, 5):
-            result.append([
-                {
-                    'sort_key': self.columns[i].header, 'html': self.columns[i].header,
-                    'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'],
-                                                self.columns[i].slug)
-                },
-                {
-                    'sort_key': self.data[self.columns[i].slug],
-                    'html': self.data[self.columns[i].slug]
-                },
-                {
-                    'sort_key': self.data[self.columns[i + 4].slug], 'html': self.data[self.columns[i + 4].slug],
-                    'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'],
-                                                self.columns[i + 4].slug)
-                },
-                {
-                    'sort_key': self.percent_fn(self.data[self.columns[i + 4].slug],
-                                                self.data[self.columns[i].slug]),
-                    'html': self.percent_fn(self.data[self.columns[i + 4].slug], self.data[self.columns[i].slug])
-                }
-            ])
         return result
 
     @property
@@ -93,6 +71,8 @@ class DeliveryPlaceDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'delivery_place_details'
     title = 'Delivery Details'
+    accordion_start = True
+    accordion_end = False
 
     @property
     def headers(self):

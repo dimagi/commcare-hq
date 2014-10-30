@@ -62,7 +62,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             weight_birth_25='2.5',
             newborn_death='newborn_death',
             infant_death='infant_death',
-            child_death='child_death'
+            child_death='child_death',
+            date_of_death='date_of_death'
         )
 
         if 'startdate' in self.request.GET and self.request.GET['startdate']:
@@ -110,8 +111,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                     total_row = data_provider.calculate_total_row(rows)
                 else:
                     total_row = list(calculate_total_row(rows))
-                    if total_row:
-                        total_row[0] = data_provider.total_row_name
+                if total_row:
+                    total_row[0] = data_provider.total_row_name
 
             if data_provider.show_charts:
                 charts = list(self.get_chart(
@@ -130,13 +131,13 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                 total_row=total_row,
                 datatables=data_provider.datatables,
                 start_at_row=0,
-                fix_column=data_provider.fix_left_col
+                fix_column=data_provider.fix_left_col,
+                accordion_start=data_provider.accordion_start,
+                accordion_end=data_provider.accordion_end
             ),
             charts=charts,
             chart_span=12
         )
-        if hasattr(data_provider, 'width'):
-            context['report_table']['width'] = data_provider.width
         return context
 
     def get_chart(self, rows, x_label, y_label, data_provider):
