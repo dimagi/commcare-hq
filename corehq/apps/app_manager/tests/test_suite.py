@@ -209,6 +209,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         form.form_filter = "./edd = '123'"
         self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
+    def test_graphing(self):
+        self._test_generic_suite('app_graphing', 'suite-graphing')
+
 
 class RegexTest(SimpleTestCase):
 
