@@ -20,6 +20,7 @@ from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
+from corehq.apps.custom_data_fields.views import CustomDataFieldsMixin
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -61,6 +62,15 @@ class LocationsListView(BaseLocationView):
             'selected_id': selected_id,
             'locations': load_locs_json(self.domain, selected_id),
         }
+
+
+class LocationFieldsView(CustomDataFieldsMixin, BaseLocationView):
+    urlname = 'location_fields_view'
+    field_type = 'LocationFields'
+    entity_string = _("Location")
+
+    def get(self, *args, **kwargs):
+        return super(LocationFieldsView, self).get(*args, **kwargs)
 
 
 class LocationSettingsView(BaseCommTrackManageView):

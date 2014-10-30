@@ -8,6 +8,7 @@ from .views import (
     LocationImportView,
     LocationImportStatusView,
     LocationSettingsView,
+    LocationFieldsView,
 )
 
 settings_urls = patterns('corehq.apps.locations.views',
@@ -23,5 +24,6 @@ settings_urls = patterns('corehq.apps.locations.views',
     url(r'^export_locations/$', 'location_export', name='location_export'),
     url(r'^sync_openlmis/$', 'sync_openlmis', name='sync_openlmis'),
     url(r'^new/$', NewLocationView.as_view(), name=NewLocationView.urlname),
+    url(r'^fields/$', LocationFieldsView.as_view(), name=LocationFieldsView.urlname),
     url(r'^(?P<loc_id>[\w-]+)/$', EditLocationView.as_view(), name=EditLocationView.urlname),
 )
