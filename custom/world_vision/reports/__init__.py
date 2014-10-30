@@ -92,7 +92,6 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                 location_list = self.request.GET.getlist(req_prop, [])
                 if location_list and location_list[0] != '0':
                     config.update({k: tuple(location_list)})
-                    break
         return config
 
     def get_report_context(self, data_provider):
