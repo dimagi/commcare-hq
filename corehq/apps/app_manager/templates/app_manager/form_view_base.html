@@ -336,7 +336,7 @@
                 {% endif %}
             </div>
 
-            {% if form.form_type == 'advanced_form' and module.has_schedule and request|toggle_enabled:"VISIT_SCHEDULER" %}
+            {% if form.form_type == 'advanced_form' and module.has_schedule %}
                 {% include "app_manager/partials/form_tab_visit_scheduler.html" %}
             {% endif %}
             {% include "app_manager/partials/form_tab_advanced.html" %}
