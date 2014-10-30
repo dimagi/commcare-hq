@@ -284,7 +284,7 @@ var GraphViewModel = function(moduleOptions){
     self.annotations = ko.observableArray([]);
     self.axisTitleConfigurations = ko.observableArray(_.map(
         // If you add to this list, don't forget to update theOrder in populate() (I know this is gross)
-        ['x-title', 'y-title', 'secondary-y-title'],
+        ['x-title', 'y-title'/*, 'secondary-y-title'*/],
         function(s){return new LocalizedConfigPropertyValuePair({
             'property': s,
             'lang': self.lang,
@@ -298,12 +298,20 @@ var GraphViewModel = function(moduleOptions){
         'x-max',
         'y-min',
         'y-max',
+        /* Not available until 2.17
         'secondary-y-min',
         'secondary-y-max',
+        */
         // Axis labels:
+        /* Not available until 2.17
         'x-labels',
         'y-labels',
+        */
+        'x-label-count',
+        'y-label-count',
+        /* Not available until 2.17
         'secondary-y-labels',
+        */
         // other:
         'show-grid',
         'show-axes',
@@ -320,12 +328,14 @@ var GraphViewModel = function(moduleOptions){
         'x-max': 'ex: 100',
         'y-min': 'ex: 0',
         'y-max': 'ex: 100',
-        'secondary-y-min': 'ex: 0',
-        'secondary-y-max': 'ex: 100',
+        //'secondary-y-min': 'ex: 0',
+        //'secondary-y-max': 'ex: 100',
         // Axis labels:
-        'x-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
-        'y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
-        'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        //'x-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        //'y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        'x-label-count': 'ex: 3',
+        'x-label-count': 'ex: 3',
+        //'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
         'show-grid': 'true or false',
         'show-axes': 'true or false',
@@ -357,7 +367,7 @@ var GraphViewModel = function(moduleOptions){
         }
         // This is dumb:
         // might make more sense to sort this in getGraphViewModelJS. Either way it's annoying.
-        var theOrder = {'x-title':0, 'y-title':1, 'secondary-y-title': 2};
+        var theOrder = {'x-title':0, 'y-title':1/*, 'secondary-y-title': 2*/};
         self.axisTitleConfigurations.sort(function(a, b){
             return theOrder[a.property] - theOrder[b.property];
         });
@@ -470,7 +480,7 @@ var GraphSeries = function (original, childCaseTypes){
         'fill-above': 'ex: #aarrggbb',
         'fill-below': 'ex: #aarrggbb',
         'line-color': 'ex: #aarrggbb',
-        'point-style': 'circle, x, or none'
+        'point-style': 'diamond, triangle, or square'
     };
 
     self.toggleShowDataPath = function() {
@@ -489,8 +499,8 @@ GraphSeries.prototype.constructor = GraphSeries;
 var XYGraphSeries = function(original, childCaseTypes){
     GraphSeries.apply(this, [original, childCaseTypes]);
     var self = this;
-    self.configPropertyOptions = self.configPropertyOptions.concat(['secondary-y']);
-    self.configPropertyHints['secondary-y'] = 'ex: false';
+    //self.configPropertyOptions = self.configPropertyOptions.concat(['secondary-y']);
+    //self.configPropertyHints['secondary-y'] = 'ex: false';
 };
 XYGraphSeries.prototype = new GraphSeries();
 XYGraphSeries.constructor = XYGraphSeries;
