@@ -52,9 +52,6 @@ class XPath(unicode):
     def neq(self, b):
         return XPath(u'{} != {}'.format(self, b))
 
-    def not_equals(self, b):
-        return XPath(u'{} != {}'.format(self, b))
-
     @staticmethod
     def expr(template, args, chainable=False):
         if chainable:

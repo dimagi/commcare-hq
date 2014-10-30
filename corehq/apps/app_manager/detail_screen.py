@@ -403,7 +403,7 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         groups = XPath(u"instance('groups')/groups/group")
         group = groups.select('@id', owner_id)
         return XPath.if_(
-            group.count().not_equals(0),
+            group.count().neq(0),
             group.slash('name'),
             XPath.if_(
                 CommCareSession.userid.eq(owner_id),
