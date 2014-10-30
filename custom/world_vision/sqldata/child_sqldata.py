@@ -205,7 +205,7 @@ class ChildrenDeathDetails(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(ChildrenDeathDetails, self).filters[1:]
+        filter = super(ChildrenDeathDetails, self).filters
         filter.extend([EQ('reason_for_child_closure', 'death'), NOTEQ('cause_of_death_child', 'empty')])
         return filter
 
