@@ -65,7 +65,6 @@ branches:
   - bulk-app-translate # Noah 9/18
   - custom_user_data  # tw+Ethan 9/9
   - graphing # Nick P 10/27
-  - graphing-debugging # Nick P 10/28
   - share-fixtures # j$ 10/29
   - lwyszomi:ilsgateway-productstock
 submodules:
