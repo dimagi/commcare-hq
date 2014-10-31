@@ -26,6 +26,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
+from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -63,7 +64,7 @@ from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
     SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
-    ConfirmSubscriptionRenewalForm,
+    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm,
 )
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
@@ -1455,6 +1456,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         context = {
             'form': self.snapshot_settings_form,
             'app_forms': self.app_forms,
+            'fixture_forms': self.fixture_forms,
             'can_publish_as_org': self.can_publish_as_org,
             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
@@ -1522,6 +1524,24 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                                                       or self.published_snapshot == self.domain_object)
                                       }, prefix=app.id)))
         return app_forms
+
+    @property
+    def fixture_forms(self):
+        fixture_forms = []
+        for fixture in FixtureDataType.by_domain(self.domain_object.name):
+            fixture.id = fixture._id
+            if self.request.method == 'POST':
+                fixture_forms.append((fixture,
+                    SnapshotFixtureForm(self.request.POST, prefix=fixture._id)))
+            else:
+                fixture_forms.append((fixture,
+                                  SnapshotFixtureForm(
+                                      initial={
+                                          'publish': (self.published_snapshot is None
+                                                      or self.published_snapshot == self.domain_object)
+                                      }, prefix=fixture._id)))
+
+        return fixture_forms
 
     @property
     @memoized
