@@ -1661,26 +1661,24 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id
-                if request.POST.get("%s-publish" % original_id, False):
-                    application.name = request.POST["%s-name" % original_id]
-                    application.description = request.POST["%s-description" % original_id]
-                    date_picked = request.POST["%s-deployment_date" % original_id]
-                    try:
-                        date_picked = dateutil.parser.parse(date_picked)
-                        if date_picked.year > 2009:
-                            application.deployment_date = date_picked
-                    except Exception:
-                        pass
-                    #if request.POST.get("%s-name" % original_id):
-                    application.phone_model = request.POST["%s-phone_model" % original_id]
-                    application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
-                    application.user_type = request.POST["%s-user_type" % original_id]
+                application.name = request.POST["%s-name" % original_id]
+                application.description = request.POST["%s-description" % original_id]
+                date_picked = request.POST["%s-deployment_date" % original_id]
+                try:
+                    date_picked = dateutil.parser.parse(date_picked)
+                    if date_picked.year > 2009:
+                        application.deployment_date = date_picked
+                except Exception:
+                    pass
+                #if request.POST.get("%s-name" % original_id):
+                application.phone_model = request.POST["%s-phone_model" % original_id]
+                application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
+                application.user_type = request.POST["%s-user_type" % original_id]
 
-                    if not new_domain.multimedia_included:
-                        application.multimedia_map = {}
-                    application.save()
-                else:
-                    application.delete()
+                if not new_domain.multimedia_included:
+                    application.multimedia_map = {}
+                application.save()
+
             if new_domain is None:
                 messages.error(request, _("Version creation failed; please try again"))
             else:
