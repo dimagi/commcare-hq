@@ -1,7 +1,7 @@
 from copy import copy
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
-from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.couch.database import SafeSaveDocument, iter_docs
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
@@ -79,6 +79,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     last_seq = StringProperty()         # the last_seq of couch during this sync
+    duration = IntegerProperty()  # in seconds
 
     # we need to store a mapping of cases to indices for generating the footprint
 
