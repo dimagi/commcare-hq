@@ -76,16 +76,13 @@ class GrowthMonitoring(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        if form.xmlns == CHILD_FOLLOWUP_XMLNS:
-            # child<n>_child_growthmon == 1 if weight was monitored this month
+        if form.xmlns in CHILDREN_FORMS:
+            # child<n>_child_growthmon_calc == 'received' if weight was monitored this month
             total = 0
             for child_num in list('123'):
-                child = form.form.get('child_%s' % child_num)
-                if child:
-                    try:
-                        total += int(child.get('child%s_child_growthmon' % child_num))
-                    except:
-                        pass
+                child_growthmon_calc = form.form.get('child%s_growthmon_calc' % child_num)
+                if child_growthmon_calc == 'received':
+                    total += 1
             if total:
                 yield {
                     'date': form.received_on,

@@ -132,23 +132,23 @@ class OpmCaseSqlData(SqlData):
 class OpmFormSqlData(SqlData):
     table_name = "fluff_OpmFormFluff"
 
-    def __init__(self, domain, case_id, datespan):
+    def __init__(self, domain, user_id, datespan):
         self.domain = domain
-        self.case_id = case_id
+        self.user_id = user_id
         self.datespan = datespan
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
-            case_id=self.case_id,
+            user_id=self.user_id,
             startdate=self.datespan.startdate_utc.date(),
             enddate=self.datespan.enddate_utc.date()
         )
 
     @property
     def group_by(self):
-        return ['case_id']
+        return ['user_id']
 
     @property
     def filters(self):
@@ -156,24 +156,24 @@ class OpmFormSqlData(SqlData):
             "domain = :domain",
             "date between :startdate and :enddate"
         ]
-        if self.case_id:
-            filters.append("case_id = :case_id")
+        if self.user_id:
+            filters.append("user_id = :user_id")
         return filters
 
     @property
     def columns(self):
         return [
-            DatabaseColumn("Case ID", SimpleColumn("case_id")),
+            DatabaseColumn("User ID", SimpleColumn("user_id")),
             DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
             DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
         ]
 
     @property
     def data(self):
-        if self.case_id is None:
+        if self.user_id is None:
             return super(OpmFormSqlData, self).data
-        if self.case_id in super(OpmFormSqlData, self).data:
-            return super(OpmFormSqlData, self).data[self.case_id]
+        if self.user_id in super(OpmFormSqlData, self).data:
+            return super(OpmFormSqlData, self).data[self.user_id]
         else:
             return None
 
