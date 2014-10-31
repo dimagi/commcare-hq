@@ -46,6 +46,18 @@ def import_products(domain, importer):
             )
             continue
 
+        if p.code and p.code in seen_product_ids:
+            messages.append(_(
+                u"Product {product_name} could not be imported \
+                due to duplicated product ids in the excel \
+                file"
+            ).format(
+                product_name=p.name
+            ))
+            continue
+        elif p.code:
+            seen_product_ids.add(p.code)
+
         product_count += 1
         to_save.append(p)
 
