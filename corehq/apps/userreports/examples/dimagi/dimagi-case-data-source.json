@@ -1,0 +1,102 @@
+{
+    "_id": "1266a770e2895afc1f30d7495edde63c",
+    "domain": "dimagi",
+    "doc_type": "DataSourceConfiguration",
+    "referenced_doc_type": "CommCareCase",
+    "table_id": "all_candidates",
+    "display_name": "Candidates",
+    "configured_filter":  {
+        "type": "property_match",
+        "property_name": "type",
+        "property_value": "candidate"
+    },
+    "configured_indicators": [
+        {
+            "column_id": "name",
+            "type": "raw",
+            "display_name": "Name",
+            "datatype": "string",
+            "property_name": "name"
+        },
+        {
+            "column_id": "closed",
+            "type": "boolean",
+            "display_name": "Closed?",
+            "filter": {
+                "type": "property_match",
+                "property_name": "closed",
+                "property_value": true
+            }
+        },
+        {
+            "column_id": "last_seen",
+            "type": "raw",
+            "display_name": "Last Seen",
+            "datatype": "date",
+            "property_name": "server_modified_on"
+        },
+        {
+            "column_id": "count",
+            "type": "count",
+            "display_name": "Count"
+        },
+        {
+            "column_id": "date_applied",
+            "type": "raw",
+            "display_name": "Date Applied",
+            "datatype": "date",
+            "property_name": "date_applied"
+        },
+        {
+            "column_id": "date_phone_screen",
+            "type": "raw",
+            "display_name": "Date of Phone Screen",
+            "datatype": "date",
+            "property_name": "phone_screen_date"
+        },
+        {
+            "column_id": "fast_track_status",
+            "type": "raw",
+            "display_name": "Fast Track Status",
+            "datatype": "string",
+            "property_name": "fast_track"
+        },
+        {
+            "column_id": "remote",
+            "type": "raw",
+            "display_name": "Is remote",
+            "datatype": "string",
+            "property_name": "remote"
+        },
+        {
+            "column_id": "remote_choices",
+            "type": "choice_list",
+            "display_name": "remote choices",
+            "property_name": "remote",
+            "choices": [
+                "yes",
+                "no",
+                "unknown"
+            ],
+            "select_style": "single"
+        },
+        {
+            "column_id": "applicant_type",
+            "type": "raw",
+            "display_name": "Applicant type",
+            "datatype": "string",
+            "property_name": "applicant_type"
+        },
+        {
+            "column_id": "applicant_type_choices",
+            "type": "choice_list",
+            "display_name": "applicant type",
+            "property_name": "applicant_type",
+            "choices": [
+                "either_team",
+                "server_only"
+            ],
+            "select_style": "single"
+        }
+    ]
+}

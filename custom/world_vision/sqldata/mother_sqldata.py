@@ -11,7 +11,6 @@ class MotherRegistrationDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'mother_registration_details'
     title = 'Mother Registration Details'
-    width = 50
 
     @property
     def filters(self):
@@ -183,6 +182,7 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
 
 
 class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
+    slug = 'ante_natal_care_service_overview_extended'
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
@@ -332,6 +332,8 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     chart_y_label = ''
     show_total = True
     total_row_name = "Total live births"
+    accordion_start = False
+    accordion_end = False
 
     @property
     def headers(self):
@@ -372,7 +374,8 @@ class DeliveryStillBirthDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'delivery_still_birth_details'
     title = ''
-    width = '50'
+    accordion_start = False
+    accordion_end = True
 
     @property
     def filters(self):
@@ -450,21 +453,27 @@ class PostnatalCareOverview(BaseSqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn("PNC 1 visit in 0-2 days",
+            DatabaseColumn(
+                "PNC visits in 48 hours of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_1", filters=self.filters + [EQ('pp_1_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 2 visit in 2-4 days",
+            DatabaseColumn(
+                "PNC visits within 2-4 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_2", filters=self.filters + [EQ('pp_2_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 3 visit in 5-7 days",
+            DatabaseColumn(
+                "PNC visits within 5-7 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_3", filters=self.filters + [EQ('pp_3_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 4 visit in 21-42 days",
+            DatabaseColumn(
+                "PNC visits within 21-42 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_4", filters=self.filters + [EQ('pp_4_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 1 visits Total Eligible",
+            DatabaseColumn(
+                "PNC 1 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_1_eligible",
-                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today')])]),
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'),
+                                                               LTE('delivery_date', 'today')])]),
             ),
             DatabaseColumn("PNC 2 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_2_eligible",
@@ -563,6 +572,7 @@ class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    slug = 'delivery_place_details_extended'
 
     @property
     def columns(self):
@@ -587,6 +597,9 @@ class DeliveryPlaceMotherDetails(DeliveryPlaceDetails):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    slug = 'delivery_place_mother_details'
+    accordion_start = False
+    accordion_end = False
 
     @property
     def columns(self):

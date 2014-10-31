@@ -45,7 +45,8 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
 from .incentive import Worker
-from .filters import HierarchyFilter, MetHierarchyFilter, OPMSelectOpenCloseFilter
+from .filters import (HierarchyFilter, MetHierarchyFilter,
+                      OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
 
@@ -637,12 +638,8 @@ class CaseReportMixin(object):
     is_rendered_as_email = False
 
     @property
-    def display_open_cases_only(self):
-        return self.request_params.get('is_open') == 'open'
-
-    @property
-    def display_closed_cases_only(self):
-        return self.request_params.get('is_open') == 'closed'
+    def case_status(self):
+        return OpenCloseFilter.case_status(self.request_params)
 
     def get_rows(self, datespan):
         def get_awc_filter(awcs):
@@ -662,12 +659,12 @@ class CaseReportMixin(object):
                 .term("type.exact", self.default_case_type)
         query.index = 'report_cases'
 
-        if self.display_open_cases_only:
+        if self.case_status == 'open':
             query = query.filter(es_filters.OR(
                 case_es.is_closed(False),
                 case_es.closed_range(gte=self.datespan.enddate_utc)
             ))
-        elif self.display_closed_cases_only:
+        elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
         if self.awcs:
@@ -685,7 +682,7 @@ class CaseReportMixin(object):
             MetHierarchyFilter,
             MonthFilter,
             YearFilter,
-            OPMSelectOpenCloseFilter,
+            OpenCloseFilter,
         ]
 
     @property
@@ -771,6 +768,7 @@ class MetReport(CaseReportMixin, BaseReport):
     fix_left_col = True
     model = ConditionsMet
     exportable = False
+    default_rows = 5
 
     @property
     def headers(self):
@@ -966,11 +964,11 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
     @property
     def fields(self):
-        return [HierarchyFilter, OPMSelectOpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, OpenCloseFilter, DatespanFilter]
 
     @property
     def case_status(self):
-        return self.request.GET['is_open']
+        return OpenCloseFilter.case_status(self.request_params)
 
     @property
     @memoized
@@ -1177,7 +1175,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
 
-    fields = [HierarchyFilter, OPMSelectOpenCloseFilter, DatespanFilter]
+    fields = [HierarchyFilter, OpenCloseFilter, DatespanFilter]
 
     data_source = {
         'adapter': 'legacyreport',
