@@ -5,26 +5,6 @@ from dimagi.utils.decorators.log_exception import log_exception
 from couchforms.signals import xform_archived, xform_unarchived
 
 
-def process_cases(sender, xform, config=None, **kwargs):
-    warnings.warn(
-        'casexml.apps.case.signals.process_cases has been moved to '
-        'casexml.apps.case.process_cases '
-        'and the unused `sender` and `**kwargs` parameters have been removed.',
-        DeprecationWarning,
-    )
-    from casexml.apps.case import process_cases
-    process_cases(xform, config)
-
-
-@log_exception()
-def _process_cases(sender, xform, config=None, **kwargs):
-    from casexml.apps.case import process_cases
-    process_cases(xform, config)
-
-
-successful_form_received.connect(_process_cases)
-
-
 def rebuild_form_cases(sender, xform, *args, **kwargs):
     from casexml.apps.case.xform import get_case_ids_from_form
     from casexml.apps.case.cleanup import rebuild_case

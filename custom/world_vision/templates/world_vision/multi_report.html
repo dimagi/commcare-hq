@@ -28,18 +28,27 @@
           </div>
         </div>
         {% endif %}
-    {% endif %}{{ block.super }}
+    {% endif %}
 {% endblock %}
 
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
+
+    <style>
+        .table-nonfluid {
+           width: auto;
+        }
+        .table tr td:nth-child(1) {width:400px;}
+        .table tr td:nth-child(2) {width:100px;}
+        .table tr td:nth-child(3) {width:100px;}
+        .table tr td:nth-child(4) {width:100px;}
+    </style>
+
     {% for thisreport in reports %}
-        <br/>
-        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
         {% include 'world_vision/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
-        <br/>
+        <br />
     {% endfor %}
 {% endif %}
 {% endblock %}

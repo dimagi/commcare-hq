@@ -11,8 +11,6 @@ from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils import create_unique_filter
-from corehq.apps.commtrack.processing import process_stock_signal_catcher
-from couchforms.signals import successful_form_received
 from custom.openlmis.commtrack import requisition_receipt, requisition_approved
 
 supply_point_modified = Signal(providing_args=['supply_point', 'created'])
@@ -128,4 +126,3 @@ def bootstrap_commtrack_settings_if_necessary_signal(sender, **kwargs):
     bootstrap_commtrack_settings_if_necessary(kwargs['domain'])
 
 commcare_domain_post_save.connect(bootstrap_commtrack_settings_if_necessary_signal)
-successful_form_received.connect(process_stock_signal_catcher)

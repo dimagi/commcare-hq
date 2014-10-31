@@ -110,7 +110,10 @@ class CareDataFormatter(DataFormatter):
 
                 disp_name = find_name(value_chains, 0)
             row = self._format.format_row(group_row)
-            yield [disp_name, row[1]['html'], row[2]['html'], row[3]['html']]
+            sum = row[1]['html'] + row[2]['html'] + row[3]['html']
+            yield [disp_name, unicode(round(row[1]['html'] * 100.0 / sum)) + '%',
+                   unicode(round(row[2]['html'] * 100.0 / sum)) + '%',
+                   unicode(round(row[3]['html'] * 100.0 / sum)) + '%']
             for value in chunk:
                 formatted_row = self._format.format_row(value[1])
                 if self.filter_row(value[0], formatted_row):

@@ -10,7 +10,7 @@
     </tr>
   </thead>
   <tbody data-bind="sortable: actions">
-    <tr>
+    <tr data-bind="attr: {'data-order': _sortableOrder}">
       <td>
         <i class="icon-sort sortable-handle"></i>
       </td>

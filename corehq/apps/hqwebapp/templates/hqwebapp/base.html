@@ -13,6 +13,7 @@
             {% block stylesheets %}
             {% endblock %}
         {% endcompress %}
+        {% block uncompressed-stylesheets %}{% endblock %}
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>

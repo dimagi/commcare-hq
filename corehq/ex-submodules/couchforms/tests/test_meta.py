@@ -2,7 +2,7 @@ from decimal import Decimal
 import os
 from datetime import date, datetime
 from django.test import TestCase
-from couchforms import create_xform_from_xml
+from couchforms.tests.testutils import create_and_save_xform
 from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
@@ -12,7 +12,7 @@ class TestMeta(TestCase):
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         xml_data = open(file_path, "rb").read()
-        with create_xform_from_xml(xml_data) as doc_id:
+        with create_and_save_xform(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
         self.assertNotEqual(None, xform.metadata)
         self.assertEqual(date(2010,07,22), xform.metadata.timeStart.date())
@@ -43,7 +43,7 @@ class TestMeta(TestCase):
         
         file_path = os.path.join(os.path.dirname(__file__), "data", "decimalmeta.xml")
         xml_data = open(file_path, "rb").read()
-        with create_xform_from_xml(xml_data) as doc_id:
+        with create_and_save_xform(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
         self.assertEqual(xform.metadata.appVersion, '2.0')
         self.assertEqual(xform.metadata.to_json(), {
@@ -63,7 +63,7 @@ class TestMeta(TestCase):
     def testMetaBadUsername(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_bad_username.xml")
         xml_data = open(file_path, "rb").read()
-        with create_xform_from_xml(xml_data) as doc_id:
+        with create_and_save_xform(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
             self.assertEqual(xform.metadata.appVersion, '2.0')
 
@@ -84,7 +84,7 @@ class TestMeta(TestCase):
     def testMetaAppVersionDict(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta_dict_appversion.xml")
         xml_data = open(file_path, "rb").read()
-        with create_xform_from_xml(xml_data) as doc_id:
+        with create_and_save_xform(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
             self.assertEqual(xform.metadata.appVersion, '2.0')
 
@@ -105,7 +105,7 @@ class TestMeta(TestCase):
     def test_gps_location(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "gps_location.xml")
         xml_data = open(file_path, "rb").read()
-        with create_xform_from_xml(xml_data) as doc_id:
+        with create_and_save_xform(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
             self.assertEqual(
                 xform.metadata.location,
@@ -135,7 +135,7 @@ class TestMeta(TestCase):
     def test_empty_gps_location(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "gps_empty_location.xml")
         xml_data = open(file_path, "rb").read()
-        with create_xform_from_xml(xml_data) as doc_id:
+        with create_and_save_xform(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
             self.assertEqual(
                 xform.metadata.location,
@@ -148,7 +148,7 @@ class TestMeta(TestCase):
     def testMetaDateInDatetimeFields(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "date_in_meta.xml")
         xml_data = open(file_path, "rb").read()
-        with create_xform_from_xml(xml_data) as doc_id:
+        with create_and_save_xform(xml_data) as doc_id:
             xform = XFormInstance.get(doc_id)
             self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
             self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
