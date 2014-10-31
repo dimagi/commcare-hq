@@ -115,6 +115,12 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
 )
 
+VISIT_SCHEDULER = StaticToggle(
+    'app_builder_visit_scheduler',
+    'Visit Scheduler',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DASHBOARD_PREVIEW = StaticToggle(
     'dashboard_preview',
     'HQ Dashboard Preview'

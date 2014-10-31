@@ -101,7 +101,11 @@ class ClosedChildCasesBreakdown(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(ClosedChildCasesBreakdown, self).filters
+        filter = super(ClosedChildCasesBreakdown, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('closed_on', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('closed_on', 'stred'))
         filter.append(NOTEQ('reason_for_child_closure', 'empty'))
         return filter
 
@@ -127,6 +131,8 @@ class ChildrenDeaths(BaseSqlData):
     chart_x_label = ''
     chart_y_label = ''
     custom_total_calculate = True
+    accordion_start = True
+    accordion_end = False
 
     def calculate_total_row(self, rows):
         total_row = []
@@ -156,6 +162,12 @@ class ChildrenDeaths(BaseSqlData):
                            {'sort_key': 'percentage', 'html': percent}])
         return result
 
+    @property
+    def filters(self):
+        filter = []
+        if 'start_date' in self.config:
+            filter.extend([AND([GTE('date_of_death', 'startdate'), LTE('date_of_death', 'enddate')])])
+        return filter
 
     @property
     def headers(self):
@@ -189,6 +201,8 @@ class ChildrenDeathDetails(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    accordion_start = False
+    accordion_end = False
 
     @property
     def group_by(self):
@@ -201,8 +215,10 @@ class ChildrenDeathDetails(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(ChildrenDeathDetails, self).filters
-        filter.extend([EQ('reason_for_child_closure', 'death'), NOTEQ('cause_of_death_child', 'empty')])
+        filter = []
+        if 'start_date' in self.config:
+            filter.extend([AND([GTE('date_of_death', 'startdate'), LTE('date_of_death', 'enddate')])])
+        filter.extend([EQ('reason_for_child_closure', 'death')])
         return filter
 
     @property
@@ -225,6 +241,8 @@ class ChildrenDeathsByMonth(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    accordion_start = False
+    accordion_end = True
 
     @property
     def group_by(self):
@@ -265,6 +283,8 @@ class NutritionMeanMedianBirthWeightDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'children_birth_weights_1'
     title = 'Nutrition Details'
+    accordion_start = True
+    accordion_end = False
 
     @property
     def filters(self):
@@ -301,6 +321,8 @@ class NutritionBirthWeightDetails(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    accordion_start = False
+    accordion_end = False
 
     @property
     def headers(self):
@@ -353,6 +375,8 @@ class NutritionFeedingDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'children_feeding_details'
     title = ''
+    accordion_start = False
+    accordion_end = True
 
     @property
     def headers(self):
@@ -483,6 +507,7 @@ class ChildHealthIndicators(BaseSqlData):
 
 class ImmunizationDetailsFirstYear(ImmunizationOverview):
     title = 'Immunization Overview (0 - 1 yrs)'
+    slug = 'immunization_first_year_overview'
 
     @property
     def columns(self):
@@ -545,6 +570,7 @@ class ImmunizationDetailsFirstYear(ImmunizationOverview):
 
 class ImmunizationDetailsSecondYear(ImmunizationOverview):
     title = 'Immunization Overview (1 - 2 yrs)'
+    slug = 'immunization_second_year_overview'
 
     @property
     def columns(self):

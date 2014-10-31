@@ -33,6 +33,8 @@ class BaseSqlData(SqlData):
     fix_left_col = False
     total_row_name = "Total"
     custom_total_calculate = False
+    accordion_start = True
+    accordion_end = True
 
     def percent_fn(self, x, y):
         return "%.0f%%" % (100 * float(y or 0) / (x or 1))

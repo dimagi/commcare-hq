@@ -11,7 +11,6 @@ class MotherRegistrationDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'mother_registration_details'
     title = 'Mother Registration Details'
-    width = 50
 
     @property
     def filters(self):
@@ -108,8 +107,11 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(ClosedMotherCasesBreakdown, self).filters
-        filter.append(NOTEQ('closed_on', 'empty'))
+        filter = super(ClosedMotherCasesBreakdown, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('closed_on', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('closed_on', 'stred'))
         return filter
 
     @property
@@ -183,6 +185,7 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
 
 
 class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
+    slug = 'ante_natal_care_service_overview_extended'
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
@@ -332,6 +335,8 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     chart_y_label = ''
     show_total = True
     total_row_name = "Total live births"
+    accordion_start = False
+    accordion_end = False
 
     @property
     def headers(self):
@@ -372,7 +377,8 @@ class DeliveryStillBirthDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'delivery_still_birth_details'
     title = ''
-    width = '50'
+    accordion_start = False
+    accordion_end = True
 
     @property
     def filters(self):
@@ -569,6 +575,7 @@ class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    slug = 'delivery_place_details_extended'
 
     @property
     def columns(self):
@@ -593,6 +600,9 @@ class DeliveryPlaceMotherDetails(DeliveryPlaceDetails):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    slug = 'delivery_place_mother_details'
+    accordion_start = False
+    accordion_end = False
 
     @property
     def columns(self):
