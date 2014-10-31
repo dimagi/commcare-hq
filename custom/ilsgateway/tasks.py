@@ -62,10 +62,14 @@ def get_product_stock(domain, endpoint):
                                             limit=1).first()
                 product = Product.get_by_code(domain, product_stock.product_code)
                 try:
-                    stock_state = StockState.objects.get(section_id='stock', case_id=case._id, product_id=product._id)
+                    stock_state = StockState.objects.get(section_id='stock',
+                                                         case_id=case._id,
+                                                         product_id=product._id)
                     if product_stock.auto_monthly_consumption:
                         stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
-                        stock_state.save()
+                    else:
+                        stock_state.daily_consumption = None
+                    stock_state.save()
                 except StockState.DoesNotExist:
                     stock_state = StockState(section_id='stock',
                                              case_id=case._id,
@@ -76,9 +80,9 @@ def get_product_stock(domain, endpoint):
 
                     if product_stock.auto_monthly_consumption:
                         stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
+                    else:
+                        stock_state.daily_consumption = None
                     stock_state.save()
-
-
 
             if not meta.get('next', False):
                 has_next = False
@@ -188,6 +192,15 @@ def stock_data_task(domain):
     get_stock_transaction(domain, endpoint)
     get_supply_point_statuses(domain, endpoint)
     get_delivery_group_reports(domain, endpoint)
+
+
+# Temporary for staging
+@task
+def clear_stock_data_task(domain):
+    StockTransaction.objects.filter(report__domain=domain).delete()
+    StockReport.objects.filter(domain=domain).delete()
+    products = Product.ids_by_domain(domain)
+    StockState.objects.filter(product_id__in=products).delete()
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

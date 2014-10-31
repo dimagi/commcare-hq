@@ -8,5 +8,6 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^global_stats/$', GlobalStats.as_view(), name=GlobalStats.urlname),
     # for testing purposes
     url(r'^sync_stock_data/$', 'sync_stock_data', name='sync_stock_data'),
+    url(r'^clear_stock_data/$', 'clear_stock_data', name='clear_stock_data'),
     url(r'^run_reports/$', 'run_warehouse_runner', name='run_reports')
 )
