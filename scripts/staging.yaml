@@ -46,8 +46,6 @@ branches:
   - remove-hutch  # DR 10/28
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
-  # - logos+master # tw
-  # - logos # Nick P 5/28
 #  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
   - lwyszomi:better_date_filters_improvment
@@ -66,6 +64,7 @@ branches:
   - share-fixtures # j$ 10/29
   - lwyszomi:ilsgateway-productstock
   - autocomplete-case-sharing # Nick P 10/31
+  - logos # Nick P 10/31
 submodules:
   submodules/couchlog-src:
     branches:
