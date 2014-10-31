@@ -174,6 +174,22 @@
                                     <p class="help-block">{% trans "Please try to include as much information as possible." %}</p>
                                 </div>
                             </div>
+
+                            {% if request.couch_user.is_commcare_user %}
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-email">{% trans "Email" %}
+                                </label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="email" id="bug-report-email">
+                                    <p class="help-block">{% trans "Please enter your email here so that we can follow up with you regarding this issue" %}
+                                    </p>
+                                    <div class="alert fade in page-level-alert alert-error">
+                                        <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter a valid email" %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
                             <div class="control-group">
                                 <label class="control-label" for="bug-report-cc">{% trans "Other recipients (optional)" %}
                                 </label>
