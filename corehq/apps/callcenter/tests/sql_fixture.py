@@ -1,11 +1,11 @@
+from collections import namedtuple
 import uuid
 import sqlalchemy
 from sqlalchemy import *
 from django.conf import settings
 from sqlalchemy.engine.url import make_url
 from datetime import date, timedelta, datetime
-from corehq.apps.callcenter.utils import get_case_mapping, get_case_ownership_mapping
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, CaseData
 
 metadata = sqlalchemy.MetaData()
 
@@ -29,83 +29,79 @@ def get_formdata(days_ago, domain, user_id, xmlns=None, duration=1):
     )
 
 
-def create_call_center_tables(engine, domain):
-    case_table = get_table(get_case_mapping(domain))
-    case_ownership_table = get_table(get_case_ownership_mapping(domain))
-    case_table.drop(engine, checkfirst=True)
-    case_ownership_table.drop(engine, checkfirst=True)
-    metadata.create_all()
-
-    return case_table, case_ownership_table
+CaseInfo = namedtuple('CaseInfo', 'id, days_ago, case_type, is_closed')
 
 
-def load_data(domain, user_id):
-    engine = create_engine(make_url(settings.SQL_REPORTING_DATABASE_URL))
-    metadata.bind = engine
+def get_casedata(case_info, domain, user_id, owner_id, opened_by, closed_by):
+    now = datetime.now()
+    date_ago = now - timedelta(days=case_info.days_ago)
+    return CaseData(
+        case_id=case_info.id,
+        doc_type='CommCareCase',
+        type=case_info.case_type,
+        domain=domain,
+        owner_id=owner_id,
+        user_id=user_id,
+        opened_on=date_ago,
+        opened_by=opened_by or user_id,
+        modified_on=now,
+        closed=case_info.is_closed,
+        closed_on=(date_ago if case_info.is_closed else None),
+        closed_by=(closed_by or user_id) if case_info.is_closed else None
+    )
+    return case
 
-    case_table, case_ownership_table = create_call_center_tables(engine, domain)
 
+def add_case_action(case):
+    case.actions.create(
+        index=1,
+        action_type='update',
+        date=case.opened_on,
+        user_id=case.user_id,
+    )
+
+
+def load_data(domain, form_user_id, case_user_id=None,
+              case_owner_id=None, case_opened_by=None, case_closed_by=None):
     form_data = [
-        get_formdata(0, domain, user_id),
-        get_formdata(3, domain, user_id),
-        get_formdata(7, domain, user_id),
-        get_formdata(8, domain, user_id),
-        get_formdata(9, domain, user_id),
-        get_formdata(11, domain, user_id),
-        get_formdata(14, domain, user_id),
-        get_formdata(15, domain, user_id),
+        get_formdata(0, domain, form_user_id),
+        get_formdata(3, domain, form_user_id),
+        get_formdata(7, domain, form_user_id),
+        get_formdata(8, domain, form_user_id),
+        get_formdata(9, domain, form_user_id),
+        get_formdata(11, domain, form_user_id),
+        get_formdata(14, domain, form_user_id),
+        get_formdata(15, domain, form_user_id),
     ]
 
-    def case_row(days_ago, case_id):
-        return {
-            "date": date.today() - timedelta(days=days_ago),
-            "user_id": user_id,
-            "case_type": 'person',
-            'action_type': 'update',
-            'case_id': case_id,
-            'action_count': 1
-        }
+    case_user_id = case_user_id or form_user_id
+    case_owner_id = case_owner_id or case_user_id
+
+    case_infos = [
+        CaseInfo('1', 0, 'person', False),
+        CaseInfo('2', 10, 'person', False),
+        CaseInfo('3', 29, 'person', True),
+        CaseInfo('4', 30, 'person', True),
+        CaseInfo('5', 31, 'dog', True),
+        CaseInfo('6', 45, 'dog', False),
+        CaseInfo('7', 55, 'dog', False),
+        CaseInfo('8', 56, 'dog', True),
+        CaseInfo('9', 59, 'dog', False),
+    ]
 
     case_data = [
-        case_row(0, '1'),
-        case_row(10, '2'),
-        case_row(29, '3'),
-        case_row(30, '4'),
-        case_row(31, '5'),
-        case_row(45, '6'),
-        case_row(55, '7'),
-        case_row(56, '8'),
-        case_row(59, '9'),
+        get_casedata(info, domain, case_user_id, case_owner_id, case_opened_by, case_closed_by)
+        for info in case_infos
     ]
 
-    def get_ownership_row(case_type, open_cases):
-        return {'user_id': user_id, 'case_type': case_type, 'open_cases': open_cases, 'closed_cases': 0},
+    FormData.objects.bulk_create(form_data)
+    CaseData.objects.bulk_create(case_data)
 
-    case_ownership_data = [
-        {'user_id': user_id, 'case_type': 'person', 'open_cases': 10, 'closed_cases': 3},
-        {'user_id': user_id, 'case_type': 'dog', 'open_cases': 2, 'closed_cases': 1}
-    ]
-
-    connection = engine.connect()
-    try:
-        connection.execute(case_table.delete())
-        connection.execute(case_ownership_table.delete())
-        connection.execute(case_table.insert(), case_data)
-        connection.execute(case_ownership_table.insert(), case_ownership_data)
-        FormData.objects.bulk_create(form_data)
-    finally:
-        connection.close()
-        engine.dispose()
+    for case in case_data:
+        add_case_action(case)
 
 
 def load_custom_data(domain, user_id, xmlns):
-    engine = create_engine(make_url(settings.SQL_REPORTING_DATABASE_URL))
-    metadata.bind = engine
-
-    create_call_center_tables(engine, domain)
-
-    engine.dispose()
-
     form_data = [
         get_formdata(0, domain, user_id, xmlns=xmlns, duration=3),
         get_formdata(1, domain, user_id, xmlns=xmlns, duration=2),
@@ -122,33 +118,6 @@ def load_custom_data(domain, user_id, xmlns):
     FormData.objects.bulk_create(form_data)
 
 
-fixture_test_table = Table("call_center",
-                           metadata,
-                           Column("case", String(50), primary_key=True, autoincrement=False),
-                           Column("date", DATE, primary_key=True, autoincrement=False),
-                           Column("cases_updated", INT),
-                           Column("duration", INT))
-
-
-def load_fixture_test_data():
-    engine = create_engine(make_url(settings.SQL_REPORTING_DATABASE_URL))
-    metadata.bind = engine
-    fixture_test_table.drop(engine, checkfirst=True)
-    metadata.create_all()
-
-    data = [
-        {"case": "123", "date": date.today(), "cases_updated": 1, "duration": 10},
-        {"case": "123", "date": date.today() - timedelta(days=2), "cases_updated": 2, "duration": 15},
-        {"case": "123", "date": date.today() - timedelta(days=7), "cases_updated": 1, "duration": 6},
-        {"case": "123", "date": date.today() - timedelta(days=8), "cases_updated": 4, "duration": 50},
-    ]
-
-    connection = engine.connect()
-    try:
-        connection.execute(fixture_test_table.delete())
-        for d in data:
-            insert = fixture_test_table.insert().values(**d)
-            connection.execute(insert)
-    finally:
-        connection.close()
-        engine.dispose()
+def clear_data():
+    FormData.objects.all().delete()
+    CaseData.objects.all().delete()

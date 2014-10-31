@@ -4,7 +4,7 @@ from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 
 
 def post_util(**kwargs):

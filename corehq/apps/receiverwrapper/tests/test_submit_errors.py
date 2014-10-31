@@ -10,14 +10,17 @@ from couchforms.signals import successful_form_received
 
 
 def _clear_all_forms(domain):
-    for item in SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
-                                  reduce=False,
-                                  include_docs=True,
-                                  startkey=[domain, "by_type"],
-                                  endkey=[domain, "by_type", {}],
-                                  wrapper=lambda row: SubmissionErrorLog.wrap(row['doc'])).all():
-
+    items = SubmissionErrorLog.view(
+        "couchforms/all_submissions_by_domain",
+        reduce=False,
+        include_docs=True,
+        startkey=[domain, "by_type"],
+        endkey=[domain, "by_type", {}],
+        wrapper=lambda row: SubmissionErrorLog.wrap(row['doc'])
+    ).all()
+    for item in items:
         item.delete()
+
 
 class SubmissionErrorTest(TestCase):
     
@@ -67,28 +70,29 @@ class SubmissionErrorTest(TestCase):
             self.assertIn("Form is a duplicate", res.content)
         
         # make sure we logged it
-        log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
-                                      reduce=False,
-                                      include_docs=True,
-                                      startkey=[self.domain.name, "by_type", "XFormDuplicate"],
-                                      endkey=[self.domain.name, "by_type", "XFormDuplicate", {}],
-                                      classes={'XFormDuplicate': SubmissionErrorLog}).one()
+        log = SubmissionErrorLog.view(
+            "couchforms/all_submissions_by_domain",
+            reduce=False,
+            include_docs=True,
+            startkey=[self.domain.name, "by_type", "XFormDuplicate"],
+            endkey=[self.domain.name, "by_type", "XFormDuplicate", {}],
+            classes={'XFormDuplicate': SubmissionErrorLog},
+        ).one()
         
-        self.assertTrue(log is not None)
+        self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
-        
-            
+
     def testSubmissionError(self):
         evil_laugh = "mwa ha ha!"
-        
+
         def fail(sender, xform, **kwargs):
             raise Exception(evil_laugh)
-        
+
         successful_form_received.connect(fail)
-        
-        try:    
+
+        try:
             file = os.path.join(os.path.dirname(__file__), "data",
                                 "simple_form.xml")
             with open(file) as f:
@@ -107,7 +111,7 @@ class SubmissionErrorTest(TestCase):
                 endkey=[self.domain.name, "by_type", "XFormError", {}],
             ).one()
 
-            self.assertTrue(log is not None)
+            self.assertIsNotNone(log)
             self.assertIn(evil_laugh, log.problem)
             with open(file) as f:
                 self.assertEqual(f.read(), log.get_xml())
@@ -127,13 +131,14 @@ class SubmissionErrorTest(TestCase):
             self.assertIn('Invalid XML', res.content)
         
         # make sure we logged it
-        log = SubmissionErrorLog.view("couchforms/all_submissions_by_domain",
-                                      reduce=False,
-                                      include_docs=True,
-                                      startkey=[self.domain.name, "by_type", "SubmissionErrorLog"],
-                                      endkey=[self.domain.name, "by_type", "SubmissionErrorLog", {}]).one()
+        log = SubmissionErrorLog.view(
+            "couchforms/all_submissions_by_domain",
+            reduce=False,
+            include_docs=True,
+            startkey=[self.domain.name, "by_type", "SubmissionErrorLog"],
+            endkey=[self.domain.name, "by_type", "SubmissionErrorLog", {}],
+        ).one()
         
-        self.assertTrue(log is not None)
+        self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)
         self.assertEqual("this isn't even close to xml", log.get_xml())
-        

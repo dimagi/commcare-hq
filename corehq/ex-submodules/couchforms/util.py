@@ -4,10 +4,9 @@ import datetime
 import logging
 
 from StringIO import StringIO
-from django.conf import settings
 from django.test.client import Client
 
-from couchdbkit import ResourceConflict, ResourceNotFound, resource
+from couchdbkit import ResourceNotFound, BulkSaveError
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -15,9 +14,10 @@ from django.http import (
     HttpResponseForbidden,
 )
 from redis import ConnectionError
+from corehq.util.couch_helpers import CouchAttachmentsBuilder
 
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.couch import uid, LockManager, ReleaseOnError, release_lock
+from dimagi.utils.couch import uid, LockManager, ReleaseOnError
 import xml2json
 
 import couchforms
@@ -26,6 +26,7 @@ from .exceptions import DuplicateError
 from .models import (
     DefaultAuthContext,
     SubmissionErrorLog,
+    UnfinishedSubmissionStub,
     XFormDeprecated,
     XFormDuplicate,
     XFormError,
@@ -99,9 +100,18 @@ def acquire_lock_for_xform(xform_id):
     return lock
 
 
-def create_xform_from_xml(xml_string, _id=None, process=None):
+class MultiLockManager(list):
+    def __enter__(self):
+        return [lock_manager.__enter__() for lock_manager in self]
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for lock_manager in self:
+            lock_manager.__exit__(exc_type, exc_val, exc_tb)
+
+
+def create_xform(xml_string, attachments=None, _id=None, process=None):
     """
-    create and save an XFormInstance from an xform payload (xml_string)
+    create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
     return doc _id of the created doc
 
@@ -110,71 +120,55 @@ def create_xform_from_xml(xml_string, _id=None, process=None):
 
     If xml_string is bad xml
       - raise couchforms.XMLSyntaxError
-      - do not save form
 
     """
+    assert attachments is not None
     json_form = convert_xform_to_json(xml_string)
 
-    _id = _id or _extract_meta_instance_id(json_form)
+    _id = (_id or _extract_meta_instance_id(json_form)
+           or XFormInstance.get_db().server.next_uuid())
+    assert _id
+    attachments_builder = CouchAttachmentsBuilder()
+    attachments_builder.add(
+        content=xml_string,
+        name='form.xml',
+        content_type='text/xml',
+    )
 
-    kwargs = dict(
-        _attachments=resource.encode_attachments({
-            "form.xml": {
-                "content_type": "text/xml",
-                "data": xml_string,
-            },
-        }),
-        form=json_form,
+    for key, value in attachments.items():
+        attachments_builder.add(
+            content=value,
+            name=key,
+            content_type=value.content_type,
+        )
+
+    xform = XFormInstance(
+        # form has to be wrapped
+        {'form': json_form},
+        # other properties can be set post-wrap
+        _id=_id,
         xmlns=json_form.get('@xmlns'),
+        _attachments=attachments_builder.to_json(),
         received_on=datetime.datetime.utcnow(),
     )
-    if _id:
-        kwargs['_id'] = _id
 
-    xform = XFormInstance(**kwargs)
+    # this had better not fail, don't think it ever has
+    # if it does, nothing's saved and we get a 500
+    if process:
+        process(xform)
 
-    try:
-        if process:
-            process(xform)
-    except Exception:
-        # if there's any problem with process just save what we had before
-        # rather than whatever intermediate state `process` left it in
-        xform = XFormInstance(**kwargs)
-        raise
-    finally:
-        lock = acquire_lock_for_xform(_id) if _id else None
+    lock = acquire_lock_for_xform(_id)
+    with ReleaseOnError(lock):
+        if _id in XFormInstance.get_db():
+            raise DuplicateError()
 
-        with ReleaseOnError(lock):
-            try:
-                xform.save(encode_attachments=False)
-            except ResourceConflict:
-                raise DuplicateError()
-
-    if not lock:
-        lock = acquire_lock_for_xform(_id)
-
-    return LockManager(xform.get_id, lock)
+    return LockManager(xform, lock)
 
 
-def post_xform_to_couch(instance, attachments=None, process=None,
-                        domain='test-domain'):
+def process_xform(instance, attachments=None, process=None, domain=None,
+                  _id=None):
     """
-    create a new xform and releases the lock
-
-    this is a testing entry point only and is not to be used in real code
-
-    """
-    assert getattr(settings, 'UNIT_TESTING', False)
-    xform_lock = create_and_lock_xform(instance, attachments=attachments,
-                                       process=process, domain=domain)
-    with xform_lock as xform:
-        return xform
-
-
-def create_and_lock_xform(instance, attachments=None, process=None,
-                          domain=None, _id=None):
-    """
-    Save a new xform to couchdb in a thread-safe manner
+    Create a new xform to ready to be saved to couchdb in a thread-safe manner
     Returns a LockManager containing the new XFormInstance and its lock,
     or raises an exception if anything goes wrong.
 
@@ -185,33 +179,15 @@ def create_and_lock_xform(instance, attachments=None, process=None,
     attachments = attachments or {}
 
     try:
-        doc_id, lock = create_xform_from_xml(instance, process=process,
-                                             _id=_id)
+        xform_lock = create_xform(instance, process=process,
+                                  attachments=attachments, _id=_id)
     except couchforms.XMLSyntaxError as e:
-        doc = _log_hard_failure(instance, attachments, e)
-        raise SubmissionError(doc)
+        xform = _log_hard_failure(instance, attachments, e)
+        raise SubmissionError(xform)
     except DuplicateError:
         return _handle_id_conflict(instance, attachments, process=process,
                                    domain=domain)
-
-    try:
-        xform = XFormInstance.get(doc_id)
-        for key, value in attachments.items():
-            xform.put_attachment(
-                value,
-                name=key,
-                content_type=value.content_type,
-                content_length=value.size
-            )
-    except Exception as e:
-        logging.exception("Problem with form %s" % doc_id)
-        # "rollback" by changing the doc_type to XFormError
-        xform = XFormError.get(doc_id)
-        xform.problem = unicode(e)
-        xform.save()
-        release_lock(lock, degrade_gracefully=True)
-        lock = None
-    return LockManager(xform, lock)
+    return MultiLockManager([xform_lock])
 
 
 def _has_errors(response, errors):
@@ -235,13 +211,12 @@ def _handle_id_conflict(instance, attachments, process, domain):
     conflict_id = _extract_id_from_raw_xml(instance)
 
     # get old document
-    existing_doc = XFormInstance.get_db().get(conflict_id)
+    existing_doc = XFormInstance.get_db().get(conflict_id, attachments=True)
     assert domain
     if existing_doc.get('domain') != domain\
             or existing_doc.get('doc_type') not in doc_types():
-        # exit early
-        return create_and_lock_xform(instance, attachments=attachments,
-                                     process=process, _id=uid.new())
+        return process_xform(instance, attachments=attachments,
+                             process=process, _id=uid.new())
     else:
         existing_doc = XFormInstance.wrap(existing_doc)
         return _handle_duplicate(existing_doc, instance, attachments, process)
@@ -252,6 +227,7 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
     Handle duplicate xforms and xform editing ('deprecation')
 
     existing doc *must* be validated as an XFormInstance in the right domain
+    and *must* include inline attachments
 
     """
     conflict_id = existing_doc.get_id
@@ -262,38 +238,47 @@ def _handle_duplicate(existing_doc, instance, attachments, process):
     # if not same:
     # Deprecate old form (including changing ID)
     # to deprecate, copy new instance into a XFormDeprecated
+    # todo: save transactionally like the rest of the code
     if existing_md5 != new_md5:
-        doc_copy = XFormInstance.get_db().copy_doc(conflict_id)
-        # get the doc back to avoid any potential bigcouch race conditions.
-        # r=3 implied by class
-        xfd = XFormDeprecated.get(doc_copy['id'])
-        xfd.orig_id = conflict_id
-        xfd.doc_type = XFormDeprecated.__name__
-        xfd.save()
+        old_id = existing_doc.get_id
+        new_id = XFormInstance.get_db().server.next_uuid()
 
-        # after that delete the original document and resubmit.
-        XFormInstance.get_db().delete_doc(conflict_id)
-        return create_and_lock_xform(instance, attachments=attachments,
-                                     process=process)
+        multi_lock_manager = process_xform(instance, attachments=attachments,
+                                           process=process, _id=new_id)
+        [(xform, _)] = multi_lock_manager
+
+        # swap the two documents so the original ID now refers to the new one
+        # and mark original as deprecated
+        xform._id, existing_doc._id = old_id, new_id
+        xform._rev, existing_doc._rev = existing_doc._rev, xform._rev
+
+        existing_doc.doc_type = XFormDeprecated.__name__
+        existing_doc.orig_id = old_id
+
+        multi_lock_manager.append(
+            LockManager(existing_doc,
+                        acquire_lock_for_xform(old_id))
+        )
+        return multi_lock_manager
     else:
         # follow standard dupe handling
         new_doc_id = uid.new()
-        new_form_id, lock = create_xform_from_xml(instance, _id=new_doc_id,
-                                                  process=process)
+        new_form, lock = create_xform(instance, attachments=attachments,
+                                      _id=new_doc_id, process=process)
 
         # create duplicate doc
         # get and save the duplicate to ensure the doc types are set correctly
         # so that it doesn't show up in our reports
-        dupe = XFormDuplicate.get(new_form_id)
+        new_form.doc_type = XFormDuplicate.__name__
+        dupe = XFormDuplicate.wrap(new_form.to_json())
         dupe.problem = "Form is a duplicate of another! (%s)" % conflict_id
-        dupe.save()
-        return LockManager(dupe, lock)
+        return MultiLockManager([LockManager(dupe, lock)])
 
 
 def _log_hard_failure(instance, attachments, error):
     """
-    Handle's a hard failure from posting a form to couch. 
-    
+    Handle's a hard failure from posting a form to couch.
+
     Currently, it will save the raw payload to couch in a hard-failure doc
     and return that doc.
     """
@@ -402,22 +387,22 @@ class SubmissionPost(object):
 
         return doc
 
-    def get_response(self):
+    def run(self):
         if not self.auth_context.is_valid():
-            return self.failed_auth_response
+            return self.failed_auth_response, None, []
 
         if isinstance(self.instance, const.BadRequest):
-            return HttpResponseBadRequest(self.instance.message)
+            return HttpResponseBadRequest(self.instance.message), None, []
 
         def process(xform):
             self._attach_shared_props(xform)
             scrub_meta(xform)
 
         try:
-            lock_manager = create_and_lock_xform(self.instance,
-                                                 attachments=self.attachments,
-                                                 process=process,
-                                                 domain=self.domain)
+            lock_manager = process_xform(self.instance,
+                                         attachments=self.attachments,
+                                         process=process,
+                                         domain=self.domain)
         except SubmissionError as e:
             logging.exception(
                 u"Problem receiving submission to %s. %s" % (
@@ -425,16 +410,90 @@ class SubmissionPost(object):
                     unicode(e),
                 )
             )
-            return self.get_error_response(e.error_log)
+            return self.get_exception_response(e.error_log), None, []
         else:
-            with lock_manager as doc:
-                return self.get_success_response(doc)
+            from casexml.apps.case import process_cases_with_casedb
+            from casexml.apps.case.models import CommCareCase
+            from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache
+            from casexml.apps.case.signals import case_post_save
+            from corehq.apps.commtrack.processing import process_stock
 
-    def get_failed_auth_response(self):
-        return HttpResponseForbidden('Bad auth')
+            cases = []
+            responses = []
+            errors = []
+            with lock_manager as xforms:
+                instance = xforms[0]
+                if instance.doc_type == "XFormInstance":
+                    domain = get_and_check_xform_domain(instance)
+                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
+                        process_cases_with_casedb(instance, case_db)
+                        process_stock(instance, case_db)
+                        now = datetime.datetime.utcnow()
+                        unfinished_submission_stub = UnfinishedSubmissionStub(
+                            xform_id=instance.get_id,
+                            timestamp=now,
+                            saved=False,
+                            domain=domain,
+                        )
+                        unfinished_submission_stub.save()
+                        cases = case_db.get_changed()
+                        # todo: this property is useless now
+                        instance.initial_processing_complete = True
+                        assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
+                        docs = xforms + cases
 
-    def success_actions_and_respond(self, doc):
-        feedback = successful_form_received.send_robust(sender='receiver', xform=doc)
+                        # in saving the cases, we have to do all the things
+                        # done in CommCareCase.save()
+                        for case in cases:
+                            case.initial_processing_complete = True
+                            case.server_modified_on = now
+                            try:
+                                rev = CommCareCase.get_db().get_rev(case.case_id)
+                            except ResourceNotFound:
+                                pass
+                            else:
+                                assert rev == case.get_rev, (
+                                    "Aborting because there would have been "
+                                    "a document update conflict. {} {} {}".format(
+                                        case.get_id, case.get_rev, rev
+                                    )
+                                )
+                        try:
+                            XFormInstance.get_db().bulk_save(docs)
+                        except BulkSaveError as e:
+                            raise
+                        unfinished_submission_stub.saved = True
+                        unfinished_submission_stub.save()
+                        for case in cases:
+                            case_post_save.send(CommCareCase, case=case)
+                        responses, errors = self.process_signals(instance)
+                        if errors:
+                            # .problems was added to instance
+                            instance.save()
+                        unfinished_submission_stub.delete()
+                elif instance.doc_type == 'XFormDuplicate':
+                    assert len(xforms) == 1
+                    instance.save()
+            if instance.doc_type == "XFormInstance":
+                response = self.get_success_response(instance,
+                                                     responses, errors)
+            else:
+                response = self.get_failure_response(instance)
+
+            # this hack is required for ODK
+            response["Location"] = self.location
+
+            # this is a magic thing that we add
+            response['X-CommCareHQ-FormID'] = instance.get_id
+            return response, instance, cases
+
+    def get_response(self):
+        response, _, _ = self.run()
+        return response
+
+    @staticmethod
+    def process_signals(instance):
+        feedback = successful_form_received.send_robust(None, xform=instance)
         responses = []
         errors = []
         for func, resp in feedback:
@@ -443,16 +502,22 @@ class SubmissionPost(object):
                 logging.error((
                     u"Receiver app: problem sending "
                     u"post-save signal %s for xform %s: %s: %s"
-                ) % (func, doc._id, type(resp).__name__, error_message))
+                ) % (func, instance._id, type(resp).__name__, error_message))
                 errors.append(error_message)
             elif resp and isinstance(resp, ReceiverResult):
                 responses.append(resp)
+        if errors:
+            instance.problem = ", ".join(errors)
+        return responses, errors
+
+    @staticmethod
+    def get_failed_auth_response():
+        return HttpResponseForbidden('Bad auth')
+
+    @staticmethod
+    def get_success_response(doc, responses, errors):
 
         if errors:
-            # in the event of errors, respond with the errors,
-            # and mark the problem
-            doc.problem = ", ".join(errors)
-            doc.save()
             response = OpenRosaResponse(
                 message=doc.problem,
                 nature=ResponseNature.SUBMIT_ERROR,
@@ -471,27 +536,15 @@ class SubmissionPost(object):
             ).response()
         return response
 
-    def fail_actions_and_respond(self, doc):
+    @staticmethod
+    def get_failure_response(doc):
         return OpenRosaResponse(
             message=doc.problem,
             nature=ResponseNature.SUBMIT_ERROR,
             status=201,
         ).response()
 
-    def get_success_response(self, instance):
-        if instance.doc_type == "XFormInstance":
-            response = self.success_actions_and_respond(instance)
-        else:
-            response = self.fail_actions_and_respond(instance)
-
-        # this hack is required for ODK
-        response["Location"] = self.location
-
-        # this is a magic thing that we add
-        response['X-CommCareHQ-FormID'] = instance.get_id
-        return response
-
-    def get_error_response(self, error_log):
+    def get_exception_response(self, error_log):
         error_doc = SubmissionErrorLog.get(error_log.get_id)
         self._attach_shared_props(error_doc)
         error_doc.save()

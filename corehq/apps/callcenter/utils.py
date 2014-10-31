@@ -6,14 +6,13 @@ from xml.etree import ElementTree
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from couchdbkit.exceptions import MultipleResultsFound
 from corehq.elastic import es_query
-from ctable.models import SqlExtractMapping, ColumnDef, KeyMatcher, NOT_EQUAL
-
-
-MAPPING_NAME_CASES = 'cc_case_updates'
-MAPPING_NAME_CASE_OWNERSHIP = 'cc_case_ownership'
 
 
 def sync_user_cases(commcare_user):
+    """
+    Each time a CommCareUser is saved this method gets called and creates or updates
+    a case associated with the user with the user's details.
+    """
     domain = commcare_user.project
     if not (domain and domain.call_center_config.enabled):
         return
@@ -85,68 +84,6 @@ def sync_user_cases(commcare_user):
     if caseblock:
         casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, domain.name)
-
-
-def bootstrap_callcenter(domain):
-    if not (domain and domain.name and domain.call_center_config.enabled):
-        return
-
-    get_case_mapping(domain.name).save()
-    get_case_ownership_mapping(domain.name).save()
-
-
-def get_case_mapping(domain):
-    mapping = get_or_create_mapping(domain, MAPPING_NAME_CASES)
-
-    mapping.couch_view = 'callcenter/case_actions_by_user'
-    mapping.couch_key_prefix = [domain]
-    mapping.columns = [
-        ColumnDef(name="date", data_type="date", value_source="key", value_index=1,
-                  date_format="%Y-%m-%dT%H:%M:%SZ"),
-        ColumnDef(name="user_id", data_type="string", value_source="key", value_index=2),
-        ColumnDef(name="case_type", data_type="string", value_source="key", value_index=3),
-        ColumnDef(name="action_type", data_type="string", value_source="key", value_index=4),
-        ColumnDef(name="case_id", data_type="string", value_source="key", value_index=5),
-        ColumnDef(name="action_count", data_type="integer", value_source="value"),
-    ]
-    return mapping
-
-
-def get_case_ownership_mapping(domain):
-    mapping = get_or_create_mapping(domain, MAPPING_NAME_CASE_OWNERSHIP, date_range=None)
-
-    mapping.couch_view = 'case/by_date_modified_owner'
-    mapping.couch_key_prefix = [domain]
-    mapping.couch_group_level = 4
-    mapping.columns = [
-        ColumnDef(name="user_id", data_type="string", value_source="key", value_index=3),
-        ColumnDef(name="case_type", data_type="string", value_source="key", value_index=2),
-        ColumnDef(name="open_cases", data_type="integer", value_source="value",
-                  match_keys=[KeyMatcher(index=1, value='open'),
-                              KeyMatcher(index=2, value='{}', operator=NOT_EQUAL)]),
-        ColumnDef(name="closed_cases", data_type="integer", value_source="value",
-                  match_keys=[KeyMatcher(index=1, value='closed'),
-                              KeyMatcher(index=2, value='{}', operator=NOT_EQUAL)]),
-    ]
-    return mapping
-
-
-def get_or_create_mapping(domain, mapping_name, date_range=2):
-    mapping = SqlExtractMapping.by_name(domain, mapping_name)
-    if not mapping:
-        mapping = SqlExtractMapping()
-
-    mapping.auto_generated = True
-    mapping.domains = [domain]
-    mapping.name = mapping_name
-    mapping.active = True
-    mapping.couch_date_range = date_range
-    mapping.couch_view_params = {}
-    mapping.schedule_type = 'hourly'
-    mapping.schedule_hour = -1
-    mapping.schedule_day = -1
-
-    return mapping
 
 
 def get_call_center_domains():

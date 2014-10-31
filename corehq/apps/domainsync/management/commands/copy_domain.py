@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.stock.models import StockTransaction, StockReport, DocDomainMapping
 from corehq.apps.domain.models import Domain
+from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
 from couchdbkit.client import Database
@@ -183,7 +184,7 @@ class Command(BaseCommand):
             print 'Failed document IDs written to %s' % err_log.name
 
         if postgres_db:
-            self.copy_postgres_data(sourcedb, domain, postgres_db, doc_ids=doc_ids, simulate=simulate)
+            copy_postgres_data_for_docs(postgres_db, doc_ids=doc_ids, simulate=simulate)
 
     def copy_domain(self, sourcedb, domain):
         print "Copying domain doc"
@@ -200,30 +201,6 @@ class Command(BaseCommand):
             save(dt, self.targetdb)
         else:
             print "Domain doc not found for domain %s." % domain
-
-    def copy_postgres_data(self, sourcedb, domain, postgres_slug, simulate, doc_ids):
-
-        # can make this more configurable or less hard coded eventually
-        # also note that ordering here is important for foreign key dependencies
-        postgres_models = [
-            (StockReport, 'form_id'),
-            (StockTransaction, 'case_id'),
-            (DocDomainMapping, 'doc_id'),
-            # StockState objects are "derived" and get created by StockTransaction post_save signal.
-            # We may want to directly port these over in the future.
-            # (StockState, 'case_id'),
-        ]
-        for model, doc_field in postgres_models:
-            query_set = model.objects.using(postgres_slug).filter(
-                **{'{}__in'.format(doc_field): doc_ids}
-            )
-            count = query_set.count()
-            print "Copying {} models ({})".format(model.__name__, count)
-            if not simulate:
-                for i, item in enumerate(query_set):
-                    # this can cause primary key conflicts to overwrite local data I think. Oh well?
-                    item.save(using='default')
-                    print 'Synced {}/{} {}'.format(i, count, model.__name__)
 
     def _get_err_log(self):
         name = 'copy_domain.err.%s'

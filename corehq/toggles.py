@@ -121,6 +121,12 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
 )
 
+VISIT_SCHEDULER = StaticToggle(
+    'app_builder_visit_scheduler',
+    'Visit Scheduler',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DASHBOARD_PREVIEW = StaticToggle(
     'dashboard_preview',
     'HQ Dashboard Preview'
@@ -129,4 +135,9 @@ DASHBOARD_PREVIEW = StaticToggle(
 EDIT_SUBMISSIONS = StaticToggle(
     'edit_submissions',
     'Submission Editing on HQ'
+)
+
+USER_CONFIGURABLE_REPORTS = StaticToggle(
+    'user_reports',
+    'User configurable reports UI'
 )
