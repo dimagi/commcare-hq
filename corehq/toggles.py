@@ -2,6 +2,7 @@ from functools import wraps
 from django.http import Http404
 from toggle.shortcuts import toggle_enabled
 
+
 class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
@@ -134,4 +135,10 @@ EDIT_SUBMISSIONS = StaticToggle(
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI'
+)
+
+
+VIEW_SYNC_HISTORY = StaticToggle(
+    'sync_history_report',
+    'Enable sync history report'
 )
