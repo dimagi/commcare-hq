@@ -451,7 +451,7 @@ class ProductImportStatusView(BaseCommTrackManageView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 @login_and_domain_required
-def product_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+def product_importer_job_poll(request, domain, download_id, template="commtrack/manage/partials/product_upload_status.html"):
     context = get_download_context(download_id, check_state=True)
     context.update({
         'on_complete_short': _('Import complete.'),
