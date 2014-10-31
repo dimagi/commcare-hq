@@ -77,11 +77,12 @@ class GrowthMonitoring(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
         if form.xmlns in CHILDREN_FORMS:
-            # child<n>_child_growthmon_calc == 'received' if weight was monitored this month
+            # child_<n>/child<n>_child_growthmon == 1 if weight was monitored this month
             total = 0
             for child_num in list('123'):
-                child_growthmon_calc = form.form.get('child%s_growthmon_calc' % child_num)
-                if child_growthmon_calc == 'received':
+                xpath = ('form/child_{num}/child{num}_child_growthmon'
+                         .format(num=child_num))
+                if form.xpath(xpath) == '1':
                     total += 1
             if total:
                 yield {
