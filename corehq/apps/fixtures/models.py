@@ -22,6 +22,7 @@ class FixtureDataType(Document):
     tag = StringProperty()
     fields = SchemaListProperty(FixtureTypeField)
     item_attributes = StringListProperty()
+    description = StringProperty()
 
     @classmethod
     def wrap(cls, obj):

@@ -1679,6 +1679,12 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                     application.multimedia_map = {}
                 application.save()
 
+            for fixture in FixtureDataType.by_domain(new_domain.name):
+                old_id = FixtureDataType.by_domain_tag(self.domain_object.name,
+                                                       fixture.tag).first()._id
+                fixture.description = request.POST["%s-description" % old_id]
+                fixture.save()
+
             if new_domain is None:
                 messages.error(request, _("Version creation failed; please try again"))
             else:
