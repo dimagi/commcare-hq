@@ -7,6 +7,7 @@ from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, SQLProduct
+from corehq.apps.consumption.const import DAYS_IN_MONTH
 from couchforms.models import XFormInstance
 from custom.ilsgateway.api import ILSGatewayEndpoint, Location
 from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
@@ -61,15 +62,24 @@ def get_product_stock(domain, endpoint):
                                             limit=1).first()
                 product = Product.get_by_code(domain, product_stock.product_code)
                 try:
-                    StockState.objects.get(section_id='stock', case_id=case._id, product_id=product._id)
+                    stock_state = StockState.objects.get(section_id='stock', case_id=case._id, product_id=product._id)
+                    if product_stock.auto_monthly_consumption:
+                        stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
+                        stock_state.save()
                 except StockState.DoesNotExist:
-                    StockState.objects.create(section_id='stock',
-                                              case_id=case._id,
-                                              product_id=product._id,
-                                              stock_on_hand=product_stock.quantity or 0,
-                                              daily_consumption=product_stock.auto_monthly_consumption or 0,
-                                              last_modified_date=product_stock.last_modified,
-                                              sql_product=SQLProduct.objects.get(product_id=product._id))
+                    stock_state = StockState(section_id='stock',
+                                             case_id=case._id,
+                                             product_id=product._id,
+                                             stock_on_hand=product_stock.quantity or 0,
+                                             last_modified_date=product_stock.last_modified,
+                                             sql_product=SQLProduct.objects.get(product_id=product._id))
+
+                    if product_stock.auto_monthly_consumption:
+                        stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
+                    stock_state.save()
+
+
+
             if not meta.get('next', False):
                 has_next = False
             else:
