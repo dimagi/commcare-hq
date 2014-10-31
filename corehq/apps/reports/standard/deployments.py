@@ -20,7 +20,6 @@ from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
-from toggle import toggle_enabled
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -139,7 +138,7 @@ class ApplicationStatusReport(DeploymentsReport):
 class SyncHistoryReport(DeploymentsReport):
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
-    fields = ['corehq.apps.reports.filters.users.SelectMobileWorkerFilter',]
+    fields = ['corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -179,7 +178,6 @@ class SyncHistoryReport(DeploymentsReport):
         def _sync_log_to_row(sync_log):
             def _fmt_duration(duration):
                 if isinstance(duration, int):
-                    now = datetime.utcnow()
                     return format_datatables_data(
                         '<span class="{cls}">{text}</span>'.format(
                             cls=_bootstrap_class(duration or 0, 20, 60),
