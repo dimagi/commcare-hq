@@ -6,9 +6,9 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 
 class DatespanFilter(BaseReportFilter):
     """
-    A filter that returns a startdate and an enddate.
-    This is the standard datespan filter that gets pulled into request with the decorator
-    @datespan_in_request
+        A filter that returns a startdate and an enddate.
+        This is the standard datespan filter that gets pulled into request with the decorator
+        @datespan_in_request
     """
     template = "reports/filters/datespan.html"
     label = ugettext_lazy("Date Range")

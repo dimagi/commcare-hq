@@ -793,7 +793,7 @@ def _deploy_without_asking():
         execute(clear_services_dir)
         set_supervisor_config()
 
-        do_migrate = env.should_migrate and needs_to_migrate()
+        do_migrate = env.should_migrate
         if do_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
@@ -815,16 +815,6 @@ def _deploy_without_asking():
     else:
         execute(services_restart)
         execute(record_successful_deploy)
-
-
-@roles(ROLES_DB_ONLY)
-def needs_to_migrate():
-    with cd(env.code_root):
-        result = sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            'migrate --all --merge --list | grep "( )"' % env
-        ), quiet=True)
-        return result.return_code == 0
 
 
 @task
@@ -1276,6 +1266,38 @@ def do_update_django_locales():
             virtualenv_root=env.virtualenv_root,
         )
         sudo(command)
+
+
+@task
+def reset_mvp_pillows():
+    _require_target()
+    mvp_pillows = [
+        'FormIndicatorPillow',
+        'CaseIndicatorPillow',
+    ]
+    for pillow in mvp_pillows:
+        reset_pillow(pillow)
+
+
+@roles(ROLES_PILLOWTOP)
+def reset_pillow(pillow):
+    _require_target()
+    prefix = 'commcare-hq-{}-pillowtop'.format(env.environment)
+    _supervisor_command('stop {prefix}-{pillow}'.format(
+        prefix=prefix,
+        pillow=pillow
+    ))
+    with cd(env.code_root):
+        command = '{virtualenv_root}/bin/python manage.py ptop_reset_checkpoint {pillow} --noinput'.format(
+            virtualenv_root=env.virtualenv_root,
+            pillow=pillow,
+        )
+        sudo(command)
+    _supervisor_command('start {prefix}-{pillow}'.format(
+        prefix=prefix,
+        pillow=pillow
+    ))
+
 
 # tests
 

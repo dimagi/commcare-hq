@@ -1,6 +1,6 @@
 from corehq import Domain
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.api.resources import JsonResource
+from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
     SuperuserAuthentication,
@@ -15,7 +15,7 @@ def _get_domain(bundle):
     return bundle.obj
 
 
-class DomainMetadataResource(JsonResource):
+class DomainMetadataResource(HqBaseResource):
     billing_properties = fields.DictField()
     calculated_properties = fields.DictField()
     domain_properties = fields.DictField()

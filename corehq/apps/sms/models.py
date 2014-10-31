@@ -23,6 +23,7 @@ WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
 WORKFLOW_KEYWORD = "KEYWORD"
 WORKFLOW_BROADCAST = "BROADCAST"
+WORKFLOW_DEFAULT = 'default'
 
 DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
@@ -187,6 +188,9 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
 
 class SMSLog(MessageLog):
     text = StringProperty()
+    # In cases where decoding must occur, this is the raw text received
+    # from the gateway
+    raw_text = StringProperty()
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
     backend_message_id = StringProperty()

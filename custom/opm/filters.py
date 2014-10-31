@@ -1,31 +1,12 @@
-from datetime import date, datetime
+from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.columns import SimpleColumn
-from corehq.apps.reports.filters.base import (
-    BaseSingleOptionFilter, BaseDrilldownOptionFilter, BaseReportFilter)
 
-from django.utils.translation import ugettext_noop, ugettext_lazy
-from custom.opm.utils import date_from_request
 from dimagi.utils.decorators.memoized import memoized
+
+from corehq.apps.reports.filters.select import SelectOpenCloseFilter
+from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
+                                              BaseDrilldownOptionFilter)
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-
-
-class SingleDateFilter(BaseReportFilter):
-    """
-    A filter that returns a single date - used by the HSR
-    """
-    template = "opm/filters/date_selector.html"
-    label = ugettext_lazy("End Date")
-    slug = "date"
-
-    @property
-    def date(self):
-        return date_from_request(self.request)
-
-    @property
-    def filter_context(self):
-        return {
-            'date': self.date,
-        }
 
 
 class HierarchySqlData(SqlData):
@@ -46,6 +27,7 @@ class HierarchySqlData(SqlData):
             DatabaseColumn('Gram Panchayat', SimpleColumn('gp')),
             DatabaseColumn('AWC', SimpleColumn('awc'))
         ]
+
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
@@ -143,7 +125,8 @@ class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         hierarchy = super(MetHierarchyFilter, self).drilldown_map
-        met_hierarchy = [x for x in hierarchy if x['val'].lower() in ['atri', 'wazirganj']]
+        met_hierarchy = [x for x in hierarchy
+                         if x['val'].lower() in ['atri', 'wazirganj']]
         return met_hierarchy
 
 
@@ -155,3 +138,27 @@ class SelectBlockFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
+
+
+class OPMSelectOpenCloseFilter(SelectOpenCloseFilter):
+    default_text = None
+
+    @property
+    def options(self):
+        return [
+            ('all', _("Show All")),
+            ('open', _("Only Open")),
+            ('closed', _("Only Closed")),
+        ]
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "open"
+
+    @classmethod
+    def case_status(cls, request_params):
+        """
+        returns either "all", "open", or "closed"
+        """
+        return request_params.get(cls.slug) or 'open'

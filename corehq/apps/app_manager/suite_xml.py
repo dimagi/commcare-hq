@@ -7,23 +7,26 @@ import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
-from corehq.apps.app_manager.exceptions import UnknownInstanceError
+from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
 from corehq.apps.app_manager.xpath import ProductInstanceXpath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
-from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
+from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
+    autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, ItemListFixtureXpath
+from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath
 
 FIELD_TYPE_ATTACHMENT = 'attachment'
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
+FIELD_TYPE_SCHEDULE = 'schedule'
 
 
 class XPathField(StringField):
@@ -409,6 +412,25 @@ class Fixture(IdNode):
         self.node.append(xml)
 
 
+class ScheduleVisit(IdNode):
+    ROOT_NAME = 'visit'
+
+    due = StringField('@due')
+    late_window = StringField('@late_window')
+
+
+class Schedule(XmlObject):
+    ROOT_NAME = 'schedule'
+
+    expires = StringField('@expires')
+    post_schedule_increment = StringField('@post_schedule_increment')
+    visits = NodeListField('visit', ScheduleVisit)
+
+
+class ScheduleFixture(Fixture):
+    schedule = NodeField('schedule', Schedule)
+
+
 class Suite(OrderedXmlObject):
     ROOT_NAME = 'suite'
     ORDER = ('version', 'descriptor')
@@ -761,6 +783,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
                             )
 
+                            variables = list(self.detail_variables(module, detail, detail_column_infos))
+                            if variables:
+                                d.variables.extend(variables)
+
                             for column_info in detail_column_infos:
                                 fields = get_column_generator(
                                     self.app, module, detail,
@@ -778,6 +804,86 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 r.append(d)
 
         return r
+
+    def detail_variables(self, module, detail, detail_column_infos):
+        has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
+        if hasattr(module, 'has_schedule') and \
+                module.has_schedule and \
+                module.all_forms_require_a_case and \
+                has_schedule_columns:
+            forms_due = []
+            for form in module.get_forms():
+                if not (form.schedule and form.schedule.anchor):
+                    raise ScheduleError('Form in schedule module is missing schedule: %s' % form.default_name())
+
+                fixture_id = self.id_strings.schedule_fixture(form)
+                anchor = form.schedule.anchor
+
+                # @late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))
+                within_window = XPath.or_(
+                    XPath('@late_window').eq(XPath.string('')),
+                    XPath('today() <= ({} + {} + {})'.format(
+                        XPath.date(anchor),
+                        XPath.int('@due'),
+                        XPath.int('@late_window'))
+                    )
+                )
+
+                due_first = ScheduleFixtureInstance(fixture_id).visit().\
+                    select_raw(within_window).\
+                    select_raw("1").slash('@due')
+
+                # current_schedule_phase = 1 and anchor != '' and (
+                #   instance(...)/schedule/@expires = ''
+                #   or
+                #   today() < (date(anchor) + instance(...)/schedule/@expires)
+                # )
+                expires = ScheduleFixtureInstance(fixture_id).expires()
+                valid_not_expired = XPath.and_(
+                    XPath(SCHEDULE_PHASE).eq(form.id + 1),
+                    XPath(anchor).neq(XPath.string('')),
+                    XPath.or_(
+                        XPath(expires).eq(XPath.string('')),
+                        "today() < ({} + {})".format(XPath.date(anchor), expires)
+                    ))
+
+                visit_num_valid = XPath('@id > {}'.format(
+                    SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
+                ))
+
+                due_not_first = ScheduleFixtureInstance(fixture_id).visit().\
+                    select_raw(visit_num_valid).\
+                    select_raw(within_window).\
+                    select_raw("1").slash('@due')
+
+                name = 'next_{}'.format(form.schedule_form_id)
+                forms_due.append(name)
+
+                def due_date(due_days):
+                    return '{} + {}'.format(XPath.date(anchor), XPath.int(due_days))
+
+                xpath_phase_set = XPath.if_(valid_not_expired, due_date(due_not_first), 0)
+                if form.id == 0:  # first form must cater for empty phase
+                    yield DetailVariable(
+                        name=name,
+                        function=XPath.if_(
+                            XPath(SCHEDULE_PHASE).eq(XPath.string('')),
+                            due_date(due_first),
+                            xpath_phase_set
+                        )
+                    )
+                else:
+                    yield DetailVariable(name=name, function=xpath_phase_set)
+
+            yield DetailVariable(
+                name='next_due',
+                function='min({})'.format(','.join(forms_due))
+            )
+
+            yield DetailVariable(
+                name='is_late',
+                function='next_due < today()'
+            )
 
     def get_filter_xpath(self, module, delegation=False):
         from corehq.apps.app_manager.detail_screen import Filter
@@ -824,7 +930,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     def get_select_chain(self, module, include_self=True):
         select_chain = [module] if include_self else []
         current_module = module
-        while current_module.parent_select.active:
+        while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
             current_module = self.get_module_by_id(
                 current_module.parent_select.module_id
             )
@@ -1330,6 +1436,26 @@ class SuiteGenerator(SuiteGeneratorBase):
             """)
             f.set_content(groups)
             yield f
+
+        schedule_modules = (module for module in self.modules if getattr(module, 'has_schedule', False) and
+                            module.all_forms_require_a_case)
+        schedule_forms = (form for module in schedule_modules for form in module.get_forms())
+        for form in schedule_forms:
+            schedule = form.schedule
+            fx = ScheduleFixture(
+                id=self.id_strings.schedule_fixture(form),
+                schedule=Schedule(
+                    expires=schedule.expires,
+                    post_schedule_increment=schedule.post_schedule_increment
+                ))
+            for i, visit in enumerate(schedule.visits):
+                fx.schedule.visits.append(ScheduleVisit(
+                    id=i + 1,
+                    due=visit.due,
+                    late_window=visit.late_window
+                ))
+
+            yield fx
 
 
 class MediaSuiteGenerator(SuiteGeneratorBase):

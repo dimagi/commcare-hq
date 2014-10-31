@@ -58,7 +58,7 @@ class OPMCaseRow(object):
         self.year = report.year
 
         if not report.is_rendered_as_email:
-            self.img_elem = '<div style="width:100px !important;"><img src="/static/opm/img/%s"></div>'
+            self.img_elem = '<div style="width:140px !important;"><img src="/static/opm/img/%s"></div>'
         else:
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
@@ -237,6 +237,12 @@ class OPMCaseRow(object):
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):
             raise InvalidRow
+
+    @property
+    def closed_date(self):
+        if not self.closed:
+            return EMPTY_FIELD
+        return str(self.case_property('closed_on', EMPTY_FIELD))
 
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
@@ -594,7 +600,9 @@ class ConditionsMet(OPMCaseRow):
         ('cash', _("Payment Amount"), True),
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner Id"), False),
-        ('closed', _('Closed'), False)
+        ('closed', _('Closed'), False),
+        ('closed_date', _("Closed On"), True),
+        ('village', _("Village Name"), False),
     ]
 
     def __init__(self, case, report, child_index=1):
@@ -657,6 +665,7 @@ class Beneficiary(OPMCaseRow):
         ('total', _("Amount to be paid to beneficiary"), True),
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner ID"), False),
+        ('closed_date', _("Closed On"), True),
     ]
 
     def __init__(self, case, report, child_index=1):

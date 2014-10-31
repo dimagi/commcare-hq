@@ -1,22 +1,50 @@
-import logging
 from xml.etree import ElementTree
-from corehq.apps.callcenter.indicator_sets import CallCenter
+from datetime import datetime
+import pytz
+from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.logging import notify_logger
+
+utc = pytz.utc
 
 
-logger = logging.getLogger(__name__)
+def should_sync(domain, last_sync, utcnow=None):
+    # definitely sync if we haven't synced before
+    if not last_sync or not last_sync.date:
+        return True
+
+    try:
+        timezone = pytz.timezone(domain.default_timezone)
+    except pytz.UnknownTimeZoneError:
+        timezone = utc
+
+    # check if user has already synced today (in local timezone). Indicators only change daily.
+    last_sync_utc = last_sync.date if last_sync.date.tzinfo else utc.localize(last_sync.date)
+    last_sync_local = timezone.normalize(last_sync_utc.astimezone(timezone))
+
+    utcnow = utcnow if utcnow else utc.localize(datetime.utcnow())
+    current_date_local = timezone.normalize(utcnow.astimezone(timezone))
+
+    if current_date_local.date() != last_sync_local.date():
+        return True
+
+    return False
 
 
-def indicators(user, version, last_sync):
+def indicators_fixture_generator(user, version, last_sync):
     assert isinstance(user, CommCareUser)
-    fixtures = []
-    indicator_sets = []
+
     domain = user.project
+    fixtures = []
+
+    if not should_sync(domain, last_sync):
+        return fixtures
+
     if domain and hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
         try:
-            fixtures.append(gen_fixture(user, CallCenter(domain, user)))
+            fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user)))
         except Exception as e:  # blanket exception catching intended
-            logger.exception('problem generating report fixtures for user {user}: {msg}'.format(
+            notify_logger.exception('problem generating callcenter fixture for user {user}: {msg}'.format(
                 user=user._id, msg=str(e)))
 
     return fixtures
@@ -28,60 +56,31 @@ def gen_fixture(user, indicator_set):
 
     :param user: The user.
     :param indicator_set: A subclass of SqlIndicatorSet
-    :param include_empty: True to include indicators that have no value for the current time period.
     """
     """
     Example output:
-    indicator_set {
-        name = 'demo'
-        group = None
-        data = {'indicator_a': 1}
-    }
-    <fixture id="indicators:demo" user_id="...">
-        <indicators>
-            <indicator_a>1</indicator_a>
-            <indicator_b>0</indicator_b>
-        </indicators>
-    </fixture>
 
-    indicator_set {
-        name = 'demo'
-        group = 'user'
-        data = {'user1': {'user': 'user1', 'indicator_a': 1}}
-    }
+    indicator_set.name = 'demo'
+    indicator_set.get_data() = {'user_case1': {'indicator_a': 1, 'indicator_b': 2}}
+
     <fixture id="indicators:demo" user_id="...">
         <indicators>
-            <user id="user1">
+            <case id="user_case1">
                 <indicator_a>1</indicator_a>
-            </user>
+                <indicator_b>2</indicator_2>
+            </case>
         </indicators>
     </fixture>
     """
     name = indicator_set.name
-    group = indicator_set.group_by
-    data = indicator_set.data
+    data = indicator_set.get_data()
 
-    xFixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
-    xIndicators = ElementTree.SubElement(xFixture, 'indicators')
-    if group:
-        if len(group) > 1:
-            raise Exception("Only single level grouping supported.")
+    fixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
+    indicators_node = ElementTree.SubElement(fixture, 'indicators')
+    for case_id, indicators in data.iteritems():
+        group = ElementTree.SubElement(indicators_node, 'case', attrib={'id': case_id})
+        for name, value in indicators.items():
+            indicator = ElementTree.SubElement(group, name)
+            indicator.text = str(value)
 
-        group_name = group[0]
-        group_columns = [c for c in indicator_set.columns if c.view.name == group_name]
-        for group_data in data.values():
-            elem_name = group_columns[0].header if group_columns else group_name
-            group_id = group_data[group_name]
-            xGroup = ElementTree.SubElement(xIndicators, elem_name, attrib={'id': group_id})
-            for c in indicator_set.columns:
-                key = c.slug
-                if key != group_name:
-                    xIndicator = ElementTree.SubElement(xGroup, c.header)
-                    xIndicator.text = str(group_data.get(key, 0))
-    elif data:
-        for c in indicator_set.columns:
-            key = c.slug
-            xIndicator = ElementTree.SubElement(xIndicators, c.header)
-            xIndicator.text = str(data.get(key, 0))
-
-    return xFixture
+    return fixture

@@ -10,10 +10,10 @@ from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
-                                               FormAliasIndicatorAdminCRUDManager,
-                                               FormLabelIndicatorAdminCRUDManager, CaseDataInFormIndicatorAdminCRUDManager, FormDataInCaseAdminCRUDManager, CouchIndicatorCRUDManager, BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
+        FormAliasIndicatorAdminCRUDManager, FormLabelIndicatorAdminCRUDManager,
+        CaseDataInFormIndicatorAdminCRUDManager, FormDataInCaseAdminCRUDManager, CouchIndicatorCRUDManager,
+        BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, add_months, months_between
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
