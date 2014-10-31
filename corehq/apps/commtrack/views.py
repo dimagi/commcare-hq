@@ -370,18 +370,11 @@ class NewProductView(BaseCommTrackManageView):
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 
-    def custom_product_is_valid(self):
-        if self.custom_data.is_valid():
-            self.product.product_data = self.custom_data.get_data_to_save()
-            self.product.save()
-            return True
-        else:
-            return False
-
     def post(self, request, *args, **kwargs):
         if all([self.new_product_form.is_valid(),
-                self.custom_product_is_valid()]):
-            self.new_product_form.save()
+                self.custom_data.is_valid()]):
+            self.product.product_data = self.custom_data.get_data_to_save()
+            self.new_product_form.save(self.product)
             messages.success(request, _("Product saved!"))
             return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
