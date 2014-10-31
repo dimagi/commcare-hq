@@ -44,9 +44,6 @@ trunk: master
 name: autostaging
 branches:
   - remove-hutch  # DR 10/28
-  - double-managment+schedule # SK 10/28
-  - schedule+bulk-app-translate # Noah 10/30
-  - schedule # SK 7/17
 #  - add-build-ui
   - hq-dropdown # sravan 5/7
   # - logos+master # tw
@@ -60,7 +57,7 @@ branches:
   - archive-location # tw 10/23
   - help-text # j$  10/8 + repeat-hidden-value Daniel 10/10
   - masterlist-workflow # j$  10/8
-  - graphing+double-management # SK 10/31
+  - graphing+double-management # SK 10/3
   - double-management # SK 10/15
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
   - bulk-app-translate # Noah 9/18
