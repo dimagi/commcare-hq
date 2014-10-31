@@ -65,6 +65,7 @@ branches:
   - graphing # Nick P 10/27
   - share-fixtures # j$ 10/29
   - lwyszomi:ilsgateway-productstock
+  - autocomplete-case-sharing # Nick P 10/31
 submodules:
   submodules/couchlog-src:
     branches:
