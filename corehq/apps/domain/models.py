@@ -652,7 +652,6 @@ class Domain(Document, SnapshotMixin):
                 delattr(new_domain, field)
 
         new_comps = {}  # a mapping of component's id to it's copy
-        old_to_new_fixture_types = dict()  # fixture items reference the types
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()
@@ -662,8 +661,6 @@ class Domain(Document, SnapshotMixin):
                     comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
             elif res['value']['doc_type'] not in ignore:
                 comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
-                if res['value']['doc_type'] == 'FixtureDataType':
-                    old_to_new_fixture_types[res['value']['_id']] = comp
             else:
                 comp = None
 
@@ -698,11 +695,6 @@ class Domain(Document, SnapshotMixin):
         if 'CaseReminderHandler' not in ignore:
             for handler in CaseReminderHandler.get_handlers(new_domain_name):
                 apply_update(handler, update_for_copy)
-
-        if 'FixtureDataItem' not in ignore:
-            for fixture in FixtureDataItem.by_domain(new_domain_name):
-                fixture.data_type_id = old_to_new_fixture_types[fixture.data_type_id]._id
-                fixture.save()
 
         return new_domain
 
