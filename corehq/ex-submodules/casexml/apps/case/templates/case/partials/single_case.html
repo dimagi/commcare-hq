@@ -112,6 +112,9 @@
     {% endif %}
     {% if ledgers %}
         <div class="tab-pane" id="case-ledgers">
+        {% if show_transaction_export %}
+            <a href="{% url 'export_case_transactions' case.domain case.get_id %}" class="pull-right">{% trans "download complete transaction history" %}</a>
+        {% endif %}
         {% for section_id, product_map in ledgers.items %}
             <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
             <table class="table table-striped table-hover">
