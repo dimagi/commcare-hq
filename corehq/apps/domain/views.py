@@ -1615,7 +1615,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             copy_by_id = set()
             for k in request.POST.keys():
                 if k.endswith("-publish"):
-                    copy_by_id.add(k[:len(k)-len("-publish")])
+                    copy_by_id.add(k[:-len("-publish")])
 
             old = self.domain_object.published_snapshot()
             new_domain = self.domain_object.save_snapshot(ignore=ignore,
@@ -1670,7 +1670,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                         application.deployment_date = date_picked
                 except Exception:
                     pass
-                #if request.POST.get("%s-name" % original_id):
                 application.phone_model = request.POST["%s-phone_model" % original_id]
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
                 application.user_type = request.POST["%s-user_type" % original_id]

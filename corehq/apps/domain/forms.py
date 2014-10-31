@@ -124,6 +124,7 @@ class SnapshotApplicationForm(forms.Form):
             'attribution_notes'
         ]
 
+
 class SnapshotFixtureForm(forms.Form):
     publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
     description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
