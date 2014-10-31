@@ -196,10 +196,10 @@ def stock_data_task(domain):
 
 # Temporary for staging
 @task
-def clear_stock_data_task(domain):
-    StockTransaction.objects.filter(report__domain=domain).delete()
-    StockReport.objects.filter(domain=domain).delete()
-    products = Product.ids_by_domain(domain)
+def clear_stock_data_task():
+    StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
+    StockReport.objects.filter(domain='ilsgateway-test-1').delete()
+    products = Product.ids_by_domain('ilsgateway-test-1')
     StockState.objects.filter(product_id__in=products).delete()
 
 
