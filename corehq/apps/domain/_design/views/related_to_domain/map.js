@@ -11,8 +11,7 @@ function(doc) {
         'Application': true,
         'RemoteApp': true,
         'CaseReminderHandler': true,
-        'FixtureDataType': true,
-        'FixtureDataItem': true
+        'FixtureDataType': true
     };
 
     if (doc.domain) {
