@@ -39,6 +39,7 @@ class TermsFacet(Facet):
         self.params = {
             "field": term,
             "size": size if size is not None else SIZE_LIMIT,
+            "shard_size": SIZE_LIMIT,
         }
 
 
