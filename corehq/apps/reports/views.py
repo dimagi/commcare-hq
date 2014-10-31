@@ -925,9 +925,9 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
             domain,
             stream_cases(case_ids),
             workbook,
-            group=group,
+            filter_group=group,
             users=users,
-            groups=groups,
+            all_groups=groups,
             process=process
         )
         export_users(users, workbook)
