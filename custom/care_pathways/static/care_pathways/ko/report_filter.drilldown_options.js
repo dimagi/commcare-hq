@@ -37,16 +37,16 @@ ko.bindingHandlers.select2 = {
                     converted.push({id: value, text: textAccessor(value)});
                 }
             });
-            converted = _.uniq(converted, function(obj) {return obj.id});
+            converted = _.uniq(converted, function(obj) {return obj.id;});
             var data = $(el).select2('data');
             if (_.indexOf(_.pluck(data, 'id'), '0') === 0 && data.length > 1) {
-                converted.splice(0, 1)
-            } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === data.length && converted.length > 1) {
+                converted.splice(0, 1);
+            } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === converted.length && converted.length > 1) {
                 converted = converted[_.indexOf(_.pluck(converted, 'id'), '0')];
-                var tmplist = allBindings.selectedOptions().slice();
+                var tmplist = allBindings.selectedOptions().slice(0);
                 $.each(tmplist, function (key, value) {
                     if (textAccessor(value) !== '' && value !== '0') {
-                        allBindings.selectedOptions().pop()
+                        allBindings.selectedOptions().pop();
                     }
                 });
             }
@@ -72,6 +72,7 @@ var DrilldownOptionFilterControl = function (options) {
     };
 
     self.updateNextDrilldown = function (trigger_level) {
+        function get_val(obj) {return obj.val;}
         var current_control = self.controls()[trigger_level];
         var current_selection = current_control.selected(),
             current_options = current_control.control_options();
@@ -94,7 +95,7 @@ var DrilldownOptionFilterControl = function (options) {
                 for (var l = trigger_level+1; l < self.controls().length; l++) {
                     if (current_index >= 0 && l === trigger_level+1) {
                         next_options.push.apply(next_options, current_options[current_index].next);
-                        self.controls()[trigger_level+1].control_options(_.uniq(next_options, function(obj) {return obj.val}));
+                        self.controls()[trigger_level+1].control_options(_.uniq(next_options, get_val));
                     } else {
                         self.controls()[l].control_options([]);
                     }
