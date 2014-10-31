@@ -1591,9 +1591,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             ignore = []
             if request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
-            if not request.POST.get('share_lookup_tables', False):
-                ignore.append('FixtureDataItem')
-                ignore.append('FixtureDataType')
 
             old = self.domain_object.published_snapshot()
             new_domain = self.domain_object.save_snapshot(ignore=ignore)
