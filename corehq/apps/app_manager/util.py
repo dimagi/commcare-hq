@@ -129,6 +129,15 @@ class ParentCasePropertyBuilder(object):
         for parent_type in parent_types:
             for property in get_properties_recursive(parent_type[0]):
                 case_properties.add('%s/%s' % (parent_type[1], property))
+        if self.app.case_sharing:
+            from corehq.apps.app_manager.models import Application
+            for app in Application.by_domain(self.app.domain):
+                if app.case_sharing:
+                    case_properties.update(
+                        get_case_properties(
+                            app, [case_type]
+                        ).get(case_type, [])
+                    )
 
         return case_properties
 
