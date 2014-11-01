@@ -88,6 +88,7 @@ class GenericReportView(CacheableRequestMixIn):
     mobile_enabled = False
     export_format_override = None
     icon = None
+    show_in_dropdown = False
 
     # the defaults for this should be sufficient. But if they aren't, well go for it.
     base_template = None

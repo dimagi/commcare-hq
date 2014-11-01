@@ -50,6 +50,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
+    show_in_dropdown = True
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True

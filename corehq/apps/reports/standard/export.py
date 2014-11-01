@@ -98,6 +98,7 @@ class ExcelExportReport(FormExportReportBase):
     slug = "excel_export_data"
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
+    show_in_dropdown = True
 
     @property
     def report_context(self):
@@ -248,6 +249,7 @@ class CaseExportReport(ExportReport):
               'corehq.apps.reports.filters.select.GroupFilter']
     report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
+    show_in_dropdown = True
 
     def get_filter_params(self):
         return self.request.GET.copy()

@@ -196,6 +196,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     name = ugettext_noop('Case List')
     slug = 'case_list'
+    show_in_dropdown = True
 
     def slugs(self):
         return [

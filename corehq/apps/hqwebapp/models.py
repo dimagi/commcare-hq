@@ -29,6 +29,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
+from corehq.apps.reports.models import ReportConfig
 from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
     ADMSectionDispatcher)
 from corehq.apps.announcements.dispatcher import (
@@ -48,17 +49,21 @@ def sidebar_to_dropdown(sidebar_items=[]):
             'is_divider': False,
             'html': None
         }
-        dropdown_items.append(dropdown_header)
+        current_dropdown_items = []
         for side_item in side_list:
-            dropdown_item = {
-                'data_id': None,
-                'url': side_item["url"],
-                'is_header': False,
-                'title': side_item["title"],
-                'is_divider': False,
-                'html': None
-            }
-            dropdown_items.append(dropdown_item)
+            show_in_dropdown = side_item.get("show_in_dropdown", False)
+            if show_in_dropdown:
+                dropdown_item = {
+                    'data_id': None,
+                    'url': side_item["url"],
+                    'is_header': False,
+                    'title': side_item["title"],
+                    'is_divider': False,
+                    'html': None
+                }
+                current_dropdown_items.append(dropdown_item)
+        if current_dropdown_items:
+            dropdown_items.extend([dropdown_header] + current_dropdown_items)
     return dropdown_items
 
 
@@ -280,7 +285,8 @@ class ProjectReportsTab(UITab):
         tools = [(_("Tools"), [
             {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
-             'icon': 'icon-tasks'}
+             'icon': 'icon-tasks',
+             'show_in_dropdown': True}
         ])]
 
         project_reports = ProjectReportDispatcher.navigation_sections(context)
@@ -363,6 +369,20 @@ class ReportsTab(UITab):
         if hasattr(module, 'DEFAULT_REPORT_CLASS'):
             return "corehq.apps.reports.views.default"
         return "corehq.apps.reports.views.saved_reports"
+
+    @property
+    def dropdown_items(self):
+        saved_report_header = format_submenu_context(_('My Saved Reports'), is_header=True)
+        saved_report_list = [
+            format_submenu_context(config.name, url=config.url) for config in ReportConfig.by_domain_and_owner(self.domain, self.couch_user._id)
+        ]
+
+        context = {
+            'request': self._request,
+            'domain': self.domain,
+        }
+        general_reports = sidebar_to_dropdown(ProjectReportDispatcher.navigation_sections(context))
+        return [saved_report_header] + saved_report_list + general_reports
 
 
 class ProjectInfoTab(UITab):
@@ -748,10 +768,12 @@ class MessagingTab(UITab):
                             'urlname': 'create_complex_reminder_schedule',
                         },
                     ],
+                    'show_in_dropdown': True,
                 },
                 {
                     'title': _("Reminder Calendar"),
-                    'url': reverse('scheduled_reminders', args=[self.domain])
+                    'url': reverse('scheduled_reminders', args=[self.domain]),
+                    'show_in_dropdown': True,
                 },
             ])
 
@@ -800,7 +822,8 @@ class MessagingTab(UITab):
         if self.can_access_reminders:
             reminders_urls.append({
                 'title': _("Reminders in Error"),
-                'url': reverse('reminders_in_error', args=[self.domain])
+                'url': reverse('reminders_in_error', args=[self.domain]),
+                'show_in_dropdown': True,
             })
         items = []
         messages_urls = []
@@ -829,14 +852,16 @@ class MessagingTab(UITab):
                             'title': _("New Broadcast"),
                             'urlname': 'copy_one_time_reminder'
                         },
-                    ]
+                    ],
+                    'show_in_dropdown': True,
                 },
             ])
         if self.can_access_sms:
             messages_urls.extend([
                 {
                     'title': _('Message Log'),
-                    'url': MessageLogReport.get_url(domain=self.domain)
+                    'url': MessageLogReport.get_url(domain=self.domain),
+                    'show_in_dropdown': True,
                 },
             ])
         if messages_urls:
@@ -992,31 +1017,35 @@ class ProjectUsersTab(UITab):
             from corehq.apps.users.views.mobile import EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
             from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
             mobile_users_menu = [
-                {'title': _('Mobile Workers'),
-                 'url': reverse('commcare_users', args=[self.domain]),
-                 'description': _("Create and manage users for CommCare and CloudCare."),
-                 'subpages': [
-                     {'title': commcare_username,
-                      'urlname': EditCommCareUserView.urlname},
-                     {'title': _('New Mobile Worker'),
-                      'urlname': 'add_commcare_account'},
-                     {'title': _('Bulk Upload'),
-                      'urlname': 'upload_commcare_users'},
-                     {'title': ConfirmBillingAccountForExtraUsersView.page_title,
-                      'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
-                     {'title': UserFieldsView.page_name(),
-                      'urlname': UserFieldsView.urlname},
-                 ]},
-                {'title': _('Groups'),
-                 'url': reverse('all_groups', args=[self.domain]),
-                 'description': _("Create and manage reporting and case sharing groups for Mobile Workers."),
-                 'subpages': [
-                     {'title': lambda **context: (
-                         "%s %s" % (_("Editing"), context['group'].name)),
-                      'urlname': 'group_members'},
-                     {'title': _('Membership Info'),
-                      'urlname': 'group_membership'}
-                 ]}
+                {
+                    'title': _('Mobile Workers'),
+                    'url': reverse('commcare_users', args=[self.domain]),
+                    'description': _("Create and manage users for CommCare and CloudCare."),
+                    'subpages': [
+                        {'title': commcare_username,
+                         'urlname': EditCommCareUserView.urlname},
+                        {'title': _('New Mobile Worker'),
+                         'urlname': 'add_commcare_account'},
+                        {'title': _('Bulk Upload'),
+                         'urlname': 'upload_commcare_users'},
+                        {'title': ConfirmBillingAccountForExtraUsersView.page_title,
+                         'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
+                    ],
+                    'show_in_dropdown': True,
+                },
+                {
+                    'title': _('Groups'),
+                    'url': reverse('all_groups', args=[self.domain]),
+                    'description': _("Create and manage reporting and case sharing groups for Mobile Workers."),
+                    'subpages': [
+                        {'title': lambda **context: (
+                            "%s %s" % (_("Editing"), context['group'].name)),
+                         'urlname': 'group_members'},
+                        {'title': _('Membership Info'),
+                         'urlname': 'group_membership'}
+                    ],
+                    'show_in_dropdown': True,
+                }
             ]
 
             if self.can_view_cloudcare:
@@ -1041,23 +1070,26 @@ class ProjectUsersTab(UITab):
 
             from corehq.apps.users.views import (EditWebUserView, EditMyAccountDomainView, ListWebUsersView)
             items.append((_('Project Users'), [
-                {'title': ListWebUsersView.page_title,
-                 'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
-                 'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
-                 'subpages': [
-                     {
-                         'title': _("Invite Web User"),
-                         'urlname': 'invite_web_user'
-                     },
-                     {
-                         'title': web_username,
-                         'urlname': EditWebUserView.urlname
-                     },
-                     {
-                         'title': _('My Information'),
-                         'urlname': EditMyAccountDomainView.urlname
-                     }
-                 ]}
+                {
+                    'title': ListWebUsersView.page_title,
+                    'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+                    'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
+                    'subpages': [
+                        {
+                            'title': _("Invite Web User"),
+                            'urlname': 'invite_web_user'
+                        },
+                        {
+                            'title': web_username,
+                            'urlname': EditWebUserView.urlname
+                        },
+                        {
+                            'title': _('My Information'),
+                            'urlname': EditMyAccountDomainView.urlname
+                        }
+                    ],
+                    'show_in_dropdown': True,
+                }
             ]))
 
         return items

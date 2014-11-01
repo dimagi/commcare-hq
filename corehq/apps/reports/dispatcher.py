@@ -189,6 +189,7 @@ class ReportDispatcher(View):
                             'icon': report.icon,
                             'title': _(report.name),
                             'subpages': report.get_subpages(),
+                            'show_in_dropdown': report.show_in_dropdown,
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
