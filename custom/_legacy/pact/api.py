@@ -260,11 +260,6 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     return submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string, extra_meta=extra_meta)
 
 
-def isodate_string(date):
-    if date: return dateutil.datetime_isoformat(date) + "Z"
-    return ""
-
-
 def get_all_providers(invalidate=False):
     """
     wrapper function to get all the providers for PACT and cache them.
