@@ -28,8 +28,8 @@
             },
             "deviceID": "commconnect",
             "instanceID": "e8afaec3c66745ef80e48062d4b91b56",
-            "timeEnd": "2013-07-20T00:02:27Z",
-            "timeStart": "2013-07-19T21:21:31Z",
+            "timeEnd": "2013-07-20T00:02:27.493000Z +00:00",
+            "timeStart": "2013-07-19T21:21:31.188000Z +00:00",
             "userID": "f7f0c79e-8b79-11df-b7de-005056c00008",
             "username": "2013-07-19"
         },
@@ -65,5 +65,6 @@
     "last_sync_token": null,
     "openrosa_headers": {},
     "path": null,
-    "submit_ip": null
+    "submit_ip": null,
+    "is_timezone_aware": true
 }

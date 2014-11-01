@@ -3,8 +3,8 @@
 	xmlns="http://bihar.commcarehq.org/pregnancy/registration">
 	<Meta>
 		<DeviceID>ZQKXWCOE9S4C9K3BTENGJFWTJ</DeviceID>
-		<TimeStart>2011-12-27T21:07:34.445Z</TimeStart>
-		<TimeEnd>2011-12-27T21:07:51.085Z</TimeEnd>
+		<TimeStart>2011-12-27T21:07:34.445-05:00</TimeStart>
+		<TimeEnd>2011-12-27T21:07:51.085-05:00</TimeEnd>
 		<username>testuser</username>
 		<uid>05f9c90f-8e2e-4e3f-b392-002058c46b00</uid>
 		<chw_id>d5ce3a980b5b69e793445ec0e3b2138e</chw_id>

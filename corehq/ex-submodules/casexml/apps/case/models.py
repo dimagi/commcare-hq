@@ -1,3 +1,9 @@
+"""
+Couch models for commcare cases.
+
+For details on casexml check out:
+http://bitbucket.org/javarosa/javarosa/wiki/casexml
+"""
 from __future__ import absolute_import
 from StringIO import StringIO
 import base64
@@ -31,19 +37,18 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
-from dimagi.utils.couch.database import SafeSaveDocument, iter_docs
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch import (
     CouchDocLockableMixIn,
     LooselyEqualDocumentSchema,
 )
+from corehq.ext.couchdbkit import (
+    UTCDateTimeProperty as DateTimeProperty,
+    ISOSafeSaveDocument as SafeSaveDocument,
+    ISODocumentSchema as DocumentSchema,
+    ISODocument as Document,
+)
 
-
-"""
-Couch models for commcare cases.  
-
-For details on casexml check out:
-http://bitbucket.org/javarosa/javarosa/wiki/casexml
-"""
 
 CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
@@ -52,7 +57,7 @@ CASE_STATUS_ALL = 'all'
 INDEX_ID_PARENT = 'parent'
 
 
-class CommCareCaseAction(LooselyEqualDocumentSchema):
+class CommCareCaseAction(DocumentSchema, LooselyEqualDocumentSchema):
     """
     An atomic action on a case. Either a create, update, or close block in
     the xml.

@@ -1,7 +1,6 @@
 from copy import copy
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
-from dimagi.utils.couch.database import SafeSaveDocument
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
@@ -10,8 +9,14 @@ from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
 
 
+from corehq.ext.couchdbkit import (
+    UTCDateTimeProperty as DateTimeProperty,
+    ISOSafeSaveDocument as SafeSaveDocument,
+)
+
+
 class User(object):
-    """ 
+    """
     This is a basic user model that's used for OTA restore to properly
     find cases and generate the user XML.
     """

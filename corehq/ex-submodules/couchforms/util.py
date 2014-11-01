@@ -157,6 +157,14 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
     if process:
         process(xform)
 
+    # this assert is to make it really hard
+    # for is_timezone_aware to be set to True without
+    # the code actually being timezone aware
+    from couchforms.models import DateTimeProperty
+    from corehq.ext.couchdbkit import UTCDateTimeProperty
+    assert DateTimeProperty is UTCDateTimeProperty
+    xform.is_timezone_aware = True
+
     lock = acquire_lock_for_xform(_id)
     with ReleaseOnError(lock):
         if _id in XFormInstance.get_db():

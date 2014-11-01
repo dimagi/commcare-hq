@@ -16,7 +16,17 @@ def make_uuid():
     return uuid.uuid4().hex
 
 from datetime import datetime, timedelta
-from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document, DateProperty, SchemaListProperty, IntegerProperty
+from couchdbkit.ext.django.schema import (
+    BooleanProperty,
+    DateProperty,
+    IntegerProperty,
+    SchemaListProperty,
+    StringProperty,
+)
+from corehq.ext.couchdbkit import (
+    ISODocument as Document,
+    UTCDateTimeProperty as DateTimeProperty,
+)
 
 dp = parser()
 
