@@ -552,6 +552,7 @@ var DetailScreenConfig = (function () {
 
                 column.field.on('change', function () {
                     column.header.val(getPropertyTitle(this.val()));
+                    column.header.fire("change");
                     if (this.val() && !field_val_re.test(this.val())) {
                         column.format_warning.show().parent().addClass('error');
                     } else {
