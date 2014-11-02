@@ -779,7 +779,7 @@ var DetailScreenConfig = (function () {
                         }
                     }
 
-                    var addItem = function(autocomplete) {
+                    var addItem = function(columnConfiguration) {
                         var col;
                         var redraw = false;
                         if (_.isEmpty(that.columns)) {
@@ -788,7 +788,7 @@ var DetailScreenConfig = (function () {
                             redraw = true;
                         }
                         col = that.initColumnAsColumn(
-                            Column.init({hasAutocomplete: autocomplete}, that)
+                            Column.init(columnConfiguration, that)
                         );
                         that.fire('add-column', col);
                         if (redraw) {
@@ -796,10 +796,10 @@ var DetailScreenConfig = (function () {
                         }
                     };
                     $(".add-property-item", $addButton).click(function () {
-                        addItem(true);
+                        addItem({hasAutocomplete: true});
                     });
                     $(".add-calculation-item", $addButton).click(function () {
-                        addItem(false);
+                        addItem({hasAutocomplete: false, format: "calculate"});
                     });
 
                     if (! _.isEmpty(this.columns)) {
