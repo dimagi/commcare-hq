@@ -155,7 +155,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
                 return {
                     'property': pair[0],
                     'value': pair[1]
-                }
+                };
             });
             return series;
         });
@@ -166,7 +166,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             obj.langs = moduleOptions.langs;
             return obj;
         });
-        ret.axisTitleConfigurations = _.map(_.pairs(serverGraphObject['locale_specific_config']), function(pair){
+        ret.axisTitleConfigurations = _.map(_.pairs(serverGraphObject.locale_specific_config), function(pair){
             return {
                 'lang': moduleOptions.lang,
                 'langs': moduleOptions.langs,
@@ -201,7 +201,7 @@ var PairConfiguration = function(original){
     };
     self.addConfigPair = function (){
         self.configPairs.push(new ConfigPropertyValuePair());
-    }
+    };
 };
 
 var ConfigPropertyValuePair = function(original){
@@ -246,7 +246,7 @@ var LocalizableValue = function(original){
         var modLangs = [self.lang].concat(self.langs);
         for (var i=0; i < modLangs.length; i++) {
             var possibleBackup = ko.unwrap(self.values[modLangs[i]]);
-            if (possibleBackup !== undefined && possibleBackup != null) {
+            if (possibleBackup !== undefined && possibleBackup !== null) {
                 backup = {
                     'value': possibleBackup,
                     'lang': modLangs[i]
@@ -289,7 +289,7 @@ var GraphViewModel = function(moduleOptions){
             'property': s,
             'lang': self.lang,
             'langs': self.langs
-        })}
+        });}
     ));
 
     self.configPropertyOptions = [
@@ -360,7 +360,7 @@ var GraphViewModel = function(moduleOptions){
             return new Annotation(o);
         }));
 
-        if (obj.axisTitleConfigurations.length != 0) {
+        if (obj.axisTitleConfigurations.length !== 0) {
             self.axisTitleConfigurations(_.map(obj.axisTitleConfigurations, function (o) {
                 return new LocalizedConfigPropertyValuePair(o);
             }));
@@ -376,7 +376,7 @@ var GraphViewModel = function(moduleOptions){
             return new ConfigPropertyValuePair(pair);
         }));
 
-        self.childCaseTypes = obj.childCaseTypes.slice(0)
+        self.childCaseTypes = obj.childCaseTypes.slice(0);
     };
 
     self.removeSeries = function (series){
@@ -391,9 +391,9 @@ var GraphViewModel = function(moduleOptions){
      */
     self.getSeriesConstructor = function(){
         if (self.selectedGraphType() == "xy"){
-            return XYGraphSeries
+            return XYGraphSeries;
         } else if (self.selectedGraphType() == "bubble"){
-            return BubbleGraphSeries
+            return BubbleGraphSeries;
         } else {
             throw "Invalid selectedGraphType";
         }
@@ -429,7 +429,7 @@ var GraphSeries = function (original, childCaseTypes){
     childCaseTypes = childCaseTypes || [];
 
     function origOrDefault(prop, fallback){
-        return original[prop] === undefined ? fallback : original[prop]
+        return original[prop] === undefined ? fallback : original[prop];
     }
     /**
      * Return the default value for the data path field based on the given source.
@@ -473,16 +473,16 @@ var GraphSeries = function (original, childCaseTypes){
     self.configPropertyOptions = [
         'fill-above',
         'fill-below',
-        'line-color',
+        'line-color'
     ];
     self.configPropertyHints = {
         'fill-above': "ex: '#aarrggbb'",
         'fill-below': "ex: '#aarrggbb'",
-        'line-color': "ex: '#aarrggbb'",
+        'line-color': "ex: '#aarrggbb'"
     };
 
     self.toggleShowDataPath = function() {
-        self.showDataPath(!self.showDataPath())
+        self.showDataPath(!self.showDataPath());
     };
     self.selectedSource.subscribe(function(newValue) {
         if (newValue.value == "custom") {
