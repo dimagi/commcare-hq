@@ -149,6 +149,7 @@ SortRowTemplate.prototype = new SortRow({notifyButtonOfChanges: false});
  */
 var SortRows = function (properties, edit) {
     var self = this;
+    self.addButtonClicked = ko.observable(false);
     self.sortRows = ko.observableArray([]);
     if (edit) {
         self.templateRow = new SortRowTemplate({properties: properties});
@@ -179,6 +180,10 @@ var SortRows = function (properties, edit) {
 
     self.rowCount = ko.computed(function () {
         return self.sortRows().length;
+    });
+
+    self.showing = ko.computed(function(){
+        return self.addButtonClicked() || self.rowCount() > 0;
     });
 };
 
