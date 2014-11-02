@@ -334,7 +334,7 @@ var GraphViewModel = function(moduleOptions){
         //'x-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         //'y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         'x-label-count': 'ex: 3',
-        'x-label-count': 'ex: 3',
+        'y-label-count': 'ex: 3',
         //'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
         'show-grid': 'true or false',
