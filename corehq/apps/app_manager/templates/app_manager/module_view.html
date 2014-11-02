@@ -350,7 +350,10 @@
                                     <td data-bind="html: fieldHtml"></td>
                                     <!-- /ko -->
                                     <!-- ko if: $data instanceof SortRowTemplate -->
-                                    <td data-bind="jqueryElement: textField.ui" class="detail-screen-field control-group"></td>
+                                    <td class="detail-screen-field control-group" data-bind="css: {error: showWarning}">
+                                        <div data-bind="jqueryElement: textField.ui"></div>
+                                        <div data-bind="jqueryElement: warningElement, if: showWarning"></div>
+                                    </td>
                                     <!-- /ko -->
 
 
