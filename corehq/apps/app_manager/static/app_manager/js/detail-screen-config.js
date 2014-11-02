@@ -44,8 +44,10 @@ var CC_DETAIL_SCREEN = {
                 var availableTags = _.map(options, function(value) {
                     var label = value;
                     if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                        label = ('<span class="icon-paper-clip"></span> '
-                            + label.substring(label.indexOf(":") + 1));
+                        label = (
+                            '<span class="icon-paper-clip"></span> ' +
+                            label.substring(label.indexOf(":") + 1)
+                        );
                     }
                     return {value: value, label: label};
                 });
@@ -86,7 +88,7 @@ ko.bindingHandlers.jqueryElement = {
 
 var SortRow = function(params){
     var self = this;
-    var params = params || {};
+    params = params || {};
     self.notifyButtonOfChanges =
             typeof params.notifyButtonOfChanges !== 'undefined' ? params.notifyButtonOfChanges : true;
     self.field = ko.observable(typeof params.field !== 'undefined' ? params.field : "");
@@ -134,7 +136,7 @@ var SortRow = function(params){
 };
 var SortRowTemplate = function(params){
     var self = this;
-    var params = params || {};
+    params = params || {};
     self.textField = uiElement.input().val("");
     CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
 
@@ -207,7 +209,7 @@ var SortRows = function (properties, edit) {
 var filterViewModel = function(filterText){
     var self = this;
     self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
-    self.showing = ko.observable(self.filterText() != "");
+    self.showing = ko.observable(self.filterText() !== "");
 
     self.filterText.subscribe(function(){
         window.filterSaveButton.fire('change');
@@ -787,23 +789,23 @@ var DetailScreenConfig = (function () {
                         );
                     }
                     $addButton = $(
-                        '<div class="btn-group"> \
-                            <button class="btn add-property-item">Add Property</button> \
-                        </div> '
+                        '<div class="btn-group">' +
+                            '<button class="btn add-property-item">Add Property</button>' +
+                        '</div>'
                     );
                     if (buttonDropdownItems.length > 1){
                         // Add the caret
-                        $addButton.append($('\
-                            <button class="btn dropdown-toggle" data-toggle="dropdown"> \
-                                <span class="caret"></span> \
-                            </button>'
+                        $addButton.append($(
+                            '<button class="btn dropdown-toggle" data-toggle="dropdown">' +
+                                '<span class="caret"></span>' +
+                            '</button>'
                         ));
                         // Add the drop down
                         var $dropdownList = $(
                             '<ul class="dropdown-menu"></ul>'
                         ).appendTo($addButton);
                         // Add the drop down items
-                        for (var i=0; i < buttonDropdownItems.length; i++){
+                        for (i = 0; i < buttonDropdownItems.length; i++){
                             $dropdownList.append(buttonDropdownItems[i]);
                         }
                     }
@@ -861,14 +863,14 @@ var DetailScreenConfig = (function () {
 
                         // Add the button
                         $buttonRow = $(
-                            '<tr> \
-                                <td class="detail-screen-icon"></td> \
-                                <td class="detail-screen-field button-cell">\
-                                </td> \
-                                <td class="detail-screen-header"></td> \
-                                <td class="detail-screen-format"></td> \
-                                <td class="detail-screen-icon"></td> \
-                            </tr>'
+                            '<tr>' +
+                                '<td class="detail-screen-icon"></td>' +
+                                '<td class="detail-screen-field button-cell">' +
+                                '</td>' +
+                                '<td class="detail-screen-header"></td>' +
+                                '<td class="detail-screen-format"></td>' +
+                                '<td class="detail-screen-icon"></td>' +
+                            '</tr>'
                         );
                         $('.button-cell', $buttonRow).append($addButton);
                         var $specialTableBody = $('<tbody/>').addClass('detail-screen-columns slim').appendTo($table);
@@ -960,10 +962,10 @@ var DetailScreenConfig = (function () {
                 $location.append(screen.$home);
             }
 
-            if (spec.state["short"] !== undefined) {
+            if (spec.state.short !== undefined) {
                 addScreen(spec.state, "short", this.$listHome);
             }
-            if (spec.state["long"] !== undefined) {
+            if (spec.state.long !== undefined) {
                 addScreen(spec.state, "long", this.$detailHome);
             }
         };
@@ -1068,7 +1070,7 @@ var DetailScreenConfig = (function () {
     DetailScreenConfig.field_format_warning = $('<span/>').addClass('help-inline')
         .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
-    DetailScreenConfig.field_val_re = RegExp(
+    DetailScreenConfig.field_val_re = new RegExp(
         '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
     );
 
