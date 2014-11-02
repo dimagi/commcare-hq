@@ -807,13 +807,6 @@ var DetailScreenConfig = (function () {
                         }
                         return col;
                     };
-                    var addGraphItem = function() {
-                        addItem({
-                            hasAutocomplete: false,
-                            format: "graph"
-                        });
-                        var graphItem = that.columns[that.columns.length - 1];
-                    };
                     $(".add-property-item", $addButton).click(function () {
                         addItem({hasAutocomplete: true});
                     });
@@ -821,7 +814,7 @@ var DetailScreenConfig = (function () {
                         addItem({hasAutocomplete: false});
                     });
                     $(".add-graph-item", $addButton).click(function() {
-                        addGraphItem();
+                        addItem({hasAutocomplete: false, format: "graph"});
                     });
 
                     if (! _.isEmpty(this.columns)) {
