@@ -477,10 +477,10 @@ var GraphSeries = function (original, childCaseTypes){
         'point-style'
     ];
     self.configPropertyHints = {
-        'fill-above': 'ex: #aarrggbb',
-        'fill-below': 'ex: #aarrggbb',
-        'line-color': 'ex: #aarrggbb',
-        'point-style': 'diamond, triangle, or square'
+        'fill-above': 'ex: "#aarrggbb"',
+        'fill-below': 'ex: "#aarrggbb"',
+        'line-color': 'ex: "#aarrggbb"',
+        'point-style': '"diamond", "triangle", or "square"'
     };
 
     self.toggleShowDataPath = function() {
