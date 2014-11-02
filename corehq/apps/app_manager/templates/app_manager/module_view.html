@@ -307,8 +307,12 @@
                 </div>
                 <div id="{{ detail.type }}-detail-screen-sort">
                 {% if app.enable_multi_sort %}
+                    <a href="#" data-bind="visible: !showing(), click: function(data){data.addButtonClicked(true);}">
+                        <i class="icon-plus"></i>
+                        Add a sort property...
+                    </a>
                     <div class="ui-sortable">
-                        <table class="table table-condensed detail-screen-table" data-bind="if: sortRows().concat(templateRow).length">
+                        <table class="table table-condensed detail-screen-table" data-bind="if: showing">
                             <thead>
                                 <tr>
                                     <th></th>
@@ -350,7 +354,10 @@
                                     <td data-bind="html: fieldHtml"></td>
                                     <!-- /ko -->
                                     <!-- ko if: $data instanceof SortRowTemplate -->
-                                    <td data-bind="jqueryElement: textField.ui" class="detail-screen-field control-group"></td>
+                                    <td class="detail-screen-field control-group" data-bind="css: {error: showWarning}">
+                                        <div data-bind="jqueryElement: textField.ui"></div>
+                                        <div data-bind="jqueryElement: warningElement, if: showWarning"></div>
+                                    </td>
                                     <!-- /ko -->
 
 
