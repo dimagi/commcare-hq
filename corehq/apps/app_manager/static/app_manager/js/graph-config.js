@@ -474,13 +474,11 @@ var GraphSeries = function (original, childCaseTypes){
         'fill-above',
         'fill-below',
         'line-color',
-        'point-style'
     ];
     self.configPropertyHints = {
         'fill-above': "ex: '#aarrggbb'",
         'fill-below': "ex: '#aarrggbb'",
         'line-color': "ex: '#aarrggbb'",
-        'point-style': "'none', 'circle', or 'x'"
     };
 
     self.toggleShowDataPath = function() {
@@ -499,8 +497,10 @@ GraphSeries.prototype.constructor = GraphSeries;
 var XYGraphSeries = function(original, childCaseTypes){
     GraphSeries.apply(this, [original, childCaseTypes]);
     var self = this;
-    //self.configPropertyOptions = self.configPropertyOptions.concat(['secondary-y']);
+    self.configPropertyOptions = self.configPropertyOptions.concat(['point-style'/*,'secondary-y'*/]);
+    self.configPropertyHints['point-style'] = "'none', 'circle', or 'x'";
     //self.configPropertyHints['secondary-y'] = 'ex: false';
+
 };
 XYGraphSeries.prototype = new GraphSeries();
 XYGraphSeries.constructor = XYGraphSeries;
