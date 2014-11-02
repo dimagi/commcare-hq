@@ -87,9 +87,9 @@
       <template form="graph">
         <graph type="xy">
           <series nodeset="instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']">
+            <configuration/>
             <x function="5"/>
             <y function="6"/>
-            <configuration/>
           </series>
           <configuration>
             <text id="x-title">
@@ -111,10 +111,10 @@
       <template form="graph">
         <graph type="bubble">
           <series nodeset="instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']">
+            <configuration/>
             <x function="5"/>
             <y function="6"/>
             <radius function="3"/>
-            <configuration/>
           </series>
           <configuration>
             <text id="x-title">
@@ -136,9 +136,9 @@
       <template form="graph">
         <graph type="xy">
           <series nodeset="instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']">
+            <configuration/>
             <x function="x_num"/>
             <y function="y_num"/>
-            <configuration/>
           </series>
           <configuration>
             <text id="x-title">
@@ -160,13 +160,13 @@
       <template form="graph">
         <graph type="xy">
           <series nodeset="instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']">
-            <x function="x_num"/>
-            <y function="y_num"/>
             <configuration>
               <text id="point-style">
                 <xpath function="x"/>
               </text>
             </configuration>
+            <x function="x_num"/>
+            <y function="y_num"/>
           </series>
           <configuration>
             <text id="x-title">
@@ -188,9 +188,9 @@
       <template form="graph">
         <graph type="xy">
           <series nodeset="instance('casedb')/casedb/case[@case_type='point_case'][index/parent=current()/@case_id][@status='open']">
+            <configuration/>
             <x function="x_num"/>
             <y function="y_num"/>
-            <configuration/>
           </series>
           <configuration>
             <text id="x-min">

@@ -113,10 +113,10 @@ class ConfigurationGroup(XmlObject):
 
 class Series(OrderedXmlObject):
     ORDER = (
+        "configuration",
         "x_function",
         "y_function",
         "radius_function",
-        "configuration",
     )
     ROOT_NAME = 'series'
 
