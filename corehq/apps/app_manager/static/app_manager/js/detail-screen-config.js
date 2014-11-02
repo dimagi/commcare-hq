@@ -483,8 +483,8 @@ var DetailScreenConfig = (function () {
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
-                column['enum'] = this.enum_extra.getItems();
-                column['graph_configuration'] =
+                column.enum = this.enum_extra.getItems();
+                column.graph_configuration =
                         this.format.val() == "graph" ? this.graph_extra.val() : null;
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());

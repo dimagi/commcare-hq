@@ -3017,7 +3017,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def create_app_strings(self, lang):
         gen = app_strings.CHOICES[self.translation_strategy]
-        #import ipdb; ipdb.set_trace()
         if lang == 'default':
             return gen.create_default_app_strings(self)
         else:

@@ -381,7 +381,11 @@ class Graph(FormattedDetailColumn):
                         radius_function=s.radius_function,
                         configuration=sx.ConfigurationGroup(
                             configs=[
-                                # TODO: We probably want to wrap the values in quotes or change the hints on the front end to include quotes
+                                # TODO: It might be worth wrapping
+                                #       these values in quotes (as appropriate)
+                                #       to prevent the user from having to
+                                #       figure out why their unquoted colors
+                                #       aren't working.
                                 sx.ConfigurationItem(id=k, xpath_function=v)
                                 for k, v in s.config.iteritems()]
                         )
@@ -429,8 +433,6 @@ class Graph(FormattedDetailColumn):
 
         # TODO: what are self.variables and do I need to care about them here?
         # (see FormattedDetailColumn.template)
-
-        #print template.serializeDocument(pretty=True)
 
         return template
 

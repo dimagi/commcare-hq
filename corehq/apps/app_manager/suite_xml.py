@@ -103,8 +103,9 @@ class Text(XmlObject):
 
 
 class ConfigurationItem(Text):
-     ROOT_NAME = "text"
-     id = StringField("@id")
+    ROOT_NAME = "text"
+    id = StringField("@id")
+
 
 class ConfigurationGroup(XmlObject):
     ROOT_NAME = 'configuration'
@@ -128,7 +129,7 @@ class Series(OrderedXmlObject):
 
 
 class Annotation(OrderedXmlObject):
-    ORDER = ("x","y","text")
+    ORDER = ("x", "y", "text")
     ROOT_NAME = 'annotation'
 
     # TODO: Specify the xpath without specifying "text" for the child (we want the Text class to specify the tag)
@@ -138,8 +139,6 @@ class Annotation(OrderedXmlObject):
 
 
 class Graph(XmlObject):
-    #TODO: Write doc string
-
     ROOT_NAME = 'graph'
 
     type = StringField("@type", choices=["xy", "bubble"])
@@ -450,8 +449,8 @@ class Detail(IdNode):
             try:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
-            except AttributeError as e:
-                pass # Its a Graph detail
+            except AttributeError:
+                pass  # Its a Graph detail
         result.discard(None)
         return result
 

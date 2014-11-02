@@ -16,14 +16,14 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
     var self = this;
     moduleOptions = moduleOptions || {};
 
-    var $editButtonDiv = $('\
-        <div> \
-            <button class="btn" data-bind="click: openModal, visible: $data.edit"> \
-                <i class="icon-pencil"></i> \
-                Edit Graph\
-            </button> \
-        </div>\
-    ');
+    var $editButtonDiv = $(
+        '<div>' +
+            '<button class="btn" data-bind="click: openModal, visible: $data.edit">' +
+                '<i class="icon-pencil"></i>' +
+                'Edit Graph' +
+            '</button>' +
+        '</div>'
+    );
 
     self.ui = $editButtonDiv;
     self.graphViewModel = new GraphViewModel(moduleOptions);
@@ -78,44 +78,44 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             var keys = _.keys(obj);
             var ret = {};
             for (var i=0; i < keys.length; i++){
-                if (obj[keys[i]] != null){
+                if (obj[keys[i]] !== null){
                     ret[keys[i]] = obj[keys[i]];
                 }
             }
             return ret;
         };
 
-        ret['graph_name'] = graphViewModelAsPOJS['graphDisplayName'];
-        ret['graph_type'] = graphViewModelAsPOJS['selectedGraphType'];
-        ret['series'] = _.map(graphViewModelAsPOJS['series'], function(s){
+        ret.graph_name = graphViewModelAsPOJS.graphDisplayName;
+        ret.graph_type = graphViewModelAsPOJS.selectedGraphType;
+        ret.series = _.map(graphViewModelAsPOJS.series, function(s){
             var series = {};
             // Only take the keys from the series that we care about
-            series['data_path'] = s['dataPath'];
-            series['x_function'] = s['xFunction'];
-            series['y_function'] = s['yFunction'];
-            if (s['radiusFunction'] !== undefined){
-                series['radius_function'] = s['radiusFunction'];
+            series.data_path = s.dataPath;
+            series.x_function = s.xFunction;
+            series.y_function = s.yFunction;
+            if (s.radiusFunction !== undefined){
+                series.radius_function = s.radiusFunction;
             }
             // convert the list of config objects to a single object (since
             // order no longer matters)
-            series['config'] = _.reduce(s['configPairs'], function(memo, pair){
-                memo[pair['property']] = pair['value'];
+            series.config = _.reduce(s.configPairs, function(memo, pair){
+                memo[pair.property] = pair.value;
                 return memo;
             }, {});
             return series;
         });
-        ret['annotations'] = _.map(graphViewModelAsPOJS['annotations'], function(obj){
-            obj['display_text'] = omitNulls(obj['values']);
-            delete obj['displayText'];
+        ret.annotations = _.map(graphViewModelAsPOJS.annotations, function(obj){
+            obj.display_text = omitNulls(obj.values);
+            delete obj.displayText;
             return obj;
         });
-        ret['locale_specific_config'] = _.reduce(
-            graphViewModelAsPOJS['axisTitleConfigurations'], function(memo, conf){
-                memo[conf['property']] = omitNulls(conf['values']);
+        ret.locale_specific_config = _.reduce(
+            graphViewModelAsPOJS.axisTitleConfigurations, function(memo, conf){
+                memo[conf.property] = omitNulls(conf.values);
                 return memo;
         }, {});
-        ret['config'] = _.reduce(graphViewModelAsPOJS['configPairs'], function(memo, pair){
-            memo[pair['property']] = pair['value'];
+        ret.config = _.reduce(graphViewModelAsPOJS.configPairs, function(memo, pair){
+            memo[pair.property] = pair.value;
             return memo;
         }, {});
         return ret;
@@ -139,19 +139,19 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         serverGraphObject = serverGraphObject || {};
         var ret = {};
 
-        ret['graphDisplayName'] = serverRepresentationOfGraph['graph_name'];
-        ret['selectedGraphType'] = serverGraphObject['graph_type'];
-        ret['series'] = _.map(serverGraphObject['series'], function(s){
+        ret.graphDisplayName = serverRepresentationOfGraph.graph_name;
+        ret.selectedGraphType = serverGraphObject.graph_type;
+        ret.series = _.map(serverGraphObject.series, function(s){
             var series = {};
 
-            series['selectedSource'] = {'text':'custom', 'value':'custom'};
-            series['dataPath'] = s['data_path'];
-            series['xFunction'] = s['x_function'];
-            series['yFunction'] = s['y_function'];
-            if (s['radius_function'] !== undefined){
-                series['radiusFunction'] = s['radius_function'];
+            series.selectedSource = {'text':'custom', 'value':'custom'};
+            series.dataPath = s.data_path;
+            series.xFunction = s.x_function;
+            series.yFunction = s.y_function;
+            if (s.radius_function !== undefined){
+                series.radiusFunction = s.radius_function;
             }
-            series['configPairs'] = _.map(_.pairs(s['config']), function(pair){
+            series.configPairs = _.map(_.pairs(s.config), function(pair){
                 return {
                     'property': pair[0],
                     'value': pair[1]
@@ -159,28 +159,28 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
             });
             return series;
         });
-        ret['annotations'] = _.map(serverGraphObject['annotations'], function(obj){
-            obj['values'] = obj['display_text'];
-            delete obj['display_text'];
-            obj['lang'] = moduleOptions['lang'];
-            obj['langs'] = moduleOptions['langs'];
+        ret.annotations = _.map(serverGraphObject.annotations, function(obj){
+            obj.values = obj.display_text;
+            delete obj.display_text;
+            obj.lang = moduleOptions.lang;
+            obj.langs = moduleOptions.langs;
             return obj;
         });
-        ret['axisTitleConfigurations'] = _.map(_.pairs(serverGraphObject['locale_specific_config']), function(pair){
+        ret.axisTitleConfigurations = _.map(_.pairs(serverGraphObject['locale_specific_config']), function(pair){
             return {
-                'lang': moduleOptions['lang'],
-                'langs': moduleOptions['langs'],
+                'lang': moduleOptions.lang,
+                'langs': moduleOptions.langs,
                 'property': pair[0],
                 'values': pair[1]
             };
         });
-        ret['configPairs'] = _.map(_.pairs(serverGraphObject['config']), function(pair){
+        ret.configPairs = _.map(_.pairs(serverGraphObject.config), function(pair){
             return {
                 'property': pair[0],
                 'value': pair[1]
             };
         });
-        ret['childCaseTypes'] = moduleOptions['childCaseTypes'];
+        ret.childCaseTypes = moduleOptions.childCaseTypes;
 
         return ret;
     }
@@ -190,7 +190,7 @@ var PairConfiguration = function(original){
     var self = this;
     original = original || {};
 
-    self.configPairs = ko.observableArray(_.map(original['configPairs'] || [], function(pair){
+    self.configPairs = ko.observableArray(_.map(original.configPairs || [], function(pair){
         return new ConfigPropertyValuePair(pair);
     }));
     self.configPropertyOptions = [];
