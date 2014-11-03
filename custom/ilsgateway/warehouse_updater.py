@@ -9,6 +9,12 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
     SupplyPointWarehouseRecord
 
 
+"""
+    These functions and variables are ported from:
+    https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/run_reports.py
+"""
+
+
 NEEDED_STATUS_TYPES = [SupplyPointStatusTypes.DELIVERY_FACILITY,
                        SupplyPointStatusTypes.R_AND_R_FACILITY,
                        SupplyPointStatusTypes.SUPERVISION_FACILITY,

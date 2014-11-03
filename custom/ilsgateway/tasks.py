@@ -14,7 +14,7 @@ from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_locati
     sync_ilsgateway_product
 
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.run_reports import populate_report_data
+from custom.ilsgateway.warehouse_updater import populate_report_data
 
 from dimagi.utils.dates import force_to_datetime
 
