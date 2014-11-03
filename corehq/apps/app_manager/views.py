@@ -2558,7 +2558,6 @@ def build_ui_translation_download_file(app):
 
     rows = row_dict.values()
     all_prop_trans = get_default_translations_for_download(app)
-    # TODO: What was with the lower casing? Is it ok that I axed this?
     rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
@@ -2617,8 +2616,6 @@ def process_ui_translation_upload(app, trans_file):
                         error_properties.append(row["property"] + ' - ' + row[lang])
                 if not (lang_with_defaults == lang
                         and row[lang] == default_trans[row["property"]].lstrip(" ")):
-                    # TODO: Can we just remove the leading spaces from the
-                    #       two translations that cause this problem?
                     trans_dict[lang].update({row["property"]: row[lang]})
     return trans_dict, error_properties
 
