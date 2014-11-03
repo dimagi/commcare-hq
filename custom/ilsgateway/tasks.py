@@ -65,11 +65,6 @@ def get_product_stock(domain, endpoint):
                     stock_state = StockState.objects.get(section_id='stock',
                                                          case_id=case._id,
                                                          product_id=product._id)
-                    if product_stock.auto_monthly_consumption:
-                        stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
-                    else:
-                        stock_state.daily_consumption = None
-                    stock_state.save()
                 except StockState.DoesNotExist:
                     stock_state = StockState(section_id='stock',
                                              case_id=case._id,
@@ -78,11 +73,11 @@ def get_product_stock(domain, endpoint):
                                              last_modified_date=product_stock.last_modified,
                                              sql_product=SQLProduct.objects.get(product_id=product._id))
 
-                    if product_stock.auto_monthly_consumption:
-                        stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
-                    else:
-                        stock_state.daily_consumption = None
-                    stock_state.save()
+                if product_stock.auto_monthly_consumption:
+                    stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
+                else:
+                    stock_state.daily_consumption = None
+                stock_state.save()
 
             if not meta.get('next', False):
                 has_next = False

@@ -28,4 +28,4 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
             date__lte=end_date,
             expires__lte=end_date
         ).order_by('-id')
-        return [alerts.values_list('text')]
+        return alerts.values_list('text')
