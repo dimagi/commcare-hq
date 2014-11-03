@@ -375,15 +375,17 @@ class ReportsTab(UITab):
     def dropdown_items(self):
         saved_report_header = format_submenu_context(_('My Saved Reports'), is_header=True)
         saved_report_list = [
-            format_submenu_context(config.name, url=config.url) for config in ReportConfig.by_domain_and_owner(self.domain, self.couch_user._id)
+            format_submenu_context(config.name, url=config.url)
+            for config in ReportConfig.by_domain_and_owner(self.domain, self.couch_user._id)
         ]
+        saved_reports_dropdown = ([saved_report_header] + saved_report_list) if saved_report_list else []
 
         context = {
             'request': self._request,
             'domain': self.domain,
         }
         general_reports = sidebar_to_dropdown(ProjectReportDispatcher.navigation_sections(context))
-        return [saved_report_header] + saved_report_list + general_reports + divider_and_more_menu(self.url)
+        return saved_reports_dropdown + general_reports + divider_and_more_menu(self.url)
 
 
 class ProjectInfoTab(UITab):
