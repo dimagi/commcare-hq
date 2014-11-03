@@ -1,4 +1,3 @@
-import copy
 import json
 import urllib
 
@@ -149,11 +148,6 @@ class NewLocationView(BaseLocationView):
 
     @property
     @memoized
-    def metadata(self):
-        return copy.copy(dict(self.location.metadata))
-
-    @property
-    @memoized
     def location_form(self):
         if self.request.method == 'POST':
             return LocationForm(self.location, self.request.POST, is_new=True)
@@ -165,7 +159,6 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': self.consumption,
-            'metadata': self.metadata,
         }
 
     def post(self, request, *args, **kwargs):
