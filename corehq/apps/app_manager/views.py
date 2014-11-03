@@ -2527,10 +2527,20 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/exchange_summary.html", context)
 
 
+def get_default_translations_for_download(app):
+    return app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
+
+
+def get_index_for_defaults(langs):
+    try:
+        return langs.index("en")
+    except ValueError:
+        return 0
+
 @require_can_edit_apps
 def download_translations(request, domain, app_id):
     app = get_app(domain, app_id)
-    properties = tuple(["property"] + app.langs + ["default"])
+    properties = tuple(["property"] + app.langs)
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2546,9 +2556,9 @@ def download_translations(request, domain, app_id):
             row_dict[prop].append(trans)
 
     rows = row_dict.values()
-    all_prop_trans = app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
-    all_prop_trans = dict((k.lower(), v) for k, v in all_prop_trans.iteritems())
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in [k.lower() for k in row_dict]])
+    all_prop_trans = get_default_translations_for_download(app)
+    # TODO: What was with the lower casing? Is it ok that I axed this?
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)
@@ -2556,7 +2566,10 @@ def download_translations(request, domain, app_id):
         return row
 
     def add_default(row):
-        row[-1] = all_prop_trans.get(row[0].lower(), "")
+        row_index = get_index_for_defaults(app.langs) + 1
+        if not row[row_index]:
+            # If no custom translation exists, replace it.
+            row[row_index] = all_prop_trans.get(row[0], "")
         return row
 
     rows = [add_default(fillrow(row)) for row in rows]
@@ -2576,6 +2589,8 @@ def upload_translations(request, domain, app_id):
         translations = workbook.get_worksheet(title='translations')
 
         app = get_app(domain, app_id)
+        default_trans = get_default_translations_for_download(app)
+        lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
         trans_dict = defaultdict(dict)
         error_properties = []
         for row in translations:
@@ -2585,7 +2600,11 @@ def upload_translations(request, domain, app_id):
                     for param in all_parameters:
                         if not re.match("\$\{[0-9]+}", param):
                             error_properties.append(row["property"] + ' - ' + row[lang])
-                    trans_dict[lang].update({row["property"]: row[lang]})
+                    if not (lang_with_defaults == lang
+                            and row[lang] == default_trans[row["property"]].lstrip(" ")):
+                        # TODO: Can we just remove the leading spaces from the
+                        #       two translations that cause this problem?
+                        trans_dict[lang].update({row["property"]: row[lang]})
 
         if error_properties:
             message = _("We found problem with following translations:")
