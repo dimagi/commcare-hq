@@ -384,8 +384,12 @@ class ReportsTab(UITab):
             'request': self._request,
             'domain': self.domain,
         }
-        general_reports = sidebar_to_dropdown(ProjectReportDispatcher.navigation_sections(context))
-        return saved_reports_dropdown + general_reports + divider_and_more_menu(self.url)
+        reports = sidebar_to_dropdown(ProjectReportDispatcher.navigation_sections(context))
+        if self.project.commtrack_enabled:
+            # exclude worker monitring reprots for CommTrack domains
+            # this is not readable but alternate is to copy code around
+            reports = reports[0:4]
+        return saved_reports_dropdown + reports + divider_and_more_menu(self.url)
 
 
 class ProjectInfoTab(UITab):
