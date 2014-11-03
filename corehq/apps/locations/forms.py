@@ -1,12 +1,15 @@
-from django import forms
-from corehq.apps.locations.models import Location
-from django.template.loader import get_template
-from django.template import Context
-from corehq.apps.locations.util import (load_locs_json, allowed_child_types,
-                                        lookup_by_property)
-from corehq.apps.locations.signals import location_created, location_edited
-from django.utils.translation import ugettext as _
 import re
+
+from django import forms
+from django.template import Context
+from django.template.loader import get_template
+from django.utils.translation import ugettext as _
+
+from corehq.apps.custom_data_fields.views import CustomDataEditor
+
+from .models import Location
+from .signals import location_created, location_edited
+from .util import load_locs_json, allowed_child_types, lookup_by_property
 
 
 class ParentLocWidget(forms.Widget):
@@ -66,18 +69,29 @@ class LocationForm(forms.Form):
         kwargs['initial']['coordinates'] = ('%s, %s' % (lat, lon)
                                             if lat is not None else '')
 
-        # TODO use this for validation as well
-        from corehq.apps.custom_data_fields.views import CustomDataEditor
-        from .views import LocationFieldsView
-        self.custom_data = CustomDataEditor(
-            field_view=LocationFieldsView,
-            domain=self.location.domain,
-            required_only=True,
-            post_dict=bound_data,
-        )
+        self.custom_data = self.get_custom_data(bound_data, is_new)
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
+
+    def get_custom_data(self, bound_data, is_new):
+        from .views import LocationFieldsView
+
+        existing = self.location.metadata
+
+        # Don't show validation error preemptively on new user creation
+        if is_new and bound_data is None:
+            existing = None
+
+        return CustomDataEditor(
+            field_view=LocationFieldsView,
+            domain=self.location.domain,
+            # For new locations, only display required fields
+            required_only=is_new,
+            existing_custom_data=existing,
+            post_dict=bound_data,
+        )
+
 
     @property
     def cur_parent_id(self):
@@ -85,6 +99,12 @@ class LocationForm(forms.Form):
             return self.location.lineage[0]
         except Exception:
             return None
+
+    def is_valid(self):
+        return all([
+            super(LocationForm, self).is_valid(),
+            self.custom_data.is_valid(),
+        ])
 
     def clean_parent_id(self):
         parent_id = self.cleaned_data['parent_id']
@@ -186,6 +206,7 @@ class LocationForm(forms.Form):
         location.lineage = Location(
             parent=self.cleaned_data['parent_id']
         ).lineage
+        location.metadata = self.custom_data.get_data_to_save()
 
         for k, v in self.cleaned_data.iteritems():
             if k.startswith('prop:'):

@@ -20,8 +20,7 @@ from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
-from corehq.apps.custom_data_fields.views import (CustomDataFieldsMixin,
-                                                  CustomDataEditor)
+from corehq.apps.custom_data_fields.views import CustomDataFieldsMixin
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -157,8 +156,8 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         if self.request.method == 'POST':
-            return LocationForm(self.location, self.request.POST)
-        return LocationForm(self.location)
+            return LocationForm(self.location, self.request.POST, is_new=True)
+        return LocationForm(self.location, is_new=True)
 
     @property
     def page_context(self):
@@ -167,11 +166,10 @@ class NewLocationView(BaseLocationView):
             'location': self.location,
             'consumption': self.consumption,
             'metadata': self.metadata,
-            # 'custom_data_form': self.custom_data.form,
         }
 
     def post(self, request, *args, **kwargs):
-        if self.location_form.is_valid() and self.custom_data.is_valid():
+        if self.location_form.is_valid():
             self.location_form.save()
             messages.success(request, _('Location saved!'))
             return HttpResponseRedirect('%s?%s' % (
@@ -180,20 +178,17 @@ class NewLocationView(BaseLocationView):
             ))
         return self.get(request, *args, **kwargs)
 
-    # @property
-    # @memoized
-    # def custom_data(self):
-        # return CustomDataEditor(
-            # field_view=LocationFieldsView,
-            # domain=self.domain,
-            # required_only=True,
-            # post_dict=self.request.POST if self.request.method == "POST" else None,
-        # )
-
 
 class EditLocationView(NewLocationView):
     urlname = 'edit_location'
     page_title = ugettext_noop("Edit Location")
+
+    @property
+    @memoized
+    def location_form(self):
+        if self.request.method == 'POST':
+            return LocationForm(self.location, self.request.POST)
+        return LocationForm(self.location)
 
     @property
     def location_id(self):
@@ -235,16 +230,6 @@ class EditLocationView(NewLocationView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.location_id])
-
-    @property
-    @memoized
-    def custom_data(self):
-        return CustomDataEditor(
-            field_view=LocationFieldsView,
-            domain=self.domain,
-            existing_custom_data=self.editable_user.user_data,  # TODO not this
-            post_dict=self.request.POST if self.request.method == "POST" else None,
-        )
 
 
 class BaseSyncView(BaseLocationView):
