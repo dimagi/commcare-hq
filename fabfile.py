@@ -440,7 +440,7 @@ def preview():
 def development():
     """A development monolith target - must specify a host either by command line or prompt"""
     env.sudo_user = 'cchq'
-    env.environment = 'development'
+    env.environment = 'dev'
     env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
