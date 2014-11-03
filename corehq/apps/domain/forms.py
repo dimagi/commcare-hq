@@ -128,7 +128,7 @@ class SnapshotApplicationForm(forms.Form):
 class SnapshotFixtureForm(forms.Form):
     publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
     description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A detailed technical description of the fixture"))
+        help_text=ugettext_noop("A detailed technical description of the table"))
 
     def __init__(self, *args, **kwargs):
         super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
