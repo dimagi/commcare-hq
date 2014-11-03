@@ -3,7 +3,7 @@
 
 import uuid
 import os
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 from django.test import TestCase
 
 

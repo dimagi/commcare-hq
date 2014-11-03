@@ -5,28 +5,29 @@
 <div class="controls">
     {% block filter_content %}
     <div id="{{ css_id }}" class="well" style="padding-bottom: 0;">
-        <div data-bind="foreach: controls">
-            <div class="control-group"
-                 data-bind="{% if use_last %}fadeVisibleInOnly{% else %}fadeVisible{% endif %}: is_visible">
+        <div data-bind="foreach: controls" style="display: inline-flex">
+            <div class="control-group">
                 <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
-                       class="control-label"></label>
-                <div class="controls">
+                       class="control-label" style="margin-left: 20px; width: auto; display: flex"></label>
+                <div class="controls" style="margin-left: 0;">
                     <div data-bind="if: level == {{ single_option_select }}">
                             {% if single_option_select_without_default_text == 1 %}
                                 <select  class="{{ css_class }}" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                                 options: control_options, optionsText: 'text', optionsValue: 'val',
-                                selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
+                                selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"
+                                style="width: 200px; display: flex; padding: 5px;"></select>
                             {% else %}
                                 <select  class="{{ css_class }}" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                                 options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
-                                selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
+                                selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"
+                                style="width: 200px; display: flex; padding: 5px"></select>
                             {% endif %}
                     </div>
-                    <div data-bind="if: level != {{ single_option_select }}">
+                    <div data-bind="if: level != {{ single_option_select }}" >
                         <select id="multi_sel" class="{{ css_class }}" multiple="true" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
-                        options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
+                        options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text, enable: is_visible,
                         selectedOptions: selected, event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }},
-                        select2: {}"></select>
+                        select2: {}" style="width: 200px; display: flex; padding: 5px"></select>
                     </div>
                 </div>
             </div>
@@ -44,13 +45,11 @@
 <script type="text/javascript">
     $(function () {
        $('#{{ css_id }}').drilldownOptionFilter({
+           selected: {{ selected|JSON }},
            drilldown_map: {{ option_map|JSON }},
            controls: {{ controls|JSON }},
-           selected: {{ selected|JSON }},
            notifications: {{ notifications|JSON }}
        });
     });
-
-
 </script>
 {% endblock %}

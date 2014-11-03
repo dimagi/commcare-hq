@@ -13,6 +13,7 @@
             {% block stylesheets %}
             {% endblock %}
         {% endcompress %}
+        {% block uncompressed-stylesheets %}{% endblock %}
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
@@ -120,7 +121,7 @@
                         <a href="http://www.commcarehq.org/"><img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}" class="powered-by"  alt="CommCare" /></a>
                         <a href="http://www.dimagi.com/"><img src="{% static 'hqwebapp/img/dimagi-footer.png' %}" class="powered-by"  alt="Powered by Dimagi, Inc." /></a>
                     </div>
-                    {% if user.is_authenticated %}
+                    {% if request.user.is_authenticated %}
                     <div class="btn-toolbar pull-right">
                         <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
                         <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
@@ -130,7 +131,7 @@
                     <div>
                         <p style="padding-top: 7px;">
                             <a href="http://www.commcarehq.org/">CommCare HQ</a> {% trans 'is copyright' %} &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                            {% if user.is_authenticated %}
+                            {% if request.user.is_authenticated %}
                                 &nbsp;|&nbsp;
                                 <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
                             {% endif %}
@@ -146,7 +147,7 @@
             </div>
         </footer>
         <div id="hq-modal-home">
-            {% if user.is_authenticated %}
+            {% if request.user.is_authenticated %}
             <div class="modal hide fade" id="reportIssueModal">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
@@ -173,6 +174,22 @@
                                     <p class="help-block">{% trans "Please try to include as much information as possible." %}</p>
                                 </div>
                             </div>
+
+                            {% if request.couch_user.is_commcare_user %}
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-email">{% trans "Email" %}
+                                </label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="email" id="bug-report-email">
+                                    <p class="help-block">{% trans "Please enter your email here so that we can follow up with you regarding this issue" %}
+                                    </p>
+                                    <div class="alert fade in page-level-alert alert-error">
+                                        <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter a valid email" %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
                             <div class="control-group">
                                 <label class="control-label" for="bug-report-cc">{% trans "Other recipients (optional)" %}
                                 </label>

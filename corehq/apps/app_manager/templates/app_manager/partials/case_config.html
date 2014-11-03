@@ -19,7 +19,7 @@
 <script type="text/html" id="case-config:case-transaction">
     <div data-bind="template: {
         name: 'case-config:condition',
-        data: {condition: condition, case_transaction: $data}
+        data: {condition: condition, config: $data}
     }, visible: allow.condition()"></div>
     <div data-bind="if: allow.case_preload()" class="row-fluid">
         <div class="well span6">
@@ -42,7 +42,7 @@
         </label>
         <div data-bind="template: {
             name: 'case-config:condition',
-            data: {condition: $data.close_condition, case_transaction: $data},
+            data: {condition: $data.close_condition, config: $data},
             if: $data.close_condition
         }"></div>
     </div>

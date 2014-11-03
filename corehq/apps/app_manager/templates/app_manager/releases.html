@@ -8,6 +8,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
@@ -373,7 +374,10 @@
                                                             into the application install screen:
                                                         {% endblocktrans %}
                                                         <code class="bitly"><a data-bind="
-                                                            attr: {href: get_short_odk_url()},
+                                                            attr: {
+                                                                href: get_short_odk_url(),
+                                                                title: get_short_odk_url_phonetic()
+                                                            },
                                                             text: get_short_odk_url()
                                                         "></a></code>
                                                     </span>

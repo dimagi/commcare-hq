@@ -288,7 +288,7 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
 
     while has_next:
         meta, locations = endpoint.get_locations(next_url_params=next_url, **kwargs)
-        save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['type'],
+        save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['location_type'],
                         meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
         for location in locations:

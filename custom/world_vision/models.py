@@ -175,6 +175,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
     dob = flat_field(lambda case: case.dob)
+    date_of_death = case_property('child_date_of_death')
     month_of_death = flat_field(get_datepart)
     year_of_death = flat_field(partial(get_datepart, t='Y'))
 

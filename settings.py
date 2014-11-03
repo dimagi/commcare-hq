@@ -266,6 +266,8 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
+    'corehq.apps.reports_core',
+    'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -989,6 +991,7 @@ COUCHDB_APPS = [
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
+    ('userreports', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1126,6 +1129,7 @@ PILLOWTOPS = {
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
+        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
     ],
     'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
