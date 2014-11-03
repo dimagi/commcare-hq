@@ -5,6 +5,7 @@ function (doc) {
         f,
         form,
         value;
+
     if ((doc.doc_type === "Application" || doc.doc_type === "Application-Deleted") && doc.copy_of === null) {
         for (m = 0; m < app.modules.length; m += 1) {
             module = app.modules[m];
@@ -39,9 +40,19 @@ function (doc) {
         }
     } else if (doc.doc_type === "XFormInstance") {
         if (doc.xmlns) {
+            var size = 0, media = 0;
+            for (var key in doc._attachments) {
+                if (doc._attachments.hasOwnProperty(key) &&
+                    doc._attachments[key].content_type !== "text/xml") {
+                    size += doc._attachments[key].length;
+                    media += 1;
+                }
+            }
             value = {
                 xmlns: doc.xmlns,
-                submissions: 1
+                submissions: 1,
+                media: media,
+                size: size
             };
             emit([doc.domain, doc.app_id, doc.xmlns], value);
             emit([doc.domain, {}, doc.xmlns], value);
