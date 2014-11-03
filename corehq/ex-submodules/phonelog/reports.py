@@ -385,7 +385,7 @@ class DeviceLogDetailsReport(PhonelogReport):
                 "device": device
             }
 
-            version = log.app_version
+            version = log.app_version or "unknown"
             ver_format = (
                 '%s <a href="#" data-datatable-tooltip="left" '
                 'data-datatable-tooltip-text="%s">'
