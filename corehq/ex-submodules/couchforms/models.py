@@ -6,6 +6,7 @@ import hashlib
 import logging
 import time
 from copy import copy
+from xml.etree.ElementTree import ParseError
 from jsonobject.base import DefaultProperty
 from lxml import etree
 from xml.etree import ElementTree
@@ -14,6 +15,7 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from lxml.etree import XMLSyntaxError
 from casexml.apps.phone.models import SyncLog
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
@@ -264,10 +266,26 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 return None
 
     def get_xml_element(self):
-        xml = self.get_xml()
-        if isinstance(xml, unicode):
-            xml = xml.encode('utf-8')
-        return etree.fromstring(xml)
+        return self._xml_string_to_element(self.get_xml())
+
+    def _xml_string_to_element(self, xml_string):
+
+        def _to_xml_element(payload):
+            if isinstance(payload, unicode):
+                payload = payload.encode('utf-8', errors='replace')
+            return etree.fromstring(payload)
+
+        try:
+            return _to_xml_element(xml_string)
+        except XMLSyntaxError:
+            # there is a bug at least in pact code that double
+            # saves a submission in a way that the attachments get saved in a base64-encoded format
+            decoded_payload = base64.b64decode(xml_string)
+            element = _to_xml_element(decoded_payload)
+
+            # in this scenario resave the attachment properly in case future calls circumvent this method
+            self.put_attachment(decoded_payload, ATTACHMENT_NAME)
+            return element
 
     @property
     def attachments(self):
@@ -292,11 +310,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         if not xml_payload:
             return SortedDict(sorted(self.form.items()))
 
-        try:
-            element = ElementTree.XML(xml_payload)
-        except UnicodeEncodeError:
-            xml_payload = xml_payload.encode('utf-8', errors='replace')
-            element = ElementTree.XML(xml_payload)
+        element = self._xml_string_to_element(xml_payload)
 
         for child in element:
             # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
