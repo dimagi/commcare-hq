@@ -2,8 +2,12 @@ import os
 import json
 import tempfile
 import re
+import zipfile
+from cStringIO import StringIO
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from unidecode import unidecode
+from dateutil.parser import parse
 
 from django.conf import settings
 from django.contrib import messages
@@ -1167,3 +1171,50 @@ def export_report(request, domain, export_hash, format):
     else:
         return HttpResponseNotFound(_("That report was not found. Please remember"
                                       " that download links expire after 24 hours."))
+
+def find_question_id(form, value):
+    for k, v in form.iteritems():
+        if isinstance(v, dict):
+            ret = find_question_id(v, value)
+            if ret:
+                return [k] + ret
+        else:
+            if v == value:
+                return [k]
+
+    return None
+
+@require_form_view_permission
+@login_and_domain_required
+@require_GET
+def form_multimedia_export(request, domain, app_id):
+    ZIP_FILE_OVERHEAD = 1024 * 1024
+    try:
+        xmlns = request.GET.__getitem__("xmlns")
+        startdate = request.GET.__getitem__("startdate")
+        enddate = request.GET.__getitem__("enddate")
+    except ValueError:
+        return HttpResponseBadRequest()
+    key = [domain, app_id, xmlns]
+    stream_file = StringIO()
+    zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
+    size = 0
+    for f in XFormInstance.get_db().view("exports_forms/attachments",
+            start_key=key+[startdate], end_key=key + [enddate,{}]):
+        form = XFormInstance.get(f['id'])
+        base_filename = unidecode(form.form['@name'])
+        base_filename += '-' + unidecode(form.form['meta']['username'])
+        base_filename += '-' + f['id']
+        for key in f['value']['attachments'].keys():
+            extension = unicode(os.path.splitext(key)[1])
+            question_id = unicode('-'.join(find_question_id(form.form, key)))
+            fname = (base_filename + '-' + unidecode(question_id) + extension)
+            zi = zipfile.ZipInfo(fname, parse(f['value']['date']).timetuple())
+            zf.writestr(zi, form.fetch_attachment(key, stream=True).read())
+            size += f['value']['attachments'][key]['length']
+
+    zf.close()
+    response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
+    response['Content-Length'] = size + ZIP_FILE_OVERHEAD
+    response['Content-Disposition'] = 'attachment; filename=yourfiles.zip'
+    return response
