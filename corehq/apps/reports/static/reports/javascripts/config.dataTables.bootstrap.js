@@ -22,7 +22,7 @@ function HQReportDataTables(options) {
     self.fixColsWidth = options.fixColsWidth || 100;
     // a list of functions to call back to after ajax.
     // see user configurable charts for an example usage
-    self.extraCallbacks = options.extraCallbacks || [];
+    self.extraCallbacks = options.extraCallbacks;
     self.datatable = null;
     self.rendered = false;
 

@@ -1404,7 +1404,7 @@ class SQLProduct(models.Model):
     SQL based queries to exclude data for archived products.
     """
     domain = models.CharField(max_length=255, db_index=True)
-    product_id = models.CharField(max_length=100, db_index=True)
+    product_id = models.CharField(max_length=100, db_index=True, unique=True)
     name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)
     code = models.CharField(max_length=100, default='', null=True)

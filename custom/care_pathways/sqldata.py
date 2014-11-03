@@ -39,7 +39,11 @@ class CareQueryMeta(QueryMeta):
         external_cols = _get_grouping(filter_values)
 
         for fil in self.filters:
-            if fil.column_name not in ['group', 'gender', 'group_leadership', 'disaggregate_by', 'table_card_group_by']:
+            if isinstance(fil, ANDFilter):
+                filter_cols.append(fil.filters[0].column_name)
+                having.append(fil.build_expression())
+            elif fil.column_name not in ['group', 'gender', 'group_leadership', 'disaggregate_by',
+                                         'table_card_group_by']:
                 if fil.column_name not in external_cols and fil.column_name != 'maxmin':
                     filter_cols.append(fil.column_name)
                 having.append(fil.build_expression())
@@ -86,11 +90,11 @@ class GeographySqlData(SqlData):
 
     def __init__(self, domain):
         self.geography_config = get_domain_configuration(domain)['geography_hierarchy']
-        self.config = dict(domain=domain)
+        self.config = dict(domain=domain, empty='')
 
     @property
     def filters(self):
-        return [EQ('domain', 'domain')]
+        return [EQ('domain', 'domain'), NOTEQ('lvl_1', 'empty')]
 
     @property
     def group_by(self):
@@ -120,25 +124,25 @@ class CareSqlData(SqlData):
         sum_all = (x or 0) + (y or 0) + (z or 0)
         return "%.2f%%" % (100 * int(x or 0) / float(sum_all or 1))
 
-
     @property
     def filters(self):
-        filters = [EQ("ppt_year", "ppt_year")]
+        filters = [EQ("domain", "domain"), EQ("ppt_year", "ppt_year"), AND([NOTEQ("case_status", "duplicate"),
+                                                                            NOTEQ("case_status", "test")])]
         for k, v in self.geography_config.iteritems():
-            if v['prop'] in self.config and self.config[v['prop']]:
-                filters.append(IN(k, v['prop']))
+            if k in self.config and self.config[k]:
+                filters.append(IN(k, k))
         if 'value_chain' in self.config and self.config['value_chain']:
             filters.append(EQ("value_chain", "value_chain"))
-        if 'domains' in self.config and self.config['domains']:
+        if 'domains' in self.config and self.config['domains'] and self.config['domains'] != ('0',):
             filters.append(IN("domains", "domains"))
-        if 'practices' in self.config and self.config['practices']:
+        if 'practices' in self.config and self.config['practices'] and self.config['practices'] != ('0',):
             filters.append(IN("practices", "practices"))
         if 'group_leadership' in self.config and self.config['group_leadership']:
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
-        if 'schedule' in self.config and self.config['schedule']:
-            filters.append(EQ('schedule', 'schedule'))
+        if 'schedule' in self.config and self.config['schedule'] and self.config['schedule'] != ('0',):
+            filters.append(IN('schedule', 'schedule'))
         return filters
 
     def filter_request_params(self, request_params):
@@ -303,6 +307,13 @@ class TableCardSqlData(CareSqlData):
 
             column_headers.append(domain_group)
         column_headers = sorted(column_headers, key=lambda x: x.html)
+
+        i = 1
+        for column in column_headers:
+            for j in range(0, len(column.columns)):
+                column.columns[j] = DataTablesColumn('Practice ' + i.__str__(), help_text=column.columns[j].html)
+                i += 1
+
         return column_headers
 
     @property
@@ -321,7 +332,7 @@ class TableCardReportGrouppedPercentSqlData(TableCardSqlData):
     title = ''
     fix_left_col = False
     show_charts = True
-    chart_x_label = 'Practices'
+    chart_x_label = ''
     chart_y_label = 'Percentages'
 
     def headers(self, data):
@@ -340,7 +351,7 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
     title = ''
     show_total = True
     datatables = True
-    fix_left_col = False
+    fix_left_col = True
     show_charts = False
 
     def format_cell_fn(self, x, y):

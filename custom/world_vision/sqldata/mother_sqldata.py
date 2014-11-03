@@ -107,8 +107,11 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(ClosedMotherCasesBreakdown, self).filters
-        filter.append(NOTEQ('closed_on', 'empty'))
+        filter = super(ClosedMotherCasesBreakdown, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('closed_on', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('closed_on', 'stred'))
         return filter
 
     @property

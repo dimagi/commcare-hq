@@ -3017,7 +3017,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             del setting_value
 
         if self.case_sharing:
-            app_profile['properties']['server-tether'] = 'sync'
+            app_profile['properties']['server-tether'] = {
+                'force': True,
+                'value': 'sync',
+            }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
