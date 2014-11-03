@@ -54,6 +54,7 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
+from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.const import (
     APP_V1,
     APP_V2,
@@ -66,7 +67,6 @@ from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_proper
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.translations import system_text as st_trans
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
@@ -2546,7 +2546,7 @@ def download_translations(request, domain, app_id):
             row_dict[prop].append(trans)
 
     rows = row_dict.values()
-    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT + st_trans.ODKCOLLECT_DEFAULT)
+    all_prop_trans = app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
     all_prop_trans = dict((k.lower(), v) for k, v in all_prop_trans.iteritems())
     rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in [k.lower() for k in row_dict]])
 
