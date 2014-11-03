@@ -47,6 +47,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
+from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
@@ -2540,7 +2541,7 @@ def get_index_for_defaults(langs):
 @require_can_edit_apps
 def download_translations(request, domain, app_id):
     app = get_app(domain, app_id)
-    properties = tuple(["property"] + app.langs)
+    properties = tuple(["property"] + app.langs + ["platform", "source"])
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2572,7 +2573,19 @@ def download_translations(request, domain, app_id):
             row[row_index] = all_prop_trans.get(row[0], "")
         return row
 
-    rows = [add_default(fillrow(row)) for row in rows]
+    def add_sources(row):
+        platform_map = {
+            "CommCareAndroid": "Android",
+            "CommCareJava": "Java",
+            "ODK": "Android",
+            "JavaRosa": "Java",
+        }
+        source = system_text_sources.SOURCES.get(row[0], "")
+        row[-1] = source
+        row[-2] = platform_map.get(source, "")
+        return row
+
+    rows = [add_sources(add_default(fillrow(row))) for row in rows]
 
     data = (("translations", tuple(rows)),)
     export_raw(headers, data, temp)
