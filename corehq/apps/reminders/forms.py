@@ -79,6 +79,8 @@ from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.reports import util as report_utils
 from dimagi.utils.timezones import utils as tz_utils
 
+ONE_MINUTE_OFFSET = time(0, 1)
+
 YES_OR_NO = (
     ("Y","Yes"),
     ("N","No"),
@@ -1594,8 +1596,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
             fire_time_type = event['fire_time_type']
 
             # clean fire_time:
-            if event['is_immediate'] or fire_time_type == FIRE_TIME_CASE_PROPERTY:
-                event['fire_time'] = time()
+            if fire_time_type == FIRE_TIME_CASE_PROPERTY:
+                event['fire_time'] = None
+
+            if event['is_immediate']:
+                event['fire_time'] = ONE_MINUTE_OFFSET
 
             # clean fire_time_aux:
             if fire_time_type != FIRE_TIME_CASE_PROPERTY:
@@ -1823,11 +1828,19 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         start_offset = abs(reminder_handler.start_offset or 0)
 
+        if (len(reminder_handler.events) == 1 and
+            reminder_handler.event_interpretation == EVENT_AS_OFFSET and
+            reminder_handler.events[0].day_num == 0 and
+            reminder_handler.events[0].fire_time == ONE_MINUTE_OFFSET):
+            sends_immediately = True
+        else:
+            sends_immediately = False
+
         if len(reminder_handler.events) > 0:
             initial['event_timing'] = cls._format_event_timing_choice(
                 reminder_handler.event_interpretation,
                 reminder_handler.events[0].fire_time_type,
-                EVENT_TIMING_IMMEDIATE if reminder_handler.events[0].fire_time == time() else None,
+                EVENT_TIMING_IMMEDIATE if sends_immediately else None,
             )
 
         initial.update({
