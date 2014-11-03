@@ -178,8 +178,6 @@ class DeliveryGroupReport(models.Model):
 class ReportingModel(models.Model):
     """
     A model to encapsulate aggregate (data warehouse) data used by a report.
-
-    Just a BaseReportingModel + a date.
     """
     date = models.DateTimeField()                   # viewing time period
     supply_point = models.CharField(max_length=100, db_index=True)
