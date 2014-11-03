@@ -28,6 +28,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/close/$', 'close_case_view', name="close_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/undo-close/$', 'undo_close_case_view', name="undo_close_case"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
+        'export_case_transactions', name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
 
     # Download and view form data

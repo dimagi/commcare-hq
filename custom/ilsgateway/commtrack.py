@@ -90,7 +90,8 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
     if user is None:
         try:
             user = WebUser.create(domain=None, username=username,
-                                  password=ilsgateway_webuser.password, email=ilsgateway_webuser.email, **user_dict)
+                                  password=ilsgateway_webuser.password, email=ilsgateway_webuser.email,
+                                  **user_dict)
             user.add_domain_membership(domain, is_admin=False, role_id=role_id, location_id=location_id)
             user.save()
         except Exception as e:
@@ -115,8 +116,8 @@ def add_location(user, location_id):
 def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
     domain_part = "%s.commcarehq.org" % domain
     username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), ilsgateway_smsuser.id)
-    username = "%s@%s" % (username_part[:(128 - len(domain_part))], domain_part)
-    #sanity check
+    username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
+    # sanity check
     assert len(username) <= 128
     user = CouchUser.get_by_username(username)
     splitted_value = ilsgateway_smsuser.name.split(' ', 1)
@@ -159,11 +160,13 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
             if "phone_numbers" in user_dict:
                 user.set_default_phone_number(user_dict["phone_numbers"][0])
                 try:
-                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
+                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True,
+                                              ilsgateway_smsuser.backend)
                 except PhoneNumberInUseException as e:
                     v = VerifiedNumber.by_phone(user_dict["phone_numbers"][0], include_pending=True)
                     v.delete()
-                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True, ilsgateway_smsuser.backend)
+                    user.save_verified_number(domain, user_dict["phone_numbers"][0], True,
+                                              ilsgateway_smsuser.backend)
             dm = user.get_domain_membership(domain)
             dm.location_id = location_id
             user.save()
@@ -239,12 +242,13 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
     return location
 
 
-def save_checkpoint(checkpoint, api, limit, offset, date):
+def save_checkpoint(checkpoint, api, limit, offset, date, commit=True):
     checkpoint.limit = limit
     checkpoint.offset = offset
     checkpoint.api = api
     checkpoint.date = date
-    checkpoint.save()
+    if commit:
+        checkpoint.save()
 
 
 def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
@@ -327,9 +331,15 @@ def bootstrap_domain(ilsgateway_config):
         date = checkpoint.date
         limit = checkpoint.limit
         offset = checkpoint.offset
+        if not checkpoint.start_date:
+            checkpoint.start_date = start_date
+            checkpoint.save()
+        else:
+            start_date = checkpoint.start_date
     except ILSMigrationCheckpoint.DoesNotExist:
         checkpoint = ILSMigrationCheckpoint()
         checkpoint.domain = domain
+        checkpoint.start_date = start_date
         api = 'product'
         date = None
         limit = 1000
@@ -337,13 +347,13 @@ def bootstrap_domain(ilsgateway_config):
         commtrack_settings_sync(domain)
 
     apis = [
-        ('product', partial(products_sync, domain, endpoint, checkpoint)),
+        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
         ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, location_type='facility'))),
+                                      filters=dict(date_updated__gte=date, type='facility'))),
         ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, location_type='district'))),
+                                      filters=dict(date_updated__gte=date, type='district'))),
         ('location_region', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                    filters=dict(date_updated__gte=date, location_type='region'))),
+                                    filters=dict(date_updated__gte=date, type='region'))),
         ('webuser', partial(webusers_sync, domain, endpoint, checkpoint, date=date,
                             filters=dict(user__date_joined__gte=date))),
         ('smsuser', partial(smsusers_sync, domain, endpoint, checkpoint, date=date,
@@ -354,11 +364,14 @@ def bootstrap_domain(ilsgateway_config):
         i = 0
         while apis[i][0] != api:
             i += 1
+
         for api in apis[i:]:
             api[1](limit=limit, offset=offset)
             limit = 1000
             offset = 0
 
-        save_checkpoint(checkpoint, 'product', 1000, 0, start_date)
+        save_checkpoint(checkpoint, 'product', 1000, 0, start_date, False)
+        checkpoint.start_date = None
+        checkpoint.save()
     except ConnectionError as e:
         logging.error(e)

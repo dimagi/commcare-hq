@@ -19,7 +19,7 @@ def get_groups(groups):
 
 def get_current_group():
     month = datetime.utcnow().month
-    return GROUPS[(month+2) % 3]
+    return GROUPS[(month + 2) % 3]
 
 
 def send_for_all_domains(date, fn, **kwargs):
@@ -44,7 +44,8 @@ def supply_points_with_latest_status_by_datespan(sps, status_type, status_value,
                                              status_type=status_type,
                                              status_date__gte=datespan.startdate,
                                              status_date__lte=datespan.enddate).annotate(pk=Max('id'))
-    ids = SupplyPointStatus.objects.filter(id__in=inner.values('pk').query,
-                                           status_type=status_type,
-                                           status_value=status_value).distinct().values_list("supply_point", flat=True)
+    ids = SupplyPointStatus.objects.filter(
+        id__in=inner.values('pk').query,
+        status_type=status_type,
+        status_value=status_value).distinct().values_list("supply_point", flat=True)
     return [SupplyPointCase.get(id) for id in ids]

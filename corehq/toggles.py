@@ -142,3 +142,9 @@ VIEW_SYNC_HISTORY = StaticToggle(
     'sync_history_report',
     'Enable sync history report'
 )
+
+
+STOCK_TRANSACTION_EXPORT = StaticToggle(
+    'ledger_export',
+    'Show "export transactions" link on case details page',
+)
