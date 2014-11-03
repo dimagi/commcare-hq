@@ -92,6 +92,12 @@ class FormExportReportBase(ExportReport, DatespanMixin):
             },
         ]
 
+def sizeof_fmt(num):
+    for x in ['bytes','KB','MB','GB','TB']:
+        if num < 1024.0:
+            return "%3.1f %s" % (num, x)
+        num /= 1024.0
+
 
 class ExcelExportReport(FormExportReportBase):
     name = ugettext_noop("Export Forms")
@@ -124,6 +130,7 @@ class ExcelExportReport(FormExportReportBase):
                 unknown_forms.append(form)
 
             form['current_app'] = form.get('app')
+            form['size'] = sizeof_fmt(form['size'])
             forms.append(form)
 
         if unknown_forms:
