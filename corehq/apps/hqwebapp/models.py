@@ -74,7 +74,6 @@ def format_submenu_context(title, url=None, html=None,
         'data_id': data_id,
     }
 
-
 def format_second_level_context(title, url, menu):
     return {
         'title': title,
@@ -83,6 +82,8 @@ def format_second_level_context(title, url, menu):
         'submenu': menu,
     }
 
+def divider_and_more_menu(url):
+    return [format_submenu_context('placeholder', is_divider=True), format_submenu_context(_('More'), url=url)]
 
 class GaTracker(namedtuple('GaTracking', 'category action label')):
     """
@@ -130,7 +131,7 @@ class UITab(object):
         # Also make it work for tabs with subtabs.
         dropdown_menu = sidebar_to_dropdown(sidebar_items=self.sidebar_items)
         if self.url and dropdown_menu:
-            return dropdown_menu + [format_submenu_context('placeholder', is_divider=True), format_submenu_context(_('More'), url=self.url)]
+            return dropdown_menu + divider_and_more_menu(self.url)
         else:
             dropdown_menu
 
@@ -382,7 +383,7 @@ class ReportsTab(UITab):
             'domain': self.domain,
         }
         general_reports = sidebar_to_dropdown(ProjectReportDispatcher.navigation_sections(context))
-        return [saved_report_header] + saved_report_list + general_reports
+        return [saved_report_header] + saved_report_list + general_reports + divider_and_more_menu(self.url)
 
 
 class ProjectInfoTab(UITab):
