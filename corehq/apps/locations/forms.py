@@ -47,6 +47,16 @@ class LocationForm(forms.Form):
         lat, lon = (getattr(self.location, k, None) for k in ('latitude', 'longitude'))
         kwargs['initial']['coordinates'] = '%s, %s' % (lat, lon) if lat is not None else ''
 
+        # TODO use this for validation as well
+        from corehq.apps.custom_data_fields.views import CustomDataEditor
+        from .views import LocationFieldsView
+        self.custom_data = CustomDataEditor(
+            field_view=LocationFieldsView,
+            domain=self.location.domain,
+            required_only=True,
+            post_dict=bound_data,
+        )
+
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
 
