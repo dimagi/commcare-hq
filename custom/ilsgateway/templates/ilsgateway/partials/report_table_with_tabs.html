@@ -7,6 +7,14 @@
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
     <div style="float: left;">
+        <div class="media">
+          <div class="media-body" style="height: 64px">
+             <h4 class="media-heading">{{ report_table.title }}</h4>
+              {% if report_table.title_url %}
+                <a href="{{ report_table.title_url }}">{{ report_table.title_url_name }}</a>
+              {% endif %}
+          </div>
+        </div>
         <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable">
             <thead>
                 <tr>

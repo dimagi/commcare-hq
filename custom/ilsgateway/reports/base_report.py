@@ -35,6 +35,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             month=self.request_params['month'] if 'month' in self.request_params else '',
             year=self.request_params['year'] if 'year' in self.request_params else '',
             location_id=self.request.GET.get('location_id'),
+            soh_month=True if self.request.GET.get('soh_month', '') == 'True' else False
         )
 
     @property
@@ -43,7 +44,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'report_facilities_url': self.report_facilities_url,
-            'with_tabs': self.with_tabs
+            'with_tabs': self.with_tabs,
         }
 
         return context
@@ -61,6 +62,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
         context = dict(
             report_table=dict(
                 title=data_provider.title,
+                title_url=data_provider.title_url,
+                title_url_name=data_provider.title_url_name,
                 slug=data_provider.slug,
                 headers=headers,
                 rows=rows,

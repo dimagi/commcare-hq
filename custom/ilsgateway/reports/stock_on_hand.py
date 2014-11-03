@@ -55,8 +55,8 @@ class DetailsReport(MultiReport):
 
 
 class SohPercentageTableData(ILSData):
-    title = 'Percentage'
-    slug = 'percentage_table'
+    title = 'Inventory'
+    slug = 'inventory_region_table'
     show_chart = False
     show_table = True
 
@@ -172,10 +172,33 @@ def _months_or_default(val, default_value):
 
 
 class DistrictSohPercentageTableData(ILSData):
-    title = 'Percentage'
-    slug = 'district_percentage_table'
+    slug = 'inventory_district_table'
     show_chart = False
     show_table = True
+
+    @property
+    def title(self):
+        if self.config['soh_month']:
+            return 'Month of Stock'
+        return 'Inventory'
+
+    @property
+    def title_url(self):
+        soh_month = True
+        if self.config['soh_month']:
+            soh_month = False
+
+        return html.escape(StockOnHandReport.get_url(
+                domain=self.config['domain']) +
+                '?location_id=%s&month=%s&year=%s&soh_month=%s' %
+                (self.config['location_id'], self.config['month'], self.config['year'], soh_month))
+
+    @property
+    def title_url_name(self):
+        if self.config['soh_month']:
+            return 'Inventory'
+        return 'Month of Stock'
+
 
     @property
     def headers(self):
@@ -264,10 +287,12 @@ class DistrictSohPercentageTableData(ILSData):
                 for product in products:
                     last_of_the_month = get_day_of_month(int(self.config['year']), int(self.config['month']), -1)
                     first_of_the_next_month = last_of_the_month + timedelta(days=1)
-                    srs = StockTransaction.objects.filter(report__date__lt=first_of_the_next_month).order_by("-report__date")\
-                        .filter(case_id=supply_point._id, product_id=product.product_id)
+                    try:
+                        srs = StockTransaction.objects.filter(report__date__lt=first_of_the_next_month, case_id=supply_point._id, product_id=product.product_id).order_by("-report__date")[0]
+                    except IndexError:
+                        srs = None
 
-                    if srs.exists():
+                    if srs:
                         ss = StockState.objects.get(case_id=supply_point._id, product_id=product.product_id)
 
                         def calculate_months_remaining(stock_state, quantity):
@@ -279,37 +304,45 @@ class DistrictSohPercentageTableData(ILSData):
                                 return 0
                             return None
 
-                        val = calculate_months_remaining(ss, srs[0].stock_on_hand)
+                        val = calculate_months_remaining(ss, srs.stock_on_hand)
                         ret = _months_or_default(val, -1)
                     else:
                         ret = -1
 
-                    row_data.append(product_format(ret, srs))
+                    row_data.append(product_format(ret, srs, self.config['soh_month']))
 
                 rows.append(row_data)
 
         return rows
 
 
-def product_format(ret, srs):
+def product_format(ret, srs, month):
     NO_DATA = -1
     STOCKOUT = 0.00
     LOW = 3
     ADEQUATE = 6
 
     mos = float(ret)
+    text = '%s'
     if mos == NO_DATA:
-        if srs.exists():
-            return '<span style="color:grey">%.0f</span>' % srs[0].stock_on_hand
-        return '<span style="color:grey">%s</span>' % 'No Data'
+            text = '<span style="color:grey">%s</span>'
     elif mos == STOCKOUT:
-        return '<span class="icon-remove" style="color:red"/>%.0f' % srs[0].stock_on_hand
+        text = '<span class="icon-remove" style="color:red"/>%s'
     elif mos < LOW:
-        return '<span class="icon-warning-sign" style="color:orange"/>%.0f' % srs[0].stock_on_hand
+        text = '<span class="icon-warning-sign" style="color:orange"/>%s'
     elif mos <= ADEQUATE:
-        return '<span class="icon-ok" style="color:green"/>%.0f' % srs[0].stock_on_hand
+        text = '<span class="icon-ok" style="color:green"/>%s'
     elif mos > ADEQUATE:
-        return '<span class="icon-arrow-up" style="color:purple"/>%.0f' % srs[0].stock_on_hand
+        text = '<span class="icon-arrow-up" style="color:purple"/>%s'
+
+    if month:
+        if srs:
+            return text % ('%.2f' % mos)
+        return text % 'No Data'
+    else:
+        if srs:
+            return text % ('%.0f' % srs.stock_on_hand)
+        return text % 'No Data'
 
 
 class StockOnHandReport(DetailsReport):

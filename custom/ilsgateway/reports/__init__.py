@@ -20,6 +20,8 @@ def link_format(text, url):
 class ILSData(object):
     show_table = False
     show_chart = True
+    title_url = None
+    title_url_name = None
 
     chart_config = {
         'on_time': {
