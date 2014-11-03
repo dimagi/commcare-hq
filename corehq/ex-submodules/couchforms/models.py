@@ -6,10 +6,8 @@ import hashlib
 import logging
 import time
 from copy import copy
-from xml.etree.ElementTree import ParseError
 from jsonobject.base import DefaultProperty
 from lxml import etree
-from xml.etree import ElementTree
 
 from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
