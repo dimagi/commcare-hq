@@ -2,7 +2,6 @@ from corehq.apps.commtrack.models import Product, SupplyPointCase
 from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
-from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
@@ -64,35 +63,6 @@ def allowed_child_types(domain, parent):
     return parent_child(domain).get(parent_type, [])
 
 
-def location_custom_properties(domain, loc_type):
-    """
-    This was originally used to add custom properties to specific
-    location types based on domain or simply location type.
-
-    It is no longer used, and perhaps will be properly deleted
-    when there is a real way to deal with custom location properties.
-
-    But for now, an example of what you could return from here is below.
-
-    properties = [
-        CustomProperty(
-            name='village_size',
-            datatype='Integer',
-            label='Village Size',
-        ),
-        CustomProperty(
-            name='village_class',
-            datatype='Choice',
-            label='Village Class',
-            choices={'mode': 'static', 'args': _village_classes(domain)},
-        ),
-    ]
-    """
-
-    properties = []
-    return properties
-
-
 def get_loc_config(domain):
     return dict((lt.name, lt) for lt in Domain.get_by_name(domain).commtrack_settings.location_types)
 
@@ -121,37 +91,6 @@ def lookup_by_property(domain, prop_name, val, scope, root=None):
         raise ValueError('invalid scope type')
 
     return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
-
-
-def property_uniqueness(domain, loc, prop_name, val, scope='global'):
-    def normalize(val):
-        try:
-            return val.lower() # case-insensitive comparison
-        except AttributeError:
-            return val
-    val = normalize(val)
-
-    try:
-        if scope == 'siblings':
-            _scope = 'child'
-            root = loc.parent
-        else:
-            _scope = scope
-            root = None
-        return lookup_by_property(domain, prop_name, val, _scope, root) - set([loc._id])
-    except ResourceNotFound:
-        # property is not indexed
-        uniqueness_set = []
-        if scope == 'global':
-            uniqueness_set = [l for l in all_locations(loc.domain) if l._id != loc._id]
-        elif scope == 'siblings':
-            uniqueness_set = loc.siblings()
-
-        return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))
-
-
-def get_custom_property_names(domain, loc_type, common_types):
-    return [prop.name for prop in location_custom_properties(domain, loc_type) if prop.name not in common_types]
 
 
 def get_default_column_data(domain, location_types):
@@ -220,7 +159,6 @@ def dump_locations(response, domain, include_consumption=False):
         header_table=[
             (loc_type, [
                 common_types +
-                get_custom_property_names(domain, loc_type, common_types) +
                 defaults['headers'].get(loc_type, [])
             ])
             for loc_type in location_types
@@ -234,13 +172,6 @@ def dump_locations(response, domain, include_consumption=False):
         for loc in locations:
             parent_site_code = loc.parent.site_code if loc.parent else ''
 
-            custom_prop_values = []
-            for prop in location_custom_properties(domain, loc.location_type):
-                if prop.name not in common_types:
-                    custom_prop_values.append(
-                        loc[prop.name] or ''
-                    )
-
             if loc._id in defaults['values']:
                 default_column_values = defaults['values'][loc._id]
             else:
@@ -253,7 +184,7 @@ def dump_locations(response, domain, include_consumption=False):
                     parent_site_code,
                     loc.latitude or '',
                     loc.longitude or ''
-                ] + custom_prop_values + default_column_values
+                ] + default_column_values
             )
         writer.write([(loc_type, tab_rows)])
 

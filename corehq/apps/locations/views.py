@@ -296,12 +296,6 @@ class FacilitySyncView(BaseSyncView):
     source = 'openlmis'
 
 
-class EditLocationHierarchy(BaseLocationView):
-    urlname = 'location_hierarchy'
-    page_title = ugettext_noop("Location Hierarchy")
-    template_name = 'locations/location_hierarchy.html'
-
-
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Location Import Status')

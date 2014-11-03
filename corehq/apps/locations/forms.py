@@ -1,10 +1,8 @@
-import json
 from django import forms
 from corehq.apps.locations.models import Location
 from django.template.loader import get_template
 from django.template import Context
-from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties, lookup_by_property
-from django.utils.safestring import mark_safe
+from corehq.apps.locations.util import load_locs_json, allowed_child_types, lookup_by_property
 from corehq.apps.locations.signals import location_created, location_edited
 from django.utils.translation import ugettext as _
 import re
@@ -36,7 +34,7 @@ class LocationForm(forms.Form):
         help_text=_("A unique system code for this location. Leave this blank to have it auto generated")
     )
 
-    strict = True # optimization hack: strict or loose validation 
+    strict = True  # optimization hack: strict or loose validation
     def __init__(self, location, bound_data=None, *args, **kwargs):
         self.location = location
 
@@ -59,15 +57,6 @@ class LocationForm(forms.Form):
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
-
-        # custom properties
-        self.sub_forms = {}
-        # TODO think i need to change this to iterate over all types, since the parent
-        # can be changed dynamically
-        for potential_type in allowed_child_types(self.location.domain, self.location.parent):
-            subform = LocationCustomPropertiesSubForm(self.location, potential_type, bound_data)
-            if subform.fields:
-                self.sub_forms[potential_type] = subform
 
     @property
     def cur_parent_id(self):
@@ -152,20 +141,6 @@ class LocationForm(forms.Form):
 
         return [lat, lon]
 
-    def clean(self):
-        super(LocationForm, self).clean()
-
-        subform = self.sub_forms.get(self.cleaned_data.get('location_type'))
-        if subform:
-            if not subform.is_valid():
-                raise forms.ValidationError('Error in location properties')
-            self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
-
-        self.cleaned_data['metadata'] = json.loads(self.data['metadata']) \
-            if self.data.get('metadata', None) else {}
-
-        return self.cleaned_data
-
     def save(self, instance=None, commit=True):
         if self.errors:
             raise ValueError('form does not validate')
@@ -179,7 +154,6 @@ class LocationForm(forms.Form):
         setattr(location, 'latitude', coords[0] if coords else None)
         setattr(location, 'longitude', coords[1] if coords else None)
         location.lineage = Location(parent=self.cleaned_data['parent_id']).lineage
-        location.metadata = self.cleaned_data.get('metadata', {})
 
         for k, v in self.cleaned_data.iteritems():
             if k.startswith('prop:'):
@@ -206,28 +180,3 @@ class LocationForm(forms.Form):
             pass
 
         return location
-
-class LocationCustomPropertiesSubForm(forms.Form):
-    def __init__(self, location, potential_type, *args, **kwargs):
-        self.location = location
-        self.properties = location_custom_properties(location.domain, potential_type)
-
-        kwargs['prefix'] = 'props_%s' % potential_type
-        super(LocationCustomPropertiesSubForm, self).__init__(*args, **kwargs)
-
-        for p in self.properties:
-            self.fields[p.name] = p.field(getattr(location, p.name, None))
-
-    def __getattr__(self, attr):
-        for p in self.properties:
-            if attr == 'clean_%s' % p.name:
-                def clean_custom():
-                    try:
-                        val = self.cleaned_data[p.name]
-                        if val is not None:
-                            p.custom_validate(self.location, val, p.name)
-                        return val
-                    except Exception, e:
-                        raise forms.ValidationError(mark_safe(str(e)))
-                return clean_custom
-        raise AttributeError
