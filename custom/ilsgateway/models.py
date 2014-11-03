@@ -57,6 +57,8 @@ class ILSGatewayConfig(Document):
                                             doc_type='ILSGatewayConfig')
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L68
 class SupplyPointStatusValues(object):
     RECEIVED = "received"
     NOT_RECEIVED = "not_received"
@@ -68,6 +70,8 @@ class SupplyPointStatusValues(object):
                NOT_SUBMITTED, REMINDER_SENT, ALERT_SENT]
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L78
 class SupplyPointStatusTypes(object):
     DELIVERY_FACILITY = "del_fac"
     DELIVERY_DISTRICT = "del_dist"
@@ -112,6 +116,7 @@ class SupplyPointStatusTypes(object):
         return type in cls.CHOICE_MAP and value in cls.CHOICE_MAP[type]
 
 
+# Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L124
 class SupplyPointStatus(models.Model):
     status_type = models.CharField(choices=((k, k) for k in SupplyPointStatusTypes.CHOICE_MAP.keys()),
                                    max_length=50)
@@ -148,6 +153,7 @@ class SupplyPointStatus(models.Model):
         ordering = ('-status_date',)
 
 
+# Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L170
 class DeliveryGroupReport(models.Model):
     supply_point = models.CharField(max_length=100, db_index=True)
     quantity = models.IntegerField()
@@ -167,10 +173,13 @@ class DeliveryGroupReport(models.Model):
         return cls(**obj)
 
 
-class BaseReportingModel(models.Model):
+# Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L170
+# https://github.com/dimagi/rapidsms-logistics/blob/master/logistics/warehouse_models.py#L14
+class ReportingModel(models.Model):
     """
     A model to encapsulate aggregate (data warehouse) data used by a report.
     """
+    date = models.DateTimeField()                   # viewing time period
     supply_point = models.CharField(max_length=100, db_index=True)
     create_date = models.DateTimeField(editable=False)
     update_date = models.DateTimeField(editable=False)
@@ -180,24 +189,13 @@ class BaseReportingModel(models.Model):
         if not self.id:
             self.create_date = datetime.utcnow()
         self.update_date = datetime.utcnow()
-        super(BaseReportingModel, self).save(*args, **kwargs)
+        super(ReportingModel, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True
 
 
-class ReportingModel(BaseReportingModel):
-    """
-    A model to encapsulate aggregate (data warehouse) data used by a report.
-
-    Just a BaseReportingModel + a date.
-    """
-    date = models.DateTimeField()                   # viewing time period
-
-    class Meta:
-        abstract = True
-
-
+# Ported from: https://github.com/dimagi/rapidsms-logistics/blob/master/logistics/warehouse_models.py#L44
 class SupplyPointWarehouseRecord(models.Model):
     """
     When something gets updated in the warehouse, create a record of having
@@ -207,6 +205,8 @@ class SupplyPointWarehouseRecord(models.Model):
     create_date = models.DateTimeField()
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L9
 class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0)
     average_lead_time_in_days = models.FloatField(default=0)
@@ -215,6 +215,8 @@ class OrganizationSummary(ReportingModel):
         return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L16
 class GroupSummary(models.Model):
     """
     Warehouse data related to a particular category of reporting
@@ -253,16 +255,18 @@ class GroupSummary(models.Model):
     def not_responding(self):
         return self.total - self.responded
 
+    def is_delivery_or_supervision_facility(self):
+        return self.title in [SupplyPointStatusTypes.DELIVERY_FACILITY,
+                              SupplyPointStatusTypes.SUPERVISION_FACILITY]
+
     @property
     def received(self):
-        assert self.title in [SupplyPointStatusTypes.DELIVERY_FACILITY,
-                              SupplyPointStatusTypes.SUPERVISION_FACILITY]
+        assert self.is_delivery_or_supervision_facility()
         return self.complete
 
     @property
     def not_received(self):
-        assert self.title in [SupplyPointStatusTypes.DELIVERY_FACILITY,
-                              SupplyPointStatusTypes.SUPERVISION_FACILITY]
+        assert self.title in self.is_delivery_or_supervision_facility()
         return self.responded - self.complete
 
     @property
@@ -295,6 +299,8 @@ class GroupSummary(models.Model):
         return "%s - %s" % (self.org_summary, self.title)
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L78
 class ProductAvailabilityData(ReportingModel):
     product = models.CharField(max_length=100, db_index=True)
     total = models.PositiveIntegerField(default=0)
@@ -312,6 +318,8 @@ class ProductAvailabilityData(ReportingModel):
         return cls(**obj)
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L85
 class ProductAvailabilityDashboardChart(object):
     label_color = {
         "Stocked out": "#a30808",
@@ -326,6 +334,8 @@ class ProductAvailabilityDashboardChart(object):
     yaxistitle = "Facilities"
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L97
 class Alert(ReportingModel):
     type = models.CharField(max_length=50, blank=True, null=True)
     number = models.PositiveIntegerField(default=0)
@@ -334,16 +344,23 @@ class Alert(ReportingModel):
     expires = models.DateTimeField()
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L11
 class DeliveryGroups(object):
+    """
+        There are three delivery groups of facilities: A, B, C.
+        Every month groups have different roles starting from the state below.
+        Submitting group: January = A
+        Processing group: January = C
+        Delivering group: January = B
+        Next month A will be changed to B, B to C and C to B.
+    """
+
     GROUPS = ('A', 'B', 'C')
 
     def __init__(self, month=None, facs=None):
         self.month = month if month else datetime.utcnow().month
         self.facs = facs
-
-    # Current submitting group: Jan = A
-    # Current processing group: Jan = C
-    # Current delivering group: Jan = B
 
     def current_submitting_group(self, month=None):
         month = month if month else self.month
@@ -379,6 +396,8 @@ class DeliveryGroups(object):
         return filter(lambda f: self.current_submitting_group(month) in f.metadata.get('groups', []), facs)
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L97
 class ReportRun(models.Model):
     """
     Log of whenever the warehouse models get updated.

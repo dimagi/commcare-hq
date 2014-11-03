@@ -9,14 +9,17 @@ from psycopg2._psycopg import DatabaseError
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, SQLProduct
+from corehq.apps.consumption.const import DAYS_IN_MONTH
 from couchforms.models import XFormInstance
 from custom.ilsgateway.api import Location
 from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
     sync_ilsgateway_product
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.tanzania.run_reports import populate_report_data
 from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
+from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
 from dimagi.utils.dates import force_to_datetime
+
+
 
 
 
@@ -47,8 +50,7 @@ def get_locations(domain, endpoint):
         sync_ilsgateway_location(domain, endpoint, Location.from_json(location))
 
 
-@task
-def product_stock_task(domain, endpoint):
+def get_product_stock(domain, endpoint):
     for facility in FACILITIES:
         has_next = True
         next_url = ""
@@ -64,23 +66,30 @@ def product_stock_task(domain, endpoint):
                                             limit=1).first()
                 product = Product.get_by_code(domain, product_stock.product_code)
                 try:
-                    StockState.objects.get(section_id='stock', case_id=case._id, product_id=product._id)
+                    stock_state = StockState.objects.get(section_id='stock',
+                                                         case_id=case._id,
+                                                         product_id=product._id)
                 except StockState.DoesNotExist:
-                    StockState.objects.create(section_id='stock',
-                                              case_id=case._id,
-                                              product_id=product._id,
-                                              stock_on_hand=product_stock.quantity or 0,
-                                              daily_consumption=product_stock.auto_monthly_consumption or 0,
-                                              last_modified_date=product_stock.last_modified,
-                                              sql_product=SQLProduct.objects.get(product_id=product._id))
+                    stock_state = StockState(section_id='stock',
+                                             case_id=case._id,
+                                             product_id=product._id,
+                                             stock_on_hand=product_stock.quantity or 0,
+                                             last_modified_date=product_stock.last_modified,
+                                             sql_product=SQLProduct.objects.get(product_id=product._id))
+
+                if product_stock.auto_monthly_consumption:
+                    stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
+                else:
+                    stock_state.daily_consumption = None
+                stock_state.save()
+
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
-@task
-def stock_transaction_task(domain, endpoint):
+def get_stock_transaction(domain, endpoint):
     # Faking xform
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
@@ -123,11 +132,10 @@ def stock_transaction_task(domain, endpoint):
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
-@task
-def supply_point_statuses_task(domain, endpoint):
+def get_supply_point_statuses(domain, endpoint):
     for facility in FACILITIES:
         has_next = True
         next_url = ""
@@ -146,11 +154,10 @@ def supply_point_statuses_task(domain, endpoint):
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
-@task
-def delivery_group_reports_task(domain, endpoint):
+def get_delivery_group_reports(domain, endpoint):
     for facility in FACILITIES:
         has_next = True
         next_url = ""
@@ -168,7 +175,7 @@ def delivery_group_reports_task(domain, endpoint):
             if not meta.get('next', False):
                 has_next = False
             else:
-                next_url = meta['next'].split('?')[1] if meta['next'] else None
+                next_url = meta['next'].split('?')[1]
 
 
 @task
@@ -180,10 +187,19 @@ def stock_data_task(domain):
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
     get_locations(domain, endpoint)
-    product_stock_task.delay(domain, endpoint)
-    stock_transaction_task.delay(domain, endpoint)
-    supply_point_statuses_task.delay(domain, endpoint)
-    delivery_group_reports_task.delay(domain, endpoint)
+    get_product_stock(domain, endpoint)
+    get_stock_transaction(domain, endpoint)
+    get_supply_point_statuses(domain, endpoint)
+    get_delivery_group_reports(domain, endpoint)
+
+
+# Temporary for staging
+@task
+def clear_stock_data_task():
+    StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
+    StockReport.objects.filter(domain='ilsgateway-test-1').delete()
+    products = Product.ids_by_domain('ilsgateway-test-1')
+    StockState.objects.filter(product_id__in=products).delete()
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

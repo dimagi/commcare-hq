@@ -1,12 +1,18 @@
-rom datetime import datetime, timedelta
+from datetime import datetime, timedelta
 import logging
-from corehq.apps.commtrack.models import Product, CommTrackUser
+from corehq.apps.commtrack.models import Product
 from corehq.apps.locations.models import Location
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
     SupplyPointWarehouseRecord
+
+
+"""
+    These functions and variables are ported from:
+    https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/run_reports.py
+"""
 
 
 NEEDED_STATUS_TYPES = [SupplyPointStatusTypes.DELIVERY_FACILITY,
@@ -60,7 +66,7 @@ def is_on_time(sp, status_date, warehouse_date, type):
 def average_lead_time(fac, window_date):
     end_date = datetime(window_date.year, window_date.month % 12 + 1, 1)
     received = SupplyPointStatus.objects.filter(
-        supply_point=fac,
+        supply_point=fac._id,
         status_date__lt=end_date,
         status_value=SupplyPointStatusValues.RECEIVED,
         status_type=SupplyPointStatusTypes.DELIVERY_FACILITY).order_by('status_date')
@@ -75,7 +81,7 @@ def average_lead_time(fac, window_date):
             continue
         last_receipt = receipt.status_date
         last_submitted = SupplyPointStatus.objects.filter(
-            supply_point=fac,
+            supply_point=fac._id,
             status_date__lt=receipt.status_date,
             status_value=SupplyPointStatusValues.SUBMITTED,
             status_type=SupplyPointStatusTypes.R_AND_R_FACILITY).order_by('-status_date')
@@ -160,10 +166,12 @@ def populate_no_primary_alerts(org, date):
     alert = Alert.objects.filter(supply_point=org._id, date=date, type='no_primary_contact')
     alert.delete()
     # create no primary alerts
-
+    # TODO Too slow. Figure out better solution.
+    """
     if not filter(lambda user: user.is_active and user.location and user.location._id == org._id,
                   CommTrackUser.by_domain(org.domain)):
         create_multilevel_alert(org, date, 'no_primary_contact', {'org': org})
+    """
 
 
 def populate_facility_stockout_alerts(org, date):

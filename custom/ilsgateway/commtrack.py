@@ -116,8 +116,8 @@ def add_location(user, location_id):
 def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
     domain_part = "%s.commcarehq.org" % domain
     username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), ilsgateway_smsuser.id)
-    username = "%s@%s" % (username_part[:(128 - len(domain_part))], domain_part)
-    #sanity check
+    username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
+    # sanity check
     assert len(username) <= 128
     user = CouchUser.get_by_username(username)
     splitted_value = ilsgateway_smsuser.name.split(' ', 1)
@@ -349,11 +349,11 @@ def bootstrap_domain(ilsgateway_config):
     apis = [
         ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
         ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, location_type='facility'))),
+                                      filters=dict(date_updated__gte=date, type='facility'))),
         ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, location_type='district'))),
+                                      filters=dict(date_updated__gte=date, type='district'))),
         ('location_region', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                    filters=dict(date_updated__gte=date, location_type='region'))),
+                                    filters=dict(date_updated__gte=date, type='region'))),
         ('webuser', partial(webusers_sync, domain, endpoint, checkpoint, date=date,
                             filters=dict(user__date_joined__gte=date))),
         ('smsuser', partial(smsusers_sync, domain, endpoint, checkpoint, date=date,

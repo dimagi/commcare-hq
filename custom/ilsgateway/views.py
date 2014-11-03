@@ -1,5 +1,7 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from django.core.urlresolvers import reverse
+from django.http.response import HttpResponseRedirect
 from corehq.apps.commtrack.models import Product, CommtrackConfig
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
@@ -10,9 +12,9 @@ from django.views.decorators.http import require_POST
 from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
-from custom.ilsgateway.models import ILSMigrationCheckpoint, ILSGatewayConfig
+from custom.ilsgateway.models import ILSMigrationCheckpoint, ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import bootstrap_domain_task as ils_bootstrap_domain_task, \
-    stock_data_task, report_run
+    stock_data_task, report_run, clear_stock_data_task
 
 
 class GlobalStats(BaseDomainView):
@@ -70,7 +72,13 @@ class ILSConfigView(BaseCommTrackManageView):
             checkpoint = ILSMigrationCheckpoint.objects.get(domain=self.domain)
         except ILSMigrationCheckpoint.DoesNotExist:
             checkpoint = None
+
+        try:
+            runner = ReportRun.objects.get(domain=self.domain, complete=False)
+        except ReportRun.DoesNotExist:
+            runner = None
         return {
+            'runner': runner,
             'checkpoint': checkpoint,
             'settings': self.settings_context,
             'source': self.source,
@@ -120,6 +128,25 @@ def sync_stock_data(request, domain):
 
 @domain_admin_required
 @require_POST
+def clear_stock_data(request, domain):
+    clear_stock_data_task.delay()
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
 def run_warehouse_runner(request, domain):
     report_run.delay(domain)
     return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def end_report_run(request, domain):
+    try:
+        rr = ReportRun.objects.get(domain=domain, complete=False)
+        rr.complete = True
+        rr.save()
+    except ReportRun.DoesNotExist, ReportRun.MultipleObjectsReturned:
+        pass
+    return HttpResponseRedirect(reverse(ILSConfigView.urlname, kwargs={'domain': domain}))
