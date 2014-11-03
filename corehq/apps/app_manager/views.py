@@ -47,6 +47,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
+from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
@@ -54,6 +55,7 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
+from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.const import (
     APP_V1,
     APP_V2,
@@ -66,7 +68,6 @@ from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_proper
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.translations import system_text as st_trans
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
@@ -96,6 +97,7 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AdvancedModule,
+    AppEditingError,
     Application,
     ApplicationBase,
     CareplanForm,
@@ -106,7 +108,11 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Form,
     FormActions,
+    FormNotFoundException,
+    FormSchedule,
+    IncompatibleFormTypeException,
     Module,
+    ModuleNotFoundException,
     ParentSelect,
     SavedAppBuild,
     get_app,
@@ -812,7 +818,7 @@ def get_module_view_context_and_template(app, module):
 
             return details
 
-        return "app_manager/module_view.html", {
+        return "app_manager/module_view_advanced.html", {
             'details': get_details(),
         }
     else:
@@ -1233,7 +1239,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "all": None,
         "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
-        'media_image': None, 'media_audio': None,
+        'media_image': None, 'media_audio': None, 'has_schedule': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
         "parent_module": None,
@@ -1299,6 +1305,13 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         if should_edit(SLUG):
             module[SLUG].show = json.loads(req.POST['{SLUG}-show'.format(SLUG=SLUG)])
             module[SLUG].label[lang] = req.POST['{SLUG}-label'.format(SLUG=SLUG)]
+
+    if isinstance(module, AdvancedModule):
+        module.has_schedule = should_edit('has_schedule')
+        if should_edit('has_schedule'):
+            for form in module.get_forms():
+                if not form.schedule:
+                    form.schedule = FormSchedule()
 
     _handle_media_edits(req, module, should_edit, resp)
 
@@ -1511,6 +1524,18 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(req, domain, app_id=app_id, unique_form_id=unique_form_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_visit_schedule(request, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    json_loads = json.loads(request.POST.get('schedule'))
+    form.schedule = FormSchedule.wrap(json_loads)
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
 
 
 @no_conflict_require_POST
@@ -2503,10 +2528,20 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/exchange_summary.html", context)
 
 
-@require_can_edit_apps
-def download_translations(request, domain, app_id):
-    app = get_app(domain, app_id)
-    properties = tuple(["property"] + app.langs + ["default"])
+def get_default_translations_for_download(app):
+    return app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
+
+
+def get_index_for_defaults(langs):
+    try:
+        return langs.index("en")
+    except ValueError:
+        return 0
+
+
+def build_ui_translation_download_file(app):
+
+    properties = tuple(["property"] + app.langs + ["platform", "source"])
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2522,9 +2557,8 @@ def download_translations(request, domain, app_id):
             row_dict[prop].append(trans)
 
     rows = row_dict.values()
-    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT + st_trans.ODKCOLLECT_DEFAULT)
-    all_prop_trans = dict((k.lower(), v) for k, v in all_prop_trans.iteritems())
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in [k.lower() for k in row_dict]])
+    all_prop_trans = get_default_translations_for_download(app)
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)
@@ -2532,14 +2566,58 @@ def download_translations(request, domain, app_id):
         return row
 
     def add_default(row):
-        row[-1] = all_prop_trans.get(row[0].lower(), "")
+        row_index = get_index_for_defaults(app.langs) + 1
+        if not row[row_index]:
+            # If no custom translation exists, replace it.
+            row[row_index] = all_prop_trans.get(row[0], "")
         return row
 
-    rows = [add_default(fillrow(row)) for row in rows]
+    def add_sources(row):
+        platform_map = {
+            "CommCareAndroid": "Android",
+            "CommCareJava": "Java",
+            "ODK": "Android",
+            "JavaRosa": "Java",
+        }
+        source = system_text_sources.SOURCES.get(row[0], "")
+        row[-1] = source
+        row[-2] = platform_map.get(source, "")
+        return row
+
+    rows = [add_sources(add_default(fillrow(row))) for row in rows]
 
     data = (("translations", tuple(rows)),)
     export_raw(headers, data, temp)
+    return temp
+
+
+@require_can_edit_apps
+def download_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    temp = build_ui_translation_download_file(app)
     return export_response(temp, Format.XLS_2007, "translations")
+
+
+def process_ui_translation_upload(app, trans_file):
+
+    workbook = WorkbookJSONReader(trans_file)
+    translations = workbook.get_worksheet(title='translations')
+
+    default_trans = get_default_translations_for_download(app)
+    lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
+    trans_dict = defaultdict(dict)
+    error_properties = []
+    for row in translations:
+        for lang in app.langs:
+            if row.get(lang):
+                all_parameters = re.findall("\$.*?}", row[lang])
+                for param in all_parameters:
+                    if not re.match("\$\{[0-9]+}", param):
+                        error_properties.append(row["property"] + ' - ' + row[lang])
+                if not (lang_with_defaults == lang
+                        and row[lang] == default_trans[row["property"]].lstrip(" ")):
+                    trans_dict[lang].update({row["property"]: row[lang]})
+    return trans_dict, error_properties
 
 
 @no_conflict_require_POST
@@ -2548,21 +2626,10 @@ def download_translations(request, domain, app_id):
 def upload_translations(request, domain, app_id):
     success = False
     try:
-        workbook = WorkbookJSONReader(request.file)
-        translations = workbook.get_worksheet(title='translations')
-
         app = get_app(domain, app_id)
-        trans_dict = defaultdict(dict)
-        error_properties = []
-        for row in translations:
-            for lang in app.langs:
-                if row.get(lang):
-                    all_parameters = re.findall("\$.*?}", row[lang])
-                    for param in all_parameters:
-                        if not re.match("\$\{[0-9]+}", param):
-                            error_properties.append(row["property"] + ' - ' + row[lang])
-                    trans_dict[lang].update({row["property"]: row[lang]})
-
+        trans_dict, error_properties = process_ui_translation_upload(
+            app, request.file
+        )
         if error_properties:
             message = _("We found problem with following translations:")
             message += "<br>"

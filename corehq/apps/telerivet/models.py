@@ -18,6 +18,9 @@ class TelerivetBackend(SMSBackend):
     phone_id = StringProperty()
     # The Webhook Secret that gets posted to hq on every request
     webhook_secret = StringProperty()
+    # If None, ignored. Otherwise, the country code to append to numbers
+    # in inbound requests if not already there.
+    country_code = StringProperty()
 
     class Meta:
         app_label = "telerivet"

@@ -5,7 +5,10 @@
 
 {% block pretable %}
 <link rel="stylesheet" href="{% static "opm/css/report.css" %}">
-<link rel="stylesheet" href="{% static "opm/css/met_report.css" %}">
+<link rel="stylesheet" href="{% static "opm/css/met_report.css" %}" rel="stylesheet" media="all">
+
+
+
 {% if not report.needs_filters %}
     {% if rendered_as == 'print' %}
         <div id="opm-report-print">
@@ -19,7 +22,8 @@
                 <img id="opm-logo-inline" class="media-object"
                 src="{% static 'opm/img/logo.jpg' %}">
             </div>
-            <h1 class="media-heading">{{ report.report_title }}</h1>
+            <h1 class="media-heading">Bihar Child Support Programme (BCSP)</h1>
+            <h2 class="media-heading">{{ report.report_title }}</h2>
             <h4 class="media-heading">
                 {% for subtitle in report.report_subtitles %}
                 <br/><small>{{ subtitle }}</small>

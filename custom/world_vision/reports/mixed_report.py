@@ -21,10 +21,6 @@ class MixedTTCReport(TTCReport):
     default_rows = 10
     exportable = True
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return False
-
     @property
     @memoized
     def data_providers(self):

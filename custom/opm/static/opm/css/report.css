@@ -17,6 +17,11 @@
     padding-top: 70px;
 }
 
+#opm-report h2 {
+    font-size: 45px;
+    text-align: center;
+}
+
 #opm-report-print {
     margin: 0px 30px;
     page-break-after: always;
@@ -24,6 +29,10 @@
 #opm-report-print h1 {
     text-align: center;
     margin: 60px;
+}
+#opm-report-print h2 {
+    text-align: center;
+    margin: 40px;
 }
 
 #opm-logo-inline {

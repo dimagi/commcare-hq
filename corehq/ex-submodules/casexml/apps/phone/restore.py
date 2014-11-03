@@ -203,6 +203,8 @@ class RestoreConfig(object):
 
         resp = xml.tostring(response)
         duration = datetime.utcnow() - start_time
+        synclog.duration = duration.seconds
+        synclog.save()
         self.set_cached_payload_if_necessary(resp, duration)
         return resp
 
