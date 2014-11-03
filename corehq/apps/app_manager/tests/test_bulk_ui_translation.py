@@ -6,8 +6,6 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.views import process_ui_translation_upload
 
 
-
-
 class BulkUiTranslation(SimpleTestCase):
 
     @classmethod
