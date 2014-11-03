@@ -41,31 +41,27 @@ def sidebar_to_dropdown(sidebar_items=[]):
     # sidebar_items = [(<django.utils.functional.__proxy__ object at 0x7361c90>, [{'subpages': [{'urlname': 'custom_export_form', 'title': <django.utils.functional.__proxy__ object at 0x7f358cd9e6d0>}, {'urlname': 'edit_custom_export_form', 'title': 'Edit Form Custom Export'}], 'description': None, 'title': u'Export Forms', 'url': '/a/hqtest/data/excel_export_data/', 'is_active': False, 'icon': 'icon-list-alt'}, {'subpages': [{'urlname': 'custom_export_case', 'title': <django.utils.functional.__proxy__ object at 0x7f358cd9e710>}, {'urlname': 'edit_custom_export_case', 'title': 'Edit Case Custom Export'}], 'description': None, 'title': u'Export Cases', 'url': '/a/hqtest/data/case_export/', 'is_active': False, 'icon': 'icon-share'}]), (<django.utils.functional.__proxy__ object at 0x7361cd0>, [{'subpages': [], 'description': None, 'title': u'Reassign Cases', 'url': '/a/hqtest/data/edit/reassign_cases/', 'is_active': False, 'icon': None}, {'subpages': [], 'description': u'Import case data from an external Excel file', 'title': u'Import Cases from Excel', 'url': '/a/hqtest/data/edit/import_cases/', 'is_active': False, 'icon': None}, {'url': '/a/hqtest/data/edit/case_groups/', 'subpages': [{'urlname': 'manage_case_groups', 'title': 'Manage Case Group'}], 'title': <django.utils.functional.__proxy__ object at 0x7f358cd92990>}])]
     dropdown_items = []
     for side_header, side_list in sidebar_items:
-        dropdown_header = {
-            'data_id': None,
-            'url': None,
-            'is_header': True,
-            'title': side_header,
-            'is_divider': False,
-            'html': None
-        }
+        dropdown_header = format_submenu_context(side_header, is_header=True)
         current_dropdown_items = []
         for side_item in side_list:
             show_in_dropdown = side_item.get("show_in_dropdown", False)
             if show_in_dropdown:
-                dropdown_item = {
-                    'data_id': None,
-                    'url': side_item["url"],
-                    'is_header': False,
-                    'title': side_item["title"],
-                    'is_divider': False,
-                    'html': None
-                }
+                second_level_dropdowns = get_second_level_dropdowns(side_item)
+                if second_level_dropdowns:
+                    dropdown_item = format_second_level_context(side_item['title'], side_item['url'], second_level_dropdowns)
+                else:
+                    dropdown_item = format_submenu_context(side_item['title'], url=side_item['url'])
                 current_dropdown_items.append(dropdown_item)
         if current_dropdown_items:
             dropdown_items.extend([dropdown_header] + current_dropdown_items)
     return dropdown_items
 
+def get_second_level_dropdowns(first_level_item):
+    second_level_dropdowns = []
+    for subpage in first_level_item.get('subpages', []):
+        if subpage.get('show_in_dropdown', False):
+            second_level_dropdowns.append(format_submenu_context(subpage['title'], url=subpage['urlname']))
+    return second_level_dropdowns
 
 def format_submenu_context(title, url=None, html=None,
                            is_header=False, is_divider=False, data_id=None):
@@ -132,7 +128,11 @@ class UITab(object):
         # todo: add default implementation which looks at sidebar_items and
         # sees which ones have is_dropdown_visible or something like that.
         # Also make it work for tabs with subtabs.
-        return sidebar_to_dropdown(sidebar_items=self.sidebar_items)
+        dropdown_menu = sidebar_to_dropdown(sidebar_items=self.sidebar_items)
+        if self.url and dropdown_menu:
+            return dropdown_menu + [format_submenu_context('placeholder', is_divider=True), format_submenu_context(_('More'), url=self.url)]
+        else:
+            dropdown_menu
 
     @property
     @memoized
@@ -1025,7 +1025,8 @@ class ProjectUsersTab(UITab):
                         {'title': commcare_username,
                          'urlname': EditCommCareUserView.urlname},
                         {'title': _('New Mobile Worker'),
-                         'urlname': 'add_commcare_account'},
+                         'urlname': 'add_commcare_account',
+                         'show_in_dropdown': True,},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
                         {'title': ConfirmBillingAccountForExtraUsersView.page_title,
