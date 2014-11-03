@@ -1,6 +1,6 @@
 {
     "domain": "user-reports",
-    "doc_type": "IndicatorConfiguration",
+    "doc_type": "DataSourceConfiguration",
     "referenced_doc_type": "CommCareCase",
     "table_id": "sample",
     "display_name": "CommBugz",

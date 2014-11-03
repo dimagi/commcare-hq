@@ -351,8 +351,16 @@ class GenericReportView(CacheableRequestMixIn):
             Intention: Override
             Returns an export table to be parsed by export_from_tables.
         """
-        return [ ['table_or_sheet_name', [['header'] ,['row']] ] ]
-
+        return [
+            [
+                'table_or_sheet_name',
+                [
+                    ['header'],
+                    ['row 1']
+                    ['row 2']
+                ]
+            ]
+        ]
 
     @property
     def filter_set(self):

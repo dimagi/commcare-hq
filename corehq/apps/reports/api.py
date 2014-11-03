@@ -11,22 +11,14 @@ class ReportDataSource(object):
             'user_id': 'abc'
          }
         """
-        self.configure(config, check_conflicts=True)
+        self.config = config
 
-    def configure(self, config, check_conflicts=False):
+    def configure(self, config):
         """
         :param config: dictionary containing configuration for this data source.
          Overrides any config supplied to the constructor.
         """
-        self.config = config or {}
-        if hasattr(self, 'filters'):
-            for filter in self.filters:
-                if check_conflicts and hasattr(self, filter.name):
-                    raise Exception("Conflicting property name: {}".format(filter.name))
-
-                setattr(self, filter.name, self.config.get(filter.name, None))
-
-        return config
+        self.config = config
 
     def slugs(self):
         """

@@ -11,10 +11,11 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.mixins import UnicodeMixIn
 from fluff.filters import ANDFilter
 
 
-class DataSourceConfiguration(ConfigurableIndicatorMixIn, Document):
+class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, Document):
 
     domain = StringProperty(required=True)
     referenced_doc_type = StringProperty(required=True)
@@ -23,6 +24,9 @@ class DataSourceConfiguration(ConfigurableIndicatorMixIn, Document):
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
     named_filters = DictProperty()
+
+    def __unicode__(self):
+        return u'{} - {}'.format(self.domain, self.display_name)
 
     @property
     def filter(self):
@@ -100,7 +104,7 @@ class DataSourceConfiguration(ConfigurableIndicatorMixIn, Document):
             yield cls.wrap(result)
 
 
-class ReportConfiguration(Document):
+class ReportConfiguration(UnicodeMixIn, Document):
     domain = StringProperty(required=True)
     config_id = StringProperty(required=True)
     title = StringProperty()
@@ -109,6 +113,9 @@ class ReportConfiguration(Document):
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
+
+    def __unicode__(self):
+        return u'{} - {}'.format(self.domain, self.title)
 
     @property
     @memoized
@@ -126,7 +133,7 @@ class ReportConfiguration(Document):
     @property
     @memoized
     def charts(self):
-        return [ChartFactory.from_spec(g) for g in self.configured_charts]
+        return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
 
     @property
     def table_id(self):

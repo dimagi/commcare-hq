@@ -59,10 +59,12 @@ app_manager_utils.bitly_nato_phonetic = function (bitly_url) {
     if (app_manager_utils.bitly_to_phonetic === undefined) {
         app_manager_utils.bitly_to_phonetic = app_manager_utils.get_bitly_to_phonetic_dict();
     }
-    var bitly_code = bitly_url.replace('http://bit.ly/', '');
-    var phonetics = [];
-    for (var i = 0; i < bitly_code.length; i++) {
-        phonetics.push(app_manager_utils.bitly_to_phonetic[bitly_code[i]] || 'symbol');
+    if (bitly_url) {
+        var bitly_code = bitly_url.replace('http://bit.ly/', '');
+        var phonetics = [];
+        for (var i = 0; i < bitly_code.length; i++) {
+            phonetics.push(app_manager_utils.bitly_to_phonetic[bitly_code[i]] || 'symbol');
+        }
+        return phonetics.join(' ');
     }
-    return phonetics.join(' ');
 };

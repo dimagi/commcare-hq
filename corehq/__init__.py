@@ -46,7 +46,8 @@ def REPORTS(project):
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
             phonelog.FormErrorReport,
-            phonelog.DeviceLogDetailsReport
+            phonelog.DeviceLogDetailsReport,
+            deployments.SyncHistoryReport,
         )),
         (ugettext_lazy("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,

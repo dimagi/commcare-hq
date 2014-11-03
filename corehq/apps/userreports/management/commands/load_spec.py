@@ -44,7 +44,7 @@ class Command(LabelCommand):
             to_save.validate()
             to_save.save()
 
-            print 'updated {}: "{}"'.format(to_save.doc_type, to_save.title)
+            print 'updated {}: "{}"'.format(to_save.doc_type, to_save)
             if options['rebuild'] and isinstance(to_save, DataSourceConfiguration):
                 print 'rebuilding table...'
                 rebuild_indicators(to_save._id)

@@ -838,8 +838,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
-    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
     flush_layout = True
     report_template_path = "reports/async/basic.html"
 
@@ -1009,17 +1007,17 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
         else:
             return self.combined_users
 
-    def es_form_submissions(self, datespan=None, dict_only=False):
+    def es_form_submissions(self, datespan=None):
         datespan = datespan or self.datespan
-        form_query = FormES() \
-            .domain(self.domain) \
-            .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
-            .terms_facet('form.meta.userID', 'form.meta.userID', size=100000) \
-            .size(1)
-
+        form_query = (FormES()
+                      .domain(self.domain)
+                      .completed(gte=datespan.startdate.date(),
+                                 lte=datespan.enddate.date())
+                      .user_facet()
+                      .size(1))
         return form_query.run()
 
-    def es_last_submissions(self, datespan=None, dict_only=False):
+    def es_last_submissions(self, datespan=None):
         """
             Creates a dict of userid => date of last submission
         """
@@ -1102,9 +1100,9 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
         form_data = self.es_form_submissions()
-        submissions_by_user = {t["term"]: t["count"] for t in form_data.facet("form.meta.userID", "terms")}
+        submissions_by_user = form_data.facets.user.counts_by_term()
         avg_form_data = self.es_form_submissions(datespan=avg_datespan)
-        avg_submissions_by_user = {t["term"]: t["count"] for t in avg_form_data.facet("form.meta.userID", "terms")}
+        avg_submissions_by_user = avg_form_data.facets.user.counts_by_term()
 
         if self.view_by == 'groups':
             active_users_by_group = {
