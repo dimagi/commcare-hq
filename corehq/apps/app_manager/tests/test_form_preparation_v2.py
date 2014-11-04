@@ -2,7 +2,7 @@
 import lxml
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction, \
-    AutoSelectCase, FormActionCondition, FormSchedule, ScheduleVisit
+    AutoSelectCase, FormActionCondition, FormSchedule, ScheduleVisit, Form
 from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -171,7 +171,6 @@ class FormPreparationCareplanTest(TestCase, TestFileMixin):
         self.assertXmlEqual(form.render_xform(), self.get_xml('update_task'))
 
 
-
 class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_v2_advanced'
     def setUp(self):
@@ -304,6 +303,7 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
         )
         self.assertXmlEqual(xml, form.render_xform())
 
+
 class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2_advanced')
 
@@ -422,11 +422,12 @@ class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('subcase-repeat-multiple'), self.form.render_xform())
 
 
-class TestXForm(TestCase):
-    def setUp(self):
-        self.xform = XForm('')
+class TestXForm(TestCase, TestFileMixin):
+    file_path = "data", "xform_test"
 
     def test_action_relevance(self):
+        xform = XForm('')
+
         def condition_case(expected, type=None, question=None, answer=None, operator=None):
             condition = FormActionCondition(
                 type=type,
@@ -444,5 +445,26 @@ class TestXForm(TestCase):
         ]
 
         for case in cases:
-            actual = self.xform.action_relevance(case[0])
+            actual = xform.action_relevance(case[0])
             self.assertEqual(actual, case[1])
+
+    def test_set_name(self):
+
+        app = Application.new_app('domain', 'New App', APP_V2)
+        module = app.add_module(Module.new_module('New Module', lang='en'))
+        form = app.new_form(0, 'MySuperSpecialForm', lang='en')
+        form.source = self.get_file("MySuperSpecialForm", "xml")
+
+        xform = form.wrapped_xform()
+        rendered_form = xform.render()
+
+        xform.set_name("NewTotallyAwesomeName")
+        new_rendered_form = xform.render()
+
+        self.assertEqual(
+            rendered_form.replace(
+                "MySuperSpecialForm",
+                "NewTotallyAwesomeName"
+            ),
+            new_rendered_form
+        )
