@@ -1,7 +1,8 @@
-var RemindersListModel = function (reminders) {
+var RemindersListModel = function (reminders, progressUrl) {
     'use strict';
     var self = this;
     self.reminders = reminders;
+    self.progressUrl = progressUrl;
 
     self.activeReminders = ko.observable([]);
     self.inactiveReminders = ko.observable([]);
@@ -64,6 +65,7 @@ var Reminder = function (o, parentModel) {
     self.name = ko.observable(o.name);
     self.caseType = ko.observable(o.caseType);
     self.url = ko.observable(o.url);
+    self.progressBar = new RuleProgressBar(o.id, parentModel.progressUrl);
 
     self.activate = function (_, event) {
         self.processReminder('activate', event.target);

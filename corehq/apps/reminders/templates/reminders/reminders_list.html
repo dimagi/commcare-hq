@@ -3,12 +3,14 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
+    <script src="{% static 'reminders/ko/reminders.old.list.js' %}"></script>
     <script src="{% static 'reminders/ko/reminders.list.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script>
-        var remindersList = new RemindersListModel({{ reminders|JSON }});
+        var remindersList = new RemindersListModel({{ reminders|JSON }},
+            '{% url "reminder_rule_progress" domain %}');
         ko.applyBindings(remindersList, $('#reminders-list').get(0));
         remindersList.init();
     </script>
@@ -58,6 +60,7 @@
                         <tr>
                             <th class="span4">{% trans 'Name' %}</th>
                             <th class="span4">{% trans 'Case Type' %}</th>
+                            <th class="span4">{% trans 'Rule Progress' %}</th>
                             <th class="span4">{% trans 'Action' %}</th>
                         </tr>
                     </thead>
@@ -65,6 +68,14 @@
                         <tr>
                             <td><a data-bind="attr: {href: url}"><span data-bind="text: name"></span></a></td>
                             <td data-bind="text: caseType"></td>
+                            <td>
+                                <div>
+                                    <div data-bind="visible: progressBar.in_progress()" class="progress progress-striped active">
+                                        <span class="bar" data-bind="style: {width: progressBar.progress_pct()}"></span>
+                                    </div>
+                                    <span class="label" data-bind="visible: !progressBar.in_progress()">{% trans "Up-to-date" %}</span>
+                                </div>
+                            </td>
                             <td>
                                 <div data-bind="template: {name: $parent.actionTemplate, data: $data}"></div>
                             </td>
