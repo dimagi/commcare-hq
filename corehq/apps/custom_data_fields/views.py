@@ -207,7 +207,7 @@ class CustomDataEditor(object):
             Fieldset(
                 _("Additional Information"),
                 *field_names
-            ),
+            ) if self.model.fields else '',
             self.get_uncategorized_form(field_names),
         )
         CustomDataForm._has_uncategorized = bool(self.get_uncategorized_form(field_names))
