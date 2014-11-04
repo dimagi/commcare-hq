@@ -2615,7 +2615,7 @@ def process_ui_translation_upload(app, trans_file):
                     if not re.match("\$\{[0-9]+}", param):
                         error_properties.append(row["property"] + ' - ' + row[lang])
                 if not (lang_with_defaults == lang
-                        and row[lang] == default_trans[row["property"]].lstrip(" ")):
+                        and row[lang] == default_trans[row["property"]]):
                     trans_dict[lang].update({row["property"]: row[lang]})
     return trans_dict, error_properties
 
