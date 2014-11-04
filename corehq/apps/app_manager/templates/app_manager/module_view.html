@@ -49,7 +49,8 @@
                     edit: {{ edit|JSON }},
                     saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
                     parentModules: {{ parent_modules|JSON }},
-                    parentSelect: detail.parent_select
+                    parentSelect: detail.parent_select,
+                    calculationEnabled: {{ enable_calc_xpaths|BOOL }}
                 });
 
                 if (detail.sort_elements) {
@@ -273,10 +274,18 @@
                             Filter
                         </label>
                         <span class="hq-help-template"
-                            data-title="{% trans "Filters" %}"
+                            data-title="{% trans "Filter" %}"
                             data-content=
                             "{% blocktrans %}
-                                Filter help text goes here
+                                This XPath expression specifies which cases
+                                should appear in the case list. It can refer to
+                                any case properties and should return true if a
+                                record should be shown and false otherwise. The
+                                same functions are available as when writing
+                                Display or Validation conditions. Refer to case
+                                properties using their name (there's no need to
+                                include a &quot;/data/&quot; in front of the
+                                case property).
                             {% endblocktrans %}"
                         >
 
@@ -293,8 +302,12 @@
                 </div>
                 <div id="{{ detail.type }}-detail-screen-sort">
                 {% if app.enable_multi_sort %}
+                    <a href="#" data-bind="visible: !showing(), click: function(data){data.addButtonClicked(true);}">
+                        <i class="icon-plus"></i>
+                        Add a sort property...
+                    </a>
                     <div class="ui-sortable">
-                        <table class="table table-condensed detail-screen-table" data-bind="if: sortRows().concat(templateRow).length">
+                        <table class="table table-condensed detail-screen-table" data-bind="if: showing">
                             <thead>
                                 <tr>
                                     <th></th>
@@ -336,7 +349,10 @@
                                     <td data-bind="html: fieldHtml"></td>
                                     <!-- /ko -->
                                     <!-- ko if: $data instanceof SortRowTemplate -->
-                                    <td data-bind="jqueryElement: textField.ui" class="detail-screen-field control-group"></td>
+                                    <td class="detail-screen-field control-group" data-bind="css: {error: showWarning}">
+                                        <div data-bind="jqueryElement: textField.ui"></div>
+                                        <div data-bind="jqueryElement: warningElement, if: showWarning"></div>
+                                    </td>
                                     <!-- /ko -->
 
 
