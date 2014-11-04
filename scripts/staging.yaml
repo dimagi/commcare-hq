@@ -67,6 +67,7 @@ branches:
   - hq-dropdown # sravan 5/7
   - custom_user_data  # tw+Ethan 9/9
   - 142623-jstree-upgrade # Daniel 11/3
+  - photo-export # J$ 11/4
 submodules:
   submodules/couchlog-src:
     branches:
