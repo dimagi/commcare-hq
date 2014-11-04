@@ -47,6 +47,8 @@ class TDHInfantClassificationFluff(fluff.IndicatorDocument):
     domains = TDH_DOMAINS
     save_direct_to_sql = True
 
+    group_by = ('domain', )
+
     case_id = flat_field(lambda f: f.form['case']['@case_id'])
     user_id = flat_field(lambda f: f.form['case']['@user_id'])
     username = flat_field(lambda f: f.form['meta']['username'])
@@ -140,6 +142,8 @@ class TDHInfantClassificationFluff(fluff.IndicatorDocument):
     signes_pb_alim = flat_field(lambda f: f.form.get('signes_pb_alim', ''))
     update_vaccines = flat_field(lambda f: f.form.get('update_vaccines', ''))
 
+    vaccines = flat_field(lambda f: ', '.join([k for k, v in f.form.get('vaccines', {}).iteritems()
+                                               if v == 'yes']))
     bcg = flat_field(lambda f: f.form.get('vaccines', {}).get('bcg', ''))
     vih_non = flat_field(lambda f: f.form.get('vih', {}).get('vih_non', ''))
     vih_qa = flat_field(lambda f: f.form.get('vih', {}).get('vih_qa', ''))
@@ -188,6 +192,8 @@ class TDHNewbornClassificationFluff(fluff.IndicatorDocument):
     document_filter = FormPropertyFilter(xmlns=NEWBORN_CLASSIFICATION_XMLNSES[0])
     domains = TDH_DOMAINS
     save_direct_to_sql = True
+
+    group_by = ('domain', )
 
     case_id = flat_field(lambda f: f.form['case']['@case_id'])
     user_id = flat_field(lambda f: f.form['case']['@user_id'])
@@ -295,6 +301,8 @@ class TDHNewbornClassificationFluff(fluff.IndicatorDocument):
     signes_hiv = flat_field(lambda f: f.form.get('signes_hiv', ''))
     update_vaccines = flat_field(lambda f: f.form.get('update_vaccines', ''))
 
+    vaccines = flat_field(lambda f: ', '.join([k for k, v in f.form.get('vaccines', {}).iteritems()
+                                               if v == 'yes']))
     bcg = flat_field(lambda f: f.form.get('vaccines', {}).get('bcg', ''))
     opv_0 = flat_field(lambda f: f.form.get('vaccines', {}).get('opv_0', ''))
 
@@ -341,6 +349,8 @@ class TDHChildClassificationFluff(fluff.IndicatorDocument):
     document_filter = FormPropertyFilter(xmlns=CHILD_CLASSIFICATION_XMLNSES[0])
     domains = TDH_DOMAINS
     save_direct_to_sql = True
+
+    group_by = ('domain', )
 
     case_id = flat_field(lambda f: f.form['case']['@case_id'])
     user_id = flat_field(lambda f: f.form['case']['@user_id'])
@@ -513,6 +523,8 @@ class TDHChildClassificationFluff(fluff.IndicatorDocument):
 
     update_vaccines = flat_field(lambda f: f.form.get('update_vaccines', ''))
 
+    vaccines = flat_field(lambda f: ', '.join([k for k, v in f.form.get('vaccines', {}).iteritems()
+                                               if v == 'yes']))
     bcg = flat_field(lambda f: f.form.get('vaccines', {}).get('bcg', ''))
     measles_1 = flat_field(lambda f: f.form.get('vaccines', {}).get('measles_1', ''))
     measles_2 = flat_field(lambda f: f.form.get('vaccines', {}).get('measles_2', ''))

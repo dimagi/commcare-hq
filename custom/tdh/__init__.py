@@ -1,9 +1,6 @@
-from custom.tdh.reports.child_consultation_history import ChildConsultationHistory
-from custom.tdh.reports.complete_child_consultation_history import CompleteChildConsultationHistoryReport
-from custom.tdh.reports.complete_infant_consultation_history import CompleteInfantConsultationHistoryReport
-from custom.tdh.reports.complete_newborn_consultation_history import CompleteNewBornConsultationHistoryReport
+from custom.tdh.reports.child_consultation_history import ChildConsultationHistoryReport
 from custom.tdh.reports.infant_consultation_history import InfantConsultationHistoryReport
-from custom.tdh.reports.newborn_consultation_history import NewbornConsultationHistory
+from custom.tdh.reports.newborn_consultation_history import NewbornConsultationHistoryReport
 
 TDH_DOMAINS = ('tdhtesting', )
 
@@ -17,11 +14,8 @@ CHILD_TREATMENT_XMLNSES = ("http://openrosa.org/formdesigner/88885ce54e53952782e
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
-        CompleteInfantConsultationHistoryReport,
-        CompleteNewBornConsultationHistoryReport,
-        CompleteChildConsultationHistoryReport,
         InfantConsultationHistoryReport,
-        NewbornConsultationHistory,
-        ChildConsultationHistory
+        NewbornConsultationHistoryReport,
+        ChildConsultationHistoryReport
     )),
 )
