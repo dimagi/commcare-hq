@@ -51,6 +51,7 @@ class Tile(object):
         """
         tile_context = {
             'slug': self.tile_config.slug,
+            'helpText': self.tile_config.help_text,
         }
         tile_context.update(self.context_processor.context)
         return tile_context
@@ -62,7 +63,8 @@ class TileConfiguration(object):
 
     def __init__(self, title, slug, icon, context_processor_class,
                  url=None, urlname=None, is_external_link=False,
-                 visibility_check=None, url_generator=None):
+                 visibility_check=None, url_generator=None,
+                 help_text=None):
         """
         :param title: The title of the tile
         :param slug: The tile's slug
@@ -72,6 +74,7 @@ class TileConfiguration(object):
         :param urlname: the urlname of the view that the icon will link to
         :param is_external_link: True if the tile opens links in new window/tab
         :param visibility_check: (optional) a lambda that accepts a request
+        :param help_text: (optional) text that will appear on hover of tile
         and urlname and returns a boolean value if the tile is visible to the
         user.
         :param url_generator: a labmda that accepts a request and returns
@@ -91,6 +94,7 @@ class TileConfiguration(object):
         self.visibility_check = (visibility_check
                                  or self._default_visibility_check)
         self.url_generator = url_generator or self._default_url_generator
+        self.help_text = help_text
 
     @property
     def ng_directive(self):

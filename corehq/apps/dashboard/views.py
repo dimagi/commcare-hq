@@ -152,6 +152,7 @@ def _get_default_tile_configurations():
             context_processor_class=AppsPaginatedContext,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
+            help_text=_('Build, update, and deploy applications'),
         ),
         TileConfiguration(
             title=_('Reports'),
@@ -160,6 +161,8 @@ def _get_default_tile_configurations():
             context_processor_class=ReportsPaginatedContext,
             urlname='reports_home',
             visibility_check=can_view_reports,
+            help_text=_('View worker monitoring reports and inspect '
+                        'project data'),
         ),
         TileConfiguration(
             title=_('Data'),
@@ -168,6 +171,7 @@ def _get_default_tile_configurations():
             context_processor_class=IconContext,
             urlname='data_interfaces_default',
             visibility_check=can_edit_data,
+            help_text=_('Export and manage data'),
         ),
         TileConfiguration(
             title=_('Users'),
@@ -176,6 +180,8 @@ def _get_default_tile_configurations():
             context_processor_class=IconContext,
             urlname=DefaultProjectUserSettingsView.urlname,
             visibility_check=can_edit_users,
+            help_text=_('Manage accounts for mobile workers '
+                        'and CommCareHQ users'),
         ),
         TileConfiguration(
             title=_('Messaging'),
@@ -184,6 +190,7 @@ def _get_default_tile_configurations():
             context_processor_class=IconContext,
             urlname='sms_default',
             visibility_check=can_use_messaging,
+            help_text=_('Configure and schedule SMS messages and keywords'),
         ),
         TileConfiguration(
             title=_('Exchange'),
@@ -193,6 +200,8 @@ def _get_default_tile_configurations():
             urlname='appstore',
             visibility_check=can_edit_apps,
             url_generator=lambda urlname, req: reverse(urlname),
+            help_text=_('Download and share CommCare applications with '
+                        'other users around the world'),
         ),
         TileConfiguration(
             title=_('Settings'),
@@ -201,6 +210,7 @@ def _get_default_tile_configurations():
             context_processor_class=IconContext,
             urlname=DefaultProjectSettingsView.urlname,
             visibility_check=is_domain_admin,
+            help_text=_('Set project-wide settings and manage subscriptions'),
         ),
         TileConfiguration(
             title=_('Help Site'),
@@ -208,5 +218,6 @@ def _get_default_tile_configurations():
             icon='dashboard-icon-help',
             context_processor_class=IconContext,
             url='http://help.commcarehq.org/',
+            help_text=_("Visit CommCare's knowledge base"),
         ),
     ]

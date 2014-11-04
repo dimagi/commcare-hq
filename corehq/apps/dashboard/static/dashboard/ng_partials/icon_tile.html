@@ -1,11 +1,23 @@
 <div class="col-md-3">
     <div class="panel panel-dashboard panel-dashboard-medium">
-        <div class="panel-heading"><a href="{{ default.url }}">{{ title }}</a></div>
+        <div class="panel-heading">
+            <a href="{{ default.url }}"
+               popover-title="{{ title }}"
+               popover="{{ helpText }}"
+               popover-trigger="mouseenter"
+               popover-placement="bottom"
+               title="">{{ title }}</a>
+        </div>
         <div class="panel-body">
             <a href="{{ url }}"
                class="dashboard-link"
                track-analytics=""
-               process-external-link="">
+               process-external-link=""
+               popover-title="{{ title }}"
+               popover="{{ helpText }}"
+               popover-trigger="mouseenter"
+               popover-placement="top"
+               title="">
                 <span class="dashboard-icon dashboard-icon-medium {{ icon }}"></span>
             </a>
         </div>
