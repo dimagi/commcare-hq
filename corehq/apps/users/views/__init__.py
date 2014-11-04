@@ -188,7 +188,7 @@ class BaseEditUserView(BaseUserSettingsView):
                 if self.editable_user._id == self.request.couch_user._id:
                     new_lang = self.request.couch_user.language
                     if new_lang != old_lang:
-                        request.session['django_language'] = new_lang
+                        self.request.session['django_language'] = new_lang
                 return True
 
     def custom_user_is_valid(self):

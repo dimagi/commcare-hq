@@ -14,7 +14,7 @@ from dimagi.utils.excel import (flatten_json, json_to_headers,
 from soil import DownloadBase
 
 from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -30,7 +30,10 @@ class UserUploadError(Exception):
 
 
 required_headers = set(['username'])
-allowed_headers = set(['data', 'email', 'group', 'language', 'name', 'password', 'phone-number', 'uncategorized_data', 'user_id']) | required_headers
+allowed_headers = set([
+    'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
+    'uncategorized_data', 'user_id',
+]) | required_headers
 
 
 def check_headers(user_specs):

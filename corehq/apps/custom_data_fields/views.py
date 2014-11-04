@@ -1,14 +1,12 @@
 import json
 import re
 
-from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 from django import forms
 
-from crispy_forms.bootstrap import InlineField, FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML
 
@@ -149,6 +147,7 @@ class CustomDataFieldsMixin(object):
         else:
             return self.get(request, *args, **kwargs)
 
+
 def add_prefix(field_dict):
     """
     Prefix all keys in the dict with the defined
@@ -264,4 +263,3 @@ class CustomDataEditor(object):
             ),
             *help_div
         ) if len(help_div) else HTML('')
-

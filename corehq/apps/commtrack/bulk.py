@@ -68,8 +68,12 @@ def import_products(domain, importer):
         Product.get_db().bulk_save(to_save)
 
     if product_count:
-        results['messages'].insert(0, _('Successfully updated {number_of_products} products with {errors} errors.').format(
-            number_of_products=product_count, errors=len(results['errors']))
+        results['messages'].insert(
+            0,
+            _('Successfully updated {number_of_products} products with {errors} '
+              'errors.').format(
+                number_of_products=product_count, errors=len(results['errors'])
+            )
         )
 
     return results
