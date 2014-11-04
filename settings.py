@@ -994,6 +994,7 @@ COUCHDB_APPS = [
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
     ('userreports', 'meta'),
+    ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
