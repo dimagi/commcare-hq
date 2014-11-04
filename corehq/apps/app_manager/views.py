@@ -1042,6 +1042,25 @@ def new_app(req, domain):
 
     return back_to_main(req, domain, app_id=app_id)
 
+@require_can_edit_apps
+def default_new_app(req, domain):
+    """New Blank Application according to defaults. So that we can link here
+    instead of creating a form and posting to the above link, which was getting
+    annoying for the Dashboard.
+    """
+    lang = 'en'
+    app = Application.new_app(
+        domain, _("Untitled Application"), lang=lang,
+        application_version=APP_V2
+    )
+    app.add_module(Module.new_module(_("Untitled Module"), lang))
+    app.new_form(0, "Untitled Form", lang)
+    if req.project.secure_submissions:
+        app.secure_submissions = True
+    _clear_app_cache(req, domain)
+    app.save()
+    return back_to_main(req, domain, app_id=app.id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
