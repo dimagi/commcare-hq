@@ -404,7 +404,7 @@ def update_case_list_translations(sheet, rows, app):
                 # Cut off the id mapping value part
                 rows[i + j]['case_property'] = \
                     rows[i + j]['case_property'].split(" ")[0]
-                mappings.append(rows[i+j])
+                mappings.append(rows[i + j])
                 j += 1
             rows[i]['mappings'] = mappings
             condensed_rows.append(rows[i])
@@ -475,7 +475,7 @@ def update_case_list_translations(sheet, rows, app):
                         language_dict = detail.header
                     else:
                         # For MappingItems
-                        language_dict = detail['enum'][index-1].value
+                        language_dict = detail['enum'][index - 1].value
 
                     if translation:
                         language_dict[lang] = translation
@@ -510,7 +510,7 @@ def has_at_least_one_translation(row, prefix, langs):
     :param langs:
     :return:
     """
-    return bool(filter(None, [row[prefix+'_'+l] for l in langs]))
+    return bool(filter(None, [row[prefix + '_' + l] for l in langs]))
 
 
 def get_col_key(translation_type, language):

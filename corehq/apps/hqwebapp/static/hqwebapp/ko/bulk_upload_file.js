@@ -13,7 +13,7 @@ $(function () {
                     file: ko.observable(null)
                 },
                 $(ids[i]).get(0)
-            )
+            );
         }
     }
 });
