@@ -93,7 +93,9 @@
                 }"
                 class="btn"
                 data-loading-text="{% trans 'Deactivating reminder...' %}"
-                data-error-text="{% trans 'Error deactivating, try again?' %}">
+                data-error-text="{% trans 'Error deactivating, try again?' %}"
+                data-locked-text="{% trans 'Wait for rule to finish and try again...' %}"
+                >
             {% trans 'Deactivate' %}
         </button>
     </script>
@@ -105,7 +107,9 @@
                 }"
                 class="btn"
                 data-loading-text="{% trans 'Activating reminder...' %}"
-                data-error-text="{% trans 'Error activating, try again?' %}">
+                data-error-text="{% trans 'Error activating, try again?' %}"
+                data-locked-text="{% trans 'Wait for rule to finish and try again...' %}"
+                >
             {% trans 'Activate' %}
         </button>
     </script>

@@ -92,7 +92,11 @@ var Reminder = function (o, parentModel) {
                 if (data.success) {
                     self.reminderList[method + 'Reminder'](self);
                 } else {
-                    $(target_button).button('error');
+                    if(data.locked) {
+                        $(target_button).button('locked');
+                    } else {
+                        $(target_button).button('error');
+                    }
                 }
             }
         });

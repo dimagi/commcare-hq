@@ -1663,6 +1663,14 @@ class RemindersListView(BaseMessagingSectionView):
 
     def get_action_response(self, active):
         try:
+            assert self.reminder.domain == self.domain
+            assert self.reminder.doc_type == "CaseReminderHandler"
+            if self.reminder.locked:
+                return {
+                    'success': False,
+                    'locked': True,
+                }
+
             self.reminder.active = active
             self.reminder.save()
             return {
