@@ -1472,6 +1472,9 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
+        xform = form.wrapped_xform()
+        xform.set_name(name)
+        save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
         resp['update'] = {'.variable-form_name': form.name[lang]}
     if should_edit("xform"):
         try:
