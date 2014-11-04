@@ -565,7 +565,7 @@ def get_app_view_context(request, app):
         'bulk_ui_translation_upload': {
             'action': reverse('upload_bulk_ui_translations',
                               args=(app.domain, app.get_id)),
-            'download_url': reverse('download_translations',
+            'download_url': reverse('download_bulk_ui_translations',
                                     args=(app.domain, app.get_id)),
             'adjective': _(u"U\u200BI translation"),
             'plural_noun': _(u"U\u200BI translations"),
@@ -2623,7 +2623,7 @@ def build_ui_translation_download_file(app):
 
 
 @require_can_edit_apps
-def download_translations(request, domain, app_id):
+def download_bulk_ui_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     temp = build_ui_translation_download_file(app)
     return export_response(temp, Format.XLS_2007, "translations")

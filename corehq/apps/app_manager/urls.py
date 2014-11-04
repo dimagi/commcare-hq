@@ -4,7 +4,7 @@ from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^languages/$', 'view_app', name='app_languages'),
-    url(r'^languages/translations/download/$', 'download_translations', name='download_translations'),
+    url(r'^languages/translations/download/$', 'download_bulk_ui_translations', name='download_bulk_ui_translations'),
     url(r'^languages/translations/upload/$', 'upload_bulk_ui_translations', name='upload_bulk_ui_translations'),
     url(r'^languages/bulk_app_translations/download/$', 'download_bulk_app_translations', name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', 'upload_bulk_app_translations', name='upload_bulk_app_translations'),
