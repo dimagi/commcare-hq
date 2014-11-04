@@ -20,6 +20,12 @@
   margin: 0 auto;
 }
 
+.dashboard-icon-bg {
+  position: absolute;
+  top: 57px;
+  left: 36px;
+}
+
 .dashboard-button {
   background-color: transparent;
   border: none;
@@ -59,6 +65,9 @@
   &.dashboard-icon-medium {
     background-image: url('../img/icon-med-applications.png');
   }
+  &.dashboard-icon-bg {
+    background-image: url('../img/icon-med-bg-applications.png');
+  }
 }
 
 .dashboard-icon-help {
@@ -73,6 +82,9 @@
   &.dashboard-icon-medium {
     background-image: url('../img/icon-med-commtrack.png');
   }
+  &.dashboard-icon-bg {
+    background-image: url('../img/icon-med-bg-commtrack.png');
+  }
 }
 
 .dashboard-icon-data {
@@ -81,6 +93,9 @@
 
 .dashboard-icon-report {
   background-image: url('../img/icon-med-report.png');
+  &.dashboard-icon-bg {
+    background-image: url('../img/icon-med-bg-report.png');
+  }
 }
 
 .dashboard-icon-messaging {
@@ -113,6 +128,10 @@
     margin-bottom: 10px;
     .list-group-item {
       padding: 7px 10px;
+      background-color: rgba(255, 255, 255, 0.4);
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+      }
     }
   }
 
@@ -122,6 +141,13 @@
     bottom: 18px;
     > li > a {
       padding: 3px 7px;
+      background-color: rgba(255, 255, 255, 0.4);
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+      }
+    }
+    li.active a {
+      background-color: rgba(21, 87, 162, 0.9);
     }
   }
 

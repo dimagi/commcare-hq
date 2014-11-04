@@ -10,6 +10,8 @@
                title="">{{ title }}</a>
         </div>
         <div class="panel-body">
+            <div class="dashboard-icon-medium dashboard-icon-bg {{ default.icon }}"
+                 ng-show="showItemList()"></div>
             <i class="fa fa-spinner fa-spin fa-5x" ng-show="showSpinner()"></i>
             <div class="list-group" ng-show="showItemList()">
                 <a class="list-group-item"
