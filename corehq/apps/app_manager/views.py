@@ -2541,7 +2541,7 @@ def get_index_for_defaults(langs):
 
 def build_ui_translation_download_file(app):
 
-    properties = tuple(["property"] + app.langs + ["platform", "source"])
+    properties = tuple(["property"] + app.langs + ["platform"])
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2580,8 +2580,7 @@ def build_ui_translation_download_file(app):
             "JavaRosa": "Java",
         }
         source = system_text_sources.SOURCES.get(row[0], "")
-        row[-1] = source
-        row[-2] = platform_map.get(source, "")
+        row[-1] = platform_map.get(source, "")
         return row
 
     rows = [add_sources(add_default(fillrow(row))) for row in rows]
