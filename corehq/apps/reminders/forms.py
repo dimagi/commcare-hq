@@ -979,7 +979,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     ):
         available_languages = available_languages or ['en']
         self.initial_event = {
-            'day_num': 1,
+            'day_num': 0,
             'fire_time_type': FIRE_TIME_DEFAULT,
             'message': dict([(l, '') for l in available_languages]),
         }
