@@ -160,8 +160,10 @@ def _reported_on_time(reminder_date, last_report_date):
 def icon_format(status, val):
     if status == OnTimeStates.ON_TIME:
         return '<span class="icon-ok" style="color:green"/>%s' % val
-    if status == OnTimeStates.LATE or status == OnTimeStates.INSUFFICIENT_DATA:
+    elif status == OnTimeStates.LATE:
         return '<span class="icon-warning-sign" style="color:orange"/>%s' % val
+    elif status == OnTimeStates.NO_DATA or OnTimeStates.INSUFFICIENT_DATA:
+        return _('Waiting for reply')
 
 
 def _months_or_default(val, default_value):
@@ -198,7 +200,6 @@ class DistrictSohPercentageTableData(ILSData):
         if self.config['soh_month']:
             return 'Inventory'
         return 'Month of Stock'
-
 
     @property
     def headers(self):
