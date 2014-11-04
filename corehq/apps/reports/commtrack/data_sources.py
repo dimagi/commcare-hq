@@ -99,13 +99,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             return Product.get(product_id).name
         @memoized
         def supply_point_location(case_id):
-            return SupplyPointCase.get(case_id).location_[-1]
+            return SupplyPointCase.get(case_id).location_id
 
         raw_map = {
             self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
             self.SLUG_PRODUCT_ID: 'product_id',
             self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
-            # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
             self.SLUG_CURRENT_STOCK: 'stock_on_hand',
             self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
             self.SLUG_MONTHS_REMAINING: 'months_remaining',

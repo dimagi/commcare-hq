@@ -78,7 +78,6 @@ class Location(CachedCouchDocumentMixin, Document):
             endkey=[domain, loc_type, loc_id, {}],
         ).one()['value']
 
-
     @classmethod
     def by_domain(cls, domain):
         relevant_ids = set([r['id'] for r in cls.get_db().view(
@@ -111,6 +110,10 @@ class Location(CachedCouchDocumentMixin, Document):
     @classmethod
     def root_locations(cls, domain):
         return root_locations(domain)
+
+    @classmethod
+    def all_locations(cls, domain):
+        return all_locations(domain)
 
     @classmethod
     def get_in_domain(cls, domain, id):
@@ -170,15 +173,6 @@ class Location(CachedCouchDocumentMixin, Document):
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
 
-    def linked_docs(self, doc_type, include_descendants=False):
-        startkey = [self.domain, self._id, doc_type]
-        if not include_descendants:
-            startkey.append(True)
-        endkey = list(startkey)
-        endkey.append({})
-        # returns arbitrary doc types, so can't call self.view()
-        return [k['doc'] for k in get_db().view('locations/linked_docs', startkey=startkey, endkey=endkey, include_docs=True)]
-
     @property
     def _geopoint(self):
         return '%s %s' % (self.latitude, self.longitude) if self.latitude is not None and self.longitude is not None else None
@@ -186,6 +180,7 @@ class Location(CachedCouchDocumentMixin, Document):
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
+
 
 def root_locations(domain):
     results = Location.get_db().view('locations/hierarchy',
@@ -195,9 +190,11 @@ def root_locations(domain):
     ids = [res['key'][-1] for res in results]
     return [Location.get(id) for id in ids]
 
+
 def all_locations(domain):
     return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
                          reduce=False, include_docs=True).all()
+
 
 class CustomProperty(Document):
     name = StringProperty()
