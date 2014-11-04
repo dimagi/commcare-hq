@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from corehq import Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized
@@ -74,11 +75,11 @@ class TileConfiguration(object):
         :param urlname: the urlname of the view that the icon will link to
         :param is_external_link: True if the tile opens links in new window/tab
         :param visibility_check: (optional) a lambda that accepts a request
-        :param help_text: (optional) text that will appear on hover of tile
         and urlname and returns a boolean value if the tile is visible to the
         user.
         :param url_generator: a labmda that accepts a request and returns
         a string that is the url the tile will take the user to if it's clicked
+        :param help_text: (optional) text that will appear on hover of tile
         """
         if not issubclass(context_processor_class, BaseTileContextProcessor):
             raise TileConfigurationError(
@@ -284,6 +285,14 @@ class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
 class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     """Generates the Paginated context for the Applications Tile.
     """
+    def __init__(self, tile_config, request, in_data):
+        super(AppsPaginatedContext, self).__init__(
+            tile_config, request, in_data)
+        # Handle special CommTrack Case
+        domain = Domain.get_by_name(self.request.domain)
+        if domain.commtrack_enabled:
+            self.tile_config.icon = 'dashboard-icon-commtrack'
+
     @property
     def total(self):
         # todo: optimize this at some point. unfortunately applications_brief
