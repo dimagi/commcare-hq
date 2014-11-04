@@ -451,7 +451,7 @@ class TestXForm(TestCase, TestFileMixin):
     def test_set_name(self):
 
         app = Application.new_app('domain', 'New App', APP_V2)
-        module = app.add_module(Module.new_module('New Module', lang='en'))
+        app.add_module(Module.new_module('New Module', lang='en'))
         form = app.new_form(0, 'MySuperSpecialForm', lang='en')
         form.source = self.get_file("MySuperSpecialForm", "xml")
 
