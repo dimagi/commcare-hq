@@ -19,7 +19,7 @@ def import_locations_async(domain, file_ref_id):
 @task
 def import_products_async(domain, file_ref_id):
     importer = SingleExcelImporter(import_products_async, file_ref_id)
-    results = list(import_products(domain, importer))
+    results = import_products(domain, importer)
     importer.mark_complete()
 
     return {

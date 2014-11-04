@@ -369,7 +369,7 @@ class Product(Document):
         self.save()
 
     @classmethod
-    def from_excel(cls, row):
+    def from_excel(cls, row, custom_data_validator):
         if not row:
             return None
 
@@ -398,7 +398,13 @@ class Product(Document):
         if not p.name:
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
-        p.product_data = row.get('data', {})
+        custom_data = row.get('data', {})
+        error = custom_data_validator(custom_data)
+        if error:
+            raise InvalidProductException(error)
+
+        p.product_data = custom_data
+        p.product_data.update(row.get('uncategorized_data', {}))
 
         return p
 
