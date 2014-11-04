@@ -797,8 +797,11 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @memoized
     def reminder_handler(self):
         try:
-            return CaseReminderHandler.get(self.handler_id)
-        except ResourceNotFound:
+            handler = CaseReminderHandler.get(self.handler_id)
+            assert handler.domain == self.domain
+            assert handler.doc_type == "CaseReminderHandler"
+            return handler
+        except (ResourceNotFound, AssertionError):
             raise Http404()
 
     @property
@@ -819,6 +822,23 @@ class EditScheduledReminderView(CreateScheduledReminderView):
 
     def process_schedule_form(self):
         self.schedule_form.save(self.reminder_handler)
+
+    def rule_in_progress(self):
+        messages.error(self.request, _("Please wait until the rule finishes "
+            "processing before making further changes."))
+        return HttpResponseRedirect(reverse(RemindersListView.urlname, args=[self.domain]))
+
+    def get(self, *args, **kwargs):
+        if self.reminder_handler.locked:
+            return self.rule_in_progress()
+        else:
+            return super(EditScheduledReminderView, self).get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        if self.reminder_handler.locked:
+            return self.rule_in_progress()
+        else:
+            return super(EditScheduledReminderView, self).post(*args, **kwargs)
 
 
 class AddStructuredKeywordView(BaseMessagingSectionView):
