@@ -87,3 +87,6 @@ submodules:
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
+  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+    branches:
+      - debug-yui # Nick P 11/4
