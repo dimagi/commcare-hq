@@ -524,6 +524,10 @@ class XForm(WrappedNode):
     def video_references(self):
         return self.media_references(form="video")
 
+    def set_name(self, new_name):
+        self.find('{h}head/{h}title').xml.text = new_name
+        self.data_node.set('name', "%s" % new_name)
+
     def normalize_itext(self):
         """
         Convert this:
