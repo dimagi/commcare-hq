@@ -991,6 +991,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 'events': json.dumps([self.initial_event])
             }
 
+        if is_edit:
+            max_iteration_count = kwargs['initial']['max_iteration_count']
+            if max_iteration_count == 1:
+                repeat_type = REPEAT_TYPE_NO
+            elif max_iteration_count == REPEAT_SCHEDULE_INDEFINITELY:
+                repeat_type = REPEAT_TYPE_INDEFINITE
+            else:
+                repeat_type = REPEAT_TYPE_SPECIFIC
+            kwargs['initial']['repeat_type'] = repeat_type
+
         super(BaseScheduleCaseReminderForm, self).__init__(data, *args, **kwargs)
 
         self.domain = domain
@@ -1654,11 +1664,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
         if repeat_type == REPEAT_TYPE_NO:
             return 1
         if repeat_type == REPEAT_TYPE_INDEFINITE:
-            return -1
+            return REPEAT_SCHEDULE_INDEFINITELY
         max_iteration_count = self.cleaned_data['max_iteration_count']
-        if max_iteration_count < 0:
-            raise ValidationError(_("Please enter a positive number."))
-        if max_iteration_count == 0:
+        if max_iteration_count <= 0:
             raise ValidationError(_(
                 "Please enter a number that is 1 or greater."
             ))
@@ -1739,7 +1747,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'recipient_case_match_value',
             'method',
             'event_interpretation',
-            'repeat_type',
             'schedule_length',
             'max_iteration_count',
             'stop_condition',
