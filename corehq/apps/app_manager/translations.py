@@ -7,7 +7,6 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.util.lcs import lcsMerge
 from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
 
 from django.contrib import messages
@@ -109,8 +108,7 @@ def process_bulk_app_translation_upload(app, f):
                 'Sheet will be processed but the following'
                 ' translations will be unchanged: %s'
                 % (sheet.worksheet.title, " ,".join(missing_cols))
-                )
-            )
+            ))
 
         # CHECK FOR EXTRA COLUMNS
         extra_cols = set(sheet.headers) - set(expected_columns)
@@ -159,10 +157,10 @@ def expected_bulk_app_sheet_headers(app):
     :param app:
     :return:
     '''
-    languages_list = ['default_'+l for l in app.langs]
-    audio_lang_list = ['audio_'+l for l in app.langs]
-    image_lang_list = ['image_'+l for l in app.langs]
-    video_lang_list = ['video_'+l for l in app.langs]
+    languages_list = ['default_' + l for l in app.langs]
+    audio_lang_list = ['audio_' + l for l in app.langs]
+    image_lang_list = ['image_' + l for l in app.langs]
+    video_lang_list = ['video_' + l for l in app.langs]
 
     headers = []
 
@@ -171,8 +169,7 @@ def expected_bulk_app_sheet_headers(app):
         ["Modules_and_forms",
             ['Type', 'sheet_name'] + languages_list +
             ['label_for_cases_%s' % l for l in app.langs] +
-            ['icon_filepath', 'audio_filepath', 'unique_id']
-        ]
+            ['icon_filepath', 'audio_filepath', 'unique_id']]
     )
 
     for mod_index, module in enumerate(app.get_modules()):
@@ -181,11 +178,11 @@ def expected_bulk_app_sheet_headers(app):
         headers.append([module_string, ['case_property', 'list_or_detail'] + languages_list])
 
         for form_index, form in enumerate(module.get_forms()):
-            form_string = module_string + "_form" + str(form_index+1)
+            form_string = module_string + "_form" + str(form_index + 1)
             headers.append([
                 form_string,
                 ["label"] + languages_list + audio_lang_list + image_lang_list
-                    + video_lang_list
+                                                             + video_lang_list
             ])
     return headers
 
@@ -217,7 +214,7 @@ def process_modules_and_forms_sheet(rows, app):
         module_index = int(identifying_text[0].replace("module", "")) - 1
         try:
             document = app.get_module(module_index)
-        except ModuleNotFoundException, e:
+        except ModuleNotFoundException:
             msgs.append((
                 messages.error,
                 'Invalid module in row "%s", skipping row.' % row.get(
@@ -402,11 +399,11 @@ def update_case_list_translations(sheet, rows, app):
             # Construct a list of mapping rows
             mappings = []
             j = 1
-            while (i+j < len(rows) and
-                    rows[i+j]['case_property'].endswith(" (ID Mapping Value)")):
+            while (i + j < len(rows) and
+                    rows[i + j]['case_property'].endswith(" (ID Mapping Value)")):
                 # Cut off the id mapping value part
-                rows[i+j]['case_property'] = \
-                    rows[i+j]['case_property'].split(" ")[0]
+                rows[i + j]['case_property'] = \
+                    rows[i + j]['case_property'].split(" ")[0]
                 mappings.append(rows[i+j])
                 j += 1
             rows[i]['mappings'] = mappings
@@ -555,7 +552,3 @@ def get_translation(id, lang, form, media=None):
             return value_node.xml.text
         except StopIteration:
             return ""
-
-
-
-

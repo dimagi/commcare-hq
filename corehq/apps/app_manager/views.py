@@ -53,7 +53,6 @@ from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
 from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
-from corehq.util.lcs import lcsMerge
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from django.utils.http import urlencode
@@ -2699,8 +2698,8 @@ def download_bulk_app_translations(request, domain, app_id):
     rows = {"Modules_and_forms": []}
 
     for mod_index, module in enumerate(app.get_modules()):
-        #This is duplicated logic from expected_bulk_app_sheet_headers,
-        #which I don't love.
+        # This is duplicated logic from expected_bulk_app_sheet_headers,
+        # which I don't love.
         module_string = "module" + str(mod_index + 1)
 
         # Add module to the first sheet
@@ -2745,7 +2744,7 @@ def download_bulk_app_translations(request, domain, app_id):
                         )
 
         for form_index, form in enumerate(module.get_forms()):
-            form_string = module_string + "_form" + str(form_index+1)
+            form_string = module_string + "_form" + str(form_index + 1)
             xform = form.wrapped_xform()
 
             # Add row for this form to the first sheet
@@ -2789,7 +2788,7 @@ def download_bulk_app_translations(request, domain, app_id):
                     # Add rows for this question's options
                     if question['type'] in ("MSelect", "Select"):
                         for j, select in enumerate(question['options']):
-                            select_id = row[0]+"-"+select['value']
+                            select_id = row[0] + "-" + select['value']
                             labels = tuple(
                                 questions_by_lang[l][i]['options'][j]['label']
                                 for l in app.langs
