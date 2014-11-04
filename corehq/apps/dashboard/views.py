@@ -151,6 +151,7 @@ def _get_default_tile_configurations():
             icon='dashboard-icon-applications',
             context_processor_class=AppsPaginatedContext,
             visibility_check=can_edit_apps,
+            urlname='default_new_app',
         ),
         TileConfiguration(
             title=_('Reports'),
