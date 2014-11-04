@@ -2400,42 +2400,6 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-def emulator_page(req, domain, app_id, template):
-    copied_app = app = get_app(domain, app_id)
-    if app.copy_of:
-        app = get_app(domain, app.copy_of)
-
-    # Coupled URL -- Sorry!
-    build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
-        **copied_app.get_preview_build()._doc
-    )
-    return render(req, template, {
-        'domain': domain,
-        'app': app,
-        'build_path': build_path,
-        'url_base': get_url_base()
-    })
-
-
-@require_can_edit_apps
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
-    return emulator_page(req, domain, app_id, template)
-
-
-def emulator_handler(req, domain, app_id):
-    exchange = req.GET.get("exchange", '')
-    if exchange:
-        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
-    else:
-        return emulator(req, domain, app_id)
-
-def emulator_commcare_jar(req, domain, app_id):
-    response = HttpResponse(
-        get_app(domain, app_id).fetch_emulator_commcare_jar()
-    )
-    response['Content-Type'] = "application/java-archive"
-    return response
-
 
 @require_can_edit_apps
 def formdefs(request, domain, app_id):

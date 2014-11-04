@@ -2704,12 +2704,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
-    def fetch_emulator_commcare_jar(self):
-        path = "Generic/WebDemo"
-        jadjar = self.get_preview_build().get_jadjar(path)
-        jadjar = jadjar.pack(self.create_all_files())
-        return jadjar.jar
-
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
