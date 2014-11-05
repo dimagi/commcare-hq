@@ -80,7 +80,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         else:
             locations = SQLLocation.objects.filter(domain=self.domain)
 
-        for loc in locations:
+        for loc in locations[:self.config.get('max_rows', 100)]:
             transactions = StockTransaction.objects.filter(
                 case_id=loc.supply_point_id,
             )

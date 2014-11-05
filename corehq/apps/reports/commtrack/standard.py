@@ -223,6 +223,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     name = 'Simple Inventory'
     slug = SimplifiedInventoryDataSource.slug
+    special_notice = 'A maximum of 100 locations will be shown. Filter by location if you need to see more.'
     exportable = True
     emailable = True
     fields = [
@@ -265,7 +266,8 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
             'program_id': self.program_id,
-            'date': self.request.GET.get('date', None)
+            'date': self.request.GET.get('date', None),
+            'max_rows': 100
         }
 
         data = SimplifiedInventoryDataSource(config).get_data()
