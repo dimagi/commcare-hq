@@ -25,7 +25,7 @@ class Command(ElasticReindexer):
             view_chunk = self.db.view(
                 self.view_name,
                 reduce=False,
-                limit=self.chunk_size * self.chunk_size,
+                limit=self.chunk_size,
                 skip=start_seq,
                 **view_kwargs
             )
@@ -33,10 +33,10 @@ class Command(ElasticReindexer):
             while len(view_chunk) > 0:
                 for item in view_chunk:
                     yield item
-                start_seq += self.chunk_size * self.chunk_size
+                start_seq += self.chunk_size
                 view_chunk = self.db.view(self.view_name,
                     reduce=False,
-                    limit=self.chunk_size * self.chunk_size,
+                    limit=self.chunk_size,
                     skip=start_seq,
                     **view_kwargs
                 )

@@ -7,7 +7,7 @@ from django.core.management.base import NoArgsCommand
 import simplejson
 from pillowtop.couchdb import CachedCouchDB
 
-CHUNK_SIZE = 500
+CHUNK_SIZE = 250000
 POOL_SIZE = 15
 
 MAX_TRIES = 10
@@ -110,7 +110,7 @@ class PtopReindexer(NoArgsCommand):
         view_chunk = self.db.view(
             self.view_name,
             reduce=False,
-            limit=self.chunk_size * self.chunk_size,
+            limit=self.chunk_size,
             skip=start_seq,
             **view_kwargs
         )
@@ -118,10 +118,11 @@ class PtopReindexer(NoArgsCommand):
         while len(view_chunk) > 0:
             for item in view_chunk:
                 yield item
-            start_seq += self.chunk_size * self.chunk_size
-            view_chunk = self.db.view(self.view_name,
+            start_seq += self.chunk_size
+            view_chunk = self.db.view(
+                self.view_name,
                 reduce=False,
-                limit=self.chunk_size * self.chunk_size,
+                limit=self.chunk_size,
                 skip=start_seq,
                 **view_kwargs
             )
