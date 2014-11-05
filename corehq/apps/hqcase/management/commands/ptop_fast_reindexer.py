@@ -117,7 +117,7 @@ class PtopReindexer(NoArgsCommand):
             **view_kwargs
         )
 
-        while len(view_chunk) > 0:
+        while view_chunk.count() > 0:
             for item in view_chunk:
                 yield item
             start_seq += self.chunk_size * self.chunk_size
