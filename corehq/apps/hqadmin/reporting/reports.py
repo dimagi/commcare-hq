@@ -631,8 +631,37 @@ def get_user_stats(domains, datespan, interval, **kwargs):
     return get_other_stats("users", domains, datespan, interval, **kwargs)
 
 
-def get_users_all_stats(domains, datespan, interval, **kwargs):
-    return get_other_stats("users_all", domains, datespan, interval, **kwargs)
+def get_users_all_stats(domains, datespan, interval,
+                        user_type_mobile=None,
+                        require_submissions=False):
+    query = UserES().domains(domains).size(0)
+    if user_type_mobile:
+        query = query.mobile_users()
+    elif user_type_mobile is not None:
+        query = query.web_users()
+    if require_submissions:
+        query = query.user_ids(
+            get_user_type_filters(
+                "users_all",
+                user_type_mobile=user_type_mobile,
+                require_submissions=require_submissions,
+            )["terms"]["_id"]
+        )
+
+    histo_data = (
+        query
+        .created(gte=datespan.startdate, lte=datespan.enddate)
+        .date_histogram('date', 'created_on', interval)
+        .run().facet('date', 'entries')
+    )
+
+    users_before_date = len(
+        query
+        .created(lt=datespan.startdate)
+        .run().doc_ids
+    )
+
+    return format_return_data(histo_data, users_before_date, datespan)
 
 
 def get_other_stats(histo_type, domains, datespan, interval,
