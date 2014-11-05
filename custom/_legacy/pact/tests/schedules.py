@@ -1,10 +1,12 @@
 import uuid
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from pact.lib.quicksect import IntervalNode
 from datetime import datetime, timedelta
 from pact.models import PactPatientCase, CDotWeeklySchedule
 import pytz
-utc=pytz.UTC
+
+
+utc = pytz.UTC
 
 NEW_START_DATE = "2013-01-26T13:01:30Z"
 NEW_SCHEDULE = {
@@ -124,7 +126,7 @@ WEEKLY_SCHEDULE_EXAMPLES = [
     ]
 
 
-class ScheduleTests(TestCase):
+class SimpleScheduleTests(SimpleTestCase):
 
     def testSimpleIntervals(self):
         td_days = timedelta(days=7)
@@ -169,13 +171,16 @@ class ScheduleTests(TestCase):
 
         self.assertEqual(len(schedules), 1)
 
-        self.assertIsNone(schedules[0]['ended'])
-        self.assertEquals(schedules[0]['started'].isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
-
+        self.assertIsNone(schedules[0].ended)
+        self.assertEquals(schedules[0].started.isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
+        self.assertTrue(schedules[0].is_current)
         test_patient.rm_last_schedule()
         updated_schedules = test_patient.get_schedules()
 
         self.assertEqual(len(updated_schedules), 0)
+
+
+class ScheduleTests(TestCase):
 
     def testExtendingPatientSchedule(self):
 
