@@ -277,27 +277,17 @@ class PactPatientCase(CommCareCase):
         return PactDOTReport.get_url(*[PACT_DOMAIN]) + "?dot_patient=%s" % self._id
 
 
-
     @property
     def schedules(self):
-        #patient_doc is the case doc
+        # patient_doc is the case doc
         computed = self['computed_']
         ret = {}
-
-        def get_current(x):
-            if x.ended is None and x.started <= datetime.utcnow():
-                return True
-            if x.ended is not None and x.ended <= datetime.utcnow():
-                return False
-            if x.started > datetime.utcnow():
-                return False
-            return False
 
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
             schedule_arr = self.get_schedules()
 
             past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)
-            current = filter(get_current, schedule_arr)
+            current = filter(lambda x: x.is_current, schedule_arr)
             future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
             past.reverse()
 
@@ -412,6 +402,15 @@ class CDotWeeklySchedule(Document):
     created_by = StringProperty()  # user id
     edited_by = StringProperty()  # user id
 
+    def is_current(self):
+        if self.ended is None and self.started <= datetime.utcnow():
+            return True
+        if self.ended is not None and self.ended <= datetime.utcnow():
+            return False
+        if self.started > datetime.utcnow():
+            return False
+        return False
+
     def weekly_arr(self):
         return [
             "Sun: %s" % self.sunday,
@@ -523,6 +522,7 @@ class CObservationAddendum(Document):
     created_by = StringProperty()
     created_date = DateTimeProperty()
     notes = StringProperty()  # placeholder if need be
+
     class Meta:
         app_label = 'pact'
 
