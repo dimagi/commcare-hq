@@ -16,7 +16,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
-    location_id = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True, unique=True)
     location_type = models.CharField(max_length=255)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
@@ -29,6 +29,9 @@ class SQLLocation(MPTTModel):
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+
+    class Meta:
+        unique_together = ('domain', 'site_code',)
 
     def __repr__(self):
         return "<SQLLocation(domain=%s, name=%s)>" % (
