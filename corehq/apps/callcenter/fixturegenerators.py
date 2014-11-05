@@ -9,9 +9,6 @@ utc = pytz.utc
 
 
 def should_sync(domain, last_sync, utcnow=None):
-    if not domain or not (hasattr(domain, 'call_center_config') and domain.call_center_config.enabled):
-        return False
-
     # definitely sync if we haven't synced before
     if not last_sync or not last_sync.date:
         return True
@@ -39,6 +36,9 @@ def indicators_fixture_generator(user, version, synclog, last_sync):
 
     domain = user.project
     fixtures = []
+
+    if not domain or not (hasattr(domain, 'call_center_config') and domain.call_center_config.enabled):
+        return fixtures
 
     if not should_sync(domain, last_sync):
         return fixtures
