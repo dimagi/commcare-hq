@@ -448,11 +448,16 @@ class TestXForm(TestCase, TestFileMixin):
             actual = xform.action_relevance(case[0])
             self.assertEqual(actual, case[1])
 
-    def test_set_name(self):
-
+    @classmethod
+    def construct_form(cls):
         app = Application.new_app('domain', 'New App', APP_V2)
         app.add_module(Module.new_module('New Module', lang='en'))
         form = app.new_form(0, 'MySuperSpecialForm', lang='en')
+        return form
+
+    def test_set_name(self):
+
+        form = self.construct_form()
         form.source = self.get_file("MySuperSpecialForm", "xml")
 
         xform = form.wrapped_xform()
@@ -468,3 +473,7 @@ class TestXForm(TestCase, TestFileMixin):
             ),
             new_rendered_form
         )
+
+    def test_set_name_on_empty_form(self):
+        form = self.construct_form()
+        form.wrapped_xform().set_name("Passes if there is no exception")
