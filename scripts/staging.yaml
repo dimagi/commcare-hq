@@ -65,7 +65,7 @@ branches:
   - hq-dropdown+custom_user_data # Noah 11/2
   - hq-dropdown # sravan 5/7
   - 142623-jstree-upgrade # Daniel 11/3
-  #- photo-export # J$ 11/4 # temporarily disabled because this caused a preindex that is holding up a staging deploy to fix issue blocking QA
+  - photo-export # J$ 11/4
 submodules:
   submodules/couchlog-src:
     branches:
