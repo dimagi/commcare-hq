@@ -20,21 +20,19 @@ from corehq.apps.users.models import CommCareUser
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils import parsing as dateparse
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
+from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError, InvalidProductException
+from corehq.apps.commtrack.exceptions import InvalidProductException
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
 from django.db import models
 from django.db.models.signals import post_save, post_delete
-from dimagi.utils.parsing import json_format_datetime
 
 from dimagi.utils.decorators.memoized import memoized
 import json_field
@@ -1276,117 +1274,6 @@ class CommTrackUser(CommCareUser):
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
         doc_type = doc_type or 'CommCareUser'
         return super(CommTrackUser, cls).by_domain(domain, is_active, reduce, limit, skip, strict, doc_type)
-
-    def get_location_map_case(self):
-        try:
-            from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.get(location_map_case_id(self))
-        except ResourceNotFound:
-            return None
-
-    @property
-    def location(self):
-        """ Legacy method. To be removed when the site supports multiple locations """
-        if self.locations:
-            return self.locations[0]
-        else:
-            return None
-
-    def get_linked_supply_point_ids(self):
-        mapping = self.get_location_map_case()
-        if mapping:
-            return [index.referenced_id for index in mapping.indices]
-        return []
-
-    def get_linked_supply_points(self):
-        for doc in iter_docs(CommCareCase.get_db(), self.get_linked_supply_point_ids()):
-            yield SupplyPointCase.wrap(doc)
-
-    @property
-    def locations(self):
-        def _gen():
-            location_ids = [sp.location_id for sp in self.get_linked_supply_points()]
-            for doc in iter_docs(Location.get_db(), location_ids):
-                yield Location.wrap(doc)
-
-        return list(_gen())
-
-    def supply_point_index_mapping(self, supply_point, clear=False):
-        if supply_point:
-            return {
-                'supply_point-' + supply_point._id:
-                (
-                    supply_point.type,
-                    supply_point._id if not clear else ''
-                )
-            }
-        else:
-            raise LinkedSupplyPointNotFoundError(
-                "There was no linked supply point for the location."
-            )
-
-    def add_location(self, location, create_sp_if_missing=False):
-        sp = SupplyPointCase.get_or_create_by_location(location)
-
-        from corehq.apps.commtrack.util import submit_mapping_case_block
-        submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
-
-    def clear_locations(self):
-        mapping = self.get_location_map_case()
-        if mapping:
-            mapping.delete()
-
-    def submit_location_block(self, caseblock):
-        submit_case_blocks(
-            ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime)),
-            self.domain,
-            self.username,
-            self._id
-        )
-
-    def set_locations(self, locations):
-        if set([loc._id for loc in locations]) == set([loc._id for loc in self.locations]):
-            # don't do anything if the list passed is the same
-            # as the users current locations. the check is a little messy
-            # as we can't compare the location objects themself
-            return
-
-        self.clear_locations()
-
-        if not locations:
-            return
-
-        index = {}
-        for location in locations:
-            sp = SupplyPointCase.get_by_location(location)
-            index.update(self.supply_point_index_mapping(sp))
-
-        from corehq.apps.commtrack.util import location_map_case_id
-        caseblock = CaseBlock(
-            create=True,
-            case_type=USER_LOCATION_OWNER_MAP_TYPE,
-            case_id=location_map_case_id(self),
-            version=V2,
-            owner_id=self._id,
-            index=index
-        )
-
-        self.submit_location_block(caseblock)
-
-    def remove_location(self, location):
-        sp = SupplyPointCase.get_by_location(location)
-
-        mapping = self.get_location_map_case()
-
-        if mapping and location._id in [loc._id for loc in self.locations]:
-            caseblock = CaseBlock(
-                create=False,
-                case_id=mapping._id,
-                version=V2,
-                index=self.supply_point_index_mapping(sp, True)
-            )
-
-            self.submit_location_block(caseblock)
 
 
 class SQLProduct(models.Model):
