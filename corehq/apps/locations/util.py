@@ -1,4 +1,5 @@
 from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
@@ -140,6 +141,14 @@ def get_default_column_data(domain, location_types):
     return data
 
 
+def get_location_data_model(domain):
+    from .views import LocationFieldsView
+    return CustomDataFieldsDefinition.get_or_create(
+        domain,
+        LocationFieldsView.field_type,
+    )
+
+
 def dump_locations(response, domain, include_consumption=False):
     file = StringIO()
     writer = Excel2007ExportWriter()
@@ -155,10 +164,15 @@ def dump_locations(response, domain, include_consumption=False):
         }
 
     common_types = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
+
+    location_data_model = get_location_data_model(domain)
+    location_data_fields = [f.slug for f in location_data_model.fields]
+
     writer.open(
         header_table=[
             (loc_type, [
                 common_types +
+                location_data_fields +
                 defaults['headers'].get(loc_type, [])
             ])
             for loc_type in location_types
@@ -177,14 +191,18 @@ def dump_locations(response, domain, include_consumption=False):
             else:
                 default_column_values = []
 
+            custom_data = [loc.metadata.get(slug, '')
+                           for slug in location_data_fields]
+            # TODO handle unschema'd location metadata?
+
             tab_rows.append(
                 [
                     loc.site_code,
                     loc.name,
                     parent_site_code,
                     loc.latitude or '',
-                    loc.longitude or ''
-                ] + default_column_values
+                    loc.longitude or '',
+                ] + custom_data + default_column_values
             )
         writer.write([(loc_type, tab_rows)])
 
