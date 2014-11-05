@@ -230,9 +230,11 @@ class PactPatientCase(CommCareCase):
         self._recompute_schedules(schedules)
 
     def _recompute_schedules(self, schedules):
+        schedules = sorted(schedules, key=lambda x: x.started)
         for ix, curr_sched in enumerate(schedules):
             # ensure that current ended is <= next ended
             next_sched = None
+
             if ix < len(schedules) - 1:
                 next_sched = schedules[ix+1]
             else:
@@ -249,13 +251,13 @@ class PactPatientCase(CommCareCase):
                 if curr_sched.ended <= next_sched.started:
                     # ok, good
                     pass
+
         self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
 
     def set_schedule(self, new_schedule):
         """
-        set the schedule as head of the schedule
-        by accepting a cdotweeklychedule.
-        Does not save doc
+        Set the schedule as head of the schedule.
+        Does not save the case document.
         """
         assert isinstance(new_schedule, CDotWeeklySchedule), \
             "setting schedule instance must be a CDotWeeklySchedule class"
@@ -276,8 +278,15 @@ class PactPatientCase(CommCareCase):
         from pact.reports.dot import PactDOTReport
         return PactDOTReport.get_url(*[PACT_DOMAIN]) + "?dot_patient=%s" % self._id
 
+    @property
+    def current_schedule(self):
+        try:
+            return self.schedules['current_schedule']
+        except (KeyError, IndexError):
+            return None
 
     @property
+    @memoized
     def schedules(self):
         # patient_doc is the case doc
         computed = self['computed_']

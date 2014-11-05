@@ -26,6 +26,7 @@ from pact.enums import (PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_HP_GROUPNAME, PA
                         XMLNS_PATIENT_UPDATE_DOT)
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
+from pact.tasks import set_schedule_case_properties
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 from corehq.apps.app_manager.models import ApplicationBase
 
@@ -385,6 +386,7 @@ class PactAPI(DomainAPI):
                 sched.deprecated = False
                 pdoc.set_schedule(sched)
                 pdoc.save()
+                set_schedule_case_properties(pdoc)
                 resp.status_code = 204
                 return resp
             else:
