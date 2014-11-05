@@ -19,7 +19,7 @@
             </div>
             <div class="panel-body">
                 <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link">
-                    <span class="dashboard-icon dashboard-icon-exchange"></span>
+                    <i class="fcc fcc-exchange dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
                         Start with an existing application
                     {% endblocktrans %}</span>
@@ -40,7 +40,7 @@
                 <p class="text-center">
                     <a href="{% url 'default_new_app' domain %}"
                        class="dashboard-link">
-                        <span class="dashboard-icon {% if project.commtrack_enabled %}dashboard-icon-commtrack{% else %}dashboard-icon-applications{% endif %}"></span>
+                        <i class="fcc dashboard-icon dashboard-icon-large {% if project.commtrack_enabled %}fcc-commtrack{% else %}fcc-applications{% endif %}"></i>
                         <span class="lead">
                         {% if project.commtrack_enabled %}
                             {% blocktrans %}
@@ -64,7 +64,7 @@
                 <p class="text-center"><a href="http://help.commcarehq.org/"
                       class="dashboard-link"
                       target="_blank">
-                    <span class="dashboard-icon dashboard-icon-help"></span>
+                    <i class="fcc fcc-help dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
                         Learn how to build an application
                     {% endblocktrans %}</span>

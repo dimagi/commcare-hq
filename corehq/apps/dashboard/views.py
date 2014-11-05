@@ -148,7 +148,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Applications'),
             slug='applications',
-            icon='dashboard-icon-applications',
+            icon='fcc fcc-applications',
             context_processor_class=AppsPaginatedContext,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
@@ -157,7 +157,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Reports'),
             slug='reports',
-            icon='dashboard-icon-report',
+            icon='fcc fcc-reports',
             context_processor_class=ReportsPaginatedContext,
             urlname='reports_home',
             visibility_check=can_view_reports,
@@ -167,7 +167,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Data'),
             slug='data',
-            icon='dashboard-icon-data',
+            icon='fcc fcc-data',
             context_processor_class=IconContext,
             urlname='data_interfaces_default',
             visibility_check=can_edit_data,
@@ -176,7 +176,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Users'),
             slug='users',
-            icon='dashboard-icon-users',
+            icon='fcc fcc-users',
             context_processor_class=IconContext,
             urlname=DefaultProjectUserSettingsView.urlname,
             visibility_check=can_edit_users,
@@ -186,7 +186,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Messaging'),
             slug='messaging',
-            icon='dashboard-icon-messaging',
+            icon='fcc fcc-messaging',
             context_processor_class=IconContext,
             urlname='sms_default',
             visibility_check=can_use_messaging,
@@ -195,7 +195,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Exchange'),
             slug='exchange',
-            icon='dashboard-icon-exchange',
+            icon='fcc fcc-exchange',
             context_processor_class=IconContext,
             urlname='appstore',
             visibility_check=can_edit_apps,
@@ -206,7 +206,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Settings'),
             slug='settings',
-            icon='dashboard-icon-settings',
+            icon='fcc fcc-settings',
             context_processor_class=IconContext,
             urlname=DefaultProjectSettingsView.urlname,
             visibility_check=is_domain_admin,
@@ -215,7 +215,7 @@ def _get_default_tile_configurations():
         TileConfiguration(
             title=_('Help Site'),
             slug='help',
-            icon='dashboard-icon-help',
+            icon='fcc fcc-help',
             context_processor_class=IconContext,
             url='http://help.commcarehq.org/',
             help_text=_("Visit CommCare's knowledge base"),
