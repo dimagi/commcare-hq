@@ -109,25 +109,23 @@ class PtopReindexer(NoArgsCommand):
             view_kwargs["key"] = self.couch_key
 
         view_kwargs.update(self.get_extra_view_kwargs())
-        view_chunk = self.db.view(
-            self.view_name,
-            reduce=False,
-            limit=self.chunk_size,
-            skip=start_seq,
-            **view_kwargs
-        )
 
+        def view(skip):
+            self.log('Fetching rows {}-{} from couch'
+                     .format(skip, skip + self.chunk_size - 1))
+            return self.db.view(
+                self.view_name,
+                reduce=False,
+                limit=self.chunk_size,
+                skip=skip,
+                **view_kwargs
+            )
+        view_chunk = view(start_seq)
         while len(view_chunk) > 0:
             for item in view_chunk:
                 yield item
             start_seq += self.chunk_size
-            view_chunk = self.db.view(
-                self.view_name,
-                reduce=False,
-                limit=self.chunk_size,
-                skip=start_seq,
-                **view_kwargs
-            )
+            view_chunk = view(start_seq)
 
     def load_from_view(self):
         """
@@ -143,13 +141,17 @@ class PtopReindexer(NoArgsCommand):
         current_db_seq = self.pillow.couch_db.info()['update_seq']
         self.pillow.set_checkpoint({'seq': current_db_seq})
 
-        #Write sequence file to disk
-        with open(self.get_seq_filename(), 'w') as fout:
+        # Write sequence file to disk
+        seq_filename = self.get_seq_filename()
+        self.log('Writing sequence file to disk: {}'.format(seq_filename))
+        with open(seq_filename, 'w') as fout:
             fout.write(str(current_db_seq))
 
-        #load entire view to disk
-        self.log("Getting full view list: %s" % datetime.utcnow().isoformat())
-        with open(self.get_dump_filename(), 'w') as fout:
+        # Load entire view to disk
+        dump_filename = self.get_dump_filename()
+        self.log('Writing dump file to disk: {}, starting at {}'.format(
+            dump_filename, datetime.utcnow().isoformat()))
+        with open(dump_filename, 'w') as fout:
             for row in self.full_couch_view_iter():
                 fout.write('{}\n'.format(simplejson.dumps(row)))
         self.log("View and sequence written to disk: %s" % datetime.utcnow().isoformat())
