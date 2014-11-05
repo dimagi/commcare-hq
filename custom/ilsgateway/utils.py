@@ -49,3 +49,4 @@ def supply_points_with_latest_status_by_datespan(sps, status_type, status_value,
         status_type=status_type,
         status_value=status_value).distinct().values_list("supply_point", flat=True)
     return [SupplyPointCase.get(id) for id in ids]
+

@@ -12,9 +12,10 @@ from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, S
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from couchforms.models import XFormInstance
 from custom.ilsgateway.api import Location
-from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
+from custom.ilsgateway.commtrack import bootstrap_domain as ils_bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
     sync_ilsgateway_product
-from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
+from custom.ilsgateway.ghana.commtrack import bootstrap_domain as ews_bootstrap_domain
+from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, EWSGhanaConfig
 from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
 from dimagi.utils.dates import force_to_datetime
@@ -28,13 +29,18 @@ def migration_task():
     configs = ILSGatewayConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            bootstrap_domain(config)
+            ils_bootstrap_domain(config)
 
 
 @task
-def bootstrap_domain_task(domain):
-    ilsgateway_config = ILSGatewayConfig.for_domain(domain)
-    return bootstrap_domain(ilsgateway_config)
+def ils_bootstrap_domain_task(domain):
+    ils_config = ILSGatewayConfig.for_domain(domain)
+    return ils_bootstrap_domain(ils_config)
+
+@task
+def ews_bootstrap_domain_task(domain):
+    ews_config = EWSGhanaConfig.for_domain(domain)
+    return ews_bootstrap_domain(ews_config)
 
 # District Moshi-Rural
 FACILITIES = [906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,

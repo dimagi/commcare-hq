@@ -209,7 +209,6 @@ class ILSGatewayEndpoint(EndpointMixin):
 
         response = requests.get(url, params=params,
                                 auth=self._auth())
-
         if response.status_code == 200 and 'objects' in response.json():
             meta = response.json()['meta']
             objects = response.json()['objects']
