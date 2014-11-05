@@ -155,7 +155,7 @@ class PostApiTest(TestCase):
 
     def testCreateVirtualFacility(self):
         loc = Location(site_code='1234', name='beavis', domain=self.domain,
-                       type='chw')
+                       location_type='chw')
         loc.save()
         sp = make_supply_point(self.domain, loc)
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api))

@@ -32,6 +32,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^loadtest/$', 'loadtest', name="loadtest_report"),
     url(r'^reset_pillow_checkpoint/$', 'reset_pillow_checkpoint', name="reset_pillow_checkpoint"),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
+    url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
 
     AdminReportDispatcher.url_pattern(),
 )

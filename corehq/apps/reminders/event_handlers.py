@@ -25,6 +25,7 @@ from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.tasks import initiate_outbound_call
 from datetime import timedelta
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
@@ -277,19 +278,26 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 else:
                     continue
 
-            # Close all currently open sessions
-            XFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
+            key = "start-sms-survey-for-contact-%s" % recipient.get_id
+            with CriticalSection([key], timeout=60):
+                # Close all currently open sessions
+                XFormsSession.close_all_open_sms_sessions(reminder.domain,
+                    recipient.get_id)
 
-            # Start the new session
-            if isinstance(recipient, CommCareCase) and not handler.force_surveys_to_use_triggered_case:
-                case_id = recipient.get_id
-            else:
-                case_id = reminder.case_id
-            session, responses = start_session(reminder.domain, recipient, app, module, form, case_id, case_for_case_submission=handler.force_surveys_to_use_triggered_case)
-            session.survey_incentive = handler.survey_incentive
-            session.workflow = get_workflow(handler)
-            session.reminder_id = reminder._id
-            session.save()
+                # Start the new session
+                if (isinstance(recipient, CommCareCase) and
+                    not handler.force_surveys_to_use_triggered_case):
+                    case_id = recipient.get_id
+                else:
+                    case_id = reminder.case_id
+                session, responses = start_session(reminder.domain, recipient,
+                    app, module, form, case_id, case_for_case_submission=
+                    handler.force_surveys_to_use_triggered_case)
+                session.survey_incentive = handler.survey_incentive
+                session.workflow = get_workflow(handler)
+                session.reminder_id = reminder._id
+                session.save()
+
             reminder.xforms_session_ids.append(session.session_id)
 
             # Send out first message

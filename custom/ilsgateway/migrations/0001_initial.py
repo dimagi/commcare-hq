@@ -4,6 +4,7 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -35,12 +36,16 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('supply_point', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
             ('quantity', self.gf('django.db.models.fields.IntegerField')()),
-            ('report_date', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2014, 10, 1, 9, 15, 49, 89325), auto_now_add=True, blank=True)),
+            ('report_date',
+             self.gf('django.db.models.fields.DateTimeField')
+             (
+                 default=datetime.datetime(2014, 10, 1, 9, 15, 49, 89325),
+                 auto_now_add=True, blank=True
+             )),
             ('message', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
             ('delivery_group', self.gf('django.db.models.fields.CharField')(max_length=1)),
         ))
         db.send_create_signal(u'ilsgateway', ['DeliveryGroupReport'])
-
 
     def backwards(self, orm):
         
@@ -53,7 +58,6 @@ class Migration(SchemaMigration):
         # Deleting model 'DeliveryGroupReport'
         db.delete_table(u'ilsgateway_deliverygroupreport')
 
-
     models = {
         u'ilsgateway.deliverygroupreport': {
             'Meta': {'ordering': "('-report_date',)", 'object_name': 'DeliveryGroupReport'},
@@ -61,7 +65,9 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'quantity': ('django.db.models.fields.IntegerField', [], {}),
-            'report_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2014, 10, 1, 9, 15, 49, 89325)', 'auto_now_add': 'True', 'blank': 'True'}),
+            'report_date': ('django.db.models.fields.DateTimeField', [],
+                            {'default': 'datetime.datetime(2014, 10, 1, 9, 15, 49, 89325)',
+                             'auto_now_add': 'True', 'blank': 'True'}),
             'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
         },
         u'ilsgateway.ilsmigrationcheckpoint': {

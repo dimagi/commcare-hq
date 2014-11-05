@@ -1,3 +1,4 @@
+from collections import namedtuple
 from urllib import urlencode
 
 from django.template.loader import render_to_string
@@ -56,12 +57,24 @@ def format_second_level_context(title, url, menu):
     }
 
 
+class GaTracker(namedtuple('GaTracking', 'category action label')):
+    """
+    Info for tracking clicks using Google Analytics
+    see https://developers.google.com/analytics/devguides/collection/analyticsjs/events
+    """
+    def __new__(cls, category, action, label=None):
+        return super(GaTracker, cls).__new__(cls, category, action, label)
+
+
 class UITab(object):
     title = None
     view = None
     subtab_classes = None
 
     dispatcher = None
+
+    # must be instance of GaTracker
+    ga_tracker = None
 
     def __init__(self, request, current_url_name, domain=None, couch_user=None,
                  project=None, org=None):
@@ -384,6 +397,7 @@ class CommTrackSetupTab(UITab):
             ProductListView,
             NewProductView,
             EditProductView,
+            ProductFieldsView,
             DefaultConsumptionView,
             ProgramListView,
             NewProgramView,
@@ -414,6 +428,10 @@ class CommTrackSetupTab(UITab):
                     {
                         'title': EditProductView.page_title,
                         'urlname': EditProductView.urlname,
+                    },
+                    {
+                        'title': ProductFieldsView.page_name(),
+                        'urlname': ProductFieldsView.urlname,
                     },
                 ]
             },
@@ -619,6 +637,8 @@ class ApplicationsTab(UITab):
 class CloudcareTab(UITab):
     title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
+
+    ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
 
     @property
     def is_viewable(self):
@@ -950,6 +970,7 @@ class ProjectUsersTab(UITab):
                     return None
 
             from corehq.apps.users.views.mobile import EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
+            from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
             mobile_users_menu = [
                 {'title': _('Mobile Workers'),
                  'url': reverse('commcare_users', args=[self.domain]),
@@ -963,6 +984,8 @@ class ProjectUsersTab(UITab):
                       'urlname': 'upload_commcare_users'},
                      {'title': ConfirmBillingAccountForExtraUsersView.page_title,
                       'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
+                     {'title': UserFieldsView.page_name(),
+                      'urlname': UserFieldsView.urlname},
                  ]},
                 {'title': _('Groups'),
                  'url': reverse('all_groups', args=[self.domain]),
