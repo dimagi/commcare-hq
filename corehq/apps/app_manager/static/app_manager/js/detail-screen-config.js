@@ -187,12 +187,11 @@ var DetailScreenConfig = (function () {
             this.original.header = this.original.header || {};
             this.original.format = this.original.format || "plain";
             this.original['enum'] = this.original['enum'] || [];
-            this.original.late_flag = this.original.late_flag || 30;
+            this.original.late_flag = _.isNumber(this.original.late_flag) ? this.original.late_flag : 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
             var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                            ? COMMCAREHQ.icons.PAPERCLIP : null);
-
 
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 

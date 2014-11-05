@@ -28,6 +28,11 @@ class PhoneNumberInUseException(PhoneNumberException):
 class BadSMSConfigException(Exception):
     pass
 
+
+class BackendProcessingException(Exception):
+    pass
+
+
 class VerifiedNumber(Document):
     """
     There should only be one VerifiedNumber entry per (owner_doc_type, owner_id), and

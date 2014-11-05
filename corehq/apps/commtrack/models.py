@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
-    compute_consumption)
+    compute_daily_consumption)
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -367,7 +367,7 @@ class Product(Document):
         self.save()
 
     @classmethod
-    def from_excel(cls, row):
+    def from_excel(cls, row, custom_data_validator):
         if not row:
             return None
 
@@ -396,7 +396,13 @@ class Product(Document):
         if not p.name:
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
-        p.product_data = row.get('data', {})
+        custom_data = row.get('data', {})
+        error = custom_data_validator(custom_data)
+        if error:
+            raise InvalidProductException(error)
+
+        p.product_data = custom_data
+        p.product_data.update(row.get('uncategorized_data', {}))
 
         return p
 
@@ -717,7 +723,7 @@ class NewStockReport(object):
         return cls(form, timestamp, tag, transactions)
 
     @transaction.commit_on_success
-    def create_models(self):
+    def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
@@ -734,6 +740,9 @@ class NewStockReport(object):
                 section_id=txn.section_id,
                 product_id=txn.product_id,
             )
+            if domain:
+                # set this as a shortcut for post save signal receivers
+                db_txn.domain = domain
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
             db_txn.subtype = txn.subaction
@@ -1397,7 +1406,7 @@ class SQLProduct(models.Model):
     SQL based queries to exclude data for archived products.
     """
     domain = models.CharField(max_length=255, db_index=True)
-    product_id = models.CharField(max_length=100, db_index=True)
+    product_id = models.CharField(max_length=100, db_index=True, unique=True)
     name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)
     code = models.CharField(max_length=100, default='', null=True)
@@ -1594,9 +1603,12 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 
 def update_stock_state_for_transaction(instance):
-    domain = Domain.get_by_name(
-        CommCareCase.get(instance.case_id).domain
-    )
+    try:
+        domain_name = instance.domain
+    except AttributeError:
+        domain_name = CommCareCase.get(instance.case_id).domain
+
+    domain = Domain.get_by_name(domain_name)
 
     sql_product = SQLProduct.objects.get(product_id=instance.product_id)
 
@@ -1628,13 +1640,15 @@ def update_stock_state_for_transaction(instance):
     else:
         consumption_calc = None
 
-    state.daily_consumption = compute_consumption(
+    state.daily_consumption = compute_daily_consumption(
         instance.case_id,
         instance.product_id,
         instance.report.date,
         'stock',
         consumption_calc
     )
+    # so you don't have to look it up again in the signal receivers
+    state.domain = domain
     state.save()
 
 
@@ -1658,11 +1672,17 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
+    try:
+        domain_name = instance.domain
+        if not domain_name:
+            raise ValueError()
+    except (AttributeError, ValueError):
+        domain_name = CommCareCase.get(case_id).domain
     if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
         mapping = DocDomainMapping(
             doc_id=case_id,
             doc_type='CommCareCase',
-            domain_name=CommCareCase.get(case_id).domain
+            domain_name=domain_name,
         )
         mapping.save()
 
@@ -1685,7 +1705,8 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    process_stock(xform)
+    for case in process_stock(xform):
+        case.save()
 
 
 # import signals

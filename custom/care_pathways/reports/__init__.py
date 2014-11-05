@@ -16,15 +16,17 @@ class CareReportMixin(object):
             owner_id=self.request.GET.get('cbt_name', ''),
             gender=self.request.GET.get('gender', ''),
             group_leadership=self.request.GET.get('group_leadership', ''),
-            schedule=self.request.GET.get('farmer_social_category', ''),
+            schedule=self.request.GET.getlist('farmer_social_category', []),
             none=0,
             some=1,
-            all=2
+            all=2,
+            test='test',
+            duplicate='duplicate',
         )
         hierarchy_config = get_domain_configuration(self.domain).geography_hierarchy
         for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
             req_prop = 'geography_%s' % v['prop']
-            if self.request.GET.getlist(req_prop, []):
+            if self.request.GET.getlist(req_prop, []) not in [[], ['0']]:
                 config.update({k: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return config

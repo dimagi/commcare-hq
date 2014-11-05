@@ -5,6 +5,7 @@
 
 {% block js %}{{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <link href="{% static 'ilsgateway/css/ilsgateway.css' %}" rel="stylesheet">
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
 {% endblock %}
@@ -28,33 +29,16 @@
           </div>
         </div>
         {% endif %}
-    {% endif %}    {{ block.super }}
+    {% endif %}{{ block.super }}
 {% endblock %}
 
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/standard/partials/description.html' %}
 {% else %}
-    <table>
-        <tr style="background-color: #008000">
-            <td>A - Green</td><td>76-100%</td>
-        </tr>
-        <tr style="background-color: orange">
-            <td>B - Orange</td><td>51-75%</td>
-        </tr>
-        <tr style="background-color: #ffff00">
-            <td>C -Yellow</td><td>26-50%</td>
-        </tr>
-        <tr style="background-color: red">
-            <td>D - Red</td> <td>0-25%</td>
-        </tr>
-    </table>
-
+    <br/>
     {% for thisreport in reports %}
-        <br/>
-        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-        {% include 'care_pathways/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
-        <br/>
+        {% include 'ilsgateway/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
     {% endfor %}
 {% endif %}
 {% endblock %}
