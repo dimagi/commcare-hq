@@ -12,7 +12,6 @@ class Command(ElasticReindexer):
     pillow_class = ReportXFormPillow
     file_prefix = "ptop_fast_reindex_Report"
 
-
     def full_couch_view_iter(self):
         view_kwargs = {}
         dynamic_domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
