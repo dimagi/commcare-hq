@@ -403,13 +403,8 @@ class CDotWeeklySchedule(Document):
     edited_by = StringProperty()  # user id
 
     def is_current(self):
-        if self.ended is None and self.started <= datetime.utcnow():
-            return True
-        if self.ended is not None and self.ended <= datetime.utcnow():
-            return False
-        if self.started > datetime.utcnow():
-            return False
-        return False
+        now = datetime.utcnow()
+        return self.started <= now and (self.ended is None or self.ended > datetime.utcnow())
 
     def weekly_arr(self):
         return [
