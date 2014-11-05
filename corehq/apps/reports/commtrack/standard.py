@@ -243,7 +243,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         # since that is the easiest way to sort the data later
         self.product_names = [p.name for p in sorted(
             products,
-            key=lambda(p): p.product_id
+            key=lambda p: p.product_id
         )]
 
         self.product_dict = {
