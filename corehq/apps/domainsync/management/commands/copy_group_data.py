@@ -12,6 +12,9 @@ from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
 
+CHUNK_SIZE = 100
+
+
 class Command(LabelCommand):
     help = "Copy all data (users, forms, cases) associated with a single group"
     args = '<sourcedb> <group_id>'
@@ -73,7 +76,6 @@ class Command(LabelCommand):
             )
             return [res['id'] for res in results]
 
-        CHUNK_SIZE = 100
         print 'getting case ids'
 
         case_ids = get_case_ids(owners)

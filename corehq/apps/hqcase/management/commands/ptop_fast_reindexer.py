@@ -15,8 +15,6 @@ RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
 
 
-
-
 class PtopReindexer(NoArgsCommand):
     help = "View based elastic reindexer"
     option_list = NoArgsCommand.option_list + (
