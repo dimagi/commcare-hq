@@ -61,7 +61,6 @@ branches:
   - bulk-app-translate # Noah 9/18
   - graphing # Nick P 10/27
   - share-fixtures # j$ 10/29
-  - lwyszomi:ilsgateway-productstock
   - autocomplete-case-sharing # Nick P 10/31
   - logos # Nick P 10/31
   - hq-dropdown+custom_user_data # Noah 11/2
