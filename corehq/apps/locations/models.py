@@ -47,7 +47,7 @@ class SQLLocation(MPTTModel):
 
     def child_locations(self, include_archive_ancestors=False):
         """
-        Returns a list of this nodes children.
+        Returns a list of this location's children.
         """
         children = self.get_children()
         return _filter_for_archived(children, include_archive_ancestors)
