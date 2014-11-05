@@ -16,13 +16,14 @@ from django.core.cache import cache
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.es import ReportXFormES
 from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from couchforms.models import XFormInstance
 import localsettings
 from pact.dot_data import get_dots_case_json
-from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY, XMLNS_PATIENT_UPDATE_DOT
+from pact.enums import (PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY,
+                        XMLNS_PATIENT_UPDATE_DOT)
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
