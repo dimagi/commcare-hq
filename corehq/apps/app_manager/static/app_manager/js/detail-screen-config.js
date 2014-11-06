@@ -317,6 +317,15 @@ var DetailScreenConfig = (function () {
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
             this.original.graph_configuration = this.original.graph_configuration || {};
+
+            // Tab attributes
+            this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
+            this.original.name = this.original.name !== undefined ? this.original.name : "Tab";
+
+            this.isTab = this.original.isTab;
+            this.name = this.original.name;
+
+
             var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                            ? COMMCAREHQ.icons.PAPERCLIP : null);
 
@@ -592,6 +601,11 @@ var DetailScreenConfig = (function () {
                 return col.format != "filter";
             });
 
+            // woooo
+            columns.push(
+                {isTab: true, name: "My Awesome Tab!"}
+            );
+
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
                 this.columns[i] = Column.init(columns[i], this);
@@ -714,19 +728,33 @@ var DetailScreenConfig = (function () {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                 }
 
-                if (!column.field.edit) {
-                    column.field.setHtml(CC_DETAIL_SCREEN.getFieldHtml(column.field.val()));
-                }
-                var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui);
-                dsf.append(column.format_warning);
-                if (column.field.value && !DetailScreenConfig.field_val_re.test(column.field.value)) {
-                    column.format_warning.show().parent().addClass('error');
-                }
-                dsf.appendTo($tr);
 
-                $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
-                $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
-                column.format.fire('change');
+                if (! column.isTab) {
+                    if (!column.field.edit) {
+                        column.field.setHtml(CC_DETAIL_SCREEN.getFieldHtml(column.field.val()));
+                    }
+                    var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui);
+                    dsf.append(column.format_warning);
+                    if (column.field.value && !DetailScreenConfig.field_val_re.test(column.field.value)) {
+                        column.format_warning.show().parent().addClass('error');
+                    }
+                    dsf.appendTo($tr);
+
+                    $('<td/>').addClass('detail-screen-header').append(column.header.ui).appendTo($tr);
+                    $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
+                    column.format.fire('change');
+                } else {
+                    var $cell = $('<td colspan="3">' +
+                        '<div class="input-prepend">' +
+                            '<span class="add-on">Tab:</span>' +
+                            '<input class="input-large" type="text" placeholder="My Tab">' +
+                        '</div>' +
+                      '</td>'
+                    ).appendTo($tr);
+                    $('input', $cell).val(column.name);
+
+                    $tr.addClass("info");
+                }
 
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(
@@ -838,9 +866,9 @@ var DetailScreenConfig = (function () {
                     });
 
                     if (! _.isEmpty(this.columns)) {
-                        $table = $('<table class="table table-condensed"/>'
-                        ).addClass('detail-screen-table'
-                        ).appendTo($box);
+                        $table = $(
+                            '<table class="table table-condensed"/>'
+                        ).addClass('detail-screen-table').appendTo($box);
                         $thead = $('<thead/>').appendTo($table);
 
                         $tr = $('<tr/>').appendTo($thead);
