@@ -5,6 +5,7 @@ import sys
 
 from django.core.management.base import NoArgsCommand
 import simplejson
+from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
 
 CHUNK_SIZE = 2000
@@ -100,7 +101,6 @@ class PtopReindexer(NoArgsCommand):
         return view_dump_filename
 
     def full_couch_view_iter(self):
-        start_seq = 0
         if hasattr(self.pillow, 'include_docs_when_preindexing'):
             include_docs = self.pillow.include_docs_when_preindexing
         else:
@@ -111,23 +111,27 @@ class PtopReindexer(NoArgsCommand):
 
         view_kwargs.update(self.get_extra_view_kwargs())
 
-        def view(skip):
-            self.log('Fetching rows {}-{} from couch'
-                     .format(skip, skip + self.chunk_size - 1))
-            return self.db.view(
-                self.view_name,
-                reduce=False,
-                limit=self.chunk_size,
-                skip=skip,
-                **view_kwargs
-            )
+        class PaginateViewLogHandler:
+            @staticmethod
+            def view_starting(db, view_name, kwargs, total_emitted):
+                self.log('Fetching rows {}-{} from couch'.format(
+                    total_emitted,
+                    total_emitted + kwargs['limit'] - 1)
+                )
+                self.log('{}, {}'.format(kwargs.get('startkey'), kwargs.get('startkey_docid')))
 
-        view_chunk = view(start_seq)
-        while len(view_chunk) > 0:
-            for item in view_chunk:
-                yield item
-            start_seq += self.chunk_size
-            view_chunk = view(start_seq)
+            @staticmethod
+            def view_ending(db, view_name, kwargs, total_emitted, time):
+                self.log('View call took {}'.format(time))
+
+        return paginate_view(
+            self.db,
+            self.view_name,
+            chunk_size=self.chunk_size,
+            log_handler=PaginateViewLogHandler,
+            reduce=False,
+            **view_kwargs
+        )
 
     def load_from_view(self):
         """
