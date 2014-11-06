@@ -1,12 +1,13 @@
-from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
-from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.locations.models import Location, SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
 from mock import patch
+from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
+from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
 
 
 class LocationsTest(CommTrackTest):
@@ -152,3 +153,199 @@ class LocationsTest(CommTrackTest):
         self.assertEqual(1, len(ct_user.locations))
         self.assertEqual('someloc', ct_user.locations[0].name)
         self.assertFalse(hasattr(ct_user, 'commtrack_location'))
+
+    def test_sync(self):
+        test_state = make_loc(
+            'teststate',
+            type='state',
+            parent=self.user.locations[0]
+        )
+        test_village = make_loc(
+            'testvillage',
+            type='village',
+            parent=test_state
+        )
+
+        try:
+            sql_village = SQLLocation.objects.get(
+                name='testvillage',
+                domain=self.domain.name,
+            )
+
+            self.assertEqual(sql_village.name, test_village.name)
+            self.assertEqual(sql_village.domain, test_village.domain)
+        except SQLLocation.DoesNotExist:
+            self.fail("Synced SQL object does not exist")
+
+    def test_archive(self):
+        test_state = make_loc(
+            'teststate',
+            type='state',
+            parent=self.user.locations[0]
+        )
+        test_state.save()
+
+        original_count = len(list(Location.by_domain(self.domain.name)))
+
+        loc = self.user.locations[0]
+        loc.archive()
+
+        # it should also archive children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count - 2
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            0
+        )
+
+        loc.unarchive()
+
+        # and unarchive children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            1
+        )
+
+    def test_archive_flips_sp_cases(self):
+        loc = make_loc('someloc')
+        sp = make_supply_point(self.domain.name, loc)
+
+        self.assertFalse(sp.closed)
+        loc.archive()
+        sp = SupplyPointCase.get(sp._id)
+        self.assertTrue(sp.closed)
+
+        loc.unarchive()
+        sp = SupplyPointCase.get(sp._id)
+        self.assertFalse(sp.closed)
+
+    def test_location_queries(self):
+        test_state1 = make_loc(
+            'teststate1',
+            type='state',
+            parent=self.user.locations[0]
+        )
+        test_state2 = make_loc(
+            'teststate2',
+            type='state',
+            parent=self.user.locations[0]
+        )
+        test_village1 = make_loc(
+            'testvillage1',
+            type='village',
+            parent=test_state1
+        )
+        test_village1.site_code = 'tv1'
+        test_village1.save()
+        test_village2 = make_loc(
+            'testvillage2',
+            type='village',
+            parent=test_state2
+        )
+
+        def compare(list1, list2):
+            self.assertEqual(
+                set([l._id for l in list1]),
+                set([l._id for l in list2])
+            )
+
+        # descendants
+        compare(
+            [test_state1, test_state2, test_village1, test_village2],
+            self.user.locations[0].descendants
+        )
+
+        # children
+        compare(
+            [test_state1, test_state2],
+            self.user.locations[0].children
+        )
+
+        # siblings
+        compare(
+            [test_state2],
+            test_state1.siblings()
+        )
+
+        # parent and parent_id
+        self.assertEqual(
+            self.user.locations[0]._id,
+            test_state1.parent_id
+        )
+        self.assertEqual(
+            self.user.locations[0]._id,
+            test_state1.parent._id
+        )
+
+
+        # is_root
+        self.assertTrue(self.user.locations[0].is_root)
+        self.assertFalse(test_state1.is_root)
+
+        # Location.root_locations
+        compare(
+            [self.user.locations[0]],
+            Location.root_locations(self.domain.name)
+        )
+
+        # Location.filter_by_type
+        compare(
+            [test_village1, test_village2],
+            Location.filter_by_type(self.domain.name, 'village')
+        )
+        compare(
+            [test_village1],
+            Location.filter_by_type(self.domain.name, 'village', test_state1)
+        )
+
+        # Location.filter_by_type_count
+        self.assertEqual(
+            2,
+            Location.filter_by_type_count(self.domain.name, 'village')
+        )
+        self.assertEqual(
+            1,
+            Location.filter_by_type_count(self.domain.name, 'village', test_state1)
+        )
+
+        # Location.get_in_domain
+        test_village2.domain = 'rejected'
+        test_village2.save()
+        self.assertEqual(
+            Location.get_in_domain(self.domain.name, test_village1._id)._id,
+            test_village1._id
+        )
+        self.assertIsNone(
+            Location.get_in_domain(self.domain.name, test_village2._id),
+        )
+        self.assertIsNone(
+            Location.get_in_domain(self.domain.name, 'not-a-real-id'),
+        )
+
+        # Location.all_locations
+        compare(
+            [self.user.locations[0], test_state1, test_state2, test_village1],
+            Location.all_locations(self.domain.name)
+        )
+
+        # Location.by_site_code
+        self.assertEqual(
+            test_village1._id,
+            Location.by_site_code(self.domain.name, 'tv1')._id
+        )
+        self.assertIsNone(
+            None,
+            Location.by_site_code(self.domain.name, 'notreal')
+        )
+
+        # Location.by_domain
+        compare(
+            [self.user.locations[0], test_state1, test_state2, test_village1],
+            Location.by_domain(self.domain.name)
+        )

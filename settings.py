@@ -191,6 +191,7 @@ DEFAULT_APPS = (
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
+    'mptt',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -238,6 +239,7 @@ HQ_APPS = (
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
+    'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
@@ -937,6 +939,7 @@ COUCHDB_APPS = [
     'couchforms',
     'couchexport',
     'ctable',
+    'custom_data_fields',
     'hqadmin',
     'domain',
     'facilities',
@@ -992,6 +995,7 @@ COUCHDB_APPS = [
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
     ('userreports', 'meta'),
+    ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1261,6 +1265,7 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
+    'ilsgateway-test-1': 'custom.ilsgateway',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',

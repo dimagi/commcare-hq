@@ -426,8 +426,31 @@ class SubmissionPost(object):
                 if instance.doc_type == "XFormInstance":
                     domain = get_and_check_xform_domain(instance)
                     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-                        process_cases_with_casedb(instance, case_db)
-                        process_stock(instance, case_db)
+                        try:
+                            process_cases_with_casedb(instance, case_db)
+                            process_stock(instance, case_db)
+                        except Exception as e:
+                            # Some things to consider here
+                            # The following code saves the xform instance
+                            # as an XFormError, with a different ID.
+                            # That's because if you save with the original ID
+                            # and then resubmit, the new submission never has a
+                            # chance to get reprocessed; it'll just get saved as
+                            # a duplicate.
+                            error_message = '{}: {}'.format(
+                                type(e).__name__, unicode(e))
+                            new_id = XFormError.get_db().server.next_uuid()
+                            logging.exception((
+                                u"Error in case or stock processing "
+                                u"for form {}: {}.\n"
+                                u"Error saved as {}"
+                            ).format(instance._id, error_message, new_id))
+                            instance.__class__ = XFormError
+                            instance.orig_id = instance._id
+                            instance._id = new_id
+                            instance.problem = error_message
+                            instance.save()
+                            raise
                         now = datetime.datetime.utcnow()
                         unfinished_submission_stub = UnfinishedSubmissionStub(
                             xform_id=instance.get_id,

@@ -204,6 +204,7 @@ class TestESFacet(ElasticTestMixin, TestCase):
                     "terms": {
                         "field": "babies.count",
                         "size": 10,
+                        "shard_size": SIZE_LIMIT,
                     }
                 }
             },

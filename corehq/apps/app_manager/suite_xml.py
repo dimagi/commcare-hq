@@ -1536,10 +1536,21 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
+            descriptor = None
+            if self.app.build_version >= '2.9':
+                type_mapping = {"CommCareImage": "Image",
+                                "CommCareAudio": "Audio",
+                                "CommCareVideo": "Video"}
+                descriptor = u"{filetype} File: {name}".format(
+                    filetype=type_mapping.get(m.media_type, "Media"),
+                    name=name
+                )
+
             yield MediaResource(
                 id=self.id_strings.media_resource(m.unique_id, name),
                 path=install_path,
                 version=m.version,
+                descriptor=descriptor,
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),
