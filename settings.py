@@ -995,6 +995,7 @@ COUCHDB_APPS = [
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
     ('userreports', 'meta'),
+    ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1190,6 +1191,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

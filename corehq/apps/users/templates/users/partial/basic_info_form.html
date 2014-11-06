@@ -13,7 +13,7 @@
             </div>
         </div>
         {% crispy form_user_update %}
-        {% if data_fields_form.fields %}
+        {% if data_fields_form.fields or data_fields_form.data %}
             {% crispy data_fields_form %}
         {% endif %}
         <div class="form-actions">

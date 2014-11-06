@@ -66,9 +66,23 @@ class Migration(DataMigration):
                 sql_location.supply_point_id = sp._id
 
             # sync parent connection
-            parent_id = location.get('parent_id', None)
-            if parent_id:
-                sql_location.parent = orm.SQLLocation.objects.get(location_id=parent_id)
+            lineage = location.get('lineage', None)
+            if lineage:
+                try:
+                    sql_location.parent = orm.SQLLocation.objects.get(location_id=lineage[0])
+                except orm.SQLLocation.DoesNotExist:
+                    # create a placeholder for the parent if it does
+                    # not yet exist, assuming that it will be properly
+                    # populated with data when its turn comes up in the
+                    # loop
+                    sql_location.parent = orm.SQLLocation.objects.create(
+                        location_id=lineage[0],
+                        lft=0,
+                        rght=0,
+                        tree_id=0,
+                        level=0
+                    )
+                    sql_location.parent.save()
 
             sql_location.save()
 
@@ -76,7 +90,8 @@ class Migration(DataMigration):
         SQLLocation.objects.rebuild()
 
     def backwards(self, orm):
-        orm.SQLLocation.objects.all().delete()
+        # clean up by triggering recursive delete on all roots
+        SQLLocation.objects.root_nodes().delete()
 
     models = {
         u'locations.sqllocation': {

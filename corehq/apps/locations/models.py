@@ -16,7 +16,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
-    location_id = models.CharField(max_length=100, db_index=True)
+    location_id = models.CharField(max_length=100, db_index=True, unique=True)
     location_type = models.CharField(max_length=255)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
@@ -29,6 +29,9 @@ class SQLLocation(MPTTModel):
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+
+    class Meta:
+        unique_together = ('domain', 'site_code',)
 
     def __repr__(self):
         return "<SQLLocation(domain=%s, name=%s)>" % (
@@ -44,7 +47,7 @@ class SQLLocation(MPTTModel):
 
     def child_locations(self, include_archive_ancestors=False):
         """
-        Returns a list of this nodes children.
+        Returns a list of this location's children.
         """
         children = self.get_children()
         return _filter_for_archived(children, include_archive_ancestors)
@@ -240,7 +243,10 @@ class Location(CachedCouchDocumentMixin, Document):
             startkey=[domain, loc_type, loc_id],
             endkey=[domain, loc_type, loc_id, {}],
         ).all()]
-        return (cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids)))
+        return (
+            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+            if not l.get('is_archived', False)
+        )
 
     @classmethod
     def filter_by_type_count(cls, domain, loc_type, root_loc=None):
