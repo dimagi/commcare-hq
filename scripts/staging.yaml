@@ -62,7 +62,6 @@ branches:
   - graphing # Nick P 10/27
   - case-detail-tabs # Noah 11/6
   - share-fixtures # j$ 10/29
-  - autocomplete-case-sharing # Nick P 10/31
   - logos # Nick P 10/31
   - hq-dropdown+custom_user_data # Noah 11/2
   - hq-dropdown # sravan 5/7
