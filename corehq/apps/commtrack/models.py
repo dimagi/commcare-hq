@@ -929,14 +929,12 @@ class SupplyPointCase(CommCareCase):
     specific to supply points.
     """
 
-    # TODO move location_ property from CommCareCase
-
     class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
     def open_requisitions(self):
-        return RequisitionCase.open_for_location(self.domain, self.location_[-1])
+        return RequisitionCase.open_for_location(self.domain, self.location_id)
 
     @property
     @memoized
