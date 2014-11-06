@@ -321,7 +321,7 @@ var DetailScreenConfig = (function () {
             // Tab attributes
             this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
             this.original.name = this.original.name !== undefined ? this.original.name : "Tab";
-
+            //
             this.isTab = this.original.isTab;
             this.name = this.original.name;
 
@@ -488,6 +488,13 @@ var DetailScreenConfig = (function () {
                 this.screen.fire('add-column', this);
             },
             serialize: function () {
+                if (this.isTab) {
+                    // Note: starting_index is added by Screen.serialize.
+                    return {
+                        name: this.name,
+                        starting_index: this.starting_index
+                    }
+                }
                 var column = this.original;
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
@@ -676,12 +683,23 @@ var DetailScreenConfig = (function () {
         Screen.prototype = {
             save: function () {
                 //Only save if property names are valid
+                var containsTab = false;
                 for (var i = 0; i < this.columns.length; i++){
                     var column = this.columns[i];
-                    if (! DetailScreenConfig.field_val_re.test(column.field.val())){
-                        // column won't have format_warning showing if it's empty
-                        column.format_warning.show().parent().addClass('error');
-                        alert("There are errors in your property names");
+                    if (! column.isTab) {
+                        if (!DetailScreenConfig.field_val_re.test(column.field.val())) {
+                            // column won't have format_warning showing if it's empty
+                            column.format_warning.show().parent().addClass('error');
+                            alert("There are errors in your property names");
+                            return;
+                        }
+                    } else {
+                        containsTab = true;
+                    }
+                }
+                if (containsTab){
+                    if (! this.columns[0].isTab){
+                        alert("All properties must be below a tab");
                         return;
                     }
                 }
@@ -699,7 +717,28 @@ var DetailScreenConfig = (function () {
                 var data = {
                     type: JSON.stringify(this.type)
                 };
-                data[this.columnKey] = JSON.stringify(_.map(this.columns, function(c){return c.serialize();}));
+
+                // Add columns
+                data[this.columnKey] = JSON.stringify(_.map(
+                    _.filter(this.columns, function(c){return ! c.isTab}),
+                    function(c){return c.serialize();}
+                ));
+
+                // Add tabs
+                // Get the starting index for each Tab
+                var acc = 0;
+                for (var j=0; j < this.columns.length; j++){
+                    var c = this.columns[j];
+                    if (c.isTab){
+                        c.starting_index = acc;
+                    } else {
+                        acc++;
+                    }
+                }
+                data['tabs'] = JSON.stringify(_.map(
+                    _.filter(this.columns, function(c){return c.isTab}),
+                    function(c){return c.serialize();}
+                ));
 
                 if (this.containsParentConfiguration) {
                     var parentSelect;
@@ -751,8 +790,13 @@ var DetailScreenConfig = (function () {
                         '</div>' +
                       '</td>'
                     ).appendTo($tr);
-                    $('input', $cell).val(column.name);
 
+                    $('input', $cell).val(column.name).bind("change textchange", function(){
+                        column.name = $(this).val();
+                        column.fire("change");
+                    });
+
+                    // Color this row
                     $tr.addClass("info");
                 }
 
