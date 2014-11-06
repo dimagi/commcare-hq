@@ -1181,6 +1181,21 @@ class Detail(IndexedSchema):
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
 
+    def get_tab_spans(self):
+        '''
+        TODO: Write doc string
+        :return:
+        '''
+        tabs = [t for t in self.get_tabs()]
+        ret = []
+        for tab in tabs:
+            try:
+                end = tabs[tab.id + 1].starting_index
+            except IndexError:
+                end = len(self.columns)
+            ret.append((tab.starting_index, end))
+        return ret
+
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
