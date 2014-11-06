@@ -15,21 +15,60 @@
 var LOAD_LOCS_URL = '{{ api_root }}',
     NEW_LOC_URL = '{% url "create_location" domain %}';
 
-
 var locs = {{ locations|JSON }};
 var selected_loc = {{ selected_id|JSON }};
 var hierarchy = {{ hierarchy|JSON }};
+var show_inactive = {{ show_inactive|yesno:"true,false" }}
 
 function loc_edit_url(loc_id) {
     var template = '{% url "edit_location" domain "-locid-" %}';
     return template.replace('-locid-', loc_id);
 }
 
+function loc_archive_url(loc_id) {
+    var template = '{% url "archive_location" domain "-locid-" %}';
+    return template.replace('-locid-', loc_id);
+}
+
+function loc_unarchive_url(loc_id) {
+    var template = '{% url "unarchive_location" domain "-locid-" %}';
+    return template.replace('-locid-', loc_id);
+}
+
+archive_loc = function(button, loc_id) {
+    $(button).button('loading');
+    $.ajax({
+        type: 'POST',
+        url: loc_archive_url(loc_id),
+        dataType: 'json',
+        error: 'error',
+        success: function (response) {
+            remove_elements_after_action(button);
+        }
+    });
+}
+
+unarchive_loc = function(button, loc_id) {
+    $(button).button('loading');
+    $.ajax({
+        type: 'POST',
+        url: loc_unarchive_url(loc_id),
+        dataType: 'json',
+        error: 'error',
+        success: function (response) {
+            remove_elements_after_action(button);
+        }
+    });
+}
+
+remove_elements_after_action = function(button) {
+    $(button).closest('.loc_section').remove();
+}
+
 $(function() {
     var model = new LocationTreeViewModel(hierarchy);
     ko.applyBindings(model, $('#location_tree')[0]);
     model.load(locs, selected_loc);
-
 });
 
 </script>
@@ -40,10 +79,27 @@ $(function() {
     <div class="row-fluid">
         <div class="span8">
             <h2>{% trans "Manage Locations" %}</h2>
+            {% if show_inactive %}
+            <p class="alert alert-info">
+                {% if show_inactive %}{% trans 'Showing the Inactive Location List.' %}{% endif %}
+            </p>
+            {% endif %}
+        </div>
+        <div class="span4">
+            {% if not show_inactive %}
+                <a class="btn btn-inverse pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">
+                    {% trans "Show Archived Locations" %}
+                </a>
+            {% else %}
+                <a class="btn pull-right" href="?" style="margin-right: 2.5em;">
+                    {% trans "Show Active Locations" %}
+                </a>
+            {% endif %}
         </div>
     </div>
 </header>
 
+{% if not show_inactive %}
 <div class="row-fluid">
     <div class="span12">
         <div class="btn-toolbar">
@@ -53,44 +109,75 @@ $(function() {
         </div>
     </div>
 </div>
+{% endif %}
 
 <script type="text/html" id="location-template">
 
-  <!-- header bar -->
-  <div class="loc_header" data-bind="if: name() != '_root'">
-    <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">Edit</a>
-    <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }"> <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-      <span data-bind="if: can_have_children"><a class="label"><i data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></i></a></span>
-      <span class="loc_name" data-bind="text: name"></span> <span class="loc_type">(<span data-bind="text: type"></span>)</span>
-    </span>
-    <div style="clear: both;"></div>
-  </div>
+    <div class="loc_section">
+        <!-- header bar -->
+        <div class="loc_header" data-bind="if: name() != '_root'">
+            <span data-bind="visible: show_archive_action_button">
+                {% if show_inactive %}
+                <a class="loc_edit btn btn-primary"
+                    data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }">
+                    Unarchive
+                </a>
+                {% else %}
+                <a class="loc_edit btn btn-primary"
+                    data-bind="click: function(data, event) { archive_loc(event.currentTarget, uuid()) }">
+                    Archive
+                </a>
+                {% endif %}
+            </span>
+            {% if not show_inactive %}
+            <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
+                Edit
+            </a>
+            {% endif %}
 
-  <!-- child content -->
-  <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+            <!-- want to make entire row clickable, but overrides click on 'edit' button -->
+            <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
+                <span data-bind="if: can_have_children">
+                    <a class="label">
+                        <i data-bind="css: { 'icon-plus': !expanded(), 'icon-minus': expanded() }"></i>
+                    </a>
+                </span>
+                <span class="loc_name" data-bind="text: name"></span>
+                <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+            </span>
+            <div style="clear: both;"></div>
+        </div>
 
-    <!-- ajax spinner -->
-    <div class="loc_child" data-bind="visible: children_status() == 'loading'">
-      <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
+        <!-- child content -->
+        <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+
+            <!-- ajax spinner -->
+            <div class="loc_section loc_child" data-bind="visible: children_status() == 'loading'">
+                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
+            </div>
+
+            <!-- ajax content -->
+            <div data-bind="fadeVisible: children_status() == 'loaded'">
+
+                <!-- child entries -->
+                <div data-bind="foreach: children">
+                    <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+                </div>
+
+                <!-- 'no children' message -->
+                <div class="loc_child no_children" data-bind="visible: children().length == 0, text: no_children_caption"></div>
+
+            </div>
+
+            {% if not show_inactive %}
+                <!-- create child button -->
+                <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }">
+                    <i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span>
+                </a>
+            {% endif %}
+
+        </div>
     </div>
-
-    <!-- ajax content -->
-    <div data-bind="fadeVisible: children_status() == 'loaded'">
-
-      <!-- child entries -->
-      <div data-bind="foreach: children">
-        <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
-      </div>
-
-      <!-- 'no children' message -->
-      <div class="loc_child no_children" data-bind="visible: children().length == 0, text: no_children_caption"></div>
-
-    </div>
-
-    <!-- create child button -->
-    <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }"><i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span></a>
-
-  </div>
 
 </script>
 

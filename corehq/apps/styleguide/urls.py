@@ -11,6 +11,8 @@ urlpatterns = patterns('corehq.apps.styleguide.views',
     url(r'^$', MainStyleGuideView.as_view(), name=MainStyleGuideView.urlname),
     url(r'^forms/$', FormsStyleGuideView.as_view(),
         name=FormsStyleGuideView.urlname),
+    url(r'^icons/$', IconsStyleGuideView.as_view(),
+        name=IconsStyleGuideView.urlname),
     (r'^docs/', include(doc_urlpatterns)),
 )
 

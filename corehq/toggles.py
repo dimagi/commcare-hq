@@ -128,7 +128,8 @@ EDIT_SUBMISSIONS = StaticToggle(
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
-    'User configurable reports UI'
+    'User configurable reports UI',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 

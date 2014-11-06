@@ -114,8 +114,6 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
-    url(r'^emulator/(?P<app_id>[\w-]+)/$', 'emulator_handler', name="emulator"),
-    url(r'^emulator/(?P<app_id>[\w-]+)/CommCare\.jar$', 'emulator_commcare_jar'),
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),

@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - ptop-reindex  # DR 11/5
   - historical-forms  # DR 11/4
   - remove-hutch  # DR 10/28
 #  - add-build-ui
@@ -52,8 +53,6 @@ branches:
   # - lwyszomi:b3-mobile-layout
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - reduce-location_ # tw 10/6
-  - archive-location # tw 10/23
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
   - graphing+double-management # SK 10/3
@@ -61,14 +60,13 @@ branches:
   - bulk-app-translate # Noah 9/18
   - graphing # Nick P 10/27
   - share-fixtures # j$ 10/29
-  - lwyszomi:ilsgateway-productstock
   - autocomplete-case-sharing # Nick P 10/31
   - logos # Nick P 10/31
   - hq-dropdown+custom_user_data # Noah 11/2
   - hq-dropdown # sravan 5/7
-  - custom_user_data  # tw+Ethan 9/9
   - 142623-jstree-upgrade # Daniel 11/3
-  - photo-export # J$ 11/4
+  #- photo-export # J$ 11/4
+  - fix-user-indicators # Nick P 11/5
 submodules:
   submodules/couchlog-src:
     branches:

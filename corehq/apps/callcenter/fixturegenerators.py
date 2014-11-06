@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.logging import notify_logger
+from dimagi.utils.logging import notify_exception
 
 utc = pytz.utc
 
@@ -45,9 +45,11 @@ def indicators_fixture_generator(user, version, synclog, last_sync):
 
     try:
         fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user, synclog=synclog)))
-    except Exception as e:  # blanket exception catching intended
-        notify_logger.exception('problem generating callcenter fixture for user {user}: {msg}'.format(
-            user=user._id, msg=str(e)))
+    except Exception:  # blanket exception catching intended
+        notify_exception(None, 'problem generating callcenter fixture', details={
+            'user_id': user._id,
+            'domain': user.domain
+        })
 
     return fixtures
 

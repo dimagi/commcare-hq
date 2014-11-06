@@ -119,7 +119,7 @@ def origin(branch):
     return "origin/{}".format(branch)
 
 
-def sync_local_copies(config):
+def sync_local_copies(config, push=True):
     base_config = config
     unpushed_branches = []
 
@@ -153,7 +153,7 @@ def sync_local_copies(config):
                 elif unpulled:
                     print "  Fastforwarding your branch to origin"
                     git.merge('--ff-only', origin(branch))
-    if unpushed_branches:
+    if unpushed_branches and push:
         print "The following branches have commits that need to be pushed:"
         for path, branch in unpushed_branches:
             print "  [{cwd}] {branch}".format(cwd=path, branch=branch)
@@ -305,7 +305,7 @@ def main():
         if 'fetch' in args:
             fetch_remote(config)
         if 'sync' in args:
-            sync_local_copies(config)
+            sync_local_copies(config, push=do_push)
         if 'rebuild' in args:
             rebuild_staging(config, push=do_push)
 
