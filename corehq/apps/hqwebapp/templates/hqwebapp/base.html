@@ -10,14 +10,15 @@
 
         {% compress css %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+            {% block stylesheets %}
+            {% endblock %}
+        {% endcompress %}
+        {% block uncompressed-stylesheets %}
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
                   href="{% new_static 'style/less/font-commcare.less' %}" />
-            {% block stylesheets %}
-            {% endblock %}
-        {% endcompress %}
-        {% block uncompressed-stylesheets %}{% endblock %}
+        {% endblock %}
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
