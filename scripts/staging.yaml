@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - ptop-reindex  # DR 11/5
   - historical-forms  # DR 11/4
   - remove-hutch  # DR 10/28
 #  - add-build-ui
