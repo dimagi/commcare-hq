@@ -1049,8 +1049,7 @@ class DetailTab(IndexedSchema):
             'starting_index': 3
         }
     """
-    # TODO: Rename this header and make it localizable
-    name = StringProperty()
+    header = DictProperty()
     starting_index = IntegerProperty()
 
 

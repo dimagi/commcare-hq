@@ -320,11 +320,7 @@ var DetailScreenConfig = (function () {
 
             // Tab attributes
             this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
-            this.original.name = this.original.name !== undefined ? this.original.name : "Tab";
-            //
             this.isTab = this.original.isTab;
-            this.name = this.original.name;
-
 
             var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                            ? COMMCAREHQ.icons.PAPERCLIP : null);
@@ -488,14 +484,11 @@ var DetailScreenConfig = (function () {
                 this.screen.fire('add-column', this);
             },
             serialize: function () {
-                if (this.isTab) {
-                    // Note: starting_index is added by Screen.serialize.
-                    return {
-                        name: this.name,
-                        starting_index: this.starting_index
-                    }
-                }
                 var column = this.original;
+                if (this.isTab) {
+                    // Note: starting_index is added by Screen.serialize
+                    column.starting_index = this.starting_index;
+                }
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
@@ -566,6 +559,7 @@ var DetailScreenConfig = (function () {
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
+            this.allowsTabs = options.allowsTabs;
 
             this.fireChange = function() {
                 that.fire('change');
@@ -607,7 +601,7 @@ var DetailScreenConfig = (function () {
                 columns.splice(
                     tabs[i].starting_index + i,
                     0,
-                    {isTab: true, name: tabs[i].name}
+                    {isTab: true, header: tabs[i].header}
                 );
             }
 
@@ -617,10 +611,9 @@ var DetailScreenConfig = (function () {
                 return col.format != "filter";
             });
 
-            // woooo
             /*
             columns.push(
-                {isTab: true, name: "My Awesome Tab!"}
+                {isTab: true, header: {"en": "My Awesome Tab!"}}
             );
             */
 
@@ -736,7 +729,7 @@ var DetailScreenConfig = (function () {
                 ));
 
                 // Add tabs
-                // Get the starting index for each Tab
+                // calculate the starting index for each Tab
                 var acc = 0;
                 for (var j=0; j < this.columns.length; j++){
                     var c = this.columns[j];
@@ -794,21 +787,14 @@ var DetailScreenConfig = (function () {
                     $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
                     column.format.fire('change');
                 } else {
-                    var $cell = $('<td colspan="3">' +
-                        '<div class="input-prepend">' +
-                            '<span class="add-on">Tab:</span>' +
-                            '<input class="input-large" type="text" placeholder="My Tab">' +
-                        '</div>' +
-                      '</td>'
-                    ).appendTo($tr);
-
-                    $('input', $cell).val(column.name).bind("change textchange", function(){
-                        column.name = $(this).val();
-                        column.fire("change");
-                    });
-
                     // Color this row
                     $tr.addClass("info");
+
+                    // Add the input
+                    var $cell = $('<td colspan="3"></td>').appendTo($tr);
+                    // This is sorta hacky because I'm digging into the uiElement.input ...
+                    column.header.ui.appendTo($cell).addClass('input-prepend').prepend($('<span class="add-on">Tab:</span>'));
+                    // TODO: Fix the language badge
                 }
 
                 if (this.edit) {
@@ -1038,7 +1024,8 @@ var DetailScreenConfig = (function () {
                         childCaseTypes: spec.childCaseTypes,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
-                        containsFilterConfiguration: columnType == "short"
+                        containsFilterConfiguration: columnType == "short",
+                        allowsTabs: columnType == 'long'
                     }
                 );
                 that.screens.push(screen);
