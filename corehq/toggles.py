@@ -76,7 +76,7 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
 
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
-    'Tabs in the case detail list'
+    'Tabs in the case detail list',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
