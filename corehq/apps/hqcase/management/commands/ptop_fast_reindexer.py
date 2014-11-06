@@ -121,6 +121,7 @@ class PtopReindexer(NoArgsCommand):
                 skip=skip,
                 **view_kwargs
             )
+
         view_chunk = view(start_seq)
         while len(view_chunk) > 0:
             for item in view_chunk:
@@ -180,7 +181,6 @@ class PtopReindexer(NoArgsCommand):
         self.runfile = options['runfile']
         self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
         self.start_num = options.get('seq', 0)
-
 
     def handle(self, *args, **options):
         if not options['noinput']:

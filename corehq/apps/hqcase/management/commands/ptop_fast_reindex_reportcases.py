@@ -22,21 +22,22 @@ class Command(ElasticReindexer):
             view_kwargs['endkey'] = [domain, {}]
 
             view_kwargs.update(self.get_extra_view_kwargs())
-            view_chunk = self.db.view(
-                self.view_name,
-                reduce=False,
-                limit=self.chunk_size,
-                skip=start_seq,
-                **view_kwargs
-            )
+
+            def view(skip):
+                self.log('Fetching rows {}-{} from couch'
+                         .format(skip, skip + self.chunk_size - 1))
+                return self.db.view(
+                    self.view_name,
+                    reduce=False,
+                    limit=self.chunk_size,
+                    skip=skip,
+                    **view_kwargs
+                )
+
+            view_chunk = view(start_seq)
 
             while len(view_chunk) > 0:
                 for item in view_chunk:
                     yield item
                 start_seq += self.chunk_size
-                view_chunk = self.db.view(self.view_name,
-                    reduce=False,
-                    limit=self.chunk_size,
-                    skip=start_seq,
-                    **view_kwargs
-                )
+                view_chunk = view(start_seq)
