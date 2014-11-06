@@ -20,6 +20,14 @@ NEEDED_STATUS_TYPES = [SupplyPointStatusTypes.DELIVERY_FACILITY,
                        SupplyPointStatusTypes.SUPERVISION_FACILITY,
                        SupplyPointStatusTypes.SOH_FACILITY]
 
+NO_PRIMARY_CONTACT = 'no_primary_contact'
+PRODUCT_STOCKOUT = 'product_stockout'
+RR_NOT_SUBMITTED = 'rr_' + SupplyPointStatusValues.NOT_SUBMITTED
+RR_NOT_RESPONDED = 'rr_not_responded'
+DELIVERY_NOT_RECEIVED = 'delivery_' + SupplyPointStatusValues.NOT_RECEIVED
+DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
+SOH_NOT_RESPONDING = 'soh_not_responding'
+
 
 def _is_valid_status(facility, date, type):
     if type not in NEEDED_STATUS_TYPES:
@@ -30,9 +38,9 @@ def _is_valid_status(facility, date, type):
 
     code = facility.metadata['groups'][0]
     dg = DeliveryGroups(date.month)
-    if type.startswith('rr'):
+    if type == SupplyPointStatusTypes.R_AND_R_FACILITY:
         return code == dg.current_submitting_group()
-    elif type.startswith('del'):
+    elif type == SupplyPointStatusTypes.DELIVERY_FACILITY:
         return code == dg.current_delivering_group()
     return True
 
@@ -53,7 +61,11 @@ def _get_window_date(type, date):
 def is_on_time(sp, status_date, warehouse_date, type):
     """
     on_time requirement
+    SOH report should be submitted before 6th business day of the month.
+    R & R report should be submitted before 13th business day of the month.
+    Otherwise reports are marked as late response.
     """
+    
     if type == SupplyPointStatusTypes.SOH_FACILITY:
         if status_date.date() < get_business_day_of_month(warehouse_date.year, warehouse_date.month, 6):
             return True
@@ -136,23 +148,27 @@ def update_product_availability_facility_data(org_summary):
     assert facility.location_type == "FACILITY"
     prods = Product.ids_by_domain(facility.domain)
     for p in prods:
-        product_data, created = ProductAvailabilityData.objects.get_or_create(product=p,
-                                                                              supply_point=facility._id,
-                                                                              date=org_summary.date)
+        product_data, created = ProductAvailabilityData.objects.get_or_create(
+            product=p,
+            supply_point=facility._id,
+            date=org_summary.date
+        )
 
         if created:
             # set defaults
             product_data.total = 1
-            previous_reports = ProductAvailabilityData.objects.filter(product=p,
-                                                                      supply_point=facility._id,
-                                                                      date__lt=org_summary.date)
+            previous_reports = ProductAvailabilityData.objects.filter(
+                product=p,
+                supply_point=facility._id,
+                date__lt=org_summary.date
+            )
             if previous_reports.count():
                 prev = previous_reports.order_by("-date")[0]
                 product_data.with_stock = prev.with_stock
                 product_data.without_stock = prev.without_stock
                 product_data.without_data = prev.without_data
-            # otherwise we use the defaults
             else:
+                # otherwise we use the defaults
                 product_data.with_stock = 0
                 product_data.without_stock = 0
                 product_data.without_data = 1
@@ -162,26 +178,26 @@ def update_product_availability_facility_data(org_summary):
 
 
 def populate_no_primary_alerts(org, date):
-    # delete no primary alerts
-    alert = Alert.objects.filter(supply_point=org._id, date=date, type='no_primary_contact')
+    # First of all we have to delete all existing alert for this date.
+    alert = Alert.objects.filter(supply_point=org._id, date=date, type=NO_PRIMARY_CONTACT)
     alert.delete()
-    # create no primary alerts
+    # create no primary contact alerts
     # TODO Too slow. Figure out better solution.
     """
     if not filter(lambda user: user.is_active and user.location and user.location._id == org._id,
                   CommTrackUser.by_domain(org.domain)):
-        create_multilevel_alert(org, date, 'no_primary_contact', {'org': org})
+        create_multilevel_alert(org, date, NO_PRIMARY_CONTACT, {'org': org})
     """
 
 
 def populate_facility_stockout_alerts(org, date):
     # delete stockout alerts
-    alert = Alert.objects.filter(supply_point=org, date=date, type='product_stockout')
+    alert = Alert.objects.filter(supply_point=org, date=date, type=PRODUCT_STOCKOUT)
     alert.delete()
     # create stockout alerts
     product_data = ProductAvailabilityData.objects.filter(supply_point=org, date=date, without_stock=1)
     for p in product_data:
-        create_multilevel_alert(org, date, 'product_stockout', {'org': org, 'product': p.product})
+        create_multilevel_alert(org, date, PRODUCT_STOCKOUT, {'org': org, 'product': p.product})
 
 
 def create_multilevel_alert(org, date, type, details):
@@ -199,10 +215,10 @@ def create_alert(org, date, type, details):
 
     number = 0 if 'number' not in details else details['number']
 
-    if type in ['product_stockout', 'no_primary_contact']:
-        if type == 'product_stockout':
+    if type in [PRODUCT_STOCKOUT, NO_PRIMARY_CONTACT]:
+        if type == PRODUCT_STOCKOUT:
             text = '%s is stocked out of %s.' % (details['org'].name, details['product'].name)
-        elif type == 'no_primary_contact':
+        elif type == NO_PRIMARY_CONTACT:
             text = '%s has no primary contact.' % details['org'].name
 
         alert = Alert.objects.filter(supply_point=org, date=date, type=type, text=text)
@@ -210,19 +226,19 @@ def create_alert(org, date, type, details):
             Alert(supply_point=org, date=date, type=type, expires=expires, text=text).save()
 
     else:
-        if type == 'rr_not_submitted':
+        if type == RR_NOT_SUBMITTED:
             text = '%s have reported not submitting their R&R form as of today.' % \
                    ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif type == 'rr_not_responded':
+        elif type == RR_NOT_RESPONDED:
             text = '%s did not respond to the SMS asking if they had submitted their R&R form.' % \
                    ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif type == 'delivery_not_received':
+        elif type == DELIVERY_NOT_RECEIVED:
             text = '%s have reported not receiving their deliveries as of today.' % \
                    ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif type == 'delivery_not_responding':
+        elif type == DELIVERY_NOT_RESPONDING:
             text = '%s did not respond to the SMS asking if they had received their delivery.' % \
                    ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
-        elif type == 'soh_not_responding':
+        elif type == SOH_NOT_RESPONDING:
             text = '%s have not reported their stock levels for last month.' % \
                    ((str(number) + ' facility') if number == 1 else (str(number) + ' facilities'))
 
@@ -261,7 +277,7 @@ def process_facility_warehouse_data(fac, start_date, end_date):
     process all the facility-level warehouse tables
     """
     logging.info("processing facility %s (%s)" % (fac.name, str(fac._id)))
-    for alert_type in ['soh_not_responding', 'rr_not_responded', 'delivery_not_responding']:
+    for alert_type in [SOH_NOT_RESPONDING, RR_NOT_RESPONDED, DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(supply_point=fac._id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)
         alert.delete()
@@ -330,10 +346,14 @@ def process_facility_statuses(facility, statuses, alerts=True):
         assert status.supply_point == facility._id
         warehouse_date = _get_window_date(status.status_type, status.status_date)
         if _is_valid_status(facility._id, status.status_date, status.status_type):
-            org_summary = \
-                OrganizationSummary.objects.get_or_create(supply_point=facility._id, date=warehouse_date)[0]
-            group_summary = GroupSummary.objects.get_or_create(org_summary=org_summary, title=status.status_type)[
-                0]
+            org_summary = OrganizationSummary.objects.get_or_create(
+                supply_point=facility._id,
+                date=warehouse_date
+            )[0]
+            group_summary = GroupSummary.objects.get_or_create(
+                org_summary=org_summary,
+                title=status.status_type
+            )[0]
             group_summary.total = 1
             if status.status_value not in (SupplyPointStatusValues.REMINDER_SENT,
                                            SupplyPointStatusValues.ALERT_SENT):
@@ -357,12 +377,12 @@ def process_facility_statuses(facility, statuses, alerts=True):
                 if alerts:
                     if status.status_value == SupplyPointStatusValues.NOT_SUBMITTED \
                             and status.status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-                        create_alert(facility._id, status.status_date, 'rr_not_submitted',
+                        create_alert(facility._id, status.status_date, RR_NOT_SUBMITTED,
                                      {'number': 1})
 
                     if status.status_value == SupplyPointStatusValues.NOT_RECEIVED \
                             and status.status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-                        create_alert(facility._id, status.status_date, 'delivery_not_received',
+                        create_alert(facility._id, status.status_date, DELIVERY_NOT_RECEIVED,
                                      {'number': 1})
 
 
@@ -414,9 +434,11 @@ def process_facility_transactions(facility, transactions, default_to_previous=Tr
     for trans in transactions:
         assert trans.case_id == facility.linked_supply_point()._id
         date = trans.report.date
-        product_data = ProductAvailabilityData.objects.get_or_create(product=trans.product_id,
-                                                                     supply_point=facility._id,
-                                                                     date=datetime(date.year, date.month, 1))[0]
+        product_data = ProductAvailabilityData.objects.get_or_create(
+            product=trans.product_id,
+            supply_point=facility._id,
+            date=datetime(date.year, date.month, 1)
+        )[0]
 
         product_data.total = 1
         product_data.without_data = 0
@@ -503,8 +525,8 @@ def process_non_facility_warehouse_data(org, start_date, end_date, strict=True):
             if gsum.total != expected:
                 logging.info("expected %s but was %s for %s" % (expected, gsum.total, gsum))
 
-        for alert_type in ['rr_not_submitted', 'delivery_not_received',
-                           'soh_not_responding', 'rr_not_responded', 'delivery_not_responding']:
+        for alert_type in [RR_NOT_SUBMITTED, DELIVERY_NOT_RECEIVED,
+                           SOH_NOT_RESPONDING, RR_NOT_RESPONDED, DELIVERY_NOT_RESPONDING]:
             sub_alerts = Alert.objects.filter(supply_point__in=fac_ids, date=window_date, type=alert_type)
             aggregate_response_alerts(org, window_date, sub_alerts, alert_type)
 
