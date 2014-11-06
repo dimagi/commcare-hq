@@ -485,10 +485,6 @@ var DetailScreenConfig = (function () {
             },
             serialize: function () {
                 var column = this.original;
-                if (this.isTab) {
-                    // Note: starting_index is added by Screen.serialize
-                    column.starting_index = this.starting_index;
-                }
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
@@ -499,6 +495,13 @@ var DetailScreenConfig = (function () {
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
                 column.calc_xpath = this.calc_xpath_extra.val();
+                if (this.isTab) {
+                    // Note: starting_index is added by Screen.serialize
+                    return {
+                        starting_index: this.starting_index,
+                        header: column.header
+                    };
+                }
                 return column;
             },
             setGrip: function (grip) {
@@ -604,6 +607,27 @@ var DetailScreenConfig = (function () {
                     {isTab: true, header: tabs[i].header}
                 );
             }
+            var $addTabDiv = $('.add-tab', this.$location);
+            if ($addTabDiv.length) {
+                ko.applyBindings(
+                    {
+                        addTab: function(){
+                            var col = that.initColumnAsColumn(Column.init({
+                                isTab: true,
+                                model: 'tab'
+                            }, that));
+                            // This copies the add-column event handler, but
+                            // puts it first and doesn't copy the object.
+                            that.columns.splice(0, 0, col);
+                            var $tr = that.addColumn(col, that.$columns, 0);
+                            $tr.detach().insertBefore(that.$columns.find('tr:nth-child(1)'));
+                            $tr.hide().fadeIn('slow');
+                            that.fire('change');
+                        }
+                    },
+                    $addTabDiv.get(0)
+                );
+            }
 
             // Filters are a type of DetailColumn on the server. Don't display
             // them with the other columns though
@@ -611,9 +635,13 @@ var DetailScreenConfig = (function () {
                 return col.format != "filter";
             });
 
-            /*
+            /*//wooo
             columns.push(
-                {isTab: true, header: {"en": "My Awesome Tab!"}}
+                {isTab: true, header: {"en": "My Awesome Tab!"}, model: "tab"}
+                // Note that model must be set to something other than "case"
+                // to ensure that the "Add Property" button keeps working
+                // (it does a thing where it scans the list to figure out the
+                // index of new columns in the add-column event handler)
             );
             */
 
