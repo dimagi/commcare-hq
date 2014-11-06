@@ -56,7 +56,7 @@ branches:
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
   - graphing+double-management # SK 10/3
-  - double-mangaement+case-detail-tabs # Noah 11/6
+  - double-management+case-detail-tabs # Noah 11/6
   - double-management # SK 10/15
   - bulk-app-translate # Noah 9/18
   - graphing # Nick P 10/27
