@@ -2,6 +2,7 @@ from corehq.apps.commtrack.models import Product, SupplyPointCase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.locations.models import Location, root_locations
 from corehq.apps.domain.models import Domain
+from dimagi.utils.excel import flatten_json, json_to_headers
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
@@ -149,62 +150,100 @@ def get_location_data_model(domain):
     )
 
 
-def dump_locations(response, domain, include_consumption=False):
-    file = StringIO()
-    writer = Excel2007ExportWriter()
+def _loc_type_dict(domain, loc_type, data_model):
+    uncategorized_keys = set()
+    tab_rows = []
+    for loc in Location.filter_by_type(domain, loc_type):
 
-    location_types = defined_location_types(domain)
+        model_data, uncategorized_data = \
+            data_model.get_model_and_uncategorized(loc.metadata)
 
-    if include_consumption:
-        defaults = get_default_column_data(domain, location_types)
-    else:
-        defaults = {
-            'headers': {},
-            'values': {}
+        uncategorized_keys.add(uncategorized_data.keys())
+
+        loc_dict = {
+            'site_code': loc.site_code,
+            'name': loc.name,
+            'parent_site_code': loc.parent.site_code if loc.parent else '',
+            'latitude': loc.latitude or '',
+            'longitude': loc.longitude or '',
+            'data': model_data,
+            'uncategorized_data': uncategorized_data,
         }
 
-    common_types = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
+        # TODO format defaults to be a proper k/v mapping
+        # Does it need a prefix?  How do we avoid name conflicts?
+        # if loc._id in defaults['values']:
+            # loc_row.update(defaults['values'][loc._id])
 
-    location_data_model = get_location_data_model(domain)
-    location_data_fields = [f.slug for f in location_data_model.fields]
+        tab_rows.append(dict(flatten_json(loc_dict)))
 
+    tab_headers = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
+    tab_headers.extend(json_to_headers(
+        {'data': {field.slug: None for field in data_model.fields}}
+    ))
+    # TODO
+    # tab_headers.extent(defaults['headers'].get(loc_type, []))
+    tab_headers.extend(json_to_headers(
+        {'uncategorized_data': {key: None for key in uncategorized_keys}}
+    ))
+
+    return (loc_type, {
+        'headers': tab_headers,
+        'rows': tab_rows,
+    })
+
+
+def dump_locations(response, domain, include_consumption=False):
+    location_types = defined_location_types(domain)
+    data_model = get_location_data_model(domain)
+
+    # if include_consumption:
+        # defaults = get_default_column_data(domain, location_types)
+    # else:
+        # defaults = {
+            # 'headers': {},
+            # 'values': {}
+        # }
+
+    locations = [_loc_type_dict(domain, loc_type, data_model)
+                 for loc_type in location_types]
+
+    result = write_to_file(locations)
+    response.write(result)
+
+
+def write_to_file(locations):
+    """
+    locations = [
+        ('loc_type1', {
+             'headers': ['header1', 'header2', ...]
+             'rows': [
+                 {
+                     'header1': val1
+                     'header2': val2
+                 },
+                 {...},
+             ]
+        })
+    ]
+    """
+    outfile = StringIO()
+    writer = Excel2007ExportWriter()
     writer.open(
         header_table=[
-            (loc_type, [
-                common_types +
-                location_data_fields +
-                defaults['headers'].get(loc_type, [])
-            ])
-            for loc_type in location_types
+            (loc_type, tab['headers'])
+            for loc_type, tab in locations
         ],
-        file=file,
+        file=outfile,
     )
-
-    for loc_type in location_types:
-        tab_rows = []
-        locations = Location.filter_by_type(domain, loc_type)
-        for loc in locations:
-            parent_site_code = loc.parent.site_code if loc.parent else ''
-
-            if loc._id in defaults['values']:
-                default_column_values = defaults['values'][loc._id]
-            else:
-                default_column_values = []
-
-            custom_data = [loc.metadata.get(slug, '')
-                           for slug in location_data_fields]
-            # TODO handle unschema'd location metadata?
-
-            tab_rows.append(
-                [
-                    loc.site_code,
-                    loc.name,
-                    parent_site_code,
-                    loc.latitude or '',
-                    loc.longitude or '',
-                ] + custom_data + default_column_values
-            )
-        writer.write([(loc_type, tab_rows)])
-
+    for loc_type, tab in locations:
+        headers = tab['headers']
+        writer.write([(
+            loc_type,
+            [
+                [row.get(header, '') for header in headers]
+                for row in tab['rows']
+            ]
+        )])
     writer.close()
-    response.write(file.getvalue())
+    return outfile.getvalue()

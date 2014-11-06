@@ -60,3 +60,21 @@ class CustomDataFieldsDefinition(Document):
             return ' '.join(errors)
 
         return validate_custom_fields
+
+    def get_model_and_uncategorized(self, data_dict):
+        """
+        Splits data_dict into two dictionaries:
+        one for data which matches the model and one for data that doesn't
+        """
+        if not data_dict:
+            return {}, {}
+        model_data = {}
+        uncategorized_data = {}
+        slugs = [field.slug for field in self.fields]
+        for k, v in data_dict.items():
+            if k in slugs:
+                model_data[k] = v
+            else:
+                uncategorized_data[k] = v
+
+        return model_data, uncategorized_data
