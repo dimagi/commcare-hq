@@ -1,4 +1,5 @@
 from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty
+from jsonobject.base import DefaultProperty
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
@@ -36,7 +37,7 @@ class ReportColumn(JsonObject):
 
 
 class FilterChoice(JsonObject):
-    value = StringProperty(required=True)
+    value = DefaultProperty(required=True)
     display = StringProperty()
 
     def get_display(self):
