@@ -634,7 +634,7 @@ def get_user_stats(domains, datespan, interval, **kwargs):
 def get_users_all_stats(domains, datespan, interval,
                         user_type_mobile=None,
                         require_submissions=False):
-    query = UserES().domains(domains).size(0)
+    query = UserES().domains(domains).show_inactive().size(0)
     if user_type_mobile:
         query = query.mobile_users()
     elif user_type_mobile is not None:
