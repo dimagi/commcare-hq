@@ -221,9 +221,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
 
 class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
-    name = 'Simple Inventory'
+    name = ugettext_noop('Inventory by Location')
     slug = SimplifiedInventoryDataSource.slug
-    special_notice = 'A maximum of 100 locations will be shown. Filter by location if you need to see more.'
+    special_notice = ugettext_noop('A maximum of 100 locations will be shown. Filter by location if you need to see more.')
     exportable = True
     emailable = True
     fields = [
@@ -278,7 +278,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Inventory')
+    name = ugettext_noop('Aggregate Inventory')
     slug = StockStatusDataSource.slug
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',

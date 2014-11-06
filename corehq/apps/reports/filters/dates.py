@@ -48,12 +48,11 @@ class SingleDateFilter(BaseReportFilter):
     A filter that returns a single date
     """
     template = "reports/filters/date_selector.html"
-    label = ugettext_lazy("End Date")
+    label = ugettext_lazy("Date")
     slug = "date"
 
     @property
     def date(self):
-        # TODO duped
         from_req = self.request.GET.get('date')
         if from_req:
             try:

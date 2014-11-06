@@ -57,7 +57,7 @@ class CommtrackDataSourceMixin(object):
 
 
 class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
-    slug = 'simple_inventory'
+    slug = 'location_inventory'
 
     def datetime(self):
         """
