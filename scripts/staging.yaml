@@ -67,6 +67,8 @@ branches:
   - 142623-jstree-upgrade # Daniel 11/3
   - photo-export # J$ 11/4
   - fix-user-indicators # Nick P 11/5
+  - double-mangement+case-detail-tabs # Noah 11/6
+  - case-detail-tabs # Noah 11/6
 submodules:
   submodules/couchlog-src:
     branches:
