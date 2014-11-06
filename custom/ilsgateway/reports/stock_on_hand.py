@@ -16,6 +16,7 @@ from custom.ilsgateway.reports.base_report import MultiReport
 from custom.ilsgateway.reports.dashboard_report import SohSubmissionData
 from django.utils.translation import ugettext as _
 from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
+from dimagi.utils.decorators.memoized import memoized
 
 
 class DetailsReport(MultiReport):
@@ -232,7 +233,7 @@ class DistrictSohPercentageTableData(ILSData):
         headers = DataTablesHeader(*[
             DataTablesColumn(_('MSD Code')),
             DataTablesColumn(_('Facility Name')),
-            DataTablesColumn(_('D G')),
+            DataTablesColumn(_('DG')),
             DataTablesColumn(_('Last Reported')),
             DataTablesColumn(_('Hist. Resp. Rate')),
         ])
@@ -347,7 +348,7 @@ def product_format(ret, srs, month):
     mos = float(ret)
     text = '%s'
     if mos == NO_DATA:
-            text = '<span style="color:grey">%s</span>'
+        text = '<span style="color:grey">%s</span>'
     elif mos == STOCKOUT:
         text = '<span class="icon-remove" style="color:red"/>%s'
     elif mos < LOW:
@@ -383,6 +384,7 @@ class StockOnHandReport(DetailsReport):
         return config
 
     @property
+    @memoized
     def data_providers(self):
         config = self.report_config
         data_providers = []
