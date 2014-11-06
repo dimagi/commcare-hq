@@ -274,7 +274,9 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
 
         for loc_name, loc_data in data:
             row_dict = dict(self.product_dict, **dict(loc_data))
-            yield [loc_name] + [v for k, v in sorted(row_dict.items(), key=lambda(k, v): k)]
+            yield [loc_name] + [
+                v if v is not None else _('No data')
+                for k, v in sorted(row_dict.items(), key=lambda(k, v): k)]
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
