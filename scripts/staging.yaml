@@ -60,6 +60,7 @@ branches:
   - double-management # SK 10/15
   - bulk-app-translate # Noah 9/18
   - graphing # Nick P 10/27
+  - case-detail-tabs # Noah 11/6
   - share-fixtures # j$ 10/29
   - autocomplete-case-sharing # Nick P 10/31
   - logos # Nick P 10/31
@@ -68,7 +69,6 @@ branches:
   - 142623-jstree-upgrade # Daniel 11/3
   - photo-export # J$ 11/4
   - fix-user-indicators # Nick P 11/5
-  - case-detail-tabs # Noah 11/6
 submodules:
   submodules/couchlog-src:
     branches:
