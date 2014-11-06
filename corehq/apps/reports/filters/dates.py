@@ -59,7 +59,8 @@ class SingleDateFilter(BaseReportFilter):
                 return datetime.datetime.strptime(from_req, '%Y-%m-%d').date()
             except ValueError:
                 pass
-            return datetime.date.today()
+
+        return datetime.date.today()
 
     @property
     def filter_context(self):
