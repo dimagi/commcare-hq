@@ -742,7 +742,7 @@ def get_user_ids(user_type_mobile):
         query = query.mobile_users()
     else:
         query = query.web_users()
-    return {doc_id for doc_id in query.run().doc_ids}
+    return set(query.run().doc_ids)
 
 
 def get_submitted_users():
