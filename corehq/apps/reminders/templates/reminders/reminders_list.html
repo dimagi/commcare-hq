@@ -77,7 +77,8 @@
                                 </div>
                             </td>
                             <td>
-                                <div data-bind="template: {name: $parent.actionTemplate, data: $data}"></div>
+                                <div style="display: inline;" data-bind="template: {name: $parent.actionTemplate, data: $data}"></div>
+                                <div style="display: inline;" data-bind="template: {name: 'delete-reminder-template', data: $data}"></div>
                             </td>
                         </tr>
                     </tbody>
@@ -111,6 +112,24 @@
                 data-locked-text="{% trans 'Wait for rule to finish and try again...' %}"
                 >
             {% trans 'Activate' %}
+        </button>
+    </script>
+
+    <script type="text/html" id="delete-reminder-template">
+        <button type="button"
+                data-bind="event: {
+                    click: function(_, event) {
+                        if(confirm('{% trans "Are you sure you want to delete this reminder?" %}')) {
+                            $data.del(_, event);
+                        }
+                    }
+                }"
+                class="btn btn-danger"
+                data-loading-text="{% trans 'Deleting reminder...' %}"
+                data-error-text="{% trans 'Error deleting, try again?' %}"
+                data-locked-text="{% trans 'Wait for rule to finish and try again...' %}"
+                >
+            {% trans 'Delete' %}
         </button>
     </script>
 {% endblock %}

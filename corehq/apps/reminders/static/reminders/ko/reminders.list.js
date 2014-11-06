@@ -4,8 +4,8 @@ var RemindersListModel = function (reminders, progressUrl) {
     self.reminders = reminders;
     self.progressUrl = progressUrl;
 
-    self.activeReminders = ko.observable([]);
-    self.inactiveReminders = ko.observable([]);
+    self.activeReminders = ko.observableArray();
+    self.inactiveReminders = ko.observableArray();
 
     self.init = function () {
         var active = [],
@@ -41,6 +41,11 @@ var RemindersListModel = function (reminders, progressUrl) {
         self.activeReminders(trans.to);
     };
 
+    self.removeReminder = function (id) {
+        self.activeReminders.remove(function(item) { return item.id === id; });
+        self.inactiveReminders.remove(function(item) { return item.id === id; });
+    }
+
     self.utils = {
         transferReminder: function (from, to, rem) {
             var to_list = _.union([rem], to);
@@ -75,6 +80,10 @@ var Reminder = function (o, parentModel) {
         self.processReminder('deactivate', event.target);
     };
 
+    self.del = function(_, event) {
+        self.processReminder('delete', event.target);
+    };
+
     self.processReminder = function (method, target_button) {
         $(target_button).button('loading');
         $.ajax({
@@ -90,7 +99,11 @@ var Reminder = function (o, parentModel) {
             },
             success: function (data) {
                 if (data.success) {
-                    self.reminderList[method + 'Reminder'](self);
+                    if(method == 'delete') {
+                        self.reminderList.removeReminder(self.id);
+                    } else {
+                        self.reminderList[method + 'Reminder'](self);
+                    }
                 } else {
                     if(data.locked) {
                         $(target_button).button('locked');

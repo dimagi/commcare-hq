@@ -77,6 +77,10 @@ from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reports import util as report_utils
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 
+ACTION_ACTIVATE = 'activate'
+ACTION_DEACTIVATE = 'deactivate'
+ACTION_DELETE = 'delete'
+
 reminders_framework_permission = lambda *args, **kwargs: (
     require_permission(Permissions.edit_data)(
         requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK)(*args, **kwargs)
@@ -1661,7 +1665,7 @@ class RemindersListView(BaseMessagingSectionView):
             'url': reverse(EditScheduledReminderView.urlname, args=[self.domain, reminder._id]),
         }
 
-    def get_action_response(self, active):
+    def get_action_response(self, action):
         try:
             assert self.reminder.domain == self.domain
             assert self.reminder.doc_type == "CaseReminderHandler"
@@ -1671,11 +1675,13 @@ class RemindersListView(BaseMessagingSectionView):
                     'locked': True,
                 }
 
-            self.reminder.active = active
-            self.reminder.save()
+            if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE]:
+                self.reminder.active = (action == ACTION_ACTIVATE)
+                self.reminder.save()
+            elif action == ACTION_DELETE:
+                self.reminder.retire()
             return {
                 'success': True,
-                'reminder': self._fmt_reminder_data(self.reminder),
             }
         except Exception as e:
             return {
@@ -1684,8 +1690,8 @@ class RemindersListView(BaseMessagingSectionView):
 
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
-        if action in ['activate', 'deactivate']:
-            return HttpResponse(json.dumps(self.get_action_response(action == 'activate')))
+        if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
+            return HttpResponse(json.dumps(self.get_action_response(action)))
         return HttpResponse(status=400)
 
 
