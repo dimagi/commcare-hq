@@ -52,7 +52,6 @@ branches:
   # - lwyszomi:b3-mobile-layout
   - revert-4574-revert-4553-case-list-redesign # Noah 9/16
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - archive-location # tw 10/23
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
   - graphing+double-management # SK 10/3
@@ -65,7 +64,7 @@ branches:
   - hq-dropdown+custom_user_data # Noah 11/2
   - hq-dropdown # sravan 5/7
   - 142623-jstree-upgrade # Daniel 11/3
-  - photo-export # J$ 11/4
+  #- photo-export # J$ 11/4
   - fix-user-indicators # Nick P 11/5
 submodules:
   submodules/couchlog-src:
