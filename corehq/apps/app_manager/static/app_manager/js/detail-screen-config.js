@@ -635,16 +635,6 @@ var DetailScreenConfig = (function () {
                 return col.format != "filter";
             });
 
-            /*//wooo
-            columns.push(
-                {isTab: true, header: {"en": "My Awesome Tab!"}, model: "tab"}
-                // Note that model must be set to something other than "case"
-                // to ensure that the "Add Property" button keeps working
-                // (it does a thing where it scans the list to figure out the
-                // index of new columns in the add-column event handler)
-            );
-            */
-
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
                 this.columns[i] = Column.init(columns[i], this);
