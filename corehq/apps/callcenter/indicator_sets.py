@@ -83,16 +83,25 @@ class CallCenterIndicators(object):
 
     See https://help.commcarehq.or/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application
     for user docs.
+
+    :param domain:          the domain object
+    :param user:            the user to generate the fixture for
+    :param synclog:         the SyncLog object for the current sync. This is used to get the users' cases.
+                            if not supplied the users' cases will get re-calculated
+    :param custom_cache:    used in testing to verify caching
+    :param override_date:   used in testing
+
     """
     no_value = 0
     name = 'call-center'
 
-    def __init__(self, domain, user, custom_cache=None, override_date=None):
+    def __init__(self, domain, user, synclog=None, custom_cache=None, override_date=None):
         self.domain = domain
         self.user = user
         self.data = defaultdict(dict)
         self.cc_case_type = self.domain.call_center_config.case_type
         self.cache = custom_cache or cache
+        self.synclog = synclog
         if override_date and isinstance(override_date, datetime):
             self.override_date = override_date.date()
         else:
@@ -129,7 +138,11 @@ class CallCenterIndicators(object):
         """
         :return: Set of all user_ids that we need to produce data for.
         """
-        all_owned_cases = CaseSyncOperation(self.user, None).actual_owned_cases
+        if self.synclog:
+            all_owned_cases = self.synclog.cases_on_phone
+        else:
+            all_owned_cases = CaseSyncOperation(self.user, None).actual_owned_cases
+
         relevant_cases = filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
 
         ids = {getattr(case, 'hq_user_id', None) for case in relevant_cases}
