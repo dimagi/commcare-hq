@@ -7,7 +7,7 @@ from django.core.management.base import NoArgsCommand
 import simplejson
 from pillowtop.couchdb import CachedCouchDB
 
-CHUNK_SIZE = 250000
+CHUNK_SIZE = 2000
 POOL_SIZE = 15
 
 MAX_TRIES = 10
@@ -52,12 +52,13 @@ class PtopReindexer(NoArgsCommand):
                     help='Previous run input file prefix',),
     )
 
-
     doc_class = None
     view_name = None
     couch_key = None
     pillow_class = None  # the pillow where the main indexing logic is
-    indexing_pillow_class = None  # the pillow that points to the index you want to index. By default this == self.pillow_class
+    # the pillow that points to the index you want to index.
+    # By default this == self.pillow_class
+    indexing_pillow_class = None
     file_prefix = "ptop_fast_reindex_"
 
     def __init__(self):
@@ -305,7 +306,8 @@ class PtopReindexer(NoArgsCommand):
                 self.log("\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.now().isoformat(), start, end, ex, retry_time))
                 time.sleep(retry_time)
                 self.log("\t%s: Retrying again %d:%d..." % (datetime.now().isoformat(), start, end))
-                bulk_start = datetime.utcnow() #reset timestamp when looping again
+                # reset timestamp when looping again
+                bulk_start = datetime.utcnow()
 
     def pre_load_hook(self):
         pass
@@ -323,7 +325,7 @@ class ElasticReindexer(PtopReindexer):
 
     def pre_load_hook(self):
         if self.own_index_exists:
-            #delete the existing index.
+            # delete the existing index.
             self.log("Deleting index")
             self.indexing_pillow.delete_index()
             self.log("Recreating index")
@@ -331,7 +333,7 @@ class ElasticReindexer(PtopReindexer):
             self.indexing_pillow.seen_types = {}
 
     def post_load_hook(self):
-        #configure index to indexing mode
+        # configure index to indexing mode
         self.indexing_pillow.set_index_reindex_settings()
 
     def pre_complete_hook(self):
