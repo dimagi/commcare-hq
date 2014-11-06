@@ -601,6 +601,15 @@ var DetailScreenConfig = (function () {
             };
 
             columns = spec[this.columnKey].columns;
+            // Inject tabs into te columns list:
+            var tabs = spec[this.columnKey].tabs || [];
+            for (i = 0; i < tabs.length; i++){
+                columns.splice(
+                    tabs[i].starting_index + i,
+                    0,
+                    {isTab: true, name: tabs[i].name}
+                );
+            }
 
             // Filters are a type of DetailColumn on the server. Don't display
             // them with the other columns though
@@ -609,9 +618,11 @@ var DetailScreenConfig = (function () {
             });
 
             // woooo
+            /*
             columns.push(
                 {isTab: true, name: "My Awesome Tab!"}
             );
+            */
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {

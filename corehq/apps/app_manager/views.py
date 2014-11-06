@@ -118,7 +118,7 @@ from corehq.apps.app_manager.models import (
     get_app,
     load_case_reserved_words,
     str_to_cls,
-)
+    DetailTab)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -1360,6 +1360,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     detail_type = params.get('type')
     short = params.get('short', None)
     long = params.get('long', None)
+    tabs = params.get('tabs', None)
     filter = params.get('filter', ())
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
@@ -1383,6 +1384,9 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         detail.short.columns = map(DetailColumn.wrap, short)
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
+    if tabs is not None and long is not None:
+        # Tabs only apply to the case detail page
+        detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.

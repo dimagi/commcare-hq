@@ -1041,6 +1041,19 @@ class GraphConfiguration(DocumentSchema):
     series = SchemaListProperty(GraphSeries)
 
 
+class DetailTab(IndexedSchema):
+    """
+    Represents a tab in the case detail screen on the phone. Ex:
+        {
+            'name': 'Medical',
+            'starting_index': 3
+        }
+    """
+    # TODO: Rename this header and make it localizable
+    name = StringProperty()
+    starting_index = IntegerProperty()
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -1162,6 +1175,9 @@ class Detail(IndexedSchema):
 
     columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
+
+    tabs = SchemaListProperty(DetailTab)
+    get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
