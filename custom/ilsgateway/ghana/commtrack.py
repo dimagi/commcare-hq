@@ -9,11 +9,13 @@ from custom.ilsgateway.models import ILSMigrationCheckpoint
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
+from custom.ilsgateway.utils import get_next_meta_url
 
-def ews_smsuser_extension(sms_user, user_dict):
-    sms_user.user_data['to'] = user_dict.to
-    if user_dict.family_name != '':
-        sms_user.__setattr__('last_name', user_dict.family_name)
+
+def ews_smsuser_extension(sms_user, user):
+    sms_user.user_data['to'] = user.to
+    if user.family_name != '':
+        sms_user.last_name = user.family_name
 
     sms_user.save()
     return sms_user
@@ -27,19 +29,17 @@ def smsusers_sync(project, endpoint, checkpoint, **kwargs):
         save_checkpoint(checkpoint, "smsuser",
                         meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
-        for user_dict in users:
-            sms_user = sync_ilsgateway_smsuser(project, user_dict)
-            ews_smsuser_extension(sms_user, user_dict)
+        for user in users:
+            sms_user = sync_ilsgateway_smsuser(project, user)
+            ews_smsuser_extension(sms_user, user)
 
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1] if meta['next'] else None
+        has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
-def ews_webuser_extension(couch_user, user_dict):
+def ews_webuser_extension(couch_user, user):
+    # WebUsers doesn't contain user_data dict
     couch_user.__setattr__('user_data', {})
-    couch_user.user_data['sms_notifications'] = user_dict.sms_notifications
-    couch_user.user_data['organization'] = user_dict.organization
+    couch_user.user_data['sms_notifications'] = user.sms_notifications
+    couch_user.user_data['organization'] = user.organization
     couch_user.save()
     return couch_user
 
@@ -51,9 +51,9 @@ def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
             ews_webuser_extension(couch_user, user)
 
 
-def ews_location_extension(location, location_dict):
-    location.metadata['created_at'] = location_dict.created_at
-    location.metadata['supervised_by'] = location_dict.supervised_by
+def ews_location_extension(location, loc):
+    location.metadata['created_at'] = loc.created_at
+    location.metadata['supervised_by'] = loc.supervised_by
     location.save()
     return location
 
@@ -66,14 +66,11 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
         save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['type'],
                         meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
-        for location_dict in locations:
-            location = sync_ilsgateway_location(project, endpoint, location_dict)
-            ews_location_extension(location, location_dict)
+        for loc in locations:
+            location = sync_ilsgateway_location(project, endpoint, loc)
+            ews_location_extension(location, loc)
 
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1] if meta['next'] else None
+        has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
 def bootstrap_domain(ilsgateway_config):

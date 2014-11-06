@@ -8,6 +8,14 @@ from django.db.models.aggregates import Max
 GROUPS = ('A', 'B', 'C')
 
 
+def get_next_meta_url(has_next, meta, next_url):
+    if not meta.get('next', False):
+        has_next = False
+    else:
+        next_url = meta['next'].split('?')[1]
+    return has_next, next_url
+
+
 def get_groups(groups):
     if isinstance(groups, list):
         return groups

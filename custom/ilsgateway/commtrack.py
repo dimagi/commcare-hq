@@ -16,6 +16,7 @@ from custom.ilsgateway.models import ILSMigrationCheckpoint
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
+from custom.ilsgateway.utils import get_next_meta_url
 
 
 def retry(retry_max):
@@ -276,10 +277,7 @@ def smsusers_sync(project, endpoint, checkpoint, **kwargs):
         for user in users:
             sync_ilsgateway_smsuser(project, user)
 
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1] if meta['next'] else None
+        has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
 def locations_sync(project, endpoint, checkpoint, **kwargs):
@@ -294,10 +292,7 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
         for location in locations:
             sync_ilsgateway_location(project, endpoint, location)
 
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1] if meta['next'] else None
+        has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
 def commtrack_settings_sync(project):
