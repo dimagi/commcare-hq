@@ -74,6 +74,12 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
     [NAMESPACE_USER]
 )
 
+DETAIL_LIST_TABS = StaticToggle(
+    'detail-list-tabs',
+    'Enable tabs in the case detail list',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',

@@ -78,10 +78,10 @@
                     $(this).val(valueNoSpaces);
                 }
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
-                    $(this).closest('.control-group').addClass('error')
+                    $(this).closest('.control-group').addClass('error');
                     $('#case_type_error').css('display', 'inline');
                 } else {
-                    $(this).closest('.control-group').removeClass('error')
+                    $(this).closest('.control-group').removeClass('error');
                     $('#case_type_error').css('display', 'none');
                 }
             });
@@ -426,10 +426,12 @@
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
         <div id="{{ detail.type }}-detail-screen-detail-config-body">
             <div id="{{ detail.type }}-detail-screen-detail-config">
+
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
-                <div class="add-tab">
+
+                <div class="add-tab" data-bind="if: {{ request|toggle_enabled:"DETAIL_LIST_TABS"|BOOL }}">
                     <a href="#" data-bind="click: addTab">
                         <i class="icon-plus"></i>
                         Add a tab
