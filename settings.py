@@ -469,7 +469,7 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-    "corehq.apps.commtrack.fixtures.product_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom

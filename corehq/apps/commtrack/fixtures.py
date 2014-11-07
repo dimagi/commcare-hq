@@ -1,5 +1,5 @@
 from xml.etree import ElementTree
-from .models import Product, Program
+from .models import Program
 
 
 def _simple_fixture_generator(user, name, fields, data_fn, last_sync=None):
@@ -65,21 +65,6 @@ def should_sync(data, last_sync):
             return True
 
     return False
-
-
-def product_fixture_generator(user, version, synclog, last_sync):
-    fields = [
-        'name',
-        'unit',
-        'code',
-        'description',
-        'category',
-        'program_id',
-        'cost',
-        'product_data'
-    ]
-    data_fn = lambda: Product.by_domain(user.domain, include_archived=True)
-    return _simple_fixture_generator(user, "product", fields, data_fn, last_sync)
 
 
 def program_fixture_generator(user, version, synclog, last_sync):
