@@ -14,7 +14,7 @@ from StringIO import StringIO
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.commtrack.tasks import import_products_async
+from corehq.apps.products.tasks import import_products_async
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.commtrack.util import encode_if_needed
 from corehq.apps.commtrack.models import Program
