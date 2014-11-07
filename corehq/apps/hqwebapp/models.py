@@ -358,9 +358,9 @@ class CommTrackSetupTab(UITab):
         from corehq.apps.commtrack.views import (
             CommTrackSettingsView,
             DefaultConsumptionView,
-            ProgramListView,
             SMSSettingsView,
         )
+        from corehq.apps.programs.views import ProgramListView
         from corehq.apps.products.views import ProductListView
         from corehq.apps.locations.views import (
             LocationsListView,
@@ -395,10 +395,12 @@ class CommTrackSetupTab(UITab):
         from corehq.apps.commtrack.views import (
             CommTrackSettingsView,
             DefaultConsumptionView,
+            SMSSettingsView,
+        )
+        from corehq.apps.programs.views import (
             ProgramListView,
             NewProgramView,
             EditProgramView,
-            SMSSettingsView,
         )
         from corehq.apps.products.views import (
             ProductListView,
