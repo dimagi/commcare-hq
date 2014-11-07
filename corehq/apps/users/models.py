@@ -425,7 +425,7 @@ class DomainMembership(Membership):
         else:
             return None
 
-    def has_permission(self, permission, data=None):
+    def has_permission(self, permission, data=None, project=None):
         return self.is_admin or self.permissions.has(permission, data)
 
     def viewable_reports(self):
@@ -458,13 +458,13 @@ class CustomDomainMembership(DomainMembership):
 
 class IsMemberOfMixin(DocumentSchema):
 
-    def _is_member_of(self, domain):
+    def _is_member_of(self, domain, project=None):
         return domain in self.get_domains() or (
             self.is_global_admin() and
-            not domain_restricts_superusers(domain)
+            not domain_restricts_superusers(domain, project=project)
         )
 
-    def is_member_of(self, domain_qs):
+    def is_member_of(self, domain_qs, project=None):
         """
         takes either a domain name or a domain object and returns whether the user is part of that domain
         either natively or through a team
@@ -474,7 +474,7 @@ class IsMemberOfMixin(DocumentSchema):
             domain = domain_qs.name
         except Exception:
             domain = domain_qs
-        return self._is_member_of(domain)
+        return self._is_member_of(domain, project=project)
 
 
     def is_global_admin(self):
@@ -540,7 +540,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             record.save()
             return record
 
-    def is_domain_admin(self, domain=None):
+    def is_domain_admin(self, domain=None, project=None):
         if not domain:
             # hack for template
             if hasattr(self, 'current_domain'):
@@ -548,7 +548,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 domain = self.current_domain
             else:
                 return False # no domain, no admin
-        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+        if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain, project=project)):
             return True
         dm = self.get_domain_membership(domain)
         if dm:
@@ -564,16 +564,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
     @memoized
-    def has_permission(self, domain, permission, data=None):
+    def has_permission(self, domain, permission, data=None, project=None):
         # is_admin is the same as having all the permissions set
         if self.is_global_admin():
             return True
-        elif self.is_domain_admin(domain):
+        elif self.is_domain_admin(domain, project=project):
             return True
 
         dm = self.get_domain_membership(domain)
         if dm:
-            return dm.has_permission(permission, data)
+            return dm.has_permission(permission, data, project=project)
         else:
             return False
 
@@ -1274,8 +1274,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
         return list(export_reports.intersection(viewable_reports))
 
-    def can_export_data(self, domain=None):
-        can_see_exports = self.can_view_reports()
+    def can_export_data(self, domain=None, project=None):
+        can_see_exports = self.can_view_reports(project=project)
         if not can_see_exports:
             can_see_exports = bool(self.get_exportable_reports(domain))
         return can_see_exports
@@ -1287,12 +1287,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if item.startswith('can_'):
             perm = item[len('can_'):]
             if perm:
-                def fn(domain=None, data=None):
+                def fn(domain=None, data=None, **kwargs):
                     try:
                         domain = domain or self.current_domain
                     except AttributeError:
                         domain = None
-                    return self.has_permission(domain, perm, data)
+                    return self.has_permission(domain, perm, data, **kwargs)
                 fn.__name__ = item
                 return fn
         raise AttributeError("'{}' object has no attribute '{}'".format(
@@ -1344,7 +1344,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    def is_domain_admin(self, domain=None):
+    def is_domain_admin(self, domain=None, project=None):
         # cloudcare workaround
         return False
 
@@ -1885,11 +1885,11 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         return domains
 
     @memoized
-    def has_permission(self, domain, permission, data=None):
+    def has_permission(self, domain, permission, data=None, project=None):
         # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
+        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain, project=project))):
             return True
-        elif self.is_domain_admin(domain):
+        elif self.is_domain_admin(domain, project=project):
             return True
 
         dm_list = list()
@@ -1906,7 +1906,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
         if dm_list:
             role = self.total_domain_membership(dm_list, domain)
             dm = CustomDomainMembership(domain=domain, custom_role=role)
-            return dm.has_permission(permission, data)
+            return dm.has_permission(permission, data, project=project)
         else:
             return False
 

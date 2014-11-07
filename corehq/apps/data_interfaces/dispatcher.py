@@ -61,4 +61,4 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
                     ensure_request_has_privilege(request, privileges.BULK_CASE_MANAGEMENT)
                 except PermissionDenied:
                     return False
-        return request.couch_user.can_edit_data(domain)
+        return request.couch_user.can_edit_data(domain, **kwargs)

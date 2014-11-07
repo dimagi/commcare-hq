@@ -61,19 +61,20 @@ class ReportDispatcher(View):
         """
         return {}
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False, **kwargs):
         """
             Override this method to check for appropriate permissions based on the report model
             and other arguments.
         """
         return True
 
-    def get_reports(self, domain=None):
+    def get_reports(self, domain=None, project=None):
         attr_name = self.map_name
         import corehq
         domain_module = Domain.get_module_by_name(domain)
         if domain:
-            project = Domain.get_by_name(domain)
+            print "here man, here"
+            project = project or Domain.get_by_name(domain)
         else:
             project = None
 
@@ -221,10 +222,10 @@ class ProjectReportDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False, project=None):
         if domain is None:
             return False
-        return request.couch_user.can_view_report(domain, report)
+        return request.couch_user.can_view_report(domain, report, project=project)
 
 
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
@@ -261,7 +262,7 @@ class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'
     map_name = 'ADMIN_REPORTS'
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False, **kwargs):
         return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")
 
 

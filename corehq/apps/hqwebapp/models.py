@@ -116,13 +116,21 @@ class UITab(object):
 
         self.domain = domain
         self.couch_user = couch_user
-        self.project = project
+        self._project = project
         self.org = org
 
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
         self._current_url_name = current_url_name
+
+    @property
+    @memoized
+    def project(self):
+        if self._project or not self.domain:
+            return self._project
+        elif self.domain:
+            return Domain.get_by_name(domain)
 
     @property
     def dropdown_items(self):
@@ -142,6 +150,7 @@ class UITab(object):
             context = {
                 'request': self._request,
                 'domain': self.domain,
+                'project': self.project,
             }
             return self.dispatcher.navigation_sections(context)
         else:
@@ -273,14 +282,16 @@ class ProjectReportsTab(UITab):
     @property
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot and
-                (self.couch_user.can_view_reports() or
+                (self.couch_user.can_view_reports(project=self.project) or
                  self.couch_user.get_viewable_reports()))
 
     @property
+    @memoized
     def sidebar_items(self):
         context = {
             'request': self._request,
             'domain': self.domain,
+            'project': self.project,
         }
 
         tools = [(_("Tools"), [
@@ -310,7 +321,7 @@ class ADMReportsTab(UITab):
 
         return (not self.project.is_snapshot and
                 self.domain in adm_enabled_projects and
-                  (self.couch_user.can_view_reports() or
+                  (self.couch_user.can_view_reports(project=self.project) or
                    self.couch_user.get_viewable_reports()))
 
 
@@ -322,9 +333,10 @@ class IndicatorAdminTab(UITab):
     @property
     def is_viewable(self):
         indicator_enabled_projects = get_indicator_domains()
-        return self.couch_user.can_edit_data() and self.domain in indicator_enabled_projects
+        return self.couch_user.can_edit_data(project=self.project) and self.domain in indicator_enabled_projects
 
     @property
+    @memoized
     def sidebar_items(self):
         items = super(IndicatorAdminTab, self).sidebar_items
         from corehq.apps.indicators.views import (
@@ -383,6 +395,7 @@ class ReportsTab(UITab):
         context = {
             'request': self._request,
             'domain': self.domain,
+            'project': self.project,
         }
         reports = sidebar_to_dropdown(ProjectReportDispatcher.navigation_sections(context))
         if self.project.commtrack_enabled:
@@ -440,9 +453,10 @@ class CommTrackSetupTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.project.commtrack_enabled and self.couch_user.is_domain_admin()
+        return self.project.commtrack_enabled and self.couch_user.is_domain_admin(project=self.project)
 
     @property
+    @memoized
     def sidebar_items(self):
         # circular import
         from corehq.apps.commtrack.views import (
@@ -561,24 +575,26 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_edit_commcare_data(self):
-        return self.couch_user.can_edit_data()
+        return self.couch_user.can_edit_data(project=self.project)
 
     @property
     @memoized
     def can_export_data(self):
-        return self.project and not self.project.is_snapshot and self.couch_user.can_export_data()
+        return self.project and not self.project.is_snapshot and self.couch_user.can_export_data(project=self.project)
 
     @property
     def is_viewable(self):
         return self.domain and (self.can_edit_commcare_data or self.can_export_data)
 
     @property
+    @memoized
     def sidebar_items(self):
         items = []
 
         context = {
             'request': self._request,
             'domain': self.domain,
+            'project': self.project,
         }
 
         if self.can_export_data:
@@ -645,7 +661,7 @@ class ApplicationsTab(UITab):
                 app_name = app_info['name']
                 app_doc_type = app_info['doc_type']
 
-                url = reverse('view_app', args=[self.domain, app_id]) if self.couch_user.can_edit_apps() \
+                url = reverse('view_app', args=[self.domain, app_id]) if self.couch_user.can_edit_apps(project=self.project) \
                     else reverse('release_manager', args=[self.domain, app_id])
                 app_title = self.make_app_title(app_name, app_doc_type)
 
@@ -655,7 +671,7 @@ class ApplicationsTab(UITab):
                     data_id=app_id,
                 ))
 
-        if self.couch_user.can_edit_apps():
+        if self.couch_user.can_edit_apps(project=self.project):
             submenu_context.append(format_submenu_context(None, is_divider=True))
             newapp_options = [
                 format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
@@ -683,7 +699,7 @@ class ApplicationsTab(UITab):
     def is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user and
-                (couch_user.is_web_user() or couch_user.can_edit_apps()) and
+                (couch_user.is_web_user() or couch_user.can_edit_apps(project=self.project)) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
@@ -700,7 +716,7 @@ class CloudcareTab(UITab):
         except PermissionDenied:
             return False
         return (self.domain
-                and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
+                and (self.couch_user.can_edit_data(project=self.project) or self.couch_user.is_commcare_user())
                 and not self.project.commconnect_enabled)
 
 
@@ -713,7 +729,7 @@ class MessagingTab(UITab):
         return (self.can_access_reminders or self.can_access_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
-        ) and self.couch_user.can_edit_data()
+        ) and self.couch_user.can_edit_data(project=self.project)
 
     @property
     @memoized
@@ -734,6 +750,7 @@ class MessagingTab(UITab):
             return False
 
     @property
+    @memoized
     def sidebar_items(self):
         from corehq.apps.reports.standard.sms import MessageLogReport
         def reminder_subtitle(form=None, **context):
@@ -954,7 +971,7 @@ class MessagingTab(UITab):
                     },
                 ],
             })
-        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain, project=self.project):
             if toggles.REMINDERS_UI_PREVIEW.enabled(self.couch_user.username):
                 settings_pages.append(
                     {'title': ugettext_lazy("General Settings"),
@@ -983,8 +1000,8 @@ class ProjectUsersTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.domain and (self.couch_user.can_edit_commcare_users() or
-                                self.couch_user.can_edit_web_users())
+        return self.domain and (self.couch_user.can_edit_commcare_users(project=self.project) or
+                                self.couch_user.can_edit_web_users(project=self.project))
 
     @property
     def is_active_shortcircuit(self):
@@ -1005,13 +1022,14 @@ class ProjectUsersTab(UITab):
             ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
         except PermissionDenied:
             return False
-        return self.couch_user.is_domain_admin()
+        return self.couch_user.is_domain_admin(project=self.project)
 
     @property
+    @memoized
     def sidebar_items(self):
         items = []
 
-        if self.couch_user.can_edit_commcare_users():
+        if self.couch_user.can_edit_commcare_users(project=self.project):
             def commcare_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
@@ -1065,7 +1083,7 @@ class ProjectUsersTab(UITab):
 
             items.append((_('Application Users'), mobile_users_menu))
 
-        if self.couch_user.can_edit_web_users():
+        if self.couch_user.can_edit_web_users(project=self.project):
             def web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                     not couch_user.is_commcare_user()):
@@ -1110,12 +1128,13 @@ class ProjectSettingsTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.domain and self.couch_user and self.couch_user.is_domain_admin(self.domain)
+        return self.domain and self.couch_user and self.couch_user.is_domain_admin(self.domain, project=self.project)
 
     @property
+    @memoized
     def sidebar_items(self):
         items = []
-        user_is_admin = self.couch_user.is_domain_admin(self.domain)
+        user_is_admin = self.couch_user.is_domain_admin(self.domain, project=self.project)
 
         project_info = []
 
@@ -1264,6 +1283,7 @@ class MySettingsTab(UITab):
         return self.couch_user is not None
 
     @property
+    @memoized
     def sidebar_items(self):
         from corehq.apps.settings.views import MyAccountSettingsView, MyProjectsList, ChangeMyPasswordView
         items = [
@@ -1290,6 +1310,7 @@ class AdminReportsTab(UITab):
     view = "corehq.apps.hqadmin.views.default"
 
     @property
+    @memoized
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
         if self.couch_user and (not self.couch_user.is_superuser and IS_DEVELOPER.enabled(self.couch_user.username)):
@@ -1514,7 +1535,7 @@ class ExchangeTab(UITab):
     @property
     def dropdown_items(self):
         submenu_context = None
-        if self.domain and self.couch_user.is_domain_admin(self.domain):
+        if self.domain and self.couch_user.is_domain_admin(self.domain, project=self.project):
             submenu_context = [
                 format_submenu_context(_("CommCare Exchange"), url=reverse("appstore")),
                 format_submenu_context(_("Publish this project"),
@@ -1526,7 +1547,7 @@ class ExchangeTab(UITab):
     @property
     def is_viewable(self):
         couch_user = self.couch_user
-        return (self.domain and couch_user and couch_user.can_edit_apps() and
+        return (self.domain and couch_user and couch_user.can_edit_apps(project=self.project) and
                 (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
