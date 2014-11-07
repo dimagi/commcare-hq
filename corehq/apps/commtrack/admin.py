@@ -17,4 +17,5 @@ class StockStateAdmin(admin.ModelAdmin):
         'last_modified_date'
     ]
     search_fields = ['case_id', 'product_id']
+
 admin.site.register(StockState, StockStateAdmin)

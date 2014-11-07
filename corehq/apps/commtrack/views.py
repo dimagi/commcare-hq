@@ -8,7 +8,8 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.models import Product, Program
+from corehq.apps.commtrack.models import Program
+from corehq.apps.products.models import Product
 from corehq.apps.commtrack.forms import ProgramForm, ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location

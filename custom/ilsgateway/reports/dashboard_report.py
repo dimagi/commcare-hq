@@ -1,4 +1,4 @@
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis

@@ -2,7 +2,7 @@ import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponseRedirect
-from corehq.apps.commtrack.models import Product, CommtrackConfig
+from corehq.apps.products.models import Product, CommtrackConfig
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser, WebUser

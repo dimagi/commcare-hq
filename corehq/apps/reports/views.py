@@ -27,7 +27,7 @@ import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles, Domain
 from casexml.apps.case.cleanup import rebuild_case, close_case
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
 from corehq.util.couch import get_document_or_404
