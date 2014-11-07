@@ -106,6 +106,7 @@ urlpatterns = patterns('',
     *list(api_url_patterns))
 
 ADMIN_API_LIST = (
+    v0_5.AdminWebUserResource,
     DomainMetadataResource,
 )
 
