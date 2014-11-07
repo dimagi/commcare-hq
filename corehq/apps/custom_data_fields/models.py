@@ -5,12 +5,17 @@ from django.utils.translation import ugettext as _
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
+# This list is used to grandfather in existing data, any new fields should use
+# the system prefix defined below
+SYSTEM_FIELDS = ["commtrack-supply-point"]
+SYSTEM_PREFIX = "__"
 
 
 class CustomDataField(JsonObject):
     slug = StringProperty()
     is_required = BooleanProperty()
     label = StringProperty()
+    is_system = BooleanProperty()
 
 
 class CustomDataFieldsDefinition(Document):
@@ -20,7 +25,23 @@ class CustomDataFieldsDefinition(Document):
     field_type = StringProperty()
     base_doc = "CustomDataFieldsDefinition"
     domain = StringProperty()
-    fields = SchemaListProperty(CustomDataField)
+    _fields = SchemaListProperty(CustomDataField)
+
+    def get_fields(self, required_only=False, include_system=False):
+        def _is_match(field):
+            if required_only and not field.is_required:
+                return False
+            if not include_system and field.is_system:
+                return False
+            return True
+        return filter(_is_match, self._fields)
+
+    def has_fields(self):
+        return bool(self.get_fields())
+
+    def set_fields(self, fields):
+        system_fields = [f for f in self._fields if f.is_system]
+        self._fields = fields + system_fields
 
     @classmethod
     def get_or_create(cls, domain, field_type):
@@ -51,7 +72,7 @@ class CustomDataFieldsDefinition(Document):
         def validate_custom_fields(custom_fields):
             errors = []
             missing_keys = []
-            for field in self.fields:
+            for field in self.get_fields():
                 if field.is_required and not custom_fields.get(field.slug, None):
                     missing_keys.append(field.slug)
             if missing_keys:

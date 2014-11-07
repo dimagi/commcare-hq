@@ -103,7 +103,7 @@ class CustomDataFieldsMixin(object):
     def get_custom_fields(self):
         definition = self.get_definition()
         if definition:
-            return definition.fields
+            return definition.get_fields()
         else:
             return []
 
@@ -111,10 +111,10 @@ class CustomDataFieldsMixin(object):
         definition = self.get_definition() or CustomDataFieldsDefinition()
         definition.field_type = self.field_type
         definition.domain = self.domain
-        definition.fields = [
+        definition.set_fields([
             self.get_field(field)
             for field in self.form.cleaned_data['data_fields']
-        ]
+        ])
         definition.save()
 
     def get_field(self, field):
@@ -122,6 +122,7 @@ class CustomDataFieldsMixin(object):
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
+            is_system=False,
         )
 
     @property
@@ -185,18 +186,19 @@ class CustomDataEditor(object):
 
     def get_data_to_save(self):
         cleaned_data = self.form.cleaned_data
+        system_fields = [f for f in self.model._fields if f.is_system]
         self.existing_custom_data = None
         self.form = self.init_form(add_prefix(cleaned_data))
         self.form.is_valid()
-        return cleaned_data
+        return cleaned_data + system_fields
 
     def init_form(self, post_dict=None):
         def _make_field(field):
             return forms.CharField(label=field.label, required=field.is_required)
 
         fields = {
-            field.slug: _make_field(field) for field in self.model.fields
-            if not self.required_only or field.is_required
+            field.slug: _make_field(field)
+            for field in self.model.get_fields(required_only=self.required_only)
         }
         field_names = fields.keys()
 
@@ -207,7 +209,7 @@ class CustomDataEditor(object):
             Fieldset(
                 _("Additional Information"),
                 *field_names
-            ) if self.model.fields else '',
+            ) if self.model.has_fields else '',
             self.get_uncategorized_form(field_names),
         )
         CustomDataForm._has_uncategorized = bool(self.get_uncategorized_form(field_names))

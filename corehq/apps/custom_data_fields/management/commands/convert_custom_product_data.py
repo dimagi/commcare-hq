@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
+from corehq.apps.custom_data_fields import models as cdm
 from corehq.apps.products.models import Product
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import iter_docs
@@ -16,7 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for domain in Domain.get_all():
             if domain['commtrack_enabled']:
-                fields_definition = CustomDataFieldsDefinition.get_or_create(
+                fields_definition = cdm.CustomDataFieldsDefinition.get_or_create(
                     domain['name'],
                     'ProductFields'
                 )
@@ -31,12 +31,14 @@ class Command(BaseCommand):
                     for key in product_data.keys():
                         if key and key not in existing_field_slugs:
                             existing_field_slugs.add(key)
-                            fields_definition.fields.append(CustomDataField(
+                            fields_definition.fields.append(cdm.CustomDataField(
                                 slug=key,
                                 label=key,
-                                is_required=False
+                                is_required=False,
+                                is_system=key in cdm.SYSTEM_FIELDS
                             ))
 
                 # Only save a definition for domains which use custom product data
                 if fields_definition.fields:
                     fields_definition.save()
+            print 'finished domain "{}"'.format(domain.name)
