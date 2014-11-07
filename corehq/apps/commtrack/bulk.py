@@ -9,7 +9,7 @@ def set_error(row, msg, override=False):
 
 
 def import_products(domain, importer):
-    from .views import ProductFieldsView
+    from corehq.apps.products.views import ProductFieldsView
     results = {'errors': [], 'messages': []}
     to_save = []
     product_count = 0

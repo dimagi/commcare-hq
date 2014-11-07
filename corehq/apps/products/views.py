@@ -71,7 +71,7 @@ def unarchive_product(request, domain, prod_id, archive=True):
 class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
-    template_name = 'commtrack/manage/products.html'
+    template_name = 'products/manage/products.html'
     page_title = ugettext_noop("Products")
 
     DEFAULT_LIMIT = 10
@@ -172,7 +172,7 @@ class FetchProductListView(ProductListView):
 class NewProductView(BaseCommTrackManageView):
     urlname = 'commtrack_product_new'
     page_title = ugettext_noop("New Product")
-    template_name = 'commtrack/manage/product.html'
+    template_name = 'products/manage/product.html'
 
     @property
     @memoized
@@ -224,7 +224,7 @@ class NewProductView(BaseCommTrackManageView):
 class UploadProductView(BaseCommTrackManageView):
     urlname = 'commtrack_upload_products'
     page_title = ugettext_noop("Import Products")
-    template_name = 'commtrack/manage/upload_products.html'
+    template_name = 'products/manage/upload_products.html'
 
     @property
     def page_context(self):
@@ -293,7 +293,7 @@ class ProductImportStatusView(BaseCommTrackManageView):
 
 @login_and_domain_required
 def product_importer_job_poll(request, domain, download_id,
-        template="commtrack/manage/partials/product_upload_status.html"):
+        template="products/manage/partials/product_upload_status.html"):
     context = get_download_context(download_id, check_state=True)
     context.update({
         'on_complete_short': _('Import complete.'),
