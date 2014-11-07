@@ -4,6 +4,7 @@ from functools import wraps
 import json
 
 # Django imports
+import datetime
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
@@ -17,6 +18,7 @@ from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.es import FormES
 from corehq.apps.users.decorators import require_permission, require_permission_raw
 from couchforms.models import XFormInstance
 
@@ -181,12 +183,33 @@ class CommCareUserResource(UserResource):
         object_class = CommCareUser
         resource_name = 'user'
 
+    def dehydrate(self, bundle):
+        show_extras = _safe_bool(bundle, 'extras')
+        if show_extras:
+            extras = {}
+            now = datetime.datetime.utcnow()
+            form_es_base = (FormES()
+                .domain(bundle.request.domain)
+                .user_id([bundle.obj._id])
+            )
+            extras['submitted_last_30'] = (form_es_base
+                .submitted(gte=now - datetime.timedelta(days=30),
+                           lte=now)
+                .run()
+            ).total
+            extras['completed_last_30'] = (form_es_base
+                .completed(gte=now - datetime.timedelta(days=30),
+                           lte=now)
+                .run()
+            ).total
+            bundle.data['extras'] = extras
+        return super(UserResource, self).dehydrate(bundle)
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        try:
-            show_archived = string_to_boolean(bundle.request.GET.get('archived', 'false'))
-        except ValueError:
-            show_archived = False
+
+
+        show_archived = _safe_bool(bundle, 'archived')
         group_id = bundle.request.GET.get('group')
         if group_id:
             group = Group.get(group_id)
@@ -296,3 +319,9 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         resource_name = 'form'
         serializer = XFormInstanceSerializer()
+
+def _safe_bool(bundle, param, default=False):
+    try:
+        return string_to_boolean(bundle.request.GET.get(param))
+    except ValueError:
+        return default
