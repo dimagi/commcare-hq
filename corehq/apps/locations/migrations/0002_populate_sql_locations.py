@@ -20,6 +20,9 @@ EXCLUDE_DOMAINS = (
 
 
 def iter_location_join_supply_point(all_location_ids, chunksize=100):
+
+    # this function was copy-paste-modified from iter_docs
+
     database = Location.get_db()
     for location_ids in chunked(all_location_ids, chunksize):
         # sync supply point id
@@ -27,19 +30,25 @@ def iter_location_join_supply_point(all_location_ids, chunksize=100):
                      for row in get_docs(database, keys=location_ids)
                      if row.get('doc')
                      and row.get('doc')['domain'] not in EXCLUDE_DOMAINS]
+
         supply_points = SupplyPointCase.view(
             'commtrack/supply_point_by_loc',
             keys=[[location['domain'], location['_id']]
                   for location in locations],
             include_docs=True,
             classes={'CommCareCase': SupplyPointCase},
-        )
-        supply_points_index = {
-            (supply_point.domain, supply_point.location_id): supply_point
-            for supply_point in supply_points
-        }
-        assert len(supply_points_index) == supply_points, \
-            "Multiple supply points have the same (domain, location_id)"
+        ).all()
+
+        supply_points_index = {}
+
+        for supply_point in supply_points:
+            key = (supply_point.domain, supply_point.location_id)
+            if key in supply_points_index:
+                raise Exception(
+                    "Multiple supply points have "
+                    "domain={!r}, location_id={!r}".format(*key))
+            supply_points_index[key] = supply_point
+
         for location in locations:
             yield (
                 location,
