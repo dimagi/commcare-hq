@@ -16,6 +16,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.products.tasks import import_products_async
 from corehq.apps.products.models import Product
+from corehq.apps.products.forms import ProductForm
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.commtrack.util import encode_if_needed
 from corehq.apps.commtrack.models import Program
@@ -28,9 +29,6 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
 )
-
-# TODO move me too
-from corehq.apps.commtrack.forms import ProductForm
 
 
 @require_POST
