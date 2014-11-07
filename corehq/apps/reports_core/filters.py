@@ -86,23 +86,36 @@ class BaseFilter(object):
 
 
 class DatespanFilter(BaseFilter):
+    template = 'reports_core/filters/datespan_filter/datespan_filter.html'
+    javascript_template = 'reports_core/filters/datespan_filter/datespan_filter.js'
 
     def __init__(self, name, required=True, label='Datespan Filter',
-                 template='reports_core/filters/datespan_filter.html',
                  css_id=None):
         # todo: should these be in the constructor as well?
+        self.label = label
+        self.css_id = css_id or name
         params = [
-            FilterParam('startdate', True),
-            FilterParam('enddate', True),
+            FilterParam(self.startdate_param_name, True),
+            FilterParam(self.enddate_param_name, True),
             FilterParam('date_range_inclusive', False),
         ]
         super(DatespanFilter, self).__init__(required=required, name=name, params=params)
-        self.label = label
-        self.template = template
-        self.css_id = css_id or self.name
+
+
+    @property
+    def startdate_param_name(self):
+        return '{}-start'.format(self.css_id)
+
+    @property
+    def enddate_param_name(self):
+        return '{}-end'.format(self.css_id)
 
     @memoized
-    def value(self, startdate, enddate, date_range_inclusive=True):
+    def value(self, **kwargs):
+        startdate = kwargs[self.startdate_param_name]
+        enddate = kwargs[self.enddate_param_name]
+        date_range_inclusive = kwargs.get('date_range_inclusive', True)
+
         def date_or_nothing(param):
             return datetime.strptime(param, "%Y-%m-%d") \
                 if param else None
