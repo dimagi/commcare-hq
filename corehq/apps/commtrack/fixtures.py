@@ -1,5 +1,5 @@
 from xml.etree import ElementTree
-from .models import Program
+from corehq.apps.programs.models import Program
 
 
 def _simple_fixture_generator(user, name, fields, data_fn, last_sync=None):
