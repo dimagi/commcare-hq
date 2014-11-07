@@ -309,3 +309,4 @@ class SQLProduct(models.Model):
         to move data and foreign key dependencies.
         """
         db_table = 'commtrack_sqlproduct'
+        app_label = 'commtrack'
