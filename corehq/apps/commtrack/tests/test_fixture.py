@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 from casexml.apps.case.xml import V1
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.commtrack.fixtures import program_fixture_generator
+from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program

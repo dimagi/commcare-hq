@@ -471,7 +471,7 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
     "corehq.apps.products.fixtures.product_fixture_generator",
-    "corehq.apps.commtrack.fixtures.program_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",

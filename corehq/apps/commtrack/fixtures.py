@@ -1,8 +1,10 @@
 from xml.etree import ElementTree
-from corehq.apps.programs.models import Program
-
 
 def _simple_fixture_generator(user, name, fields, data_fn, last_sync=None):
+    """
+    Fixture generator used to build commtrack related fixtures such
+    as products and programs.
+    """
     project = user.project
     if not project or not project.commtrack_enabled:
         return []
@@ -65,12 +67,3 @@ def should_sync(data, last_sync):
             return True
 
     return False
-
-
-def program_fixture_generator(user, version, synclog, last_sync):
-    fields = [
-        'name',
-        'code'
-    ]
-    data_fn = lambda: Program.by_domain(user.domain)
-    return _simple_fixture_generator(user, "program", fields, data_fn, last_sync)
