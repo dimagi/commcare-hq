@@ -171,12 +171,12 @@ class ReportDispatcher(View):
         dispatcher = cls()  # uhoh
         current_slug = context.get('report',{}).get('slug','')
 
-        reports = dispatcher.get_reports(domain)
+        reports = dispatcher.get_reports(domain, project=project)
         for section_name, report_group in reports:
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
-                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
+                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True, project=project):
                     continue
                 if report.show_in_navigation(
                         domain=domain, project=project, user=couch_user):
@@ -244,7 +244,7 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     def dispatch_with_priv(self, request, *args, **kwargs):
         return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False, **kwargs):
         if is_navigation_check:
             try:
                 ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
