@@ -13,8 +13,8 @@ from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
 from custom.ilsgateway.models import ILSMigrationCheckpoint, ILSGatewayConfig, ReportRun, EWSGhanaConfig
-from custom.ilsgateway.tasks import stock_data_task, report_run, clear_stock_data_task, \
-    ils_bootstrap_domain_task, ews_bootstrap_domain_task
+from custom.ilsgateway.tasks import ils_stock_data_task, report_run, ils_clear_stock_data_task, \
+    ils_bootstrap_domain_task, ews_bootstrap_domain_task, ews_stock_data_task, ews_clear_stock_data_task
 
 
 class GlobalStats(BaseDomainView):
@@ -78,6 +78,8 @@ class BaseConfigView(BaseCommTrackManageView):
             'settings': self.settings_context,
             'source': self.source,
             'sync_url': self.sync_urlname,
+            'sync_stock_url': self.sync_stock_url,
+            'clear_stock_url': self.clear_stock_url,
             'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username),
             'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
         }
@@ -111,6 +113,8 @@ class ILSConfigView(BaseConfigView):
     config = ILSGatewayConfig
     urlname = 'ils_config'
     sync_urlname = 'sync_ilsgateway'
+    sync_stock_url = 'ils_sync_stock_data'
+    clear_stock_url = 'ils_clear_stock_data'
     page_title = ugettext_noop("ILSGateway")
     template_name = 'ilsgateway/ilsconfig.html'
     source = 'ilsgateway'
@@ -120,8 +124,10 @@ class EWSConfigView(BaseConfigView):
     config = EWSGhanaConfig
     urlname = 'ews_config'
     sync_urlname = 'sync_ewsghana'
+    sync_stock_url = 'ews_sync_stock_data'
+    clear_stock_url = 'ews_clear_stock_data'
     page_title = ugettext_noop("EWS Ghana")
-    template_name = 'ilsgateway/ilsconfig.html'
+    template_name = 'ilsgateway/ewsconfig.html'
     source = 'ewsghana'
 
 
@@ -141,17 +147,29 @@ def sync_ilsgateway(request, domain):
 
 @domain_admin_required
 @require_POST
-def sync_stock_data(request, domain):
-    stock_data_task.delay(domain)
+def ils_sync_stock_data(request, domain):
+    ils_stock_data_task.delay(domain)
     return HttpResponse('OK')
 
 
 @domain_admin_required
 @require_POST
-def clear_stock_data(request, domain):
-    clear_stock_data_task.delay()
+def ils_clear_stock_data(request, domain):
+    ils_clear_stock_data_task.delay()
     return HttpResponse('OK')
 
+@domain_admin_required
+@require_POST
+def ews_sync_stock_data(request, domain):
+    ews_stock_data_task.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def ews_clear_stock_data(request, domain):
+    ews_clear_stock_data_task.delay()
+    return HttpResponse('OK')
 
 @domain_admin_required
 @require_POST

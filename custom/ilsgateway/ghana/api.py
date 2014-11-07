@@ -1,4 +1,5 @@
-from custom.ilsgateway.api import ILSGatewayEndpoint, Product
+from custom.ilsgateway.api import ILSGatewayEndpoint, Product, ProductStock, StockTransaction
+
 
 class EWSUser(object):
     def __init__(self, username, first_name, last_name, email,
@@ -112,5 +113,7 @@ class GhanaEndpoint(ILSGatewayEndpoint):
         'product': Product,
         'webuser': EWSUser,
         'smsuser': SMSUser,
-        'location': Location
+        'location': Location,
+        'product_stock': ProductStock,
+        'stock_transaction': StockTransaction
     }

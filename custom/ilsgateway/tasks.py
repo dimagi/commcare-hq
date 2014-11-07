@@ -14,6 +14,7 @@ from couchforms.models import XFormInstance
 from custom.ilsgateway.api import Location
 from custom.ilsgateway.commtrack import bootstrap_domain as ils_bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
     sync_ilsgateway_product
+from custom.ilsgateway.ghana.api import GhanaEndpoint
 from custom.ilsgateway.ghana.commtrack import bootstrap_domain as ews_bootstrap_domain
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, EWSGhanaConfig
 from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
@@ -43,24 +44,25 @@ def ews_bootstrap_domain_task(domain):
     return ews_bootstrap_domain(ews_config)
 
 # District Moshi-Rural
-FACILITIES = [906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,
+ILS_FACILITIES = [906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,
               917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927,
               928, 929, 930, 931, 932, 933, 934, 935, 936, 937, 938,
               939, 941, 942, 943, 944, 946, 947, 948, 949, 950, 951,
               952, 953, 954, 955, 4860, 654]
 
+# District Ashanti
+EWS_FACILITIES = [109, 110, 624, 626, 922, 908, 961, 948, 956, 967]
 
-def get_locations(domain, endpoint):
-    for facility in FACILITIES:
+def get_locations(domain, endpoint, facilities):
+    for facility in facilities:
         location = endpoint.get_location(facility)
         sync_ilsgateway_location(domain, endpoint, Location.from_json(location))
 
 
-def get_product_stock(domain, endpoint):
-    for facility in FACILITIES:
+def get_product_stock(domain, endpoint, facilities):
+    for facility in facilities:
         has_next = True
         next_url = ""
-
         while has_next:
             meta, product_stocks = endpoint.get_productstocks(next_url_params=next_url,
                                                               filters=dict(supply_point=facility))
@@ -95,7 +97,7 @@ def get_product_stock(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-def get_stock_transaction(domain, endpoint):
+def get_stock_transaction(domain, endpoint, facilities):
     # Faking xform
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
@@ -103,7 +105,7 @@ def get_stock_transaction(domain, endpoint):
         xform = XFormInstance(_id='ilsgateway-xform')
         xform.save()
 
-    for facility in FACILITIES:
+    for facility in facilities:
         has_next = True
         next_url = ""
 
@@ -141,8 +143,8 @@ def get_stock_transaction(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-def get_supply_point_statuses(domain, endpoint):
-    for facility in FACILITIES:
+def get_supply_point_statuses(domain, endpoint, facilities):
+    for facility in facilities:
         has_next = True
         next_url = ""
 
@@ -163,8 +165,8 @@ def get_supply_point_statuses(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-def get_delivery_group_reports(domain, endpoint):
-    for facility in FACILITIES:
+def get_delivery_group_reports(domain, endpoint, facilities):
+    for facility in facilities:
         has_next = True
         next_url = ""
         while has_next:
@@ -185,28 +187,46 @@ def get_delivery_group_reports(domain, endpoint):
 
 
 @task
-def stock_data_task(domain):
+def ils_stock_data_task(domain):
     ilsgateway_config = ILSGatewayConfig.for_domain(domain)
     domain = ilsgateway_config.domain
     endpoint = TanzaniaEndpoint.from_config(ilsgateway_config)
     commtrack_settings_sync(domain)
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
-    get_locations(domain, endpoint)
-    get_product_stock(domain, endpoint)
-    get_stock_transaction(domain, endpoint)
-    get_supply_point_statuses(domain, endpoint)
-    get_delivery_group_reports(domain, endpoint)
+    get_locations(domain, endpoint, ILS_FACILITIES)
+    get_product_stock(domain, endpoint, ILS_FACILITIES)
+    get_stock_transaction(domain, endpoint, ILS_FACILITIES)
+    get_supply_point_statuses(domain, endpoint, ILS_FACILITIES)
+    get_delivery_group_reports(domain, endpoint, ILS_FACILITIES)
+
+@task
+def ews_stock_data_task(domain):
+    ewsghana_config = EWSGhanaConfig.for_domain(domain)
+    domain = ewsghana_config.domain
+    endpoint = GhanaEndpoint.from_config(ewsghana_config)
+    commtrack_settings_sync(domain)
+    for product in endpoint.get_products():
+        sync_ilsgateway_product(domain, product)
+    get_locations(domain, endpoint, EWS_FACILITIES)
+    get_product_stock(domain, endpoint, EWS_FACILITIES)
+    get_stock_transaction(domain, endpoint, EWS_FACILITIES)
 
 
 # Temporary for staging
 @task
-def clear_stock_data_task():
+def ils_clear_stock_data_task():
     StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
     StockReport.objects.filter(domain='ilsgateway-test-1').delete()
     products = Product.ids_by_domain('ilsgateway-test-1')
     StockState.objects.filter(product_id__in=products).delete()
 
+@task
+def ews_clear_stock_data_task():
+    StockTransaction.objects.filter(report__domain='ewsghana-test-1').delete()
+    StockReport.objects.filter(domain='ewsghana-test-1').delete()
+    products = Product.ids_by_domain('ewsghana-test-1')
+    StockState.objects.filter(product_id__in=products).delete()
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task
