@@ -133,7 +133,9 @@ class SuperuserAuthentication(LoginAndDomainAuthentication):
             require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
             api_auth,
         ]
-        return self._auth_test(request, wrappers=wrappers, **kwargs)
+        # passing the domain is a hack to work around non-domain-specific requests
+        # failing on auth
+        return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)
 
 
 class CustomResourceMeta(object):

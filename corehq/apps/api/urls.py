@@ -104,3 +104,16 @@ def api_url_patterns():
 
 urlpatterns = patterns('',
     *list(api_url_patterns))
+
+ADMIN_API_LIST = (
+    DomainMetadataResource,
+)
+
+@inline
+def api_url_patterns():
+    api = CommCareHqApi(api_name='global')
+    for resource in ADMIN_API_LIST:
+        api.register(resource())
+        yield (r'^', include(api.urls))
+
+admin_urlpatterns = patterns('', *list(api_url_patterns))
