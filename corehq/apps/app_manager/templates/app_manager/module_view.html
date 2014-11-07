@@ -141,6 +141,11 @@
                     {{ case_list_form_allowed|JSON }}
                 );
                 ko.applyBindings(caseListForm, $('#case-list-form').get(0));
+                // Reset save button after bindings
+                // see http://manage.dimagi.com/default.asp?145851
+                var $form = $('#case-list-form').closest('form'),
+                    $button = $form.find('.save-button-holder').data('button');
+                $button.setStateWhenReady('saved');
             }
         });
         $(function () {
