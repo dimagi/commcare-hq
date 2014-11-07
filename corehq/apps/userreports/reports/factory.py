@@ -1,11 +1,11 @@
 import json
 from jsonobject.exceptions import BadValueError
-from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice
+from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice, DynamicChoiceListFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
+from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, dynamic_choice_list_url
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
-    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, ReportColumn
+    MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, ReportColumn, DynamicChoiceListFilterSpec
 
 
 def _build_date_filter(spec):
@@ -30,10 +30,22 @@ def _build_choice_list_filter(spec):
     )
 
 
+def _build_dynamic_choice_list_filter(spec):
+    wrapped = DynamicChoiceListFilterSpec.wrap(spec)
+    return DynamicChoiceListFilter(
+        name=wrapped.slug,
+        label=wrapped.display,
+        required=wrapped.required,
+        show_all=wrapped.show_all,
+        url_generator=dynamic_choice_list_url,
+    )
+
+
 class ReportFilterFactory(object):
     constructor_map = {
         'date': _build_date_filter,
         'choice_list': _build_choice_list_filter,
+        'dynamic_choice_list': _build_dynamic_choice_list_filter,
     }
 
     @classmethod

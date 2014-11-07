@@ -17,6 +17,7 @@ class ReportFilter(JsonObject):
         return {
             'date': DateFilterValue,
             'choice_list': ChoiceListFilterValue,
+            'dynamic_choice_list': ChoiceListFilterValue,
         }[self.type](self, value)
 
 
@@ -63,6 +64,15 @@ class ChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('choice_list')
     show_all = BooleanProperty(default=True)
     choices = ListProperty(FilterChoice)
+
+
+class DynamicChoiceListFilterSpec(FilterSpec):
+    type = TypeProperty('dynamic_choice_list')
+    show_all = BooleanProperty(default=True)
+
+    @property
+    def choices(self):
+        return []
 
 
 class ChartSpec(JsonObject):

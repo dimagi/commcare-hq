@@ -155,6 +155,22 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
+def choice_list_api(request, domain, report_id, filter_id):
+    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    filter = report.get_ui_filter(filter_id)
+
+    def get_choices(data_source, filter, search_term=None, limit=20):
+        table = get_indicator_table(data_source)
+        sql_column = table.c[filter.name]
+        query = Session.query(sql_column)
+        if search_term:
+            query = query.filter(sql_column.contains(search_term))
+
+        return [v[0] for v in query.distinct().limit(limit)]
+
+    return json_response(get_choices(report.config, filter, request.GET.get('q', None)))
+
+
 def _shared_context(domain):
     return {
         'domain': domain,
