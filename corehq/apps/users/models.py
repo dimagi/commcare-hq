@@ -1287,12 +1287,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if item.startswith('can_'):
             perm = item[len('can_'):]
             if perm:
-                def fn(domain=None, data=None, **kwargs):
+                def fn(domain=None, data=None, project=None):
                     try:
                         domain = domain or self.current_domain
                     except AttributeError:
                         domain = None
-                    return self.has_permission(domain, perm, data, **kwargs)
+                    return self.has_permission(domain, perm, data, project=project)
                 fn.__name__ = item
                 return fn
         raise AttributeError("'{}' object has no attribute '{}'".format(
