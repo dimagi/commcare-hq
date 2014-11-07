@@ -3,7 +3,6 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
 
-from corehq.apps.commtrack.models import Program
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
 from django.core.urlresolvers import reverse
@@ -129,44 +128,3 @@ class ConsumptionForm(forms.Form):
                 product._id,
                 val,
             )
-
-
-class ProgramForm(forms.Form):
-    name = forms.CharField(max_length=100)
-
-    def __init__(self, program, *args, **kwargs):
-        self.program = program
-
-        kwargs['initial'] = self.program._doc
-        super(ProgramForm, self).__init__(*args, **kwargs)
-
-        # don't let users rename the uncategorized
-        # program
-        if program.default:
-            self.fields['name'].required = False
-            self.fields['name'].widget.attrs['readonly'] = True
-
-    def clean_name(self):
-        name = self.cleaned_data['name']
-
-        other_program_names = [
-            p['name'] for p in Program.by_domain(self.program.domain, wrap=False)
-            if p['_id'] != self.program._id
-        ]
-        if name in other_program_names:
-            raise forms.ValidationError(_('Name already in use'))
-
-        return name
-
-    def save(self, instance=None, commit=True):
-        if self.errors:
-            raise ValueError(_('Form does not validate'))
-
-        program = instance or self.program
-
-        setattr(program, 'name', self.cleaned_data['name'])
-
-        if commit:
-            program.save()
-
-        return program
