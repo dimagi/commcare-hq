@@ -88,7 +88,7 @@ class BaseFilter(object):
 class DatespanFilter(BaseFilter):
 
     def __init__(self, name, required=True, label='Datespan Filter',
-                 template='reports_core/filters/datespan_filter.html',
+                 template='reports_core/filters/datespan_filter/datespan_filter.html',
                  css_id=None):
         # todo: should these be in the constructor as well?
         params = [
