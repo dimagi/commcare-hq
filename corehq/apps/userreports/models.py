@@ -146,6 +146,12 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def table_id(self):
         return self.config.table_id
 
+    def get_ui_filter(self, filter_slug):
+        for filter in self.ui_filters:
+            if filter.name == filter_slug:
+                return filter
+        return None
+
     def validate(self, required=True):
         super(ReportConfiguration, self).validate(required)
         # these calls implicitly do validation
