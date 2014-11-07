@@ -357,11 +357,11 @@ class CommTrackSetupTab(UITab):
         # circular import
         from corehq.apps.commtrack.views import (
             CommTrackSettingsView,
-            ProductListView,
             DefaultConsumptionView,
             ProgramListView,
             SMSSettingsView,
         )
+        from corehq.apps.products.views import ProductListView
         from corehq.apps.locations.views import (
             LocationsListView,
             LocationSettingsView,
@@ -394,15 +394,17 @@ class CommTrackSetupTab(UITab):
         # circular import
         from corehq.apps.commtrack.views import (
             CommTrackSettingsView,
-            ProductListView,
-            NewProductView,
-            EditProductView,
-            ProductFieldsView,
             DefaultConsumptionView,
             ProgramListView,
             NewProgramView,
             EditProgramView,
             SMSSettingsView,
+        )
+        from corehq.apps.products.views import (
+            ProductListView,
+            NewProductView,
+            EditProductView,
+            ProductFieldsView,
         )
         from corehq.apps.locations.views import (
             LocationsListView,
