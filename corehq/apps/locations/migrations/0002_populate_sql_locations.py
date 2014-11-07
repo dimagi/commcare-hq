@@ -7,14 +7,26 @@ from dimagi.utils.couch.bulk import get_docs
 import corehq.apps.locations.models as location_models
 from dimagi.utils.couch import sync_docs
 
+EXCLUDE_DOMAINS = (
+    "drewpsi",
+    "psi",
+    "psi-ors",
+    "psi-test",
+    "psi-test2",
+    "psi-test3",
+    "psi-unicef",
+    "psi-unicef-wb",
+)
 
-def iter_location_join_supply_point(ids, chunksize=100):
+
+def iter_location_join_supply_point(all_location_ids, chunksize=100):
     database = Location.get_db()
-    for location_ids in chunked(ids, chunksize):
+    for location_ids in chunked(all_location_ids, chunksize):
         # sync supply point id
         locations = [row.get('doc')
                      for row in get_docs(database, keys=location_ids)
-                     if row.get('doc')]
+                     if row.get('doc')
+                     and row.get('doc')['domain'] not in EXCLUDE_DOMAINS]
         supply_points = SupplyPointCase.view(
             'commtrack/supply_point_by_loc',
             keys=[[location['domain'], location['_id']]
