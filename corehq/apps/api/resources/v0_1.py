@@ -29,6 +29,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin
+from dimagi.utils.parsing import string_to_boolean
 
 
 def determine_authtype(request):
@@ -182,6 +183,10 @@ class CommCareUserResource(UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
+        try:
+            show_archived = string_to_boolean(bundle.request.GET.get('archived', 'false'))
+        except ValueError:
+            show_archived = False
         group_id = bundle.request.GET.get('group')
         if group_id:
             group = Group.get(group_id)
@@ -189,7 +194,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            return list(CommCareUser.by_domain(domain, strict=True))
+            return list(CommCareUser.by_domain(domain, strict=True, is_active=not show_archived))
 
 
 class WebUserResource(UserResource):
