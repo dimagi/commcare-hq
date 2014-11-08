@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.userreports.getters import SimpleGetter, DictGetter, NestedDictGetter
+from corehq.apps.userreports.getters import SimpleGetter, DictGetter, NestedDictGetter, TransformedGetter
 
 
 class Foo(object):
@@ -75,3 +75,19 @@ class NestedDictGetterTest(SimpleTestCase):
 
     def test_null(self):
         self.assertEqual(None, self.getter(None))
+
+
+class TransformedGetterTest(SimpleTestCase):
+
+    def setUp(self):
+        self.base_getter = DictGetter('foo')
+
+    def test_no_transform(self):
+        getter = TransformedGetter(self.base_getter, None)
+        self.assertEqual('bar', getter({'foo': 'bar'}))
+        self.assertEqual(1, getter({'foo': 1}))
+
+    def test_basic(self):
+        getter = TransformedGetter(self.base_getter, lambda x: '{}-transformed'.format(x))
+        self.assertEqual('bar-transformed', getter({'foo': 'bar'}))
+        self.assertEqual('1-transformed', getter({'foo': 1}))
