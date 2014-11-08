@@ -219,6 +219,7 @@ class AdminWebUserResource(v0_1.UserResource):
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(WebUserResource.Meta):
+        resource_name = 'web-user'
         authentication = SuperuserAuthentication()
         detail_allowed_methods = ['get']
         list_allowed_methods = ['get']
