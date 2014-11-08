@@ -1,7 +1,8 @@
 from decimal import Decimal
 import functools
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
-from corehq.apps.commtrack.models import StockState, SQLProduct
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.products.models import SQLProduct
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.tests.base import _stock_report
 from corehq.apps.commtrack.tests.util import CommTrackTest

@@ -5,7 +5,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.locations.bulk import import_location
 from mock import patch
 from corehq.apps.consumption.shortcuts import get_default_consumption
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 
 
 class LocationImportTest(CommTrackTest):

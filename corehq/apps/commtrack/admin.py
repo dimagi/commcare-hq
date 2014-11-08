@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import StockState, SQLProduct
+from .models import StockState
 
 
 class StockStateAdmin(admin.ModelAdmin):
@@ -18,25 +18,4 @@ class StockStateAdmin(admin.ModelAdmin):
     ]
     search_fields = ['case_id', 'product_id']
 
-
-class ProductAdmin(admin.ModelAdmin):
-    model = SQLProduct
-
-    list_display = [
-        'domain',
-        'name',
-        'is_archived',
-        'product_id'
-    ]
-    list_filter = [
-        'domain',
-        'is_archived',
-    ]
-    search_fields = [
-        'name',
-        'product_id'
-    ]
-
-
 admin.site.register(StockState, StockStateAdmin)
-admin.site.register(SQLProduct, ProductAdmin)

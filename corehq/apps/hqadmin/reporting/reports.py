@@ -33,7 +33,7 @@ from django.db.models import Q, Count, Sum
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES

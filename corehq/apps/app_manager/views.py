@@ -31,7 +31,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.commtrack.models import Program
+from corehq.apps.programs.models import Program
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
