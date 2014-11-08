@@ -1,11 +1,5 @@
 
 
-class Getter(object):
-
-    def get_value(self, item):
-        raise NotImplementedError()
-
-
 class SimpleGetter(object):
 
     def __init__(self, property_name):
