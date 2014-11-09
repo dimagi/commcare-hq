@@ -37,7 +37,7 @@ from corehq.apps.announcements.dispatcher import (
 from corehq.toggles import IS_DEVELOPER
 
 
-def sidebar_to_dropdown(sidebar_items=[]):
+def sidebar_to_dropdown(sidebar_items, domain=None):
     # sidebar_items = [(<django.utils.functional.__proxy__ object at 0x7361c90>, [{'subpages': [{'urlname': 'custom_export_form', 'title': <django.utils.functional.__proxy__ object at 0x7f358cd9e6d0>}, {'urlname': 'edit_custom_export_form', 'title': 'Edit Form Custom Export'}], 'description': None, 'title': u'Export Forms', 'url': '/a/hqtest/data/excel_export_data/', 'is_active': False, 'icon': 'icon-list-alt'}, {'subpages': [{'urlname': 'custom_export_case', 'title': <django.utils.functional.__proxy__ object at 0x7f358cd9e710>}, {'urlname': 'edit_custom_export_case', 'title': 'Edit Case Custom Export'}], 'description': None, 'title': u'Export Cases', 'url': '/a/hqtest/data/case_export/', 'is_active': False, 'icon': 'icon-share'}]), (<django.utils.functional.__proxy__ object at 0x7361cd0>, [{'subpages': [], 'description': None, 'title': u'Reassign Cases', 'url': '/a/hqtest/data/edit/reassign_cases/', 'is_active': False, 'icon': None}, {'subpages': [], 'description': u'Import case data from an external Excel file', 'title': u'Import Cases from Excel', 'url': '/a/hqtest/data/edit/import_cases/', 'is_active': False, 'icon': None}, {'url': '/a/hqtest/data/edit/case_groups/', 'subpages': [{'urlname': 'manage_case_groups', 'title': 'Manage Case Group'}], 'title': <django.utils.functional.__proxy__ object at 0x7f358cd92990>}])]
     dropdown_items = []
     for side_header, side_list in sidebar_items:
@@ -46,7 +46,7 @@ def sidebar_to_dropdown(sidebar_items=[]):
         for side_item in side_list:
             show_in_dropdown = side_item.get("show_in_dropdown", False)
             if show_in_dropdown:
-                second_level_dropdowns = get_second_level_dropdowns(side_item)
+                second_level_dropdowns = get_second_level_dropdowns(side_item, domain=domain)
                 if second_level_dropdowns:
                     dropdown_item = format_second_level_context(side_item['title'], side_item['url'], second_level_dropdowns)
                 else:
@@ -56,11 +56,11 @@ def sidebar_to_dropdown(sidebar_items=[]):
             dropdown_items.extend([dropdown_header] + current_dropdown_items)
     return dropdown_items
 
-def get_second_level_dropdowns(first_level_item):
+def get_second_level_dropdowns(first_level_item, domain=None):
     second_level_dropdowns = []
     for subpage in first_level_item.get('subpages', []):
         if subpage.get('show_in_dropdown', False):
-            second_level_dropdowns.append(format_submenu_context(subpage['title'], url=subpage['urlname']))
+            second_level_dropdowns.append(format_submenu_context(subpage['title'], url=reverse(subpage['urlname'], args=[domain])))
     return second_level_dropdowns
 
 def format_submenu_context(title, url=None, html=None,
@@ -137,7 +137,7 @@ class UITab(object):
         # todo: add default implementation which looks at sidebar_items and
         # sees which ones have is_dropdown_visible or something like that.
         # Also make it work for tabs with subtabs.
-        dropdown_menu = sidebar_to_dropdown(sidebar_items=self.sidebar_items)
+        dropdown_menu = sidebar_to_dropdown(sidebar_items=self.sidebar_items, domain=self.domain)
         if self.url and dropdown_menu:
             return dropdown_menu + divider_and_more_menu(self.url)
         else:
