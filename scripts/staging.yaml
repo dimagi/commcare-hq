@@ -64,7 +64,6 @@ branches:
   - case-detail-tabs # Noah 11/6
   - share-fixtures # j$ 10/29
   - logos # Nick P 10/31
-  - hq-dropdown+custom_user_data # Noah 11/2
   - hq-dropdown # sravan 5/7
   - 142623-jstree-upgrade # Daniel 11/3
   # - photo-export # J$ 11/4
