@@ -1,4 +1,5 @@
 # encoding: utf-8
+import logging
 from south.v2 import DataMigration
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
@@ -8,6 +9,8 @@ from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.xpath import dot_interpolate
+
+logger = logging.getLogger(__name__)
 
 
 class Migration(DataMigration):
@@ -40,6 +43,7 @@ class Migration(DataMigration):
             detail.filter = combined_filter_string
 
         app.save()
+        logger.info("Filter migration on app {id} complete.".format(id=app.id))
 
     @classmethod
     def combine_and_interpolate_V1_filters(cls, columns, app, module, detail):
