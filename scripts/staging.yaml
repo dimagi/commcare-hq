@@ -68,6 +68,7 @@ branches:
   - 142623-jstree-upgrade # Daniel 11/3
   # - photo-export # J$ 11/4
   - fix-user-indicators # Nick P 11/5
+  - custom-data-choices  # Ethan 11/09
 submodules:
   submodules/couchlog-src:
     branches:
