@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - staging  # Ethan 11/09 - Too many effing merge conflicts
   - ptop-reindex  # DR 11/5
   - historical-forms  # DR 11/4
   - remove-hutch  # DR 10/28
