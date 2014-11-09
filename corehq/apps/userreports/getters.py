@@ -89,6 +89,4 @@ def recursive_lookup(dict_object, keys):
 
 def transform_date(item):
     # postgres crashes on empty strings, but is happy to take null dates
-    if not item:
-        return None
-    return item
+    return item or None
