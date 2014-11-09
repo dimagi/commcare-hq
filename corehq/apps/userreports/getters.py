@@ -1,12 +1,11 @@
 
 
-class Getter(object):
-
-    def get_value(self, item):
-        raise NotImplementedError()
-
-
 class SimpleGetter(object):
+    """
+    Getter that just takes in a property name and assumes that is an attribute of the object.
+
+    Returns None if the attribute doesn't exist.
+    """
 
     def __init__(self, property_name):
         self.property_name = property_name
@@ -16,6 +15,23 @@ class SimpleGetter(object):
             return getattr(item, self.property_name)
         except AttributeError:
             return None
+
+
+class TransformedGetter(object):
+    """
+    Getter that takes in another getter and a transform function.
+
+    Returns the result of calling the transform function on result of the getter.
+    """
+    def __init__(self, getter, transform=None):
+        self.getter = getter
+        self.transform = transform
+
+    def __call__(self, item):
+        extracted = self.getter(item)
+        if self.transform:
+            return self.transform(extracted)
+        return extracted
 
 
 class DictGetter(object):
@@ -69,3 +85,10 @@ def recursive_lookup(dict_object, keys):
         return dict_object[keys[0]]
     else:
         return recursive_lookup(dict_object[keys[0]], keys[1:])
+
+
+def transform_date(item):
+    # postgres crashes on empty strings, but is happy to take null dates
+    if not item:
+        return None
+    return item
