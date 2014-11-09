@@ -1,5 +1,5 @@
 {% load i18n %}
-<ul class="dropdown-menu nav-list dropdown-orange">
+<ul class="dropdown-menu nav-list dropdown-orange dropdown-menu-right">
     {% if is_public %}
         <li>
             <a href="{% url 'domain_select' %}">{% trans 'Back to My Projects' %}...</a>
@@ -15,6 +15,6 @@
         {% endif %}
     {% endif %}
     <li class="divider"></li>
-    <li><a href="{% url 'registration_domain' %}">{% trans 'New Project' %}</a></li>
+    <li><a href="{% url 'registration_domain' DOMAIN_TYPE %}">{% trans 'New Project' %}</a></li>
     <li><a href="{% url 'appstore'%}">{% trans 'CommCare Exchange' %}</a></li>
 </ul>

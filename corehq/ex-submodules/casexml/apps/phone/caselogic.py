@@ -8,6 +8,7 @@ import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 from casexml.apps.case.xform import CaseDbCache
+from dimagi.utils.decorators.memoized import memoized
 
 
 def get_related_cases(initial_case_list, domain, strip_history=False, search_up=True):
@@ -78,75 +79,112 @@ class CaseSyncUpdate(object):
             ret.append(const.CASE_ACTION_CLOSE)
         return ret
 
+
+def _to_case_id_set(cases):
+    return set([c.case_id for c in cases])
+
+
 class CaseSyncOperation(object):
     """
     A record of a user's sync operation
     """
     
     def __init__(self, user, last_sync):
+        self.user = user
+        self.last_sync = last_sync
+
+    @property
+    @memoized
+    def actual_owned_cases(self):
         try:
-            keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
+            keys = [[owner_id, False] for owner_id in self.user.get_owner_ids()]
         except AttributeError:
-            keys = [[user.user_id, False]]
+            keys = [[self.user.user_id, False]]
 
         def _user_case_domain_match(case):
-            if user.domain:
-                return user.domain == case.domain
+            if self.user.domain:
+                return self.user.domain == case.domain
             return True
 
+        cases = CommCareCase.view("case/by_owner_lite", keys=keys).all()
+        return set(filter(_user_case_domain_match, cases))
+
+    @property
+    @memoized
+    def actual_cases_to_sync(self):
         # the world to sync involves
-        # Union(cases on the phone, footprint of those,  
-        #       cases the server thinks are the phone's, footprint of those) 
+        # Union(cases on the phone, footprint of those,
+        #       cases the server thinks are the phone's, footprint of those)
         # intersected with:
         # (cases modified by someone else since the last sync)
-        
+
         # TODO: clean this up. Basically everything is a set of cases,
         # but in order to do proper comparisons we use IDs so all of these
         # operations look much more complicated than they should be.
+        actual_cases_to_sync = []
+        for _, case in self.all_potential_to_sync_dict.items():
+            sync_update = CaseSyncUpdate(case, self.last_sync)
+            if sync_update.required_updates:
+                actual_cases_to_sync.append(sync_update)
 
-        self.actual_owned_cases = set(filter(_user_case_domain_match,
-                                             CommCareCase.view("case/by_owner_lite", keys=keys).all()))
-        self._all_relevant_cases = get_footprint(self.actual_owned_cases, domain=user.domain)
-        
-        def _to_case_id_set(cases):
-            return set([c.case_id for c in cases])
-        
-        def _get_case(case_id):
-            if case_id in self._all_relevant_cases:
-                return self._all_relevant_cases[case_id]
-            else:
-                case = CommCareCase.get_with_rebuild(case_id)
-                self._all_relevant_cases[case_id] = case
-                return case
+        return actual_cases_to_sync
 
-        self.actual_relevant_cases = set(self._all_relevant_cases.values())
-        
-        
-        self.actual_extended_cases = set([_get_case(case_id) for case_id in \
-                                          _to_case_id_set(self.actual_relevant_cases) - \
-                                          _to_case_id_set(self.actual_owned_cases)])
-        
-        self.phone_relevant_cases = set([_get_case(case_id) for case_id \
-                                         in last_sync.get_footprint_of_cases_on_phone()]) \
-                                    if last_sync else set()
-        
-        self.all_potential_cases = set([_get_case(case_id) for case_id in \
-                                        _to_case_id_set(self.actual_relevant_cases) | \
-                                        _to_case_id_set(self.phone_relevant_cases)])
-        
-        self.all_potential_to_sync = filter_cases_modified_elsewhere_since_sync(
-            list(self.all_potential_cases), last_sync)
-        
+    @property
+    @memoized
+    def _all_relevant_cases(self):
+        return get_footprint(self.actual_owned_cases, domain=self.user.domain)
+
+    @property
+    @memoized
+    def actual_relevant_cases(self):
+        return set(self._all_relevant_cases.values())
+
+    @property
+    @memoized
+    def actual_extended_cases(self):
+        return set([
+            self._get_case(case_id) for case_id in
+            _to_case_id_set(self.actual_relevant_cases) -
+            _to_case_id_set(self.actual_owned_cases)
+        ])
+
+    @property
+    @memoized
+    def phone_relevant_cases(self):
+        return set([
+            self._get_case(case_id) for case_id
+            in self.last_sync.get_footprint_of_cases_on_phone()
+        ]) if self.last_sync else set()
+
+    @property
+    @memoized
+    def all_potential_cases(self):
+        return set([
+            self._get_case(case_id) for case_id in
+            _to_case_id_set(self.actual_relevant_cases) |
+            _to_case_id_set(self.phone_relevant_cases)
+        ])
+
+    @property
+    @memoized
+    def all_potential_to_sync(self):
+        return filter_cases_modified_elsewhere_since_sync(list(self.all_potential_cases), self.last_sync)
+
+    @property
+    @memoized
+    def all_potential_to_sync_dict(self):
         # this is messy but forces uniqueness at the case_id level, without
         # having to reload all the cases from the DB
-        self.all_potential_to_sync_dict = dict((case.get_id, case) \
-                                               for case in self.all_potential_to_sync)
-        
-        self.actual_cases_to_sync = []
-        for _, case in self.all_potential_to_sync_dict.items():
-            sync_update = CaseSyncUpdate(case, last_sync)
-            if sync_update.required_updates:
-                self.actual_cases_to_sync.append(sync_update)
+        return dict((case.get_id, case) for case in self.all_potential_to_sync)
+
+    def _get_case(self, case_id):
+        if case_id in self._all_relevant_cases:
+            return self._all_relevant_cases[case_id]
+        else:
+            case = CommCareCase.get_with_rebuild(case_id)
+            self._all_relevant_cases[case_id] = case
+            return case
+
 
 def get_case_updates(user, last_sync):
     """

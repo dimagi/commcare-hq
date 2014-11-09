@@ -26,12 +26,13 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
-                       xmlns='http://commcarehq.org/case', attachments={}):
+                       xmlns='http://commcarehq.org/case', attachments=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
     returns the UID of the resulting form.
     """
+    attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
     if not isinstance(case_blocks, basestring):
         case_blocks = ''.join(case_blocks)
@@ -77,6 +78,21 @@ def get_case_by_domain_hq_user_id(domain, user_id, include_docs=False):
                          key=[domain, user_id],
                          reduce=False,
                          include_docs=include_docs).one()
+
+
+def get_callcenter_case_mapping(domain, user_ids):
+    """
+    Get the mapping from user_id to 'user case id' for each user in user_ids.
+    """
+    keys = [[domain, user_id] for user_id in user_ids]
+    rows = CommCareCase.view(
+        'hqcase/by_domain_hq_user_id',
+        keys=keys,
+        reduce=False,
+        include_docs=False
+    )
+
+    return {r['key'][1]: r['id'] for r in rows}
 
 
 def get_case_by_identifier(domain, identifier):

@@ -2,7 +2,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import TableDataFormat
 from custom.care_pathways.reports import CareBaseReport
-from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter, \
+from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter, GroupByFilter, PPTYearFilter, TypeFilterWithoutPractices, ScheduleFilter, \
     DisaggregateByFilter
 from custom.care_pathways.sqldata import AdoptionDisaggregatedSqlData
 from custom.care_pathways.utils import CareDataFormatter, _chunks
@@ -12,21 +12,20 @@ class AdoptionDisaggregatedReport(CareBaseReport):
     name = 'Adoption Disaggregated'
     slug = 'adoption_disaggregated'
     report_title = 'Adoption Disaggregated'
-    report_template_path = 'care_pathways/report.html'
+    report_template_path = 'care_pathways/adoption_disaggregated_report.html'
     default_rows = 100
 
     @property
     def fields(self):
         filters = [GeographyFilter,
-              GroupByFilter,
-              PPTYearFilter,
-              TypeFilter,
-              GenderFilter,
-              GroupLeadershipFilter,
-              CBTNameFilter,
-              ]
+                   PPTYearFilter,
+                   GenderFilter,
+                   GroupLeadershipFilter,
+                   CBTNameFilter]
         if self.domain == 'pathways-india-mis':
             filters.append(ScheduleFilter)
+        filters.append(TypeFilterWithoutPractices)
+        filters.append(GroupByFilter)
         filters.append(DisaggregateByFilter)
         return filters
 
@@ -65,12 +64,13 @@ class AdoptionDisaggregatedReport(CareBaseReport):
                                 group_by=self.data_provider.group_by, domain=self.domain, chunk_size=self.chunk_size)
     
     def get_chart(self, rows, x_label, y_label):
-        chunks = _chunks(list(rows), self.chunk_size+1)
+        chunks = _chunks(list(rows), self.chunk_size + 1)
         charts = []
+        if self.request.GET.get('group_by', '') == 'domain':
+            chunks = sorted(chunks, key=lambda k: k[0][0])
         for chunk in chunks:
 
-            chart = MultiBarChart(chunk[0][0], x_axis=Axis(x_label), y_axis=Axis(y_label))
-            chart.forceY = [0, 100]
+            chart = MultiBarChart(chunk[0][0], x_axis=Axis(x_label), y_axis=Axis(y_label, '.0%'))
             chart.height = 300
             chart.rotateLabels = 0
             chart.marginBottom = 80
@@ -81,17 +81,19 @@ class AdoptionDisaggregatedReport(CareBaseReport):
 
     def _chart_data(self, chart, rows):
         def p2f(column):
-            return float(column['html'].strip('%'))
+            return float(column['html'].strip('%')) / 100.0
 
         if rows:
             charts = [[], [], []]
             for row in rows:
                 group_name = row[0]
+                total = sum(row[1:])
+                total = float(total) if total else 1.0
                 for ix, column in enumerate(row[1:]):
-                    charts[ix].append({'x': group_name, 'y': column})
+                    charts[ix].append({'x': group_name, 'y': float(column) / total})
 
-            chart.add_dataset('All', charts[0], "blue")
-            chart.add_dataset('Some', charts[1], "green")
+            chart.add_dataset('All', charts[0], "green")
+            chart.add_dataset('Some', charts[1], "yellow")
             chart.add_dataset('None', charts[2], "red")
 
     @property

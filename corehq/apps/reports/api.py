@@ -11,7 +11,7 @@ class ReportDataSource(object):
             'user_id': 'abc'
          }
         """
-        self.config = config or {}
+        self.config = config
 
     def configure(self, config):
         """
@@ -40,3 +40,6 @@ class ReportDataSource(object):
         """
 
         return {}
+
+    def get_total_records(self):
+        return 0

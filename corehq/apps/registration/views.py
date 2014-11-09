@@ -52,7 +52,7 @@ def register_user(request, domain_type=None):
         # Redirect to a page which lets user choose whether or not to create a new account
         domains_for_user = Domain.active_for_user(request.user)
         if len(domains_for_user) == 0:
-            return redirect("registration_domain")
+            return redirect("registration_domain", domain_type=domain_type)
         else:
             return redirect("homepage")
     else:

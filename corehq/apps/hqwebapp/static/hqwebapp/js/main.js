@@ -92,13 +92,18 @@ var SaveButton = {
                 options.error = function (data) {
                     that.nextState = null;
                     that.setState('retry');
-                    alert(SaveButton.message.ERROR_SAVING);
+                    responseText = data.responseText || '';
+                    alert(SaveButton.message.ERROR_SAVING + '\n' +  data.responseText);
                     error.apply(this, arguments);
                 };
                 return options;
             },
             ajax: function (options) {
-                $.ajax(button.ajaxOptions(options));
+                var jqXHR = $.ajax(button.ajaxOptions(options));
+                if (!jqXHR) {
+                    // request was aborted
+                    this.setState('save');
+                }
             }
         };
         eventize(button);

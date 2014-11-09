@@ -1,5 +1,6 @@
 import collections
 import functools
+import json
 import math
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
@@ -40,6 +41,13 @@ class ConsumptionConfiguration(object):
     def test_config(cls):
         return cls(0, 0, 60)
 
+    def __repr__(self):
+        return json.dumps({
+            'min_periods': self.min_periods,
+            'min_window': self.min_window,
+            'max_window': self.max_window,
+            'has_default_monthly_consumption_function': bool(self.default_monthly_consumption_function)
+        }, indent=2)
 
 def from_ts(dt):
     # damn this is ugly
@@ -58,7 +66,7 @@ def span_days(start, end):
     return span.days + span.seconds / 86400.
 
 
-def compute_consumption(case_id,
+def compute_daily_consumption(case_id,
                         product_id,
                         window_end,
                         section_id=const.SECTION_TYPE_STOCK,
@@ -81,8 +89,7 @@ def compute_consumption(case_id,
         window_start,
         window_end
     )
-
-    return compute_consumption_from_transactions(
+    return compute_daily_consumption_from_transactions(
         transactions, window_start, configuration
     )
 
@@ -97,8 +104,7 @@ def compute_consumption_or_default(case_id,
     value is real or just a default value
     """
     configuration = configuration or ConsumptionConfiguration()
-
-    consumption = compute_consumption(
+    daily_consumption = compute_daily_consumption(
         case_id,
         product_id,
         window_end,
@@ -106,8 +112,8 @@ def compute_consumption_or_default(case_id,
         configuration
     )
 
-    if consumption:
-        return consumption
+    if daily_consumption:
+        return daily_consumption * 30.
     else:
         return compute_default_monthly_consumption(
             case_id,
@@ -164,7 +170,7 @@ def get_transactions(case_id, product_id, section_id, window_start, window_end):
         yield _to_consumption_tx(db_tx)
 
 
-def compute_consumption_from_transactions(transactions, window_start, configuration=None):
+def compute_daily_consumption_from_transactions(transactions, window_start, configuration=None):
     configuration = configuration or ConsumptionConfiguration()
 
     class ConsumptionPeriod(object):
@@ -223,7 +229,6 @@ def compute_consumption_from_transactions(transactions, window_start, configurat
     periods = filter(lambda period: period.normalized_length, periods)
     total_consumption = sum(period.normalized_consumption for period in periods)
     total_length = sum(period.normalized_length for period in periods)
-
     # check minimum statistical significance thresholds
     if len(periods) < configuration.min_periods or total_length < configuration.min_window:
         return None

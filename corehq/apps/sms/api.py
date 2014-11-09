@@ -52,12 +52,12 @@ def add_msg_tags(msg, metadata):
 
 def log_sms_exception(msg):
     direction = "OUT" if msg.direction == OUTGOING else "IN"
-    if msg._id:
-        message = "[SMS %s] Error processing SMS %s" % (direction, msg._id)
-    else:
-        message = ("[SMS %s] Error processing SMS for domain %s on %s" %
-            (direction, msg.domain, msg.date))
-    notify_exception(None, message=message)
+    message = "[SMS %s] Error processing SMS" % direction
+    notify_exception(None, message=message, details={
+        'domain': msg.domain,
+        'date': msg.date,
+        'message_id': msg._id,
+    })
 
 
 def send_sms(domain, contact, phone_number, text, metadata=None):
@@ -265,7 +265,7 @@ def process_sms_registration(msg):
 
 def incoming(phone_number, text, backend_api, timestamp=None, 
              domain_scope=None, backend_message_id=None, delay=True,
-             backend_attributes=None):
+             backend_attributes=None, raw_text=None):
     """
     entry point for incoming sms
 
@@ -289,6 +289,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         domain_scope = domain_scope,
         backend_api = backend_api,
         backend_message_id = backend_message_id,
+        raw_text=raw_text,
     )
     if backend_attributes:
         for k, v in backend_attributes.items():
