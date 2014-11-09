@@ -72,6 +72,9 @@ submodules:
   submodules/couchlog-src:
     branches:
       - static-tags # Nick P 5/20
+  submodules/django-prbac-src:
+    branches:
+      - memoize-perms # Sravan 11/9
   submodules/django-soil-src:
     branches:
       - static-tags # Nick P 5/20
