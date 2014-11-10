@@ -285,13 +285,6 @@ class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
 class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     """Generates the Paginated context for the Applications Tile.
     """
-    def __init__(self, tile_config, request, in_data):
-        super(AppsPaginatedContext, self).__init__(
-            tile_config, request, in_data)
-        # Handle special CommTrack Case
-        domain = Domain.get_by_name(self.request.domain)
-        if domain.commtrack_enabled:
-            self.tile_config.icon = 'dashboard-icon-commtrack'
 
     @property
     def total(self):
