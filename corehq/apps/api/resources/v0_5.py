@@ -215,6 +215,9 @@ class WebUserResource(v0_1.WebUserResource):
 class AdminWebUserResource(v0_1.UserResource):
     domains = fields.ListField(attribute='domains')
 
+    def obj_get(self, bundle, **kwargs):
+        return WebUser.get(kwargs['pk'])
+
     def obj_get_list(self, bundle, **kwargs):
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
