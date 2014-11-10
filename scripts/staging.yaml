@@ -86,9 +86,11 @@ submodules:
       - static-tags # Nick P 5/20
       # Danny 8/12. If form validation seems wonky on staging, just remove this
       - clean-up-api
+      - update-jar # J$ 11/10
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
+      - update-jars # J$ 11/10
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
