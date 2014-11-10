@@ -1,0 +1,12 @@
+<partial>
+    <action>
+        <display>
+            <text><locale id="case_list_form.m0"/></text>
+        </display>
+        <stack>
+            <create>
+                <command>m0-f0</command>
+            </create>
+        </stack>
+    </action>
+</partial>
