@@ -16,6 +16,24 @@ RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
 
 
+class PaginateViewLogHandler(object):
+    def __init__(self, reindexer):
+        self.reindexer = reindexer
+
+    def log(self, *args, **kwargs):
+        self.reindexer.log(*args, **kwargs)
+
+    def view_starting(self, db, view_name, kwargs, total_emitted):
+        self.log('Fetching rows {}-{} from couch'.format(
+            total_emitted,
+            total_emitted + kwargs['limit'] - 1)
+        )
+        self.log('  startkey={}, startkey_docid={!r}'.format(kwargs.get('startkey'), kwargs.get('startkey_docid')))
+
+    def view_ending(self, db, view_name, kwargs, total_emitted, time):
+        self.log('View call took {}'.format(time))
+
+
 class PtopReindexer(NoArgsCommand):
     help = "View based elastic reindexer"
     option_list = NoArgsCommand.option_list + (
@@ -100,6 +118,13 @@ class PtopReindexer(NoArgsCommand):
         view_dump_filename = "%s%s_%s_data.json" % (self.file_prefix, self.pillow_class.__name__,  self.get_seq_prefix())
         return view_dump_filename
 
+    def paginate_view(self, *args, **kwargs):
+        if 'chunk_size' not in kwargs:
+            kwargs['chunk_size'] = self.chunk_size
+        if 'log_handler' not in kwargs:
+            kwargs['log_handler'] = PaginateViewLogHandler(self)
+        return paginate_view(*args, **kwargs)
+
     def full_couch_view_iter(self):
         if hasattr(self.pillow, 'include_docs_when_preindexing'):
             include_docs = self.pillow.include_docs_when_preindexing
@@ -111,24 +136,9 @@ class PtopReindexer(NoArgsCommand):
 
         view_kwargs.update(self.get_extra_view_kwargs())
 
-        class PaginateViewLogHandler:
-            @staticmethod
-            def view_starting(db, view_name, kwargs, total_emitted):
-                self.log('Fetching rows {}-{} from couch'.format(
-                    total_emitted,
-                    total_emitted + kwargs['limit'] - 1)
-                )
-                self.log('{}, {}'.format(kwargs.get('startkey'), kwargs.get('startkey_docid')))
-
-            @staticmethod
-            def view_ending(db, view_name, kwargs, total_emitted, time):
-                self.log('View call took {}'.format(time))
-
-        return paginate_view(
+        return self.paginate_view(
             self.db,
             self.view_name,
-            chunk_size=self.chunk_size,
-            log_handler=PaginateViewLogHandler,
             reduce=False,
             **view_kwargs
         )
@@ -265,6 +275,8 @@ class PtopReindexer(NoArgsCommand):
         Iterative view indexing - use --bulk for faster reindex.
         :return:
         """
+        # todo: should this use self.view_data_file_iter() instead?
+        # currently some reindexers run full_couch_view_iter twice
         for ix, item in enumerate(self.full_couch_view_iter()):
             self.log("\tProcessing item %s (%d)" % (item['id'], ix))
             self.process_row(item, ix)
