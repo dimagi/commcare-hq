@@ -137,7 +137,7 @@ def _get_default_tile_configurations():
             return False
 
     can_use_messaging = lambda request: (
-        (_can_access_reminders or _can_access_sms)
+        (_can_access_reminders(request) or _can_access_sms(request))
         and not request.couch_user.is_commcare_user()
         and request.couch_user.can_edit_data()
     )
