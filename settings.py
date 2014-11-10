@@ -191,6 +191,7 @@ DEFAULT_APPS = (
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
+    'mptt',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -238,6 +239,7 @@ HQ_APPS = (
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
+    'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
@@ -328,6 +330,7 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
+    'custom.tdh',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -937,6 +940,7 @@ COUCHDB_APPS = [
     'couchforms',
     'couchexport',
     'ctable',
+    'custom_data_fields',
     'hqadmin',
     'domain',
     'facilities',
@@ -992,6 +996,7 @@ COUCHDB_APPS = [
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
     ('userreports', 'meta'),
+    ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1001,7 +1006,8 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2')
+    ('wvindia2', 'wvindia2'),
+    'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1162,7 +1168,13 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-
+        'custom.tdh.models.TDHEnrollChildFluffPillow',
+        'custom.tdh.models.TDHInfantClassificationFluffPillow',
+        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
+        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
+        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
+        'custom.tdh.models.TDHChildClassificationFluffPillow',
+        'custom.tdh.models.TDHChildTreatmentFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1187,6 +1199,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1261,10 +1275,12 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
+    'ilsgateway-test-1': 'custom.ilsgateway',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'tdhtesting': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

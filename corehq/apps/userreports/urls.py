@@ -15,4 +15,7 @@ urlpatterns = patterns('corehq.apps.userreports.views',
         name='rebuild_configurable_data_source'),
     url(r'^data_sources/preview/(?P<config_id>[\w-]+)/$', 'preview_data_source',
         name='preview_configurable_data_source'),
+
+    # apis
+    url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$', 'choice_list_api', name='choice_list_api'),
 )

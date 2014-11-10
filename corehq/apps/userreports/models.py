@@ -1,6 +1,7 @@
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
@@ -15,8 +16,11 @@ from dimagi.utils.mixins import UnicodeMixIn
 from fluff.filters import ANDFilter
 
 
-class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, Document):
-
+class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCouchDocumentMixin, Document):
+    """
+    A data source configuration. These map 1:1 with database tables that get created.
+    Each data source can back an arbitrary number of reports.
+    """
     domain = StringProperty(required=True)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -104,7 +108,10 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, Document
             yield cls.wrap(result)
 
 
-class ReportConfiguration(UnicodeMixIn, Document):
+class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+    """
+    A report configuration. These map 1:1 with reports that show up in the UI.
+    """
     domain = StringProperty(required=True)
     config_id = StringProperty(required=True)
     title = StringProperty()
@@ -138,6 +145,12 @@ class ReportConfiguration(UnicodeMixIn, Document):
     @property
     def table_id(self):
         return self.config.table_id
+
+    def get_ui_filter(self, filter_slug):
+        for filter in self.ui_filters:
+            if filter.name == filter_slug:
+                return filter
+        return None
 
     def validate(self, required=True):
         super(ReportConfiguration, self).validate(required)

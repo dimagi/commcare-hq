@@ -1,4 +1,6 @@
+import logging
 from celery.task import task
+from sqlalchemy.exc import DataError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.utils import get_doc_ids
 from corehq.apps.userreports.models import DataSourceConfiguration
@@ -19,7 +21,10 @@ def rebuild_indicators(indicator_config_id):
 
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
         if config.filter.filter(doc):
-            adapter.save(doc)
+            try:
+                adapter.save(doc)
+            except DataError as e:
+                logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
 
 def _get_db(doc_type):

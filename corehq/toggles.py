@@ -2,6 +2,7 @@ from functools import wraps
 from django.http import Http404
 from toggle.shortcuts import toggle_enabled
 
+
 class StaticToggle(object):
     def __init__(self, slug, label, namespaces=None):
         self.slug = slug
@@ -104,12 +105,6 @@ PATHWAYS_PREVIEW = StaticToggle(
     'Is Pathways preview'
 )
 
-CUSTOM_PRODUCT_DATA = StaticToggle(
-    'custom_product_data',
-    'Custom Product Data',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
@@ -133,5 +128,18 @@ EDIT_SUBMISSIONS = StaticToggle(
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
-    'User configurable reports UI'
+    'User configurable reports UI',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+
+VIEW_SYNC_HISTORY = StaticToggle(
+    'sync_history_report',
+    'Enable sync history report'
+)
+
+
+STOCK_TRANSACTION_EXPORT = StaticToggle(
+    'ledger_export',
+    'Show "export transactions" link on case details page',
 )

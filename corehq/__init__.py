@@ -46,7 +46,8 @@ def REPORTS(project):
             deployments.ApplicationStatusReport,
             receiverwrapper.SubmissionErrorReport,
             phonelog.FormErrorReport,
-            phonelog.DeviceLogDetailsReport
+            phonelog.DeviceLogDetailsReport,
+            deployments.SyncHistoryReport,
         )),
         (ugettext_lazy("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
@@ -55,6 +56,7 @@ def REPORTS(project):
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
+            commtrack_reports.SimplifiedInventoryReport,
             commtrack_reports.InventoryReport,
             commtrack_reports.CurrentStockStatusReport,
             commtrack_maps.StockStatusMapReport,

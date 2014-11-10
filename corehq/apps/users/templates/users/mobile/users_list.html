@@ -145,6 +145,11 @@
                         {% trans "Bulk Upload" %}
                     </a>
                 {% endif %}
+                {% if can_add_extra_users %}
+                    <a class="btn" href="{% url "user_fields_view" domain %}">
+                        {% trans "Edit User Fields" %}
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
