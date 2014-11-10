@@ -239,6 +239,7 @@ HQ_APPS = (
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
+    'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
@@ -267,6 +268,8 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
+    'corehq.apps.reports_core',
+    'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -327,6 +330,7 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
+    'custom.tdh',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -343,7 +347,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
     'corehq.apps.megamobile',
@@ -464,7 +467,7 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.callcenter.fixturegenerators.indicators",
+    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
     "corehq.apps.commtrack.fixtures.product_fixture_generator",
     "corehq.apps.commtrack.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
@@ -769,7 +772,7 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
+            'class': 'corehq.util.log.HqAdminEmailHandler',
         },
         'sentry': {
             'level': 'ERROR',
@@ -937,6 +940,7 @@ COUCHDB_APPS = [
     'couchforms',
     'couchexport',
     'ctable',
+    'custom_data_fields',
     'hqadmin',
     'domain',
     'facilities',
@@ -991,6 +995,8 @@ COUCHDB_APPS = [
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
+    ('userreports', 'meta'),
+    ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1000,7 +1006,8 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2')
+    ('wvindia2', 'wvindia2'),
+    'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1128,6 +1135,7 @@ PILLOWTOPS = {
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
+        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
     ],
     'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
@@ -1160,7 +1168,13 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-
+        'custom.tdh.models.TDHEnrollChildFluffPillow',
+        'custom.tdh.models.TDHInfantClassificationFluffPillow',
+        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
+        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
+        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
+        'custom.tdh.models.TDHChildClassificationFluffPillow',
+        'custom.tdh.models.TDHChildTreatmentFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1185,6 +1199,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1259,10 +1275,12 @@ DOMAIN_MODULE_MAP = {
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
+    'ilsgateway-test-1': 'custom.ilsgateway',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'tdhtesting': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

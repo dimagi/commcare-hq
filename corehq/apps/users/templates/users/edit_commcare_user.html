@@ -40,32 +40,6 @@
                     expires: 1});
         });
 
-        var customDataEditor;
-
-        function handleChange() {
-            var data = customDataEditor.val();
-
-            {% if commtrack %}
-            $(".user-data-role").each(function (i, el) {
-                var attrName = $(el).attr('name');
-                data[attrName] = $(el).is(':checked') ? 'true' : 'false';
-            });
-            $("input#commtrack-user-data-input").val(JSON.stringify(data));
-            {% endif %}
-
-            $("input#user-data-input").val(JSON.stringify(data));
-        }
-
-        customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', "{% trans 'User Data' %}");
-        customDataEditor.val({{ custom_user_data|JSON }});
-        customDataEditor.on('change', handleChange);
-
-        $("#user-data-form .custom-data-controls").append(customDataEditor.ui);
-
-        {% if commtrack %}
-        $(".user-data-role").change(handleChange);
-        {% endif %}
-
         $('.reset-password-form').submit(function(){
             $(this).ajaxSubmit({
                 url: $(this).attr('action'),
@@ -135,7 +109,6 @@
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
-        <li><a href="#user-data" data-toggle="tab">{% trans "Custom Registration Data" %}</a></li>
         {% if commtrack %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommTrack" %}</a></li>
         {% endif %}
@@ -148,31 +121,7 @@
         <div class="tab-pane" id="basic-info">
             {% include 'users/partial/basic_info_form.html' %}
         </div>
-        <div class="tab-pane" id="user-data">
 
-            <form id="user-data-form"
-                  class="form form-horizontal"
-                  name="user-data-form"
-                  method="post"
-                  action="{% url "update_user_data" domain couch_user.user_id %}">
-                <input name="user-data" id="user-data-input" type="hidden" />
-
-                <fieldset>
-                    <legend>{% trans "Custom Registration Data" %}</legend>
-                    <div class="control-group">
-                        <label class="control-label">{% trans 'Current Data' %}</label>
-                        <div class="controls custom-data-controls"></div>
-                    </div>
-                </fieldset>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary disable-on-submit">
-                        {% trans "Update Information" %}
-                    </button>
-                </div>
-            </form>
-
-        </div>
         <div class="tab-pane" id="groups">
             <form class="form" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
                 <legend>{% trans 'Edit Groups' %}</legend>

@@ -3,24 +3,26 @@ import dateutil
 from django.conf import settings
 from pytz import timezone
 from datetime import datetime, timedelta, date
-from pact.enums import DAY_SLOTS_BY_TIME, \
-    DOT_DAYS_INTERVAL, \
-    DOT_ART, \
-    DOT_NONART, \
-    CASE_ART_REGIMEN_PROP, \
-    CASE_NONART_REGIMEN_PROP, \
-    DOT_OBSERVATION_DIRECT,\
-    DOT_UNCHECKED_CELL
+from pact.enums import (
+    CASE_ART_REGIMEN_PROP,
+    CASE_NONART_REGIMEN_PROP,
+    DAY_SLOTS_BY_TIME,
+    DOT_ART,
+    DOT_DAYS_INTERVAL,
+    DOT_NONART,
+    DOT_OBSERVATION_DIRECT,
+    DOT_UNCHECKED_CELL,
+)
 
 from pact.models import CObservation
 
 
 class DOTDayDose(object):
-    drug_class=None  # DOT_ART, DOT_NONART
+    drug_class = None  # DOT_ART, DOT_NONART
     total_doses = 0
 
     def __init__(self, drug_class):
-        self.drug_class=drug_class
+        self.drug_class = drug_class
         self.total_doses_hist = {}  # debug tool
         self.dose_dict = {}
 
@@ -39,10 +41,11 @@ class DOTDayDose(object):
         if self.total_doses < obs.total_doses:
             self.total_doses = obs.total_doses
 
-        #debug, double check for weird data
-        if not self.total_doses_hist.has_key(obs.total_doses):
+        # debug, double check for weird data
+        if 'obs.total_doses' not in self.total_doses_hist:
             self.total_doses_hist[obs.total_doses] = []
         self.total_doses_hist[obs.total_doses].append(obs)
+
 
 class DOTDay(object):
     nonart = None
@@ -59,20 +62,23 @@ class DOTDay(object):
                 observations = dose_dict[dose_num]
                 dose_dict[dose_num] = sort_observations(observations)
 
-
     def update_dosedata(self, obs):
         if obs.is_art:
-            drug_attr = 'art'
+            dot_day_dose = self.art
         else:
-            drug_attr = 'nonart'
-        getattr(self,drug_attr).update_total_doses(obs)
-        getattr(self, drug_attr).add_obs(obs)
+            dot_day_dose = self.nonart
+        dot_day_dose.update_total_doses(obs)
+        dot_day_dose.add_obs(obs)
 
     @classmethod
     def merge_from_observations(cls, day_observations):
         """
-        Receive an array of CObservations and try to priority sort them and make a json-able array of ART and NON ART submissions for DOT calendar display.
-        This is an intermiary, more semantically readable markup for preparing/merging data. This is not the final form that's transmitted to/from phones.
+        Receive an array of CObservations and try to priority sort them
+        and make a json-able array of ART and NON ART submissions
+        for DOT calendar display.
+        This is an intermediate, more semantically readable markup
+        for preparing/merging data.
+        This is not the final form that's transmitted to/from phones.
         """
         dot_day = cls()
 
@@ -81,12 +87,14 @@ class DOTDay(object):
         dot_day.sort_all_observations()
         return dot_day
 
-
     def to_case_json(self, casedoc, regimen_labels):
         """
-        Return the json representation of a single days nonart/art data that is put back into the caseblock, sent to phone, sent back from phone
+        Return the json representation of a single days nonart/art data
+        that is put back into the caseblock, sent to phone,
+        sent back from phone
 
-        This is the transmitted representation and the phone's representation of DOT data.
+        This is the transmitted representation
+        and the phone's representation of DOT data.
         """
 
         def get_obs_for_dosenum(obs_list, dose_num, label):
@@ -95,17 +103,17 @@ class DOTDay(object):
                 day_slot = label
                 if obs.day_slot != '' and obs.day_slot is not None:
                     day_slot = obs.day_slot
-                if obs.day_note != None and len(obs.day_note) > 0 and obs.day_note != "[AddendumEntry]":
+                if (obs.day_note is not None and len(obs.day_note) > 0
+                        and obs.day_note != "[AddendumEntry]"):
                     day_note = obs.day_note
                 else:
                     day_note = ''
 
                 return [obs.adherence, obs.method, day_note, day_slot]
-                #one and done per array
+                # one and done per array
             else:
-                #return pristine unchecked
+                # return pristine unchecked
                 return ['unchecked', 'pillbox', '', label]
-
 
         ret = []
         for ix, dose_data in enumerate([self.nonart, self.art]):
@@ -116,7 +124,8 @@ class DOTDay(object):
 
             for dose_num in dose_nums:
                 if dose_num is not None:
-                    # for each dose num in the observed array of the drug type, there maybe more than one observation
+                    # for each dose num in the observed array of the drug type,
+                    # there maybe more than one observation
                     obs_list = dose_data.dose_dict[dose_num]
                     drug_arr.append(get_obs_for_dosenum(obs_list, dose_num, labels_arr[dose_num]))
                 else:
@@ -136,7 +145,6 @@ class DOTDay(object):
                     drug_arr.append(["unchecked", "pillbox", '', labels_arr[x] if x < len(labels_arr) else -1])
             ret.append(drug_arr)
         return ret
-
 
 
 def filter_obs_for_day(this_date, observations):
@@ -159,6 +167,7 @@ def query_observations(case_id, start_date, end_date):
                                      classes={None: CObservation}).all()
     return observations
 
+
 def query_observations_singledoc(doc_id):
     """
     Hit couch to get the CObservations for a single xform submission
@@ -167,6 +176,7 @@ def query_observations_singledoc(doc_id):
     observations = CObservation.view('pact/dots_observations', key=key,
                                      classes={None: CObservation}).all()
     return observations
+
 
 def cmp_observation(x, y):
     """
@@ -185,50 +195,49 @@ def cmp_observation(x, y):
     """
 
     assert x.observed_date.date() == y.observed_date.date()
-    #Reconcilation handling
-    #reconciliations always win.
-    if (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
-        #sort by earlier date, so flip x,y
+    x_is_reconciliation = getattr(x, 'is_reconciliation', None)
+    y_is_reconciliation = getattr(y, 'is_reconciliation', None)
+    # Reconciliation handling
+    # reconciliations always win.
+    if x_is_reconciliation and y_is_reconciliation:
+        # sort by earlier date, so flip x,y
         return cmp(y.submitted_date, x.submitted_date)
-    elif (hasattr(x, 'is_reconciliation') and getattr(x, 'is_reconciliation')) and (not hasattr(y,'is_reconciliation') or not getattr(y, 'is_reconciliation')):
+    elif x_is_reconciliation and not y_is_reconciliation:
         # result: x > y
         return 1
-    elif (not hasattr(x, 'is_reconciliation') or not getattr(x, 'is_reconciliation')) and (hasattr(y, 'is_reconciliation') and getattr(y, 'is_reconciliation')):
+    elif not x_is_reconciliation and y_is_reconciliation:
         # result: x < y
         return -1
     elif x.method == DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
-        #Direct observations win next
-        #sort by earlier date, so flip x,y
+        # Direct observations win next
+        # sort by earlier date, so flip x,y
         return cmp(y.encounter_date, x.encounter_date)
     elif x.method == DOT_OBSERVATION_DIRECT and y.method != DOT_OBSERVATION_DIRECT:
-        #result: x > y
+        # result: x > y
         return 1
     elif x.method != DOT_OBSERVATION_DIRECT and y.method == DOT_OBSERVATION_DIRECT:
-        #result: x < y
+        # result: x < y
         return -1
     elif (x.adherence, x.method) == DOT_UNCHECKED_CELL and (y.adherence, y.method) != DOT_UNCHECKED_CELL:
-        #unchecked should always lose
+        # unchecked should always lose
         return -1
     elif (x.adherence, x.method) != DOT_UNCHECKED_CELL and (y.adherence, y.method) == DOT_UNCHECKED_CELL:
         return 1
     else:
         return cmp(y.encounter_date, x.encounter_date)
 
+
 def sort_observations(observations):
     """
     Method to sort observations to make sure that the "winner" is at index 0
     """
-    return sorted(observations, cmp=cmp_observation, reverse=True) #key=lambda x: x.created_date, reverse=True)
+    return sorted(observations, cmp=cmp_observation, reverse=True)
 
-
-
-def isodate_string(date):
-    if date: return dateutil.datetime_isoformat(date) + "Z"
-    return ""
 
 def get_regimen_code_arr(str_regimen):
     """
-    Helper function to decode regimens for both the old style regimens (in REGIMEN_CHOICES) as well as the new style
+    Helper function to decode regimens for both the old style regimens
+    (in REGIMEN_CHOICES) as well as the new style
     regimens as required in the technical specs above.
 
     should return an array of day slot indices.
@@ -236,8 +245,7 @@ def get_regimen_code_arr(str_regimen):
     if str_regimen is None or str_regimen == '' or str_regimen == 'None':
         return []
 
-
-    #legacy handling
+    # legacy handling
     if str_regimen.lower() == 'qd':
         return [0]
     elif str_regimen.lower() == 'qd-am':
@@ -253,7 +261,7 @@ def get_regimen_code_arr(str_regimen):
     elif str_regimen.lower() == '':
         return []
 
-    #newer handling, a split string
+    # newer handling, a split string
     splits = str_regimen.split(',')
     ret = []
     for x in splits:
@@ -264,31 +272,36 @@ def get_regimen_code_arr(str_regimen):
             ret = []
     return ret
 
+
 def get_dots_case_json(casedoc, anchor_date=None):
     """
     Return JSON-ready array of the DOTS block for given patient.
-    Pulling properties from PATIENT document.  patient document trumps casedoc in this use case.
+    Pulling properties from PATIENT document.
+    Patient document trumps casedoc in this use case.
     """
 
     if anchor_date is None:
         anchor_date = datetime.now(tz=timezone(settings.TIME_ZONE))
     enddate = anchor_date
-    ret = {}
+    ret = {
+        'regimens': [
+            # non art is 0
+            int(getattr(casedoc, CASE_NONART_REGIMEN_PROP, None) or 0),
+            # art is 1
+            int(getattr(casedoc, CASE_ART_REGIMEN_PROP, None) or 0),
+        ],
+        'regimen_labels': [
+            list(casedoc.nonart_labels),
+            list(casedoc.art_labels)
+        ],
+        'days': [],
+        # dmyung - hack to have query_observations timezone
+        # be relative specific to the eastern seaboard
+        'anchor': anchor_date.strftime("%d %b %Y"),
+    }
 
-    ret['regimens'] = [
-        int(getattr(casedoc, CASE_NONART_REGIMEN_PROP, None) or 0),  # non art is 0
-        int(getattr(casedoc, CASE_ART_REGIMEN_PROP, None) or 0),  # art is 1
-    ]
-    ret['regimen_labels'] = [
-        list(casedoc.nonart_labels),
-        list(casedoc.art_labels)
-    ]
-
-    ret['days'] = []
-    #dmyung - hack to have query_observations be timezone be relative specific to the eastern seaboard
-    ret['anchor'] = anchor_date.strftime("%d %b %Y")
-
-    observations = query_observations(casedoc._id, enddate-timedelta(days=DOT_DAYS_INTERVAL),enddate)
+    observations = query_observations(
+        casedoc._id, enddate-timedelta(days=DOT_DAYS_INTERVAL), enddate)
     for delta in range(DOT_DAYS_INTERVAL):
         obs_date = enddate - timedelta(days=delta)
         day_arr = filter_obs_for_day(obs_date.date(), observations)
@@ -301,8 +314,9 @@ def get_dots_case_json(casedoc, anchor_date=None):
 
 def calculate_regimen_caseblock(case):
     """
-    Forces all labels to be reset back to the labels set on the patient document.
-    patient document trumps casedoc in this case.
+    Forces all labels to be reset back to the labels set
+    on the patient document.
+    Patient document trumps casedoc in this case.
     """
     update_ret = {}
     for prop_fmt in ['dot_a_%s', 'dot_n_%s']:
@@ -312,8 +326,8 @@ def calculate_regimen_caseblock(case):
         elif prop_fmt[4] == 'n':
             code_arr = get_regimen_code_arr(case.non_art_regimen)
             update_ret['nonartregimen'] = str(len(code_arr)) if len(code_arr) > 0 else ""
-        digit_strings = ["zero", 'one', 'two', 'three','four']
-        for x in range(1,5):
+        digit_strings = ["zero", 'one', 'two', 'three', 'four']
+        for x in range(1, 5):
             prop_prop = prop_fmt % digit_strings[x]
             if x > len(code_arr):
                 update_ret[prop_prop] = ''

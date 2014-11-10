@@ -10,12 +10,16 @@ from custom.world_vision import user_calcs
 from django.utils.dateformat import format
 
 
+WV_DELETED_TYPES = ('CommCareCase-Deleted', )
+
+
 class WorldVisionMotherFluff(fluff.IndicatorDocument):
     def case_property(property):
         return flat_field(lambda case: case.get_case_property(property))
 
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='ttc_mother')
+    deleted_types = WV_DELETED_TYPES
 
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain', 'user_id')
@@ -127,6 +131,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
 
     document_class = CommCareCase
     document_filter = CasePropertyFilter(type='ttc_child')
+    deleted_types = WV_DELETED_TYPES
 
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain', 'user_id')
@@ -175,6 +180,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     opened_on = flat_field(lambda case: case.opened_on)
     closed_on = flat_field(lambda case: case.closed_on)
     dob = flat_field(lambda case: case.dob)
+    date_of_death = case_property('child_date_of_death')
     month_of_death = flat_field(get_datepart)
     year_of_death = flat_field(partial(get_datepart, t='Y'))
 

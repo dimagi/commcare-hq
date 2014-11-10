@@ -46,7 +46,7 @@ class SubmissionTest(TestCase):
         self.assertTrue(foo['received_on'])
         for key in ['form', '_attachments', '_rev', 'received_on']:
             del foo[key]
-        self.assertEqual(n_times_saved, 2)
+        self.assertEqual(n_times_saved, 1)
         self.assertEqual(foo, {
             "#export_tag": [
                 "domain",

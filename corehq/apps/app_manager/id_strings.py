@@ -156,3 +156,7 @@ def referral_list_command(module):
 
 def indicator_instance(indicator_set_name):
     return u"indicators:%s" % indicator_set_name
+
+
+def schedule_fixture(form):
+    return u'schedule:m{module.id}:f{form.id}'.format(module=form.get_module(), form=form)

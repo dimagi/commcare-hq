@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import base64
 
 import datetime
 import hashlib
@@ -7,12 +8,12 @@ import time
 from copy import copy
 from jsonobject.base import DefaultProperty
 from lxml import etree
-from xml.etree import ElementTree
 
 from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from lxml.etree import XMLSyntaxError
 from casexml.apps.phone.models import SyncLog
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
@@ -207,6 +208,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, **kwargs):
+        # default to encode_attachments=False
+        if 'encode_attachments' not in kwargs:
+            kwargs['encode_attachments'] = False
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
@@ -248,6 +252,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return None
 
     def get_xml(self):
+        if ATTACHMENT_NAME in self._attachments and 'data' in self._attachments[ATTACHMENT_NAME]:
+            return base64.b64decode(self._attachments[ATTACHMENT_NAME]['data'])
         try:
             return self.fetch_attachment(ATTACHMENT_NAME)
         except ResourceNotFound:
@@ -258,10 +264,26 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 return None
 
     def get_xml_element(self):
-        xml = self.get_xml()
-        if isinstance(xml, unicode):
-            xml = xml.encode('utf-8')
-        return etree.fromstring(xml)
+        return self._xml_string_to_element(self.get_xml())
+
+    def _xml_string_to_element(self, xml_string):
+
+        def _to_xml_element(payload):
+            if isinstance(payload, unicode):
+                payload = payload.encode('utf-8', errors='replace')
+            return etree.fromstring(payload)
+
+        try:
+            return _to_xml_element(xml_string)
+        except XMLSyntaxError:
+            # there is a bug at least in pact code that double
+            # saves a submission in a way that the attachments get saved in a base64-encoded format
+            decoded_payload = base64.b64decode(xml_string)
+            element = _to_xml_element(decoded_payload)
+
+            # in this scenario resave the attachment properly in case future calls circumvent this method
+            self.put_attachment(decoded_payload, ATTACHMENT_NAME)
+            return element
 
     @property
     def attachments(self):
@@ -286,11 +308,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         if not xml_payload:
             return SortedDict(sorted(self.form.items()))
 
-        try:
-            element = ElementTree.XML(xml_payload)
-        except UnicodeEncodeError:
-            xml_payload = xml_payload.encode('utf-8', errors='replace')
-            element = ElementTree.XML(xml_payload)
+        element = self._xml_string_to_element(xml_payload)
 
         for child in element:
             # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
@@ -324,7 +342,8 @@ class XFormError(XFormInstance):
     Instances that have errors go here.
     """
     problem = StringProperty()
-    
+    orig_id = StringProperty()
+
     def save(self, *args, **kwargs):
         # we put this here, in case the doc hasn't been modified from an original 
         # XFormInstance we'll force the doc_type to change. 
@@ -350,7 +369,8 @@ class XFormDeprecated(XFormError):
     After an edit, the old versions go here.
     """
     deprecated_date = DateTimeProperty(default=datetime.datetime.utcnow)
-    
+    orig_id = StringProperty()
+
     def save(self, *args, **kwargs):
         # we put this here, in case the doc hasn't been modified from an original 
         # XFormInstance we'll force the doc_type to change. 
@@ -408,3 +428,12 @@ class DefaultAuthContext(DocumentSchema):
 
     def is_valid(self):
         return True
+
+from django.db import models
+
+
+class UnfinishedSubmissionStub(models.Model):
+    xform_id = models.CharField(max_length=200)
+    timestamp = models.DateTimeField()
+    saved = models.BooleanField()
+    domain = models.CharField(max_length=256)

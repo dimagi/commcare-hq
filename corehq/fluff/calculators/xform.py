@@ -1,6 +1,5 @@
 from datetime import timedelta
 import warnings
-from corehq.fluff.calculators.logic import ORCalculator
 import fluff
 from fluff.filters import Filter, ORFilter, ANDFilter
 from fluff.models import SimpleCalculator
@@ -163,8 +162,15 @@ class FormPropertyFilter(Filter):
         )
 
 
-class FormSUMCalculator(ORCalculator):
+class FormSUMCalculator(fluff.Calculator):
     window = timedelta(days=1)
+
+    def __init__(self, calculators):
+        self.calculators = calculators
+        assert len(self.calculators) > 1
+
+    def filter(self, item):
+        return any(calc.filter(item) for calc in self.calculators)
 
     @fluff.date_emitter
     def total(self, form):
