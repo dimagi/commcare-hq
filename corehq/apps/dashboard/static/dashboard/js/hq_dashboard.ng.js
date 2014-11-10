@@ -85,6 +85,7 @@
             $scope.paginatedItems = resp.paginatedItems || [];
             $scope.isLoading = false;
             $scope.default = data.response.default || {};
+            $scope.helpText = data.response.helpText;
         };
 
         self.retry = function () {
@@ -103,6 +104,7 @@
         $scope.icon = '';
         $scope.url = '';
         $scope.isExternal = false;
+        $scope.helpText = '';
 
         self.retries = 0;
 
@@ -122,6 +124,7 @@
             $scope.icon = data.response.icon;
             $scope.url = data.response.url;
             $scope.isExternal = !!data.response.isExternal;
+            $scope.helpText = data.response.helpText;
             if ($scope.isExternal) {
                 $($scope.externalLink).attr('target', '_blank');
             }

@@ -1,7 +1,7 @@
 import os
 from django.test import TestCase
 from couchforms.models import XFormInstance
-from couchforms.util import post_xform_to_couch, create_and_lock_xform
+from couchforms.tests.testutils import post_xform_to_couch
 
 
 class DuplicateFormTest(TestCase):

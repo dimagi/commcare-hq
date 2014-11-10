@@ -21,14 +21,12 @@ from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_cate
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.loosechange import map_reduce
-from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError, InvalidProductException
@@ -369,7 +367,7 @@ class Product(Document):
         self.save()
 
     @classmethod
-    def from_excel(cls, row):
+    def from_excel(cls, row, custom_data_validator):
         if not row:
             return None
 
@@ -398,7 +396,13 @@ class Product(Document):
         if not p.name:
             raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
 
-        p.product_data = row.get('data', {})
+        custom_data = row.get('data', {})
+        error = custom_data_validator(custom_data)
+        if error:
+            raise InvalidProductException(error)
+
+        p.product_data = custom_data
+        p.product_data.update(row.get('uncategorized_data', {}))
 
         return p
 
@@ -719,7 +723,7 @@ class NewStockReport(object):
         return cls(form, timestamp, tag, transactions)
 
     @transaction.commit_on_success
-    def create_models(self):
+    def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
@@ -736,6 +740,9 @@ class NewStockReport(object):
                 section_id=txn.section_id,
                 product_id=txn.product_id,
             )
+            if domain:
+                # set this as a shortcut for post save signal receivers
+                db_txn.domain = domain
             previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
             db_txn.subtype = txn.subaction
@@ -926,14 +933,12 @@ class SupplyPointCase(CommCareCase):
     specific to supply points.
     """
 
-    # TODO move location_ property from CommCareCase
-
     class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
     def open_requisitions(self):
-        return RequisitionCase.open_for_location(self.domain, self.location_[-1])
+        return RequisitionCase.open_for_location(self.domain, self.location_id)
 
     @property
     @memoized
@@ -1401,7 +1406,7 @@ class SQLProduct(models.Model):
     SQL based queries to exclude data for archived products.
     """
     domain = models.CharField(max_length=255, db_index=True)
-    product_id = models.CharField(max_length=100, db_index=True)
+    product_id = models.CharField(max_length=100, db_index=True, unique=True)
     name = models.CharField(max_length=100, null=True)
     is_archived = models.BooleanField(default=False)
     code = models.CharField(max_length=100, default='', null=True)
@@ -1429,9 +1434,9 @@ class ActiveManager(models.Manager):
     """
 
     def get_query_set(self):
-        return super(ActiveManager, self).get_query_set().exclude(
-            sql_product__is_archived=True
-        )
+        return super(ActiveManager, self).get_query_set() \
+            .exclude(sql_product__is_archived=True) \
+            .exclude(sql_location__is_archived=True)
 
 
 class StockState(models.Model):
@@ -1445,6 +1450,7 @@ class StockState(models.Model):
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
     sql_product = models.ForeignKey(SQLProduct)
+    sql_location = models.ForeignKey(SQLLocation, null=True)
 
     # override default model manager to only include unarchived data
     objects = ActiveManager()
@@ -1557,6 +1563,10 @@ class StockExportColumn(ComplexExportColumn):
 
 
 def sync_location_supply_point(loc):
+    """
+    This method syncs the location/supply point connection
+    and is triggered whenever a location is edited or created.
+    """
     # circular import
     from corehq.apps.domain.models import Domain
 
@@ -1573,9 +1583,18 @@ def sync_location_supply_point(loc):
         supply_point = SupplyPointCase.get_by_location(loc)
         if supply_point:
             supply_point.update_from_location(loc)
-            return supply_point
+            updated_supply_point = supply_point
         else:
-            return SupplyPointCase.create_from_location(loc.domain, loc)
+            updated_supply_point = SupplyPointCase.create_from_location(loc.domain, loc)
+
+        # need to sync this sp change to the sql location
+        # but saving the doc will trigger a loop
+        try:
+            sql_loc = SQLLocation.objects.get(location_id=loc._id)
+            sql_loc.supply_point_id = updated_supply_point._id
+            sql_loc.save()
+        except SQLLocation.DoesNotExist:
+            pass
 
 
 @receiver(post_save, sender=DbStockTransaction)
@@ -1584,18 +1603,25 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 
 def update_stock_state_for_transaction(instance):
-    domain = Domain.get_by_name(
-        CommCareCase.get(instance.case_id).domain
-    )
+    try:
+        domain_name = instance.domain
+    except AttributeError:
+        domain_name = CommCareCase.get(instance.case_id).domain
+
+    domain = Domain.get_by_name(domain_name)
 
     sql_product = SQLProduct.objects.get(product_id=instance.product_id)
+
+    try:
+        sql_location = SQLLocation.objects.get(supply_point_id=instance.case_id)
+    except SQLLocation.DoesNotExist:
+        sql_location = None
 
     try:
         state = StockState.include_archived.get(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
-            sql_product=sql_product,
         )
     except StockState.DoesNotExist:
         state = StockState(
@@ -1603,6 +1629,7 @@ def update_stock_state_for_transaction(instance):
             case_id=instance.case_id,
             product_id=instance.product_id,
             sql_product=sql_product,
+            sql_location=sql_location,
         )
 
     state.last_modified_date = instance.report.date
@@ -1620,6 +1647,8 @@ def update_stock_state_for_transaction(instance):
         'stock',
         consumption_calc
     )
+    # so you don't have to look it up again in the signal receivers
+    state.domain = domain
     state.save()
 
 
@@ -1643,11 +1672,17 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
+    try:
+        domain_name = instance.domain
+        if not domain_name:
+            raise ValueError()
+    except (AttributeError, ValueError):
+        domain_name = CommCareCase.get(case_id).domain
     if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
         mapping = DocDomainMapping(
             doc_id=case_id,
             doc_type='CommCareCase',
-            domain_name=CommCareCase.get(case_id).domain
+            domain_name=domain_name,
         )
         mapping.save()
 
@@ -1670,7 +1705,8 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    process_stock(xform)
+    for case in process_stock(xform):
+        case.save()
 
 
 # import signals

@@ -45,7 +45,8 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
 from .incentive import Worker
-from .filters import HierarchyFilter, MetHierarchyFilter, OPMSelectOpenCloseFilter
+from .filters import (HierarchyFilter, MetHierarchyFilter,
+                      OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
 
@@ -131,23 +132,23 @@ class OpmCaseSqlData(SqlData):
 class OpmFormSqlData(SqlData):
     table_name = "fluff_OpmFormFluff"
 
-    def __init__(self, domain, case_id, datespan):
+    def __init__(self, domain, user_id, datespan):
         self.domain = domain
-        self.case_id = case_id
+        self.user_id = user_id
         self.datespan = datespan
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
-            case_id=self.case_id,
+            user_id=self.user_id,
             startdate=self.datespan.startdate_utc.date(),
             enddate=self.datespan.enddate_utc.date()
         )
 
     @property
     def group_by(self):
-        return ['case_id']
+        return ['user_id']
 
     @property
     def filters(self):
@@ -155,24 +156,24 @@ class OpmFormSqlData(SqlData):
             "domain = :domain",
             "date between :startdate and :enddate"
         ]
-        if self.case_id:
-            filters.append("case_id = :case_id")
+        if self.user_id:
+            filters.append("user_id = :user_id")
         return filters
 
     @property
     def columns(self):
         return [
-            DatabaseColumn("Case ID", SimpleColumn("case_id")),
+            DatabaseColumn("User ID", SimpleColumn("user_id")),
             DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
             DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
         ]
 
     @property
     def data(self):
-        if self.case_id is None:
+        if self.user_id is None:
             return super(OpmFormSqlData, self).data
-        if self.case_id in super(OpmFormSqlData, self).data:
-            return super(OpmFormSqlData, self).data[self.case_id]
+        if self.user_id in super(OpmFormSqlData, self).data:
+            return super(OpmFormSqlData, self).data[self.user_id]
         else:
             return None
 
@@ -637,12 +638,8 @@ class CaseReportMixin(object):
     is_rendered_as_email = False
 
     @property
-    def display_open_cases_only(self):
-        return self.request_params.get('is_open') == 'open'
-
-    @property
-    def display_closed_cases_only(self):
-        return self.request_params.get('is_open') == 'closed'
+    def case_status(self):
+        return OpenCloseFilter.case_status(self.request_params)
 
     def get_rows(self, datespan):
         def get_awc_filter(awcs):
@@ -662,12 +659,12 @@ class CaseReportMixin(object):
                 .term("type.exact", self.default_case_type)
         query.index = 'report_cases'
 
-        if self.display_open_cases_only:
+        if self.case_status == 'open':
             query = query.filter(es_filters.OR(
                 case_es.is_closed(False),
                 case_es.closed_range(gte=self.datespan.enddate_utc)
             ))
-        elif self.display_closed_cases_only:
+        elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
         if self.awcs:
@@ -685,7 +682,7 @@ class CaseReportMixin(object):
             MetHierarchyFilter,
             MonthFilter,
             YearFilter,
-            OPMSelectOpenCloseFilter,
+            OpenCloseFilter,
         ]
 
     @property
@@ -771,6 +768,7 @@ class MetReport(CaseReportMixin, BaseReport):
     fix_left_col = True
     model = ConditionsMet
     exportable = False
+    default_rows = 5
 
     @property
     def headers(self):
@@ -966,11 +964,11 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
     @property
     def fields(self):
-        return [HierarchyFilter, OPMSelectOpenCloseFilter, DatespanFilter]
+        return [HierarchyFilter, OpenCloseFilter, DatespanFilter]
 
     @property
     def case_status(self):
-        return self.request.GET['is_open']
+        return OpenCloseFilter.case_status(self.request_params)
 
     @property
     @memoized
@@ -1177,7 +1175,7 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
     name = "Health Status (Map)"
     slug = "health_status_map"
 
-    fields = [HierarchyFilter, OPMSelectOpenCloseFilter, DatespanFilter]
+    fields = [HierarchyFilter, OpenCloseFilter, DatespanFilter]
 
     data_source = {
         'adapter': 'legacyreport',

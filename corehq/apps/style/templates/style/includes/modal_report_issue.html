@@ -40,6 +40,25 @@
                                           placeholder="{% trans "Please try to include as much information as possible." %}"></textarea>
                             </div>
                         </div>
+
+                        {% if request.couch_user.is_commcare_user %}
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label" for="bug-report-email">{% trans "Email" %}
+                            </label>
+                            <div class="col-sm-9">
+                                <input type="text"
+                                       name="email"
+                                       class="form-control"
+                                       id="bug-report-email">
+                                <p class="help-block">
+                                    {% blocktrans %}
+                                        Please enter your email here so that we can follow up with you regarding this issue
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <div class="form-group" id="bug-report-cc-form-group">
                             <label for="bug-report-cc"
                                    class="col-sm-3 control-label">{% trans "Other recipients (optional)" %}</label>

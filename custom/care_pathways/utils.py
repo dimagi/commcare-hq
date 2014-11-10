@@ -110,7 +110,10 @@ class CareDataFormatter(DataFormatter):
 
                 disp_name = find_name(value_chains, 0)
             row = self._format.format_row(group_row)
-            yield [disp_name, row[1]['html'], row[2]['html'], row[3]['html']]
+            sum = row[1]['html'] + row[2]['html'] + row[3]['html']
+            yield [disp_name, unicode(round(row[1]['html'] * 100.0 / sum)) + '%',
+                   unicode(round(row[2]['html'] * 100.0 / sum)) + '%',
+                   unicode(round(row[3]['html'] * 100.0 / sum)) + '%']
             for value in chunk:
                 formatted_row = self._format.format_row(value[1])
                 if self.filter_row(value[0], formatted_row):
@@ -156,9 +159,12 @@ class TableCardDataGroupsFormatter(DataFormatter):
             range_groups[2].append(0)
             range_groups[3].append(0)
 
+        min_length = min([len(group) for group in rows_dict])
+
         for key, row in rows_dict.items():
              for idx, practice in enumerate(row, 1):
-                range_groups[self.group_level(practice)][idx] += 1
+                if idx <= min_length:
+                    range_groups[self.group_level(practice)][idx] += 1
         all_rows = len(rows_dict)
 
         for group in range_groups:
@@ -211,8 +217,10 @@ class TableCardDataIndividualFormatter(DataFormatter):
                 rows_dict[formatted_row[0]] = []
             rows_dict[formatted_row[0]].append(formatted_row[1])
 
+        min_length = min([len(item[1]) for item in rows_dict.items()])
+
         for key, row in rows_dict.items():
             total_column = self.calculate_total_column(row)
             res = [key, total_column]
-            res.extend(row)
+            res.extend(row[0:min_length])
             yield res

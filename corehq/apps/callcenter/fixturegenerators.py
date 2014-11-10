@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.logging import notify_logger
+from dimagi.utils.logging import notify_exception
 
 utc = pytz.utc
 
@@ -31,21 +31,25 @@ def should_sync(domain, last_sync, utcnow=None):
     return False
 
 
-def indicators_fixture_generator(user, version, last_sync):
+def indicators_fixture_generator(user, version, synclog, last_sync):
     assert isinstance(user, CommCareUser)
 
     domain = user.project
     fixtures = []
 
+    if not domain or not (hasattr(domain, 'call_center_config') and domain.call_center_config.enabled):
+        return fixtures
+
     if not should_sync(domain, last_sync):
         return fixtures
 
-    if domain and hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
-        try:
-            fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user)))
-        except Exception as e:  # blanket exception catching intended
-            notify_logger.exception('problem generating callcenter fixture for user {user}: {msg}'.format(
-                user=user._id, msg=str(e)))
+    try:
+        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user, synclog=synclog)))
+    except Exception:  # blanket exception catching intended
+        notify_exception(None, 'problem generating callcenter fixture', details={
+            'user_id': user._id,
+            'domain': user.domain
+        })
 
     return fixtures
 

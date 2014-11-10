@@ -1,5 +1,7 @@
 from StringIO import StringIO
 from datetime import datetime, timedelta
+from django.test.testcases import SimpleTestCase
+from mock import MagicMock
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
@@ -10,11 +12,13 @@ from django.test import TestCase
 from django.test.client import Client
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 from corehq.apps.receiverwrapper.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
-)
+    RegisterGenerator)
+from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
 from couchforms.models import XFormInstance
 
 case_id = "ABC123CASEID"
@@ -64,9 +68,22 @@ xform_xml = xform_xml_template % (instance_id, case_block)
 update_xform_xml = xform_xml_template % (update_instance_id, update_block)
 
 
-class RepeaterTest(TestCase):
+class BaseRepeaterTest(TestCase):
+    client = Client()
+
+    def post_xml(self, xml):
+        f = StringIO(xml)
+        f.name = 'form.xml'
+        self.client.post(
+            reverse('receiver_post', args=[self.domain]), {
+                'xml_submission_file': f
+            }
+        )
+
+
+class RepeaterTest(BaseRepeaterTest):
     def setUp(self):
-        self.client = Client()
+
         self.domain = "test-domain"
         create_domain(self.domain)
         self.case_repeater = CaseRepeater(
@@ -83,17 +100,9 @@ class RepeaterTest(TestCase):
         self.log = []
         self.post_xml(xform_xml)
 
-    def post_xml(self, xml):
-        f = StringIO(xml)
-        f.name = 'form.xml'
-        self.client.post(
-            reverse('receiver_post', args=[self.domain]), {
-                'xml_submission_file': f
-            }
-        )
-
     def clear_log(self):
-        for i in range(len(self.log)): self.log.pop()
+        for i in range(len(self.log)):
+            self.log.pop()
 
     def make_post_fn(self, status_codes):
         status_codes = iter(status_codes)
@@ -194,6 +203,56 @@ class RepeaterTest(TestCase):
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 2)
+
+
+class TestRepeaterFormat(BaseRepeaterTest):
+    def setUp(self):
+        self.domain = "test-domain"
+        create_domain(self.domain)
+        self.post_xml(xform_xml)
+
+        self.repeater = CaseRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+            version=V1,
+            format='new_format'
+        )
+        self.repeater.save()
+
+    def tearDown(self):
+        self.repeater.delete()
+        XFormInstance.get(instance_id).delete()
+        repeat_records = RepeatRecord.all()
+        for repeat_record in repeat_records:
+            repeat_record.delete()
+
+    def test_new_format_same_name(self):
+        with self.assertRaises(DuplicateFormatException):
+            @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=False)
+            class NewCaseGenerator(BasePayloadGenerator):
+                def get_payload(self, repeat_record, payload_doc):
+                    return "some random case"
+
+    def test_new_format_second_default(self):
+        with self.assertRaises(DuplicateFormatException):
+            @RegisterGenerator(CaseRepeater, 'rubbish', 'XML', is_default=True)
+            class NewCaseGenerator(BasePayloadGenerator):
+                def get_payload(self, repeat_record, payload_doc):
+                    return "some random case"
+
+    def test_new_format_payload(self):
+        payload = "some random case"
+
+        @RegisterGenerator(CaseRepeater, 'new_format', 'XML')
+        class NewCaseGenerator(BasePayloadGenerator):
+            def get_payload(self, repeat_record, payload_doc):
+                return payload
+
+        repeat_record = self.repeater.register(case_id)
+        post_fn = MagicMock()
+        repeat_record.fire(post_fn=post_fn)
+        headers = self.repeater.get_headers(repeat_record)
+        post_fn.assert_called_with(payload, self.repeater.url, headers=headers)
 
 
 class RepeaterLockTest(TestCase):

@@ -8,6 +8,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
@@ -34,7 +35,6 @@
         var urls = {
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
-            emulator: '{% url "emulator" domain '___' %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
@@ -301,17 +301,6 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
-                                attr: {href: $root.url('emulator', id)},
-                                click: function() { track_deploy_type_and_redirect('Preview in Emulator', $root.url('emulator', id)); },
-                            ">
-                                {% trans 'Preview in Emulator' %}
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
                                 click: function() { track_deploy_type('Download to Java Phone'); },
                             ">
                                 {% trans "Download to Java Phone" %}
@@ -373,7 +362,10 @@
                                                             into the application install screen:
                                                         {% endblocktrans %}
                                                         <code class="bitly"><a data-bind="
-                                                            attr: {href: get_short_odk_url()},
+                                                            attr: {
+                                                                href: get_short_odk_url(),
+                                                                title: get_short_odk_url_phonetic()
+                                                            },
                                                             text: get_short_odk_url()
                                                         "></a></code>
                                                     </span>

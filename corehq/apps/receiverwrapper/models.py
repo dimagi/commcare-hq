@@ -1,5 +1,5 @@
+from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
-import json
 import urllib
 import urlparse
 
@@ -11,6 +11,7 @@ import hashlib
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
@@ -54,12 +55,138 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
 
 DELETED = "-Deleted"
 
+FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
+
+
+class GeneratorCollection():
+    """Collection of format_name to Payload Generators for a Repeater class
+
+    args:
+        repeater_class: A valid child class of Repeater class
+    """
+
+    def __init__(self, repeater_class):
+        self.repeater_class = repeater_class
+        self.default_format = ''
+        self.format_generator_map = {}
+
+    def add_new_format(self, format_name, format_label, generator_class, is_default=False):
+        """Adds a new format->generator mapping to the collection
+
+        args:
+            format_name: unique name to identify the format
+            format_label: label to be displayed to the user
+            generator_class: child class of .repeater_generators.BasePayloadGenerator
+
+        kwargs:
+            is_default: True if the format_name should be default format
+
+        exceptions:
+            raises DuplicateFormatException if format is added with is_default while other
+            default exists
+            raises DuplicateFormatException if format_name alread exists in the collection
+        """
+        if is_default and self.default_format:
+            raise DuplicateFormatException("A default format already exists for this repeater.")
+        elif is_default:
+            self.default_format = format_name
+        if format_name in self.format_generator_map:
+            raise DuplicateFormatException("There is already a Generator with this format name.")
+
+        self.format_generator_map[format_name] = FormatInfo(
+            name=format_name,
+            label=format_label,
+            generator_class=generator_class
+        )
+
+    def get_default_format(self):
+        """returns default format"""
+        return self.default_format
+
+    def get_default_generator(self):
+        """returns generator class for the default format"""
+        raise self.format_generator_map[self.default_format].generator_class
+
+    def get_all_formats(self, for_domain=None):
+        """returns all the formats added to this repeater collection"""
+        return [(name, format.label) for name, format in self.format_generator_map.iteritems()
+                if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
+
+    def get_generator_by_format(self, format):
+        """returns generator class given a format"""
+        return self.format_generator_map[format].generator_class
+
+
+class RegisterGenerator(object):
+    """Decorator to register new formats and Payload generators for Repeaters
+
+    args:
+        repeater_cls: A child class of Repeater for which the new format is being added
+        format_name: unique identifier for the format
+        format_label: description for the format
+
+    kwargs:
+        is_default: whether the format is default to the repeater_cls
+    """
+
+    generators = {}
+
+    def __init__(self, repeater_cls, format_name, format_label, is_default=False):
+        self.format_name = format_name
+        self.format_label = format_label
+        self.repeater_cls = repeater_cls
+        self.label = format_label
+        self.is_default = is_default
+
+    def __call__(self, generator_class):
+        if not self.repeater_cls in RegisterGenerator.generators:
+            RegisterGenerator.generators[self.repeater_cls] = GeneratorCollection(self.repeater_cls)
+        RegisterGenerator.generators[self.repeater_cls].add_new_format(
+            self.format_name,
+            self.format_label,
+            generator_class,
+            is_default=self.is_default
+        )
+
+    @classmethod
+    def generator_class_by_repeater_format(cls, repeater_class, format_name):
+        """Return generator class given a Repeater class and format_name"""
+        generator_collection = cls.generators[repeater_class]
+        return generator_collection.get_generator_by_format(format_name)
+
+    @classmethod
+    def all_formats_by_repeater(cls, repeater_class, for_domain=None):
+        """Return all formats for a given Repeater class"""
+        generator_collection = cls.generators[repeater_class]
+        return generator_collection.get_all_formats(for_domain=for_domain)
+
+    @classmethod
+    def default_format_by_repeater(cls, repeater_class):
+        """Return default format_name for a Repeater class"""
+        generator_collection = cls.generators[repeater_class]
+        return generator_collection.get_default_format()
+
 
 class Repeater(Document, UnicodeMixIn):
     base_doc = 'Repeater'
 
     domain = StringProperty()
     url = StringProperty()
+    format = StringProperty()
+
+    def format_or_default_format(self):
+        return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
+
+    def get_payload_generator(self, payload_format):
+        gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
+        return gen(self)
+
+    def payload_doc(self, repeat_record):
+        raise NotImplementedError
+
+    def get_payload(self, repeat_record):
+        generator = self.get_payload_generator(self.format_or_default_format())
+        return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
         try:
@@ -138,28 +265,26 @@ class FormRepeater(Repeater):
     exclude_device_reports = BooleanProperty(default=False)
 
     @memoized
-    def _payload_doc(self, repeat_record):
+    def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
-
-    def get_payload(self, repeat_record):
-        return self._payload_doc(repeat_record).get_xml()
 
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
         # adapted from http://stackoverflow.com/a/2506477/10840
         url_parts = list(urlparse.urlparse(url))
         query = urlparse.parse_qsl(url_parts[4])
-        query.append(("app_id", self._payload_doc(repeat_record).app_id))
+        query.append(("app_id", self.payload_doc(repeat_record).app_id))
         url_parts[4] = urllib.urlencode(query)
         return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         return {
-            "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
+            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
         }
 
     def __unicode__(self):
         return "forwarding forms to: %s" % self.url
+
 
 @register_repeater_type
 class CaseRepeater(Repeater):
@@ -171,19 +296,17 @@ class CaseRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
 
     @memoized
-    def _payload_doc(self, repeat_record):
+    def payload_doc(self, repeat_record):
         return CommCareCase.get(repeat_record.payload_id)
-
-    def get_payload(self, repeat_record):
-        return self._payload_doc(repeat_record).to_xml(version=self.version or V2)
 
     def get_headers(self, repeat_record):
         return {
-            "server-modified-on": self._payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
+            "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
         }
 
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
+
 
 @register_repeater_type
 class ShortFormRepeater(Repeater):
@@ -195,19 +318,12 @@ class ShortFormRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
 
     @memoized
-    def _payload_doc(self, repeat_record):
+    def payload_doc(self, repeat_record):
         return XFormInstance.get(repeat_record.payload_id)
-
-    def get_payload(self, repeat_record):
-        form = self._payload_doc(repeat_record)
-        cases = CommCareCase.get_by_xform_id(form.get_id)
-        return json.dumps({'form_id': form._id,
-                           'received_on': json_format_datetime(form.received_on),
-                           'case_ids': [case._id for case in cases]})
 
     def get_headers(self, repeat_record):
         return {
-            "received-on": self._payload_doc(repeat_record).received_on.isoformat()+"Z"
+            "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
         }
 
     def __unicode__(self):
@@ -216,9 +332,8 @@ class ShortFormRepeater(Repeater):
 
 @register_repeater_type
 class AppStructureRepeater(Repeater):
-    def get_payload(self, repeat_record):
-        # This is the id of the application, currently all we forward
-        return repeat_record.payload_id
+    def payload_doc(self, repeat_record):
+        return None
 
 
 class RepeatRecord(Document, LockableMixIn):
