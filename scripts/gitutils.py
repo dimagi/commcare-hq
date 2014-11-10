@@ -95,7 +95,12 @@ def git_bisect_merge_conflict(branch1, branch2, git=None):
                     txt = git.bisect('good')
                 else:
                     txt = git.bisect('bad')
-            return grep(txt, '^commit ').strip().split(' ')[-1]
+            try:
+                # txt has a line that's like "<commit> is the first bad commit"
+                return grep(txt, ' is the first bad commit$').strip().split(' ')[0]
+            except sh.ErrorReturnCode_1:
+                raise Exception('Error finding offending commit: '
+                                '"^commit" does not match\n{}'.format(txt))
         finally:
             git.bisect('reset')
 
