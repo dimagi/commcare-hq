@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import ugettext_noop
 
-from corehq.apps.commtrack.models import Program
+from corehq.apps.programs.models import Program
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.util import all_sms_codes
 import json

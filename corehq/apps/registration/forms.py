@@ -1,4 +1,4 @@
-from corehq.apps.commtrack.models import Program
+from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
 from django import forms
 from django.contrib.auth.models import User

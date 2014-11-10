@@ -3,8 +3,9 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
     CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions,
-    CommtrackRequisitionConfig, Product, SupplyPointCase, RequisitionCase, Program
+    CommtrackRequisitionConfig, Product, SupplyPointCase, RequisitionCase
 )
+from corehq.apps.programs.models import Program
 from corehq.apps.locations.models import Location
 import itertools
 from datetime import datetime, date, timedelta
