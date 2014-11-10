@@ -254,9 +254,9 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
     else:
         historical_groups = {}
     for date, groups in historical_groups.iteritems():
-            for group in groups:
-                HistoricalLocationGroup.objects.get_or_create(date=date, group=group,
-                                                              location_id=location.sql_location)
+        for group in groups:
+            HistoricalLocationGroup.objects.get_or_create(date=date, group=group,
+                                                          location_id=location.sql_location)
 
     return location
 
