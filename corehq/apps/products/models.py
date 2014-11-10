@@ -301,12 +301,3 @@ class SQLProduct(models.Model):
             self.domain,
             self.name
         )
-
-    class Meta:
-        """
-        Historically this model was in the commtrack app
-        and here we set the db_table to avoid having
-        to move data and foreign key dependencies.
-        """
-        db_table = 'commtrack_sqlproduct'
-        app_label = 'commtrack'
