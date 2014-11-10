@@ -40,17 +40,9 @@
                 <p class="text-center">
                     <a href="{% url 'default_new_app' domain %}"
                        class="dashboard-link">
-                        <i class="fcc dashboard-icon dashboard-icon-large {% if project.commtrack_enabled %}fcc-commtrack{% else %}fcc-applications{% endif %}"></i>
+                        <i class="fcc dashboard-icon dashboard-icon-large fcc-applications"></i>
                         <span class="lead">
-                        {% if project.commtrack_enabled %}
-                            {% blocktrans %}
-                                Setup CommTrack
-                            {% endblocktrans %}
-                        {% else %}
-                            {% blocktrans %}
-                                Build a new application
-                            {% endblocktrans %}
-                        {% endif %}
+                            Build a new application
                         </span>
                    </a>
                 </p>

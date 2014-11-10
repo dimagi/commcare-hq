@@ -12,7 +12,7 @@ from custom.ilsgateway.api import ILSGatewayEndpoint
 from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
     CommtrackActionConfig
 from dimagi.utils.dates import force_to_datetime
-from custom.ilsgateway.models import ILSMigrationCheckpoint
+from custom.ilsgateway.models import ILSMigrationCheckpoint, HistoricalLocationGroup
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
@@ -190,7 +190,7 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
 
 
 @retry(5)
-def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
+def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups=False):
     try:
         sql_loc = SQLLocation.objects.get(
             domain=domain,
@@ -239,7 +239,10 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
             'location_type': ilsgateway_location.location_type,
             'site_code': ilsgateway_location.code.lower(),
             'external_id': str(ilsgateway_location.id),
+            'metadata': {}
         }
+        if ilsgateway_location.groups:
+            location_dict['metadata']['groups'] = ilsgateway_location.groups
         case = SupplyPointCase.get_by_location(location)
         if apply_updates(location, location_dict):
             location.save()
@@ -247,6 +250,22 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
                 case.update_from_location(location)
             else:
                 SupplyPointCase.create_from_location(domain, location)
+    if ilsgateway_location.historical_groups:
+        historical_groups = ilsgateway_location.historical_groups
+    elif fetch_groups:
+        location_object = endpoint.get_location(
+            ilsgateway_location.id,
+            params=dict(with_historical_groups=1)
+        )
+
+        historical_groups = Loc.from_json(location_object).historical_groups
+    else:
+        historical_groups = {}
+    for date, groups in historical_groups.iteritems():
+        for group in groups:
+            HistoricalLocationGroup.objects.get_or_create(date=date, group=group,
+                                                          location_id=location.sql_location)
+
     return location
 
 
@@ -300,7 +319,7 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
                         meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
         for location in locations:
-            sync_ilsgateway_location(project, endpoint, location)
+            sync_ilsgateway_location(project, endpoint, location, fetch_groups=True)
 
         if not meta.get('next', False):
             has_next = False
