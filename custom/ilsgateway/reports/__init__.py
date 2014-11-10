@@ -1,9 +1,18 @@
+from datetime import datetime, timedelta, time
+from functools import partial
+from django.utils.formats import date_format
+from corehq.apps.users.models import CommCareUser
+from dimagi.utils.dates import get_business_day_of_month
+from corehq.apps.locations.models import Location
 from corehq.apps.reports.graph_models import PieChart
 from corehq.apps.commtrack.models import SQLProduct
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, DeliveryGroups, \
-    ProductAvailabilityData, ProductAvailabilityDashboardChart
+    ProductAvailabilityData, ProductAvailabilityDashboardChart, OrganizationSummary, SupplyPointStatus, \
+    SupplyPointStatusValues
 from django.utils.translation import ugettext as _
+from django.utils import html
+from django.utils.dateformat import format
 
 
 def format_percent(float_number):
@@ -15,6 +24,52 @@ def format_percent(float_number):
 
 def link_format(text, url):
     return '<a href=%s>%s</a>' % (url, text)
+
+
+def reporting_window(year, month):
+    """
+    Returns the range of time when people are supposed to report
+    """
+    last_of_last_month = datetime(year, month, 1) - timedelta(days=1)
+    last_bd_of_last_month = datetime.combine(
+        get_business_day_of_month(last_of_last_month.year, last_of_last_month.month, -1),
+        time()
+    )
+    last_bd_of_the_month = get_business_day_of_month(year, month, -1)
+    return last_bd_of_last_month, last_bd_of_the_month
+
+
+def latest_status(location_id, type, value=None, month=None, year=None):
+    qs = SupplyPointStatus.objects.filter(supply_point=location_id, status_type=type)
+    if value:
+        qs = qs.filter(status_value=value)
+    if month and year:
+        rw = reporting_window(year, month)
+        qs = qs.filter(status_date__gt=rw[0], status_date__lte=rw[1])
+    if qs.exclude(status_value="reminder_sent").exists():
+        # HACK around bad data.
+        qs = qs.exclude(status_value="reminder_sent")
+    qs = qs.order_by("-status_date")
+    return qs[0] if qs.count() else None
+
+
+def _latest_status_or_none(location_id, type, month, year, value=None):
+    t = latest_status(location_id, type,
+                      month=month,
+                      year=year,
+                      value=value)
+    return t.status_date if t else None
+
+
+def randr_value(location_id, month, year):
+    latest_submit = _latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                           month, year, value=SupplyPointStatusValues.SUBMITTED)
+    latest_not_submit = _latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                               month, year, value=SupplyPointStatusValues.NOT_SUBMITTED)
+    if latest_submit:
+        return latest_submit
+    else:
+        return latest_not_submit
 
 
 class ILSData(object):
@@ -242,6 +297,165 @@ class ProductAvailabilitySummary(ILSData):
                 for r in sorted(row['data'], key=lambda x: x[0])], color=row['color']
             )
         return [chart]
+
+
+class RRStatus(object):
+    show_table = True
+    title = "R&R Status"
+    slug = "rr_status"
+    title_url = None
+    title_url_name = None
+    show_chart = False
+    css_class = None
+
+    def __init__(self, config=None):
+        self.config = config or {}
+
+    @property
+    def rows(self):
+        def format_percent(numerator, denominator):
+            if numerator and denominator:
+                return "%.1f%%" % ((float(numerator) / float(denominator)) * 100.0)
+            else:
+                return "No data"
+        rows = []
+        location = Location.get(self.config['location_id'])
+        for child in location.children:
+            try:
+                org_summary = OrganizationSummary.objects.get(
+                    date__range=(self.config['startdate'],
+                                 self.config['enddate']),
+                    supply_point=child._id
+                )
+            except OrganizationSummary.DoesNotExist:
+                return []
+
+            rr_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                               org_summary=org_summary)
+
+            fp_partial = partial(format_percent, denominator=rr_data.total)
+
+            total_responses = 0
+            total_possible = 0
+            group_summaries = GroupSummary.objects.filter(
+                org_summary__date__lte=datetime(int(self.config['year']), int(self.config['month']), 1),
+                org_summary__supply_point=child._id, title='rr_fac'
+            )
+            for g in group_summaries:
+                if g:
+                    total_responses += g.responded
+                    total_possible += g.total
+            hist_resp_rate = format_percent(total_responses, total_possible)
+            try:
+                from custom.ilsgateway import RRreport
+                url = html.escape(RRreport.get_url(
+                    domain=self.config['domain']) +
+                    '?location_id=%s&month=%s&year=%s' %
+                    (child._id, self.config['month'], self.config['year']))
+            except KeyError:
+                url = None
+
+            rows.append(
+                [
+                    link_format(child.name, url),
+                    fp_partial(rr_data.on_time),
+                    fp_partial(rr_data.late),
+                    fp_partial(rr_data.not_submitted),
+                    fp_partial(rr_data.not_responding),
+                    hist_resp_rate
+                ])
+
+        return rows
+
+    @property
+    def headers(self):
+        return [
+            'Name',
+            '% Facilities Submitting R&R On Time',
+            "% Facilities Submitting R&R Late",
+            "% Facilities With R&R Not Submitted",
+            "% Facilities Not Responding To R&R Reminder",
+            "Historical Response Rate"
+        ]
+
+
+class RRReportingHistory(object):
+    show_table = True
+    title = "R&R Reporting History"
+    slug = "rr_reporting_history"
+    title_url = None
+    title_url_name = None
+    show_chart = False
+    css_class = None
+
+    def __init__(self, config=None):
+        self.config = config or {}
+
+    @property
+    def rows(self):
+        def format_percent(numerator, denominator):
+            if numerator and denominator:
+                return "%.1f%%" % ((float(numerator) / float(denominator)) * 100.0)
+            else:
+                return "No data"
+        rows = []
+        location = Location.get(self.config['location_id'])
+        dg = DeliveryGroups().submitting(location.children, int(self.config['month']))
+        for child in dg:
+            total_responses = 0
+            total_possible = 0
+            group_summaries = GroupSummary.objects.filter(
+                org_summary__date__lte=datetime(int(self.config['year']), int(self.config['month']), 1),
+                org_summary__supply_point=child._id, title='rr_fac'
+            )
+            for g in group_summaries:
+                if g:
+                    total_responses += g.responded
+                    total_possible += g.total
+            hist_resp_rate = format_percent(total_responses, total_possible)
+            try:
+                from custom.ilsgateway import RRreport
+                url = html.escape(RRreport.get_url(
+                    domain=self.config['domain']) +
+                    '?location_id=%s&month=%s&year=%s' %
+                    (child._id, self.config['month'], self.config['year']))
+            except KeyError:
+                url = None
+            rr_value = randr_value(child._id, int(self.config['month']), int(self.config['year']))
+
+            def _default_contact(location_id):
+                users = CommCareUser.by_domain(self.config['domain'])
+                for user in users:
+                    if user.get_domain_membership(self.config['domain']).location_id == location_id:
+                        return user
+                return None
+
+            contact = _default_contact(child._id)
+            if contact:
+                role = contact.user_data.get('role') or ""
+                contact_string = "%s %s (%s)" % (contact.first_name, contact.last_name, role)
+            else:
+                contact_string = ""
+            rows.append(
+                [
+                    child.site_code,
+                    child.name,
+                    (format(rr_value, "d M Y") if rr_value else "Not reported"),
+                    contact_string,
+                    hist_resp_rate
+                ])
+
+        return rows
+
+    @property
+    def headers(self):
+        return [
+            'Code',
+            'Facility Name',
+            'R&R Status',
+            'Contact',
+            'Historical Response Rate'
+        ]
 
 
 class ILSMixin(object):
