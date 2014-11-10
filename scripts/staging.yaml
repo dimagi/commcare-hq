@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - bulk-app-translate+double-management # SK 11/10
   - staging  # Ethan 11/09 - Too many effing merge conflicts
   - ptop-reindex  # DR 11/5
   - historical-forms  # DR 11/4
@@ -58,7 +59,6 @@ branches:
   - masterlist-workflow # j$  10/8
   - graphing+double-management # SK 10/3
   - double-management+case-detail-tabs2 # Noah 11/6
-  - bulk-app-translate+double-management # SK 11/10
   - double-management # SK 10/15
   - bulk-app-translate # Noah 9/18
   - graphing # Nick P 10/27
