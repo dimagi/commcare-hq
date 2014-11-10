@@ -56,7 +56,6 @@ branches:
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
-  - double-managent+bulk-app-translate # SK 11/10
   - graphing+double-management # SK 10/3
   - double-management+case-detail-tabs2 # Noah 11/6
   - double-management # SK 10/15
