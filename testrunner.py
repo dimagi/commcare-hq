@@ -115,9 +115,13 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         """
         self._db_patch = patch('django.db.backends.util.CursorWrapper')
         db_mock = self._db_patch.start()
-        db_mock.side_effect = RuntimeError('No database present during SimpleTestCase run.')
+        error = RuntimeError(
+            "Attempt to access database in a 'no database' test suite run. "
+            "It could be that you don't have 'BASE_ADDRESS' set in your local_settings.py. "
+            "If your test really needs database access it must subclass 'TestCase' and not 'SimpleTestCase'.")
+        db_mock.side_effect = error
 
-        mock_couch = Mock(side_effect=RuntimeError('No database present during SimpleTestCase run.'), spec=[])
+        mock_couch = Mock(side_effect=error, spec=[])
 
         # register our dbs with the extension document classes
         old_handler = loading.couchdbkit_handler
