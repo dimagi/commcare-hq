@@ -6,7 +6,7 @@ from dimagi.utils.dates import get_business_day_of_month, add_months, months_bet
 from casexml.apps.stock.models import StockReport, StockTransaction
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, DeliveryGroups, \
     OrganizationSummary, GroupSummary, SupplyPointStatusValues, Alert, ProductAvailabilityData, \
-    SupplyPointWarehouseRecord
+    SupplyPointWarehouseRecord, HistoricalLocationGroup
 
 
 """
@@ -25,10 +25,18 @@ def _is_valid_status(facility, date, type):
     if type not in NEEDED_STATUS_TYPES:
         return False
     facility = Location.get(docid=facility)
-    if not facility.metadata.get('groups', []):
+    groups = HistoricalLocationGroup.objects.filter(
+        date__month=date.month,
+        date__year=date.year,
+        location_id=facility.sql_location
+    )
+    if (not facility.metadata.get('groups', [])) and (groups.count() == 0):
         return False
 
-    code = facility.metadata['groups'][0]
+    if groups.count() > 0:
+        code = groups[0].group
+    else:
+        code = facility.metadata['groups'][0]
     dg = DeliveryGroups(date.month)
     if type.startswith('rr'):
         return code == dg.current_submitting_group()
