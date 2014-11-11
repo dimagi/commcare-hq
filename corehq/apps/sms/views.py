@@ -886,6 +886,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     template_name = "sms/gateway_list.html"
     urlname = 'list_domain_backends_new'
     page_title = ugettext_noop("SMS Connectivity")
+    strict_domain_fetching = True
 
     @property
     def page_url(self):

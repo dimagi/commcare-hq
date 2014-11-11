@@ -116,7 +116,10 @@ class DomainViewMixin(object):
     """
         Paving the way for a world of entirely class-based views.
         Let's do this, guys. :-)
+
+        Set strict_domain_fetching to True in subclasses to bypass the cache.
     """
+    strict_domain_fetching = False
 
     @property
     @memoized
@@ -127,7 +130,7 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain_object(self):
-        domain = Domain.get_by_name(self.domain, strict=True)
+        domain = Domain.get_by_name(self.domain, strict=self.strict_domain_fetching)
         if not domain:
             raise Http404()
         return domain
@@ -261,6 +264,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
     """
         The base class for all the edit project information views.
     """
+    strict_domain_fetching = True
 
     @property
     def autocomplete_fields(self):
@@ -1442,6 +1446,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     template_name = 'domain/create_snapshot.html'
     urlname = 'domain_create_snapshot'
     page_title = ugettext_noop("Publish New Version")
+    strict_domain_fetching = True
 
     @property
     def parent_pages(self):
@@ -1861,6 +1866,7 @@ class OrgSettingsView(BaseAdminProjectSettingsView):
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
+    strict_domain_fetching = True
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
@@ -1884,6 +1890,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = ugettext_noop("Project Information")
     template_name = 'domain/internal_settings.html'
+    strict_domain_fetching = True
 
     @property
     @memoized

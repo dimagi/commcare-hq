@@ -514,16 +514,18 @@ class Domain(Document, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
+
         cache_key = _domain_cache_key(name)
-        MISSING = object()
-        res = cache.get(cache_key, MISSING)
-        if res != MISSING:
-            return res
-        else:
-            domain = cls._get_by_name(name, strict)
-            # 30 mins, so any unforeseen invalidation bugs aren't too bad.
-            cache.set(cache_key, domain, 30*60)
-            return domain
+        if not strict:
+            MISSING = object()
+            res = cache.get(cache_key, MISSING)
+            if res != MISSING:
+                return res
+
+        domain = cls._get_by_name(name, strict)
+        # 30 mins, so any unforeseen invalidation bugs aren't too bad.
+        cache.set(cache_key, domain, 30*60)
+        return domain
 
     @classmethod
     def _get_by_name(cls, name, strict=False):
