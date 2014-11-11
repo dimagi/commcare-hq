@@ -70,12 +70,13 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     now = datetime.now
     last_update = [now()]
-    upate_period = timedelta(seconds=1) # do not update progress more than once a second
+    upate_period = timedelta(seconds=1)  # do not update progress more than once a second
+
     def _update_progress(event_count, item_count, items_in_table):
         if task and now() - last_update[0] > upate_period:
             last_update[0] = now()
             processed = event_count * 10 + (10. * item_count / items_in_table)
-            processed = min(processed, total_events) # limit at 100%
+            processed = min(processed, total_events)  # limit at 100%
             DownloadBase.set_progress(task, processed, total_events)
 
     # book-keeping data from view_results for repeated use
@@ -97,7 +98,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         }
     """
     excel_sheets = {}
-    
+
     def empty_padding_list(length):
         return ["" for x in range(0, length)]
 
@@ -115,7 +116,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     """
         captures all possible 'field-property' values for each data-type
         Example value
-          {u'clinics': {'field 2 : property 1': u'lang'}, u'growth_chart': {'field 2 : property 2': u'maxWeight'}}
+          {
+            u'clinics': {'field 2 : property 1': u'lang'},
+            u'growth_chart': {'field 2 : property 2': u'maxWeight'}
+          }
     """
     type_field_properties = {}
     get_field_prop_format = lambda x, y: "field " + str(x) + " : property " + str(y)
@@ -180,10 +184,13 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     for data_type in data_types_book:
         common_vals = ["N", data_type.tag, yesno(data_type.is_global)]
-        field_vals = [field.field_name for field in data_type.fields] + empty_padding_list(max_fields - len(data_type.fields))
-        item_att_vals = data_type.item_attributes + empty_padding_list(max_item_attributes - len(data_type.item_attributes))
+        field_vals = ([field.field_name for field in data_type.fields]
+                      + empty_padding_list(max_fields - len(data_type.fields)))
+        item_att_vals = (data_type.item_attributes + empty_padding_list(
+            max_item_attributes - len(data_type.item_attributes)
+        ))
         prop_vals = []
-        if type_field_properties.has_key(data_type.tag):
+        if data_type.tag in type_field_properties:
             props = type_field_properties.get(data_type.tag)
             prop_vals.extend([props.get(key, "") for key in field_prop_headers])
         row = tuple(common_vals[2 if html_response else 0:] + field_vals + item_att_vals + prop_vals)
@@ -192,7 +199,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     types_sheet["rows"] = tuple(types_sheet["rows"])
     types_sheet["headers"] = tuple(types_sheet["headers"])
     excel_sheets["types"] = types_sheet
-    
+
     # Prepare 'items' sheet data for each data-type
     for n, data_type in enumerate(data_types_book):
         _update_progress(total_tables, n, total_tables)
@@ -224,13 +231,19 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                     })
                 field_headers.extend(prop_headers)
         item_sheet["headers"] = tuple(
-            common_headers[2 if html_response else 0:] + field_headers + item_att_headers + user_headers + group_headers
+            common_headers[2 if html_response else 0:]
+            + field_headers
+            + item_att_headers
+            + user_headers
+            + group_headers
         )
         excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
             common_vals = [str(_id_from_doc(item_row)), "N"]
-            user_vals = [user.raw_username for user in item_row.users] + empty_padding_list(max_users - len(item_row.users))
-            group_vals = [group.name for group in item_row.groups] + empty_padding_list(max_groups - len(item_row.groups))
+            user_vals = ([user.raw_username for user in item_row.users]
+                         + empty_padding_list(max_users - len(item_row.users)))
+            group_vals = ([group.name for group in item_row.groups]
+                          + empty_padding_list(max_groups - len(item_row.groups)))
             field_vals = []
             item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
             for field in data_type.fields:
@@ -248,12 +261,16 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                         for property in field.properties:
                             field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
                         field_prop_vals.append(field_prop_combo.field_value)
-                    padding_list_len = (max_field_prop_combos[field.field_name] - cur_combo_count) * (cur_prop_count + 1)
+                    padding_list_len = ((max_field_prop_combos[field.field_name] - cur_combo_count)
+                                        * (cur_prop_count + 1))
                     field_prop_vals.extend(empty_padding_list(padding_list_len))
-                    # import pdb; pdb.set_trace();
                     field_vals.extend(field_prop_vals)
             row = tuple(
-                common_vals[2 if html_response else 0:] + field_vals + item_att_vals + user_vals + group_vals
+                common_vals[2 if html_response else 0:]
+                + field_vals
+                + item_att_vals
+                + user_vals
+                + group_vals
             )
             item_sheet["rows"].append(row)
         item_sheet["rows"] = tuple(item_sheet["rows"])
