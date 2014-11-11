@@ -15,7 +15,7 @@ from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
-from corehq.apps.fixtures.download import prepare_fixture_download
+from corehq.apps.fixtures.download import prepare_fixture_download, prepare_fixture_html
 from corehq.apps.fixtures.exceptions import (
     FixtureDownloadError,
     ExcelMalformatException,
@@ -186,10 +186,10 @@ def create_types(fields_patches, domain, data_tag, is_global, transaction):
 
 @require_can_edit_fixtures
 def data_table(request, domain):
-    # TODO make this async
+    # TODO this should be async (large tables time out)
     table_ids = request.GET.getlist("table_id")
     try:
-        sheets = prepare_fixture_download(table_ids, domain, html_response=True)
+        sheets = prepare_fixture_html(table_ids, domain)
     except FixtureDownloadError as e:
         messages.info(request, unicode(e))
         raise
@@ -222,6 +222,7 @@ def download_item_lists(request, domain):
     """
     download = DownloadBase()
     download.set_task(fixture_download_async.delay(
+        prepare_fixture_download,
         table_ids=request.GET.getlist("table_id"),
         domain=domain,
         download_id=download.download_id,

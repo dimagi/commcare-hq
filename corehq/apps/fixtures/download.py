@@ -18,20 +18,36 @@ from soil import DownloadBase
 from soil.util import expose_download
 
 
-def safe_fixture_download(*args, **kw):
-    try:
-        return prepare_fixture_download(*args, **kw)
-    except FixtureDownloadError as e:
-        # TODO implement FixtureDownloadResult?
-        result = FixtureDownloadResult()
-        result.success = False
-        result.errors.append(unicode(e))
-        return result
-
-
-def prepare_fixture_download(table_ids, domain, html_response=False, task=None, download_id=None):
-    """Prepare fixture data for Excel download or HTML view
+def prepare_fixture_download(table_ids, domain, task, download_id):
+    """Prepare fixture data for Excel download
     """
+    data_types_book, excel_sheets = _prepare_fixture(table_ids, domain, task=task)
+
+    header_groups = [("types", excel_sheets["types"]["headers"])]
+    value_groups = [("types", excel_sheets["types"]["rows"])]
+    for data_type in data_types_book:
+        header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
+        value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
+
+    file = StringIO()
+    format = Format.XLS_2007
+    export_raw(tuple(header_groups), tuple(value_groups), file, format)
+    return expose_download(
+        file.getvalue(),
+        60 * 10,
+        mimetype=Format.from_format(format).mimetype,
+        content_disposition='attachment; filename="%s_fixtures.xlsx"' % domain,
+        download_id=download_id,
+    )
+
+
+def prepare_fixture_html(table_ids, domain):
+    """Prepare fixture data for HTML view
+    """
+    return _prepare_fixture(table_ids, domain, html_response=True)[1]
+
+
+def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     if table_ids and table_ids[0]:
         try:
             data_types_view = [FixtureDataType.get(id) for id in table_ids]
@@ -243,23 +259,4 @@ def prepare_fixture_download(table_ids, domain, html_response=False, task=None, 
         item_sheet["rows"] = tuple(item_sheet["rows"])
         excel_sheets[data_type.tag] = item_sheet
 
-    if html_response:
-        return excel_sheets
-
-    header_groups = [("types", excel_sheets["types"]["headers"])]
-    value_groups = [("types", excel_sheets["types"]["rows"])]
-    for data_type in data_types_book:
-        header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
-        value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
-
-    file = StringIO()
-    format = Format.XLS_2007
-    export_raw(tuple(header_groups), tuple(value_groups), file, format)
-    fileref = expose_download(
-        file.getvalue(),
-        60 * 10,
-        mimetype=Format.from_format(format).mimetype,
-        content_disposition='attachment; filename="%s_fixtures.xlsx"' % domain,
-        download_id=download_id,
-    )
-    return json_response({"download_id": fileref.download_id})
+    return data_types_book, excel_sheets
