@@ -14,8 +14,8 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     except ResourceNotFound:
         raise Http404()
 
-    if (unwrapped.get('domain', domain) != domain or 
-        domain not in unwrapped.get('domains', [domain]) or
+    if ((unwrapped.get('domain', None) != domain and
+         domain not in unwrapped.get('domains', [])) or
         unwrapped['doc_type'] not in allowed_doc_types):
         raise Http404()
 
