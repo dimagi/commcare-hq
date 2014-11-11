@@ -1,0 +1,71 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+<div class="tab-pane active" id="form-settings">
+    <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
+        <div class="save-button-holder clearfix"></div>
+        <div class="control-group">
+            <label class="control-label">{% trans "Form Name" %}</label>
+            <div class="controls">
+                {% if edit %}
+                    {{ form.name|input_trans:langs|safe }}
+                {% else %}
+                    {{ form.name|html_trans:langs|safe }}
+                {% endif %}
+            </div>
+        </div>
+
+        <legend>
+        <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
+            <i class="icon-double-angle-down"></i>
+            <span data-bind="text: title">Media</span>
+        </a>
+        </legend>
+        <div class="collapse in" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia" style="overflow: hidden;">
+            <div class="control-group" data-bind="
+                visible: visible,
+                css: {error: hasError()}">
+
+                {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+
+            </div>
+        </div>
+
+        <legend>
+        <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-logic">
+            <i class="icon-double-angle-down"></i>
+            <span data-bind="text: title">Logic</span>
+        </a>
+        </legend>
+        <div class="collapse in" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-logic" style="overflow: hidden;">
+            <div class="control-group" data-bind="
+                visible: visible,
+                css: {error: hasError()}">
+
+                {% if allow_form_filtering %}
+                    {% include "app_manager/partials/form_filter.html" %}
+                {% endif %}
+                {% if allow_form_workflow %}
+                    {% include "app_manager/partials/form_workflow.html" %}
+                {% endif %}
+
+            </div>
+        </div>
+
+        <legend>
+        <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-advanced">
+            <i class="icon-double-angle-down"></i>
+            <span data-bind="text: title">Advanced</span>
+        </a>
+        </legend>
+        <div class="collapse collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-advanced" style="overflow: hidden;">
+            <div class="control-group" data-bind="
+                visible: visible,
+                css: {error: hasError()}">
+
+                {% include "app_manager/partials/form_gps_capture.html" %}
+
+            </div>
+        </div>
+    </form>
+</div>

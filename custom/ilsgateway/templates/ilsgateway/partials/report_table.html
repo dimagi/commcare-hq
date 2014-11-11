@@ -1,0 +1,62 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+
+{% if thisreport.show_chart %}
+    {% if charts %}
+        <div class="{{ thisreport.css_class }}">
+            <h4 class="media-heading">{{ report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+            {% for chart in charts %}
+                {% if chart.data.0.values %}
+                    {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+                    <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
+                        <svg style='height: {{ chart.height }}px'> </svg>
+                    </div>
+                {% else %}
+                    <span>{% trans "No facilities are due to submit data in this month" %}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endif %}
+
+
+{% if thisreport.show_table %}
+<div class="{{ thisreport.css_class }} module">
+    <h4 class="media-heading">{{ report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+    {% if report_table.rows %}
+        <ul class="stats">
+            <li>
+                <div class="report">{{ report_table.rows.total }}</div>
+                <div class="caption">{% trans 'Facilities' %}</div>
+            </li>
+            <li>
+                <div class="report">Group {{ report_table.rows.submitting_group }}: {% trans 'Submitting' %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.submitting_complete as submitted and report_table.rows.submitting_total as count %}{{ submitted }} of {{ count }}{% endblocktrans %} {% trans 'submitted' %}</div>
+            </li>
+            <li>
+                <div class="report">Group {{ report_table.rows.processing_group }}: {% trans 'Processing' %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.processing_complete as processed and report_table.rows.processing_total as count %}{{ processed }} of {{ count }} forms sent to MSD{% endblocktrans %}</div>
+            </li>
+            <li>
+                <div class="report">Group {{ report_table.rows.delivery_group }}: {% trans "Deliveries" %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.delivery_complete as delivered and report_table.rows.delivery_total as count %}{{ delivered }} of {{ count }}{% endblocktrans %} {% trans 'delivered' %}</div>
+            </li>
+            <li>
+                <div class="report">Average Lead Time</div>
+                <div class="caption">
+                    {% if report_table.rows.avg_lead_time %}
+                        {% trans "Current Average Lead Time from Report to Delivery: "%} {{ report_table.rows.avg_lead_time }} {% trans " days" %}
+                    {% else %}
+                        <span class='no_data'>No Data</span>
+                    {% endif %}
+                </div>
+            </li>
+        </ul>
+    {% else %}
+        <span>{% trans "No facilities are due to submit data in this month" %}</span>
+    {% endif %}
+</div>
+{% endif %}
+

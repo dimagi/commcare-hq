@@ -12,24 +12,24 @@ function CustomDataFieldsModel () {
 
     self.addField = function () {
         self.data_fields.push(new CustomDataField('', false));
-    }
+    };
 
     self.removeField = function (field) {
         self.data_fields.remove(field);
-    }
+    };
 
     // Manually remove modal backrop because it is not part of the div
     // we delete otherwise
     self.removeFieldAndModal = function (field) {
         self.removeField(field);
         $(".modal-backdrop").remove();
-    }
+    };
 
     self.init = function (initialFields) {
         _.each(initialFields, function (field) {
             self.data_fields.push(new CustomDataField(field));
         });
-    }
+    };
 
     self.serialize = function () {
         var fields = [];
@@ -50,7 +50,7 @@ function CustomDataFieldsModel () {
             self.removeField(field);
         });
         return fields;
-    }
+    };
 
     self.submitFields = function (fieldsForm) {
         var customDataFieldsForm = $("<form>")
@@ -62,7 +62,7 @@ function CustomDataFieldsModel () {
             .appendTo(customDataFieldsForm);
         customDataFieldsForm.appendTo("body");
         customDataFieldsForm.submit();
-    }
+    };
 
 }
 

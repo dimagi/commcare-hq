@@ -499,6 +499,32 @@ class CachedStringProperty(object):
         cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
+class ScheduleVisit(DocumentSchema):
+    """
+    due:         Days after the anchor date that this visit is due
+    late_window: Days after the due day that this visit is valid until
+    """
+    due = IntegerProperty()
+    late_window = IntegerProperty()
+
+
+class FormSchedule(DocumentSchema):
+    """
+    anchor:                     Case property containing a date after which this schedule becomes active
+    expiry:                     Days after the anchor date that this schedule expires (optional)
+    visit_list:                 List of visits in this schedule
+    post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
+    transition_condition:       Condition under which the schedule transitions to the next phase
+    termination_condition:      Condition under which the schedule terminates
+    """
+    anchor = StringProperty()
+    expires = IntegerProperty()
+    visits = SchemaListProperty(ScheduleVisit)
+    post_schedule_increment = IntegerProperty()
+    transition_condition = SchemaProperty(FormActionCondition)
+    termination_condition = SchemaProperty(FormActionCondition)
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -568,6 +594,10 @@ class FormBase(DocumentSchema):
             return form, app
         else:
             return form
+
+    @property
+    def schedule_form_id(self):
+        return self.unique_id[:6]
 
     def wrapped_xform(self):
         return XForm(self.source)
@@ -1480,6 +1510,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
+    schedule = SchemaProperty(FormSchedule, default=None)
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
@@ -1571,8 +1602,16 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 error.update(error_meta)
                 errors.append(error)
 
+        module = self.get_module()
+        if module.has_schedule and not (self.schedule and self.schedule.anchor):
+            error = {
+                'type': 'validation error',
+                'validation_message': _("All forms in this module require a visit schedule.")
+            }
+            error.update(error_meta)
+            errors.append(error)
+
         if validate_module:
-            module = self.get_module()
             errors.extend(module.get_case_errors(
                 needs_case_type=False,
                 needs_case_detail=module.requires_case_details(),
@@ -1614,6 +1653,7 @@ class AdvancedModule(ModuleBase):
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
+    has_schedule = BooleanProperty()
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2664,12 +2704,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
 
-    def fetch_emulator_commcare_jar(self):
-        path = "Generic/WebDemo"
-        jadjar = self.get_preview_build().get_jadjar(path)
-        jadjar = jadjar.pack(self.create_all_files())
-        return jadjar.jar
-
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
         if not copy._id:
@@ -2977,7 +3011,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             del setting_value
 
         if self.case_sharing:
-            app_profile['properties']['server-tether'] = 'sync'
+            app_profile['properties']['server-tether'] = {
+                'force': True,
+                'value': 'sync',
+            }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')

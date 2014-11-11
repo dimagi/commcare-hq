@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 
+
 class CustomDataField(JsonObject):
     slug = StringProperty()
     is_required = BooleanProperty()
@@ -36,7 +37,6 @@ class CustomDataFieldsDefinition(Document):
             new = cls(domain=domain, field_type=field_type)
             new.save()
             return new
-
 
     # TODO use this in the CustomDataEditor too?
     def get_validator(self, data_field_class):

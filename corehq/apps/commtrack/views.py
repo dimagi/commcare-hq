@@ -370,18 +370,11 @@ class NewProductView(BaseCommTrackManageView):
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 
-    def custom_product_is_valid(self):
-        if self.custom_data.is_valid():
-            self.product.product_data = self.custom_data.get_data_to_save()
-            self.product.save()
-            return True
-        else:
-            return False
-
     def post(self, request, *args, **kwargs):
         if all([self.new_product_form.is_valid(),
-                self.custom_product_is_valid()]):
-            self.new_product_form.save()
+                self.custom_data.is_valid()]):
+            self.product.product_data = self.custom_data.get_data_to_save()
+            self.new_product_form.save(self.product)
             messages.success(request, _("Product saved!"))
             return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
@@ -458,7 +451,8 @@ class ProductImportStatusView(BaseCommTrackManageView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 @login_and_domain_required
-def product_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+def product_importer_job_poll(request, domain, download_id,
+        template="commtrack/manage/partials/product_upload_status.html"):
     context = get_download_context(download_id, check_state=True)
     context.update({
         'on_complete_short': _('Import complete.'),
@@ -614,15 +608,19 @@ def api_query_supply_point(request, domain):
             q = query.lower()
             startkey = [domain, type, q]
             endkey = [domain, type, q + 'zzzzzz']
-            return Location.view('locations/by_name',
+            return [loc for loc in Location.view(
+                'locations/by_name',
                 startkey=startkey,
                 endkey=endkey,
                 limit=LIMIT,
                 reduce=False,
                 include_docs=True,
-            )
+            ) if not loc.is_archived]
 
-        locs = sorted(itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)), key=lambda e: e.name)[:LIMIT]
+        locs = sorted(
+            itertools.chain(*(get_locs(loc_type) for loc_type in loc_types)),
+            key=lambda e: e.name
+        )[:LIMIT]
         return HttpResponse(json.dumps(map(loc_to_payload, locs)), 'text/json')
 
 

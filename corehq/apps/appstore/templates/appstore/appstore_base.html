@@ -235,9 +235,6 @@
     {% if sort_by == 'newest' %}
         <li>{% trans "Newest" %}</li>
     {% endif %}
-    {% if sort_by  == 'best' %}
-    <li>{% trans "Highest Rated" %}</li>
-    {% endif %}
 
 </ul>
 {% endblock %}
@@ -256,7 +253,6 @@
         <ul class="nav nav-pills">
             <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">{% trans "Most Downloaded" %}</a></li>
             <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" %}">{% trans "Newest" %}</a></li>
-            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">{% trans "Highest Rated" %}</a></li>
         </ul>
     </div>
     {% endblock %}
@@ -313,15 +309,6 @@
                     {% if app.project_type %}
                         <h6>{{ app.project_type }}</h6>
                     {% endif %}
-                    {% for rating_name, average_rating in average_ratings %}
-                        {% if rating_name == app.get_id %}
-                            {% if average_rating %}
-                                <span id="rating_container">
-                                {% include "appstore/partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
-                            </span>
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
                     <h6>{{ app.download_count }} download{{ app.download_count|pluralize }}</h6>
                     {% if app.short_description %}
                         <p>{{ app.short_description }}</p>

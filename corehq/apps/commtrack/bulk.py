@@ -1,5 +1,4 @@
 from corehq.apps.commtrack.models import *
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from django.utils.translation import ugettext as _
 
 
@@ -11,7 +10,7 @@ def set_error(row, msg, override=False):
 
 def import_products(domain, importer):
     from .views import ProductFieldsView
-    messages = []
+    results = {'errors': [], 'messages': []}
     to_save = []
     product_count = 0
     seen_product_ids = set()
@@ -22,7 +21,7 @@ def import_products(domain, importer):
         try:
             p = Product.from_excel(row, custom_data_validator)
         except Exception, e:
-            messages.append(
+            results['errors'].append(
                 _(u'Failed to import product {name}: {ex}'.format(
                     name=row['name'] or '',
                     ex=e,
@@ -39,12 +38,24 @@ def import_products(domain, importer):
             p.domain = domain
         elif p.domain != domain:
             # don't let user import against another domains products
-            messages.append(
+            results['errors'].append(
                 _(u"Product {product_name} belongs to another domain and was not updated").format(
                     product_name=p.name
                 )
             )
             continue
+
+        if p.code and p.code in seen_product_ids:
+            results['errors'].append(_(
+                u"Product {product_name} could not be imported \
+                due to duplicated product ids in the excel \
+                file"
+            ).format(
+                product_name=p.name
+            ))
+            continue
+        elif p.code:
+            seen_product_ids.add(p.code)
 
         product_count += 1
         to_save.append(p)
@@ -57,7 +68,12 @@ def import_products(domain, importer):
         Product.get_db().bulk_save(to_save)
 
     if product_count:
-        messages.insert(0, _('Successfullly updated {number_of_products} products with {errors} errors.').format(
-            number_of_products=product_count, errors=len(messages))
+        results['messages'].insert(
+            0,
+            _('Successfully updated {number_of_products} products with {errors} '
+              'errors.').format(
+                number_of_products=product_count, errors=len(results['errors'])
+            )
         )
-    return messages
+
+    return results

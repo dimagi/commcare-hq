@@ -1,11 +1,12 @@
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
+from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState, SQLLocation
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
+from dateutil import parser
 from casexml.apps.stock.models import StockTransaction
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
@@ -55,6 +56,52 @@ class CommtrackDataSourceMixin(object):
             return request
 
 
+class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
+    slug = 'location_inventory'
+
+    def datetime(self):
+        """
+        Returns a datetime object at the end of the selected
+        (or current) date. This is needed to properly filter
+        transactions that occur during the day we are filtering
+        for
+        """
+        date = self.config.get('date')
+        if date:
+            date = parser.parse(date).date()
+        else:
+            date = datetime.now().date()
+        return datetime(date.year, date.month, date.day, 23, 59, 59)
+
+    def get_data(self, slugs=None):
+        if self.active_location:
+            current_location = self.active_location.sql_location
+            locations = [current_location] + list(current_location.get_descendants())
+        else:
+            locations = SQLLocation.objects.filter(domain=self.domain)
+
+        for loc in locations[:self.config.get('max_rows', 100)]:
+            transactions = StockTransaction.objects.filter(
+                case_id=loc.supply_point_id,
+            )
+
+            if self.program_id:
+                transactions = transactions.filter(
+                    sql_product__program_id=self.program_id
+                )
+
+            stock_results = transactions.exclude(
+                report__date__gt=self.datetime
+            ).order_by(
+                'product_id', '-report__date'
+            ).values_list(
+                'product_id', 'stock_on_hand'
+            ).distinct(
+                'product_id'
+            )
+
+            yield (loc.name, stock_results)
+
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
@@ -99,13 +146,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             return Product.get(product_id).name
         @memoized
         def supply_point_location(case_id):
-            return SupplyPointCase.get(case_id).location_[-1]
+            return SupplyPointCase.get(case_id).location_id
 
         raw_map = {
             self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
             self.SLUG_PRODUCT_ID: 'product_id',
             self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
-            # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
             self.SLUG_CURRENT_STOCK: 'stock_on_hand',
             self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
             self.SLUG_MONTHS_REMAINING: 'months_remaining',
@@ -197,6 +243,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             }
 
     def aggregated_data(self, stock_states):
+        def _convert_to_daily(consumption):
+            return consumption / 30 if consumption is not None else None
+
         product_aggregation = {}
         for state in stock_states:
             if state.product_id in product_aggregation:
@@ -215,12 +264,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
                 product['category'] = stock_category(
                     product['current_stock'],
-                    product['consumption'],
+                    _convert_to_daily(product['consumption']),
                     Domain.get_by_name(self.domain)
                 )
                 product['months_remaining'] = months_of_stock_remaining(
                     product['current_stock'],
-                    product['consumption'] / 30 if product['consumption'] is not None else None
+                    _convert_to_daily(product['consumption'])
                 )
             else:
                 product = Product.get(state.product_id)
@@ -237,12 +286,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                     'consumption': consumption,
                     'category': stock_category(
                         state.stock_on_hand,
-                        consumption,
+                        _convert_to_daily(consumption),
                         Domain.get_by_name(self.domain)
                     ),
                     'months_remaining': months_of_stock_remaining(
                         state.stock_on_hand,
-                        consumption / 30 if consumption is not None else None
+                        _convert_to_daily(consumption)
                     )
                 }
 

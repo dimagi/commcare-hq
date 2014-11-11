@@ -2,7 +2,8 @@ from django.conf.urls.defaults import *
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 
-from .views import DefaultProjectUserSettingsView, EditWebUserView, EditMyAccountDomainView, ListWebUsersView, InviteWebUserView
+from .views import (DefaultProjectUserSettingsView, EditWebUserView,
+    EditMyAccountDomainView, ListWebUsersView, InviteWebUserView)
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import EditGroupsView, EditGroupMembersView
 from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,

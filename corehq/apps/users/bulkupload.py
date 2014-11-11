@@ -14,7 +14,7 @@ from dimagi.utils.excel import (flatten_json, json_to_headers,
 from soil import DownloadBase
 
 from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -30,7 +30,10 @@ class UserUploadError(Exception):
 
 
 required_headers = set(['username'])
-allowed_headers = set(['data', 'email', 'group', 'language', 'name', 'password', 'phone-number', 'uncategorized_data', 'user_id']) | required_headers
+allowed_headers = set([
+    'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
+    'uncategorized_data', 'user_id',
+]) | required_headers
 
 
 def check_headers(user_specs):
@@ -282,7 +285,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
             data = row.get('data')
             email = row.get('email')
-            group_names = row.get('group_names')
+            group_names = row.get('group')
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -470,7 +473,7 @@ def parse_users(group_memoizer, users, user_data_fields):
 
         return model_data, uncategorized_data
 
-    def _make_user_dict(user):
+    def _make_user_dict(user, group_names):
         model_data, uncategorized_data = _parse_custom_data(user)
         return {
             'data': model_data,
@@ -491,7 +494,7 @@ def parse_users(group_memoizer, users, user_data_fields):
 
     for user in users:
         group_names = _get_group_names(user)
-        user_dicts.append(_make_user_dict(user))
+        user_dicts.append(_make_user_dict(user, group_names))
         user_data_keys.update(user.user_data.keys() if user.user_data else [])
         user_groups_length = max(user_groups_length, len(group_names))
 

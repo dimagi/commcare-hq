@@ -10,6 +10,7 @@
     CASE_DETAILS.xform_api_url = "/a/{{ case.domain }}/api/v0.1/xform_es/";
     CASE_DETAILS.xform_ids = {{ case.xform_ids|JSON }};
     CASE_DETAILS.xform_ajax_url = "{% url 'case_form_data' case.domain case.get_id 'placeholder-form-id' %}".replace('placeholder-form-id/', '');
+    CASE_DETAILS.timezone_offset = {{ timezone_offset }};
 </script>
 
 <div id="report-content">
@@ -111,6 +112,9 @@
     {% endif %}
     {% if ledgers %}
         <div class="tab-pane" id="case-ledgers">
+        {% if show_transaction_export %}
+            <a href="{% url 'export_case_transactions' case.domain case.get_id %}" class="pull-right">{% trans "download complete transaction history" %}</a>
+        {% endif %}
         {% for section_id, product_map in ledgers.items %}
             <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
             <table class="table table-striped table-hover">

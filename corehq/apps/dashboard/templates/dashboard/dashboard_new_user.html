@@ -19,7 +19,7 @@
             </div>
             <div class="panel-body">
                 <p class="text-center"><a href="{% url 'appstore' %}" class="dashboard-link">
-                    <span class="dashboard-icon dashboard-icon-exchange"></span>
+                    <i class="fcc fcc-exchange dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
                         Start with an existing application
                     {% endblocktrans %}</span>
@@ -37,24 +37,15 @@
                 {% endif %}
             </div>
             <div class="panel-body">
-                <form action="{% url 'new_app' domain %}" method="post"><p class="text-center">
-                    <input type="hidden" name="type" value="Application">
-                    <input type="hidden" name="application_version" value="2.0">
-                    <button href="#" type="submit" class="dashboard-button">
-                        <span class="dashboard-icon {% if project.commtrack_enabled %}dashboard-icon-commtrack{% else %}dashboard-icon-applications{% endif %}"></span>
+                <p class="text-center">
+                    <a href="{% url 'default_new_app' domain %}"
+                       class="dashboard-link">
+                        <i class="fcc dashboard-icon dashboard-icon-large fcc-applications"></i>
                         <span class="lead">
-                        {% if project.commtrack_enabled %}
-                            {% blocktrans %}
-                                Setup CommTrack
-                            {% endblocktrans %}
-                        {% else %}
-                            {% blocktrans %}
-                                Build a new application
-                            {% endblocktrans %}
-                        {% endif %}
+                            Build a new application
                         </span>
-                    </button>
-                </p></form>
+                   </a>
+                </p>
             </div>
         </div>
     </div>
@@ -65,7 +56,7 @@
                 <p class="text-center"><a href="http://help.commcarehq.org/"
                       class="dashboard-link"
                       target="_blank">
-                    <span class="dashboard-icon dashboard-icon-help"></span>
+                    <i class="fcc fcc-help dashboard-icon dashboard-icon-large"></i>
                     <span class="lead">{% blocktrans %}
                         Learn how to build an application
                     {% endblocktrans %}</span>

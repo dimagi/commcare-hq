@@ -12,12 +12,20 @@ class MockExcelFile(object):
     """
     Provides the minimal API of ExcelFile used by the importer
     """
+    class Workbook(object):
+        def __init__(self):
+            self._datemode = 0
+
+        @property
+        def datemode(self):
+            return self._datemode
 
     def __init__(self, header_columns=None, num_rows=0, has_errors=False, row_generator=None):
         self.header_columns = header_columns or []
         self.num_rows = num_rows
         self.has_errors = has_errors
         self.row_generator = row_generator or default_row_generator
+        self.workbook = self.Workbook()
 
     def get_header_columns(self):
         return self.header_columns

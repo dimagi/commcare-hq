@@ -421,7 +421,8 @@ def bug_report(req):
         'url',
         'message',
         'app_id',
-        'cc'
+        'cc',
+        'email'
     )])
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
@@ -436,10 +437,13 @@ def bug_report(req):
     try:
         couch_user = CouchUser.get_by_username(report['username'])
         full_name = couch_user.full_name
-        email = couch_user.get_email()
+        if couch_user.is_commcare_user():
+            email = report['email']
+        else:
+            email = couch_user.get_email()
     except Exception:
         full_name = None
-        email = None
+        email = report['email']
     report['full_name'] = full_name
     report['email'] = email or report['username']
 

@@ -38,6 +38,7 @@ from corehq.apps.domain.decorators import (login_and_domain_required, require_su
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms import verify as smsverify
+from corehq.util.couch import get_document_or_404
 
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
@@ -135,7 +136,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @memoized
     def editable_user(self):
         try:
-            return WebUser.get(self.editable_user_id)
+            return get_document_or_404(WebUser, self.domain, self.editable_user_id)
         except (ResourceNotFound, CouchUser.AccountTypeError):
             raise Http404()
 
@@ -188,7 +189,7 @@ class BaseEditUserView(BaseUserSettingsView):
                 if self.editable_user._id == self.request.couch_user._id:
                     new_lang = self.request.couch_user.language
                     if new_lang != old_lang:
-                        request.session['django_language'] = new_lang
+                        self.request.session['django_language'] = new_lang
                 return True
 
     def custom_user_is_valid(self):
