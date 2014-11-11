@@ -232,7 +232,7 @@ def fit_to_schema(doc, schema):
         if not doc:
             doc = []
         if not isinstance(doc, list):
-            return fit_to_schema([doc], schema)
+            doc = [doc]
         answ = []
         schema_, = schema
         for doc_ in doc:
