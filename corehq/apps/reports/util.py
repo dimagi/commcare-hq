@@ -339,7 +339,11 @@ def users_matching_filter(domain, user_filters):
     return [
         user.user_id
         for user in get_all_users_by_domain(
-            domain, user_filter=user_filters, simplified=True)
+            domain,
+            user_filter=user_filters,
+            simplified=True,
+            include_inactive=True
+        )
     ]
 
 
