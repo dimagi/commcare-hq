@@ -172,7 +172,7 @@ def export_data(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    group, users = util.get_group_params(domain, **json_request(req.GET))
+    group = util.get_group(**json_request(req.GET))
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
 
     kwargs = {"format": req.GET.get("format", Format.XLS_2007),

@@ -79,21 +79,12 @@ def user_list(domain):
     return users
 
 
-def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs):
+def get_group(group='', **kwargs):
     # refrenced in reports/views and create_export_filter below
     if group:
         if not isinstance(group, Group):
             group = Group.get(group)
-        users = group.get_user_ids() if user_id_only else group.get_users()
-    else:
-        users = users or []
-        if user_id_only:
-            users = users or [user.user_id for user in CommCareUser.by_domain(domain)]
-        else:
-            users = [CommCareUser.get_by_user_id(userID) for userID in users] or CommCareUser.by_domain(domain)
-    if not user_id_only:
-        users = sorted(users, key=lambda user: user.user_id)
-    return group, users
+    return group
 
 
 def get_all_users_by_domain(domain=None, group=None, user_ids=None,
@@ -356,7 +347,7 @@ def create_export_filter(request, domain, export_type='form'):
     from corehq.apps.reports.filters.users import UserTypeFilter
     app_id = request.GET.get('app_id', None)
 
-    group, users = get_group_params(domain, **json_request(request.GET))
+    group = get_group(**json_request(request.GET))
 
     user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
 
