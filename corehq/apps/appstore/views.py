@@ -67,10 +67,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
     if not can_view_app(request, dom):
         raise Http404()
     copies = dom.copies_of_parent()
-
     images = set()
     audio = set()
-
     return render(request, template, {
         "project": dom,
         "applications": dom.full_applications(include_builds=False),
