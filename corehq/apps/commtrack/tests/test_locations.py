@@ -7,7 +7,7 @@ from dimagi.utils.parsing import json_format_datetime
 from mock import patch
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
 
 
 class LocationsTest(CommTrackTest):
@@ -72,7 +72,7 @@ class LocationsTest(CommTrackTest):
         loc = make_loc('secondloc')
         make_supply_point(self.domain.name, loc)
 
-        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+        with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.remove_location(loc)
             self.assertEqual(submit_blocks.call_count, 0)
 
@@ -111,7 +111,7 @@ class LocationsTest(CommTrackTest):
         loc1 = make_loc('secondloc')
         make_supply_point(self.domain.name, loc1)
 
-        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+        with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.set_locations([loc1])
             self.assertEqual(submit_blocks.call_count, 1)
 
@@ -129,11 +129,12 @@ class LocationsTest(CommTrackTest):
         user.add_location(loc1)
         user.add_location(loc2)
 
-        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+        with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.set_locations([loc1, loc2])
             self.assertEqual(submit_blocks.call_count, 0)
 
     def test_location_migration(self):
+        from corehq.apps.commtrack.models import CommTrackUser
         user = CommCareUser.create(
             self.domain.name,
             'commcareuser',

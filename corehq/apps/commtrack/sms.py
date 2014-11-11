@@ -10,7 +10,7 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
+from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, RequisitionTransaction, RequisitionCase
 from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.locations.models import Location
@@ -79,7 +79,7 @@ class StockReportParser(object):
                 raise NotAUserClassError
 
             # currently only support one location on the UI
-            linked_loc = CommTrackUser.wrap(u.to_json()).location
+            linked_loc = u.location
             if linked_loc:
                 self.location = get_supply_point(self.domain.name, loc=linked_loc)
 
