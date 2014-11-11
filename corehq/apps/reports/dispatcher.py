@@ -73,7 +73,6 @@ class ReportDispatcher(View):
         import corehq
         domain_module = Domain.get_module_by_name(domain)
         if domain:
-            print "here man, here"
             project = project or Domain.get_by_name(domain)
         else:
             project = None
