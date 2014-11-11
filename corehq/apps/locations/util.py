@@ -118,7 +118,7 @@ class LocationExporter(object):
     def __init__(self, domain, include_consumption=False):
         self.domain = domain
         self.commtrack_settings = Domain.get_by_name(domain).commtrack_settings
-        self._include_consumption = include_consumption
+        self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
 
     @property
@@ -130,13 +130,8 @@ class LocationExporter(object):
     @memoized
     def include_consumption(self):
         if bool(
-            self._include_consumption
-            and self.commtrack_settings.individual_consumption_defaults
-            # FIXME I'm pretty sure this is a bug, but it's consistent with
-            # master - if build_consumption_dict returns {}, return nothing.
-            # I expect the intended behavior is to return headers for
-            # consumption defaults, just don't bother trying to look up values
-            and self.consumption_dict
+            self.include_consumption_flag and
+            self.commtrack_settings.individual_consumption_defaults
         ):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
@@ -152,8 +147,9 @@ class LocationExporter(object):
 
     def get_consumption(self, loc):
         if (
-            not self.include_consumption
-            or loc.location_type in self.administrative_types
+            not self.include_consumption or
+            loc.location_type in self.administrative_types or
+            not self.consumption_dict
         ):
             return {}
         if loc._id in self.supply_point_map:
@@ -203,7 +199,7 @@ class LocationExporter(object):
             ))
         _extend_headers('data', (f.slug for f in self.data_model.fields))
         _extend_headers('uncategorized_data', uncategorized_keys)
-        if self.include_consumption and loc_type not in self.administrative_types:
+        if self.include_consumption_flag and loc_type not in self.administrative_types:
             _extend_headers('consumption', self.product_codes)
 
         return (loc_type, {
