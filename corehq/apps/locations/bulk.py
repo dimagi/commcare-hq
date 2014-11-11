@@ -183,19 +183,12 @@ def import_location(domain, location_type, location_data, parent_child_map=None)
     if lat and lon:
         form_data['coordinates'] = '%s, %s' % (lat, lon)
 
-    properties = {}
-    consumption = []
-    for k, v in data.iteritems():
-        if k.startswith('default_'):
-            consumption.append((k[8:], v))
-        else:
-            properties[(location_type, k)] = v
+    consumption = data.get('consumption', {}).items()
 
     return submit_form(
         domain,
         parent,
         form_data,
-        properties,
         existing,
         location_type,
         consumption
@@ -228,12 +221,9 @@ def _process_parent_site_code(parent_site_code, domain, location_type, parent_ch
         raise LocationImportError(_('Parent with site code {0} does not exist in this project').format(parent_site_code))
 
 
-def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):
+def no_changes_needed(domain, existing, form_data, consumption, sp=None):
     if not existing:
         return False
-    for prop, val in properties.iteritems():
-        if getattr(existing, prop[1], None) != val:
-            return False
     for key, val in form_data.iteritems():
         if getattr(existing, key, None) != val:
             return False
@@ -250,15 +240,13 @@ def no_changes_needed(domain, existing, properties, form_data, consumption, sp=N
     return True
 
 
-def submit_form(domain, parent, form_data, properties, existing, location_type, consumption):
+def submit_form(domain, parent, form_data, existing, location_type, consumption):
     # don't save if there is nothing to save
-    if no_changes_needed(domain, existing, properties, form_data, consumption):
+    if no_changes_needed(domain, existing, form_data, consumption):
         return {
             'id': existing._id,
             'message': 'no changes for %s %s' % (location_type, existing.name)
         }
-
-    form_data.update(properties)
 
     form = make_form(domain, parent, form_data, existing)
     form.strict = False  # optimization hack to turn off strict validation
