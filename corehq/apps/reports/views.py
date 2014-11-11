@@ -172,7 +172,6 @@ def export_data(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    group = util.get_group(**json_request(req.GET))
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
 
     kwargs = {"format": req.GET.get("format", Format.XLS_2007),
@@ -194,6 +193,7 @@ def export_data(req, domain):
                 return False
         filter = _ufilter
     else:
+        group = util.get_group(**json_request(req.GET))
         filter = SerializableFunction(util.group_filter, group=group)
 
     errors_filter = instances if not include_errors else None

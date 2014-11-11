@@ -347,12 +347,12 @@ def create_export_filter(request, domain, export_type='form'):
     from corehq.apps.reports.filters.users import UserTypeFilter
     app_id = request.GET.get('app_id', None)
 
-    group = get_group(**json_request(request.GET))
-
     user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
+    use_user_filters &= bool(user_filters)
+    group = None if use_user_filters else get_group(**json_request(request.GET))
 
     if export_type == 'case':
-        if user_filters and use_user_filters:
+        if use_user_filters:
             filtered_users = users_matching_filter(domain, user_filters)
             filter = SerializableFunction(case_users_filter,
                                           users=filtered_users)
@@ -364,7 +364,7 @@ def create_export_filter(request, domain, export_type='form'):
         if datespan.is_valid():
             datespan.set_timezone(get_timezone(request.couch_user, domain))
             filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
-        if user_filters and use_user_filters:
+        if use_user_filters:
             filtered_users = users_matching_filter(domain, user_filters)
             filter &= SerializableFunction(users_filter, users=filtered_users)
         else:
