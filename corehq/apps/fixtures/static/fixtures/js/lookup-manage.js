@@ -141,7 +141,7 @@ $(function () {
             var indicesToRemoveAt = [];
             self.tag(self.original_tag);
             self.is_global(self.original_visibility);
-            if (!o._id()) { 
+            if (!self._id()) {
                 app.data_types.remove(self);
                 return;
             }

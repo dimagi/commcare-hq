@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 from couchdbkit import ResourceNotFound
+from collections import OrderedDict
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -57,7 +58,7 @@ def _to_kwargs(req):
     # unicode can mix this up so have a little utility to do it
     # was seeing this only locally, not sure if python / django
     # version dependent
-    return dict((str(k), v) for k, v in json.load(req).items())
+    return dict((str(k), v) for k, v in json.load(req, object_pairs_hook=OrderedDict).items())
 
 @require_can_edit_fixtures
 def tables(request, domain):
