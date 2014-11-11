@@ -14,12 +14,25 @@ import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
-from hutch.models import AuxMedia
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
+
+
+class AuxMedia(DocumentSchema):
+    """
+    Additional metadata companion for couch models
+    that you want to supply add arbitrary attachments to
+    """
+    uploaded_date = DateTimeProperty()
+    uploaded_by = StringProperty()
+    uploaded_filename = StringProperty()  # the uploaded filename info
+    checksum = StringProperty()
+    attachment_id = StringProperty()  # the actual attachment id in _attachments
+    media_meta = DictProperty()
+    notes = StringProperty()
 
 
 class HQMediaLicense(DocumentSchema):
