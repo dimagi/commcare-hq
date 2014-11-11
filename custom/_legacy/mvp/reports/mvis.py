@@ -240,7 +240,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
 
     def get_indicator_row(self, retrospective):
         row = [i.get('value', 0) for i in retrospective]
-        nonzero_row = [r for r in row if r]
+        nonzero_row = [r for r in row]
         row.extend(self._get_statistics(nonzero_row))
         return dict(
             numerators=self._format_row(row)
