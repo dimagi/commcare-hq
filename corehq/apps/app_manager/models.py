@@ -3554,6 +3554,11 @@ class RemoteApp(ApplicationBase):
 
 
 def get_apps_in_domain(domain, full=False, include_remote=True):
+    """
+    Returns all apps(not builds) in a domain
+
+    full use applications when true, otherwise applications_brief
+    """
     if full:
         view_name = 'app_manager/applications'
         startkey = [domain, None]
