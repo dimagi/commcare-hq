@@ -10,9 +10,11 @@ be aware of. Save time and create consistency.
 Paginated CRUD View
 -------------------
 
-Use `corehq.apps.hqwebapp.views.CRUDPaginatedViewMixin` the with a `TemplateView` subclass (ideally
-one that also subclasses `corehq.apps.hqwebapp.views.BasePageView` or `BaseSectionPageView`) to have
-a paginated list of objects which you can create, update, or delete.
+Use `corehq.apps.hqwebapp.views.CRUDPaginatedViewMixin` the with a
+`TemplateView` subclass (ideally one that also subclasses
+`corehq.apps.hqwebapp.views.BasePageView` or `BaseSectionPageView`) to
+have a paginated list of objects which you can create, update, or
+delete.
 
 
 The Basic Paginated View
@@ -83,9 +85,9 @@ In its very basic form (a simple paginated view) it should look like:
         def post(self, *args, **kwargs):
             return self.paginated_crud_response
 
-The template should use `knockout templates <http://knockoutjs.com/documentation/template-binding.html>`_
-to render the data you pass back to the view. Each template will have access to
-everything inside of `itemData`. Here's an example:
+The template should use `knockout templates`_ to render the data you
+pass back to the view. Each template will have access to everything
+inside of `itemData`. Here's an example:
 
 .. code-block:: html
 
@@ -100,10 +102,14 @@ everything inside of `itemData`. Here's an example:
     {% endblock %}
 
 
+.. _knockout templates: http://knockoutjs.com/documentation/template-binding.html
+
+
 Allowing Creation in your Paginated View
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to create data with your paginated view, you must implement the following:
+If you want to create data with your paginated view, you must implement
+the following:
 
 .. code-block:: python
 
@@ -167,7 +173,8 @@ The form returned in `get_create_form()` should make use of
 Allowing Updating in your Paginated View
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to update data with your paginated view, you must implement the following:
+If you want to update data with your paginated view, you must implement
+the following:
 
 .. code-block:: python
 
@@ -285,7 +292,8 @@ You should add the following to your `base-puppy-template` knockout template:
 Allowing Deleting in your Paginated View
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to delete data with your paginated view, you should implement something like the following:
+If you want to delete data with your paginated view, you should
+implement something like the following:
 
 .. code-block:: python
 
@@ -359,8 +367,8 @@ You should add the following to your `base-puppy-template` knockout template:
 Refreshing The Whole List Base on Update
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to do something that affects an item's position in the list (generally, moving it to the top), this is
-the feature you want.
+If you want to do something that affects an item's position in the list
+(generally, moving it to the top), this is the feature you want.
 
 You implement the following method (note that a return is not expected):
 

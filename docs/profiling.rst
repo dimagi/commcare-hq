@@ -4,22 +4,29 @@ Profiling
 Practical guide to profiling a slow view or function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This will walkthrough one way to profile slow code using the `@profile decorator <https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py>`_.
+This will walkthrough one way to profile slow code using the `@profile decorator`_.
 
 At a high level this is the process:
 
 #. Find the function that is slow
-#. Add a decorator to save a raw profile file that will collect information about function calls and timing
-#. Use libraries to analyze the raw profile file and spit out more useful information
+#. Add a decorator to save a raw profile file that will collect
+   information about function calls and timing
+#. Use libraries to analyze the raw profile file and spit out more
+   useful information
 #. Inspect the output of that information and look for anomalies
-#. Make a change, observe the updated load times and repeat the process as necessary
+#. Make a change, observe the updated load times and repeat the process
+   as necessary
+
+
+.. _@profile decorator: https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py
 
 Finding the slow function
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is usually pretty straightforward.
-The easiest thing to do is typically use the top-level entry point for a view call.
-In this example we are investigating the performance of commtrack location download, so the relevant function would be commtrack.views.location_export.::
+This is usually pretty straightforward. The easiest thing to do is
+typically use the top-level entry point for a view call. In this example
+we are investigating the performance of commtrack location download, so
+the relevant function would be commtrack.views.location_export. ::
 
     @login_and_domain_required
     def location_export(request, domain):
@@ -31,7 +38,8 @@ In this example we are investigating the performance of commtrack location downl
 Getting a profile dump
 ^^^^^^^^^^^^^^^^^^^^^^
 
-To get a profile dump, simply add the following decoration to the function.::
+To get a profile dump, simply add the following decoration to the
+function. ::
 
     from dimagi.utils.decorators.profile import profile
     @login_and_domain_required
@@ -42,8 +50,10 @@ To get a profile dump, simply add the following decoration to the function.::
         dump_locations(response, domain)
         return response
 
-Now each time you load the page a raw dump file will be created with a timestamp of when it was run.
-These are created in /tmp/ by default, however you can change it by adding a value to your settings.py like so::
+Now each time you load the page a raw dump file will be created with a
+timestamp of when it was run. These are created in /tmp/ by default,
+however you can change it by adding a value to your settings.py like 
+so ::
 
     PROFILE_LOG_BASE = "/home/czue/profiling/"
 
@@ -51,26 +61,33 @@ These are created in /tmp/ by default, however you can change it by adding a val
 Creating a more useful output from the dump file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The raw profile files are not human readable, and you need to use something like `hotshot <https://docs.python.org/2/library/hotshot.html>`_ to make them useful.
-A script that will generate what is typically sufficient information to analyze these can be found `here <https://gist.github.com/czue/4947238>`_.
-You can read the source of that script to generate your own analysis, or just use it directly as follows::
+The raw profile files are not human readable, and you need to use
+something like `hotshot`_ to make them useful. A script that will
+generate what is typically sufficient information to analyze these can
+be found `here <https://gist.github.com/czue/4947238>`_. You can read
+the source of that script to generate your own analysis, or just use it
+directly as follows::
 
    ./prof.py /path/to/profile_dump.prof > /path/to/output_file.txt
 
 
+.. _hotshot: https://docs.python.org/2/library/hotshot.html
+
 Reading the output of the analysis file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The analysis file is broken into two sections.
-The first section is an ordered breakdown of calls by the **cumulative** time spent in those functions.
-It also shows the number of calls and average time per call.
+The analysis file is broken into two sections. The first section is an
+ordered breakdown of calls by the **cumulative** time spent in those
+functions. It also shows the number of calls and average time per call.
 
-The second section is harder to read, and shows the callers to each function.
+The second section is harder to read, and shows the callers to each
+function.
 
-This analysis will focus on the first section.
-The second section is useful when you determine a huge amount of time is being spent in a function but it's not clear where that function is getting called.
+This analysis will focus on the first section. The second section is
+useful when you determine a huge amount of time is being spent in a
+function but it's not clear where that function is getting called.
 
-Here is a sample start to that file::
+Here is a sample start to that file ::
 
     loading profile stats for locations_download/commtrack-location-20140822T205905.prof
              361742 function calls (355960 primitive calls) in 8.838 seconds
@@ -107,23 +124,32 @@ Here is a sample start to that file::
           289    0.002    0.000    0.185    0.001 /home/czue/src/commcare-hq/corehq/apps/locations/models.py:31(__init__)
             6    0.000    0.000    0.176    0.029 /home/czue/.virtualenvs/commcare-hq/local/lib/python2.7/site-packages/couchdbkit/client.py:1024(_fetch_if_needed)
 
-The most important thing to look at is the cumtime (cumulative time) column.
-In this example we can see that the vast majority of the time (over 8 of the 8.9 total seconds) is spent in the cached_open_doc function (and likely the library calls below are called by that function).
-This would be the first place to start when looking at improving profile performance.
-The first few questions that would be useful to ask include:
+The most important thing to look at is the cumtime (cumulative time)
+column. In this example we can see that the vast majority of the time
+(over 8 of the 8.9 total seconds) is spent in the cached_open_doc
+function (and likely the library calls below are called by that
+function). This would be the first place to start when looking at
+improving profile performance. The first few questions that would be
+useful to ask include:
 
 * Can we optimize the function?
 * Can we reduce calls to that function?
-* In the case where that function is hitting a database or a disk, can the code be rewritten to load things in bulk?
+* In the case where that function is hitting a database or a disk, can
+  the code be rewritten to load things in bulk?
 
-In this practical example, the function is clearly meant to already be caching (based on the name alone) so it's possible that the results would be different if caching was enabled and the cache was hot.
-It would be good to make sure we test with those two parameters true as well.
-This can be done by changing your localsettings file and setting the following two variables::
+In this practical example, the function is clearly meant to already be
+caching (based on the name alone) so it's possible that the results
+would be different if caching was enabled and the cache was hot. It
+would be good to make sure we test with those two parameters true as
+well. This can be done by changing your localsettings file and setting
+the following two variables::
 
     COUCH_CACHE_DOCS = True
     COUCH_CACHE_VIEWS = True
 
-Reloading the page twice (the first time to prime the cache and the second time to profile with a hot cache) will then produce a vastly different output::
+Reloading the page twice (the first time to prime the cache and the
+second time to profile with a hot cache) will then produce a vastly
+different output::
 
     loading profile stats for locations_download/commtrack-location-20140822T211654.prof
              303361 function calls (297602 primitive calls) in 0.484 seconds
@@ -154,25 +180,31 @@ Reloading the page twice (the first time to prime the cache and the second time 
             4    0.000    0.000    0.075    0.019 submodules/dimagi-utils-src/dimagi/utils/couch/bulk.py:81(get_docs)
             4    0.000    0.000    0.073    0.018 /home/czue/.virtualenvs/commcare-hq/local/lib/python2.7/site-packages/requests/api.py:80(post)
 
-Yikes! It looks like this is already quite fast with a hot cache!
-And there don't appear to be any obvious candidates for further optimization.
-If it is still a problem it may be an indication that we need to prime the cache better, or increase the amount of data we are testing with locally to see more interesting results.
+Yikes! It looks like this is already quite fast with a hot cache! And
+there don't appear to be any obvious candidates for further
+optimization. If it is still a problem it may be an indication that we
+need to prime the cache better, or increase the amount of data we are
+testing with locally to see more interesting results.
 
 Aggregating data from multiple runs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In some cases it is useful to run a function a number of times and aggregate the profile data.
-To do this follow the steps above to create a set of '.prof' files (one for each run of the function) then use the
-'gather_profile_stats.py' script included with django (lib/python2.7/site-packages/django/bin/profiling/gather_profile_stats.py)
+In some cases it is useful to run a function a number of times and
+aggregate the profile data. To do this follow the steps above to create
+a set of '.prof' files (one for each run of the function) then use the
+'gather_profile_stats.py' script included with django 
+(lib/python2.7/site-packages/django/bin/profiling/gather_profile_stats.py) 
 to aggregate the data.
 
-This will produce a '.agg.prof' file which can be analysed with the `prof.py <https://gist.github.com/czue/4947238>`_ script.
+This will produce a '.agg.prof' file which can be analysed with the
+`prof.py <https://gist.github.com/czue/4947238>`_ script.
 
 Line profiling
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
-In addition to the above methods of profiling it is possible to do line profiling of code which attached profile
-data to individual lines of code as opposed to function names.
+In addition to the above methods of profiling it is possible to do line
+profiling of code which attached profile data to individual lines of
+code as opposed to function names.
 
 Example output:
 
@@ -194,7 +226,7 @@ Example output:
         790
         791         1      2100843 2100843.0    100.0      return view_generic(req, domain, app_id)
 
-TODO: give more detailed info
+.. TODO: give more detailed info
 
 See
 * https://github.com/dmclain/django-debug-toolbar-line-profiler
@@ -203,4 +235,3 @@ See
 Additional references
 ^^^^^^^^^^^^^^^^^^^^^
 * http://django-extensions.readthedocs.org/en/latest/runprofileserver.html
-

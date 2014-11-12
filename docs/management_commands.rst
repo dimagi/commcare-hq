@@ -1,5 +1,5 @@
 HQ Management Commands
-=======================
+======================
 
 ..
     Please add to and edit this doc as you see fit.
@@ -37,15 +37,19 @@ For more information on a specific command, run
     Run the pillowtop management command to scan all _changes feeds
 
 **runserver**
-    | Starts a lightweight web server for development which outputs additional debug information.
-    | ``--werkzeug``  Tells Django to use the Werkzeug interactive debugger.
+    | Starts a lightweight web server for development which outputs
+    | additional debug information. ``--werkzeug``  Tells Django to use
+    | the Werkzeug interactive debugger.
 
 **syncdb**
-    | Create the database tables for all apps in INSTALLED_APPS whose tables haven't already been created, except those which use migrations.
-    | ``--migrate`` Tells South to also perform migrations after the sync.
+    | Create the database tables for all apps in INSTALLED_APPS whose
+    | tables haven't already been created, except those which use
+    | migrations. ``--migrate`` Tells South to also perform migrations
+    | after the sync.
 
 **test**
-    Runs the test suite for the specified applications, or the entire site if no apps are specified.
+    Runs the test suite for the specified applications, or the entire
+    site if no apps are specified.
     Usage::
     $ ./manage.py test [options] [appname ...]
 

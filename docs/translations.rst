@@ -47,7 +47,7 @@ This ends up in the translations file as::
     msgid "User '{user}' has successfully been {action}."
 
 Using `ugettext_lazy`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 The `ugettext_lazy` method will work in the majority of translation situations. 
 It flags the string for translation but does not translate it until it is
@@ -156,7 +156,7 @@ It will be quicker for testing during development to only build one language::
 After this command has run, your .po files will be up to date. To have content
 in this file show up on the website you still need to compile the strings.
 
-.. code-block:: python
+.. code-block:: bash
 
         $ django-admin.py compilemessages
 
@@ -172,3 +172,4 @@ Example::
         #, fuzzy
         msgid "Export Data"
         msgstr "Exporter des cas"
+

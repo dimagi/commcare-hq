@@ -12,6 +12,7 @@ Best practice principles:
 
 .. _bootstrap_forms: http://bootstrapdocs.com/v2.3.1/docs/base-css.html#forms
 
+
 .. _async_form_example:
 
 An Example Complex Asynchronous Form With Partial Fields
@@ -232,4 +233,7 @@ Your knockout code in `form.person.js`:
     };
 
 That should hopefully get you 90% there. For an example on HQ see
-`corehq.apps.reminders.views.CreateScheduledReminderView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reminders/views.py#L486>`
+`corehq.apps.reminders.views.CreateScheduledReminderView <reminder_view_>`_
+
+
+.. _reminder_view: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reminders/views.py#L486

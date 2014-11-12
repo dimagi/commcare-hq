@@ -56,17 +56,19 @@ Example Custom Report Scaffolding
             ]
 
 Hooking up reports to CommCare HQ
-----------------------------------
-Custom reports can be configured in code or in the database. To configure custom reports in code
-follow the following instructions.
+---------------------------------
 
-First, you must add the app to `HQ_APPS` in `settings.py`.  It must have an `__init__.py` and a
-`models.py` for django to recognize it as an app.
+Custom reports can be configured in code or in the database. To
+configure custom reports in code follow the following instructions.
 
-Next, add a mapping for your domain(s) to the custom reports module root to the `DOMAIN_MODULE_MAP`
-variable in `settings.py`.
+First, you must add the app to `HQ_APPS` in `settings.py`.  It must have
+an `__init__.py` and a `models.py` for django to recognize it as an app.
 
-Finally, add a mapping to your custom reports to `__init__.py` in your custom reports submodule:
+Next, add a mapping for your domain(s) to the custom reports module root
+to the `DOMAIN_MODULE_MAP` variable in `settings.py`.
+
+Finally, add a mapping to your custom reports to `__init__.py` in your
+custom reports submodule:
 
 .. code-block:: python
 
@@ -88,7 +90,8 @@ As described above there are various ways of getting reporting data into
 and SQL database. From there we can query the data in a number of ways.
 
 Extending the ``SqlData`` class
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The ``SqlData`` class allows you to define how to query the data
 in a declarative manner by breaking down a query into a number of components.
 
@@ -213,9 +216,10 @@ user interface and can also be reused for multiple use cases such as
 displaying the data in the CommCare UI as a table, displaying it in a map,
 making it available via HTTP etc.
 
-An extension of this base data source class is the ``corehq.apps.reports.sqlreport.SqlData``
-class which simplifies creating data sources that get data by running
-an SQL query. See section on `SQL reporting <sql_>`_ for more info.
+An extension of this base data source class is the
+``corehq.apps.reports.sqlreport.SqlData`` class which simplifies
+creating data sources that get data by running an SQL query. See section
+on `SQL reporting <sql_>`_ for more info.
 
 e.g.
 
@@ -239,9 +243,10 @@ e.g.
 Adding dynamic reports
 ----------------------
 
-Domains support dynamic reports. Currently the only verison of this is the pie charts
-that show breakdowns of forms/cases by a particular property. See the `add_pie_chart_report`
-management command to use this for pie charts without writing any code.
+Domains support dynamic reports. Currently the only verison of this is
+the pie charts that show breakdowns of forms/cases by a particular
+property. See the `add_pie_chart_report` management command to use this
+for pie charts without writing any code.
 
 Note that pie charts require a full case/xform ES index
 
@@ -280,7 +285,7 @@ Note that pie charts require a full case/xform ES index
 .. _Fluff:
 
 How pillow/fluff work
-----------------------
+---------------------
 
 `GitHub <https://github.com/dimagi/fluff>`_
 
