@@ -2,6 +2,8 @@ from django.conf.urls.defaults import *
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import FlagBrokenBuilds
 
+from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
+
 urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^$', 'default', name="default_admin_report"),
     url(r'^export/global/$', 'global_report', name="export_global_report", kwargs=dict(as_export=True)),
@@ -33,6 +35,8 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^reset_pillow_checkpoint/$', 'reset_pillow_checkpoint', name="reset_pillow_checkpoint"),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
+
+    (r'^api/', include(admin_api_urlpatterns)),
 
     AdminReportDispatcher.url_pattern(),
 )

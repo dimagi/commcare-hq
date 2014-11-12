@@ -2,6 +2,7 @@ import simplejson
 from django.utils.translation import ugettext_lazy, ugettext as _
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.filters.base import BaseReportFilter
+import datetime
 
 
 class DatespanFilter(BaseReportFilter):
@@ -40,3 +41,29 @@ class DatespanFilter(BaseReportFilter):
             'last_month': _('Last Month'),
             'last_30_days': _('Last 30 Days')
         })
+
+
+class SingleDateFilter(BaseReportFilter):
+    """
+    A filter that returns a single date
+    """
+    template = "reports/filters/date_selector.html"
+    label = ugettext_lazy("Date")
+    slug = "date"
+
+    @property
+    def date(self):
+        from_req = self.request.GET.get('date')
+        if from_req:
+            try:
+                return datetime.datetime.strptime(from_req, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        return datetime.date.today()
+
+    @property
+    def filter_context(self):
+        return {
+            'date': self.date,
+        }

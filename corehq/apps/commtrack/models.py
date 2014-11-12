@@ -21,14 +21,12 @@ from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_cate
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.loosechange import map_reduce
-from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
 from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError, InvalidProductException
@@ -1271,6 +1269,7 @@ class CommTrackUser(CommCareUser):
             del data['commtrack_location']
 
             instance = super(CommTrackUser, cls).wrap(data)
+            instance.save()
 
             try:
                 original_location_object = Location.get(original_location)
@@ -1436,9 +1435,9 @@ class ActiveManager(models.Manager):
     """
 
     def get_query_set(self):
-        return super(ActiveManager, self).get_query_set().exclude(
-            sql_product__is_archived=True
-        )
+        return super(ActiveManager, self).get_query_set() \
+            .exclude(sql_product__is_archived=True) \
+            .exclude(sql_location__is_archived=True)
 
 
 class StockState(models.Model):
@@ -1452,6 +1451,7 @@ class StockState(models.Model):
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
     sql_product = models.ForeignKey(SQLProduct)
+    sql_location = models.ForeignKey(SQLLocation, null=True)
 
     # override default model manager to only include unarchived data
     objects = ActiveManager()
@@ -1564,6 +1564,10 @@ class StockExportColumn(ComplexExportColumn):
 
 
 def sync_location_supply_point(loc):
+    """
+    This method syncs the location/supply point connection
+    and is triggered whenever a location is edited or created.
+    """
     # circular import
     from corehq.apps.domain.models import Domain
 
@@ -1580,9 +1584,18 @@ def sync_location_supply_point(loc):
         supply_point = SupplyPointCase.get_by_location(loc)
         if supply_point:
             supply_point.update_from_location(loc)
-            return supply_point
+            updated_supply_point = supply_point
         else:
-            return SupplyPointCase.create_from_location(loc.domain, loc)
+            updated_supply_point = SupplyPointCase.create_from_location(loc.domain, loc)
+
+        # need to sync this sp change to the sql location
+        # but saving the doc will trigger a loop
+        try:
+            sql_loc = SQLLocation.objects.get(location_id=loc._id)
+            sql_loc.supply_point_id = updated_supply_point._id
+            sql_loc.save()
+        except SQLLocation.DoesNotExist:
+            pass
 
 
 @receiver(post_save, sender=DbStockTransaction)
@@ -1601,11 +1614,15 @@ def update_stock_state_for_transaction(instance):
     sql_product = SQLProduct.objects.get(product_id=instance.product_id)
 
     try:
+        sql_location = SQLLocation.objects.get(supply_point_id=instance.case_id)
+    except SQLLocation.DoesNotExist:
+        sql_location = None
+
+    try:
         state = StockState.include_archived.get(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
-            sql_product=sql_product,
         )
     except StockState.DoesNotExist:
         state = StockState(
@@ -1613,6 +1630,7 @@ def update_stock_state_for_transaction(instance):
             case_id=instance.case_id,
             product_id=instance.product_id,
             sql_product=sql_product,
+            sql_location=sql_location,
         )
 
     state.last_modified_date = instance.report.date

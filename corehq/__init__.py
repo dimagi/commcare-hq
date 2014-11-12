@@ -56,6 +56,7 @@ def REPORTS(project):
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
+            commtrack_reports.SimplifiedInventoryReport,
             commtrack_reports.InventoryReport,
             commtrack_reports.CurrentStockStatusReport,
             commtrack_maps.StockStatusMapReport,

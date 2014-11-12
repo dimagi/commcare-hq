@@ -31,23 +31,25 @@ def should_sync(domain, last_sync, utcnow=None):
     return False
 
 
-def indicators_fixture_generator(user, version, last_sync):
+def indicators_fixture_generator(user, version, synclog, last_sync):
     assert isinstance(user, CommCareUser)
 
     domain = user.project
     fixtures = []
 
+    if not domain or not (hasattr(domain, 'call_center_config') and domain.call_center_config.enabled):
+        return fixtures
+
     if not should_sync(domain, last_sync):
         return fixtures
 
-    if domain and hasattr(domain, 'call_center_config') and domain.call_center_config.enabled:
-        try:
-            fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user)))
-        except Exception:  # blanket exception catching intended
-            notify_exception(None, 'problem generating callcenter fixture', details={
-                'user_id': user._id,
-                'domain': user.domain
-            })
+    try:
+        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user, synclog=synclog)))
+    except Exception:  # blanket exception catching intended
+        notify_exception(None, 'problem generating callcenter fixture', details={
+            'user_id': user._id,
+            'domain': user.domain
+        })
 
     return fixtures
 

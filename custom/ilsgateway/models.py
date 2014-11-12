@@ -3,6 +3,7 @@ from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
 from django.db import models
 from corehq.apps.commtrack.models import Product
+from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -417,3 +418,12 @@ class ReportRun(models.Model):
         """
         qs = cls.objects.filter(complete=True, has_error=False, domain=domain)
         return qs.order_by("-start_run")[0] if qs.count() else None
+
+
+class HistoricalLocationGroup(models.Model):
+    location_id = models.ForeignKey(SQLLocation)
+    date = models.DateField()
+    group = models.CharField(max_length=1)
+
+    class Meta:
+        unique_together = ('location_id', 'date', 'group')

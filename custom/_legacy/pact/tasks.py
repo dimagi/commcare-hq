@@ -1,17 +1,21 @@
 import traceback
 from datetime import datetime
+from xml.etree import ElementTree
+from celery.schedules import crontab
 
-from celery.task import task
+from celery.task import task, periodic_task
 import simplejson
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.hqcase.utils import submit_case_blocks, get_case_ids_in_domain
 
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from pact.enums import PACT_DOTS_DATA_PROPERTY
+from pact.models import PactPatientCase
 from pact.utils import get_case_id
 
 
-DOT_RECOMPUTE=True
-#cc_user = CommCareUser.get_by_username('pactimporter@pact.commcarehq.org')
+DOT_RECOMPUTE = True
 
 @task(ignore_result=True)
 def recalculate_dots_data(case_id, cc_user, sync_token=None):
@@ -65,4 +69,40 @@ def eval_dots_block(xform_json, callback=None):
         #if this gets triggered, that's ok because web entry don't got them
         tb = traceback.format_exc()
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
-#        print "PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb)
+
+
+@periodic_task(run_every=crontab(hour="12", minute="0", day_of_week="*"))
+def update_schedule_case_properties():
+    """
+    Iterate through all pact patient cases in the domain and set schedule case properties if necessary.
+    """
+    case_ids = get_case_ids_in_domain('pact', 'cc_path_client')
+    # this is intentionally not user iter_docs since pact cases are *huge* and we want to use
+    # get_lite and only load one at a time.
+    for case_id in case_ids:
+        case = PactPatientCase.get_lite(case_id)
+        set_schedule_case_properties(case)
+
+
+def set_schedule_case_properties(pact_case):
+    """
+    Sets the required schedule case properties on the case if they are different from the current
+    case properties. See the README for more information.
+    """
+    SCHEDULE_CASE_PROPERTY_PREFIX = 'dotSchedule'
+    DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    current_schedule = pact_case.current_schedule
+    if current_schedule is not None:
+        to_change = {}
+        for day in DAYS:
+            case_property_name = '{}{}'.format(SCHEDULE_CASE_PROPERTY_PREFIX, day)
+            from_case = getattr(pact_case, case_property_name, None)
+            from_schedule = current_schedule[day]
+            if (from_case or from_schedule) and from_case != from_schedule:
+                to_change[case_property_name] = current_schedule[day]
+        if to_change:
+            case_block = CaseBlock(
+                case_id=pact_case._id,
+                update=to_change,
+            ).as_xml()
+            submit_case_blocks([ElementTree.tostring(case_block)], 'pact')

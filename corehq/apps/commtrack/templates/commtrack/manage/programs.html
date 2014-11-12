@@ -60,14 +60,12 @@
                 <thead>
                     <tr>
                         <th>{% trans "Program" %}</th>
-                        <th>{% trans "Code" %}</th>
                         <th>{% trans "Delete" %}</th>
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: data_list">
                     <tr>
                         <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
-                        <td data-bind="text: code"></td>
                         <td>
                             <div data-bind="visible: is_default">
                                 {% trans "This program is the default and cannot be deleted." %}

@@ -16,8 +16,18 @@ def close_case(case_id, domain, user):
     """
     Close a case by submitting a close form to it.
 
+    Accepts submitting user as a user object or a fake system user string.
+
     Returns the form id of the closing form.
     """
+
+    if hasattr(user, '_id'):
+        user_id = user._id
+        username = user.username
+    else:
+        user_id = user
+        username = user
+
     case_block = ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case_id,
@@ -25,7 +35,7 @@ def close_case(case_id, domain, user):
         version=V2,
     ).as_xml())
 
-    return submit_case_blocks([case_block], domain, user.username, user._id)
+    return submit_case_blocks([case_block], domain, username, user_id)
 
 
 def rebuild_case(case_id):
@@ -76,7 +86,10 @@ def rebuild_case(case_id):
         for u in filtered_updates:
             case.update_from_case_update(u, form)
 
-    case.xform_ids = [f._id for f in sorted_forms]
+    # call "rebuild" on the case, which should populate xform_ids
+    # and re-sort actions if necessary
+    case.rebuild(strict=False, xforms={f._id: f for f in sorted_forms})
+
     if not case.xform_ids:
         if not found:
             return None
