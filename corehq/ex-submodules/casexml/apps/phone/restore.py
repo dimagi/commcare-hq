@@ -91,7 +91,6 @@ class RestoreConfig(object):
         if self.domain and not self.domain.commtrack_enabled:
             return
 
-        cases = [e.case for e in syncop.actual_cases_to_sync]
         from lxml.builder import ElementMaker
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
@@ -115,7 +114,8 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
-        for commtrack_case in cases:
+        for op in syncop.actual_cases_to_sync:
+            commtrack_case = op.case
             current_ledgers = get_current_ledger_transactions(commtrack_case._id)
 
             section_product_map = defaultdict(lambda: [])
