@@ -53,9 +53,10 @@ ILS_FACILITIES = [906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,
 # District Ashanti
 EWS_FACILITIES = [109, 110, 624, 626, 922, 908, 961, 948, 956, 967]
 
+
 def get_locations(domain, endpoint, facilities):
     for facility in facilities:
-        location = endpoint.get_location(facility)
+        location = endpoint.get_location(facility, params=dict(with_historical_groups=1))
         sync_ilsgateway_location(domain, endpoint, Location.from_json(location))
 
 

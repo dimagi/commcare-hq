@@ -1,17 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-
-{# TODO load js IFF needed #}
-{# Filter javascript file #}
-<script type="text/javascript">
-    // load initial filter params
-</script>
-
 <div class="control-group">
     <fieldset id="{{ filter.css_id }}">
         <label class="control-label">{{ context.label }}</label>
         <div class="controls">
-            {% block controls %}{% endblock %}
+            {% block filter-controls %}{% endblock %}
         </div>
     </fieldset>
 </div>

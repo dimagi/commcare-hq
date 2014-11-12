@@ -95,7 +95,8 @@ class SMSUser(object):
 
 
 class Location(object):
-    def __init__(self, id, name, location_type, parent, latitude, longitude, code, groups):
+    def __init__(self, id, name, location_type, parent, latitude, longitude, code, groups,
+                 historical_groups=None):
         self.id = id
         self.name = name
         self.location_type = location_type
@@ -104,6 +105,7 @@ class Location(object):
         self.longitude = longitude
         self.code = code
         self.groups = groups
+        self.historical_groups = historical_groups
 
     @classmethod
     def from_json(cls, json_rep):
@@ -115,7 +117,8 @@ class Location(object):
             latitude=json_rep['latitude'],
             longitude=json_rep['longitude'],
             code=json_rep['code'],
-            groups=json_rep['groups']
+            groups=json_rep['groups'],
+            historical_groups=json_rep.get('historical_groups')
         )
 
     def __repr__(self):
@@ -240,8 +243,8 @@ class ILSGatewayEndpoint(EndpointMixin):
         meta, users = self.get_objects(self.smsusers_url, **kwargs)
         return meta, [self.models_map['smsuser'].from_json(user) for user in users]
 
-    def get_location(self, id):
-        response = requests.get(self.locations_url + str(id) + "/", auth=self._auth())
+    def get_location(self, id, params=None):
+        response = requests.get(self.locations_url + str(id) + "/", params=params, auth=self._auth())
         return response.json()
 
     def get_locations(self, **kwargs):

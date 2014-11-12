@@ -4,7 +4,7 @@ import traceback
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
@@ -12,7 +12,7 @@ from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase,
     CommtrackActionConfig
 from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
 from dimagi.utils.dates import force_to_datetime
-from custom.ilsgateway.models import ILSMigrationCheckpoint
+from custom.ilsgateway.models import ILSMigrationCheckpoint, HistoricalLocationGroup
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
@@ -191,10 +191,18 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
 
 
 @retry(5)
-def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
-    location = Location.view('commtrack/locations_by_code',
-                             key=[domain, ilsgateway_location.code.lower()],
-                             include_docs=True).first()
+def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups=False):
+    try:
+        sql_loc = SQLLocation.objects.get(
+            domain=domain,
+            external_id=int(ilsgateway_location.id)
+        )
+        location = Location.get(sql_loc.location_id)
+    except SQLLocation.DoesNotExist:
+        location = None
+    except SQLLocation.MultipleObjectsReturned:
+        return
+
     if not location:
         if ilsgateway_location.parent:
             loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',
@@ -232,7 +240,10 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
             'location_type': ilsgateway_location.location_type,
             'site_code': ilsgateway_location.code.lower(),
             'external_id': str(ilsgateway_location.id),
+            'metadata': {}
         }
+        if ilsgateway_location.groups:
+            location_dict['metadata']['groups'] = ilsgateway_location.groups
         case = SupplyPointCase.get_by_location(location)
         if apply_updates(location, location_dict):
             location.save()
@@ -240,6 +251,22 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location):
                 case.update_from_location(location)
             else:
                 SupplyPointCase.create_from_location(domain, location)
+    if ilsgateway_location.historical_groups:
+        historical_groups = ilsgateway_location.historical_groups
+    elif fetch_groups:
+        location_object = endpoint.get_location(
+            ilsgateway_location.id,
+            params=dict(with_historical_groups=1)
+        )
+
+        historical_groups = Loc.from_json(location_object).historical_groups
+    else:
+        historical_groups = {}
+    for date, groups in historical_groups.iteritems():
+        for group in groups:
+            HistoricalLocationGroup.objects.get_or_create(date=date, group=group,
+                                                          location_id=location.sql_location)
+
     return location
 
 
@@ -286,11 +313,11 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
 
     while has_next:
         meta, locations = endpoint.get_locations(next_url_params=next_url, **kwargs)
-        save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['location_type'],
+        save_checkpoint(checkpoint, 'location_%s' % kwargs['filters']['type'],
                         meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
         for location in locations:
-            sync_ilsgateway_location(project, endpoint, location)
+            sync_ilsgateway_location(project, endpoint, location, fetch_groups=True)
 
         has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 

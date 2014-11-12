@@ -988,7 +988,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
         self.xform_ids = []
         for a in self.actions:
-            if a.xform_id not in self.xform_ids:
+            if a.xform_id and a.xform_id not in self.xform_ids:
                 self.xform_ids.append(a.xform_id)
 
     def dynamic_case_properties(self):

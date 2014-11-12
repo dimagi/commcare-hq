@@ -33,5 +33,13 @@
     <form class="form form-horizontal" method="post" id="add_commcare_account_form">
         <input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
         {% crispy form %}
+        {% if data_fields_form.fields %}
+            {% crispy data_fields_form %}
+        {% endif %}
+        <div class="form-actions">
+            <div class="buttonHolder">
+                <input id="submit_mobile_worker" class="btn btn-primary" type="submit" value="{% trans 'Create Mobile Worker' %}" name="create"></input>
+            </div>
+        </div>
     </form>
 {% endblock %}

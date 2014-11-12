@@ -31,7 +31,7 @@ install:
   - "time (bash -e .travis/misc-setup.sh | ts)"
   - "cp .travis/localsettings.py localsettings.py"
   - "pip install coverage unittest2 mock --use-mirrors"
-script: "coverage run manage.py test --noinput --failfast --testrunner=$TEST_RUNNER"
+script: "coverage run manage.py test --noinput --failfast --traceback --testrunner=$TEST_RUNNER"
 after_success:
   - coverage report
   - coveralls

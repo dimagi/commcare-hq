@@ -1042,6 +1042,25 @@ def new_app(req, domain):
 
     return back_to_main(req, domain, app_id=app_id)
 
+@require_can_edit_apps
+def default_new_app(req, domain):
+    """New Blank Application according to defaults. So that we can link here
+    instead of creating a form and posting to the above link, which was getting
+    annoying for the Dashboard.
+    """
+    lang = 'en'
+    app = Application.new_app(
+        domain, _("Untitled Application"), lang=lang,
+        application_version=APP_V2
+    )
+    app.add_module(Module.new_module(_("Untitled Module"), lang))
+    app.new_form(0, "Untitled Form", lang)
+    if req.project.secure_submissions:
+        app.secure_submissions = True
+    _clear_app_cache(req, domain)
+    app.save()
+    return back_to_main(req, domain, app_id=app.id)
+
 
 @no_conflict_require_POST
 @require_can_edit_apps
@@ -1472,6 +1491,10 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
+        xform = form.wrapped_xform()
+        if xform.exists():
+            xform.set_name(name)
+            save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': form.name[lang]}
     if should_edit("xform"):
         try:
@@ -2378,42 +2401,6 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-def emulator_page(req, domain, app_id, template):
-    copied_app = app = get_app(domain, app_id)
-    if app.copy_of:
-        app = get_app(domain, app.copy_of)
-
-    # Coupled URL -- Sorry!
-    build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
-        **copied_app.get_preview_build()._doc
-    )
-    return render(req, template, {
-        'domain': domain,
-        'app': app,
-        'build_path': build_path,
-        'url_base': get_url_base()
-    })
-
-
-@require_can_edit_apps
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
-    return emulator_page(req, domain, app_id, template)
-
-
-def emulator_handler(req, domain, app_id):
-    exchange = req.GET.get("exchange", '')
-    if exchange:
-        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
-    else:
-        return emulator(req, domain, app_id)
-
-def emulator_commcare_jar(req, domain, app_id):
-    response = HttpResponse(
-        get_app(domain, app_id).fetch_emulator_commcare_jar()
-    )
-    response['Content-Type'] = "application/java-archive"
-    return response
-
 
 @require_can_edit_apps
 def formdefs(request, domain, app_id):
@@ -2541,7 +2528,7 @@ def get_index_for_defaults(langs):
 
 def build_ui_translation_download_file(app):
 
-    properties = tuple(["property"] + app.langs + ["platform", "source"])
+    properties = tuple(["property"] + app.langs + ["platform"])
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2580,8 +2567,7 @@ def build_ui_translation_download_file(app):
             "JavaRosa": "Java",
         }
         source = system_text_sources.SOURCES.get(row[0], "")
-        row[-1] = source
-        row[-2] = platform_map.get(source, "")
+        row[-1] = platform_map.get(source, "")
         return row
 
     rows = [add_sources(add_default(fillrow(row))) for row in rows]
@@ -2615,7 +2601,7 @@ def process_ui_translation_upload(app, trans_file):
                     if not re.match("\$\{[0-9]+}", param):
                         error_properties.append(row["property"] + ' - ' + row[lang])
                 if not (lang_with_defaults == lang
-                        and row[lang] == default_trans[row["property"]].lstrip(" ")):
+                        and row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})
     return trans_dict, error_properties
 

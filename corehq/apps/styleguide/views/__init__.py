@@ -75,3 +75,16 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
         return [
             'forms/anatomy',
         ]
+
+
+class IconsStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_icons'
+    navigation_name = 'icons'
+
+    @property
+    def sections(self):
+        return [
+            'icons/overview',
+            'icons/sources',
+            'icons/new_icons',
+        ]

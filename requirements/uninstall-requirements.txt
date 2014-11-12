@@ -1,3 +1,4 @@
 couchdbkit
 phonenumbers
 pycurl
+sorl-thumbnail

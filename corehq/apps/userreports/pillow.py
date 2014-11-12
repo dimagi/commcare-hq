@@ -39,6 +39,8 @@ class ConfigurableIndicatorPillow(PythonPillow):
         return True
 
     def change_transport(self, doc):
+        if not self.bootstrapped:
+            self.bootstrap()
         for table in self.tables:
             if table.config.filter.filter(doc):
                 table.save(doc)

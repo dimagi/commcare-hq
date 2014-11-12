@@ -55,7 +55,10 @@ class DomainMetadataResource(HqBaseResource):
         return domain
 
     def obj_get_list(self, bundle, **kwargs):
-        return [self.obj_get(bundle, **kwargs)]
+        if kwargs.get('domain'):
+            return [self.obj_get(bundle, **kwargs)]
+        else:
+            return list(Domain.get_all())
 
     class Meta(CustomResourceMeta):
         authentication = SuperuserAuthentication()

@@ -54,15 +54,17 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     """
     
     case_id = StringProperty()
+    type = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
     
     @classmethod
     def from_case(cls, case):
-        return cls(case_id=case.get_id,
+        return cls(case_id=case.get_id, type=case.type,
                    indices=case.indices)
 
     def __repr__(self):
         return "case state: %s (%s)" % (self.case_id, self.indices)
+
 
 class SyncLogAssertionError(AssertionError):
 

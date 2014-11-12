@@ -105,12 +105,6 @@ PATHWAYS_PREVIEW = StaticToggle(
     'Is Pathways preview'
 )
 
-CUSTOM_PRODUCT_DATA = StaticToggle(
-    'custom_product_data',
-    'Custom Product Data',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
@@ -134,7 +128,8 @@ EDIT_SUBMISSIONS = StaticToggle(
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
-    'User configurable reports UI'
+    'User configurable reports UI',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 
