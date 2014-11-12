@@ -743,7 +743,6 @@ class NewStockReport(object):
             if domain:
                 # set this as a shortcut for post save signal receivers
                 db_txn.domain = domain
-            previous_transaction = db_txn.get_previous_transaction()
             db_txn.type = txn.action
             db_txn.subtype = txn.subaction
             if self.tag == stockconst.REPORT_TYPE_BALANCE:
@@ -751,6 +750,7 @@ class NewStockReport(object):
                 db_txn.quantity = 0
             else:
                 assert self.tag == stockconst.REPORT_TYPE_TRANSFER
+                previous_transaction = db_txn.get_previous_transaction()
                 db_txn.quantity = txn.relative_quantity
                 db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
             db_txn.save()
