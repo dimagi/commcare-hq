@@ -43,7 +43,7 @@ class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMi
 
     @property
     def fixed_cols_spec(self):
-        return dict(num=2, width=250)
+        return dict(num=3, width=350)
 
     @property
     def export_table(self):
@@ -67,7 +67,7 @@ class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMi
                 return CompleteChildConsultationHistoryReport(
                     request=self.request, domain=self.domain).export_table
 
-        return [self._export_table(self.data_provider.title,
+        return [self._export_table("Consultation History",
                                    self.report_context['report_table']['headers'],
                                    self.report_context['report_table']['rows'])]
 
