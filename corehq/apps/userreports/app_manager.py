@@ -10,17 +10,28 @@ def get_case_data_sources(app):
     return {case_type: get_case_data_source(app, case_type) for case_type in app.get_case_types() if case_type}
 
 
+def get_default_case_property_datatypes():
+    return {
+        "name": "string",
+        "modified_on": "date",
+        "opened_on": "date",
+        "owner_id": "string",
+        "user_id": "string",
+    }
+
+
 def get_case_data_source(app, case_type):
+    default_case_property_datatypes = get_default_case_property_datatypes()
     def _make_indicator(property_name):
         return {
             "type": "raw",
             "column_id": property_name,
-            "datatype": "string",
+            "datatype": default_case_property_datatypes.get(property_name, "string"),
             'property_name': property_name,
             "display_name": property_name,
         }
 
-    property_builder = ParentCasePropertyBuilder(app)
+    property_builder = ParentCasePropertyBuilder(app, default_case_property_datatypes.keys())
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
