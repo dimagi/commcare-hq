@@ -2,7 +2,7 @@ from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
 from casexml.apps.stock.consumption import compute_consumption_or_default
-from casexml.apps.stock.utils import get_current_ledger_transactions
+from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -114,9 +114,11 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
+        case_ids = [op.case._id for op in syncop.actual_cases_to_sync]
+        all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
         for op in syncop.actual_cases_to_sync:
             commtrack_case = op.case
-            current_ledgers = get_current_ledger_transactions(commtrack_case._id)
+            current_ledgers = all_current_ledgers[commtrack_case._id]
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
