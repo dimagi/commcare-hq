@@ -384,7 +384,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 'secure_submissions', False)
             apps_to_save = []
             if secure_submissions != domain.secure_submissions:
-                for app in ApplicationBase.by_domain(domain.name):
+                for app in get_apps_in_domain(domain.name):
                     if app.secure_submissions != secure_submissions:
                         app.secure_submissions = secure_submissions
                         apps_to_save.append(app)

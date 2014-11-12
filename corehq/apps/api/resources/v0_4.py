@@ -331,7 +331,7 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
         # There should be few enough apps per domain that doing an explicit refresh for each is OK.
         # This is the easiest way to filter remote apps
         # Later we could serialize them to their URL or whatevs but it is not that useful yet
-        application_bases = ApplicationBase.by_domain(domain)
+        application_bases = get_apps_in_domain(domain)
 
         # This wraps in the appropriate class so that is_remote_app() returns the correct answer
         applications = [get_app(domain, application_base.id) for application_base in application_bases]
