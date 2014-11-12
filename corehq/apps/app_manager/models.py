@@ -2362,12 +2362,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('app_manager/applications_brief',
-                        startkey=[domain],
-                        endkey=[domain, {}],
-                        include_docs=True,
-                        #stale=settings.COUCH_STALE_QUERY,
-        ).all()
+        return get_apps_in_domain(domain)
 
     @classmethod
     def get_latest_build(cls, domain, app_id):
