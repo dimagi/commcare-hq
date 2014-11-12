@@ -1,23 +1,28 @@
 from StringIO import StringIO
 import logging
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
+
 from couchdbkit.exceptions import (
     BulkSaveError,
     MultipleResultsFound,
     ResourceNotFound,
 )
-from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext as _
-from corehq.apps.groups.models import Group
-from corehq.apps.users.forms import CommCareAccountForm
-from corehq.apps.users.util import normalize_username, raw_username
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.domain.models import Domain
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.excel import flatten_json, json_to_headers, \
-    alphanumeric_sort_key
-from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from dimagi.utils.excel import (flatten_json, json_to_headers,
+    alphanumeric_sort_key)
 from soil import DownloadBase
+
+from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
+from corehq.apps.commtrack.models import CommTrackUser
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.groups.models import Group
+from corehq.apps.domain.models import Domain
+
+from .forms import CommCareAccountForm
+from .models import CommCareUser, CouchUser
+from .util import normalize_username, raw_username
+from .views.mobile.custom_data_fields import UserFieldsView
 
 
 class UserUploadError(Exception):
@@ -25,7 +30,10 @@ class UserUploadError(Exception):
 
 
 required_headers = set(['username'])
-allowed_headers = set(['password', 'phone-number', 'email', 'user_id', 'name', 'group', 'data', 'language']) | required_headers
+allowed_headers = set([
+    'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
+    'uncategorized_data', 'user_id',
+]) | required_headers
 
 
 def check_headers(user_specs):
@@ -256,6 +264,7 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
+    custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
     def _set_progress(progress):
@@ -273,9 +282,18 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
         for row in user_specs:
             _set_progress(current)
             current += 1
-            data, email, group_names, language, name, password, phone_number, user_id, username = (
-                row.get(k) for k in sorted(allowed_headers)
-            )
+
+            data = row.get('data')
+            email = row.get('email')
+            group_names = row.get('group')
+            language = row.get('language')
+            name = row.get('name')
+            password = row.get('password')
+            phone_number = row.get('phone_number')
+            uncategorized_data = row.get('uncategorized_data')
+            user_id = row.get('user_id')
+            username = row.get('username')
+
             if password:
                 password = unicode(password)
             group_names = group_names or []
@@ -346,7 +364,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if name:
                         user.set_full_name(name)
                     if data:
+                        error = custom_data_validator(data)
+                        if error:
+                            raise UserUploadError(error)
                         user.user_data.update(data)
+                    if uncategorized_data:
+                        user.user_data.update(uncategorized_data)
                     if language:
                         user.language = language
                     if email:
@@ -422,79 +445,144 @@ def get_location_rows(domain):
     return mappings
 
 
-def dump_users_and_groups(response, domain):
-    file = StringIO()
-    writer = Excel2007ExportWriter()
+def build_data_headers(keys, header_prefix='data'):
+    return json_to_headers(
+        {header_prefix: {key: None for key in keys}}
+    )
 
-    users = CommCareUser.by_domain(domain)
-    user_data_keys = set()
-    user_groups_length = 0
-    user_dicts = []
-    group_data_keys = set()
-    group_dicts = []
-    group_memoizer = GroupMemoizer(domain=domain)
-    # load groups manually instead of calling group_memoizer.load_all()
-    # so that we can detect blank groups
-    blank_groups = set()
-    for group in Group.by_domain(domain):
-        if group.name:
-            group_memoizer.add_group(group)
-        else:
-            blank_groups.add(group)
 
-    if blank_groups:
-        raise GroupNameError(blank_groups=blank_groups)
-
-    for user in users:
-        data = user.user_data
-        group_names = sorted(map(
+def parse_users(group_memoizer, users, user_data_fields):
+    def _get_group_names(user):
+        return sorted(map(
             lambda id: group_memoizer.get(id).name,
             Group.by_user(user, wrap=False)
         ), key=alphanumeric_sort_key)
-        # exclude password and user_id
-        user_dicts.append({
-            'data': data,
+
+    def _parse_custom_data(user):
+        if not user.user_data:
+            return {}, {}
+        model_data = {}
+        uncategorized_data = {}
+        for k, v in user.user_data.items():
+            if k in user_data_fields:
+                model_data[k] = v
+            else:
+                uncategorized_data[k] = v
+
+        return model_data, uncategorized_data
+
+    def _make_user_dict(user, group_names):
+        model_data, uncategorized_data = _parse_custom_data(user)
+        return {
+            'data': model_data,
+            'uncategorized_data': uncategorized_data,
             'group': group_names,
             'name': user.full_name,
-            # dummy display string for passwords
-            'password': "********", 
+            'password': "********",  # dummy display string for passwords
             'phone-number': user.phone_number,
             'email': user.email,
             'username': user.raw_username,
             'language': user.language,
             'user_id': user._id,
-        })
-        user_data_keys.update(user.user_data.keys() if user.user_data else {})
+        }
+
+    user_data_keys = set()
+    user_groups_length = 0
+    user_dicts = []
+
+    for user in users:
+        group_names = _get_group_names(user)
+        user_dicts.append(_make_user_dict(user, group_names))
+        user_data_keys.update(user.user_data.keys() if user.user_data else [])
         user_groups_length = max(user_groups_length, len(group_names))
 
-    sorted_groups = sorted(group_memoizer.groups, key=lambda group: alphanumeric_sort_key(group.name))
-    for group in sorted_groups:
-        group_dicts.append({
-            'id': group.get_id,
-            'name': group.name,
-            'case-sharing': group.case_sharing,
-            'reporting': group.reporting,
-            'data': group.metadata,
-        })
-        group_data_keys.update(group.metadata.keys() if group.metadata else {})
-
-    # include obscured password column for adding new users
-    user_headers = ['username', 'password', 'name', 'phone-number', 'email', 'language', 'user_id']
-    user_headers.extend(json_to_headers(
-        {'data': dict([(key, None) for key in user_data_keys])}
+    user_headers = [
+        'username', 'password', 'name', 'phone-number', 'email',
+        'language', 'user_id'
+    ]
+    user_headers.extend(build_data_headers(user_data_fields))
+    user_headers.extend(build_data_headers(
+        user_data_keys.difference(set(user_data_fields)),
+        header_prefix='uncategorized_data'
     ))
     user_headers.extend(json_to_headers(
         {'group': range(1, user_groups_length + 1)}
     ))
 
-    group_headers = ['id', 'name', 'case-sharing?', 'reporting?']
-    group_headers.extend(json_to_headers(
-        {'data': dict([(key, None) for key in group_data_keys])}
-    ))
+    def _user_rows():
+        for user_dict in user_dicts:
+            row = dict(flatten_json(user_dict))
+            yield [row.get(header) or '' for header in user_headers]
+    return user_headers, _user_rows()
 
+
+def parse_groups(groups):
+    def _make_group_dict(group):
+        return {
+            'id': group.get_id,
+            'name': group.name,
+            'case-sharing': group.case_sharing,
+            'reporting': group.reporting,
+            'data': group.metadata,
+        }
+
+    group_data_keys = set()
+    group_dicts = []
+    sorted_groups = sorted(
+        groups,
+        key=lambda group: alphanumeric_sort_key(group.name)
+    )
+    for group in sorted_groups:
+        group_dicts.append(_make_group_dict(group))
+        group_data_keys.update(group.metadata.keys() if group.metadata else [])
+
+    group_headers = ['id', 'name', 'case-sharing?', 'reporting?']
+    group_headers.extend(build_data_headers(group_data_keys))
+
+    def _get_group_rows():
+        for group_dict in group_dicts:
+            row = dict(flatten_json(group_dict))
+            yield [row.get(header) or '' for header in group_headers]
+    return group_headers, _get_group_rows()
+
+
+def dump_users_and_groups(response, domain):
+    def _load_memoizer(domain):
+        group_memoizer = GroupMemoizer(domain=domain)
+        # load groups manually instead of calling group_memoizer.load_all()
+        # so that we can detect blank groups
+        blank_groups = set()
+        for group in Group.by_domain(domain):
+            if group.name:
+                group_memoizer.add_group(group)
+            else:
+                blank_groups.add(group)
+        if blank_groups:
+            raise GroupNameError(blank_groups=blank_groups)
+
+        return group_memoizer
+
+    export_file = StringIO()
+    writer = Excel2007ExportWriter()
+    group_memoizer = _load_memoizer(domain)
+    user_data_model = CustomDataFieldsDefinition.get_or_create(
+        domain,
+        UserFieldsView.field_type
+    )
+    user_data_fields = [f.slug for f in user_data_model.fields]
+
+    user_headers, user_rows = parse_users(group_memoizer,
+                                          CommCareUser.by_domain(domain),
+                                          user_data_fields)
+
+    group_headers, group_rows = parse_groups(group_memoizer.groups)
     headers = [
         ('users', [user_headers]),
         ('groups', [group_headers]),
+    ]
+    rows = [
+        ('users', user_rows),
+        ('groups', group_rows),
     ]
 
     commtrack_enabled = Domain.get_by_name(domain).commtrack_enabled
@@ -502,34 +590,14 @@ def dump_users_and_groups(response, domain):
         headers.append(
             ('locations', [['username', 'location-sms-code', 'location name (optional)']])
         )
-
-    writer.open(
-        header_table=headers,
-        file=file,
-    )
-
-    def get_user_rows():
-        for user_dict in user_dicts:
-            row = dict(flatten_json(user_dict))
-            yield [row.get(header) or '' for header in user_headers]
-
-    def get_group_rows():
-        for group_dict in group_dicts:
-            row = dict(flatten_json(group_dict))
-            yield [row.get(header) or '' for header in group_headers]
-
-    rows = [
-        ('users', get_user_rows()),
-        ('groups', get_group_rows()),
-    ]
-
-    if commtrack_enabled:
         rows.append(
             ('locations', get_location_rows(domain))
         )
 
-
+    writer.open(
+        header_table=headers,
+        file=export_file,
+    )
     writer.write(rows)
-
     writer.close()
-    response.write(file.getvalue())
+    response.write(export_file.getvalue())

@@ -162,7 +162,7 @@ class CommTrackSubmissionTest(CommTrackTest):
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
         self.user = self.users[0]
-        loc2 = make_loc('loc1')
+        loc2 = make_loc('loc2')
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

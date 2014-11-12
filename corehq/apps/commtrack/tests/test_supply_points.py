@@ -22,7 +22,7 @@ class SupplyPointTest(TestCase):
         self.assertEqual(self.loc.name, sp.name)
         self.assertEqual(TEST_DOMAIN, sp.domain)
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, sp.type)
-        self.assertEqual([self.loc._id], sp.location_)
+        self.assertEqual(self.loc._id, sp.location_id)
         self.assertEqual(const.get_commtrack_user_id(TEST_DOMAIN), sp.user_id)
         self.assertEqual(sp.user_id, sp.owner_id)
         self.assertFalse(sp.closed)

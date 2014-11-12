@@ -35,7 +35,6 @@
         var urls = {
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
-            emulator: '{% url "emulator" domain '___' %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
@@ -61,16 +60,20 @@
 </script>
 <script>
     function track_deploy_type(type) {
-        ga('send', 'event', 'App Manager', 'Deploy Type', type);
+        if (ga !== undefined) {
+            ga('send', 'event', 'App Manager', 'Deploy Type', type);
+        }
     }
 
     function track_deploy_type_and_redirect(type, href) {
         {% if GOOGLE_ANALYTICS_ID %}
-            ga('send', 'event', 'App Manager', 'Deploy Type', type, {
-                'hitCallback': function () {
-                    document.location = href;
-                }
-            });
+            if (ga !== undefined) {
+                ga('send', 'event', 'App Manager', 'Deploy Type', type, {
+                    'hitCallback': function () {
+                        document.location = href;
+                    }
+                });
+            }
         {% else %}
             return true;
         {% endif %}
@@ -216,7 +219,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga('send', 'event', 'App Manager', 'Deploy Button', '{{ app.id }}'); }
+                                click: function() { if (ga !== undefined) { ga('send', 'event', 'App Manager', 'Deploy Button', '{{ app.id }}'); } }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -299,17 +302,6 @@
             </div>
             <div class="modal-body">
                 <div class="accordion" data-bind="bootstrapCollapse: true">
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
-                                attr: {href: $root.url('emulator', id)},
-                                click: function() { track_deploy_type_and_redirect('Preview in Emulator', $root.url('emulator', id)); },
-                            ">
-                                {% trans 'Preview in Emulator' %}
-                            </a>
-                        </div>
-                    </div>
-
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="

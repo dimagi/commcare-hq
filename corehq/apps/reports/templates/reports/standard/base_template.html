@@ -118,13 +118,13 @@
                         {% trans "Filter Options" %}
                     </a>
                 {% endif %}
-
-                {% if report.is_exportable %}
-                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
-                        <i class="icon icon-share"></i> {% trans "Export to Excel" %}
-                    </a>
-                {% endif %}
-
+                {% block export %}
+                    {% if report.is_exportable %}
+                        <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                            <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+                        </a>
+                    {% endif %}
+                {% endblock %}
                 {% if report.is_emailable %}
                     <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
                         <i class="icon icon-envelope"></i> {% trans "Email report" %}

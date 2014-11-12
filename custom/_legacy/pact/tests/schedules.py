@@ -1,10 +1,12 @@
 import uuid
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from pact.lib.quicksect import IntervalNode
 from datetime import datetime, timedelta
 from pact.models import PactPatientCase, CDotWeeklySchedule
 import pytz
-utc=pytz.UTC
+
+
+utc = pytz.UTC
 
 NEW_START_DATE = "2013-01-26T13:01:30Z"
 NEW_SCHEDULE = {
@@ -123,9 +125,8 @@ WEEKLY_SCHEDULE_EXAMPLES = [
         }
     ]
 
-class ScheduleTests(TestCase):
-    def setUp(self):
-        pass
+
+class SimpleScheduleTests(SimpleTestCase):
 
     def testSimpleIntervals(self):
         td_days = timedelta(days=7)
@@ -142,15 +143,12 @@ class ScheduleTests(TestCase):
 
             int_start = int_end
             int_end = int_end+td_days
-#            print "inserting week: %d" % counter
             counter = counter + 1
 
         td_hours = timedelta(hours=4)
 
         start_check = time_start
         check_time = time_start
-        day_count = 0
-        hour_count = 0
         self.node_hits = 0
         while check_time < time_end:
             def report_schedule(node):
@@ -159,10 +157,8 @@ class ScheduleTests(TestCase):
             tree.intersect(check_time.toordinal(), check_time.toordinal(), report_schedule)
             check_time = check_time + td_hours
             if check_time > start_check+td_days:
-                #print "node hits per interval: %d" % self.node_hits
                 self.node_hits = 0
                 start_check = check_time
-
 
     def testCreatePatientSchedule(self):
         """
@@ -175,55 +171,46 @@ class ScheduleTests(TestCase):
 
         self.assertEqual(len(schedules), 1)
 
-        self.assertIsNone(schedules[0]['ended'])
-        self.assertEquals(schedules[0]['started'].isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
-
-
+        self.assertIsNone(schedules[0].ended)
+        self.assertEquals(schedules[0].started.isoformat()[0:10], datetime.utcnow().isoformat()[0:10])
+        self.assertTrue(schedules[0].is_current)
         test_patient.rm_last_schedule()
         updated_schedules = test_patient.get_schedules()
 
         self.assertEqual(len(updated_schedules), 0)
 
 
-    def testExtendingPatientSchedule(self):
-        def fmt_datetime(dt):
-            """Hacky timezone somewhat aware way to get date outputs right"""
-            return utc.localize(dt).strftime("%Y-%m-%dT%H:%M:%SZ")
-            #return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+class ScheduleTests(TestCase):
 
+    def testExtendingPatientSchedule(self):
 
         test_patient = PactPatientCase()
         test_patient.computed_ = {}
 
-        #hand make it
-        #test_patient.computed_[WEEKLY_SCHEDULE_KEY] = [CDotWeeklySchedule.wrap(x) for x in WEEKLY_SCHEDULE_EXAMPLES]
+        # hand make it
         test_patient.computed_[WEEKLY_SCHEDULE_KEY] = WEEKLY_SCHEDULE_EXAMPLES
 
-        #verify that tail is <date> - null
-        api_schedules =  test_patient.get_schedules(raw_json=True)
+        # verify that tail is <date> - null
+        api_schedules = test_patient.get_schedules(raw_json=True)
         self.assertIsNone(api_schedules[-1]['ended'])
         self.assertEquals(api_schedules[-1]['started'], '2011-02-25T14:05:32Z')
 
         self.assertEquals(len(api_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
 
-        #add a new schedule, verify tail is <date>-present, and [-2] is <datex> - <datey>
-
+        # add a new schedule, verify tail is <date>-present, and [-2] is <datex> - <datey>
 
         test_patient.set_schedule(CDotWeeklySchedule.wrap(NEW_SCHEDULE))
 
         updated_schedules = test_patient.get_schedules(raw_json=True)
         self.assertIsNone(updated_schedules[-1]['ended'])
         self.assertEquals(len(updated_schedules), len(WEEKLY_SCHEDULE_EXAMPLES)+1)
-        #pdb.set_trace()
 
         self.assertEquals(updated_schedules[-1]['started'][0:10], datetime.utcnow().isoformat()[0:10])
 
         self.assertIsNotNone(updated_schedules[-2]['ended'])
-        print updated_schedules[-2]['ended']
-        print datetime.utcnow().isoformat()
         self.assertLess(updated_schedules[-2]['ended'], datetime.utcnow().isoformat())
 
-        ### remove tail
+        # remove tail
         test_patient.save()
         loaded_patient = PactPatientCase.get(test_patient.get_id)
 
@@ -233,4 +220,3 @@ class ScheduleTests(TestCase):
         self.assertEquals(len(removed_schedules), len(WEEKLY_SCHEDULE_EXAMPLES))
         self.assertIsNone(removed_schedules[-1]['ended'])
         self.assertEquals(removed_schedules[-1]['started'], '2011-02-25T14:05:32Z')
-

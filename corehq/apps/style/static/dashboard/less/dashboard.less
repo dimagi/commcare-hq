@@ -5,94 +5,45 @@
 @panel-dashboard-header-bg: @navbar-default-bg;
 
 .dashboard-icon {
+  display: block;
+  text-align: center;
+}
+
+.dashboard-icon-large {
+  margin: 0 auto;
   @icon-size: 220px;
   width: @icon-size;
   height: @icon-size;
-  margin: @grid-gutter-width/2 auto;
-  display: block;
-  background-position: 0px 0px;
+  font-size: 200px;
 }
 
 .dashboard-icon-medium {
-  @icon-size: 189px;
+  @icon-size: 230px;
   width: @icon-size;
   height: @icon-size;
   margin: 0 auto;
+  font-size: 170px;
 }
 
-.dashboard-button {
-  background-color: transparent;
-  border: none;
-  padding: 0;
-  color: @link-color;
-  &:hover,
-  &:focus {
-    color: @link-hover-color;
-    text-decoration: underline;
-  }
+.dashboard-icon-bg {
+  position: absolute;
+  top: 57px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: #e7e7e7;
 }
 
 .dashboard-link,
 .dashboard-button {
   &:hover,
   &:focus {
-    text-decoration: underline;
+    text-decoration: none;
     outline: none;
-    .dashboard-icon {
-      background-position: 0px -220px;
-    }
     .dashboard-icon-medium {
       background-position: 0px -189px;
     }
   }
-}
-
-.dashboard-icon-exchange {
-  background-image: url('../img/icon-large-exchange.png');
-  &.dashboard-icon-medium {
-    background-image: url('../img/icon-med-exchange.png');
-  }
-}
-
-.dashboard-icon-applications {
-  background-image: url('../img/icon-large-applications.png');
-  &.dashboard-icon-medium {
-    background-image: url('../img/icon-med-applications.png');
-  }
-}
-
-.dashboard-icon-help {
-  background-image: url('../img/icon-large-help.png');
-  &.dashboard-icon-medium {
-    background-image: url('../img/icon-med-help.png');
-  }
-}
-
-.dashboard-icon-commtrack {
-  background-image: url('../img/icon-large-commtrack.png');
-  &.dashboard-icon-medium {
-    background-image: url('../img/icon-med-commtrack.png');
-  }
-}
-
-.dashboard-icon-data {
-  background-image: url('../img/icon-med-data.png');
-}
-
-.dashboard-icon-report {
-  background-image: url('../img/icon-med-report.png');
-}
-
-.dashboard-icon-messaging {
-  background-image: url('../img/icon-med-messaging.png');
-}
-
-.dashboard-icon-settings {
-  background-image: url('../img/icon-med-settings.png');
-}
-
-.dashboard-icon-users {
-  background-image: url('../img/icon-med-users.png');
 }
 
 .panel-dashboard {
@@ -113,6 +64,10 @@
     margin-bottom: 10px;
     .list-group-item {
       padding: 7px 10px;
+      background-color: rgba(255, 255, 255, 0.4);
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+      }
     }
   }
 
@@ -122,6 +77,13 @@
     bottom: 18px;
     > li > a {
       padding: 3px 7px;
+      background-color: rgba(255, 255, 255, 0.4);
+      &:hover {
+        background-color: rgba(244, 244, 244, 0.9);
+      }
+    }
+    li.active a {
+      background-color: rgba(21, 87, 162, 0.9);
     }
   }
 

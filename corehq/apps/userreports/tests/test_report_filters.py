@@ -99,3 +99,30 @@ class ChoiceListFilterTestCase(SimpleTestCase):
         for i, choice in enumerate(self.CHOICES):
             self.assertEqual(filter.choices[i + 1].value, choice['value'])
             self.assertEqual(filter.choices[i + 1].display, choice['display'])
+
+    def test_choice_list_filter_with_integers(self):
+        choices = [
+            {
+                "value": 0,
+                "display": "Negative"
+            },
+            {
+                "value": 1,
+                "display": "positive"
+            }
+        ]
+        filter = ReportFilterFactory.from_spec({
+            "type": "choice_list",
+            "slug": "diagnosis_slug",
+            "field": "diagnosis_field",
+            "display": "Diagnosis",
+            "choices": choices,
+            "show_all": False,
+        })
+        self.assertEqual(ChoiceListFilter, type(filter))
+        self.assertEqual('diagnosis_slug', filter.name)
+        self.assertEqual('Diagnosis', filter.label)
+        self.assertEqual(2, len(filter.choices))
+        for i, choice in enumerate(choices):
+            self.assertEqual(filter.choices[i].value, choice['value'])
+            self.assertEqual(filter.choices[i].display, choice['display'])
