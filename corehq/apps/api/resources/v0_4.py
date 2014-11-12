@@ -328,15 +328,7 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
             return []
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        # There should be few enough apps per domain that doing an explicit refresh for each is OK.
-        # This is the easiest way to filter remote apps
-        # Later we could serialize them to their URL or whatevs but it is not that useful yet
-        application_bases = get_apps_in_domain(domain)
-
-        # This wraps in the appropriate class so that is_remote_app() returns the correct answer
-        applications = [get_app(domain, application_base.id) for application_base in application_bases]
-
-        return [app for app in applications if not app.is_remote_app()]
+        return get_apps_in_domain(domain, include_remote=False)
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
