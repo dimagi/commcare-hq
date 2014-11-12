@@ -433,14 +433,22 @@ class RRReportingHistory(object):
             contact = _default_contact(child._id)
             if contact:
                 role = contact.user_data.get('role') or ""
-                contact_string = "%s %s (%s)" % (contact.first_name, contact.last_name, role)
+                contact_string = "%s %s (%s) %s" % (contact.first_name, contact.last_name, role,
+                                                    contact.default_phone_number)
             else:
                 contact_string = ""
+
+            def get_span(rr_value):
+                if rr_value:
+                    return '<span class="icon-ok" style="color:green"/>%s'
+                else:
+                    return '<span class="icon-warning-sign" style="color:orange"/>%s'
+
             rows.append(
                 [
                     child.site_code,
                     child.name,
-                    (format(rr_value, "d M Y") if rr_value else "Not reported"),
+                    get_span(rr_value) % (format(rr_value, "d M Y") if rr_value else "Not reported"),
                     contact_string,
                     hist_resp_rate
                 ])

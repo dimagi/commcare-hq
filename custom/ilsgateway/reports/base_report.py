@@ -44,7 +44,6 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'report_facilities_url': self.report_facilities_url,
-            'with_tabs': self.with_tabs,
         }
 
         return context
@@ -77,16 +76,4 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             chart_span=12,
             css_class=data_provider.css_class
         )
-
-        if self.with_tabs:
-            context.update(
-                dict(
-                    report_stockonhand_url=self.report_stockonhand_url,
-                    report_rand_url=self.report_rand_url,
-                    report_supervision_url=self.report_supervision_url,
-                    report_delivery_url=self.report_delivery_url,
-                    report_unrecognizedmessages_url=self.report_unrecognizedmessages_url,
-                )
-            )
-
         return context

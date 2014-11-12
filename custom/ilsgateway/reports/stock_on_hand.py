@@ -20,7 +20,6 @@ from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
 
 class DetailsReport(MultiReport):
     with_tabs = True
-
     flush_layout = True
 
     @classmethod
@@ -28,8 +27,23 @@ class DetailsReport(MultiReport):
         return True
 
     @property
+    def report_context(self):
+        context = super(DetailsReport, self).report_context
+        context.update(
+            dict(
+                report_stockonhand_url=self.report_stockonhand_url,
+                report_rand_url=self.report_rand_url,
+                report_supervision_url=self.report_supervision_url,
+                report_delivery_url=self.report_delivery_url,
+                report_unrecognizedmessages_url=self.report_unrecognizedmessages_url,
+            )
+        )
+        return context
+
+    @property
     def report_stockonhand_url(self):
         try:
+            from custom.ilsgateway.reports.randr import RRreport
             return html.escape(StockOnHandReport.get_url(
                 domain=self.domain) +
                 '?location_id=%s&month=%s&year=%s' %
@@ -39,7 +53,14 @@ class DetailsReport(MultiReport):
 
     @property
     def report_rand_url(self):
-        return 'test2'
+        try:
+            from custom.ilsgateway import RRreport
+            return html.escape(RRreport.get_url(
+                domain=self.domain) +
+                '?location_id=%s&month=%s&year=%s' %
+                (self.request_params['location_id'], self.request_params['month'], self.request_params['year']))
+        except KeyError:
+            return None
 
     @property
     def report_supervision_url(self):
