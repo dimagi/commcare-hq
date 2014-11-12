@@ -1,24 +1,22 @@
+from jsonobject.properties import StringProperty, BooleanProperty, IntegerProperty, DecimalProperty, ListProperty
 from custom.ilsgateway.api import ILSGatewayEndpoint, Product, ProductStock, StockTransaction
+from jsonobject import JsonObject
 
-
-class EWSUser(object):
-    def __init__(self, username, first_name, last_name, email,
-                 password, is_staff, is_active, is_superuser, last_login,
-                 date_joined, location, supply_point, sms_notifications, organization):
-        self.username = username
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.password = password
-        self.is_staff = is_staff
-        self.is_active = is_active
-        self.is_superuser = is_superuser
-        self.last_login = last_login
-        self.date_joined = date_joined
-        self.location = location
-        self.supply_point = supply_point
-        self.sms_notifications = sms_notifications
-        self.organization = organization
+class EWSUser(JsonObject):
+    username = StringProperty()
+    first_name = StringProperty()
+    last_name = StringProperty()
+    email = StringProperty()
+    password = StringProperty()
+    is_staff = BooleanProperty()
+    is_active = BooleanProperty()
+    is_superuser = BooleanProperty()
+    last_login = StringProperty()
+    date_joined = StringProperty()
+    location = DecimalProperty()
+    supply_point = DecimalProperty()
+    sms_notifications = BooleanProperty()
+    organization = StringProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -43,18 +41,17 @@ class EWSUser(object):
         return str(self.__dict__)
 
 
-class SMSUser(object):
-    def __init__(self, id, name, role, is_active, supply_point, email, phone_numbers, backend, family_name, to):
-        self.id = id
-        self.name = name
-        self.role = role
-        self.is_active = is_active
-        self.supply_point = supply_point
-        self.email = email
-        self.phone_numbers = phone_numbers
-        self.backend = backend
-        self.family_name = family_name
-        self.to = to
+class SMSUser(JsonObject):
+    id = DecimalProperty()
+    name = StringProperty()
+    role = StringProperty()
+    is_active = StringProperty()
+    supply_point = DecimalProperty()
+    email = StringProperty()
+    phone_numbers = ListProperty()
+    backend = StringProperty()
+    family_name = StringProperty()
+    to = StringProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -75,19 +72,18 @@ class SMSUser(object):
         return str(self.__dict__)
 
 
-
-class Location(object):
-    def __init__(self, id, name, location_type, parent, latitude, longitude, code, groups, created_at, supervised_by):
-        self.id = id
-        self.name = name
-        self.location_type = location_type
-        self.parent = parent
-        self.latitude = latitude
-        self.longitude = longitude
-        self.code = code
-        self.groups = groups
-        self.created_at = created_at
-        self.supervised_by = supervised_by
+class Location(JsonObject):
+    id = DecimalProperty()
+    name = StringProperty()
+    location_type = StringProperty()
+    parent = DecimalProperty()
+    latitude = StringProperty()
+    longitude = StringProperty()
+    code = StringProperty()
+    groups = ListProperty()
+    historical_groups = ListProperty()
+    created_at = StringProperty()
+    supervised_by = DecimalProperty()
 
     @classmethod
     def from_json(cls, json_rep):

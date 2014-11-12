@@ -12,7 +12,7 @@ from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase,
     CommtrackActionConfig
 from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
 from dimagi.utils.dates import force_to_datetime
-from custom.ilsgateway.models import ILSMigrationCheckpoint, HistoricalLocationGroup
+from custom.ilsgateway.models import LogisticsMigrationCheckpoint, HistoricalLocationGroup
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
@@ -348,7 +348,7 @@ def bootstrap_domain(ilsgateway_config):
     start_date = datetime.today()
     endpoint = TanzaniaEndpoint.from_config(ilsgateway_config)
     try:
-        checkpoint = ILSMigrationCheckpoint.objects.get(domain=domain)
+        checkpoint = LogisticsMigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
         date = checkpoint.date
         limit = checkpoint.limit
@@ -358,8 +358,8 @@ def bootstrap_domain(ilsgateway_config):
             checkpoint.save()
         else:
             start_date = checkpoint.start_date
-    except ILSMigrationCheckpoint.DoesNotExist:
-        checkpoint = ILSMigrationCheckpoint()
+    except LogisticsMigrationCheckpoint.DoesNotExist:
+        checkpoint = LogisticsMigrationCheckpoint()
         checkpoint.domain = domain
         checkpoint.start_date = start_date
         api = 'product'

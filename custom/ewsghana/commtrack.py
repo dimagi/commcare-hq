@@ -1,11 +1,9 @@
 from functools import partial
 import logging
 from custom.ilsgateway.commtrack import sync_ilsgateway_webuser, sync_ilsgateway_product, commtrack_settings_sync, sync_ilsgateway_smsuser, save_checkpoint, products_sync, sync_ilsgateway_location
-from custom.ilsgateway.ghana.api import GhanaEndpoint
-from custom.ilsgateway.ghana.commtrack import commtrack_settings_sync, save_checkpoint, sync_ilsgateway_webuser, sync_ilsgateway_product
-from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
+from custom.ewsghana.api import GhanaEndpoint
 from dimagi.utils.dates import force_to_datetime
-from custom.ilsgateway.models import ILSMigrationCheckpoint
+from custom.ilsgateway.models import LogisticsMigrationCheckpoint
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
@@ -36,8 +34,6 @@ def smsusers_sync(project, endpoint, checkpoint, **kwargs):
         has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 def ews_webuser_extension(couch_user, user):
-    # WebUsers doesn't contain user_data dict
-    couch_user.__setattr__('user_data', {})
     couch_user.user_data['sms_notifications'] = user.sms_notifications
     couch_user.user_data['organization'] = user.organization
     couch_user.save()
@@ -73,12 +69,12 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
         has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
-def bootstrap_domain(ilsgateway_config):
-    domain = ilsgateway_config.domain
+def bootstrap_domain(ewsghana_config):
+    domain = ewsghana_config.domain
     start_date = datetime.today()
-    endpoint = GhanaEndpoint.from_config(ilsgateway_config)
+    endpoint = GhanaEndpoint.from_config(ewsghana_config)
     try:
-        checkpoint = ILSMigrationCheckpoint.objects.get(domain=domain)
+        checkpoint = LogisticsMigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
         date = checkpoint.date
         limit = checkpoint.limit
@@ -88,8 +84,8 @@ def bootstrap_domain(ilsgateway_config):
             checkpoint.save()
         else:
             start_date = checkpoint.start_date
-    except ILSMigrationCheckpoint.DoesNotExist:
-        checkpoint = ILSMigrationCheckpoint()
+    except LogisticsMigrationCheckpoint.DoesNotExist:
+        checkpoint = LogisticsMigrationCheckpoint()
         checkpoint.domain = domain
         checkpoint.start_date = start_date
         api = 'product'

@@ -1,3 +1,5 @@
+from jsonobject.api import JsonObject
+from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty
 import requests
 from corehq.apps.commtrack.models import SupplyPointCase
 from custom.api.utils import EndpointMixin
@@ -6,13 +8,12 @@ class MigrationException(Exception):
     pass
 
 
-class Product(object):
-    def __init__(self, name, units, sms_code, description, is_active):
-        self.name = name
-        self.units = units
-        self.sms_code = sms_code
-        self.description = description
-        self.is_active = is_active
+class Product(JsonObject):
+    name = StringProperty()
+    units = StringProperty()
+    sms_code = StringProperty()
+    description = StringProperty()
+    is_active = BooleanProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -28,22 +29,19 @@ class Product(object):
         return str(self.__dict__)
 
 
-class ILSUser(object):
-    def __init__(self, username, first_name, last_name, email,
-                 password, is_staff, is_active, is_superuser, last_login,
-                 date_joined, location, supply_point):
-        self.username = username
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.password = password
-        self.is_staff = is_staff
-        self.is_active = is_active
-        self.is_superuser = is_superuser
-        self.last_login = last_login
-        self.date_joined = date_joined
-        self.location = location
-        self.supply_point = supply_point
+class ILSUser(JsonObject):
+    username = StringProperty()
+    first_name = StringProperty()
+    last_name = StringProperty()
+    email = StringProperty()
+    password = StringProperty()
+    is_staff = BooleanProperty()
+    is_active = BooleanProperty()
+    is_superuser = BooleanProperty()
+    last_login = StringProperty()
+    date_joined = StringProperty()
+    location = DecimalProperty()
+    supply_point = DecimalProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -66,16 +64,15 @@ class ILSUser(object):
         return str(self.__dict__)
 
 
-class SMSUser(object):
-    def __init__(self, id, name, role, is_active, supply_point, email, phone_numbers, backend):
-        self.id = id
-        self.name = name
-        self.role = role
-        self.is_active = is_active
-        self.supply_point = supply_point
-        self.email = email
-        self.phone_numbers = phone_numbers
-        self.backend = backend
+class SMSUser(JsonObject):
+    id = DecimalProperty()
+    name = StringProperty()
+    role = StringProperty()
+    is_active = StringProperty()
+    supply_point = DecimalProperty()
+    email = StringProperty()
+    phone_numbers = ListProperty()
+    backend = StringProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -94,18 +91,16 @@ class SMSUser(object):
         return str(self.__dict__)
 
 
-class Location(object):
-    def __init__(self, id, name, location_type, parent, latitude, longitude, code, groups,
-                 historical_groups=None):
-        self.id = id
-        self.name = name
-        self.location_type = location_type
-        self.parent = parent
-        self.latitude = latitude
-        self.longitude = longitude
-        self.code = code
-        self.groups = groups
-        self.historical_groups = historical_groups
+class Location(JsonObject):
+    id = DecimalProperty()
+    name = StringProperty()
+    location_type = StringProperty()
+    parent = DecimalProperty()
+    latitude = StringProperty()
+    longitude = StringProperty()
+    code = StringProperty()
+    groups = ListProperty()
+    historical_groups = ListProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -125,13 +120,12 @@ class Location(object):
         return str(self.__dict__)
 
 
-class ProductStock(object):
-    def __init__(self, supply_point_id, quantity, product_code, last_modified, auto_monthly_consumption):
-        self.supply_point_id = supply_point_id
-        self.quantity = quantity
-        self.product_code = product_code
-        self.last_modified = last_modified
-        self.auto_monthly_consumption = auto_monthly_consumption
+class ProductStock(JsonObject):
+    supply_point_id = DecimalProperty()
+    quantity = DecimalProperty()
+    product_code = StringProperty()
+    last_modified = StringProperty()
+    auto_monthly_consumption = DecimalProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -147,16 +141,14 @@ class ProductStock(object):
         return str(self.__dict__)
 
 
-class StockTransaction(object):
-    def __init__(self, beginning_balance, date, ending_balance, product_code, quantity, report_type,
-                 supply_point_id):
-        self.beginning_balance = beginning_balance
-        self.date = date
-        self.ending_balance = ending_balance
-        self.product_code = product_code
-        self.quantity = quantity
-        self.report_type = report_type
-        self.supply_point_id = supply_point_id
+class StockTransaction(JsonObject):
+    beginning_balance = DecimalProperty()
+    date = StringProperty()
+    ending_balance = DecimalProperty()
+    product_code = StringProperty()
+    quantity = DecimalProperty()
+    report_type = StringProperty()
+    supply_point_id = DecimalProperty()
 
     @classmethod
     def from_json(cls, json_rep):
