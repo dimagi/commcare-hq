@@ -166,10 +166,6 @@ class RestoreConfig(object):
 
         start_time = datetime.utcnow()
         sync_operation = user.get_case_updates(last_sync)
-        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
-                             for op in sync_operation.actual_cases_to_sync]
-        commtrack_elements = self.get_stock_payload(sync_operation)
-
         last_seq = str(get_db().info()["update_seq"])
 
         # create a sync log for this
@@ -196,9 +192,17 @@ class RestoreConfig(object):
         # fixture block
         for fixture in generator.get_fixtures(user, self.version, synclog, last_sync):
             response.append(fixture)
+
         # case blocks
+        case_xml_elements = (
+            xml.get_case_element(op.case, op.required_updates, self.version)
+            for op in sync_operation.actual_cases_to_sync
+        )
         for case_elem in case_xml_elements:
             response.append(case_elem)
+
+        # commtrack balance sections
+        commtrack_elements = self.get_stock_payload(sync_operation)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
