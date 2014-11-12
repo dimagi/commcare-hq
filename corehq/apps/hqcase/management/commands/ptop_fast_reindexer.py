@@ -8,7 +8,7 @@ import simplejson
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
 
-CHUNK_SIZE = 100000
+CHUNK_SIZE = 10000
 POOL_SIZE = 15
 
 MAX_TRIES = 10

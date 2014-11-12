@@ -42,10 +42,10 @@ if __name__ == "__main__":
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
-    # proxy for whether we're running gunicorn with -k gevent
-    if "gevent" in sys.argv:
-        from restkit.session import set_session; set_session("gevent")
-        from gevent.monkey import patch_all; patch_all()
+    # important to apply gevent monkey patches before running any other code
+    # applying this later can lead to inconsistencies and threading issues
+    from restkit.session import set_session; set_session("gevent")
+    from gevent.monkey import patch_all; patch_all()
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
     from django.core.management import execute_from_command_line
