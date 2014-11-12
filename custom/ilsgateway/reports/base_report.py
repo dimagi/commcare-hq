@@ -69,6 +69,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
                 datatables=self.use_datatables,
                 total_row=total_row,
                 start_at_row=0,
+                subtitle=data_provider.subtitle,
             ),
             show_table=data_provider.show_table,
             show_chart=data_provider.show_chart,

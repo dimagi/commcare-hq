@@ -21,6 +21,14 @@
     list-style: none;
 }
 
+.small_table {
+    width: 100% !important;
+}
+
+.dataTables_scrollHeadInner{
+    width: 100% !important;
+}
+
 .module ul {
     padding: 0.5em;
     padding-top: 0;

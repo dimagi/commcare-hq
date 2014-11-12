@@ -77,6 +77,7 @@ class ILSData(object):
     show_chart = True
     title_url = None
     title_url_name = None
+    subtitle=None
 
     chart_config = {
         'on_time': {

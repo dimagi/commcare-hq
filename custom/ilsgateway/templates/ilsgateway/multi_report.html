@@ -45,6 +45,9 @@
             {% if thisreport.charts %}
                 <div class="{{ thisreport.css_class }}">
                     <h4 class="media-heading">{{ thisreport.report_table.title }}</h4>
+                    {% if report_table.subtitle %}
+                        <span style="color: slategray">{{ report_table.subtitle }}</span>
+                    {% endif %}
                     {% for chart in thisreport.charts %}
                         {% if chart.data.0.values %}
                             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}

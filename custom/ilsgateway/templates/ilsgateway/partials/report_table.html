@@ -4,6 +4,9 @@
 
 <div class="{{ thisreport.css_class }} module">
     <h4 class="media-heading">{{ report_table.title }}<br/></h4>
+              {% if report_table.subtitle %}
+                <span style="color: slategray">{{ report_table.subtitle }}</span>
+              {% endif %}
     {% if report_table.rows %}
         <ul class="stats">
             <li>
