@@ -116,7 +116,8 @@ class ParentCasePropertyBuilder(object):
 
         get_properties_recursive = functools.partial(
             self.get_properties,
-            already_visited=already_visited + (case_type,)
+            already_visited=already_visited + (case_type,),
+            include_shared_properties=include_shared_properties
         )
 
         case_properties = set(self.defaults)
