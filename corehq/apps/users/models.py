@@ -1802,6 +1802,7 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
 
     location_id = StringProperty()
     program_id = StringProperty()
+    user_data = DictProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
