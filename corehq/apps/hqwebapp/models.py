@@ -115,17 +115,15 @@ class UITab(object):
 
         self.domain = domain
         self.couch_user = couch_user
-        if project or not domain:
-            self.project = project
-        elif domain:
-            self.project = Domain.get_by_name(domain)
+        self.project = project
+        if not self.project and self.domain:
+            self.project = Domain.get_by_name(self.domain)
         self.org = org
 
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
         self._request = request
         self._current_url_name = current_url_name
-
 
     @property
     def dropdown_items(self):
