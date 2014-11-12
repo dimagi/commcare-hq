@@ -68,13 +68,30 @@ def get_current_ledger_transactions_multi(case_ids):
     if not case_ids:
         return {}
 
-    results = StockTransaction.objects.filter(
-        case_id__in=case_ids
-    ).values_list('case_id', 'section_id', 'product_id').distinct()
+    relevant_transactions = StockTransaction.objects.raw(
+        """
+        SELECT MAX(stx.id) AS id FROM
+        (
+            SELECT case_id, product_id, section_id, MAX(sr.date) AS date
+            FROM stock_stocktransaction st JOIN stock_stockreport sr ON st.report_id = sr.id
+            WHERE case_id IN %s
+            GROUP BY case_id, section_id, product_id
+        ) AS x INNER JOIN stock_stocktransaction AS stx ON
+            stx.case_id = x.case_id
+            AND stx.product_id = x.product_id
+            AND stx.section_id = x.section_id
+        JOIN stock_stockreport str ON
+            str.date = x.date
+            AND stx.report_id = str.id
+        GROUP BY stx.case_id, stx.product_id, stx.section_id, str.date;
+        """,
+        [tuple(case_ids)]
+    )
 
+    transaction_ids = [tx.id for tx in relevant_transactions]
+    results = StockTransaction.objects.filter(id__in=transaction_ids).select_related()
     ret = {case_id: {} for case_id in case_ids}
-    for case_id, section_id, product_id in results:
-        sections = ret[case_id].setdefault(section_id, {})
-        sections[product_id] = StockTransaction.latest(case_id, section_id, product_id)
-
+    for txn in results:
+        sections = ret[txn.case_id].setdefault(txn.section_id, {})
+        sections[txn.product_id] = txn
     return ret

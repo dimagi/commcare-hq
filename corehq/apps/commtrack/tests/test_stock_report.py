@@ -23,12 +23,12 @@ class StockReportDomainTest(TestCase):
             for _ in range(DOMAIN_MAX_LENGTH)
         )
 
-    def create_report(self, transactions=None, tag=None):
+    def create_report(self, transactions=None, tag=None, date=None):
         form = XFormInstance(domain=self.domain)
         form.save()
         report = NewStockReport(
             form,
-            datetime.now(),
+            date or datetime.now(),
             tag or REPORT_TYPE_BALANCE,
             transactions or [],
         )
@@ -94,6 +94,7 @@ class StockReportDomainTest(TestCase):
     def _test_get_current_ledger_transactions(self, tester_fn):
         tester_fn(self.transactions)
 
+        date = datetime.now()
         report, _ = self.create_report([
             STrans(
                 case_id='c1',
@@ -101,11 +102,23 @@ class StockReportDomainTest(TestCase):
                 product_id='p1',
                 action='soh',
                 quantity=864)
-        ])
+        ], date=date)
+        report.create_models(self.domain)
+
+        # create second report with the same date
+        # results should have this transaction and not the previous one
+        report, _ = self.create_report([
+            STrans(
+                case_id='c1',
+                section_id='s1',
+                product_id='p1',
+                action='soh',
+                quantity=1)
+        ], date=date)
         report.create_models(self.domain)
 
         new_trans = self.transactions.copy()
-        new_trans['c1']['s1']['p1'] = 864
+        new_trans['c1']['s1']['p1'] = 1
 
         tester_fn(new_trans)
 
