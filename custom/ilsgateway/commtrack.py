@@ -9,7 +9,7 @@ from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
+from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommtrackConfig, \
     CommtrackActionConfig
 from dimagi.utils.dates import force_to_datetime
 from custom.ilsgateway.models import ILSMigrationCheckpoint, HistoricalLocationGroup
@@ -105,11 +105,10 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
 
 
 def add_location(user, location_id):
-    commtrack_user = CommTrackUser.wrap(user.to_json())
     if location_id:
         loc = Location.get(location_id)
-        commtrack_user.clear_locations()
-        commtrack_user.add_location(loc, create_sp_if_missing=True)
+        user.clear_locations()
+        user.add_location(loc, create_sp_if_missing=True)
 
 
 @retry(5)
