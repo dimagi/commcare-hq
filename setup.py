@@ -10,7 +10,7 @@ setup(
     author_email='information@dimagi.com',
     url='http://www.dimagi.com/',
     install_requires = [
-        "django",
+        "django<1.7",
         "jsonobject-couchdbkit",
         "dimagi-utils",
         'django-soil',
