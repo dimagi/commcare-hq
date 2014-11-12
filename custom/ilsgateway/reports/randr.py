@@ -18,10 +18,11 @@ class RRreport(DetailsReport):
     @memoized
     def data_providers(self):
         config = self.report_config
-        location = Location.get(config['location_id'])
-        data_providers = [RandRSubmissionData(config=config)]
-        if location.location_type in ['REGION', 'MOHSW']:
-            data_providers.append(RRStatus(config=config))
-        else:
-            data_providers.append(RRReportingHistory(config=config))
+        data_providers = [RandRSubmissionData(config=config, css_class='row_chart_all')]
+        if config['location_id']:
+            location = Location.get(config['location_id'])
+            if location.location_type in ['REGION', 'MOHSW']:
+                data_providers.append(RRStatus(config=config))
+            else:
+                data_providers.append(RRReportingHistory(config=config))
         return data_providers
