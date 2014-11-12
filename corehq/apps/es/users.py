@@ -16,7 +16,6 @@ class UserES(HQESQuery):
             mobile_users,
             web_users,
             user_ids,
-            domains,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -52,9 +51,3 @@ def created(gt=None, gte=None, lt=None, lte=None):
 
 def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
-
-def domains(domains):
-    return filters.OR(
-        filters.term("domain.exact", list(domains)),
-        filters.term("domain_memberships.domain.exact", list(domains))
-    )
