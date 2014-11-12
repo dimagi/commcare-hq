@@ -133,28 +133,6 @@ class LocationsTest(CommTrackTest):
             user.set_locations([loc1, loc2])
             self.assertEqual(submit_blocks.call_count, 0)
 
-    def test_location_migration(self):
-        from corehq.apps.commtrack.models import CommTrackUser
-        user = CommCareUser.create(
-            self.domain.name,
-            'commcareuser',
-            'password',
-            phone_numbers=['123123'],
-            user_data={},
-            first_name='test',
-            last_name='user'
-        )
-
-        loc = make_loc('someloc')
-        make_supply_point(self.domain.name, loc)
-
-        user.commtrack_location = loc._id
-        ct_user = CommTrackUser.wrap(user.to_json())
-
-        self.assertEqual(1, len(ct_user.locations))
-        self.assertEqual('someloc', ct_user.locations[0].name)
-        self.assertFalse(hasattr(ct_user, 'commtrack_location'))
-
     def test_sync(self):
         test_state = make_loc(
             'teststate',

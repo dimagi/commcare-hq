@@ -1253,38 +1253,6 @@ class RequisitionTransaction(StockTransaction):
         return 'requisition'
 
 
-class CommTrackUser(CommCareUser):
-    class Meta:
-        # This is necessary otherwise syncdb will confuse this app with users
-        app_label = "commtrack"
-
-
-    @classmethod
-    def wrap(cls, data):
-        # lazy migration from commtrack_location to locations
-        if 'commtrack_location' in data:
-            original_location = data['commtrack_location']
-            del data['commtrack_location']
-
-            instance = super(CommTrackUser, cls).wrap(data)
-
-            try:
-                original_location_object = Location.get(original_location)
-            except ResourceNotFound:
-                # if there was bad data in there before, we can ignore it
-                return instance
-            instance.set_locations([original_location_object])
-
-            return instance
-        else:
-            return super(CommTrackUser, cls).wrap(data)
-
-    @classmethod
-    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0, strict=False, doc_type=None):
-        doc_type = doc_type or 'CommCareUser'
-        return super(CommTrackUser, cls).by_domain(domain, is_active, reduce, limit, skip, strict, doc_type)
-
-
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
