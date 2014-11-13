@@ -202,6 +202,7 @@ Example output::
         78         1      1004013 1004013.0     55.6      demo_follow()
 
 More details here:
+
 * https://github.com/dmclain/django-debug-toolbar-line-profiler
 * https://github.com/dcramer/django-devserver#devservermodulesprofilelineprofilermodule
 
