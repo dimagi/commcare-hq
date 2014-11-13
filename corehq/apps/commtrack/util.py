@@ -2,10 +2,11 @@ from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
-    CommtrackConfig, CommtrackActionConfig, LocationType, RequisitionActions,
+    CommtrackConfig, CommtrackActionConfig, RequisitionActions,
     CommtrackRequisitionConfig, Product, SupplyPointCase, RequisitionCase, Program
 )
 from corehq.apps.locations.models import Location
+from corehq.apps.locations.schema import LocationType
 import itertools
 from datetime import datetime, date, timedelta
 from calendar import monthrange

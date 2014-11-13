@@ -9,8 +9,9 @@ from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommtrackConfig, \
+from corehq.apps.commtrack.models import Product, SupplyPointCase, CommtrackConfig, \
     CommtrackActionConfig
+from corehq.apps.locations.schema import LocationType
 from dimagi.utils.dates import force_to_datetime
 from custom.ilsgateway.models import ILSMigrationCheckpoint, HistoricalLocationGroup
 from requests.exceptions import ConnectionError

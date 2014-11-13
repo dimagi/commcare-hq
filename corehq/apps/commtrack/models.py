@@ -455,20 +455,6 @@ class CommtrackActionConfig(DocumentSchema):
         return self.action in REQUISITION_ACTION_TYPES
 
 
-class LocationType(DocumentSchema):
-    name = StringProperty()
-    code = StringProperty()
-    allowed_parents = StringListProperty()
-    administrative = BooleanProperty()
-
-    @classmethod
-    def wrap(cls, obj):
-        from corehq.apps.commtrack.util import unicode_slug
-        if not obj.get('code'):
-            obj['code'] = unicode_slug(obj['name'])
-        return super(LocationType, cls).wrap(obj)
-
-
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
     enabled = BooleanProperty(default=False)
@@ -557,8 +543,6 @@ class CommtrackConfig(CachedCouchDocumentMixin, Document):
 
     multiaction_enabled = BooleanProperty()
     multiaction_keyword_ = StringProperty()
-
-    location_types = SchemaListProperty(LocationType)
 
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
     openlmis_config = SchemaProperty(OpenLMISConfig)
