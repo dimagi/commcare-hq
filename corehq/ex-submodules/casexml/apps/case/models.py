@@ -658,7 +658,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             # feature flags ftw
             return (not case_update.has_referrals()
                     and (getattr(settings,'UNIT_TESTING', False)
-                         or getattr(xformdoc, 'domain', None) == 'ekjut'))
+                         or getattr(xformdoc, 'domain', None) in ('ekjut', 'miralbwsurvey')))
 
         if _use_new_case_processing():
             return self._new_update_from_case_update(case_update, xformdoc)
