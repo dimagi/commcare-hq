@@ -11,40 +11,41 @@ This is the life-cycle of an incoming stock report via sms.
 2. The parsed sms is converted to an HQ-compatible xform submission.
    This includes:
 
-  * stock/requisition info (i.e., just the data provided in the sms)
-  * location to which this message applies (provided in message or
-    associated with sending user)
-  * standard HQ submission meta-data (submit time, user, etc.)
+   * stock/requisition info (i.e., just the data provided in the sms)
+   * location to which this message applies (provided in message or
+     associated with sending user)
+   * standard HQ submission meta-data (submit time, user, etc.)
 
-  Notably missing: anything that updates cases
+   Notably missing: anything that updates cases
 
 3. The submission is *not* submitted yet, but rather processed further
    on the server. This includes:
 
-  * looking up the product sub-cases that actually store
-    stock/consumption values. (step (2) looked up the location ID; each
-    supply point is a case associated with that location, and actual
-    stock data is stored in a sub-case -- one for each product -- of the
-    supply point case)
-  * applying the stock actions for each product in the correct order (a
-    stock report can include multiple actions; these must be applied in
-    a consistent order or else unpredictable stock levels may result)
-  * computing updated stock levels and consumption (using somewhat
-    complex business and reconciliation logic)
-  * dumping the result in case blocks (added to the submission) that
-    will update the new values in HQ's database
-  * post-processing also makes some changes elsewhere in the instance,
-    namely:
-     * also added are 'inferred' transactions (if my stock was 20, is
-       now 10, and i had receipts of 15, my inferred consumption was
-       25). This is needed to compute consumption rate later.
-       Conversely, if a deployment tracks consumption instead of
-       receipts, receipts are inferred this way.
-     * transactions are annotated with the order in which they were
-       processed
+   *  looking up the product sub-cases that actually store
+      stock/consumption values. (step (2) looked up the location ID; each
+      supply point is a case associated with that location, and actual
+      stock data is stored in a sub-case -- one for each product -- of
+      the supply point case)
+   *  applying the stock actions for each product in the correct order (a
+      stock report can include multiple actions; these must be applied in
+      a consistent order or else unpredictable stock levels may result)
+   *  computing updated stock levels and consumption (using somewhat
+      complex business and reconciliation logic)
+   *  dumping the result in case blocks (added to the submission) that
+      will update the new values in HQ's database
+   *  post-processing also makes some changes elsewhere in the instance,
+      namely:
 
-  Note that normally CommCare generates its own case blocks in the forms
-  it submits.
+     *  also added are 'inferred' transactions (if my stock was 20, is
+        now 10, and i had receipts of 15, my inferred consumption was
+        25). This is needed to compute consumption rate later.
+        Conversely, if a deployment tracks consumption instead of
+        receipts, receipts are inferred this way.
+     *  transactions are annotated with the order in which they were
+        processed
+
+   Note that normally CommCare generates its own case blocks in the
+   forms it submits.
 
 4. The updated submission is submitted to HQ like a normal form
 

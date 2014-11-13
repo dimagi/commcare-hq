@@ -6,17 +6,18 @@ Welcome to CommCareHQ's documentation!
 **Contents:**
 
 ..
-	list rst documents here, and it'll be added to the index,
-	including any subsections inside those docs (up to the maxdepth).
-	For reference on generating a toc, check out the sphinx docs on
-	the subject: http://sphinx-doc.org/markup/toctree.html
-	Here's a sample well-organized toc:
-	https://github.com/kennethreitz/python-guide/blob/master/docs/contents.rst.inc
+    list rst documents here, and it'll be added to the index,
+    including any subsections inside those docs (up to the maxdepth).
+    For reference on generating a toc, check out the sphinx docs on
+    the subject: http://sphinx-doc.org/markup/toctree.html
+    Here's a sample well-organized toc:
+    https://github.com/kennethreitz/python-guide/blob/master/docs/contents.rst.inc
 
 
 .. toctree::
    :maxdepth: 2
 
+   technical_overview
    deploy
    reporting
    api
@@ -31,6 +32,7 @@ Welcome to CommCareHQ's documentation!
    profiling
    elasticsearch
    test_coverage
+   export_api
 
 Tips for documenting
 --------------------

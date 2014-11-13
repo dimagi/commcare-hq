@@ -158,8 +158,8 @@ Parameters:
 
 Pull case data similar to the Case List.
 
-*(In the current implementation, you must use the same report filters as
-  on the regular Case List report)*
+(*In the current implementation, you must use the same report filters*
+*as on the regular Case List report*)
 
 Parameters:
 
