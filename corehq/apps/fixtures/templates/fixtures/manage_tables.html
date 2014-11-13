@@ -164,6 +164,7 @@
           <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
           {% trans 'Processing data. Please wait...' %}
         </div>
+        <div class="span12 hide" id="download-progress"></div>
         <div class="span12 hide" id="download-complete">
             <p class="alert alert-success">{% trans "Your file is ready." %}</p>
             <a href="#" id="file-download-url">

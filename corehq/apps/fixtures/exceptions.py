@@ -2,6 +2,10 @@ class FixtureException(Exception):
     pass
 
 
+class FixtureDownloadError(FixtureException):
+    pass
+
+
 class FixtureUploadError(FixtureException):
     pass
 
