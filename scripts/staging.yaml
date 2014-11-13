@@ -67,6 +67,7 @@ branches:
   - export-user # SK 11/13
   - vellum-jquery-upgrade # Daniel 11/13
   - vellum-staging # J$ 11/13
+  - product-app+bulk-app-translate # tw 11/13
   - product-app # tw 11/13
 submodules:
   submodules/couchlog-src:
