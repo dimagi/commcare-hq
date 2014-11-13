@@ -820,7 +820,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         # the actions and _attachment must be added before the first saves can happen
         # todo attach cached attachment info
         def fetch_attachment(name):
-            if xform:
+            if xform and 'data' in xform._attachments[name]:
                 assert xform._id == attachment_action.xform_id
                 return base64.b64decode(xform._attachments[name]['data'])
             else:
@@ -988,7 +988,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
         self.xform_ids = []
         for a in self.actions:
-            if a.xform_id not in self.xform_ids:
+            if a.xform_id and a.xform_id not in self.xform_ids:
                 self.xform_ids.append(a.xform_id)
 
     def dynamic_case_properties(self):

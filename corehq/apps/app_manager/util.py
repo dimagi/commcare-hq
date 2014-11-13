@@ -116,7 +116,8 @@ class ParentCasePropertyBuilder(object):
 
         get_properties_recursive = functools.partial(
             self.get_properties,
-            already_visited=already_visited + (case_type,)
+            already_visited=already_visited + (case_type,),
+            include_shared_properties=include_shared_properties
         )
 
         case_properties = set(self.defaults)
@@ -131,8 +132,8 @@ class ParentCasePropertyBuilder(object):
             for property in get_properties_recursive(parent_type[0]):
                 case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
-            from corehq.apps.app_manager.models import Application
-            for app in Application.by_domain(self.app.domain):
+            from corehq.apps.app_manager.models import get_apps_in_domain
+            for app in get_apps_in_domain(self.app.domain, include_remote=False):
                 if app.case_sharing:
                     case_properties.update(
                         get_case_properties(

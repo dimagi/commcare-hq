@@ -676,7 +676,9 @@ class InvoiceInterface(GenericTabularReport):
     def view_response(self):
         if self.request.method == 'POST':
             if self.adjust_balance_form.is_valid():
-                self.adjust_balance_form.adjust_balance()
+                self.adjust_balance_form.adjust_balance(
+                    web_user=self.request.user.username,
+                )
         return super(InvoiceInterface, self).view_response
 
     @property

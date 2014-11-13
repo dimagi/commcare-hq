@@ -692,7 +692,9 @@ class InvoiceSummaryView(AccountingSectionView):
     def post(self, request, *args, **kwargs):
         if 'adjust_balance' in self.request.POST:
             if self.adjust_balance_form.is_valid():
-                self.adjust_balance_form.adjust_balance()
+                self.adjust_balance_form.adjust_balance(
+                    web_user=self.request.user.username,
+                )
                 return HttpResponseRedirect(self.page_url)
         elif 'resend_email' in self.request.POST:
             if self.resend_email_form.is_valid():
