@@ -1139,9 +1139,10 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
 
     def configure_entry_as_case_list_form(self, module, form, entry):
-        entry.datums.append(SessionDatum(id='case_id', function='uuid()'))
+        autogen_case_id = 'case_id_autogen'
+        entry.datums.append(SessionDatum(id=autogen_case_id, function='uuid()'))
         entry.stack = Stack()
-        case_id = session_var('case_id')
+        case_id = session_var(autogen_case_id)
         case_count = CaseIDXPath(case_id).case().count()
         frame_case_created = CreateFrame(if_clause='{} > 0'.format(case_count))
         frame_case_created.add_command(self.id_strings.menu(module))

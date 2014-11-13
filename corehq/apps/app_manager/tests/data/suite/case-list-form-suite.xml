@@ -302,14 +302,14 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-        <datum id="case_id" function="uuid()"/>
+        <datum id="case_id_autogen" function="uuid()"/>
     </session>
     <stack>
-        <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) &gt; 0">
+        <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_autogen]) &gt; 0">
             <command>m0</command>
-            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_autogen"/>
         </create>
-        <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+        <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_autogen]) = 0">
             <command>m0</command>
         </create>
     </stack>
