@@ -63,11 +63,11 @@ branches:
   - share-fixtures # j$ 10/29
   - logos # Nick P 10/31
   - hq-dropdown # sravan 5/7
-  - 142623-jstree-upgrade # Daniel 11/3
   # - photo-export # J$ 11/4
   - custom-data-choices  # Ethan 11/09
   - export-user # SK 11/13
-  # - vellum-staging # J$ 11/13
+  - vellum-jquery-upgrade # Daniel 11/13
+  - vellum-staging # J$ 11/13
 submodules:
   submodules/couchlog-src:
     branches:
