@@ -56,16 +56,9 @@ function SavedApp(o, r) {
     self.editing_comment = ko.observable(false);
     self.new_comment = ko.observable(self.build_comment());
     self.pending_comment_update = ko.observable(false);
-
-    self.update_build_comment = function () {
-        self.editing_comment(true);
-    };
+    self.comment_update_error = ko.observable(false);
 
     self.submit_new_comment = function () {
-        console.log("the comment for " + self.id() + "changed from '" +
-                self.build_comment() + "' to '" + self.new_comment() +
-                "'. Sending to server."
-        );
         self.pending_comment_update(true);
         $.ajax({
             url: r.options.urls.update_build_comment,
@@ -73,18 +66,18 @@ function SavedApp(o, r) {
             dataType: 'JSON',
             data: {"build_id": self.id(), "comment": self.new_comment()},
             success: function (data) {
-                console.log("success!!");
+                self.pending_comment_update(false);
+                self.editing_comment(false);
+                self.build_comment(self.new_comment());
             },
             error: function () {
-                console.log("ERROR!!");
+                self.pending_comment_update(false);
+                self.editing_comment(false);
+                self.comment_update_error(true);
             }
         });
-        self.pending_comment_update(false);
     };
 
-    self.cancel_edit = function () {
-        self.editing_comment(false);
-    };
     return self;
 }
 

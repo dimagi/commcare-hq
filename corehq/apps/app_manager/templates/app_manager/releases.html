@@ -237,7 +237,7 @@
                     {% endif %}
                     <td>
                         <div data-bind="visible: !editing_comment()">
-                            <a href="#" data-bind="click: update_build_comment">
+                            <a href="#" data-bind="click: function () {editing_comment(true);}">
                                 <span class="icon-pencil"></span>
                             </a>
                             <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
@@ -249,12 +249,15 @@
                             <a href="#" data-bind="click: submit_new_comment, visible: !pending_comment_update()">
                                 <span class="icon-arrow-right"></span>
                             </a>
-                            <a href="#" data-bind="click: cancel_edit, visible: !pending_comment_update()">
+                            <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
                                 <span class="icon-remove"></span>
                             </a>
-                            <span data-bind="visible: pending_comment_update">
+                            <span data-bind="visible: pending_comment_update()">
                                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                             </span>
+                        </div>
+                        <div data-bind="visible: comment_update_error()" class="alert alert-error">
+                            {% trans "Error updating comment.  Please try again" %}
                         </div>
                     </td>
                     <td class="build-is-released">
