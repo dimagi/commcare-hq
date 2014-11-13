@@ -75,6 +75,13 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         self.form.actions.close_case.condition.type = 'always'
         self.assertXmlEqual(self.get_xml('close_case'), self.form.render_xform())
 
+    def test_strip_ignore_retain(self):
+        before = self.get_xml('ignore_retain')
+        after = self.get_xml('ignore_retain_stripped')
+        xform = XForm(before)
+        xform.strip_ignore_retain()
+        self.assertXmlEqual(xform.render(), after)
+
 
 class SubcaseRepeatTest(TestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2')

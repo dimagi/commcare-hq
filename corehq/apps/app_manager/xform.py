@@ -32,6 +32,7 @@ namespaces = dict(
     reg="{http://openrosa.org/user/registration}",
     cx2="{%s}" % V2_NAMESPACE,
     cc="{http://commcarehq.org/xforms}",
+    v="{http://commcarehq.org/xforms/vellum}",
 )
 
 
@@ -97,6 +98,10 @@ class WrappedAttribs(object):
 
     def __getitem__(self, item):
         return self.attrib[self._get_item_name(item)]
+
+    def __delitem__(self, item):
+        del self.attrib[self._get_item_name(item)]
+
 
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
@@ -594,6 +599,10 @@ class XForm(WrappedNode):
                 xf_string = replace_ref_s(xf_string, old_ref, new_ref)
 
         self.xml = parse_xml(xf_string)
+
+    def strip_ignore_retain(self):
+        for node in self.findall('.//*[@{v}ignore]'):
+            del node.attrib['{v}ignore']
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
