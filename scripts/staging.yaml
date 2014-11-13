@@ -69,6 +69,7 @@ branches:
   # - photo-export # J$ 11/4
   - fix-user-indicators # Nick P 11/5
   - custom-data-choices  # Ethan 11/09
+  - export-user # SK 11/13
 submodules:
   submodules/couchlog-src:
     branches:
