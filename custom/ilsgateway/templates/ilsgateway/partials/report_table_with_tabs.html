@@ -18,7 +18,7 @@
               {% endif %}
           </div>
         </div>
-        <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable  {% if thisreport.css_class == 'row_chart' %}small_table{% endif %}">
+        <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable">
             <thead>
                 <tr>
                     {% for header in report_table.headers %}
@@ -52,35 +52,18 @@
 
         {% if report_table and report_table.datatables and thisreport.show_table %}
 
-           var reportTables = new HQReportDataTables({
-                dataTableElem: '#report_table_{{ report_table.slug }}',
-                defaultRows: {{ report_table.default_rows|default:10 }},
-                startAtRowNum: {{ report_table.start_at_row|default:0 }},
-                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+           var dataTablesDom = "frt<'row-fluid dataTables_control'<'span6'il><'span6'p>>";
+           var params = {
+                sDom: dataTablesDom,
+                "sPaginationType": "bootstrap",
+                iDisplayLength: 10,
+                iDisplayStart: 0,
+                sScrollX: "100%",
+                autoWidth: true
+            };
 
-                {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
-                autoWidth: {{ report_table.headers.auto_width|JSON }},
-                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
-
-                {% if report_table.pagination.is_on %}
-                    ajaxSource: '{{ report_table.pagination.source }}',
-                    ajaxParams: {{ report_table.pagination.params|JSON }},
-                {% endif %}
-
-                {% if report_table.bad_request_error_text %}
-                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}",
-                {% endif %}
-
-                {% if report_table.left_col.is_fixed %}
-                    fixColumns: true,
-                    fixColsNumLeft: {{ report_table.left_col.fixed.num }},
-                    fixColsWidth: {{ report_table.left_col.fixed.width }},
-                {% endif %}
-            });
-            if (typeof standardHQReport !== 'undefined') {
-                standardHQReport.handleTabularReportCookies(reportTables);
-            }
-            reportTables.render();
+            var id = '#report_table_{{ report_table.slug }}';
+            var datatable = $(id).dataTable(params);
 
         {% endif %}
 

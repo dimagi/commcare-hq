@@ -1,7 +1,12 @@
-from corehq.apps.commtrack.models import SQLProduct, StockState
+from datetime import datetime, timedelta
+from casexml.apps.stock.models import StockTransaction
+from django.template.loader import render_to_string
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.users.models import CommCareUser
+from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.reports import ILSData
 from custom.ilsgateway.reports.base_report import MultiReport
 from dimagi.utils.decorators.memoized import memoized
@@ -34,10 +39,6 @@ class InventoryHistoryData(ILSData):
     show_table = True
 
     @property
-    def subtitle(self):
-        return 'test'
-
-    @property
     def headers(self):
         headers = DataTablesHeader(*[
             DataTablesColumn(_('Product')),
@@ -66,6 +67,41 @@ class InventoryHistoryData(ILSData):
         return rows
 
 
+class RegistrationData(ILSData):
+    show_chart = False
+    show_table = True
+
+    @property
+    def title(self):
+        return '%s Contacts' % self.config['loc_type']
+
+    @property
+    def slug(self):
+        return '%s_registration' % self.config['loc_type'].lower()
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[
+            DataTablesColumn(_('Name')),
+            DataTablesColumn(_('Role')),
+            DataTablesColumn(_('Phone')),
+            DataTablesColumn(_('Email')),
+        ])
+
+    @property
+    def rows(self):
+        users_in_domain = CommCareUser.by_domain(domain=self.config['domain'])
+        location = SQLLocation.objects.get(location_id=self.config['location_id'])
+        if self.config['loc_type'] == 'DISTRICT':
+            location = location.parent
+        elif self.config['loc_type'] == 'REGION':
+            location = location.parent.parent
+
+        users = [user for user in users_in_domain if user.domain_membership[0].location_id == location.location_id]
+        if users:
+            return [[u.full_name, u.user_data['role'], u.phone_number, u.email] for u in users]
+        
+
 class FacilityDetailsReport(MultiReport):
 
     title = "Facility Details Report"
@@ -78,4 +114,10 @@ class FacilityDetailsReport(MultiReport):
     @memoized
     def data_providers(self):
         config = self.report_config
-        return [InventoryHistoryData(config=config)]
+
+        return [
+            InventoryHistoryData(config=config, css_class='row_chart_all'),
+            RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
+            RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
+            RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')
+        ]

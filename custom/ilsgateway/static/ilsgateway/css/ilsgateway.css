@@ -10,10 +10,6 @@
     margin: 20px;
 }
 
-.table_small {
-    width: 50% !important;
-}
-
 .module ul,
 .module li {
     margin: 0;
@@ -21,12 +17,8 @@
     list-style: none;
 }
 
-.small_table {
-    width: 100% !important;
-}
-
-.dataTables_scrollHeadInner{
-    width: 100% !important;
+tr:nth-child(n+2) {
+    white-space: nowrap;
 }
 
 .module ul {

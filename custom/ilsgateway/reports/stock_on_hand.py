@@ -15,6 +15,7 @@ from custom.ilsgateway.reports import ProductAvailabilitySummary, ILSData, forma
 from custom.ilsgateway.reports.base_report import MultiReport
 from custom.ilsgateway.reports.dashboard_report import SohSubmissionData
 from django.utils.translation import ugettext as _
+from custom.ilsgateway.reports.facility_details import FacilityDetailsReport
 from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
 from dimagi.utils.decorators.memoized import memoized
 
@@ -299,9 +300,17 @@ class DistrictSohPercentageTableData(ILSData):
 
                 status, last_reported = get_last_reported()
                 hisp = get_hisp_resp_rate()
+
+                try:
+                    url = html.escape(FacilityDetailsReport.get_url(
+                        domain=self.config['domain']) +
+                        '?location_id=%s' % loc._id)
+                except KeyError:
+                    url = None
+
                 row_data = [
                     loc.site_code,
-                    loc.name,
+                    link_format(loc.name, url),
                     loc.metadata['groups'][0] if 'groups' in loc.metadata else '?',
                     icon_format(status, last_reported),
                     "<span title='%d of %d'>%s%%</span>" % (hisp[1], hisp[2], floatformat(hisp[0]*100.0)) if hisp else "No data"
