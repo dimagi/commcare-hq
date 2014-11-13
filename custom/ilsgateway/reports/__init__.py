@@ -299,17 +299,11 @@ class ProductAvailabilitySummary(ILSData):
         return [chart]
 
 
-class RRStatus(object):
+class RRStatus(ILSData):
     show_table = True
     title = "R&R Status"
     slug = "rr_status"
-    title_url = None
-    title_url_name = None
     show_chart = False
-    css_class = None
-
-    def __init__(self, config=None):
-        self.config = config or {}
 
     @property
     def rows(self):
@@ -379,17 +373,11 @@ class RRStatus(object):
         ]
 
 
-class RRReportingHistory(object):
+class RRReportingHistory(ILSData):
     show_table = True
     title = "R&R Reporting History"
     slug = "rr_reporting_history"
-    title_url = None
-    title_url_name = None
     show_chart = False
-    css_class = None
-
-    def __init__(self, config=None):
-        self.config = config or {}
 
     @property
     def rows(self):

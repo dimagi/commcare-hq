@@ -22,7 +22,7 @@ class RRreport(DetailsReport):
         if config['location_id']:
             location = Location.get(config['location_id'])
             if location.location_type in ['REGION', 'MOHSW']:
-                data_providers.append(RRStatus(config=config))
+                data_providers.append(RRStatus(config=config, css_class='row_chart_all'))
             else:
-                data_providers.append(RRReportingHistory(config=config))
+                data_providers.append(RRReportingHistory(config=config, css_class='row_chart_all'))
         return data_providers
