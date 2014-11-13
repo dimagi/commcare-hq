@@ -331,6 +331,12 @@ class LocationImportView(BaseLocationView):
 
     @property
     def page_context(self):
+        def _get_manage_consumption():
+            if self.domain_object.commtrack_settings:
+                return self.domain_object.commtrack_settings.individual_consumption_defaults
+            else:
+                return False
+
         context = {
             'bulk_upload': {
                 "download_url": reverse(
@@ -338,7 +344,7 @@ class LocationImportView(BaseLocationView):
                 "adjective": _("location"),
                 "plural_noun": _("locations"),
             },
-            "manage_consumption": self.domain_object.commtrack_settings.individual_consumption_defaults,
+            "manage_consumption": _get_manage_consumption(),
         }
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
