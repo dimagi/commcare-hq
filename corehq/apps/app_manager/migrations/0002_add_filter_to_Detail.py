@@ -22,11 +22,26 @@ class Migration(DataMigration):
                 reduce=False,
             ).all()}
 
+            to_save = []
+
             for app_doc in iter_docs(Application.get_db(), application_ids):
 
                 if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
                     application = Application.wrap(app_doc)
                     self.migrate_app(application)
+
+                    to_save.append(application)
+                    if len(to_save) > 25:
+                        self.bulk_save(to_save)
+                        to_save = []
+            if to_save:
+                self.bulk_save(to_save)
+
+    @classmethod
+    def bulk_save(cls, apps):
+        Application.get_db().bulk_save(apps)
+        for app in apps:
+            logger.info("Filter migration on app {id} complete.".format(id=app.id))
 
     @classmethod
     def migrate_app(cls, app):
@@ -41,9 +56,6 @@ class Migration(DataMigration):
                 detail.get_columns(), app, module, detail
             )
             detail.filter = combined_filter_string
-
-        app.save()
-        logger.info("Filter migration on app {id} complete.".format(id=app.id))
 
     @classmethod
     def combine_and_interpolate_V1_filters(cls, columns, app, module, detail):

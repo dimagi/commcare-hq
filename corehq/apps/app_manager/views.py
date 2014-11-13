@@ -296,6 +296,7 @@ def migrate_app_filters(req, domain, app_id):
     try:
         app = get_app(domain, app_id)
         FilterMigration.migrate_app(app)
+        app.save()
     except:
         message = "Migration failed :("
     return HttpResponse(message, content_type='text/plain')
