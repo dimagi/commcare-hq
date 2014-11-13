@@ -11,7 +11,10 @@ var RemindersListModel = function (reminders, progressUrl) {
     };
 
     self.removeReminder = function (id) {
-        self.reminders.remove(function(item) { return item.id === id; });
+        self.reminders.remove(function(item) { return item.id() === id; });
+        var dt = $("#reminder-list-table").dataTable();
+        var row = dt.$("#" + id)[0];
+        dt.fnDeleteRow(row);
     };
 };
 
@@ -57,7 +60,7 @@ var Reminder = function (o, parentModel) {
                 if (data.success) {
                     $(target_button).button('success');
                     if(method === 'delete') {
-                        self.reminderList.removeReminder(self.id);
+                        self.reminderList.removeReminder(self.id());
                     } else if (method === 'activate') {
                         self.active(true);
                     } else if (method === 'deactivate') {
