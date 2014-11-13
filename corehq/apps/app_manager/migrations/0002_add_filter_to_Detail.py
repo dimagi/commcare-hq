@@ -1,5 +1,6 @@
 # encoding: utf-8
 import logging
+import sys
 from south.v2 import DataMigration
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
@@ -23,17 +24,23 @@ class Migration(DataMigration):
             ).all()}
 
             to_save = []
+            errors = []
 
             for app_doc in iter_docs(Application.get_db(), application_ids):
+                try:
+                    if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
+                        application = Application.wrap(app_doc)
+                        self.migrate_app(application)
 
-                if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
-                    application = Application.wrap(app_doc)
-                    self.migrate_app(application)
+                        to_save.append(application)
+                        if len(to_save) > 25:
+                            self.bulk_save(to_save)
+                            to_save = []
+                except:
+                    errors.append(
+                            ("App {id} not properly migrated because {error}".format(id=app_doc['_id'], 
+                                                                                     error=sys.exc_info()[0])))
 
-                    to_save.append(application)
-                    if len(to_save) > 25:
-                        self.bulk_save(to_save)
-                        to_save = []
             if to_save:
                 self.bulk_save(to_save)
 
