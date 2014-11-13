@@ -79,7 +79,11 @@ def gen_fixture(user, indicator_set):
     name = indicator_set.name
     data = indicator_set.get_data()
 
-    fixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
+    fixture = ElementTree.Element('fixture', attrib={
+        'id': 'indicators:%s' % name,
+        'user_id': user.user_id,
+        'date': indicator_set.reference_date.isoformat()
+    })
     indicators_node = ElementTree.SubElement(fixture, 'indicators')
     for case_id, indicators in data.iteritems():
         group = ElementTree.SubElement(indicators_node, 'case', attrib={'id': case_id})

@@ -1023,6 +1023,7 @@ def doc_in_es(request):
 def callcenter_test(request):
     user_id = request.GET.get("user_id")
     date_param = request.GET.get("date")
+    enable_caching = request.GET('cache', False)
 
     if not user_id:
         return render(request, "hqadmin/callcenter_test.html", {})
@@ -1052,8 +1053,8 @@ def callcenter_test(request):
 
     if user:
         domain = user.project
-        dummy_cache = cache.get_cache('django.core.cache.backends.dummy.DummyCache')
-        cci = CallCenterIndicators(domain, user, custom_cache=dummy_cache, override_date=query_date)
+        custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        cci = CallCenterIndicators(domain, user, custom_cache=custom_cache, override_date=query_date)
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:
         data = {}
