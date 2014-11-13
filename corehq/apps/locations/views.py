@@ -84,7 +84,7 @@ class LocationSettingsView(BaseCommTrackManageView):
     @property
     def settings_context(self):
         return {
-            'loc_types': [self._get_loctype_info(l) for l in self.domain_object.commtrack_settings.location_types],
+            'loc_types': [self._get_loctype_info(l) for l in self.domain_object.location_types],
         }
 
     def _get_loctype_info(self, loctype):
@@ -112,9 +112,9 @@ class LocationSettingsView(BaseCommTrackManageView):
 
         #TODO add server-side input validation here (currently validated on client)
 
-        self.domain_object.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+        self.domain_object.location_types = [mk_loctype(l) for l in payload['loc_types']]
 
-        self.domain_object.commtrack_settings.save()
+        self.domain_object.save()
 
         return self.get(request, *args, **kwargs)
 
