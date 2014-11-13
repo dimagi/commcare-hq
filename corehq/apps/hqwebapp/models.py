@@ -367,16 +367,22 @@ class SetupTab(UITab):
             LocationSettingsView,
         )
 
-        dropdown_items = [(_(view.page_title), view) for view in (
-                ProductListView,
+        dropdown_items = []
+
+        if self.project.locations_enabled:
+            dropdown_items += [(_(view.page_title), view) for view in (
                 LocationsListView,
                 LocationSettingsView,
+            )]
+
+        if self.project.commtrack_enabled:
+            dropdown_items += [(_(view.page_title), view) for view in (
+                ProductListView,
                 ProgramListView,
                 SMSSettingsView,
                 DefaultConsumptionView,
                 CommTrackSettingsView,
-            )
-        ]
+            )]
 
         return [
             format_submenu_context(
@@ -387,7 +393,10 @@ class SetupTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.project.commtrack_enabled and self.couch_user.is_domain_admin()
+        return self.couch_user.is_domain_admin() and (
+            self.project.commtrack_enabled or
+            self.project.locations_enabled
+        )
 
     @property
     def sidebar_items(self):
