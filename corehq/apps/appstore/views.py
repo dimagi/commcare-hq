@@ -13,8 +13,6 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.views import _clear_app_cache
 
-from corehq.apps.appstore.forms import AddReviewForm
-from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
@@ -68,56 +66,13 @@ def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get(domain)
     if not can_view_app(request, dom):
         raise Http404()
-
-    if request.method == "POST" and dom.copied_from.name not in request.couch_user.get_domains():
-        form = AddReviewForm(request.POST)
-        if form.is_valid():
-            title = form.cleaned_data['review_title']
-            rating = int(request.POST.get('rating'))
-            if rating < 1:
-                rating = 1
-            if rating > 5:
-                rating = 5
-            info = form.cleaned_data['review_info']
-            date_published = datetime.now()
-            user = request.user.username
-
-            old_review = Review.get_by_version_and_user(domain, user)
-
-            if len(old_review) > 0: # replace old review
-                review = old_review[0]
-                review.title = title
-                review.rating = rating
-                review.info = info
-                review.date_published = date_published
-            else:
-                review = Review(title=title, rating=rating, user=user, info=info, date_published = date_published, domain=domain, project_id=dom.copied_from._id)
-            review.save()
-        else:
-            form = AddReviewForm()
-    else:
-        form = AddReviewForm()
-
     copies = dom.copies_of_parent()
-
-    reviews = Review.get_by_app(dom.copied_from._id)
-    average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
-    num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
-
-    if average_rating:
-        average_rating = round(average_rating, 1)
-
     images = set()
     audio = set()
-
     return render(request, template, {
         "project": dom,
         "applications": dom.full_applications(include_builds=False),
-        "form": form,
         "copies": copies,
-        "reviews": reviews,
-        "average_rating": average_rating,
-        "num_ratings": num_ratings,
         "images": images,
         "audio": audio,
         "url_base": reverse('appstore'),
@@ -147,9 +102,7 @@ def appstore(request, template="appstore/appstore_base.html"):
     d_results = [Domain.wrap(res['_source']) for res in hits]
 
     sort_by = request.GET.get('sort_by', None)
-    if sort_by == 'best':
-        d_results = Domain.popular_sort(d_results)
-    elif sort_by == 'newest':
+    if sort_by == 'newest':
         pass
     else:
         d_results = Domain.hit_sort(d_results)
@@ -161,10 +114,6 @@ def appstore(request, template="appstore/appstore_base.html"):
         persistent_params["is_approved"] = "false"
     persistent_params = urlencode(persistent_params) # json.dumps(persistent_params)
 
-    average_ratings = list()
-    for result in d_results:
-        average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
-
     more_pages = False if len(d_results) <= page*page_length else True
 
     facet_map = fill_mapping_with_facets(SNAPSHOT_MAPPING, results, params)
@@ -175,7 +124,6 @@ def appstore(request, template="appstore/appstore_base.html"):
         next_page=(page+1),
         more_pages=more_pages,
         sort_by=sort_by,
-        average_ratings=average_ratings,
         include_unapproved=include_unapproved,
         facet_map=facet_map,
         facets=results.get("facets", []),

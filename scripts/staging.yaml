@@ -45,8 +45,9 @@ name: autostaging
 branches:
 # this branch didn't exist on github
 #  - bulk-app-translate+double-management # SK 11/10
-  - staging  # Ethan 11/09 - Too many effing merge conflicts
-  - ptop-reindex  # DR 11/5
+  - double-management+case-detail-tabs # Noah 11/6
+#  - staging  # Ethan 11/09 - Too many effing merge conflicts
+#  - ptop-reindex  # DR 11/5
   - historical-forms  # DR 11/4
   - remove-hutch  # DR 10/28
 #  - add-build-ui
@@ -58,11 +59,8 @@ branches:
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
-  - graphing+double-management # SK 10/3
-  - double-management+case-detail-tabs2 # Noah 11/6
   - double-management # SK 10/15
   - bulk-app-translate # Noah 9/18
-  - graphing # Nick P 10/27
   - case-detail-tabs # Noah 11/6
   - share-fixtures # j$ 10/29
   - logos # Nick P 10/31
@@ -71,6 +69,7 @@ branches:
   # - photo-export # J$ 11/4
   - fix-user-indicators # Nick P 11/5
   - custom-data-choices  # Ethan 11/09
+  - export-user # SK 11/13
 submodules:
   submodules/couchlog-src:
     branches:

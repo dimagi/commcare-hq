@@ -40,6 +40,7 @@ def doc_types():
         'XFormDeprecated': XFormDeprecated,
         'XFormDuplicate': XFormDuplicate,
         'XFormError': XFormError,
+        'SubmissionErrorLog': SubmissionErrorLog,
     }
 
 

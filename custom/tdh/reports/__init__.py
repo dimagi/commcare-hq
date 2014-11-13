@@ -2,6 +2,7 @@ from datetime import timedelta
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from couchexport.models import Format
 from custom.tdh.filters import TDHDateSpanFilter
 
 UNNECESSARY_FIELDS = ['doc_type', 'numerator', 'base_doc', 'save_direct_to_sql', 'domain']
@@ -11,7 +12,7 @@ class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMi
     use_datatables = True
     emailable = False
     exportable = True
-    export_format_override = 'csv'
+    export_format_override = Format.UNZIPPED_CSV
     fields = [ExpandedMobileWorkerFilter, TDHDateSpanFilter]
     fix_left_col = True
 
@@ -43,7 +44,7 @@ class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMi
 
     @property
     def fixed_cols_spec(self):
-        return dict(num=2, width=250)
+        return dict(num=3, width=350)
 
     @property
     def export_table(self):
@@ -67,11 +68,10 @@ class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMi
                 return CompleteChildConsultationHistoryReport(
                     request=self.request, domain=self.domain).export_table
 
-        return [self._export_table(self.data_provider.title,
-                                   self.report_context['report_table']['headers'],
+        return [self._export_table(self.report_context['report_table']['headers'],
                                    self.report_context['report_table']['rows'])]
 
-    def _export_table(self, title, headers, formatted_rows):
+    def _export_table(self, headers, formatted_rows):
         def _unformat_row(row):
             return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
 
@@ -86,4 +86,4 @@ class TDHReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMi
                 table[0][k] = replace
         table.extend(rows)
 
-        return [title, table]
+        return ['', table]

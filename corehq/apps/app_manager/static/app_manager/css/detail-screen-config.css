@@ -1,7 +1,13 @@
+.detail-screen-table {
+    display: inline-block;
+}
 .detail-screen-table th {
     border-top-width: 0;
 }
-
+.filter-form .ui-autocomplete-input {
+    margin-left: 26px;
+    margin-right: 6px;
+}
 .detail-screen-table td {
     word-wrap: break-word;
 }
@@ -27,15 +33,6 @@
 .detail-screen-table .detail-screen-field {
     width: 160px;
 }
-.detail-screen-table .detail-screen-suggestion {
-    color: #888;
-    cursor: pointer;
-    border: 1px solid transparent;
-}
-.detail-screen-table .detail-screen-suggestion:hover {
-    color: inherit;
-    background-color: #EEE;
-}
-.detail-screen-table .detail-screen-columns tr {
-    background-color: #EEE;
+.table > tbody.slim {
+    border-top-width: 0px;
 }
