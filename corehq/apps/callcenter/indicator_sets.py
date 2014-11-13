@@ -44,7 +44,7 @@ def seconds_till_midnight(timezone):
 
 
 def cache_key(user_id, date):
-    return 'callcenter_{}_{:%Y-%m-%d}'.format(user_id, date)
+    return 'callcenter_{}_{}'.format(user_id, date.isoformat())
 
 
 class CachedIndicators(JsonObject):
