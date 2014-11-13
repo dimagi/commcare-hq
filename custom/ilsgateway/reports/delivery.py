@@ -1,5 +1,5 @@
 from corehq.apps.locations.models import Location
-from custom.ilsgateway.reports import DeliverySubmissionData, LeadTimeHistory
+from custom.ilsgateway.reports import DeliverySubmissionData, LeadTimeHistory, DeliveryStatus
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
@@ -24,7 +24,7 @@ class DeliveryReport(DetailsReport):
         if config['location_id']:
             location = Location.get(config['location_id'])
             if location.location_type in ['REGION', 'MOHSW']:
-                data_providers.append(LeadTimeHistory(config=config))
+                data_providers.append(LeadTimeHistory(config=config, css_class='row_chart_all'))
             else:
-                pass
+                data_providers.append(DeliveryStatus(config=config, css_class='row_chart_all'))
         return data_providers

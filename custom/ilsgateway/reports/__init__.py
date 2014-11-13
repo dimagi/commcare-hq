@@ -496,6 +496,10 @@ class LeadTimeHistory(ILSData):
 
 
 class DeliveryStatus(ILSData):
+    show_table = True
+    title = "Delivery Status"
+    slug = "delivery_status"
+    show_chart = False
 
     @property
     def headers(self):
@@ -504,18 +508,21 @@ class DeliveryStatus(ILSData):
             'Facility Name',
             'Delivery Status',
             'Delivery Date',
-            'This Cycle Lead Time',
-            'Average Lead Time In Days'
+            # 'This Cycle Lead Time',
+            # 'Average Lead Time In Days'
         ]
 
     @property
     def rows(self):
         rows = []
         location = Location.get(self.config['location_id'])
-        dg = DeliveryGroups().submitting(location.children, int(self.config['month']))
+        dg = DeliveryGroups().delivering(location.children, int(self.config['month']))
         for child in dg:
-            latest_date = latest_status()
-            rows.append([child.name])
+            latest = latest_status_or_none(child._id, SupplyPointStatusTypes.DELIVERY_FACILITY,
+                                           int(self.config['month']), int(self.config['year']))
+            status_name = latest.name if latest else ""
+            status_date = format(latest.status_date, "d M Y") if latest else "None"
+            rows.append([child.site_code, child.name, status_name, status_date])
         return rows
 
 
