@@ -2,7 +2,8 @@ from collections import defaultdict
 import logging
 import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
+from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
+    CASE_ID_AUTOGEN
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
@@ -1141,7 +1142,7 @@ class XForm(WrappedNode):
                 case_id = 'uuid()'
                 if module.case_list_form.form_id == form.get_unique_id() and \
                         module.module_type == 'basic' and not module.parent_select.active:
-                    case_id = session_var('case_id')
+                    case_id = session_var(CASE_ID_AUTOGEN)
 
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
