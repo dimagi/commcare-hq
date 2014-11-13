@@ -1,8 +1,19 @@
 # coding=utf-8
-import lxml
 from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.models import Application, OpenCaseAction, UpdateCaseAction, PreloadAction, FormAction, Module, AdvancedModule, AdvancedForm, AdvancedOpenCaseAction, LoadUpdateAction, \
-    AutoSelectCase, FormActionCondition, FormSchedule, ScheduleVisit, Form
+from corehq.apps.app_manager.models import (
+    AdvancedForm,
+    AdvancedModule,
+    AdvancedOpenCaseAction,
+    Application,
+    FormAction,
+    FormActionCondition,
+    FormSchedule,
+    LoadUpdateAction,
+    Module,
+    OpenCaseAction,
+    PreloadAction,
+    UpdateCaseAction,
+)
 from django.test import SimpleTestCase as TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.util import new_careplan_module
@@ -11,6 +22,7 @@ from corehq.apps.app_manager.xform import XForm
 
 class FormPreparationV2Test(TestCase, TestFileMixin):
     file_path = 'data', 'form_preparation_v2'
+
     def setUp(self):
         self.app = Application.new_app('domain', 'New App', APP_V2)
         self.app.version = 3

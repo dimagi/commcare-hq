@@ -1,6 +1,5 @@
 from collections import defaultdict
 import logging
-import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
 from lxml import etree as ET
@@ -23,8 +22,8 @@ def parse_xml(string):
 
 
 namespaces = dict(
-    jr = "{http://openrosa.org/javarosa}",
-    xsd = "{http://www.w3.org/2001/XMLSchema}",
+    jr="{http://openrosa.org/javarosa}",
+    xsd="{http://www.w3.org/2001/XMLSchema}",
     h='{http://www.w3.org/1999/xhtml}',
     f='{http://www.w3.org/2002/xforms}',
     ev="{http://www.w3.org/2001/xml-events}",
@@ -109,7 +108,7 @@ class WrappedNode(object):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
-        self.namespaces=namespaces
+        self.namespaces = namespaces
 
     def find(self, xpath, *args, **kwargs):
         if self.xml is not None:
