@@ -3,6 +3,7 @@ import copy
 import logging
 import hashlib
 import itertools
+from lxml import etree
 import os
 import re
 import json
