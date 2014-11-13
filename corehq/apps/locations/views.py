@@ -430,16 +430,14 @@ def location_edit(request, domain, loc_id=None):
 @domain_admin_required
 @require_POST
 def sync_facilities(request, domain):
-    commtrack_settings = request.project.commtrack_settings
-
     # create Facility Registry and Facility LocationTypes if they don't exist
     if not any(lt.name == 'Facility Registry' 
-               for lt in commtrack_settings.location_types):
-        commtrack_settings.location_types.extend([
+               for lt in request.project.location_types):
+        request.project.location_types.extend([
             LocationType(name='Facility Registry', allowed_parents=['']),
             LocationType(name='Facility', allowed_parents=['Facility Registry'])
         ])
-        commtrack_settings.save()
+        request.project.save()
 
     registry_locs = dict((l.external_id, l) for l in
             Location.filter_by_type(domain, 'Facility Registry'))
