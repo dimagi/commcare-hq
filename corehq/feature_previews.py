@@ -117,3 +117,19 @@ CALLCENTER = FeaturePreview(
     save_fn=enable_callcenter,
 )
 
+
+def enable_locations(domain_name, checked):
+    from corehq.apps.domain.models import Domain
+    domain = Domain.get_by_name(domain_name)
+    domain.locations_enabled = checked
+    domain.save()
+
+LOCATIONS = FeaturePreview(
+    slug='locations',
+    label=_("Locations"),
+    description=_(
+        'Turn on locations... fill me in'
+    ),
+    help_link='http://help.commcarehq.org/',
+    save_fn=enable_locations,
+)
