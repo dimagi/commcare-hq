@@ -174,7 +174,7 @@ Line profiling
 In addition to the above methods of profiling it is possible to do line profiling of code which attached profile
 data to individual lines of code as opposed to function names.
 
-The easiest way to do this is to use the `line_profile https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py#L51`_
+The easiest way to do this is to use the `line_profile <https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py#L51>`_
 decorator.
 
 Example output::
