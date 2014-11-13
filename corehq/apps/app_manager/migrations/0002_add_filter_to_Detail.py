@@ -37,9 +37,11 @@ class Migration(DataMigration):
                             self.bulk_save(to_save)
                             to_save = []
                 except:
-                    errors.append(
-                            ("App {id} not properly migrated because {error}".format(id=app_doc['_id'], 
-                                                                                     error=sys.exc_info()[0])))
+                    errors.append("App {id} not properly migrated because {error}".format(id=app_doc['_id'],
+                                                                                          error=sys.exc_info()[0]))
+
+            if errors:
+                logger.info('\n'.join(errors))
 
             if to_save:
                 self.bulk_save(to_save)
