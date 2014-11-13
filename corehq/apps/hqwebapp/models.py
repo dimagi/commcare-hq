@@ -348,7 +348,7 @@ class ProjectInfoTab(UITab):
         return self.project and self.project.is_snapshot
 
 
-class CommTrackSetupTab(UITab):
+class SetupTab(UITab):
     title = ugettext_noop("Setup")
     view = "corehq.apps.commtrack.views.default"
 
