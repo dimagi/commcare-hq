@@ -14,24 +14,31 @@ from corehq.apps.app_manager.xpath import dot_interpolate
 logger = logging.getLogger(__name__)
 
 
-class Migration(DataMigration):
+class AppFilterMigrationMixIn(object):
+
+    def get_app_ids(self):
+        # this is the only method that migration subclasses should override
+        raise NotImplementedError()
+
+    def _get_main_app_ids(self):
+        return self._get_app_ids([None, None])
+
+    def _get_released_app_ids(self):
+        return self._get_app_ids(['^ReleasedApplications'])
+
+    def _get_all_app_ids(self):
+        return self._get_app_ids([None])
+
+    def _get_app_ids(self, startkey):
+        return {r['id'] for r in Application.get_db().view(
+            'app_manager/applications',
+            startkey=startkey,
+            endkey=startkey + [{}],
+            reduce=False,
+        ).all()}
 
     def forwards(self, orm):
         if not settings.UNIT_TESTING:
-            def _get_main_app_ids():
-                return _get_app_ids([None, None])
-
-            def _get_released_app_ids():
-                return _get_app_ids(['^ReleasedApplications'])
-
-            def _get_app_ids(startkey):
-                return {r['id'] for r in Application.get_db().view(
-                    'app_manager/applications',
-                    startkey=startkey,
-                    endkey=startkey + [{}],
-                    reduce=False,
-                ).all()}
-
             errors = []
 
             def _migrate_app_ids(app_ids):
@@ -42,27 +49,24 @@ class Migration(DataMigration):
                     try:
                         if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
                             application = Application.wrap(app_doc)
-                            self.migrate_app(application)
-
-                            to_save.append(application)
-                            if len(to_save) > 25:
-                                self.bulk_save(to_save)
-                                logger.info('completed {}/{} apps'.format(i, count))
-                                to_save = []
+                            should_save = self.migrate_app(application)
+                            if should_save:
+                                to_save.append(application)
+                                if len(to_save) > 25:
+                                    self.bulk_save(to_save)
+                                    logger.info('completed {}/{} apps'.format(i, count))
+                                    to_save = []
                     except Exception:
                         errors.append("App {id} not properly migrated because {error}".format(id=app_doc['_id'],
                                                                                               error=sys.exc_info()[0]))
                 if to_save:
                     self.bulk_save(to_save)
 
-            logger.info('migrating first class application')
-            _migrate_app_ids(_get_main_app_ids())
-            # logger.info('migrating released builds')
-            # _migrate_app_ids(_get_released_app_ids())
+            logger.info('migrating applications')
+            _migrate_app_ids(self.get_app_ids())
 
             if errors:
                 logger.info('\n'.join(errors))
-
 
     @classmethod
     def bulk_save(cls, apps):
@@ -77,12 +81,19 @@ class Migration(DataMigration):
             filter_combination_func = \
                 cls.combine_and_interpolate_V1_filters
 
+        needs_save = False
         for module in app.get_modules():
             detail = module.case_details.short
+            # already migrated - don't bother saving again
+            if detail.filter:
+                return False
             combined_filter_string = filter_combination_func(
                 detail.get_columns(), app, module, detail
             )
             detail.filter = combined_filter_string
+            if detail.filter:
+                needs_save = True
+        return needs_save
 
     @classmethod
     def combine_and_interpolate_V1_filters(cls, columns, app, module, detail):
@@ -172,3 +183,9 @@ class Migration(DataMigration):
 
     models = {}
     complete_apps = ['app_manager']
+
+
+class Migration(AppFilterMigrationMixIn, DataMigration):
+
+    def get_app_ids(self):
+        return self._get_main_app_ids()
