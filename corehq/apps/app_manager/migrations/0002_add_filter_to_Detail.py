@@ -18,33 +18,51 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         if not settings.UNIT_TESTING:
-            application_ids = {r['id'] for r in Application.get_db().view(
-                'app_manager/applications',
-                reduce=False,
-            ).all()}
+            def _get_main_app_ids():
+                return _get_app_ids([None, None])
 
-            to_save = []
+            def _get_released_app_ids():
+                return _get_app_ids(['^ReleasedApplications'])
+
+            def _get_app_ids(startkey):
+                return {r['id'] for r in Application.get_db().view(
+                    'app_manager/applications',
+                    startkey=startkey,
+                    endkey=startkey + [{}],
+                    reduce=False,
+                ).all()}
+
             errors = []
 
-            for app_doc in iter_docs(Application.get_db(), application_ids):
-                try:
-                    if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
-                        application = Application.wrap(app_doc)
-                        self.migrate_app(application)
+            def _migrate_app_ids(app_ids):
+                to_save = []
+                count = len(app_ids)
+                logger.info('migrating {} apps'.format(count))
+                for i, app_doc in enumerate(iter_docs(Application.get_db(), app_ids)):
+                    try:
+                        if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
+                            application = Application.wrap(app_doc)
+                            self.migrate_app(application)
 
-                        to_save.append(application)
-                        if len(to_save) > 25:
-                            self.bulk_save(to_save)
-                            to_save = []
-                except:
-                    errors.append("App {id} not properly migrated because {error}".format(id=app_doc['_id'],
-                                                                                          error=sys.exc_info()[0]))
+                            to_save.append(application)
+                            if len(to_save) > 25:
+                                self.bulk_save(to_save)
+                                logger.info('completed {}/{} apps'.format(i, count))
+                                to_save = []
+                    except Exception:
+                        errors.append("App {id} not properly migrated because {error}".format(id=app_doc['_id'],
+                                                                                              error=sys.exc_info()[0]))
+                if to_save:
+                    self.bulk_save(to_save)
+
+            logger.info('migrating first class application')
+            _migrate_app_ids(_get_main_app_ids())
+            # logger.info('migrating released builds')
+            # _migrate_app_ids(_get_released_app_ids())
 
             if errors:
                 logger.info('\n'.join(errors))
 
-            if to_save:
-                self.bulk_save(to_save)
 
     @classmethod
     def bulk_save(cls, apps):
