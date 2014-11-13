@@ -53,23 +53,23 @@ def latest_status(location_id, type, value=None, month=None, year=None):
     return qs[0] if qs.count() else None
 
 
-def _latest_status_or_none(location_id, type, month, year, value=None):
+def latest_status_or_none(location_id, type, month, year, value=None):
     t = latest_status(location_id, type,
                       month=month,
                       year=year,
                       value=value)
-    return t.status_date if t else None
+    return t
 
 
 def randr_value(location_id, month, year):
-    latest_submit = _latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                           month, year, value=SupplyPointStatusValues.SUBMITTED)
-    latest_not_submit = _latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                               month, year, value=SupplyPointStatusValues.NOT_SUBMITTED)
+    latest_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                          month, year, value=SupplyPointStatusValues.SUBMITTED)
+    latest_not_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                              month, year, value=SupplyPointStatusValues.NOT_SUBMITTED)
     if latest_submit:
-        return latest_submit
+        return latest_submit.status_date
     else:
-        return latest_not_submit
+        return latest_not_submit.status_date if latest_not_submit else None
 
 
 class ILSData(object):
@@ -419,6 +419,12 @@ class RRReportingHistory(ILSData):
                         return user
                 return None
 
+            def get_span(rr_value):
+                if rr_value:
+                    return '<span class="icon-ok" style="color:green"/>%s'
+                else:
+                    return '<span class="icon-warning-sign" style="color:orange"/>%s'
+
             contact = _default_contact(child._id)
             if contact:
                 role = contact.user_data.get('role') or ""
@@ -426,12 +432,6 @@ class RRReportingHistory(ILSData):
                                                     contact.default_phone_number)
             else:
                 contact_string = ""
-
-            def get_span(rr_value):
-                if rr_value:
-                    return '<span class="icon-ok" style="color:green"/>%s'
-                else:
-                    return '<span class="icon-warning-sign" style="color:orange"/>%s'
 
             rows.append(
                 [
@@ -453,6 +453,70 @@ class RRReportingHistory(ILSData):
             'Contact',
             'Historical Response Rate'
         ]
+
+
+class LeadTimeHistory(ILSData):
+    show_table = True
+    title = "Lead Time History"
+    slug = "lead_time_history"
+    show_chart = False
+
+    @property
+    def headers(self):
+        return [
+            'Name',
+            'Average Lead Time In Days'
+        ]
+
+    @property
+    def rows(self):
+        location = Location.get(self.config['location_id'])
+        date = datetime(int(self.config['year']), int(self.config['month']), 1)
+        rows = []
+        for child in location.children:
+            try:
+                org_summary = OrganizationSummary.objects.get(supply_point=child._id, date=date)
+            except OrganizationSummary.DoesNotExist:
+                continue
+            avg_lead_time = org_summary.average_lead_time_in_days
+            if avg_lead_time:
+                avg_lead_time = "%.1f" % avg_lead_time
+            else:
+                avg_lead_time = "None"
+
+            try:
+                from custom.ilsgateway import DeliveryReport
+                url = html.escape(DeliveryReport.get_url(
+                    domain=self.config['domain']) + '?location_id=%s&month=%s&year=%s' %
+                                  (child._id, self.config['month'], self.config['year']))
+            except KeyError:
+                url = None
+            rows.append([link_format(child.name, url), avg_lead_time])
+        return rows
+
+
+class DeliveryStatus(ILSData):
+
+    @property
+    def headers(self):
+        return [
+            'Code',
+            'Facility Name',
+            'Delivery Status',
+            'Delivery Date',
+            'This Cycle Lead Time',
+            'Average Lead Time In Days'
+        ]
+
+    @property
+    def rows(self):
+        rows = []
+        location = Location.get(self.config['location_id'])
+        dg = DeliveryGroups().submitting(location.children, int(self.config['month']))
+        for child in dg:
+            latest_date = latest_status()
+            rows.append([child.name])
+        return rows
 
 
 class ILSMixin(object):

@@ -38,6 +38,7 @@ class DetailsReport(MultiReport):
                 report_supervision_url=self.report_supervision_url,
                 report_delivery_url=self.report_delivery_url,
                 report_unrecognizedmessages_url=self.report_unrecognizedmessages_url,
+                with_tabs=True
             )
         )
         return context
@@ -70,7 +71,14 @@ class DetailsReport(MultiReport):
 
     @property
     def report_delivery_url(self):
-        return 'test4'
+        try:
+            from custom.ilsgateway import DeliveryReport
+            return html.escape(DeliveryReport.get_url(
+                domain=self.domain) +
+                '?location_id=%s&month=%s&year=%s' %
+                (self.request_params['location_id'], self.request_params['month'], self.request_params['year']))
+        except KeyError:
+            return None
 
     @property
     def report_unrecognizedmessages_url(self):
