@@ -44,8 +44,12 @@ if __name__ == "__main__":
 
     # important to apply gevent monkey patches before running any other code
     # applying this later can lead to inconsistencies and threading issues
-    from restkit.session import set_session; set_session("gevent")
-    from gevent.monkey import patch_all; patch_all()
+    # but compressor doesn't like it
+    # ('module' object has no attribute 'poll' which has to do with
+    # gevent-patching subprocess)
+    if sys.argv[1] != 'compress':
+        from restkit.session import set_session; set_session("gevent")
+        from gevent.monkey import patch_all; patch_all()
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
     from django.core.management import execute_from_command_line
