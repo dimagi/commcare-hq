@@ -43,7 +43,7 @@ function SavedApp(o, r) {
 
     self.sms_url = function(index) {
         if (index === 0) { // sending to sms
-            return self.short_url()
+            return self.short_url();
         } else { // sending to odk
             if (self.include_media() && self.short_odk_media_url()) {
                 return self.short_odk_media_url();
@@ -51,6 +51,39 @@ function SavedApp(o, r) {
                 return self.short_odk_url();
             }
         }
+    };
+
+    self.editing_comment = ko.observable(false);
+    self.new_comment = ko.observable(self.build_comment());
+    self.pending_comment_update = ko.observable(false);
+
+    self.update_build_comment = function () {
+        self.editing_comment(true);
+    };
+
+    self.submit_new_comment = function () {
+        console.log("the comment for " + self.id() + "changed from '" +
+                self.build_comment() + "' to '" + self.new_comment() +
+                "'. Sending to server."
+        );
+        self.pending_comment_update(true);
+        $.ajax({
+            url: r.options.urls.update_build_comment,
+            type: 'POST',
+            dataType: 'JSON',
+            data: {"build_id": self.id(), "comment": self.new_comment()},
+            success: function (data) {
+                console.log("success!!");
+            },
+            error: function () {
+                console.log("ERROR!!");
+            }
+        });
+        self.pending_comment_update(false);
+    };
+
+    self.cancel_edit = function () {
+        self.editing_comment(false);
     };
     return self;
 }
@@ -161,7 +194,7 @@ function ReleasesMain(o) {
         }
     };
     self.reload_message = "Sorry, that didn't go through. " +
-            "Please reload your page and try again"
+            "Please reload your page and try again";
     self.deleteSavedApp = function (savedApp) {
         savedApp._deleteState('pending');
         $.post(self.url('delete'), {saved_app: savedApp.id()}, function () {
@@ -223,7 +256,7 @@ function ReleasesMain(o) {
         }).success(function (data) {
             $('#build-errors-wrapper').html(data.error_html);
             if (data.saved_app) {
-                var app = SavedApp(data.saved_app, self)
+                var app = SavedApp(data.saved_app, self);
                 self.addSavedApp(app, true);
             }
             self.buildState('');

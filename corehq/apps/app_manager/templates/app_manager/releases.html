@@ -46,6 +46,7 @@
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
+            update_build_comment: '{% url "update_build_comment" domain app.id %}',
         };
         var o = {
             urls: urls,
@@ -235,9 +236,26 @@
                     </td>
                     {% endif %}
                     <td>
-                        <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
-                        <span data-bind="text: build_comment"></span>
-                        <h6 data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</h6>
+                        <div data-bind="visible: !editing_comment()">
+                            <a href="#" data-bind="click: update_build_comment">
+                                <span class="icon-pencil"></span>
+                            </a>
+                            <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
+                            <span data-bind="text: build_comment"></span>
+                            <b data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</b>
+                        </div>
+                        <div data-bind="visible: editing_comment()">
+                            <input type="text" data-bind="value: new_comment"></input>
+                            <a href="#" data-bind="click: submit_new_comment, visible: !pending_comment_update()">
+                                <span class="icon-arrow-right"></span>
+                            </a>
+                            <a href="#" data-bind="click: cancel_edit, visible: !pending_comment_update()">
+                                <span class="icon-remove"></span>
+                            </a>
+                            <span data-bind="visible: pending_comment_update">
+                                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                            </span>
+                        </div>
                     </td>
                     <td class="build-is-released">
                         <div data-bind="starred: is_released{% if edit %}, click: $root.toggleRelease{% endif %}"></div>

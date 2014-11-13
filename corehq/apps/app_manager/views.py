@@ -2662,6 +2662,17 @@ def upload_translations(request, domain, app_id):
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
 
+def update_build_comment(request, domain, app_id):
+    build_id = request.POST.get('build_id')
+    try:
+        build = SavedAppBuild.get(build_id)
+    except ResourceNotFound:
+        raise Http404()
+    build.build_comment = request.POST.get('comment')
+    build.save()
+    return json_response({'status': 'success'})
+
+
 common_module_validations = [
     (lambda app: app.application_version == APP_V1,
      _('Please upgrade you app to > 2.0 in order to add a Careplan module'))
