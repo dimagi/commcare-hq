@@ -97,7 +97,8 @@ class RegistrationData(ILSData):
         elif self.config['loc_type'] == 'REGION':
             location = location.parent.parent
 
-        users = [user for user in users_in_domain if user.domain_membership[0].location_id == location.location_id]
+        users = [user for user in users_in_domain if user.get_domain_membership(self.config['domain']).location_id
+                 == location.location_id]
         if users:
             return [[u.full_name, u.user_data['role'], u.phone_number, u.email] for u in users]
         
