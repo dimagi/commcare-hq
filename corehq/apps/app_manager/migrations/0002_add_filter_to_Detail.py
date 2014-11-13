@@ -57,8 +57,8 @@ class Migration(DataMigration):
 
             logger.info('migrating first class application')
             _migrate_app_ids(_get_main_app_ids())
-            logger.info('migrating released builds')
-            _migrate_app_ids(_get_released_app_ids())
+            # logger.info('migrating released builds')
+            # _migrate_app_ids(_get_released_app_ids())
 
             if errors:
                 logger.info('\n'.join(errors))
