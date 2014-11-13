@@ -58,15 +58,34 @@ Losh.  Here are some takeaways:
 * Use short sentences and paragraphs
 * Break your documentation into sections to avoid text walls
 * Avoid making assumptions about your reader's background knowledge
-* Consider `three levels of documentation <jkm_>`_:
+* Consider `three types of documentation <jkm_wtw_>`_:
 
    #. Tutorials - quick introduction to the basics
    #. Topical Guides - comprehensive overview of the project; everything
       but the dirty details
    #. Reference Material - complete reference for the API
 
-.. _jkm: http://jacobian.org/writing/great-documentation/what-to-write/
+One aspect that Kaplan-Moss doesn't mention explicitly (other than
+advising us to "Omit fluff" in his `Technical style <jkm_ts_>`_ piece)
+but is clear from both his documentation series and the Django
+documentation, is *what not to write*. It's an important aspect of the
+readability of any written work, but has other implications when it
+comes to technical writing.
+
+Antoine de Saint Exupéry wrote, "... perfection is attained not when
+there is nothing more to add, but when there is nothing more to remove."
+
+Keep things short and take stuff out where possible. It can help to get
+your point across, but, maybe more importantly with documentation, means
+there is less that needs to change when the codebase changes.
+
+Think of it as an extension of the DRY principle.
+
+
+.. _jkm: http://jacobian.org/writing/great-documentation/
 .. _blog post: http://stevelosh.com/blog/2013/09/teach-dont-tell/
+.. _jkm_wtw: http://jacobian.org/writing/what-to-write/
+.. _jkm_ts: http://jacobian.org/writing/technical-style/
 
 
 .. _rst:
