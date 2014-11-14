@@ -204,14 +204,14 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
         return
 
     if not location:
-        if ilsgateway_location.parent:
+        if ilsgateway_location.parent_id:
             loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                              key=[domain, str(ilsgateway_location.parent)],
+                                              key=[domain, str(ilsgateway_location.parent_id)],
                                               reduce=False,
                                               include_docs=True).first()
             if not loc_parent:
-                parent = endpoint.get_location(ilsgateway_location.parent)
-                loc_parent = sync_ilsgateway_location(domain, endpoint, Loc(**parent))
+                parent = endpoint.get_location(ilsgateway_location.parent_id)
+                loc_parent = sync_ilsgateway_location(domain, endpoint, Loc(parent))
             else:
                 loc_parent = loc_parent.location
             location = Location(parent=loc_parent)

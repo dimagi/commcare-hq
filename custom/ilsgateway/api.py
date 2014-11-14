@@ -5,6 +5,7 @@ import requests
 from corehq.apps.commtrack.models import SupplyPointCase
 from custom.api.utils import EndpointMixin
 
+
 class MigrationException(Exception):
     pass
 
@@ -15,9 +16,6 @@ class Product(JsonObject):
     sms_code = StringProperty()
     description = StringProperty()
     is_active = BooleanProperty()
-
-    def __repr__(self):
-        return str(self.__dict__)
 
 
 class ILSUser(JsonObject):
@@ -51,9 +49,6 @@ class ILSUser(JsonObject):
             supply_point=json_rep['supply_point']
         )
 
-    def __repr__(self):
-        return str(self.__dict__)
-
 
 class SMSUser(JsonObject):
     id = IntegerProperty()
@@ -78,69 +73,35 @@ class SMSUser(JsonObject):
             backend=json_rep['backend']
         )
 
-    def __repr__(self):
-        return str(self.__dict__)
-
 
 class Location(JsonObject):
-    id = DecimalProperty()
+    id = IntegerProperty()
     name = StringProperty()
     type = StringProperty()
-    parent = IntegerProperty()
+    parent_id = IntegerProperty()
     latitude = StringProperty()
     longitude = StringProperty()
     code = StringProperty()
     groups = ListProperty()
     historical_groups = DictProperty()
 
-    def __repr__(self):
-        return str(self.__dict__)
-
 
 class ProductStock(JsonObject):
-    supply_point_id = DecimalProperty()
-    quantity = DecimalProperty()
-    product_code = StringProperty()
+    supply_point = IntegerProperty()
+    quantity = FloatProperty()
+    product = StringProperty()
     last_modified = StringProperty()
-    auto_monthly_consumption = DecimalProperty()
-
-    @classmethod
-    def from_json(cls, json_rep):
-        return cls(
-            supply_point_id=json_rep['supply_point'],
-            quantity=json_rep['quantity'],
-            product_code=json_rep['product'],
-            last_modified=json_rep['last_modified'],
-            auto_monthly_consumption=json_rep['auto_monthly_consumption']
-        )
-
-    def __repr__(self):
-        return str(self.__dict__)
+    auto_monthly_consumption = FloatProperty()
 
 
 class StockTransaction(JsonObject):
     beginning_balance = DecimalProperty()
     date = StringProperty()
     ending_balance = DecimalProperty()
-    product_code = StringProperty()
+    product = StringProperty()
     quantity = DecimalProperty()
     report_type = StringProperty()
-    supply_point_id = DecimalProperty()
-
-    @classmethod
-    def from_json(cls, json_rep):
-        return cls(
-            beginning_balance=json_rep['beginning_balance'],
-            date=json_rep['date'],
-            ending_balance=json_rep['ending_balance'],
-            product_code=json_rep['product'],
-            quantity=json_rep['quantity'],
-            report_type=json_rep['report_type'],
-            supply_point_id=json_rep['supply_point']
-        )
-
-    def __repr__(self):
-        return str(self.__dict__)
+    supply_point = IntegerProperty()
 
 
 class ILSGatewayEndpoint(EndpointMixin):

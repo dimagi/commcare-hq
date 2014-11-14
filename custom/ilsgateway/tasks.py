@@ -37,11 +37,7 @@ def ils_bootstrap_domain_task(domain):
     return ils_bootstrap_domain(ils_config)
 
 # District Moshi-Rural
-ILS_FACILITIES = [906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,
-              917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927,
-              928, 929, 930, 931, 932, 933, 934, 935, 936, 937, 938,
-              939, 941, 942, 943, 944, 946, 947, 948, 949, 950, 951,
-              952, 953, 954, 955, 4860, 654]
+ILS_FACILITIES = [906, 907, 908, 909]
 
 
 def get_locations(domain, endpoint, facilities):
@@ -59,11 +55,11 @@ def get_product_stock(domain, endpoint, facilities):
                                                               filters=dict(supply_point=facility))
             for product_stock in product_stocks:
                 case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(product_stock.supply_point_id)],
+                                            key=[domain, str(product_stock.supply_point)],
                                             reduce=False,
                                             include_docs=True,
                                             limit=1).first()
-                product = Product.get_by_code(domain, product_stock.product_code)
+                product = Product.get_by_code(domain, product_stock.product)
                 try:
                     stock_state = StockState.objects.get(section_id='stock',
                                                          case_id=case._id,
@@ -106,11 +102,11 @@ def get_stock_transaction(domain, endpoint, facilities):
                                                                                    order_by='date')))
             for stocktransaction in stocktransactions:
                 case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(stocktransaction.supply_point_id)],
+                                            key=[domain, str(stocktransaction.supply_point)],
                                             reduce=False,
                                             include_docs=True,
                                             limit=1).first()
-                product = Product.get_by_code(domain, stocktransaction.product_code)
+                product = Product.get_by_code(domain, stocktransaction.product)
                 try:
                     StockTransaction.objects.get(case_id=case._id,
                                                  product_id=product._id,

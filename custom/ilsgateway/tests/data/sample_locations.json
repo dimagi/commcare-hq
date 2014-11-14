@@ -1,20 +1,5 @@
 [
     {
-
-        "id" : 1,
-        "name": "MOHSW",
-        "type": "MOHSW",
-        "parent_id": null,
-        "latitude": "-10.6676087700",
-        "longitude": "39.1621900200",
-        "code": "MOHSW-MOHSW",
-        "groups": ["A"],
-        "historical_groups":
-        {}
-    },
-
-
-    {
         "code": "DM520053",
         "date_updated": "2014-11-10T08:31:53.020929",
         "groups": ["B"],
@@ -41,7 +26,19 @@
             "2014-05-01": ["B"]
         }
     },
+    {
 
+        "id" : 1,
+        "name": "MOHSW",
+        "type": "MOHSW",
+        "parent_id": null,
+        "latitude": "-10.6676087700",
+        "longitude": "39.1621900200",
+        "code": "MOHSW-MOHSW",
+        "groups": ["A"],
+        "historical_groups":
+        {}
+    },
     {
         "code": "DISTRICT-Bahi",
         "date_updated": "2014-07-17T00:00:00",

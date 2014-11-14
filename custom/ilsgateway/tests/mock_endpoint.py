@@ -30,10 +30,10 @@ class MockEndpoint(ILSGatewayEndpoint):
 
     def get_location(self, id, params=None):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
-            objects = [Location(location) for location in json.loads(f.read())]
-            if id == 1:
+            objects = [location for location in json.loads(f.read())]
+            if id == 2632:
                 return objects[0]
-            elif id == 2632:
+            elif id == 1:
                 return objects[1]
             elif id == 2625:
                 return objects[2]

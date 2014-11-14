@@ -22,14 +22,14 @@ class LocationSyncTest(TestCase):
 
     def test_create_location(self):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
-            location = Loc(**json.loads(f.read())[0])
+            location = Loc(**json.loads(f.read())[1])
 
         ilsgateway_location = sync_ilsgateway_location(TEST_DOMAIN, None, location)
         self.assertEqual(ilsgateway_location.name, location.name)
         self.assertEqual(ilsgateway_location.location_type, location.type)
         self.assertEqual(ilsgateway_location.longitude, float(location.longitude))
         self.assertEqual(ilsgateway_location.latitude, float(location.latitude))
-        self.assertEqual(ilsgateway_location.parent, location.parent)
+        self.assertEqual(ilsgateway_location.parent, location.parent_id)
 
     def test_locations_migration(self):
         checkpoint = LogisticsMigrationCheckpoint(
