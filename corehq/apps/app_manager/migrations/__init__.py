@@ -85,14 +85,11 @@ class AppFilterMigrationMixIn(object):
         needs_save = False
         for module in app.get_modules():
             detail = module.case_details.short
-            # already migrated - don't bother saving again
-            if detail.filter:
-                return False
             combined_filter_string = filter_combination_func(
                 detail.get_columns(), app, module, detail
             )
-            detail.filter = combined_filter_string
-            if detail.filter:
+            if combined_filter_string and detail.filter != combined_filter_string:
+                detail.filter = combined_filter_string
                 needs_save = True
         return needs_save
 
