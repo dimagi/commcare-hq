@@ -15,6 +15,7 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
+from corehq import toggles
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
@@ -655,10 +656,15 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     
     def update_from_case_update(self, case_update, xformdoc):
         def _use_new_case_processing():
-            # feature flags ftw
-            return (not case_update.has_referrals()
-                    and (getattr(settings,'UNIT_TESTING', False)
-                         or getattr(xformdoc, 'domain', None) == 'ekjut'))
+            domain = getattr(xformdoc, 'domain', None)
+            return (
+                not case_update.has_referrals()
+                and (
+                    getattr(settings,'UNIT_TESTING', False)
+                    or domain in ('ekjut', 'miralbwsurvey')
+                    or toggles.NEW_CASE_PROCESSING.enabled(domain)
+                )
+            )
 
         if _use_new_case_processing():
             return self._new_update_from_case_update(case_update, xformdoc)

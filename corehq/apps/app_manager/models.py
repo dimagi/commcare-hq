@@ -1130,6 +1130,7 @@ class Detail(IndexedSchema):
     get_columns = IndexedSchema.Getter('columns')
 
     sort_elements = SchemaListProperty(SortElement)
+    filter = StringProperty()
 
     @parse_int([1])
     def get_column(self, i):
@@ -1138,18 +1139,6 @@ class Detail(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
-
-    def filter_xpath(self):
-        filters = []
-        for i,column in enumerate(self.columns):
-            if column.format == 'filter':
-                value = dot_interpolate(
-                    column.filter_xpath,
-                    '%s_%s_%s' % (column.model, column.field, i + 1)
-                )
-                filters.append("(%s)" % value)
-        xpath = ' and '.join(filters)
-        return partial_escape(xpath)
 
 
 class CaseList(IndexedSchema):
@@ -1269,15 +1258,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                             'key': key,
                             'module': self.get_module_info(),
                         }
-            elif column.format == 'filter':
-                try:
-                    etree.XPath(column.filter_xpath or '')
-                except etree.XPathSyntaxError:
-                    yield {
-                        'type': 'invalid filter xpath',
-                        'module': self.get_module_info(),
-                        'column': column,
-                    }
             elif column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
@@ -1418,6 +1398,13 @@ class Module(ModuleBase):
         except Exception:
             return []
 
+    @property
+    def case_list_filter(self):
+        try:
+            return self.case_details.short.filter
+        except AttributeError:
+            return None
+
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
         for sort_element in self.detail_sort_elements:
@@ -1428,6 +1415,15 @@ class Module(ModuleBase):
                     'type': 'invalid sort field',
                     'field': sort_element.field,
                     'module': self.get_module_info(),
+                })
+        if self.case_list_filter:
+            try:
+                etree.XPath(self.case_list_filter)
+            except etree.XPathSyntaxError:
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.get_module_info(),
+                    'filter': self.case_list_filter,
                 })
         if self.parent_select.active and not self.parent_select.module_id:
             errors.append({
@@ -2360,10 +2356,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.save()
 
         return self
-
-    @classmethod
-    def by_domain(cls, domain):
-        return get_apps_in_domain(domain)
 
     @classmethod
     def get_latest_build(cls, domain, app_id):
@@ -3559,12 +3551,26 @@ class RemoteApp(ApplicationBase):
 
 
 def get_apps_in_domain(domain, full=False, include_remote=True):
-    view_name = 'app_manager/applications' if full else 'app_manager/applications_brief'
+    """
+    Returns all apps(not builds) in a domain
+
+    full use applications when true, otherwise applications_brief
+    """
+    if full:
+        view_name = 'app_manager/applications'
+        startkey = [domain, None]
+        endkey = [domain, None, {}]
+    else:
+        view_name = 'app_manager/applications_brief'
+        startkey = [domain]
+        endkey = [domain, {}]
+
     view_results = Application.get_db().view(view_name,
-        startkey=[domain, None],
-        endkey=[domain, None, {}],
+        startkey=startkey,
+        endkey=endkey,
         include_docs=True,
     )
+
     remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
     wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
     return filter(remote_app_filter, wrapped_apps)

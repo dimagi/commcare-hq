@@ -113,6 +113,19 @@
                     {% endif %}
                 {% endfor %}
             </ul>
+            {% if toggle_meta.randomness %}
+                <p>
+                    {% blocktrans with percent=toggle_meta.randomness_percent namespace=toggle_meta.namespace %}
+                    And <strong>{{ percent }}%</strong> of all other {{ namespace }}s.
+                    {% endblocktrans %}
+                    <br/>
+                    <ul>
+                        <li>
+                            <span class="muted">{% trans "Go to the project settings page to see if a toggle is randomly enabled for your domain." %}</span>
+                        </li>
+                    </ul>
+                </p>
+            {% endif %}
         </div>
         <hr/>
         <!-- ko foreach: items -->
