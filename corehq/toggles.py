@@ -1,5 +1,7 @@
 from functools import wraps
+import hashlib
 from django.http import Http404
+import math
 from toggle.shortcuts import toggle_enabled
 
 
@@ -32,6 +34,35 @@ class StaticToggle(object):
             return wrapped_view
         return decorator
 
+
+def deterministic_random(input_string):
+    return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
+
+
+class PredicatablyRandomToggle(StaticToggle):
+    """
+    A toggle that is predictably random based off some axis. Useful for for doing
+    a randomized rollout of a feature. E.g. "turn this on for 5% of domains", or
+    "turn this on for 40% of users".
+
+    It extends StaticToggle, so individual domains/users can also be explicitly added.
+    """
+
+    def __init__(self, slug, label, namespace, randomness):
+        super(PredicatablyRandomToggle, self).__init__(slug, label, [namespace])
+        assert namespace, 'namespace must be defined!'
+        self.namespace = namespace
+        assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
+        self.randomness = randomness
+
+    def _get_identifier(self, item):
+        return '{}:{}:{}'.format(self.namespace, self.slug, item)
+
+    def enabled(self, item, **kwargs):
+        return (
+            (item and deterministic_random(self._get_identifier(item)) < self.randomness)
+            or super(PredicatablyRandomToggle, self).enabled(item, **kwargs)
+        )
 
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = object()
