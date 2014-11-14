@@ -10,12 +10,12 @@ We have a lot of views:
 
 Things to know about views:
 
-1. Every time you create or update doc, each map function is run on it
+1. Every time you create or update a doc, each map function is run on it
    and the btree_ for the view is updated based on the change
    in what the maps emit for that doc.
    Deleting a doc causes the btree to be updated as well.
-2. Every time you update a view, it needs to be run, from scratch,
-   in its entirety, on every single doc in the database, regardless of doc_type.
+2. Every time you update a view, all views in the design doc it need to be run, from scratch,
+   in their entirety, on every single doc in the database, regardless of doc_type.
 
 .. _btree: http://guide.couchdb.org/draft/btree.html
 
@@ -43,3 +43,12 @@ Takeaways:
    hundreds of thousands of docs. One way to do this is to save N docs
    and then make a tiny request to the view you think will be slowest to update,
    and then repeat.
+5. Use different databases!
+   All forms and cases save to the main database, but there is a `_meta` database we have just added for new doc or migrated doc types.
+   When you use a different database you create two advantages:
+   a) Documents you save don't contribute to the view indexing load of all of the views in the main database.
+   b) Views you add don't have to run on all forms and cases.
+6. Split views!
+   When a single view changes, the **entire design doc** has to reindex.
+   If you make a new view, it's much better to make a new design doc for it than to put it in with some other big, possibly expensive views.
+   We use the `couchapps` folder/app for this.
