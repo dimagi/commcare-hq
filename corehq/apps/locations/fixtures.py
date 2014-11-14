@@ -54,7 +54,7 @@ def location_fixture_generator(user, version, synclog, last_sync):
                                {'id': 'commtrack:locations',
                                 'user_id': user.user_id})
 
-    loc_types = project.commtrack_settings.location_types
+    loc_types = project.location_types
     type_to_slug_mapping = dict((ltype.name, ltype.code) for ltype in loc_types)
 
     def location_type_lookup(location_type):

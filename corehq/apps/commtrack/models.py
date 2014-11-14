@@ -1413,12 +1413,11 @@ def sync_location_supply_point(loc):
     if not domain.commtrack_enabled:
         return
 
-    def _needs_supply_point(loc, config):
+    def _needs_supply_point(loc, domain):
         """Exclude administrative-only locs"""
-        return loc.location_type in [loc_type.name for loc_type in config.location_types if not loc_type.administrative]
+        return loc.location_type in [loc_type.name for loc_type in domain.location_types if not loc_type.administrative]
 
-    config = domain.commtrack_settings
-    if _needs_supply_point(loc, config):
+    if _needs_supply_point(loc, domain):
         supply_point = SupplyPointCase.get_by_location(loc)
         if supply_point:
             supply_point.update_from_location(loc)
