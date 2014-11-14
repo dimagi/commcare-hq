@@ -7,6 +7,7 @@ from django.core.validators import validate_email
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
+from corehq.apps.domain.models import Domain
 from custom.api.utils import apply_updates
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from corehq.apps.commtrack.models import Product, SupplyPointCase, CommtrackConfig, \
@@ -330,12 +331,13 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
 def commtrack_settings_sync(project):
     locations_types = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
     config = CommtrackConfig.for_domain(project)
-    config.location_types = []
+    domain = Domain.get_by_name(project)
+    domain.location_types = []
     for i, value in enumerate(locations_types):
         if not any(lt.name == value
-                   for lt in config.location_types):
+                   for lt in domain.location_types):
             allowed_parents = [locations_types[i - 1]] if i > 0 else [""]
-            config.location_types.append(
+            domain.location_types.append(
                 LocationType(name=value, allowed_parents=allowed_parents, administrative=(value != 'FACILITY')))
     actions = [action.keyword for action in config.actions]
     if 'delivered' not in actions:
