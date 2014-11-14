@@ -772,6 +772,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
     keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
+    user_data = DictProperty()
 
     _user = None
     _user_checked = False
@@ -1305,7 +1306,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     domain = StringProperty()
     registering_device_id = StringProperty()
-    user_data = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1802,7 +1802,6 @@ class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobil
 
     location_id = StringProperty()
     program_id = StringProperty()
-    user_data = DictProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
