@@ -84,7 +84,6 @@ class AppFilterMigrationMixIn(object):
 
         needs_save = False
         for module in app.get_modules():
-
             for detail_type in ["case_details", "task_details", "goal_details", "product_details"]:
                 details = getattr(module, detail_type, None)
                 if details is None:
@@ -97,8 +96,8 @@ class AppFilterMigrationMixIn(object):
                 combined_filter_string = filter_combination_func(
                     detail.get_columns(), app, module, detail
                 )
-                detail.filter = combined_filter_string
-                if detail.filter:
+                if combined_filter_string and detail.filter != combined_filter_string:
+                    detail.filter = combined_filter_string
                     needs_save = True
         return needs_save
 
