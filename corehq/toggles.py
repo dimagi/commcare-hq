@@ -55,6 +55,10 @@ class PredicatablyRandomToggle(StaticToggle):
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
         self.randomness = randomness
 
+    @property
+    def randomness_percent(self):
+        return "{:.0f}".format(self.randomness * 100)
+
     def _get_identifier(self, item):
         return '{}:{}:{}'.format(self.namespace, self.slug, item)
 
@@ -174,3 +178,4 @@ STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
 )
+
