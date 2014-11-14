@@ -72,6 +72,19 @@ class PredicatablyRandomToggle(StaticToggle):
 NAMESPACE_USER = object()
 NAMESPACE_DOMAIN = 'domain'
 
+
+def all_toggles():
+    """
+    Loads all toggles
+    """
+    # trick for listing the attributes of the current module.
+    # http://stackoverflow.com/a/990450/8207
+    for toggle_name, toggle in globals().items():
+        if not toggle_name.startswith('__'):
+            if isinstance(toggle, StaticToggle):
+                yield toggle
+
+
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'Custom case parent reference'
