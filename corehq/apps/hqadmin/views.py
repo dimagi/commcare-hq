@@ -1023,10 +1023,10 @@ def doc_in_es(request):
 def callcenter_test(request):
     user_id = request.GET.get("user_id")
     date_param = request.GET.get("date")
-    enable_caching = request.GET('cache', False)
+    enable_caching = request.GET.get('cache')
 
     if not user_id:
-        return render(request, "hqadmin/callcenter_test.html", {})
+        return render(request, "hqadmin/callcenter_test.html", {"enable_caching": enable_caching})
 
     error = None
     try:
@@ -1063,6 +1063,7 @@ def callcenter_test(request):
         "error": error,
         "mobile_user": user,
         "date": query_date.strftime("%Y-%m-%d"),
+        "enable_caching": enable_caching,
         "data": data,
     }
     return render(request, "hqadmin/callcenter_test.html", context)
