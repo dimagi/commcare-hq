@@ -61,19 +61,19 @@ class ReportDispatcher(View):
         """
         return {}
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False, project=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         """
             Override this method to check for appropriate permissions based on the report model
             and other arguments.
         """
         return True
 
-    def get_reports(self, domain=None, project=None):
+    def get_reports(self, domain=None):
         attr_name = self.map_name
         import corehq
         domain_module = Domain.get_module_by_name(domain)
         if domain:
-            project = project or Domain.get_by_name(domain)
+            project = Domain.get_by_name(domain)
         else:
             project = None
 
@@ -170,12 +170,12 @@ class ReportDispatcher(View):
         dispatcher = cls()  # uhoh
         current_slug = context.get('report',{}).get('slug','')
 
-        reports = dispatcher.get_reports(domain, project=project)
+        reports = dispatcher.get_reports(domain)
         for section_name, report_group in reports:
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
-                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True, project=project):
+                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
                     continue
                 if report.show_in_navigation(
                         domain=domain, project=project, user=couch_user):
@@ -226,10 +226,10 @@ class ProjectReportDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False, project=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if domain is None:
             return False
-        return request.couch_user.can_view_report(domain, report, project=project)
+        return request.couch_user.can_view_report(domain, report)
 
 
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
@@ -248,7 +248,7 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     def dispatch_with_priv(self, request, *args, **kwargs):
         return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False, **kwargs):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check:
             try:
                 ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
@@ -266,7 +266,7 @@ class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'
     map_name = 'ADMIN_REPORTS'
 
-    def permissions_check(self, report, request, domain=None, is_navigation_check=False, project=None):
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         return hasattr(request, 'couch_user') and request.user.has_perm("is_superuser")
 
 
