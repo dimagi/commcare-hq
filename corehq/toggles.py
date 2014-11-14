@@ -192,3 +192,10 @@ STOCK_TRANSACTION_EXPORT = StaticToggle(
     'Show "export transactions" link on case details page',
 )
 
+
+NEW_CASE_PROCESSING = PredicatablyRandomToggle(
+    'new_case_processing',
+    'Use new case processing/rebuild logic',
+    namespace=NAMESPACE_DOMAIN,
+    randomness=0.05,
+)
