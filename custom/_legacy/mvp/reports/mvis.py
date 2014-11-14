@@ -141,6 +141,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 'category_title': "Child Health",
                 'category_slug': 'child_health',
                 'indicator_slugs': [
+                    "length_reading_proportion",
                     "muac_routine_proportion",
                     "muac_wasting_proportion",
                     "moderate_muac_wasting_proportion",

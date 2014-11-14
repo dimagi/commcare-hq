@@ -1,6 +1,7 @@
 function (doc) {
     // !code util/mvp.js
-    if(isChildVisitForm(doc)) {
+    if(isChildVisitForm(doc)
+       isChildWelfareForm(doc)) {
         var indicators = get_indicators(doc);
 
         if (indicators.child_dob && indicators.child_dob.value &&
@@ -62,6 +63,12 @@ function (doc) {
                 } catch (e) {
                     // do nothing
                 }
+            }
+
+            //LengthIndicator
+            if (age >= 90*MS_IN_DAY && age < 730*MS_IN_DAY && indicators.child_length && indicators.child_length.value) {
+                var length_date  =  (indicators.length_date && indicators.length_date.value) ? new Date(indicators.length_date.value) : visit_date;
+                emit_standard(doc, length_date, {length_reading: case_id}, [doc._id]);
             }
 
             emit_special(doc, last_muac_date, last_muac_indicators, [doc._id]);
