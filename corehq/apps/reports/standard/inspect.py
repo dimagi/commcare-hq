@@ -50,7 +50,6 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
-    show_in_dropdown = True
     ajax_pagination = True
     filter_users_field_class = StrongFilterUsersField
     include_inactive = True
@@ -65,6 +64,13 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
                 'corehq.apps.reports.filters.forms.CustomFieldFilter',
             ]
         super(SubmitHistory, self).__init__(request, **kwargs)
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     def other_fields(self):

@@ -88,7 +88,6 @@ class GenericReportView(CacheableRequestMixIn):
     mobile_enabled = False
     export_format_override = None
     icon = None
-    show_in_dropdown = False
 
     # the defaults for this should be sufficient. But if they aren't, well go for it.
     base_template = None
@@ -652,6 +651,10 @@ class GenericReportView(CacheableRequestMixIn):
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return False
 
     @classmethod
     def get_subpages(cls):

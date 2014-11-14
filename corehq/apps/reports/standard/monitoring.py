@@ -88,9 +88,15 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     all_users = None
     display_data = ['percent']
     emailable = True
-    show_in_dropdown = True
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     def special_notice(self):
@@ -294,8 +300,14 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
     fix_left_col = True
     emailable = True
     is_cacheable = True
-    show_in_dropdown = True
     description = ugettext_noop("Number of submissions by form.")
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     def headers(self):
@@ -388,7 +400,6 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_noop("Daily Form Activity")
-    show_in_dropdown = True
     bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
 
     fields = [
@@ -403,6 +414,13 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     emailable = True
     is_cacheable = False
     ajax_pagination = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     @memoized
@@ -947,7 +965,6 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     name = ugettext_noop("Worker Activity")
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
-    show_in_dropdown = True
     num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
@@ -959,6 +976,13 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     ]
     fix_left_col = True
     emailable = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     @memoized

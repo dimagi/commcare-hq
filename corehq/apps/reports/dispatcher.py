@@ -179,11 +179,6 @@ class ReportDispatcher(View):
                     continue
                 if report.show_in_navigation(
                         domain=domain, project=project, user=couch_user):
-                    if project.commtrack_enabled:
-                        from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
-                        show_in_dropdown = issubclass(report, CommtrackReportMixin) and report.show_in_dropdown
-                    else:
-                        show_in_dropdown = report.show_in_dropdown
                     if hasattr(report, 'override_navigation_list'):
                         report_contexts.extend(report.override_navigation_list(context))
                     else:
@@ -194,7 +189,7 @@ class ReportDispatcher(View):
                             'icon': report.icon,
                             'title': _(report.name),
                             'subpages': report.get_subpages(),
-                            'show_in_dropdown': show_in_dropdown,
+                            'show_in_dropdown': report.display_in_dropdown(project=project),
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
