@@ -818,6 +818,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     stack=Stack()
                                 )
                                 frame = CreateFrame()
+                                frame.add_command(self.id_strings.menu(module))
                                 frame.add_command(self.id_strings.form_command(form))
                                 d.action.stack.add_frame(frame)
 
