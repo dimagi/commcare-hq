@@ -1055,6 +1055,7 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'custom.ilsgateway.tanzania.handler.handle',
+    'custom.ilsgateway.ghana.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
