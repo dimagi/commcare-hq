@@ -55,6 +55,9 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
 
     case_id = StringProperty()
     type = StringProperty()
+
+    # this property is here as a hack to enable the call center fixtures to work.
+    # https://github.com/dimagi/commcare-hq/pull/4799 has some context.
     hq_user_id = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
 
