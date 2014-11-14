@@ -79,6 +79,7 @@ class LocationSettingsView(BaseCommTrackManageView):
     def page_context(self):
         return {
             'settings': self.settings_context,
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
 
     @property
