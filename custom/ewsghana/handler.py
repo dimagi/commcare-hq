@@ -1,8 +1,7 @@
 import re
-from custom.ilsgateway.ghana.handlers.registration import RegistrationHandler
-from custom.ilsgateway.ghana.handlers.requisition import RequisitionHandler
-from custom.ilsgateway.ghana.handlers.undo import UndoHandler
-from custom.ilsgateway.models import ILSGatewayConfig
+from custom.ewsghana.handlers.registration import RegistrationHandler
+from custom.ewsghana.handlers.requisition import RequisitionHandler
+from custom.ewsghana.handlers.undo import UndoHandler
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler

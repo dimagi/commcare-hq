@@ -1,5 +1,5 @@
 from casexml.apps.stock.models import StockTransaction
-from custom.ilsgateway.ghana.reminders import PRODUCTS_NOT_SUBMITTED
+from custom.ewsghana.reminders import PRODUCTS_NOT_SUBMITTED
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 
 
