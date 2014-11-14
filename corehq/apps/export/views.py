@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 import json
+from corehq.apps.app_manager.models import get_app
 from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.export.exceptions import ExportNotFound, ExportAppException
 from corehq.apps.reports.display import xmlns_to_name
@@ -116,7 +117,9 @@ class BaseCreateCustomExportView(BaseExportView):
 
         # This adds [info] location.#text to the standard list of columns to export, even if no forms have been
         # submitted with location data yet.
-        schema.schema['form']['meta']['location'] = {'#text': 'string'}
+        app = get_app('demo-wits-ca', request.GET.get('app_id'))
+        if app.auto_gps_capture:
+            schema.schema['form']['meta']['location'] = {'#text': 'string'}
 
         if schema:
             app_id = request.GET.get('app_id')
