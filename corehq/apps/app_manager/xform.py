@@ -86,6 +86,9 @@ class WrappedAttribs(object):
     def __contains__(self, item):
         return self._get_item_name(item) in self.attrib
 
+    def __iter__(self):
+        raise NotImplementedError()
+
     def __setitem__(self, item, value):
         self.attrib[self._get_item_name(item)] = value
 
@@ -109,6 +112,13 @@ class WrappedNode(object):
         else:
             self.xml = xml
         self.namespaces = namespaces
+
+    def xpath(self, xpath, *args, **kwargs):
+        if self.xml is not None:
+            return [WrappedNode(n) for n in self.xml.xpath(
+                    xpath.format(**self.namespaces), *args, **kwargs)]
+        else:
+            return []
 
     def find(self, xpath, *args, **kwargs):
         if self.xml is not None:
@@ -600,8 +610,11 @@ class XForm(WrappedNode):
         self.xml = parse_xml(xf_string)
 
     def strip_ignore_retain(self):
-        for node in self.findall('.//*[@{v}ignore]'):
-            del node.attrib['{v}ignore']
+        xpath = ".//*[@*[namespace-uri()='{v}']]".format(v=namespaces['v'][1:-1])
+        for node in self.xpath(xpath):
+            for key in node.xml.attrib:
+                if key.startswith(self.namespaces['v']):
+                    del node.attrib[key]
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)

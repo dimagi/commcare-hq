@@ -8,7 +8,7 @@
 				<orx:meta xmlns:cc="http://commcarehq.org/xforms"><orx:deviceID/><orx:timeStart/><orx:timeEnd/><orx:username/><orx:userID/><orx:instanceID/><cc:appVersion/></orx:meta></data>
 			</instance><instance id="commcaresession" src="jr://instance/session"/>
 			<bind nodeset="/data/question1" type="xsd:string"/>
-			<itext>
+			<itext vellum:arbitrary="value">
 				<translation lang="en" default="">
 					<text id="question1-label">
 						<value>question1</value>
