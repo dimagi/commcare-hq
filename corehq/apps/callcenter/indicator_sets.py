@@ -144,8 +144,8 @@ class CallCenterIndicators(object):
             all_owned_cases = CaseSyncOperation(self.user, None).actual_owned_cases
 
         relevant_cases = filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
-
         ids = {getattr(case, 'hq_user_id', None) for case in relevant_cases}
+
         try:
             ids.remove(None)
         except KeyError:
