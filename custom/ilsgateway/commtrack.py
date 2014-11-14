@@ -211,7 +211,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
                                               include_docs=True).first()
             if not loc_parent:
                 parent = endpoint.get_location(ilsgateway_location.parent)
-                loc_parent = sync_ilsgateway_location(domain, endpoint, Loc.from_json(parent))
+                loc_parent = sync_ilsgateway_location(domain, endpoint, Loc(**parent))
             else:
                 loc_parent = loc_parent.location
             location = Location(parent=loc_parent)
@@ -226,7 +226,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
             location.latitude = float(ilsgateway_location.latitude)
         if ilsgateway_location.longitude:
             location.longitude = float(ilsgateway_location.longitude)
-        location.location_type = ilsgateway_location.location_type
+        location.location_type = ilsgateway_location.type
         location.site_code = ilsgateway_location.code
         location.external_id = str(ilsgateway_location.id)
         location.save()
@@ -237,7 +237,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
             'name': ilsgateway_location.name,
             'latitude': float(ilsgateway_location.latitude) if ilsgateway_location.latitude else None,
             'longitude': float(ilsgateway_location.longitude) if ilsgateway_location.longitude else None,
-            'location_type': ilsgateway_location.location_type,
+            'location_type': ilsgateway_location.type,
             'site_code': ilsgateway_location.code.lower(),
             'external_id': str(ilsgateway_location.id),
             'metadata': {}
@@ -259,7 +259,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
             params=dict(with_historical_groups=1)
         )
 
-        historical_groups = Loc.from_json(location_object).historical_groups
+        historical_groups = Loc(**location_object).historical_groups
     else:
         historical_groups = {}
     for date, groups in historical_groups.iteritems():
@@ -343,10 +343,10 @@ def commtrack_settings_sync(project):
     config.save()
 
 
-def bootstrap_domain(ilsgateway_config):
+def bootstrap_domain(ilsgateway_config, endpoint=None):
     domain = ilsgateway_config.domain
     start_date = datetime.today()
-    endpoint = TanzaniaEndpoint.from_config(ilsgateway_config)
+    endpoint = endpoint if endpoint else TanzaniaEndpoint.from_config(ilsgateway_config)
     try:
         checkpoint = LogisticsMigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api

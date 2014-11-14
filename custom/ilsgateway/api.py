@@ -1,5 +1,6 @@
 from jsonobject.api import JsonObject
-from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty
+from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty, \
+    FloatProperty, DictProperty
 import requests
 from corehq.apps.commtrack.models import SupplyPointCase
 from custom.api.utils import EndpointMixin
@@ -15,16 +16,6 @@ class Product(JsonObject):
     description = StringProperty()
     is_active = BooleanProperty()
 
-    @classmethod
-    def from_json(cls, json_rep):
-        return cls(
-            name=json_rep['name'],
-            units=json_rep['units'],
-            sms_code=json_rep['sms_code'],
-            description=json_rep['description'],
-            is_active=json_rep['is_active']
-        )
-
     def __repr__(self):
         return str(self.__dict__)
 
@@ -35,13 +26,13 @@ class ILSUser(JsonObject):
     last_name = StringProperty()
     email = StringProperty()
     password = StringProperty()
-    is_staff = BooleanProperty()
+    is_staff = BooleanProperty(default=False)
     is_active = BooleanProperty()
-    is_superuser = BooleanProperty()
+    is_superuser = BooleanProperty(default=False)
     last_login = StringProperty()
     date_joined = StringProperty()
     location = DecimalProperty()
-    supply_point = DecimalProperty()
+    supply_point = IntegerProperty()
 
     @classmethod
     def from_json(cls, json_rep):
@@ -65,7 +56,7 @@ class ILSUser(JsonObject):
 
 
 class SMSUser(JsonObject):
-    id = DecimalProperty()
+    id = IntegerProperty()
     name = StringProperty()
     role = StringProperty()
     is_active = StringProperty()
@@ -94,27 +85,13 @@ class SMSUser(JsonObject):
 class Location(JsonObject):
     id = DecimalProperty()
     name = StringProperty()
-    location_type = StringProperty()
-    parent = DecimalProperty()
+    type = StringProperty()
+    parent = IntegerProperty()
     latitude = StringProperty()
     longitude = StringProperty()
     code = StringProperty()
     groups = ListProperty()
-    historical_groups = ListProperty()
-
-    @classmethod
-    def from_json(cls, json_rep):
-        return cls(
-            id=json_rep['id'],
-            name=json_rep['name'],
-            location_type=json_rep['type'],
-            parent=json_rep['parent_id'],
-            latitude=json_rep['latitude'],
-            longitude=json_rep['longitude'],
-            code=json_rep['code'],
-            groups=json_rep['groups'],
-            historical_groups=json_rep.get('historical_groups')
-        )
+    historical_groups = DictProperty()
 
     def __repr__(self):
         return str(self.__dict__)
@@ -224,16 +201,16 @@ class ILSGatewayEndpoint(EndpointMixin):
     def get_products(self, **kwargs):
         meta, products = self.get_objects(self.products_url, **kwargs)
         for product in products:
-            yield self.models_map['product'].from_json(product)
+            yield (self.models_map['product'])(product)
 
     def get_webusers(self, **kwargs):
         meta, users = self.get_objects(self.webusers_url, **kwargs)
         for user in users:
-            yield self.models_map['webuser'].from_json(user)
+            yield (self.models_map['webuser'])(user)
 
     def get_smsusers(self, **kwargs):
         meta, users = self.get_objects(self.smsusers_url, **kwargs)
-        return meta, [self.models_map['smsuser'].from_json(user) for user in users]
+        return meta, [(self.models_map['smsuser'])(user) for user in users]
 
     def get_location(self, id, params=None):
         response = requests.get(self.locations_url + str(id) + "/", params=params, auth=self._auth())
@@ -241,11 +218,11 @@ class ILSGatewayEndpoint(EndpointMixin):
 
     def get_locations(self, **kwargs):
         meta, locations = self.get_objects(self.locations_url, **kwargs)
-        return meta, [self.models_map['location'].from_json(location) for location in locations]
+        return meta, [(self.models_map['location'])(location) for location in locations]
 
     def get_productstocks(self, **kwargs):
         meta, product_stocks = self.get_objects(self.productstock_url, **kwargs)
-        return meta, [self.models_map['product_stock'].from_json(product_stock) for product_stock in product_stocks]
+        return meta, [(self.models_map['product_stock'])(product_stock) for product_stock in product_stocks]
 
     def get_stocktransactions(self, **kwargs):
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)

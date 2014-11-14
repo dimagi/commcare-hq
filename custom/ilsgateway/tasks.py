@@ -43,10 +43,11 @@ ILS_FACILITIES = [906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,
               939, 941, 942, 943, 944, 946, 947, 948, 949, 950, 951,
               952, 953, 954, 955, 4860, 654]
 
+
 def get_locations(domain, endpoint, facilities):
     for facility in facilities:
         location = endpoint.get_location(facility, params=dict(with_historical_groups=1))
-        sync_ilsgateway_location(domain, endpoint, Location.from_json(location))
+        sync_ilsgateway_location(domain, endpoint, Location(location))
 
 
 def get_product_stock(domain, endpoint, facilities):
