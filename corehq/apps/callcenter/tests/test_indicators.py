@@ -179,9 +179,10 @@ class CallCenterTests(BaseCCTests):
             domain=self.cc_domain.name,
             indicators=expected_indicators
         )
-        locmem_cache.set(cache_key(self.cc_user.get_id), cached_data.to_json())
 
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
+        locmem_cache.set(cache_key(self.cc_user.get_id, indicator_set.reference_date), cached_data.to_json())
+
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))

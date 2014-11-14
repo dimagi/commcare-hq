@@ -58,7 +58,7 @@ class OPMCaseRow(object):
         self.year = report.year
 
         if not report.is_rendered_as_email:
-            self.img_elem = '<div style="width:140px !important;"><img src="/static/opm/img/%s"></div>'
+            self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s"></div>'
         else:
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
@@ -592,11 +592,11 @@ class ConditionsMet(OPMCaseRow):
         ('child_name', _("Child Name"), True),
         ('child_age_display', _("Child Age"), True),
         ('window', _("Window"), True),
-        ('one', _("1"), True),
-        ('two', _("2"), True),
-        ('three', _("3"), True),
-        ('four', _("4"), True),
-        ('five', _("5"), True),
+        ('one', _("Condition 1"), True),
+        ('two', _("Condition 2"), True),
+        ('three', _("Condition 3"), True),
+        ('four', _("Condition 4"), True),
+        ('five', _("Condition 5"), True),
         ('cash', _("Payment Amount"), True),
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner Id"), False),

@@ -780,6 +780,7 @@ class MetReport(CaseReportMixin, BaseReport):
             with localize('hin'):
                 return DataTablesHeader(*[
                     DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
+                    if method != 'case_id' and method != 'owner_id'
                 ])
 
     @property
@@ -791,11 +792,24 @@ class MetReport(CaseReportMixin, BaseReport):
         self.is_rendered_as_email = True
         self.use_datatables = False
         self.override_template = "opm/met_print_report.html"
+
         return HttpResponse(self._async_context()['report'])
 
     @property
     def fixed_cols_spec(self):
-        return dict(num=9, width=800)
+        return dict(num=9, width=900)
+
+    @property
+    def rows(self):
+        if not self.is_rendered_as_email:
+            return super(MetReport, self).rows
+        else:
+            rows = super(MetReport, self).rows
+            for idx, row in enumerate(rows):
+                row = row[0:16]
+                row.extend(row[18:20])
+                rows[idx] = row
+            return rows
 
 class UsersIdsData(SqlData):
     table_name = "fluff_OpmUserFluff"

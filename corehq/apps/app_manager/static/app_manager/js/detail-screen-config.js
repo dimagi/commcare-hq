@@ -31,21 +31,78 @@ var CC_DETAIL_SCREEN = {
         ).replace(/\w\S*/g, function (txt) {
             return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
         });
+    },
+    /**
+     * Enable autocomplete on the given jquery element with the given autocomplete
+     * options.
+     * @param $elem
+     * @param options
+     */
+    setUpAutocomplete: function($elem, options){
+        $elem.$edit_view.autocomplete({
+            source: function (request, response) {
+                var availableTags = _.map(options, function(value) {
+                    var label = value;
+                    if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
+                        label = (
+                            '<span class="icon-paper-clip"></span> ' +
+                            label.substring(label.indexOf(":") + 1)
+                        );
+                    }
+                    return {value: value, label: label};
+                });
+                response(
+                    $.ui.autocomplete.filter(availableTags, request.term)
+                );
+            },
+            minLength: 0,
+            delay: 0,
+            select: function (event, ui) {
+                $elem.val(ui.item.value);
+                $elem.fire('change');
+            }
+        }).focus(function () {
+            $(this).autocomplete('search');
+        }).data("autocomplete")._renderItem = function (ul, item) {
+            return $("<li></li>")
+                .data("item.autocomplete", item)
+                .append($("<a></a>").html(item.label))
+                .appendTo(ul);
+        };
+        return $elem;
+    }
+
+};
+
+/**
+ * A custom knockout binding that replaces the element's contents with a jquery
+ * element.
+ * @type {{update: update}}
+ */
+ko.bindingHandlers.jqueryElement = {
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        $(element).empty();
+        $(element).append(ko.unwrap(valueAccessor()));
     }
 };
 
-var SortRow = function (field, type, direction) {
+var SortRow = function(params){
     var self = this;
-    self.field = ko.observable(field);
-    self.type = ko.observable(type);
-    self.direction = ko.observable(direction);
+    params = params || {};
+    self.notifyButtonOfChanges =
+            typeof params.notifyButtonOfChanges !== 'undefined' ? params.notifyButtonOfChanges : true;
+    self.field = ko.observable(typeof params.field !== 'undefined' ? params.field : "");
+    self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
+    self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
 
-    self.type.subscribe(function () {
-        window.sortRowSaveButton.fire('change');
-    });
-    self.direction.subscribe(function () {
-        window.sortRowSaveButton.fire('change');
-    });
+    if (self.notifyButtonOfChanges) {
+        self.type.subscribe(function () {
+            window.sortRowSaveButton.fire('change');
+        });
+        self.direction.subscribe(function () {
+            window.sortRowSaveButton.fire('change');
+        });
+    }
 
     self.fieldHtml = ko.computed(function () {
         return CC_DETAIL_SCREEN.getFieldHtml(self.field());
@@ -77,15 +134,64 @@ var SortRow = function (field, type, direction) {
         }
     });
 };
-
-var SortRows = function () {
+var SortRowTemplate = function(params){
     var self = this;
+    params = params || {};
+    self.textField = uiElement.input().val("");
+    CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
+
+    self.showWarning = ko.observable(false);
+    self.warningElement = DetailScreenConfig.field_format_warning.clone().show();
+    self.hasValidPropertyName = function(){
+        return DetailScreenConfig.field_val_re.test(self.textField.val());
+    };
+    this.textField.on('change', function(){
+        if (!self.hasValidPropertyName()){
+            self.showWarning(true);
+        } else {
+            self.showWarning(false);
+        }
+    });
+};
+SortRowTemplate.prototype = new SortRow({notifyButtonOfChanges: false});
+
+/**
+ *
+ * @param properties
+ * @param edit is true if the user has permissions to edit the sort rows.
+ * @constructor
+ */
+var SortRows = function (properties, edit) {
+    var self = this;
+    self.addButtonClicked = ko.observable(false);
     self.sortRows = ko.observableArray([]);
+    if (edit) {
+        self.templateRow = new SortRowTemplate({properties: properties});
+    } else {
+        self.templateRow = []; // Empty list because sortRows.concat([]) == sortRows
+    }
 
     self.addSortRow = function (field, type, direction) {
-        self.sortRows.push(new SortRow(field, type, direction));
+        self.sortRows.push(new SortRow({
+            field: field,
+            type: type,
+            direction: direction
+        }));
     };
-
+    self.addSortRowFromTemplateRow = function(row) {
+        if (! row.hasValidPropertyName()){
+            // row won't have format_warning showing if it's empty
+            row.showWarning(true);
+            return;
+        }
+        self.sortRows.push(new SortRow({
+            field: row.textField.val(),
+            type: row.type(),
+            direction: row.direction()
+        }));
+        row.textField.val("");
+        window.sortRowSaveButton.fire('change');
+    };
     self.removeSortRow = function (row) {
         self.sortRows.remove(row);
         window.sortRowSaveButton.fire('change');
@@ -94,6 +200,30 @@ var SortRows = function () {
     self.rowCount = ko.computed(function () {
         return self.sortRows().length;
     });
+
+    self.showing = ko.computed(function(){
+        return self.addButtonClicked() || self.rowCount() > 0;
+    });
+};
+
+var filterViewModel = function(filterText){
+    var self = this;
+    self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
+    self.showing = ko.observable(self.filterText() !== "");
+
+    self.filterText.subscribe(function(){
+        window.filterSaveButton.fire('change');
+    });
+    self.showing.subscribe(function(){
+        window.filterSaveButton.fire('change');
+    });
+
+    self.serialize = function(){
+        if (self.showing()) {
+            return self.filterText();
+        }
+        return null;
+    };
 };
 
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
@@ -159,11 +289,6 @@ var DetailScreenConfig = (function () {
 
     var DetailScreenConfig, Screen, Column, sortRows;
     var word = '[a-zA-Z][\\w_-]*';
-    var field_val_re = RegExp(
-        '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
-    );
-    var field_format_warning = $('<span/>').addClass('help-inline')
-        .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
     Column = (function () {
         function Column(col, screen) {
@@ -184,6 +309,7 @@ var DetailScreenConfig = (function () {
             }
             this.original.model = this.original.model || screen.model;
             this.original.field = this.original.field || "";
+            this.original.hasAutocomplete = orDefault(this.original.hasAutocomplete, true);
             this.original.header = this.original.header || {};
             this.original.format = this.original.format || "plain";
             this.original['enum'] = this.original['enum'] || [];
@@ -198,14 +324,11 @@ var DetailScreenConfig = (function () {
             this.screen = screen;
             this.lang = screen.lang;
 
-            this.includeInShort = uiElement.checkbox().val(orDefault(this.original.includeInShort, true));
-            this.includeInLong = uiElement.checkbox().val(orDefault(this.original.includeInLong, true));
-
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
-            this.format_warning = field_format_warning.clone().hide();
+            this.format_warning = DetailScreenConfig.field_format_warning.clone().hide();
 
             (function () {
                 var i, lang, visibleVal = "", invisibleVal = "";
@@ -221,7 +344,6 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 that.header = uiElement.input().val(invisibleVal);
-                that.header.ui.find('input').addClass('input-small');
                 that.header.setVisibleValue(visibleVal);
             }());
             this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
@@ -261,8 +383,6 @@ var DetailScreenConfig = (function () {
             this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
             elements = [
-                'includeInShort',
-                'includeInLong',
                 'model',
                 'field',
                 'header',
@@ -325,23 +445,10 @@ var DetailScreenConfig = (function () {
                 }
             }).fire('change');
 
-            this.$add = $('<i></i>').addClass(COMMCAREHQ.icons.ADD).click(function () {
-                if (that.field.val() && field_val_re.test(that.field.val())) {
-                    that.duplicate();
-                } else {
-                    that.field.$edit_view.focus();
-                }
-            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.ADD_COLUMN);
             this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 $(this).remove();
                 that.screen.fire('delete-column', that);
             }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
-
-            this.$sortLink = $('<a href="#">Sort by this</a>').click(function (e) {
-                that.screen.config.sortRows.addSortRow(that.field.val(), '', '');
-                e.preventDefault();
-                e.stopImmediatePropagation();
-            });
         }
 
         Column.init = function (col, screen) {
@@ -351,9 +458,8 @@ var DetailScreenConfig = (function () {
             duplicate: function () {
                 this.screen.fire('add-column', this);
             },
-            serialize: function (keepShortLong) {
+            serialize: function () {
                 var column = this.original;
-//                column.model = this.model.val();
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
@@ -362,13 +468,6 @@ var DetailScreenConfig = (function () {
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
                 column.calc_xpath = this.calc_xpath_extra.val();
-                if (!keepShortLong) {
-                    delete column.includeInShort;
-                    delete column.includeInLong;
-                } else {
-                    column.includeInShort = this.includeInShort.val();
-                    column.includeInLong = this.includeInLong.val();
-                }
                 return column;
             },
             setGrip: function (grip) {
@@ -389,6 +488,17 @@ var DetailScreenConfig = (function () {
         return Column;
     }());
     Screen = (function () {
+        /**
+         * The Screen "Class" is in charge inserting a table into the DOM that
+         * contains rows for each case DetailColumn. It also handles the
+         * reordering of these columns through drag and drop as well as
+         * saving them on the server.
+         * @param $home jQuery object where the Screen will be rendered
+         * @param spec
+         * @param config A DetailScreenConfig object.
+         * @param options
+         * @constructor
+         */
         function Screen($home, spec, config, options) {
             var i, column, model, property, header,
                 that = this, columns;
@@ -396,23 +506,35 @@ var DetailScreenConfig = (function () {
             this.type = spec.type;
             this.saveUrl = options.saveUrl;
             this.$home = $home;
+            // $location is the element containing this Screen.
+            this.$location = options.$location;
             this.config = config;
             this.edit = options.edit;
             this.columns = [];
-            this.suggestedColumns = [];
             this.model = config.model;
             this.lang = options.lang;
             this.langs = options.langs || [];
             this.properties = options.properties;
+            // The column key is used to retreive the columns from the spec and
+            // as the name of the key in the data object that is sent to the
+            // server on save.
+            this.columnKey = options.columnKey;
+            // Not all Screen instances will handle sorting, parent selection,
+            // and filtering. E.g The "Case Detail" tab only handles the module's
+            // "long" case details. These flags will make sure this instance
+            // doesn't try to save these configurations if it is not in charge
+            // of these configurations.
+            this.containsSortConfiguration = options.containsSortConfiguration;
+            this.containsParentConfiguration = options.containsParentConfiguration;
+            this.containsFilterConfiguration = options.containsFilterConfiguration;
 
-            function fireChange() {
+            this.fireChange = function() {
                 that.fire('change');
-            }
-            function initColumnAsColumn(column) {
-                column.includeInShort.setEdit(that.edit);
-                column.includeInLong.setEdit(that.edit);
+            };
+
+            this.initColumnAsColumn = function (column) {
                 column.model.setEdit(false);
-                column.field.setEdit(false);
+                column.field.setEdit(that.edit);
                 column.header.setEdit(that.edit);
                 column.format.setEdit(that.edit);
                 column.enum_extra.setEdit(that.edit);
@@ -421,99 +543,35 @@ var DetailScreenConfig = (function () {
                 column.calc_xpath_extra.setEdit(that.edit);
                 column.time_ago_extra.setEdit(that.edit);
                 column.setGrip(true);
-                column.on('change', fireChange);
-                return column;
-            }
+                column.on('change', that.fireChange);
 
-            function initColumnAsSuggestion(column) {
-                column.includeInShort.setEdit(false);
-                column.includeInLong.setEdit(false);
-                column.model.setEdit(false);
-                column.field.setEdit(false);
-                column.header.setEdit(false);
-                column.format.setEdit(false);
-                column.enum_extra.setEdit(false);
-                column.late_flag_extra.setEdit(false);
-                column.filter_xpath_extra.setEdit(false);
-                column.calc_xpath_extra.setEdit(false);
-                column.time_ago_extra.setEdit(false);
-                column.setGrip(false);
+                column.field.on('change', function () {
+                    column.header.val(getPropertyTitle(this.val()));
+                    if (this.val() && !DetailScreenConfig.field_val_re.test(this.val())) {
+                        column.format_warning.show().parent().addClass('error');
+                    } else {
+                        column.format_warning.hide().parent().removeClass('error');
+                    }
+                });
+                if (column.original.hasAutocomplete) {
+                    CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
+                }
                 return column;
-            }
+            };
 
-            var longColumns = spec.long ? spec.long.columns : [];
-            columns = lcsMerge(spec.short.columns, longColumns, _.isEqual);
+            columns = spec[this.columnKey].columns;
+
+            // Filters are a type of DetailColumn on the server. Don't display
+            // them with the other columns though
+            columns = _.filter(columns, function(col){
+                return col.format != "filter";
+            });
 
             // set up the columns
             for (i = 0; i < columns.length; i += 1) {
-                column = columns[i].token;
-                column.includeInShort = columns[i].x;
-                column.includeInLong = columns[i].y;
-
-                this.columns[i] = Column.init(column, this);
-                initColumnAsColumn(this.columns[i]);
+                this.columns[i] = Column.init(columns[i], this);
+                that.initColumnAsColumn(this.columns[i]);
             }
-
-            // set up the custom column
-            this.customColumn = Column.init({model: this.model, format: "plain", includeInShort: false}, this);
-            this.customColumn.field.on('change', function () {
-                that.customColumn.header.val(getPropertyTitle(this.val()));
-                if (this.val() && !field_val_re.test(this.val())) {
-                    that.customColumn.format_warning.show().parent().addClass('error');
-                } else {
-                    that.customColumn.format_warning.hide().parent().removeClass('error');
-                }
-            }).$edit_view.autocomplete({
-                source: function (request, response) {
-                    var availableTags = _.map(that.properties, function(value) {
-                        var label = value;
-                        if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                            label = ('<span class="icon-paper-clip"></span> '
-                                     + label.substring(label.indexOf(":") + 1));
-                        }
-                        return {value: value, label: label};
-                    });
-                    response(
-                        $.ui.autocomplete.filter(availableTags,  request.term)
-                    );
-                },
-                minLength: 0,
-                delay: 0,
-                select: function (event, ui) {
-                    that.customColumn.field.val(ui.item.value);
-                    that.customColumn.field.fire('change');
-                }
-            }).focus(function () {
-                $(this).val("").trigger('change');
-                $(this).autocomplete('search');
-            }).data("autocomplete")._renderItem = function (ul, item) {
-                return $("<li></li>")
-                    .data("item.autocomplete", item)
-                    .append($("<a></a>").html(item.label))
-                    .appendTo(ul);
-            };
-
-            // set up suggestion columns
-            var info;
-            for (i = 0; i < this.properties.length; i += 1) {
-                property = this.properties[i];
-                header = {};
-                header[this.lang] = getPropertyTitle(property);
-                column = Column.init({
-                    model: model,
-                    field: property,
-                    header: header,
-                    includeInShort: false
-                }, this);
-                initColumnAsSuggestion(column);
-                this.suggestedColumns.push(column);
-            }
-            this.suggestedColumns = _(this.suggestedColumns).sortBy(function (column) {
-                return [
-                    /\//.test(column.field.val()) ? 2 : 1,
-                    column.field.val()
-                ];
-            });
 
             this.saveButton = COMMCAREHQ.SaveButton.init({
                 unsavedMessage: DetailScreenConfig.message.UNSAVED_MESSAGE,
@@ -521,7 +579,13 @@ var DetailScreenConfig = (function () {
                     that.save();
                 }
             });
-            window.sortRowSaveButton = this.saveButton;
+
+            if (this.containsSortConfiguration){
+                window.sortRowSaveButton = this.saveButton;
+            }
+            if (this.containsFilterConfiguration){
+                window.filterSaveButton = this.saveButton;
+            }
 
             this.render();
             this.on('add-column', function (column) {
@@ -539,13 +603,13 @@ var DetailScreenConfig = (function () {
                 }
                 column = column.serialize(true);
                 column = Column.init(column, this);
-                initColumnAsColumn(column);
+                that.initColumnAsColumn(column);
                 if (i !== -1) {
                     this.columns.splice(i + 1, 0, column);
                 } else {
                     this.columns.push(column);
                 }
-                $tr = this.addColumn(column, this.$columns, this.$columns.length, false);
+                $tr = this.addColumn(column, this.$columns, this.$columns.length);
                 if (i !== -1) {
                     $tr.detach().insertAfter(this.$columns.find('tr:nth-child(' + (i + 1).toString() + ')'));
                 }
@@ -572,22 +636,20 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
-                var parentSelect;
-                if (this.config.hasOwnProperty('parentSelect')) {
-                    parentSelect = JSON.stringify({
-                        module_id: this.config.parentSelect.moduleId(),
-                        relationship: 'parent',
-                        active: this.config.parentSelect.active()
-                    });
+                //Only save if property names are valid
+                for (var i = 0; i < this.columns.length; i++){
+                    var column = this.columns[i];
+                    if (! DetailScreenConfig.field_val_re.test(column.field.val())){
+                        // column won't have format_warning showing if it's empty
+                        column.format_warning.show().parent().addClass('error');
+                        alert("There are errors in your property names");
+                        return;
+                    }
                 }
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
-                    data: {
-                        type: this.type,
-                        screens: JSON.stringify(this.serialize()),
-                        parent_select: parentSelect
-                    },
+                    data: this.serialize(),
                     dataType: 'json',
                     success: function (data) {
                         COMMCAREHQ.app_manager.updateDOM(data.update);
@@ -595,44 +657,44 @@ var DetailScreenConfig = (function () {
                 });
             },
             serialize: function () {
-                var i, column,
-                    shortColumns = [],
-                    longColumns = [];
-                for (i = 0; i < this.columns.length; i += 1) {
-                    column = this.columns[i];
-                    if (column.includeInShort.val()) {
-                        shortColumns.push(column.serialize());
-                    }
-                    if (column.includeInLong.val()) {
-                        longColumns.push(column.serialize());
-                    }
-                }
-                return {
-                    short: shortColumns,
-                    long: longColumns,
-                    sort_elements: ko.toJS(this.config.sortRows.sortRows)
+                var data = {
+                    type: JSON.stringify(this.type)
                 };
-            },
-            addColumn: function (column, $tbody, i, suggested) {
-                var $tr = $('<tr/>').data('index', i).appendTo($tbody);
-                if (suggested && i !== -1) {
-                    $tr.addClass('detail-screen-suggestion').attr('title', DetailScreenConfig.message.ADD_COLUMN);
+                data[this.columnKey] = JSON.stringify(_.map(this.columns, function(c){return c.serialize();}));
+
+                if (this.containsParentConfiguration) {
+                    var parentSelect;
+                    if (this.config.hasOwnProperty('parentSelect')) {
+                        parentSelect = {
+                            module_id: this.config.parentSelect.moduleId(),
+                            relationship: 'parent',
+                            active: this.config.parentSelect.active()
+                        };
+                    }
+                    data.parent_select = JSON.stringify(parentSelect);
                 }
+                if (this.containsSortConfiguration) {
+                    data.sort_elements = JSON.stringify(ko.toJS(this.config.sortRows.sortRows));
+                }
+                if (this.containsFilterConfiguration) {
+                    data.filter = JSON.stringify(this.config.filter.serialize());
+                }
+                return data;
+            },
+            addColumn: function (column, $tbody, i) {
+                var $tr = $('<tr/>').data('index', i).appendTo($tbody);
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(column.$grip).appendTo($tr);
                 } else {
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                 }
 
-                $('<td/>').addClass('detail-screen-checkbox').append(column.includeInShort.ui).appendTo($tr);
-                $('<td/>').addClass('detail-screen-checkbox').append(column.includeInLong.ui).appendTo($tr);
-
                 if (!column.field.edit) {
                     column.field.setHtml(CC_DETAIL_SCREEN.getFieldHtml(column.field.val()));
                 }
                 var dsf = $('<td/>').addClass('detail-screen-field control-group').append(column.field.ui);
                 dsf.append(column.format_warning);
-                if (column.field.value && !field_val_re.test(column.field.value)) {
+                if (column.field.value && !DetailScreenConfig.field_val_re.test(column.field.value)) {
                     column.format_warning.show().parent().addClass('error');
                 }
                 dsf.appendTo($tr);
@@ -641,29 +703,20 @@ var DetailScreenConfig = (function () {
                 $('<td/>').addClass('detail-screen-format').append(column.format.ui).appendTo($tr);
                 column.format.fire('change');
 
-                var sortLine = $('<td/>').addClass('detail-screen-extra');
-                // Only add sort link if we are using new sort feature and
-                // this is not the blank field row
-                if (window.enableNewSort && column.field.value) {
-                    sortLine.append(column.$sortLink)
-                }
-                sortLine.appendTo($tr);
-
                 if (this.edit) {
                     $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? column.$add : column.$copy
-                    ).appendTo($tr);
-                    $('<td/>').addClass('detail-screen-icon').append(
-                        suggested ? "" : column.$delete
+                        column.$delete
                     ).appendTo($tr);
                 } else {
-                    $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                     $('<td/>').addClass('detail-screen-icon').appendTo($tr);
                 }
                 return $tr;
             },
             render: function () {
-                var $table, $columns, $suggestedColumns, $thead, $tr, i, $box;
+                var that = this;
+                var $table, $columns, $thead, $tr, i, $box, $buttonRow, $addButton;
+
+                this.$home.empty();
                 $box = $("<div/>").appendTo(this.$home);
 
                 // this is a not-so-elegant way to get the styling right
@@ -679,7 +732,11 @@ var DetailScreenConfig = (function () {
                 } else {
                     if (this.edit) {
                         if (window.enableNewSort) {
-                            var $detailBody = $('#' + this.type + '-detail-screen-config-body');
+
+                            // $location id is in this form: "-detail-screen-config"
+                            // so $detailBody id will be in this form: "-detail-screen-config-body"
+                            var $detailBody = $("#" + this.$location.attr("id") + "-body");
+
                             $('<div id="saveBtn" class="clearfix">')
                                 .append(this.saveButton.ui)
                                 .prependTo($detailBody);
@@ -689,49 +746,106 @@ var DetailScreenConfig = (function () {
                                 .prependTo($box);
                         }
                     }
-                    $table = $('<table class="table table-condensed"/>'
-                        ).addClass('detail-screen-table'
-                    ).appendTo($box);
-                    $thead = $('<thead/>').appendTo($table);
+                    this.$columns = $('</tbody>');
 
-                    $tr = $('<tr/>').appendTo($thead);
+                    // Add the "Add Property" button
 
-                    // grip
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
-
-                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.SHORT).appendTo($tr).popover(DetailScreenConfig.message.SHORT_POPOVER);
-                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.LONG).appendTo($tr).popover(DetailScreenConfig.message.LONG_POPOVER);
-                    $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
-                    $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
-                    $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
-                    $('<th/>').addClass('detail-screen-extra').appendTo($tr);
-
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
-                    $('<th/>').addClass('detail-screen-icon').appendTo($tr);
-
-                    $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
-                    $suggestedColumns = $('<tbody/>').appendTo($table);
-
-                    for (i = 0; i < this.columns.length; i += 1) {
-                        this.addColumn(this.columns[i], $columns, i, false);
+                    var buttonDropdownItems = [
+                        $('<li class="add-property-item"><a>Property</a></li>')
+                    ];
+                    if (this.config.calculationEnabled){
+                        buttonDropdownItems.push(
+                            $('<li class="add-calculation-item"><a>Calculation</a></li>')
+                        );
                     }
-
-                    if (this.edit) {
-                        this.addColumn(this.customColumn, $suggestedColumns, -1, true);
-
-                        for (i = 0; i < this.suggestedColumns.length; i += 1) {
-                            this.addColumn(this.suggestedColumns[i], $suggestedColumns, i, true).click(
-                                getDuplicateCallback(this.suggestedColumns[i])
-                            );
-                            this.suggestedColumns[i].includeInShort.ui.hide();
-                            this.suggestedColumns[i].includeInLong.ui.hide();
-                            this.suggestedColumns[i].$add.hide();
+                    $addButton = $(
+                        '<div class="btn-group">' +
+                            '<button class="btn add-property-item">Add Property</button>' +
+                        '</div>'
+                    );
+                    if (buttonDropdownItems.length > 1){
+                        // Add the caret
+                        $addButton.append($(
+                            '<button class="btn dropdown-toggle" data-toggle="dropdown">' +
+                                '<span class="caret"></span>' +
+                            '</button>'
+                        ));
+                        // Add the drop down
+                        var $dropdownList = $(
+                            '<ul class="dropdown-menu"></ul>'
+                        ).appendTo($addButton);
+                        // Add the drop down items
+                        for (i = 0; i < buttonDropdownItems.length; i++){
+                            $dropdownList.append(buttonDropdownItems[i]);
                         }
                     }
-                    this.$columns = $columns;
 
-                    // init UI events
-                    this.initUI($columns);
+                    var redrawOnAddItem = false;
+                    if (_.isEmpty(that.columns)) {
+                        // Only the button has been drawn, so we want to
+                        // render again, this time with a table.
+                        redrawOnAddItem = true;
+                    }
+                    var addItem = function(columnConfiguration) {
+                        var col;
+                        col = that.initColumnAsColumn(
+                            Column.init(columnConfiguration, that)
+                        );
+                        that.fire('add-column', col);
+                        if (redrawOnAddItem) {
+                            that.render();
+                        }
+                    };
+                    $(".add-property-item", $addButton).click(function () {
+                        addItem({hasAutocomplete: true});
+                    });
+                    $(".add-calculation-item", $addButton).click(function () {
+                        addItem({hasAutocomplete: false, format: "calculate"});
+                    });
+
+                    if (! _.isEmpty(this.columns)) {
+                        $table = $('<table class="table table-condensed"/>'
+                        ).addClass('detail-screen-table'
+                        ).appendTo($box);
+                        $thead = $('<thead/>').appendTo($table);
+
+                        $tr = $('<tr/>').appendTo($thead);
+
+                        // grip
+                        $('<th/>').addClass('detail-screen-icon').appendTo($tr);
+
+                        $('<th/>').addClass('detail-screen-field').text(DetailScreenConfig.message.FIELD).appendTo($tr);
+                        $('<th/>').addClass('detail-screen-header').text(DetailScreenConfig.message.HEADER).appendTo($tr);
+                        $('<th/>').addClass('detail-screen-format').text(DetailScreenConfig.message.FORMAT).appendTo($tr);
+
+                        $('<th/>').addClass('detail-screen-icon').appendTo($tr);
+                        $columns = $('<tbody/>').addClass('detail-screen-columns').appendTo($table);
+
+                        for (i = 0; i < this.columns.length; i += 1) {
+                            this.addColumn(this.columns[i], $columns, i);
+                        }
+
+                        this.$columns = $columns;
+
+                        // Add the button
+                        $buttonRow = $(
+                            '<tr>' +
+                                '<td class="detail-screen-icon"></td>' +
+                                '<td class="detail-screen-field button-cell">' +
+                                '</td>' +
+                                '<td class="detail-screen-header"></td>' +
+                                '<td class="detail-screen-format"></td>' +
+                                '<td class="detail-screen-icon"></td>' +
+                            '</tr>'
+                        );
+                        $('.button-cell', $buttonRow).append($addButton);
+                        var $specialTableBody = $('<tbody/>').addClass('detail-screen-columns slim').appendTo($table);
+                        $specialTableBody.append($buttonRow);
+                        // init UI events
+                        this.initUI($columns);
+                    } else {
+                        $addButton.appendTo($box);
+                    }
                 }
             },
             initUI: function (rows) {
@@ -756,13 +870,14 @@ var DetailScreenConfig = (function () {
         return Screen;
     }());
     DetailScreenConfig = (function () {
-        var DetailScreenConfig = function ($home, spec) {
+        var DetailScreenConfig = function ($listHome, $detailHome, spec) {
             var that = this;
-            this.$home = $home;
+            this.$listHome = $listHome;
+            this.$detailHome = $detailHome;
             this.properties = spec.properties;
             this.screens = [];
             this.model = spec.model || 'case';
-            this.sortRows = new SortRows();
+            this.sortRows = new SortRows(this.properties, spec.edit);
             this.lang = spec.lang;
             this.langs = spec.langs || [];
             if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
@@ -776,8 +891,20 @@ var DetailScreenConfig = (function () {
             }
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
+            this.calculationEnabled = spec.calculationEnabled;
 
-            function addScreen(pair) {
+            var filter_xpath = spec.state.short.filter;
+            this.filter = new filterViewModel(filter_xpath ? filter_xpath : null);
+
+            /**
+             * Add a Screen to this DetailScreenConfig
+             * @param pair
+             * @param columnType
+             * The type of case properties that this Screen will be displaying,
+             * either "short" or "long".
+             */
+            function addScreen(pair, columnType, $location) {
+
                 var screen = Screen.init(
                     $('<div/>'),
                     pair,
@@ -787,21 +914,33 @@ var DetailScreenConfig = (function () {
                         langs: that.langs,
                         edit: that.edit,
                         properties: that.properties,
-                        saveUrl: that.saveUrl
+                        saveUrl: that.saveUrl,
+                        $location: $location,
+                        columnKey: columnType,
+                        containsSortConfiguration: columnType == "short",
+                        containsParentConfiguration: columnType == "short",
+                        containsFilterConfiguration: columnType == "short"
                     }
                 );
                 that.screens.push(screen);
-                that.$home.append(screen.$home);
+                $location.append(screen.$home);
             }
 
-            addScreen(spec.state);
+            if (spec.state.short !== undefined) {
+                addScreen(spec.state, "short", this.$listHome);
+            }
+            if (spec.state.long !== undefined) {
+                addScreen(spec.state, "long", this.$detailHome);
+            }
         };
-        DetailScreenConfig.init = function ($home, spec) {
-            var ds = new DetailScreenConfig($home, spec);
+        DetailScreenConfig.init = function ($listHome, $detailHome, spec) {
+            var ds = new DetailScreenConfig($listHome, $detailHome, spec);
             var type = spec.state.type;
             var $sortRowsHome = $('#' + type + '-detail-screen-sort');
+            var $filterHome = $('#' + type + '-filter');
             var $parentSelectHome = $('#' + type + '-detail-screen-parent');
             ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
+            ko.applyBindings(ds.filter, $filterHome.get(0));
             if ($parentSelectHome.get(0) && ds.hasOwnProperty('parentSelect')){
                 ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
                 $parentSelectHome.on('change', '*', function () {
@@ -815,25 +954,6 @@ var DetailScreenConfig = (function () {
 
     DetailScreenConfig.message = {
         EMPTY_SCREEN: 'No detail screen configured',
-
-        SHORT: 'List',
-        SHORT_POPOVER: {
-            title: 'List View',
-            content: (
-                "Checked properties will be displayed in the case list, where each case is listed as a row on the phone's screen. " +
-                "We recommend using 2-3 case properties that will help the mobile worker identify each case."
-            ),
-            placement: 'top'
-        },
-        LONG: 'Detail',
-        LONG_POPOVER: {
-            title: 'Detail View',
-            content: (
-                "Checked properties will be shown in the detail view that appears after selecting an item in the list view. " +
-                "We recommend that you include all properties that the mobile worker will find relevant. "
-            ),
-            placement: 'top'
-        },
 
         MODEL: 'Model',
         FIELD: 'Property',
@@ -859,7 +979,6 @@ var DetailScreenConfig = (function () {
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
-        FILTER_XPATH_FORMAT: 'Filter (Advanced)',
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
@@ -890,7 +1009,6 @@ var DetailScreenConfig = (function () {
         {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
         {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
         {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-        {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
@@ -912,5 +1030,13 @@ var DetailScreenConfig = (function () {
             {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
         );
     }
+
+    DetailScreenConfig.field_format_warning = $('<span/>').addClass('help-inline')
+        .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
+
+    DetailScreenConfig.field_val_re = new RegExp(
+        '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
+    );
+
     return DetailScreenConfig;
 }());
