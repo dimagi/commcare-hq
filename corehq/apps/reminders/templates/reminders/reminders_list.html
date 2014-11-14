@@ -64,7 +64,7 @@
                         <tr>
                             <th class="span4">{% trans 'Name' %}</th>
                             <th class="span4">{% trans 'Case Type' %}</th>
-                            <th class="span4">{% trans 'Rule Progress' %}</th>
+                            <th class="span4">{% trans 'Status' %}</th>
                             <th class="span4">{% trans 'Action' %}</th>
                         </tr>
                     </thead>
@@ -74,10 +74,9 @@
                             <td data-bind="text: caseType"></td>
                             <td>
                                 <div>
-                                    <div data-bind="visible: progressBar.in_progress()" class="progress progress-striped active">
-                                        <span class="bar" data-bind="style: {width: progressBar.progress_pct()}"></span>
-                                    </div>
-                                    <span class="label" data-bind="visible: !progressBar.in_progress()">{% trans "Up-to-date" %}</span>
+                                    <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
+                                    <span class="label label-important" data-bind="visible: !active()">{% trans "Inactive" %}</span>
+                                    <span class="label" data-bind="visible: progressBar.in_progress(), text: '{% trans 'Rule is processing: ' %}' + progressBar.progress_pct()"></span>
                                 </div>
                             </td>
                             <td>
