@@ -609,11 +609,13 @@ class XForm(WrappedNode):
 
         self.xml = parse_xml(xf_string)
 
-    def strip_ignore_retain(self):
-        xpath = ".//*[@*[namespace-uri()='{v}']]".format(v=namespaces['v'][1:-1])
+    def strip_vellum_ns_attributes(self):
+        # vellum_ns is wrapped in braces i.e. '{http...}'
+        vellum_ns = self.namespaces['v']
+        xpath = ".//*[@*[namespace-uri()='{v}']]".format(v=vellum_ns[1:-1])
         for node in self.xpath(xpath):
             for key in node.xml.attrib:
-                if key.startswith(self.namespaces['v']):
+                if key.startswith(vellum_ns):
                     del node.attrib[key]
 
     def rename_language(self, old_code, new_code):

@@ -91,7 +91,7 @@ class FormPreparationV2Test(TestCase, TestFileMixin):
         before = self.get_xml('ignore_retain')
         after = self.get_xml('ignore_retain_stripped')
         xform = XForm(before)
-        xform.strip_ignore_retain()
+        xform.strip_vellum_ns_attributes()
         self.assertXmlEqual(xform.render(), after)
 
 
