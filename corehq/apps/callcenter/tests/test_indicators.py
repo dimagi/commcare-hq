@@ -18,6 +18,11 @@ from django.core import cache
 locmem_cache = cache.get_cache('django.core.cache.backends.locmem.LocMemCache')
 
 
+class FakeSyncOp(object):
+    def __init__(self, cases):
+        self.actual_owned_cases = cases
+
+
 def create_domain_and_user(domain_name, username):
     domain = create_domain(domain_name)
     user = CommCareUser.create(domain_name, username, '***')
@@ -156,11 +161,7 @@ class CallCenterTests(BaseCCTests):
             self.cc_user.get_id,
             include_docs=True
         )
-        synclog = SyncLog(
-            user_id=self.cc_user.get_id,
-            date=datetime.utcnow(),
-            cases_on_phone=[CaseState.from_case(user_case)]
-        )
+        sync_op = FakeSyncOp([user_case])
 
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, case_sync_op=sync_op, custom_cache=locmem_cache)
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id]))
