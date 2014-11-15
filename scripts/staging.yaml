@@ -58,6 +58,7 @@ branches:
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
   - bulk-app-translate # Noah 9/18
+  - case-detail-tabs+share-fixtures # Noah 11/15
   - case-detail-tabs # Noah 11/6
   - share-fixtures # j$ 10/29
   - logos # Nick P 10/31
