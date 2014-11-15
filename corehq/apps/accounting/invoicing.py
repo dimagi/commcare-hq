@@ -355,7 +355,10 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def num_excess_users(self):
-        return max(self.num_users - self.rate.monthly_limit, 0)
+        if self.rate.monthly_limit == -1:
+            return 0
+        else:
+            return max(self.num_users - self.rate.monthly_limit, 0)
 
     @property
     @memoized
@@ -370,8 +373,8 @@ class UserLineItemFactory(FeatureLineItemFactory):
         if self.num_excess_users > 0:
             return _("Per User fee exceeding monthly limit of "
                      "%(monthly_limit)s users." % {
-                        'monthly_limit': self.rate.monthly_limit,
-                    })
+                         'monthly_limit': self.rate.monthly_limit,
+                     })
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
@@ -404,23 +407,31 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @memoized
     def unit_description(self):
         if self.is_within_monthly_limit:
-            return _("%(num_sms)d of %(monthly_limit)d included SMS "
-                     "messages") % {
-                        'num_sms': self.num_sms,
-                        'monthly_limit': self.rate.monthly_limit,
-                    }
-        if self.rate.monthly_limit == 0:
+            return _(
+                "%(num_sms)d of %(monthly_limit)d included SMS  messages"
+            ) % {
+                'num_sms': self.num_sms,
+                'monthly_limit': self.rate.monthly_limit,
+            }
+        elif self.rate.monthly_limit == 0:
             return _("%(num_sms)d SMS Message%(plural)s") % {
                 'num_sms': self.num_sms,
                 'plural': '' if self.num_sms == 1 else 's',
             }
-        num_extra = self.rate.monthly_limit - self.num_sms
-        return _("%(num_extra_sms)d SMS Message%(plural)s beyond "
-                 "%(monthly_limit)d messages included.") % {
-                    'num_extra_sms': num_extra,
-                    'plural': '' if num_extra == 0 else 's',
-                    'monthly_limit': self.rate.monthly_limit,
-                 }
+        else:
+            assert self.rate.monthly_limit != -1
+            assert self.rate.monthly_limit < self.num_sms
+            num_extra = self.num_sms - self.rate.monthly_limit
+            assert num_extra > 0
+            return _(
+                "%(num_extra_sms)d SMS %(messages)s beyond "
+                "%(monthly_limit)d messages included."
+            ) % {
+                'num_extra_sms': num_extra,
+                'messages': (_('Messages') if num_extra == 1
+                             else _('Messages')),
+                'monthly_limit': self.rate.monthly_limit,
+            }
 
     @property
     @memoized
@@ -444,7 +455,10 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def is_within_monthly_limit(self):
-        return self.num_sms - self.rate.monthly_limit <= 0
+        if self.rate.monthly_limit == -1:
+            return True
+        else:
+            return self.num_sms <= self.rate.monthly_limit
 
     @property
     def line_item_details(self):

@@ -1057,6 +1057,8 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
+        from corehq.apps.domain.views import FeatureFlagsView, FeaturePreviewsView
+
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
 
@@ -1135,8 +1137,8 @@ class ProjectSettingsTab(UITab):
             ])
 
             administration.append({
-                    'title': _('Feature Previews'),
-                    'url': reverse('feature_previews', args=[self.domain])
+                    'title': _(FeaturePreviewsView.page_title),
+                    'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
             })
             items.append((_('Project Administration'), administration))
 
@@ -1189,10 +1191,12 @@ class ProjectSettingsTab(UITab):
             {
                 'title': _(EditInternalCalculationsView.page_title),
                 'url': reverse(EditInternalCalculationsView.urlname, args=[self.domain])
+            },
+            {
+                'title': _(FeatureFlagsView.page_title),
+                'url': reverse(FeatureFlagsView.urlname, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
-
-
 
         return items
 

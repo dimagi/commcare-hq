@@ -26,7 +26,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -2146,6 +2146,31 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
+
+
+class FeatureFlagsView(BaseAdminProjectSettingsView):
+    urlname = 'domain_feature_flags'
+    page_title = ugettext_noop("Feature Flags")
+    template_name = 'domain/admin/feature_flags.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
+
+    @memoized
+    def enabled_flags(self):
+        def _sort_key(toggle_enabled_tuple):
+            return (not toggle_enabled_tuple[1], toggle_enabled_tuple[0])
+        return sorted(
+            [(toggle, toggle.enabled(self.domain)) for toggle in all_toggles()],
+            key=_sort_key,
+        )
+
+    @property
+    def page_context(self):
+        return {
+            'flags': self.enabled_flags(),
+        }
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

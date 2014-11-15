@@ -1,5 +1,7 @@
 from functools import wraps
+import hashlib
 from django.http import Http404
+import math
 from toggle.shortcuts import toggle_enabled
 
 
@@ -33,9 +35,59 @@ class StaticToggle(object):
         return decorator
 
 
+def deterministic_random(input_string):
+    """
+    Returns a deterministically random number between 0 and 1 based on the
+    value of the string. The same input should always produce the same output.
+    """
+    return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
+
+
+class PredicatablyRandomToggle(StaticToggle):
+    """
+    A toggle that is predictably random based off some axis. Useful for for doing
+    a randomized rollout of a feature. E.g. "turn this on for 5% of domains", or
+    "turn this on for 40% of users".
+
+    It extends StaticToggle, so individual domains/users can also be explicitly added.
+    """
+
+    def __init__(self, slug, label, namespace, randomness):
+        super(PredicatablyRandomToggle, self).__init__(slug, label, [namespace])
+        assert namespace, 'namespace must be defined!'
+        self.namespace = namespace
+        assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
+        self.randomness = randomness
+
+    @property
+    def randomness_percent(self):
+        return "{:.0f}".format(self.randomness * 100)
+
+    def _get_identifier(self, item):
+        return '{}:{}:{}'.format(self.namespace, self.slug, item)
+
+    def enabled(self, item, **kwargs):
+        return (
+            (item and deterministic_random(self._get_identifier(item)) < self.randomness)
+            or super(PredicatablyRandomToggle, self).enabled(item, **kwargs)
+        )
+
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = object()
 NAMESPACE_DOMAIN = 'domain'
+
+
+def all_toggles():
+    """
+    Loads all toggles
+    """
+    # trick for listing the attributes of the current module.
+    # http://stackoverflow.com/a/990450/8207
+    for toggle_name, toggle in globals().items():
+        if not toggle_name.startswith('__'):
+            if isinstance(toggle, StaticToggle):
+                yield toggle
+
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
@@ -142,4 +194,12 @@ VIEW_SYNC_HISTORY = StaticToggle(
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
+)
+
+
+NEW_CASE_PROCESSING = PredicatablyRandomToggle(
+    'new_case_processing',
+    'Use new case processing/rebuild logic',
+    namespace=NAMESPACE_DOMAIN,
+    randomness=0.05,
 )
