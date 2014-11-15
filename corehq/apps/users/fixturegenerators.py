@@ -3,7 +3,7 @@ Generate user-based fixtures used in OTA restore
 """
 
 
-def user_groups(user, version, synclog, last_sync):
+def user_groups(user, version, case_sync_op, last_sync):
     """
     For a given user, return a fixture containing all the groups
     they are a part of.
