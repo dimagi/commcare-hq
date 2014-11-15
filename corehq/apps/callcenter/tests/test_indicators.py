@@ -1,6 +1,8 @@
 from collections import namedtuple
+from datetime import datetime
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SyncLog, CaseState
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
 from corehq.apps.callcenter.utils import sync_user_cases
@@ -137,9 +139,9 @@ class CallCenterTests(BaseCCTests):
         clear_data()
 
     def check_cc_indicators(self, data_set, expected):
-        super(CallCenterTests, self)._test_indicators(self.cc_user, data_set, expected)
+        self._test_indicators(self.cc_user, data_set, expected)
         expected_no_data = expected_standard_indicators(no_data=True)
-        super(CallCenterTests, self)._test_indicators(self.cc_user_no_data, data_set, expected_no_data)
+        self._test_indicators(self.cc_user_no_data, data_set, expected_no_data)
 
     def test_standard_indicators(self):
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
@@ -147,6 +149,24 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
+
+    def test_sync_log(self):
+        user_case = get_case_by_domain_hq_user_id(
+            self.cc_domain.name,
+            self.cc_user.get_id,
+            include_docs=True
+        )
+        synclog = SyncLog(
+            user_id=self.cc_user.get_id,
+            date=datetime.utcnow(),
+            cases_on_phone=[CaseState.from_case(user_case)]
+        )
+
+        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, synclog=synclog, custom_cache=locmem_cache)
+        self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id]))
+        self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))
+        self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id]))
+        self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
 
     def test_custom_indicators(self):
         expected = {'totalCases': 0L}
@@ -179,9 +199,10 @@ class CallCenterTests(BaseCCTests):
             domain=self.cc_domain.name,
             indicators=expected_indicators
         )
-        locmem_cache.set(cache_key(self.cc_user.get_id), cached_data.to_json())
 
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
+        locmem_cache.set(cache_key(self.cc_user.get_id, indicator_set.reference_date), cached_data.to_json())
+
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))

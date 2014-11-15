@@ -7,11 +7,13 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
 from corehq import toggles
+from corehq.apps.userreports.app_manager import get_case_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm
+from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm, \
+    ConfigurableDataSourceFromAppForm
 from corehq.util.couch import get_document_or_404
 from dimagi.utils.web import json_response
 
@@ -98,6 +100,23 @@ def create_data_source(request, domain):
     return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain))
 
 
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def create_data_source_from_app(request, domain):
+    if request.method == 'POST':
+        form = ConfigurableDataSourceFromAppForm(domain, request.POST)
+        if form.is_valid():
+            # save config
+            data_source = get_case_data_source(form.app, form.cleaned_data['case_type'])
+            data_source.save()
+            messages.success(request, _("Data source created for '{}'".format(form.cleaned_data['case_type'])))
+            HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
+    else:
+        form = ConfigurableDataSourceFromAppForm(domain)
+    context = _shared_context(domain)
+    context['form'] = form
+    return render(request, 'userreports/data_source_from_app.html', context)
+
+
 def _edit_data_source_shared(request, domain, config):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(config, request.POST)
@@ -153,6 +172,22 @@ def preview_data_source(request, domain, config_id):
         'data': q[:20],
     })
     return render(request, "userreports/preview_data.html", context)
+
+
+def choice_list_api(request, domain, report_id, filter_id):
+    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    filter = report.get_ui_filter(filter_id)
+
+    def get_choices(data_source, filter, search_term=None, limit=20):
+        table = get_indicator_table(data_source)
+        sql_column = table.c[filter.name]
+        query = Session.query(sql_column)
+        if search_term:
+            query = query.filter(sql_column.contains(search_term))
+
+        return [v[0] for v in query.distinct().limit(limit)]
+
+    return json_response(get_choices(report.config, filter, request.GET.get('q', None)))
 
 
 def _shared_context(domain):

@@ -1,10 +1,59 @@
 # encoding: utf-8
+from dimagi.utils.chunked import chunked
 from south.v2 import DataMigration
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.commtrack.models import SupplyPointCase
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.bulk import get_docs
 import corehq.apps.locations.models as location_models
 from dimagi.utils.couch import sync_docs
+
+EXCLUDE_DOMAINS = (
+    "drewpsi",
+    "psi",
+    "psi-ors",
+    "psi-test",
+    "psi-test2",
+    "psi-test3",
+    "psi-unicef",
+    "psi-unicef-wb",
+)
+
+
+def iter_location_join_supply_point(all_location_ids, chunksize=100):
+
+    # this function was copy-paste-modified from iter_docs
+
+    database = Location.get_db()
+    for location_ids in chunked(all_location_ids, chunksize):
+        # sync supply point id
+        locations = [row.get('doc')
+                     for row in get_docs(database, keys=location_ids)
+                     if row.get('doc')
+                     and row.get('doc')['domain'] not in EXCLUDE_DOMAINS]
+
+        supply_points = SupplyPointCase.view(
+            'commtrack/supply_point_by_loc',
+            keys=[[location['domain'], location['_id']]
+                  for location in locations],
+            include_docs=True,
+            classes={'CommCareCase': SupplyPointCase},
+        ).all()
+
+        supply_points_index = {}
+
+        for supply_point in supply_points:
+            key = (supply_point.domain, supply_point.location_id)
+            if key in supply_points_index:
+                raise Exception(
+                    "Multiple supply points have "
+                    "domain={!r}, location_id={!r}".format(*key))
+            supply_points_index[key] = supply_point
+
+        for location in locations:
+            yield (
+                location,
+                supply_points_index.get((location['domain'], location['_id']))
+            )
 
 
 class Migration(DataMigration):
@@ -31,7 +80,7 @@ class Migration(DataMigration):
             reduce=False,
         ).all()])
 
-        for location in iter_docs(Location.get_db(), location_ids):
+        for location, sp in iter_location_join_supply_point(location_ids):
             try:
                 sql_location = orm.SQLLocation.objects.get(location_id=location['_id'])
             except orm.SQLLocation.DoesNotExist:
@@ -55,13 +104,6 @@ class Migration(DataMigration):
                 if couch_prop in location:
                     setattr(sql_location, sql_prop, location[couch_prop])
 
-            # sync supply point id
-            sp = SupplyPointCase.view(
-                'commtrack/supply_point_by_loc',
-                key=[location['domain'], location['_id']],
-                include_docs=True,
-                classes={'CommCareCase': SupplyPointCase},
-            ).one()
             if sp:
                 sql_location.supply_point_id = sp._id
 

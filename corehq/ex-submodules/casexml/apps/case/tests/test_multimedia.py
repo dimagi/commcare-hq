@@ -143,6 +143,21 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
         self.assertEqual(self._calc_file_hash(single_attach), hashlib.md5(case.get_attachment(single_attach)).hexdigest())
 
+    def testArchiveAfterAttach(self):
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
+
+        single_attach = 'fruity_file'
+        self._doCreateCaseWithMultimedia(attachments=[single_attach])
+
+        case = CommCareCase.get(TEST_CASE_ID)
+
+        for xform in case.xform_ids:
+            form = XFormInstance.get(xform)
+            form.archive()
+            self.assertEqual('XFormArchived', form.doc_type)
+            form.unarchive()
+            self.assertEqual('XFormInstance', form.doc_type)
+
     def testAttachRemoveSingle(self):
         self.testAttachInCreate()
         new_attachments = []

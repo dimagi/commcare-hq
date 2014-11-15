@@ -52,17 +52,27 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     """
     Represents the state of a case on a phone.
     """
-    
+
     case_id = StringProperty()
+    type = StringProperty()
+
+    # this property is here as a hack to enable the call center fixtures to work.
+    # https://github.com/dimagi/commcare-hq/pull/4799 has some context.
+    hq_user_id = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    
+
     @classmethod
     def from_case(cls, case):
-        return cls(case_id=case.get_id,
-                   indices=case.indices)
+        return cls(
+            case_id=case.get_id,
+            type=case.type,
+            indices=case.indices,
+            hq_user_id=getattr(case, 'hq_user_id', None)
+        )
 
     def __repr__(self):
         return "case state: %s (%s)" % (self.case_id, self.indices)
+
 
 class SyncLogAssertionError(AssertionError):
 

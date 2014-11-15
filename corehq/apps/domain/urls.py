@@ -20,7 +20,7 @@ from corehq.apps.domain.views import (
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
     AddFormRepeaterView, AddOpsUserAsDomainAdminView,
-)
+    FeatureFlagsView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -128,5 +128,6 @@ domain_settings = patterns(
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
+    url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
 )

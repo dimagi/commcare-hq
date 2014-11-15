@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
+from corehq.apps.app_manager.models import Application, get_apps_in_domain
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 
 
@@ -73,6 +74,8 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     description = forms.CharField(required=False)
     configured_filter = JsonField(expected_type=dict)
     configured_indicators = JsonField(expected_type=list)
+    named_filters = JsonField(required=False, expected_type=dict,
+                              label=_("Named filters (optional)"))
 
     def clean(self):
         cleaned_data = super(ConfigurableDataSourceEditForm, self).clean()
@@ -85,4 +88,37 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             config.validate()
         except Exception, e:
             raise ValidationError(_(u'Problem with data source spec: {}').format(e))
+        return cleaned_data
+
+
+class ConfigurableDataSourceFromAppForm(forms.Form):
+
+    app_id = forms.ChoiceField()
+    case_type = forms.ChoiceField()
+
+    def __init__(self, domain, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', _('Save Changes')))
+        super(ConfigurableDataSourceFromAppForm, self).__init__(*args, **kwargs)
+        apps = get_apps_in_domain(domain, full=True, include_remote=False)
+        self.fields['app_id'] = forms.ChoiceField(
+            label=_('Application'),
+            choices=[(app._id, app.name) for app in apps]
+        )
+        self.fields['case_type'] = forms.ChoiceField(
+            choices=[(ct, ct) for ct in set([c for app in apps for c in app.get_case_types() if c])]
+        )
+
+    def clean(self):
+        cleaned_data = super(ConfigurableDataSourceFromAppForm, self).clean()
+        app = Application.get(cleaned_data['app_id'])
+        if cleaned_data['case_type'] not in app.get_case_types():
+            raise ValidationError(_('Case type {} not found in application {}!'.format(
+                cleaned_data['case_type'],
+                app.name,
+            )))
+        # set the app property on the form so we don't have to go back to the DB for it
+        # there may be a better way to do this.
+        self.app = app
         return cleaned_data

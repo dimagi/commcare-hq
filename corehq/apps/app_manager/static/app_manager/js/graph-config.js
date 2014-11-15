@@ -278,7 +278,7 @@ var GraphViewModel = function(moduleOptions){
     self.langs = moduleOptions.langs;
 
     self.graphDisplayName = ko.observable(moduleOptions.name || "Graph");
-    self.availableGraphTypes = ko.observableArray(["xy", "bubble"]);
+    self.availableGraphTypes = ko.observableArray(["xy", "bubble", "time"]);
     self.selectedGraphType = ko.observable("xy");
     self.series = ko.observableArray([]);
     self.annotations = ko.observableArray([]);
@@ -390,7 +390,7 @@ var GraphViewModel = function(moduleOptions){
      * of the view model.
      */
     self.getSeriesConstructor = function(){
-        if (self.selectedGraphType() == "xy"){
+        if (self.selectedGraphType() == "xy" || self.selectedGraphType() == "time"){
             return XYGraphSeries;
         } else if (self.selectedGraphType() == "bubble"){
             return BubbleGraphSeries;

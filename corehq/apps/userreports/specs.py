@@ -1,7 +1,7 @@
 from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.getters import DictGetter, NestedDictGetter
+from corehq.apps.userreports.getters import DictGetter, NestedDictGetter, TransformedGetter, transform_date
 from corehq.apps.userreports.logic import IN_MULTISELECT, EQUAL
 
 
@@ -62,11 +62,17 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
 
+    @property
+    def getter(self):
+        transform = _transform_from_datatype(self.datatype)
+        getter = _getter_from_property_reference(self)
+        return TransformedGetter(getter, transform)
+
 
 class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('choice_list')
     choices = ListProperty(required=True)
-    select_style = StringProperty()
+    select_style = StringProperty(choices=['single', 'multiple'])
 
     def get_operator(self):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
@@ -78,11 +84,18 @@ class BaseFilterSpec(JsonObject):
 
 def _getter_from_property_reference(spec):
     if spec.property_name:
-        assert not spec.property_path, spec.property_name
+        assert not spec.property_path, \
+            'indicator {} has both a name and path specified! you must only pick one.'.format(spec.property_name)
         return DictGetter(property_name=spec.property_name)
     else:
         assert spec.property_path, spec.property_name
         return NestedDictGetter(property_path=spec.property_path)
+
+
+def _transform_from_datatype(datatype):
+    return {
+        'date': transform_date
+    }.get(datatype)
 
 
 class PropertyMatchFilterSpec(BaseFilterSpec):

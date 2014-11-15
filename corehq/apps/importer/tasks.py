@@ -85,7 +85,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             fields_to_update = importer_util.populate_updated_fields(
                 config,
                 columns,
-                row
+                row,
+                spreadsheet.workbook.datemode
             )
             if not any(fields_to_update.values()):
                 # if the row was blank, just skip it, no errors

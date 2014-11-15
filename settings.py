@@ -290,13 +290,13 @@ HQ_APPS = (
     'toggle',
     'touchforms.formplayer',
     'phonelog',
-    'hutch',
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
+    'corehq.util',
 
     # custom reports
     'a5288',
@@ -330,6 +330,7 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
+    'custom.tdh',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -970,7 +971,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'hutch',
     'wisepill',
     'fri',
     'crs_reports',
@@ -1005,7 +1005,8 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2')
+    ('wvindia2', 'wvindia2'),
+    'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1166,7 +1167,13 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-
+        'custom.tdh.models.TDHEnrollChildFluffPillow',
+        'custom.tdh.models.TDHInfantClassificationFluffPillow',
+        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
+        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
+        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
+        'custom.tdh.models.TDHChildClassificationFluffPillow',
+        'custom.tdh.models.TDHChildTreatmentFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1191,6 +1198,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1270,6 +1279,7 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'tdhtesting': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

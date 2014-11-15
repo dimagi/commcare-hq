@@ -10,12 +10,16 @@
 
         {% compress css %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+        {% endcompress %}
+        {% compress css %}
             <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% new_static 'style/less/font-commcare.less' %}" />
-            {% block stylesheets %}
-            {% endblock %}
+                      rel="stylesheet"
+                      media="all"
+                      href="{% static 'style/less/font-commcare.less' %}" />
+        {% endcompress %}
+        {% compress css %}
+        {% block stylesheets %}
+        {% endblock %}
         {% endcompress %}
         {% block uncompressed-stylesheets %}{% endblock %}
 
