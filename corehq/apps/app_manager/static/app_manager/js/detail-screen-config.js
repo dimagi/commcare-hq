@@ -352,7 +352,13 @@ var DetailScreenConfig = (function () {
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.setVisibleValue(visibleVal);
             }());
-            this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
+
+            // Add the graphing option if this is a graph so that we can set the value to graph
+            var menuOptions = DetailScreenConfig.MENU_OPTIONS;
+            if (this.original.format === "graph"){
+                menuOptions = menuOptions.concat([{value: "graph", label: ""}]);
+            }
+            this.format = uiElement.select(menuOptions).val(this.original.format || null);
 
             (function () {
                 var o = {

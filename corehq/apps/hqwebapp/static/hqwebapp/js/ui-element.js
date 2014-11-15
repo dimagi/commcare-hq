@@ -196,12 +196,6 @@ var uiElement;
                                 break;
                             }
                         }
-                        if (label === undefined){
-                            // If this value isn't in the options, add it.
-                            // THIS IS SUCH A HACK!!!
-                            $('<option/>').text(value).val(value).appendTo(this.$edit_view);
-                            label = value;
-                        }
                         this.$edit_view.val(this.value.toString());
                         this.$noedit_view.text(label);
                         return this;
