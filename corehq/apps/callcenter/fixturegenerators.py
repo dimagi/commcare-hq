@@ -31,7 +31,7 @@ def should_sync(domain, last_sync, utcnow=None):
     return False
 
 
-def indicators_fixture_generator(user, version, synclog, last_sync):
+def indicators_fixture_generator(user, version, case_sync_op, last_sync):
     assert isinstance(user, CommCareUser)
 
     domain = user.project
@@ -44,7 +44,7 @@ def indicators_fixture_generator(user, version, synclog, last_sync):
         return fixtures
 
     try:
-        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user, synclog=synclog)))
+        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user, case_sync_op=case_sync_op)))
     except Exception:  # blanket exception catching intended
         notify_exception(None, 'problem generating callcenter fixture', details={
             'user_id': user._id,

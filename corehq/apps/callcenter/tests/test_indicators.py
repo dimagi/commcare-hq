@@ -162,7 +162,7 @@ class CallCenterTests(BaseCCTests):
             cases_on_phone=[CaseState.from_case(user_case)]
         )
 
-        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, synclog=synclog, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, case_sync_op=sync_op, custom_cache=locmem_cache)
         self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id]))
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id]))
