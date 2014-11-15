@@ -14,7 +14,7 @@ Things to know about views:
    and the btree_ for the view is updated based on the change
    in what the maps emit for that doc.
    Deleting a doc causes the btree to be updated as well.
-2. Every time you update a view, all views in the design doc it need to be run, from scratch,
+2. Every time you update a view, all views in the design doc need to be run, from scratch,
    in their entirety, on every single doc in the database, regardless of doc_type.
 
 .. _btree: http://guide.couchdb.org/draft/btree.html
