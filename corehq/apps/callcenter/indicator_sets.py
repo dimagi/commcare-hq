@@ -134,20 +134,18 @@ class CallCenterIndicators(object):
 
     @property
     @memoized
-    def all_user_ids(self):
-        """
-        :return: Set of all user_ids that we need to produce data for.
-        """
+    def call_center_cases(self):
         all_owned_cases = self.case_sync_op.actual_owned_cases
-        relevant_cases = filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
-        ids = {getattr(case, 'hq_user_id', None) for case in relevant_cases}
+        return filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
 
-        try:
-            ids.remove(None)
-        except KeyError:
-            pass
-
-        return ids
+    @property
+    @memoized
+    def user_to_case_map(self):
+        return {
+            case.hq_user_id: case.case_id
+            for case in self.call_center_cases
+            if hasattr(case, 'hq_user_id') and case.hq_user_id
+        }
 
     @property
     @memoized
@@ -155,7 +153,8 @@ class CallCenterIndicators(object):
         """
         :return: Dictionary of user_id -> CachedIndicators
         """
-        cached = self.cache.get_many([cache_key(user_id, self.reference_date) for user_id in self.all_user_ids])
+        keys = [cache_key(user_id, self.reference_date) for user_id in self.user_to_case_map.keys()]
+        cached = self.cache.get_many(keys)
         data = {data['user_id']: CachedIndicators.wrap(data) for data in cached.values()}
         return data
 
@@ -165,7 +164,7 @@ class CallCenterIndicators(object):
         """
         :return: Set of user_ids for whom we need to generate data
         """
-        ids = self.all_user_ids - set(self.cached_data.keys())
+        ids = set(self.user_to_case_map.keys()) - set(self.cached_data.keys())
         return ids
 
     @property
@@ -210,10 +209,6 @@ class CallCenterIndicators(object):
                 mapping[user_id].add(group.get_id)
 
         return mapping
-
-    @property
-    def user_to_case_map(self):
-        return get_callcenter_case_mapping(self.domain.name, self.users_needing_data)
 
     def _add_data(self, queryset, indicator_name, transformer=None):
         """
