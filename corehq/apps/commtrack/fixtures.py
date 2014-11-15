@@ -67,7 +67,7 @@ def should_sync(data, last_sync):
     return False
 
 
-def product_fixture_generator(user, version, case_sync_op, last_sync):
+def product_fixture_generator(user, version, case_sync_op=None, last_sync=None):
     fields = [
         'name',
         'unit',
@@ -82,7 +82,7 @@ def product_fixture_generator(user, version, case_sync_op, last_sync):
     return _simple_fixture_generator(user, "product", fields, data_fn, last_sync)
 
 
-def program_fixture_generator(user, version, case_sync_op, last_sync):
+def program_fixture_generator(user, version, case_sync_op=None, last_sync=None):
     fields = [
         'name',
         'code'

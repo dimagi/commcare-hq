@@ -32,7 +32,7 @@ class FixtureGenerator(object):
                 if func:
                     self._generator_funcs.append(func)
 
-    def get_fixtures(self, user, version, case_sync_op, last_sync=None):
+    def get_fixtures(self, user, version, case_sync_op=None, last_sync=None):
         """
         Gets all fixtures associated with an OTA restore operation
         """
