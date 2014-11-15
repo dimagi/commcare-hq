@@ -1,0 +1,52 @@
+.row_chart {
+    width: 45%;
+    float: left;
+    margin: 20px;
+}
+
+.row_chart_all {
+    float: left;
+    width: 90%;
+    margin: 20px;
+}
+
+.table {
+    width: 50% !important;
+}
+
+.module ul,
+.module li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.module ul {
+    padding: 0.5em;
+    padding-top: 0;
+    margin: 0.5em 0;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.module li {
+    display: block;
+    border: 1px solid #ddd;
+    margin-top: 0.5em;
+    padding: 0.5em;
+}
+
+.module li:first-child {
+    margin-top: 0; }
+
+.module li div.meta,
+.module li div.caption {
+}
+
+.module li div.report {
+    font-size: 2em;
+    line-height: 1.2;
+    border-bottom: 1px dotted #eee;
+    margin-bottom: 0.25em;
+    padding-bottom: 0.25em;
+}

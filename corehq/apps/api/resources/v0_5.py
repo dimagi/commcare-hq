@@ -11,7 +11,8 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, SuperuserAuthentication
+from corehq.apps.es import UserES
 
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
@@ -209,6 +210,23 @@ class WebUserResource(v0_1.WebUserResource):
             assert kwargs['domain'] in bundle.obj.domains
             bundle.obj.save()
         return bundle
+
+
+class AdminWebUserResource(v0_1.UserResource):
+    domains = fields.ListField(attribute='domains')
+
+    def obj_get(self, bundle, **kwargs):
+        return WebUser.get(kwargs['pk'])
+
+    def obj_get_list(self, bundle, **kwargs):
+        if 'username' in bundle.request.GET:
+            return [WebUser.get_by_username(bundle.request.GET['username'])]
+        return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
+
+    class Meta(WebUserResource.Meta):
+        authentication = SuperuserAuthentication()
+        detail_allowed_methods = ['get']
+        list_allowed_methods = ['get']
 
 
 class GroupResource(v0_4.GroupResource):

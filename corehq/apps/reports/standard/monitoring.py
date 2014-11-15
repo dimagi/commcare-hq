@@ -838,8 +838,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
-    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
     flush_layout = True
     report_template_path = "reports/async/basic.html"
 

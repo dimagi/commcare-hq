@@ -245,7 +245,7 @@ def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
     whose xml can possibly be None to a function that always returns a valid WrappedNode or raises
-    an XFormException with the message given
+    an XFormError with the message given
 
     """
     def decorator(fn):
@@ -523,6 +523,15 @@ class XForm(WrappedNode):
     @property
     def video_references(self):
         return self.media_references(form="video")
+
+    def set_name(self, new_name):
+        title = self.find('{h}head/{h}title')
+        if title.exists():
+            title.xml.text = new_name
+        try:
+            self.data_node.set('name', "%s" % new_name)
+        except XFormError:
+            pass
 
     def normalize_itext(self):
         """

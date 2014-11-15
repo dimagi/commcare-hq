@@ -16,15 +16,17 @@ from django.core.cache import cache
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.es import ReportXFormES
 from corehq.apps.domain.decorators import login_or_digest
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from couchforms.models import XFormInstance
 import localsettings
 from pact.dot_data import get_dots_case_json
-from pact.enums import PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_PROVIDER_FIXTURE_TAG, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY, XMLNS_PATIENT_UPDATE_DOT
+from pact.enums import (PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_HP_GROUPNAME, PACT_PROVIDERS_FIXTURE_CACHE_KEY,
+                        XMLNS_PATIENT_UPDATE_DOT)
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
+from pact.tasks import set_schedule_case_properties
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 from corehq.apps.app_manager.models import ApplicationBase
 
@@ -260,11 +262,6 @@ def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, 
     return submit_xform('/a/pact/receiver', PACT_DOMAIN, submission_xml_string, extra_meta=extra_meta)
 
 
-def isodate_string(date):
-    if date: return dateutil.datetime_isoformat(date) + "Z"
-    return ""
-
-
 def get_all_providers(invalidate=False):
     """
     wrapper function to get all the providers for PACT and cache them.
@@ -389,6 +386,7 @@ class PactAPI(DomainAPI):
                 sched.deprecated = False
                 pdoc.set_schedule(sched)
                 pdoc.save()
+                set_schedule_case_properties(pdoc)
                 resp.status_code = 204
                 return resp
             else:

@@ -17,10 +17,9 @@ def process_dots_submission(sender, xform, **kwargs):
         #        chain = eval_dots_block.s(xform.to_json()) | recalculate_dots_data.s(case_id)
         #        chain()
 
-        #2.4.5 subtasking:
         eval_dots_block(xform.to_json())
         case_id = get_case_id(xform)
-        #get user from xform
+        # get user from xform
         user_id = xform.metadata.userID
         cc_user = CouchUser.get_by_user_id(user_id)
         last_sync_token = getattr(xform, 'last_sync_token', None)

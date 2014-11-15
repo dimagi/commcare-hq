@@ -33,11 +33,11 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
             case_doc = None
 
         if case_doc is not None:
-            #patient is selected
+            # patient is selected
             startkey = [case_id, 'anchor_date', start_date.year, start_date.month, start_date.day]
             endkey = [case_id, 'anchor_date', end_date.year, end_date.month, end_date.day]
         elif case_doc is None:
-            #patient is not selected, do all patients
+            # patient is not selected, do all patients
             startkey = [start_date.year, start_date.month, start_date.day]
             endkey = [end_date.year, end_date.month, end_date.day]
         skip = 0
@@ -67,10 +67,6 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
 
     @property
     def headers(self):
-        #csv_keys = ['submitted_date', u'note', u'patient', 'doc_type', 'is_reconciliation', u'provider',  # u'day_index', 'day_note', u'encounter_date', u'anchor_date', u'total_doses',
-
-
-        # u'pact_id', u'dose_number', u'created_date', u'is_art', u'adherence', '_id', u'doc_id', u'method', u'observed_date']
         headers = DataTablesHeader(
             DataTablesColumn("PACT ID", prop_name="pact_id"),
             DataTablesColumn("ART", prop_name="is_art"),

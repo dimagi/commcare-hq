@@ -1,5 +1,7 @@
 import re
 
+from corehq.elastic import SIZE_LIMIT
+
 
 class FacetResult(object):
     def __init__(self, raw, facet):
@@ -36,9 +38,9 @@ class TermsFacet(Facet):
         self.name = name
         self.params = {
             "field": term,
+            "size": size if size is not None else SIZE_LIMIT,
+            "shard_size": SIZE_LIMIT,
         }
-        if size is not None:
-            self.params["size"] = size
 
 
 class DateHistogram(Facet):
