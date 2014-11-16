@@ -86,6 +86,7 @@ ko.bindingHandlers.jqueryElement = {
     }
 };
 
+// saveButton is a required parameter
 var SortRow = function(params){
     var self = this;
     params = params || {};
@@ -94,13 +95,14 @@ var SortRow = function(params){
     self.field = ko.observable(typeof params.field !== 'undefined' ? params.field : "");
     self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
     self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
+    self.saveButton = params.saveButton;
 
     if (self.notifyButtonOfChanges) {
         self.type.subscribe(function () {
-            window.sortRowSaveButton.fire('change');
+            self.saveButton.fire('change');
         });
         self.direction.subscribe(function () {
-            window.sortRowSaveButton.fire('change');
+            self.saveButton.fire('change');
         });
     }
 
@@ -159,12 +161,15 @@ SortRowTemplate.prototype = new SortRow({notifyButtonOfChanges: false});
  *
  * @param properties
  * @param edit is true if the user has permissions to edit the sort rows.
+ * @param saveButton
+ * The button that should be activated when something changes
  * @constructor
  */
-var SortRows = function (properties, edit) {
+var SortRows = function (properties, edit, saveButton) {
     var self = this;
     self.addButtonClicked = ko.observable(false);
     self.sortRows = ko.observableArray([]);
+    self.saveButton = saveButton;
     if (edit) {
         self.templateRow = new SortRowTemplate({properties: properties});
     } else {
@@ -175,7 +180,8 @@ var SortRows = function (properties, edit) {
         self.sortRows.push(new SortRow({
             field: field,
             type: type,
-            direction: direction
+            direction: direction,
+            saveButton: self.saveButton
         }));
     };
     self.addSortRowFromTemplateRow = function(row) {
@@ -187,14 +193,15 @@ var SortRows = function (properties, edit) {
         self.sortRows.push(new SortRow({
             field: row.textField.val(),
             type: row.type(),
-            direction: row.direction()
+            direction: row.direction(),
+            saveButton: self.saveButton
         }));
         row.textField.val("");
-        window.sortRowSaveButton.fire('change');
+        self.saveButton.fire('change');
     };
     self.removeSortRow = function (row) {
         self.sortRows.remove(row);
-        window.sortRowSaveButton.fire('change');
+        self.saveButton.fire('change');
     };
 
     self.rowCount = ko.computed(function () {
@@ -206,16 +213,17 @@ var SortRows = function (properties, edit) {
     });
 };
 
-var filterViewModel = function(filterText){
+var filterViewModel = function(filterText, saveButton){
     var self = this;
     self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
     self.showing = ko.observable(self.filterText() !== "");
+    self.saveButton = saveButton;
 
     self.filterText.subscribe(function(){
-        window.filterSaveButton.fire('change');
+        self.saveButton.fire('change');
     });
     self.showing.subscribe(function(){
-        window.filterSaveButton.fire('change');
+        self.saveButton.fire('change');
     });
 
     self.serialize = function(){
@@ -245,7 +253,7 @@ ko.bindingHandlers.sortableList = {
                     list.splice(position, 0, item);
                 }
                 ui.item.remove();
-                window.sortRowSaveButton.fire('change');
+                item.saveButton.fire('change');
             }
         });
     }
@@ -580,13 +588,6 @@ var DetailScreenConfig = (function () {
                 }
             });
 
-            if (this.containsSortConfiguration){
-                window.sortRowSaveButton = this.saveButton;
-            }
-            if (this.containsFilterConfiguration){
-                window.filterSaveButton = this.saveButton;
-            }
-
             this.render();
             this.on('add-column', function (column) {
                 var i, ii, $tr;
@@ -877,7 +878,6 @@ var DetailScreenConfig = (function () {
             this.properties = spec.properties;
             this.screens = [];
             this.model = spec.model || 'case';
-            this.sortRows = new SortRows(this.properties, spec.edit);
             this.lang = spec.lang;
             this.langs = spec.langs || [];
             if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
@@ -892,9 +892,6 @@ var DetailScreenConfig = (function () {
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
             this.calculationEnabled = spec.calculationEnabled;
-
-            var filter_xpath = spec.state.short.filter;
-            this.filter = new filterViewModel(filter_xpath ? filter_xpath : null);
 
             /**
              * Add a Screen to this DetailScreenConfig
@@ -924,14 +921,21 @@ var DetailScreenConfig = (function () {
                 );
                 that.screens.push(screen);
                 $location.append(screen.$home);
+                return screen;
             }
 
             if (spec.state.short !== undefined) {
-                addScreen(spec.state, "short", this.$listHome);
+                var shortScreen = addScreen(spec.state, "short", this.$listHome);
             }
             if (spec.state.long !== undefined) {
                 addScreen(spec.state, "long", this.$detailHome);
             }
+
+            // Set up filter
+            var filter_xpath = spec.state.short.filter;
+            this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, shortScreen.saveButton);
+            // Set up SortRows
+            this.sortRows = new SortRows(this.properties, spec.edit, shortScreen.saveButton);
         };
         DetailScreenConfig.init = function ($listHome, $detailHome, spec) {
             var ds = new DetailScreenConfig($listHome, $detailHome, spec);
