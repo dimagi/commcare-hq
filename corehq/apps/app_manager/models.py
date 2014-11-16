@@ -1131,6 +1131,7 @@ class Detail(IndexedSchema):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
+    custom_xml = StringProperty()
 
     @parse_int([1])
     def get_column(self, i):

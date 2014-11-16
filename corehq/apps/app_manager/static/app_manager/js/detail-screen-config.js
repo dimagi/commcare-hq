@@ -536,6 +536,7 @@ var DetailScreenConfig = (function () {
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
+            this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
 
             this.fireChange = function() {
                 that.fire('change');
@@ -680,6 +681,9 @@ var DetailScreenConfig = (function () {
                 }
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
+                }
+                if (this.containsCustomXMLConfiguration){
+                    data.custom_xml = this.config.customXMLViewModel.xml();
                 }
                 return data;
             },
@@ -893,6 +897,7 @@ var DetailScreenConfig = (function () {
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
             this.calculationEnabled = spec.calculationEnabled;
+            this.customXMLEnabled = spec.customXMLEnabled;
 
             /**
              * Add a Screen to this DetailScreenConfig
@@ -917,7 +922,8 @@ var DetailScreenConfig = (function () {
                         columnKey: columnType,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
-                        containsFilterConfiguration: columnType == "short"
+                        containsFilterConfiguration: columnType == "short",
+                        containsCustomXMLConfiguration: columnType == "short"
                     }
                 );
                 that.screens.push(screen);
@@ -937,6 +943,14 @@ var DetailScreenConfig = (function () {
             this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, shortScreen.saveButton);
             // Set up SortRows
             this.sortRows = new SortRows(this.properties, spec.edit, shortScreen.saveButton);
+            // Set up custom xml textarea
+            this.customXMLViewModel = {
+                enabled: this.customXMLEnabled,
+                xml: ko.observable(spec.state.short.custom_xml || "")
+            };
+            this.customXMLViewModel.xml.subscribe(function(v){
+                shortScreen.saveButton.fire("change");
+            });
         };
         DetailScreenConfig.init = function ($listHome, $detailHome, spec) {
             var ds = new DetailScreenConfig($listHome, $detailHome, spec);
@@ -944,8 +958,10 @@ var DetailScreenConfig = (function () {
             var $sortRowsHome = $('#' + type + '-detail-screen-sort');
             var $filterHome = $('#' + type + '-filter');
             var $parentSelectHome = $('#' + type + '-detail-screen-parent');
+            var $customXMLHome = $('#' + type + '-detail-screen-custom-xml');
             ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
             ko.applyBindings(ds.filter, $filterHome.get(0));
+            ko.applyBindings(ds.customXMLViewModel, $customXMLHome.get(0));
             if ($parentSelectHome.get(0) && ds.hasOwnProperty('parentSelect')){
                 ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
                 $parentSelectHome.on('change', '*', function () {

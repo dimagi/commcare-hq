@@ -1371,6 +1371,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     short = params.get('short', None)
     long = params.get('long', None)
     filter = params.get('filter', ())
+    custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
 
@@ -1397,6 +1398,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
+    if custom_xml != None:
+        detail.short.custom_xml = custom_xml
     if sort_elements is not None:
         detail.short.sort_elements = []
         for sort_element in sort_elements:

@@ -50,7 +50,8 @@
                     saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
                     parentModules: {{ parent_modules|JSON }},
                     parentSelect: detail.parent_select,
-                    calculationEnabled: {{ enable_calc_xpaths|BOOL }}
+                    calculationEnabled: {{ enable_calc_xpaths|BOOL }},
+                    customXMLEnabled: {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }}
                 });
 
                 if (detail.sort_elements) {
@@ -239,6 +240,7 @@
     </div>
 
     {% for detail in details %}
+    {# rename this <detail.type>-list-screen-config-tab or something like that #}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% if detail.type == 'case' %}
         <div class="alert alert-warning" id="detail-screen-config-warning"
@@ -416,6 +418,11 @@
                 </div>
              </div>
             {% endif %}
+
+            <div id="{{ detail.type }}-detail-screen-custom-xml" data-bind="visible: enabled">
+                <legend>{% trans "Custom Case List XML" %}</legend>
+                <textarea class="span6" data-bind="value: xml"></textarea>
+            </div>
         </div>
     </div>
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
