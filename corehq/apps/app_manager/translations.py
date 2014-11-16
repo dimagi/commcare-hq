@@ -235,13 +235,18 @@ def process_modules_and_forms_sheet(rows, app):
                 ))
                 continue
 
-        if has_at_least_one_translation(row, 'default', app.langs):
-            for lang in app.langs:
-                translation = row['default_%s' % lang]
-                if translation:
-                    document.name[lang] = translation
-                else:
-                    document.name.pop(lang, None)
+        # A cell that was deleted by the user gets the string "None" put in
+        # that cell. Let's standardize it by putting the empty string there.
+        for key, value in row.iteritems():
+            if value == "None":
+                row[key] = ""
+
+        for lang in app.langs:
+            translation = row['default_%s' % lang]
+            if translation:
+                document.name[lang] = translation
+            else:
+                document.name.pop(lang, None)
 
         if (has_at_least_one_translation(row, 'label_for_cases', app.langs)
                 and hasattr(document, 'case_label')):
@@ -341,6 +346,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
                 col_key = get_col_key(trans_type, lang)
                 new_translation = row[col_key]
+                if new_translation == "None":
+                    new_translation = ""
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, use the default language's
