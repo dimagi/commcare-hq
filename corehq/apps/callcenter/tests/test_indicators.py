@@ -143,7 +143,10 @@ class CallCenterTests(BaseCCTests):
 
     def test_standard_indicators(self):
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
+        self.assertEqual(
+            set(indicator_set.user_to_case_map.keys()),
+            set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
@@ -157,7 +160,7 @@ class CallCenterTests(BaseCCTests):
         sync_op = FakeSyncOp([user_case])
 
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, case_sync_op=sync_op, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id]))
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.cc_user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id]))
         self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
@@ -197,7 +200,10 @@ class CallCenterTests(BaseCCTests):
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
         locmem_cache.set(cache_key(self.cc_user.get_id, indicator_set.reference_date), cached_data.to_json())
 
-        self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
+        self.assertEqual(
+            set(indicator_set.user_to_case_map.keys()),
+            set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
         self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_indicators)
@@ -207,7 +213,7 @@ class CallCenterTests(BaseCCTests):
         Test to verify that only data belonging to users managed by the supervisor is returned.
         """
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user_no_data, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set())
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [])
         self.assertEqual(indicator_set.users_needing_data, set())
         self.assertEqual(indicator_set.owners_needing_data, set())
         self.assertEqual(indicator_set.get_data(), {})
@@ -252,7 +258,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         in final data set.
         """
         indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id]))
         self._test_indicators(self.user, indicator_set.get_data(), expected_standard_indicators())
@@ -302,7 +308,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         Ensure that indicators include cases owned by a case sharing group the user is part of.
         """
         indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, self.group.get_id]))
         expected = expected_standard_indicators()
