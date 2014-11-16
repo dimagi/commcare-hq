@@ -21,13 +21,15 @@
                         {% if credit.subscription %}
                         Subscription to {{ credit.subscription.subscriber.domain }}
                         {% else %}
-                        --
+                        {% trans "Any" %}
                         {% endif %}
                     </td>
                     {% endif %}
                     <td>
                         {% if credit.product_type %}
                         {{ credit.product_type }}
+                        {% elif credit.product_type == '' or credit.product_type == None and credit.feature_type == None %}
+                        {% trans "Any" %}
                         {% else %}
                         --
                         {% endif %}
@@ -35,6 +37,8 @@
                     <td>
                         {% if credit.feature_type %}
                         {{ credit.feature_type }}
+                        {% elif credit.feature_type == '' or credit.product_type == None and credit.feature_type == None %}
+                        {% trans "Any" %}
                         {% else %}
                         --
                         {% endif %}

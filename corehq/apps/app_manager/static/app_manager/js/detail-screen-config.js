@@ -780,19 +780,19 @@ var DetailScreenConfig = (function () {
                         }
                     }
 
+                    var redrawOnAddItem = false;
+                    if (_.isEmpty(that.columns)) {
+                        // Only the button has been drawn, so we want to
+                        // render again, this time with a table.
+                        redrawOnAddItem = true;
+                    }
                     var addItem = function(columnConfiguration) {
                         var col;
-                        var redraw = false;
-                        if (_.isEmpty(that.columns)) {
-                            // Only the button has been drawn, so we want to
-                            // render again, this time with a table.
-                            redraw = true;
-                        }
                         col = that.initColumnAsColumn(
                             Column.init(columnConfiguration, that)
                         );
                         that.fire('add-column', col);
-                        if (redraw) {
+                        if (redrawOnAddItem) {
                             that.render();
                         }
                     };

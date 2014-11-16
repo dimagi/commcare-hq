@@ -54,7 +54,7 @@ class RestoreConfig(object):
     A collection of attributes associated with an OTA restore
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, stock_settings=None):
+                 items=False, stock_settings=None, domain=None):
         self.user = user
         self.restore_id = restore_id
         self.version = version
@@ -62,6 +62,7 @@ class RestoreConfig(object):
         self.cache = get_redis_default_cache()
         self.items = items
         self.stock_settings = stock_settings or StockSettings()
+        self.domain = domain
 
     @property
     @memoized
@@ -87,6 +88,9 @@ class RestoreConfig(object):
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
     def get_stock_payload(self, syncop):
+        if self.domain and not self.domain.commtrack_enabled:
+            return
+
         cases = [e.case for e in syncop.actual_cases_to_sync]
         from lxml.builder import ElementMaker
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
@@ -190,7 +194,7 @@ class RestoreConfig(object):
         # registration block
         response.append(xml.get_registration_element(user))
         # fixture block
-        for fixture in generator.get_fixtures(user, self.version, last_sync):
+        for fixture in generator.get_fixtures(user, self.version, sync_operation, last_sync):
             response.append(fixture)
         # case blocks
         for case_elem in case_xml_elements:

@@ -22,6 +22,7 @@
     <form method="GET" action="">
         Supervisor User ID (the user who is syncing): <input name="user_id" type="text" value="{% if mobile_user %}{{ mobile_user.user_id }}{% endif %}"/><br/>
         Sync date (YYYY-MM-DD): <input name="date" type="text" value="{% if date %}{{ date }}{% endif %}"/><br/>
+        Enable caching: <input name="cache" type="checkbox" {% if enable_caching %}checked{% endif %}/><br/>
         <input type="submit"/>
     </form>
     <hr/>

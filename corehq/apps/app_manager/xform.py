@@ -1,6 +1,5 @@
 from collections import defaultdict
 import logging
-import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
 from lxml import etree as ET
@@ -23,8 +22,8 @@ def parse_xml(string):
 
 
 namespaces = dict(
-    jr = "{http://openrosa.org/javarosa}",
-    xsd = "{http://www.w3.org/2001/XMLSchema}",
+    jr="{http://openrosa.org/javarosa}",
+    xsd="{http://www.w3.org/2001/XMLSchema}",
     h='{http://www.w3.org/1999/xhtml}',
     f='{http://www.w3.org/2002/xforms}',
     ev="{http://www.w3.org/2001/xml-events}",
@@ -32,6 +31,7 @@ namespaces = dict(
     reg="{http://openrosa.org/user/registration}",
     cx2="{%s}" % V2_NAMESPACE,
     cc="{http://commcarehq.org/xforms}",
+    v="{http://commcarehq.org/xforms/vellum}",
 )
 
 
@@ -86,6 +86,9 @@ class WrappedAttribs(object):
     def __contains__(self, item):
         return self._get_item_name(item) in self.attrib
 
+    def __iter__(self):
+        raise NotImplementedError()
+
     def __setitem__(self, item, value):
         self.attrib[self._get_item_name(item)] = value
 
@@ -98,13 +101,24 @@ class WrappedAttribs(object):
     def __getitem__(self, item):
         return self.attrib[self._get_item_name(item)]
 
+    def __delitem__(self, item):
+        del self.attrib[self._get_item_name(item)]
+
+
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
-        self.namespaces=namespaces
+        self.namespaces = namespaces
+
+    def xpath(self, xpath, *args, **kwargs):
+        if self.xml is not None:
+            return [WrappedNode(n) for n in self.xml.xpath(
+                    xpath.format(**self.namespaces), *args, **kwargs)]
+        else:
+            return []
 
     def find(self, xpath, *args, **kwargs):
         if self.xml is not None:
@@ -245,7 +259,7 @@ def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
     whose xml can possibly be None to a function that always returns a valid WrappedNode or raises
-    an XFormException with the message given
+    an XFormError with the message given
 
     """
     def decorator(fn):
@@ -524,6 +538,15 @@ class XForm(WrappedNode):
     def video_references(self):
         return self.media_references(form="video")
 
+    def set_name(self, new_name):
+        title = self.find('{h}head/{h}title')
+        if title.exists():
+            title.xml.text = new_name
+        try:
+            self.data_node.set('name', "%s" % new_name)
+        except XFormError:
+            pass
+
     def normalize_itext(self):
         """
         Convert this:
@@ -585,6 +608,15 @@ class XForm(WrappedNode):
                 xf_string = replace_ref_s(xf_string, old_ref, new_ref)
 
         self.xml = parse_xml(xf_string)
+
+    def strip_vellum_ns_attributes(self):
+        # vellum_ns is wrapped in braces i.e. '{http...}'
+        vellum_ns = self.namespaces['v']
+        xpath = ".//*[@*[namespace-uri()='{v}']]".format(v=vellum_ns[1:-1])
+        for node in self.xpath(xpath):
+            for key in node.xml.attrib:
+                if key.startswith(vellum_ns):
+                    del node.attrib[key]
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)

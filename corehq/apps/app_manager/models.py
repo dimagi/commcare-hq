@@ -695,6 +695,7 @@ class FormBase(DocumentSchema):
         xform.exclude_languages(app.build_langs)
         xform.set_default_language(app.build_langs[0])
         xform.normalize_itext()
+        xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
     def render_xform(self):
@@ -2357,15 +2358,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self
 
     @classmethod
-    def by_domain(cls, domain):
-        return cls.view('app_manager/applications_brief',
-                        startkey=[domain],
-                        endkey=[domain, {}],
-                        include_docs=True,
-                        #stale=settings.COUCH_STALE_QUERY,
-        ).all()
-
-    @classmethod
     def get_latest_build(cls, domain, app_id):
         build = cls.view('app_manager/saved_app',
                                      startkey=[domain, app_id, {}],
@@ -2699,12 +2691,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
-
-    def fetch_emulator_commcare_jar(self):
-        path = "Generic/WebDemo"
-        jadjar = self.get_preview_build().get_jadjar(path)
-        jadjar = jadjar.pack(self.create_all_files())
-        return jadjar.jar
 
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
@@ -3562,6 +3548,32 @@ class RemoteApp(ApplicationBase):
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions
+
+
+def get_apps_in_domain(domain, full=False, include_remote=True):
+    """
+    Returns all apps(not builds) in a domain
+
+    full use applications when true, otherwise applications_brief
+    """
+    if full:
+        view_name = 'app_manager/applications'
+        startkey = [domain, None]
+        endkey = [domain, None, {}]
+    else:
+        view_name = 'app_manager/applications_brief'
+        startkey = [domain]
+        endkey = [domain, {}]
+
+    view_results = Application.get_db().view(view_name,
+        startkey=startkey,
+        endkey=endkey,
+        include_docs=True,
+    )
+
+    remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
+    wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
+    return filter(remote_app_filter, wrapped_apps)
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False):

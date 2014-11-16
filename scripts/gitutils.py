@@ -95,7 +95,12 @@ def git_bisect_merge_conflict(branch1, branch2, git=None):
                     txt = git.bisect('good')
                 else:
                     txt = git.bisect('bad')
-            return grep(txt, '^commit ').strip().split(' ')[-1]
+            try:
+                # txt has a line that's like "<commit> is the first bad commit"
+                return grep(txt, ' is the first bad commit$').strip().split(' ')[0]
+            except sh.ErrorReturnCode_1:
+                raise Exception('Error finding offending commit: '
+                                '"^commit" does not match\n{}'.format(txt))
         finally:
             git.bisect('reset')
 
@@ -104,9 +109,16 @@ def _left_pad(padding, text):
     return padding + ('\n' + padding).join(text.split('\n'))
 
 
-def print_one_way_merge_details(branch1, branch2, git):
+def print_one_way_merge_details(branch1, branch2, git, known_branches=None):
     def format_branch(remote, branch):
         return branch if remote == 'origin' else '{}/{}'.format(remote, branch)
+
+    if known_branches is None:
+        # make `foo in known_branches` always return True
+        class InfiniteSet(object):
+            def __contains__(self, item):
+                return True
+        known_branches = InfiniteSet()
 
     commit = git_bisect_merge_conflict(branch1, branch2, git)
     if commit:
@@ -114,19 +126,25 @@ def print_one_way_merge_details(branch1, branch2, git):
         print _left_pad(' ' * 4, git.log('-n1', commit))
         branches = git.branch('--remote', '--contains', commit)
         other_branches = [
-            format_branch(*b) for b in re.findall('([a-zA-Z0-9-]*)/([\w+-]*)', str(branches))
-            if b[0] != 'origin' or (b[1] != branch2 and b[1] != 'HEAD')
+            format_branch(*b)
+            for b in re.findall('([a-zA-Z0-9-]*)/([\w+-]*)', str(branches))
+            if b[0] != 'origin' or (b[1] != branch2 and b[1] in known_branches
+                                    and b[1] != 'HEAD')
         ]
         if other_branches:
-            msg = 'This commit also appears on these branches: {0}\n'.format(other_branches)
+            msg = 'This commit also appears on these branches:'
             print _left_pad(' ' * 4, msg)
+            for branch in other_branches:
+                print _left_pad(' ' * 4, '* {}'.format(branch))
     else:
         print '  * No conflicting commits on {0}'.format(branch2)
 
 
-def print_merge_details(branch1, branch2, git):
-    print_one_way_merge_details(branch1, branch2, git)
-    print_one_way_merge_details(branch2, branch1, git)
+def print_merge_details(branch1, branch2, git, known_branches=None):
+    print_one_way_merge_details(branch1, branch2, git,
+                                known_branches=known_branches)
+    print_one_way_merge_details(branch2, branch1, git,
+                                known_branches=known_branches)
 
 
 if __name__ == '__main__':

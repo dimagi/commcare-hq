@@ -134,7 +134,7 @@ document IDs that are contributing toward some indicator totals.
 The MVIS indicator API can be accessed by visiting:
 
 ```
-/a/<project_name>/reports/custom/health_coordinator/?indicator=<indicator_slug>&debug=true&cache=false&num_prev=1
+/a/<project_name>/reports/custom/partial/health_coordinator/?indicator=<indicator_slug>&debug=true&cache=false&num_prev=1
 ```
 
 `cache` parameter turns on and off caching. `num_prev` is the number of months
