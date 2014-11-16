@@ -1541,10 +1541,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
             return match_value
         return None
 
-    def clean_global_timeouts(self):
-        global_timeouts = self.cleaned_data['global_timeouts']
-        if global_timeouts:
-            timeouts_str = global_timeouts.split(",")
+    def _clean_timeouts(self, value):
+        if value:
+            timeouts_str = value.split(",")
             timeouts_int = []
             for t in timeouts_str:
                 try:
@@ -1558,6 +1557,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     ))
             return timeouts_int
         return []
+
+    def clean_global_timeouts(self):
+        return self._clean_timeouts(self.cleaned_data['global_timeouts'])
 
     def clean_events(self):
         method = self.cleaned_data['method']
@@ -1636,12 +1638,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 event['day_num'] = 0
 
             # clean callback_timeout_intervals:
-            event['callback_timeout_intervals'] = []
             if (method == METHOD_SMS_CALLBACK
                 or method == METHOD_IVR_SURVEY
                 or method == METHOD_SMS_SURVEY):
-                event['callback_timeout_intervals'] = self.cleaned_data.get(
-                    'global_timeouts', [])
+                if self.ui_type == UI_SIMPLE_FIXED:
+                    value = self.cleaned_data.get('global_timeouts', [])
+                else:
+                    value = self._clean_timeouts(event["callback_timeout_intervals"])
+                event['callback_timeout_intervals'] = value
+            else:
+                event['callback_timeout_intervals'] = []
 
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
@@ -1780,25 +1786,28 @@ class BaseScheduleCaseReminderForm(forms.Form):
             try:
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
+                    events_json = []
                     for event in current_val:
-                        messages = dict([(l, '') for l in available_languages])
-                        if event.message:
-                            for language, text in event.message.items():
-                                if language in available_languages:
-                                    messages[language] = text
-                        event.message = messages
-                        if event.form_unique_id:
+                        event_json = event.to_json()
+
+                        form_unique_id = event_json.get("form_unique_id")
+                        if form_unique_id:
                             try:
-                                form = CCHQForm.get_form(event.form_unique_id)
-                                event.form_unique_id = json.dumps({
+                                form = CCHQForm.get_form(form_unique_id)
+                                event_json["form_unique_id"] = json.dumps({
                                     'text': form.full_path_name,
-                                    'id': event.form_unique_id,
+                                    'id': form_unique_id,
                                 })
                             except ResourceNotFound:
                                 pass
-                    current_val = json.dumps([e.to_json() for e in current_val])
-                if field == 'callback_timeout_intervals':
-                    current_val = ",".join(current_val)
+
+                        timeouts = [str(i) for i in
+                            event_json["callback_timeout_intervals"]]
+                        event_json["callback_timeout_intervals"] = ", ".join(
+                            timeouts)
+
+                        events_json.append(event_json)
+                    current_val = json.dumps(events_json)
                 if (field == 'recipient'
                     and reminder_handler.recipient_case_match_property == '_id'
                     and reminder_handler.recipient_case_match_type == MATCH_ANY_VALUE
@@ -2022,6 +2031,10 @@ class CaseReminderEventForm(forms.Form):
     form_unique_id = forms.CharField(
         required=False,
         label=ugettext_noop("Survey"),
+    )
+
+    callback_timeout_intervals = forms.CharField(
+        required=False,
     )
 
     def __init__(self, ui_type=None, *args, **kwargs):
