@@ -675,7 +675,20 @@ var DetailScreenConfig = (function () {
                     data.parent_select = JSON.stringify(parentSelect);
                 }
                 if (this.containsSortConfiguration) {
+                    // the sortRows have references to jquery objects which we must first remove because
+                    // ko.toJS fails on them.
+                    var saveButtons = [];
+                    _.map(this.config.sortRows.sortRows(), function(r){
+                        saveButtons.push(r.saveButton);
+                        r.saveButton = null;
+                    });
+
                     data.sort_elements = JSON.stringify(ko.toJS(this.config.sortRows.sortRows));
+
+                    // put the saveButtons back
+                    _.map(this.config.sortRows.sortRows(), function(r, i){
+                        r.saveButton = saveButtons[i];
+                    });
                 }
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
