@@ -95,16 +95,19 @@ var SortRow = function(params){
     self.field = ko.observable(typeof params.field !== 'undefined' ? params.field : "");
     self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
     self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
-    self.saveButton = params.saveButton;
 
     if (self.notifyButtonOfChanges) {
         self.type.subscribe(function () {
-            self.saveButton.fire('change');
+            self.notifyButton();
         });
         self.direction.subscribe(function () {
-            self.saveButton.fire('change');
+            self.notifyButton();
         });
     }
+
+    self.notifyButton = function(){
+        params.saveButton.fire('change');
+    };
 
     self.fieldHtml = ko.computed(function () {
         return CC_DETAIL_SCREEN.getFieldHtml(self.field());
@@ -169,7 +172,6 @@ var SortRows = function (properties, edit, saveButton) {
     var self = this;
     self.addButtonClicked = ko.observable(false);
     self.sortRows = ko.observableArray([]);
-    self.saveButton = saveButton;
     if (edit) {
         self.templateRow = new SortRowTemplate({properties: properties});
     } else {
@@ -181,7 +183,7 @@ var SortRows = function (properties, edit, saveButton) {
             field: field,
             type: type,
             direction: direction,
-            saveButton: self.saveButton
+            saveButton: saveButton
         }));
     };
     self.addSortRowFromTemplateRow = function(row) {
@@ -194,14 +196,14 @@ var SortRows = function (properties, edit, saveButton) {
             field: row.textField.val(),
             type: row.type(),
             direction: row.direction(),
-            saveButton: self.saveButton
+            saveButton: saveButton
         }));
         row.textField.val("");
-        self.saveButton.fire('change');
+        saveButton.fire('change');
     };
     self.removeSortRow = function (row) {
         self.sortRows.remove(row);
-        self.saveButton.fire('change');
+        saveButton.fire('change');
     };
 
     self.rowCount = ko.computed(function () {
@@ -217,13 +219,12 @@ var filterViewModel = function(filterText, saveButton){
     var self = this;
     self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
     self.showing = ko.observable(self.filterText() !== "");
-    self.saveButton = saveButton;
 
     self.filterText.subscribe(function(){
-        self.saveButton.fire('change');
+        saveButton.fire('change');
     });
     self.showing.subscribe(function(){
-        self.saveButton.fire('change');
+        saveButton.fire('change');
     });
 
     self.serialize = function(){
@@ -253,7 +254,7 @@ ko.bindingHandlers.sortableList = {
                     list.splice(position, 0, item);
                 }
                 ui.item.remove();
-                item.saveButton.fire('change');
+                item.notifyButton();
             }
         });
     }
@@ -675,20 +676,7 @@ var DetailScreenConfig = (function () {
                     data.parent_select = JSON.stringify(parentSelect);
                 }
                 if (this.containsSortConfiguration) {
-                    // the sortRows have references to jquery objects which we must first remove because
-                    // ko.toJS fails on them.
-                    var saveButtons = [];
-                    _.map(this.config.sortRows.sortRows(), function(r){
-                        saveButtons.push(r.saveButton);
-                        r.saveButton = null;
-                    });
-
                     data.sort_elements = JSON.stringify(ko.toJS(this.config.sortRows.sortRows));
-
-                    // put the saveButtons back
-                    _.map(this.config.sortRows.sortRows(), function(r, i){
-                        r.saveButton = saveButtons[i];
-                    });
                 }
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
