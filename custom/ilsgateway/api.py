@@ -1,4 +1,4 @@
-from jsonobject.api import JsonObject
+from jsonobject import JsonObject
 from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty, \
     FloatProperty, DictProperty
 import requests
