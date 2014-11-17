@@ -8,7 +8,8 @@ from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, SQLProduct
+from corehq.apps.commtrack.models import StockState, SupplyPointCase
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from couchforms.models import XFormInstance
 from custom.ilsgateway.api import Location

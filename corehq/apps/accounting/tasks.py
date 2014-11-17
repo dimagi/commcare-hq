@@ -51,7 +51,7 @@ def activate_subscriptions(based_on_date=None):
 @periodic_task(run_every=crontab(minute=0, hour=0))
 def deactivate_subscriptions(based_on_date=None):
     """
-    Deactivates all subscriptions ending yesterday (or, for testing, based on the date specified)
+    Deactivates all subscriptions ending today (or, for testing, based on the date specified)
     """
     ending_date = based_on_date or datetime.date.today()
     ending_subscriptions = Subscription.objects.filter(date_end=ending_date)

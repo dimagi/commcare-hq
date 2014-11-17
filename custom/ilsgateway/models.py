@@ -2,8 +2,8 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
 from django.db import models
+from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.commtrack.models import Product
 from dimagi.utils.dates import force_to_datetime
 
 

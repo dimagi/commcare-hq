@@ -8,9 +8,10 @@ from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
-from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
+from corehq.apps.commtrack.models import LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
     CommtrackActionConfig
 from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
+from corehq.apps.products.models import Product
 from dimagi.utils.dates import force_to_datetime
 from custom.ilsgateway.models import LogisticsMigrationCheckpoint, HistoricalLocationGroup
 from requests.exceptions import ConnectionError

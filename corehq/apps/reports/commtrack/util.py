@@ -1,5 +1,6 @@
 from corehq.apps.locations.models import all_locations
-from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.products.models import Product
 
 
 def supply_point_ids(locations):
