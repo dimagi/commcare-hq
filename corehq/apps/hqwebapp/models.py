@@ -45,23 +45,32 @@ def sidebar_to_dropdown(sidebar_items, domain=None):
         for side_item in side_list:
             show_in_dropdown = side_item.get("show_in_dropdown", False)
             if show_in_dropdown:
-                second_level_dropdowns = get_second_level_dropdowns(side_item, domain=domain)
+                second_level_dropdowns = get_second_level_dropdowns(side_item.get('subpages', []), domain=domain)
                 dropdown_item = format_submenu_context(
                                     side_item['title'],
                                     url=side_item['url'],
                                     second_level_dropdowns=second_level_dropdowns,
                                 )
                 current_dropdown_items.append(dropdown_item)
+                first_level_dropdowns = get_first_level_dropdowns(side_item.get('subpages', []), domain=domain)
+                current_dropdown_items = current_dropdown_items + first_level_dropdowns
         if current_dropdown_items:
             dropdown_items.extend([dropdown_header] + current_dropdown_items)
     return dropdown_items
 
-def get_second_level_dropdowns(first_level_item, domain=None):
+def get_second_level_dropdowns(subpages, domain=None):
     second_level_dropdowns = []
-    for subpage in first_level_item.get('subpages', []):
-        if subpage.get('show_in_dropdown', False):
+    for subpage in subpages:
+        if subpage.get('show_in_dropdown', False) and not subpage.get('show_in_first_level', False):
             second_level_dropdowns.append(format_submenu_context(subpage['title'], url=reverse(subpage['urlname'], args=[domain])))
     return second_level_dropdowns
+
+def get_first_level_dropdowns(subpages, domain=None):
+    first_level_dropdowns = []
+    for subpage in subpages:
+        if subpage.get('show_in_dropdown', False) and subpage.get('show_in_first_level', False):
+            first_level_dropdowns.append(format_submenu_context(subpage['title'], url=reverse(subpage['urlname'], args=[domain])))
+    return first_level_dropdowns
 
 def format_submenu_context(title, url=None, html=None,
                            is_header=False, is_divider=False, data_id=None, second_level_dropdowns=[]):
@@ -92,6 +101,7 @@ def format_second_level_context(title, url, menu):
 
 def divider_and_more_menu(url):
     return [format_submenu_context('placeholder', is_divider=True), format_submenu_context(_('More'), url=url)]
+
 
 class GaTracker(namedtuple('GaTracking', 'category action label')):
     """
@@ -1037,7 +1047,8 @@ class ProjectUsersTab(UITab):
                          'urlname': EditCommCareUserView.urlname},
                         {'title': _('New Mobile Worker'),
                          'urlname': 'add_commcare_account',
-                         'show_in_dropdown': True,},
+                         'show_in_dropdown': True,
+                         'show_in_first_level': True},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
                         {'title': ConfirmBillingAccountForExtraUsersView.page_title,
