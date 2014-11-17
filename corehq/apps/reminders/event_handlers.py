@@ -101,6 +101,26 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
 
 
 def get_message_template_params(case):
+    """
+    Data such as case properties can be referenced from reminder messages
+    such as {case.name} which references the case's name. Add to this result
+    all data that can be referenced from a reminder message.
+
+    The result is a dictionary where each key is the object's name and each
+    value is a dictionary of attributes to be referenced. Dictionaries can
+    also be nested, so a result here of {"case": {"parent": {"name": "joe"}}}
+    allows you to reference {case.parent.name} in a reminder message.
+
+    At the moment, the result here is of this structure:
+    {
+        "case": {
+            ...key:value case properties...
+            "parent": {
+                ...key:value parent case properties...
+            }
+        }
+    }
+    """
     result = {"case": {}}
     if case:
         result["case"] = case.case_properties()
