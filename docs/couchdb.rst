@@ -38,6 +38,11 @@ Takeaways:
    save them all at once
    (after excluding the ones that haven't changed and don't need to be saved!)
    using ``MyClass.get_db().bulk_save(docs)``.
+   If you're writing application code that touches a number of related docs
+   in a number of different places, and you want to bulk save them,
+   you can use ``dimagi.utils.couch.bulk.CouchTransaction``.
+   Note that this isn't good for saving thousands of documents,
+   because it doesn't do any chunking.
 4. Don't save too many docs in too short a time!
    To give the views time to catch up, rate-limit your saves if going through
    hundreds of thousands of docs. One way to do this is to save N docs
