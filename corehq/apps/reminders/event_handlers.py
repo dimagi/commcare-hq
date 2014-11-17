@@ -100,16 +100,24 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
     return (verified_number, unverified_number)
 
 
+def get_message_template_params(case):
+    result = {}
+    parent_case = case.parent if case else None
+    if case:
+        result["case"] = case.case_properties()
+    if parent_case:
+        result["parent"] = parent_case.case_properties()
+    return result
+
+
 def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=None):
     metadata = MessageMetadata(
         workflow=workflow or get_workflow(handler),
         reminder_id=reminder._id,
     )
     current_event = reminder.current_event
-    template_params = {}
     case = reminder.case
-    if case is not None:
-        template_params["case"] = case.case_properties()
+    template_params = get_message_template_params(case)
     for recipient in recipients:
         try:
             lang = recipient.get_language_code()
