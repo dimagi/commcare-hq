@@ -100,16 +100,46 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
     return (verified_number, unverified_number)
 
 
+def get_message_template_params(case):
+    """
+    Data such as case properties can be referenced from reminder messages
+    such as {case.name} which references the case's name. Add to this result
+    all data that can be referenced from a reminder message.
+
+    The result is a dictionary where each key is the object's name and each
+    value is a dictionary of attributes to be referenced. Dictionaries can
+    also be nested, so a result here of {"case": {"parent": {"name": "joe"}}}
+    allows you to reference {case.parent.name} in a reminder message.
+
+    At the moment, the result here is of this structure:
+    {
+        "case": {
+            ...key:value case properties...
+            "parent": {
+                ...key:value parent case properties...
+            }
+        }
+    }
+    """
+    result = {"case": {}}
+    if case:
+        result["case"] = case.case_properties()
+
+    parent_case = case.parent if case else None
+    result["case"]["parent"] = {}
+    if parent_case:
+        result["case"]["parent"] = parent_case.case_properties()
+    return result
+
+
 def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=None):
     metadata = MessageMetadata(
         workflow=workflow or get_workflow(handler),
         reminder_id=reminder._id,
     )
     current_event = reminder.current_event
-    template_params = {}
     case = reminder.case
-    if case is not None:
-        template_params["case"] = case.case_properties()
+    template_params = get_message_template_params(case)
     for recipient in recipients:
         try:
             lang = recipient.get_language_code()
