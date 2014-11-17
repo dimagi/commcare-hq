@@ -101,12 +101,14 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
 
 
 def get_message_template_params(case):
-    result = {}
-    parent_case = case.parent if case else None
+    result = {"case": {}}
     if case:
         result["case"] = case.case_properties()
+
+    parent_case = case.parent if case else None
+    result["case"]["parent"] = {}
     if parent_case:
-        result["parent"] = parent_case.case_properties()
+        result["case"]["parent"] = parent_case.case_properties()
     return result
 
 
