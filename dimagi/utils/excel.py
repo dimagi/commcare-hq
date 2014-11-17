@@ -143,7 +143,7 @@ class IteratorJSONReader(object):
                     'false': False,
                     '': False,
                     None: False,
-                }[value]
+                }[value.lower()]
             except KeyError:
                 raise JSONReaderError(
                     'Values for %s must be: "yes" or "no" (or empty = "no")' % field
