@@ -124,7 +124,7 @@ class StockReportParser(object):
         action = self.C.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
             # TODO: support single-action by product, as well as by action?
-            if not self.location['case']:
+            if not self.location.get('case'):
                 raise NoDefaultLocationException(
                     _("You have not been registered with a default location yet."
                       "  Please register a default location for this user.")
