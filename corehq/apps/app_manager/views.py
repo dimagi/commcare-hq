@@ -2636,6 +2636,7 @@ def upload_translations(request, domain, app_id):
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
 
+@require_deploy_apps
 def update_build_comment(request, domain, app_id):
     build_id = request.POST.get('build_id')
     try:
