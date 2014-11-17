@@ -1,0 +1,50 @@
+[
+    {
+        "name": "Condoms",
+        "units": "each",
+        "sms_code": "cond",
+        "description": "Condoms",
+        "is_active": true
+    },
+    {
+        "description": "Albendazole",
+        "is_active": true, "name":
+        "Albendazole",
+        "sms_code": "ab",
+        "units": "each"
+    },
+    {
+        "description": "Artemether / Lumefantrine",
+        "is_active": true,
+        "name": "Artemether / Lumefantrine",
+        "sms_code": "al",
+        "units": "each"
+    },
+    {
+        "description": "Benzyl Penicillin",
+        "is_active": true,
+        "name": "Benzyl Penicillin",
+        "sms_code": "bp",
+        "units": "each"
+    },
+    {
+        "description": "Chlorpheniramine Tablets",
+        "is_active": true,
+        "name": "Chlorpheniramine Tablets",
+        "sms_code": "cp",
+        "units": "each"
+    },
+    {
+        "description": "Combined Oral Contraceptives",
+        "is_active": true,
+        "name": "Combined Oral Contraceptives",
+        "sms_code": "cc",
+        "units": "each"},
+    {
+        "description": "Condoms",
+        "is_active": true,
+        "name": "Condoms",
+        "sms_code": "cond",
+        "units": "each"
+    }
+]

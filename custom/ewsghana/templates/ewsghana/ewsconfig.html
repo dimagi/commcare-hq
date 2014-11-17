@@ -4,7 +4,7 @@
     {% if is_commtrack_enabled %}
         {{ block.super }}
     {% else %}
-        You have to enable commtrack in order to use ILSGateway migration.
+        You have to enable commtrack in order to use EWS Ghana migration.
     {% endif %}
 {% endblock %}
 {% block enabled_section %}
@@ -41,51 +41,6 @@
         </table>
     {% endif %}
 
-    {% if runner %}
-        <h3>Active report run</h3>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Start</th>
-                    <th>End</th>
-                    <th>Start run</th>
-                    <th>End run</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tr>
-                <td>{% if runner.start %}
-                        {{ runner.start}}
-                    {% else %}
-                        Not started yet.
-                    {% endif %}</td>
-                <td>
-                    {% if runner.end %}
-                        {{ runner.end }}
-                    {% else %}
-                        Not finished yet.
-                    {% endif %}
-                </td>
-                <td>
-                    {{ runner.start_run }}
-                </td>
-                <td>
-                    {% if runner.end_run %}
-                        {{ runner.end_run }}
-                    {% else %}
-                        Not finished yet.
-                    {% endif %}
-                </td>
-                <td>
-                    <form action="{% url 'end_report_run' domain %}" method="POST">
-
-                        <button type="submit" class="btn">Mark as finished</button>
-                    </form>
-                </td>
-            </tr>
-
-        </table>
-    {% endif %}
     {{ block.super }}
     {% if settings.source_config.enabled %}
         <div class="row-fluid">
@@ -107,17 +62,6 @@
                 </div>
             </div>
         </div>
-        {% if not runner %}
-            <div class="row-fluid">
-                <div class="span12">
-                    <div class="btn-toolbar">
-                        <button class="btn" id="run_reports">
-                            {% trans "Run reports generation" %}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
     {% endif %}
 {% endblock %}
 
@@ -155,10 +99,5 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#run_reports").click(function() {
-            var url = '{% url 'run_reports' domain %}';
-            var successMessage = "{% trans "Sync started" %}";
-            _post(this, url, {success: successMessage});
-        });
     </script>
 {% endblock %}
