@@ -1,6 +1,6 @@
 # coding=utf-8
 import calendar
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat

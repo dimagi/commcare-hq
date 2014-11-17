@@ -10,7 +10,8 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
+from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
+from corehq.apps.products.models import Product
 from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.locations.models import Location

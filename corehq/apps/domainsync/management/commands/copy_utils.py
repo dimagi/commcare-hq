@@ -1,5 +1,5 @@
 from casexml.apps.stock.models import StockReport, StockTransaction, DocDomainMapping
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 
 
 def copy_postgres_data_for_docs(remote_postgres_slug, doc_ids, simulate=False):

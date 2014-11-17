@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import logging
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
 from casexml.apps.stock.models import StockReport, StockTransaction
