@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
@@ -18,7 +19,10 @@ from corehq.apps.locations.models import Location
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from corehq.apps.commtrack.exceptions import NotAUserClassError
+from corehq.apps.commtrack.exceptions import (
+    NoDefaultLocationException,
+    NotAUserClassError,
+)
 
 import uuid
 
@@ -121,6 +125,11 @@ class StockReportParser(object):
         action = self.C.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
             # TODO: support single-action by product, as well as by action?
+            if not self.location.get('case'):
+                raise NoDefaultLocationException(
+                    _("You have not been registered with a default location yet."
+                      "  Please register a default location for this user.")
+                )
             self.case_id = self.location['case']._id
             _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
         elif action and action.action in [
