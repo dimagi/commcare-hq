@@ -770,6 +770,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
     keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
+    user_data = DictProperty()
 
     _user = None
     _user_checked = False
@@ -1303,7 +1304,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     domain = StringProperty()
     registering_device_id = StringProperty()
-    user_data = DictProperty()
 
     @classmethod
     def wrap(cls, data):

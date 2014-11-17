@@ -1,22 +1,5 @@
 
 
-class SimpleGetter(object):
-    """
-    Getter that just takes in a property name and assumes that is an attribute of the object.
-
-    Returns None if the attribute doesn't exist.
-    """
-
-    def __init__(self, property_name):
-        self.property_name = property_name
-
-    def __call__(self, item):
-        try:
-            return getattr(item, self.property_name)
-        except AttributeError:
-            return None
-
-
 class TransformedGetter(object):
     """
     Getter that takes in another getter and a transform function.

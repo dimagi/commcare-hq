@@ -14,6 +14,7 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
 
     def testSimpleCaseManagement(self):
         app = Application.wrap(self.get_json('simple_app.json'))
+        self.assertEqual('userreports_test', app.domain)
         data_sources = get_case_data_sources(app)
         self.assertEqual(1, len(data_sources))
         data_source = data_sources['ticket']
