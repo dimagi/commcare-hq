@@ -303,6 +303,24 @@ class FormCustomExportHelper(CustomExportHelper):
                 'display': ''
             })
 
+        # This adds [info] location.#text to the standard list of columns to export, even if no forms have been
+        # submitted with location data yet.
+        if self.custom_export.app.auto_gps_capture:
+            loc_present = False
+            for col in column_conf:
+                if col['index'] == 'form.meta.location.#text':
+                    loc_present = True
+            if not loc_present:
+                column_conf.append({
+                    'index': 'form.meta.location.#text',
+                    'show': True,
+                    'is_sensitive': False,
+                    'selected': False,
+                    'transform': None,
+                    'tag': None,
+                    'display': ''
+                })
+
         column_conf.extend(generate_additional_columns(requires_case))
 
         def get_remainder_column(question):
