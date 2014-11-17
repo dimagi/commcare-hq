@@ -38,6 +38,67 @@ from corehq.toggles import IS_DEVELOPER
 
 
 def sidebar_to_dropdown(sidebar_items, domain=None):
+    """
+    Formats sidebar_items as dropdown items
+    Sample input:
+        [(u'Application Users',
+          [{'description': u'Create and manage users for CommCare and CloudCare.',
+            'show_in_dropdown': True,
+            'subpages': [{'title': <function commcare_username at 0x109869488>,
+                          'urlname': 'edit_commcare_user'},
+                         {'show_in_dropdown': True,
+                          'show_in_first_level': True,
+                          'title': u'New Mobile Worker',
+                          'urlname': 'add_commcare_account'},
+                         {'title': u'Bulk Upload',
+                          'urlname': 'upload_commcare_users'},
+                         {'title': 'Confirm Billing Information',],
+            'title': u'Mobile Workers',
+            'url': '/a/sravan-test/settings/users/commcare/'},
+         (u'Project Users',
+          [{'description': u'Grant other CommCare HQ users access
+                            to your project and manage user roles.',
+            'show_in_dropdown': True,
+            'subpages': [{'title': u'Invite Web User',
+                          'urlname': 'invite_web_user'},
+                         {'title': <function web_username at 0x10982a9b0>,
+                          'urlname': 'user_account'},
+                         {'title': u'My Information',
+                          'urlname': 'domain_my_account'}],
+            'title': <django.utils.functional.__proxy__ object at 0x106a5c790>,
+            'url': '/a/sravan-test/settings/users/web/'}])]
+    Sample output:
+        [{'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': True,
+          'title': u'Application Users',
+          'url': None},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': False,
+          'title': u'Mobile Workers',
+          'url': '/a/sravan-test/settings/users/commcare/'},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': False,
+          'title': u'New Mobile Worker',
+          'url': '/a/sravan-test/settings/users/commcare/add_commcare_account/'},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': False,
+          'title': u'Groups',
+          'url': '/a/sravan-test/settings/users/groups/'},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': True,
+          'title': u'Project Users',
+          'url': None},]
+    """
     dropdown_items = []
     for side_header, side_list in sidebar_items:
         dropdown_header = format_submenu_context(side_header, is_header=True)
@@ -63,6 +124,9 @@ def sidebar_to_dropdown(sidebar_items, domain=None):
 
 
 def get_second_level_dropdowns(subpages, domain=None):
+    """
+        formats subpages of a sidebar_item as second level dropdown items
+    """
     second_level_dropdowns = []
     for subpage in subpages:
         if (subpage.get('show_in_dropdown', False) and
@@ -75,6 +139,9 @@ def get_second_level_dropdowns(subpages, domain=None):
 
 
 def get_first_level_dropdowns(subpages, domain=None):
+    """
+        formats subpages of a side_item as first leve dropdown items
+    """
     first_level_dropdowns = []
     for subpage in subpages:
         if (subpage.get('show_in_dropdown', False) and
@@ -82,7 +149,7 @@ def get_first_level_dropdowns(subpages, domain=None):
             first_level_dropdowns.append(format_submenu_context(
                 subpage['title'],
                 url=reverse(subpage['urlname'],
-                args=[domain])),
+                            args=[domain])),
             )
     return first_level_dropdowns
 
