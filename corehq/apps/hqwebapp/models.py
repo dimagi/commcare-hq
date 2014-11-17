@@ -46,10 +46,11 @@ def sidebar_to_dropdown(sidebar_items, domain=None):
             show_in_dropdown = side_item.get("show_in_dropdown", False)
             if show_in_dropdown:
                 second_level_dropdowns = get_second_level_dropdowns(side_item, domain=domain)
-                if second_level_dropdowns:
-                    dropdown_item = format_second_level_context(side_item['title'], side_item['url'], second_level_dropdowns)
-                else:
-                    dropdown_item = format_submenu_context(side_item['title'], url=side_item['url'])
+                dropdown_item = format_submenu_context(
+                                    side_item['title'],
+                                    url=side_item['url'],
+                                    second_level_dropdowns=second_level_dropdowns,
+                                )
                 current_dropdown_items.append(dropdown_item)
         if current_dropdown_items:
             dropdown_items.extend([dropdown_header] + current_dropdown_items)
@@ -63,7 +64,15 @@ def get_second_level_dropdowns(first_level_item, domain=None):
     return second_level_dropdowns
 
 def format_submenu_context(title, url=None, html=None,
-                           is_header=False, is_divider=False, data_id=None):
+                           is_header=False, is_divider=False, data_id=None, second_level_dropdowns=[]):
+    if second_level_dropdowns:
+        return format_second_level_context(title, url, second_level_dropdowns)
+    else:
+        return format_first_level_context(title, url=url, html=html,
+                           is_header=is_header, is_divider=is_divider, data_id=data_id,)
+
+def format_first_level_context(title, url=None, html=None,
+                           is_header=False, is_divider=False, data_id=None, second_level_dropdowns=[]):
     return {
         'title': title,
         'url': url,
