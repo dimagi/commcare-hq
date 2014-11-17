@@ -144,9 +144,9 @@ class IteratorJSONReader(object):
                     '': False,
                     None: False,
                 }[value]
-            except AttributeError:
+            except KeyError:
                 raise JSONReaderError(
-                    'Values for %s must be: "yes" or "no" (or empty = "no")'
+                    'Values for %s must be: "yes" or "no" (or empty = "no")' % field
                 )
 
         # set for any flat type
