@@ -3,7 +3,6 @@
 <html>
     <head>
         <title>Doc {{ doc_id }} {{ status }}</title>
-
         {% compress css %}
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
         {% endcompress %}
@@ -23,18 +22,20 @@
             </div>
             {% if doc_id %}
                 <h3>Doc {{ doc_id }} {{ status }}</h3>
-                <p>Found in index: {{ index }}</p>
                 <p>Doc type: {{ doc_type }}</p>
-                <div class="row-fluid">
-                    <div class="span6">
-                        <h3>Elasticsearch Doc:</h3>
-                        <pre>{{ es_doc }}</pre>
+                {% for index, es_doc in found_indices.items %}
+                    <p>Found in index: {{ index }}</p>
+                    <div class="row-fluid">
+                        <div class="span6">
+                            <h3>Elasticsearch Doc:</h3>
+                            <pre>{{ es_doc }}</pre>
+                        </div>
+                        <div class="span6">
+                            <h3>Couch Doc:</h3>
+                            <pre>{{ couch_doc }}</pre>
+                        </div>
                     </div>
-                    <div class="span6">
-                        <h3>Couch Doc:</h3>
-                        <pre>{{ couch_doc }}</pre>
-                    </div>
-                </div>
+                {% endfor %}
             {% endif %}
         </div>
     </body>

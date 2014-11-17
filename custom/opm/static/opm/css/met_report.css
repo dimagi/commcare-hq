@@ -1,3 +1,15 @@
-#report_table_met_report_wrapper tbody tr {
-    height: 270px !important;
+
+#report_table_met_report_wrapper > div.DTFC_ScrollWrapper > div.DTFC_LeftWrapper > div.DTFC_LeftBodyWrapper > table {
+    font-size: 19px;
+    word-break: break-all;
+}
+#report_table_met_report_wrapper > div.DTFC_ScrollWrapper > div.dataTables_scroll > div.dataTables_scrollBody {
+    font-size: 19px;
+    word-break: break-all;
+}
+#report_table_met_report_wrapper > div.DTFC_ScrollWrapper > div.DTFC_LeftWrapper > div.DTFC_LeftBodyWrapper > table > tbody > tr {
+    height: 300px !important;
+}
+#report_table_met_report > tbody > tr {
+    height: 300px !important;
 }

@@ -34,7 +34,7 @@ def prepare_fixture_download(table_ids, domain, task, download_id):
     export_raw(tuple(header_groups), tuple(value_groups), file, format)
     return expose_download(
         file.getvalue(),
-        60 * 10,
+        60 * 60 * 2,
         mimetype=Format.from_format(format).mimetype,
         content_disposition='attachment; filename="%s_fixtures.xlsx"' % domain,
         download_id=download_id,

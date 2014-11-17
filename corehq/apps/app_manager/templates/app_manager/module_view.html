@@ -34,8 +34,9 @@
             var details = {{ details|JSON }};
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var $detail_home = $("#" + detail.type + "-detail-screen-config");
-                var detailScreenConfig = DetailScreenConfig.init($detail_home, {
+                var $list_home = $("#" + detail.type + "-detail-screen-config");
+                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config");
+                var detailScreenConfig = DetailScreenConfig.init($list_home, $detail_home, {
                     state: {
                         type: detail.type,
                         short: detail.short,
@@ -48,16 +49,17 @@
                     edit: {{ edit|JSON }},
                     saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
                     parentModules: {{ parent_modules|JSON }},
-                    parentSelect: detail.parent_select
+                    parentSelect: detail.parent_select,
+                    calculationEnabled: {{ enable_calc_xpaths|BOOL }}
                 });
 
                 if (detail.sort_elements) {
                     var parsedSortRows = JSON.parse(detail.sort_elements);
                     for (var j = 0; j < parsedSortRows.length; j++) {
                         detailScreenConfig.sortRows.addSortRow(
-                                parsedSortRows[j].field,
-                                parsedSortRows[j].type,
-                                parsedSortRows[j].direction
+                            parsedSortRows[j].field,
+                            parsedSortRows[j].type,
+                            parsedSortRows[j].direction
                         );
                     }
                 }
@@ -122,6 +124,13 @@
             {{ detail.label }}
         </a>
     </li>
+    {% if detail.long %}
+    <li>
+        <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
+            {{ detail.detail_label }}
+        </a>
+    </li>
+    {% endif %}
     {% endfor %}
 </ul>
 <div class="tab-content">
@@ -245,92 +254,154 @@
         </div>
         {% endif %}
         <div id="{{ detail.type }}-detail-screen-config-body">
-            <div id="{{ detail.type }}-detail-screen-sort">
-            {% if app.enable_multi_sort %}
-                <legend data-bind="visible: rowCount() > 0">
-                    {% trans "Sort Properties" %}
-                    <span style="font-size: 13px">
-                        <span class="hq-help-template"
-                              data-title="{% trans "Sort Properties" %}"
-                              data-content=
-                                  "{% blocktrans %}
-                                      Properties in this list determine how
-                                      cases are ordered in your case list. This
-                                      is useful if for example you want higher
-                                      priority cases to appear closer to the
-                                      top of the list. The case list will sort
-                                      by the first property, then the second,
-                                      etc.
-                                  {% endblocktrans %}" ></span>
-                    </span>
-                </legend>
-                <div class="ui-sortable">
-                    <table data-bind="visible: rowCount() > 0"
-                           class="table table-condensed">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>{% trans "Property" %}</th>
-                                <th>{% trans "Direction" %}</th>
-                                <th>{% trans "Format" %}</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody data-bind="foreach: sortRows, sortableList: sortRows">
-                            <tr>
-                                <td>
-                                    <i class="grip
-                                            icon-resize-vertical
-                                            icon-blue"
-                                       style="cursor: move"></i>
-                                </td>
-
-                                <td data-bind="html: fieldHtml">
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: direction">
-                                        <option value="ascending"
-                                                data-bind="text: ascendText">
-                                        </option>
-                                        <option value="descending"
-                                                data-bind="text: descendText">
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: type">
-                                        <option value="plain">
-                                            {% trans "Plain" %}
-                                        </option>
-                                        <option value="date">
-                                            {% trans "Date" %}
-                                        </option>
-                                        <option value="int">
-                                            {% trans "Integer" %}
-                                        </option>
-                                        <option value="double">
-                                            {% trans "Decimal" %}
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <a data-bind="click: $root.removeSortRow">
-                                        <i class="icon-remove icon-blue"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
-            </div>
             <div id="{{ detail.type }}-detail-screen-config">
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
+            </div>
+            <div id="{{ detail.type }}-list-filtering-and-sorting">
+                <legend>
+                    {% trans "Filtering and Sorting" %}
+                </legend>
+                <div id="{{ detail.type }}-filter">
+                    <a href="#" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+                        <i class="icon-plus"></i>
+                        Add a filter...
+                    </a>
+                    <div data-bind="visible: showing">
+                    <form class="form-inline filter-form">
+                        <label>
+                            Filter
+                        </label>
+                        <span class="hq-help-template"
+                            data-title="{% trans "Filter" %}"
+                            data-content=
+                            "{% blocktrans %}
+                                This XPath expression specifies which cases
+                                should appear in the case list. It can refer to
+                                any case properties and should return true if a
+                                record should be shown and false otherwise. The
+                                same functions are available as when writing
+                                Display or Validation conditions. Refer to case
+                                properties using their name (there's no need to
+                                include a &quot;/data/&quot; in front of the
+                                case property).
+                            {% endblocktrans %}"
+                        >
+
+                        </span>
+                        <input type="text" placeholder="Filter expression" class="ui-autocomplete-input"
+                               data-bind="value: filterText"
+                        >
+                        <a data-bind="click: function(data){showing(false);}">
+                            <i class="icon-remove icon-blue"></i>
+                        </a>
+                    </form>
+                    </div>
+
+                </div>
+                <div id="{{ detail.type }}-detail-screen-sort">
+                {% if app.enable_multi_sort %}
+                    <a href="#" data-bind="visible: !showing(), click: function(data){data.addButtonClicked(true);}">
+                        <i class="icon-plus"></i>
+                        Add a sort property...
+                    </a>
+                    <div class="ui-sortable">
+                        <table class="table table-condensed detail-screen-table" data-bind="visible: showing">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>
+                                        {% trans "Sort Property" %}
+                                        <span style="font-size: 13px">
+                                            <span class="hq-help-template"
+                                                  data-title="{% trans "Sort Properties" %}"
+                                                  data-content=
+                                                      "{% blocktrans %}
+                                                          Properties in this list determine how
+                                                          cases are ordered in your case list. This
+                                                          is useful if for example you want higher
+                                                          priority cases to appear closer to the
+                                                          top of the list. The case list will sort
+                                                          by the first property, then the second,
+                                                          etc.
+                                                      {% endblocktrans %}" >
+                                            </span>
+                                        </span>
+                                    </th>
+                                    <th>{% trans "Direction" %}</th>
+                                    <th>{% trans "Format" %}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody data-bind="foreach: sortRows().concat(templateRow), sortableList: sortRows">
+                                <tr>
+                                    <td class="detail-screen-icon">
+                                        <span data-bind="ifnot: $data instanceof SortRowTemplate">
+                                        <i class="grip
+                                                icon-resize-vertical
+                                                icon-blue"
+                                           style="cursor: move"></i>
+                                        </span>
+                                    </td>
+
+                                    <!-- ko ifnot: $data instanceof SortRowTemplate -->
+                                    <td data-bind="html: fieldHtml"></td>
+                                    <!-- /ko -->
+                                    <!-- ko if: $data instanceof SortRowTemplate -->
+                                    <td class="detail-screen-field control-group" data-bind="css: {error: showWarning}">
+                                        <div data-bind="jqueryElement: textField.ui"></div>
+                                        <div data-bind="jqueryElement: warningElement, if: showWarning"></div>
+                                    </td>
+                                    <!-- /ko -->
+
+
+                                    <td>
+                                        <select data-bind="value: direction">
+                                            <option value="ascending"
+                                                    data-bind="text: ascendText">
+                                            </option>
+                                            <option value="descending"
+                                                    data-bind="text: descendText">
+                                            </option>
+                                        </select>
+                                    </td>
+
+                                    <td>
+                                        <select data-bind="value: type">
+                                            <option value="plain">
+                                                {% trans "Plain" %}
+                                            </option>
+                                            <option value="date">
+                                                {% trans "Date" %}
+                                            </option>
+                                            <option value="int">
+                                                {% trans "Integer" %}
+                                            </option>
+                                            <option value="double">
+                                                {% trans "Decimal" %}
+                                            </option>
+                                        </select>
+                                    </td>
+
+                                    <td>
+                                        <span data-bind="ifnot: $data instanceof SortRowTemplate">
+                                            <a data-bind="click: $root.removeSortRow">
+                                                <i class="icon-remove icon-blue"></i>
+                                            </a>
+                                        </span>
+                                        <span data-bind="if: $data instanceof SortRowTemplate">
+                                            <a data-bind="click: $root.addSortRowFromTemplateRow">
+                                                <i data-bind="css: COMMCAREHQ.icons.ADD"></i>
+                                            </a>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+                </div>
             </div>
             {% if detail.parent_select %}
             <div id="{{ detail.type }}-detail-screen-parent" data-bind="visible: moduleOptions().length">
@@ -345,6 +416,15 @@
                 </div>
              </div>
             {% endif %}
+        </div>
+    </div>
+    <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+        <div id="{{ detail.type }}-detail-screen-detail-config-body">
+            <div id="{{ detail.type }}-detail-screen-detail-config">
+                <legend>
+                    {% trans "Display Properties" %}
+                </legend>
+            </div>
         </div>
     </div>
     {% endfor %}

@@ -360,11 +360,11 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
     casexml_user = user.to_casexml_user()
     if not fixture_id:
         ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(casexml_user, version=V2, synclog=None):
+        for fixture in generator.get_fixtures(casexml_user, version=V2):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        for fixture in generator.get_fixtures(casexml_user, version=V2, synclog=None):
+        for fixture in generator.get_fixtures(casexml_user, version=V2):
             if fixture.attrib.get("id") == fixture_id:
                 assert len(fixture.getchildren()) == 1
                 return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
