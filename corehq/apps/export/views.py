@@ -115,14 +115,14 @@ class BaseCreateCustomExportView(BaseExportView):
         if not schema and self.export_helper.export_type == "form":
             schema = create_basic_form_checkpoint(export_tag)
 
+        app_id = request.GET.get('app_id')
         # This adds [info] location.#text to the standard list of columns to export, even if no forms have been
         # submitted with location data yet.
-        app = get_app('demo-wits-ca', request.GET.get('app_id'))
-        if app.auto_gps_capture:
+        app = get_app(self.domain, app_id)
+        if app['auto_gps_capture']:
             schema.schema['form']['meta']['location'] = {'#text': 'string'}
 
         if schema:
-            app_id = request.GET.get('app_id')
             self.export_helper.custom_export = self.export_helper.ExportSchemaClass.default(
                 schema=schema,
                 name="%s: %s" % (
