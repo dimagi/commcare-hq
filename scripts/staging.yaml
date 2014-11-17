@@ -43,30 +43,34 @@
 trunk: master
 name: autostaging
 branches:
-  - remove-hutch  # DR 10/28
+# this branch didn't exist on github
+#  - bulk-app-translate+double-management # SK 11/10
+  - double-management+case-detail-tabs # Noah 11/6
+  - ptop-reindex  # DR 11/5
+  - historical-forms  # DR 11/4
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
-  - lwyszomi:better_date_filters_improvment
   # - lwyszomi:b3-mobile-layout
-  - revert-4574-revert-4553-case-list-redesign # Noah 9/16
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - reduce-location_ # tw 10/6
-  - archive-location # tw 10/23
-  #- help-text # j$  10/8   removed 11/3 by Daniel
+  #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
-  - graphing+double-management # SK 10/3
   - double-management # SK 10/15
+  - bulk-app-translate+edit-build-messages  # Ethan 11/17 (trivial)
   - bulk-app-translate # Noah 9/18
-  - graphing # Nick P 10/27
+  - case-detail-tabs+share-fixtures # Noah 11/15
+  - case-detail-tabs # Noah 11/6
   - share-fixtures # j$ 10/29
-  - lwyszomi:ilsgateway-productstock
-  - autocomplete-case-sharing # Nick P 10/31
   - logos # Nick P 10/31
-  - hq-dropdown+custom_user_data # Noah 11/2
   - hq-dropdown # sravan 5/7
-  - custom_user_data  # tw+Ethan 9/9
-  - 142623-jstree-upgrade # Daniel 11/3
+  # - photo-export # J$ 11/4
+  - custom-data-choices  # Ethan 11/09
+  - export-user # SK 11/13
+  - vellum-jquery-upgrade # Daniel 11/13
+  - vellum-staging # J$ 11/13
+  - product-app+bulk-app-translate # tw 11/13
+  - product-app # tw 11/13
+  - edit-build-messages  # Ethan 11/17
 submodules:
   submodules/couchlog-src:
     branches:
@@ -79,9 +83,14 @@ submodules:
       - static-tags # Nick P 5/20
       # Danny 8/12. If form validation seems wonky on staging, just remove this
       - clean-up-api
+      - update-jar # J$ 11/10
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
+      - update-jars # J$ 11/10
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
+  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+    branches:
+      - debug-yui # Nick P 11/4

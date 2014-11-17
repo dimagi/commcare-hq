@@ -37,8 +37,8 @@
     <detail id="m{{ module.id }}_{{ detail_type }}">
         <title><text><locale id="m{{ module.id }}.{{ detail_type }}.title"/></text></title>
         <filter>
-            {% if detail.filter_xpath %}
-            <raw function="{{ detail.filter_xpath }}"/>
+            {% if detail.filter %}
+            <raw function="{{ detail.filter }}"/>
             {% endif %}
             <case case-type="{{ module.case_type }}"/>
         </filter>

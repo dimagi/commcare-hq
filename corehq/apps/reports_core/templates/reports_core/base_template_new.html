@@ -3,6 +3,8 @@
 {% load i18n %}
 {% block uncompressed-stylesheets %}{{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
 {% endblock %}
 {% block js %}{{ block.super }}
     {% include "imports/datatables.html" %}
@@ -11,7 +13,11 @@
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -67,7 +73,15 @@
             event.preventDefault();
             reportTables.render();
         });
+    });
 
+    $(function () {
+        // add any filter javascript dependencies
+        {% for filter in report.filters %}
+            {% if filter.javascript_template %}
+                {% include filter.javascript_template with filter=filter context=filter_context|dict_lookup:filter.css_id %}
+            {% endif %}
+        {% endfor %}
     });
     </script>
 {% endblock %}

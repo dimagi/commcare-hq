@@ -68,7 +68,7 @@ CASE_MAPPING = {
                     'referenced_type': {'type': 'string'}},
                 'type': 'object'},
             'initial_processing_complete': {'type': 'boolean'},
-                               'location_': {'type': 'string'},
+                               'location_id': {'type': 'string'},
                                'modified_on': {
                                        'format': DATE_FORMATS_STRING,
                                        'type': 'date'},

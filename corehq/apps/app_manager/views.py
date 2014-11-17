@@ -126,6 +126,9 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
+# Numbers in paths is prohibited, hence the use of importlib
+import importlib
+FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
 
 logger = logging.getLogger(__name__)
 
@@ -285,6 +288,18 @@ def copy_app(req, domain):
         return copy_app_check_domain(req, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
     else:
         return view_generic(req, domain, app_id=app_id, copy_app_form=form)
+
+
+@require_can_edit_apps
+def migrate_app_filters(req, domain, app_id):
+    message = "Migration succeeded!"
+    try:
+        app = get_app(domain, app_id)
+        FilterMigration.migrate_app(app)
+        app.save()
+    except:
+        message = "Migration failed :("
+    return HttpResponse(message, content_type='text/plain')
 
 
 @require_can_edit_apps
@@ -775,6 +790,7 @@ def get_module_view_context_and_template(app, module):
             'details': [
                 {
                     'label': _('Goal List'),
+                    'detail_label': _('Goal Detail'),
                     'type': 'careplan_goal',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
@@ -784,6 +800,7 @@ def get_module_view_context_and_template(app, module):
                 },
                 {
                     'label': _('Task List'),
+                    'detail_label': _('Task Detail'),
                     'type': 'careplan_task',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
@@ -798,6 +815,7 @@ def get_module_view_context_and_template(app, module):
         def get_details():
             details = [{
                 'label': _('Case List'),
+                'detail_label': _('Case Detail'),
                 'type': 'case',
                 'model': 'case',
                 'properties': sorted(builder.get_properties(case_type)),
@@ -809,6 +827,7 @@ def get_module_view_context_and_template(app, module):
             if app.commtrack_enabled:
                 details.append({
                     'label': _('Product List'),
+                    'detail_label': _('Product Detail'),
                     'type': 'product',
                     'model': 'product',
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
@@ -828,6 +847,7 @@ def get_module_view_context_and_template(app, module):
             'details': [
                 {
                     'label': _('Case List'),
+                    'detail_label': _('Case Detail'),
                     'type': 'case',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(case_type)),
@@ -1041,6 +1061,25 @@ def new_app(req, domain):
     app_id = app.id
 
     return back_to_main(req, domain, app_id=app_id)
+
+@require_can_edit_apps
+def default_new_app(req, domain):
+    """New Blank Application according to defaults. So that we can link here
+    instead of creating a form and posting to the above link, which was getting
+    annoying for the Dashboard.
+    """
+    lang = 'en'
+    app = Application.new_app(
+        domain, _("Untitled Application"), lang=lang,
+        application_version=APP_V2
+    )
+    app.add_module(Module.new_module(_("Untitled Module"), lang))
+    app.new_form(0, "Untitled Form", lang)
+    if req.project.secure_submissions:
+        app.secure_submissions = True
+    _clear_app_cache(req, domain)
+    app.save()
+    return back_to_main(req, domain, app_id=app.id)
 
 
 @no_conflict_require_POST
@@ -1323,17 +1362,17 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
 @require_can_edit_apps
 def edit_module_detail_screens(req, domain, app_id, module_id):
     """
-    Called to over write entire detail screens at a time
-
+    Overwrite module case details. Only overwrites components that have been
+    provided in the request. Components are short, long, filter, parent_select,
+    and sort_elements.
     """
     params = json_request(req.POST)
     detail_type = params.get('type')
-    screens = params.get('screens')
-    parent_select = params.get('parent_select')
-    sort_elements = screens['sort_elements']
-
-    if not screens:
-        return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
+    short = params.get('short', None)
+    long = params.get('long', None)
+    filter = params.get('filter', ())
+    parent_select = params.get('parent_select', None)
+    sort_elements = params.get('sort_elements', None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1350,19 +1389,25 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         except AttributeError:
             return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
-    detail.short.columns = map(DetailColumn.wrap, screens['short'])
-    detail.long.columns = map(DetailColumn.wrap, screens['long'])
-
-    detail.short.sort_elements = []
-    for sort_element in sort_elements:
-        item = SortElement()
-        item.field = sort_element['field']
-        item.type = sort_element['type']
-        item.direction = sort_element['direction']
-        detail.short.sort_elements.append(item)
-
-    if parent_select:
+    if short is not None:
+        detail.short.columns = map(DetailColumn.wrap, short)
+    if long is not None:
+        detail.long.columns = map(DetailColumn.wrap, long)
+    if filter != ():
+        # Note that we use the empty tuple as the sentinel because a filter
+        # value of None represents clearing the filter.
+        detail.short.filter = filter
+    if sort_elements is not None:
+        detail.short.sort_elements = []
+        for sort_element in sort_elements:
+            item = SortElement()
+            item.field = sort_element['field']
+            item.type = sort_element['type']
+            item.direction = sort_element['direction']
+            detail.short.sort_elements.append(item)
+    if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+
     resp = {}
     app.save(resp)
     return json_response(resp)
@@ -1472,6 +1517,10 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
+        xform = form.wrapped_xform()
+        if xform.exists():
+            xform.set_name(name)
+            save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': form.name[lang]}
     if should_edit("xform"):
         try:
@@ -2378,42 +2427,6 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-def emulator_page(req, domain, app_id, template):
-    copied_app = app = get_app(domain, app_id)
-    if app.copy_of:
-        app = get_app(domain, app.copy_of)
-
-    # Coupled URL -- Sorry!
-    build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
-        **copied_app.get_preview_build()._doc
-    )
-    return render(req, template, {
-        'domain': domain,
-        'app': app,
-        'build_path': build_path,
-        'url_base': get_url_base()
-    })
-
-
-@require_can_edit_apps
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
-    return emulator_page(req, domain, app_id, template)
-
-
-def emulator_handler(req, domain, app_id):
-    exchange = req.GET.get("exchange", '')
-    if exchange:
-        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
-    else:
-        return emulator(req, domain, app_id)
-
-def emulator_commcare_jar(req, domain, app_id):
-    response = HttpResponse(
-        get_app(domain, app_id).fetch_emulator_commcare_jar()
-    )
-    response['Content-Type'] = "application/java-archive"
-    return response
-
 
 @require_can_edit_apps
 def formdefs(request, domain, app_id):
@@ -2541,7 +2554,7 @@ def get_index_for_defaults(langs):
 
 def build_ui_translation_download_file(app):
 
-    properties = tuple(["property"] + app.langs + ["platform", "source"])
+    properties = tuple(["property"] + app.langs + ["platform"])
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2580,8 +2593,7 @@ def build_ui_translation_download_file(app):
             "JavaRosa": "Java",
         }
         source = system_text_sources.SOURCES.get(row[0], "")
-        row[-1] = source
-        row[-2] = platform_map.get(source, "")
+        row[-1] = platform_map.get(source, "")
         return row
 
     rows = [add_sources(add_default(fillrow(row))) for row in rows]
@@ -2615,7 +2627,7 @@ def process_ui_translation_upload(app, trans_file):
                     if not re.match("\$\{[0-9]+}", param):
                         error_properties.append(row["property"] + ' - ' + row[lang])
                 if not (lang_with_defaults == lang
-                        and row[lang] == default_trans[row["property"]].lstrip(" ")):
+                        and row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})
     return trans_dict, error_properties
 

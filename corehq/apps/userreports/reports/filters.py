@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from dimagi.utils.dates import DateSpan
 
 
@@ -41,7 +42,7 @@ class DateFilterValue(FilterValue):
 class ChoiceListFilterValue(FilterValue):
 
     def __init__(self, filter, value):
-        assert filter.type == 'choice_list'
+        assert filter.type in ('choice_list', 'dynamic_choice_list')
         super(ChoiceListFilterValue, self).__init__(filter, value)
 
     @property
@@ -51,11 +52,14 @@ class ChoiceListFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.show_all:
             return ''
-        return '{} = :value'.format(self.filter.field)
+        return '{0} = :{0}'.format(self.filter.field)
 
     def to_sql_values(self):
         if self.show_all:
             return {}
         return {
-            'value': self.value.value,
+            self.filter.field: self.value.value,
         }
+
+def dynamic_choice_list_url(domain, report, filter):
+    return reverse('choice_list_api', args=[domain, report.spec._id, filter.name])
