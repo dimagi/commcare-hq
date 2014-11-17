@@ -158,7 +158,8 @@ CHILD_INDICATOR_TOOLTIPS = {
         "vita2_eligible": "Children more than  18 months old",
         "dpt_opv_booster_eligible": "Children more than  18 months old",
         "vita3_eligible": "Children more than  23 months old",
-        "fully_immunized": "Children more than  9 months old"
+        "fully_immunized": "Children who received all vaccines from BCG to Measles",
+        "fully_immunized_eligible": "Children more than 9 months old"
     },
     "nutrition_details": {
         "colostrum_feeding": "Children who had colostrum milk within 1 hour of birth",
