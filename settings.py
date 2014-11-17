@@ -902,7 +902,7 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
-#SOUTH_TESTS_MIGRATE=False
+SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import get_dynamic_db_settings, make_couchdb_tuples
