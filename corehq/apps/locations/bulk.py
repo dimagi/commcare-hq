@@ -3,12 +3,11 @@ from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, parent_child
 import itertools
-from soil import DownloadBase
-from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.commtrack.models import Product, SupplyPointCase
 from decimal import Decimal, InvalidOperation
 from django.utils.translation import ugettext as _
+from corehq.apps.custom_data_fields.views import add_prefix
 
 
 class LocationCache(object):
@@ -185,13 +184,17 @@ def import_location(domain, location_type, location_data, parent_child_map=None)
 
     consumption = data.get('consumption', {}).items()
 
+    metadata = data.get('data', {})
+    metadata.update(data.get('uncategorized_data', {}))
+    form_data.update(add_prefix(metadata))
+
     return submit_form(
         domain,
         parent,
         form_data,
         existing,
         location_type,
-        consumption
+        consumption,
     )
 
 
@@ -248,7 +251,8 @@ def submit_form(domain, parent, form_data, existing, location_type, consumption)
             'message': 'no changes for %s %s' % (location_type, existing.name)
         }
 
-    form = make_form(domain, parent, form_data, existing)
+    location = existing or Location(domain=domain, parent=parent)
+    form = LocationForm(location, form_data)
     form.strict = False  # optimization hack to turn off strict validation
     if form.is_valid():
         loc = form.save()
@@ -305,18 +309,3 @@ def submit_form(domain, parent, form_data, existing, location_type, consumption)
             'id': None,
             'message': message
         }
-
-# TODO i think the parent param will not be necessary once the TODO in LocationForm.__init__ is done
-def make_form(domain, parent, data, existing=None):
-    """simulate a POST payload from the location create/edit page"""
-    location = existing or Location(domain=domain, parent=parent)
-
-    def make_payload(k, v):
-        if hasattr(k, '__iter__'):
-            prefix, propname = k
-            prefix = 'props_%s' % prefix
-        else:
-            prefix, propname = 'main', k
-        return ('%s-%s' % (prefix, propname), v)
-    payload = dict(make_payload(k, v) for k, v in data.iteritems())
-    return LocationForm(location, payload)

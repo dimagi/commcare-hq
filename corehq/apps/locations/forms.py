@@ -60,7 +60,6 @@ class LocationForm(forms.Form):
                  *args, **kwargs):
         self.location = location
 
-        kwargs['prefix'] = 'main'
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
         kwargs['initial']['parent_id'] = self.cur_parent_id
@@ -91,7 +90,6 @@ class LocationForm(forms.Form):
             existing_custom_data=existing,
             post_dict=bound_data,
         )
-
 
     @property
     def cur_parent_id(self):
