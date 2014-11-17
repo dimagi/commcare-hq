@@ -118,6 +118,9 @@
                     {% blocktrans with percent=toggle_meta.randomness_percent namespace=toggle_meta.namespace %}
                     And <strong>{{ percent }}%</strong> of all other {{ namespace }}s.
                     {% endblocktrans %}
+                    {% if not expanded %}
+                        <a href="{% url 'edit_toggle' toggle_meta.slug %}?expand=true">({% trans "see all" %})</a>
+                    {% endif %}
                     <br/>
                     <ul>
                         <li>
@@ -140,4 +143,24 @@
         <!-- /ko -->
         <button class="btn btn-success" data-bind="click: addItem"><i class="icon-plus"></i> {% trans "Add Item" %}</button>
     </div>
+    {% if expanded %}
+        <hr/>
+        <h1>{% trans "All domain/toggle statuses" %}</h1>
+            <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{% trans "Domain" %}</th>
+                    <th>{% trans "Enabled?" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for domain, enabled in domain_toggle_list %}
+                <tr {% if enabled %}class="info"{% endif %}>
+                    <td>{{ domain }}</td>
+                    <td>{{ enabled }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 {% endblock %}
