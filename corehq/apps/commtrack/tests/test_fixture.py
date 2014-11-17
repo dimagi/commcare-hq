@@ -108,7 +108,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
     def test_product_fixture(self):
         user = bootstrap_user(self, phone_number="1234567890")
         xml = self.generate_product_fixture_xml(user)
-        fixture = product_fixture_generator(user, V1, None, None)
+        fixture = product_fixture_generator(user, V1)
 
         self.assertXmlEqual(
             xml,
@@ -123,7 +123,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         product_list = Product.by_domain(user.domain)
         self._initialize_product_names(len(product_list))
 
-        fixture_original = product_fixture_generator(user, V1, None, None)
+        fixture_original = product_fixture_generator(user, V1)
         generate_restore_payload(user.to_casexml_user())
         self.assertXmlEqual(
             expected_xml,
@@ -142,7 +142,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
 
         # second sync is before any changes are made, so there should
         # be no products synced
-        fixture_pre_change = product_fixture_generator(user, V1, None, first_sync)
+        fixture_pre_change = product_fixture_generator(user, V1, last_sync=first_sync)
         generate_restore_payload(user.to_casexml_user())
         self.assertEqual(
             [],
@@ -165,7 +165,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
 
         # now that we've updated a product, we should get
         # product data in sync again
-        fixture_post_change = product_fixture_generator(user, V1, None, second_sync)
+        fixture_post_change = product_fixture_generator(user, V1, last_sync=second_sync)
 
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(
@@ -209,7 +209,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         program_list = Program.by_domain(user.domain)
         program_xml = self.generate_program_xml(program_list, user)
 
-        fixture = program_fixture_generator(user, V1, None, None)
+        fixture = program_fixture_generator(user, V1)
 
         self.assertXmlEqual(
             program_xml,
@@ -227,7 +227,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         program_list = Program.by_domain(user.domain)
         program_xml = self.generate_program_xml(program_list, user)
 
-        fixture_original = program_fixture_generator(user, V1, None, None)
+        fixture_original = program_fixture_generator(user, V1)
 
         generate_restore_payload(user.to_casexml_user())
         self.assertXmlEqual(
@@ -247,7 +247,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
 
         # second sync is before any changes are made, so there should
         # be no programs synced
-        fixture_pre_change = program_fixture_generator(user, V1, None, first_sync)
+        fixture_pre_change = program_fixture_generator(user, V1, last_sync=first_sync)
         generate_restore_payload(user.to_casexml_user())
         self.assertEqual(
             [],
@@ -270,7 +270,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
 
         # now that we've updated a program, we should get
         # program data in sync again
-        fixture_post_change = program_fixture_generator(user, V1, None, second_sync)
+        fixture_post_change = program_fixture_generator(user, V1, last_sync=second_sync)
 
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(

@@ -631,8 +631,31 @@ def get_user_stats(domains, datespan, interval, **kwargs):
     return get_other_stats("users", domains, datespan, interval, **kwargs)
 
 
-def get_users_all_stats(domains, datespan, interval, **kwargs):
-    return get_other_stats("users_all", domains, datespan, interval, **kwargs)
+def get_users_all_stats(domains, datespan, interval,
+                        user_type_mobile=None,
+                        require_submissions=False):
+    query = UserES().domain(domains).show_inactive().size(0)
+    if user_type_mobile:
+        query = query.mobile_users()
+    elif user_type_mobile is not None:
+        query = query.web_users()
+    if require_submissions:
+        query = query.user_ids(get_submitted_users())
+
+    histo_data = (
+        query
+        .created(gte=datespan.startdate, lte=datespan.enddate)
+        .date_histogram('date', 'created_on', interval)
+        .run().facet('date', 'entries')
+    )
+
+    users_before_date = len(
+        query
+        .created(lt=datespan.startdate)
+        .run().doc_ids
+    )
+
+    return format_return_data(histo_data, users_before_date, datespan)
 
 
 def get_other_stats(histo_type, domains, datespan, interval,
@@ -719,49 +742,34 @@ def get_user_ids(user_type_mobile):
         query = query.mobile_users()
     else:
         query = query.web_users()
-    return {doc_id for doc_id in query.run().doc_ids}
+    return set(query.run().doc_ids)
 
 
-def get_user_type_filters(histo_type, user_type_mobile, require_submissions):
-    result = {'terms': {}}
-    if histo_type == 'forms':
-        result['terms']["form.meta.userID"] = list(
-            get_user_ids(user_type_mobile)
+def get_submitted_users():
+    real_form_users = {
+        user_count['term'] for user_count in (
+            FormES()
+            .user_facet(size=USER_COUNT_UPPER_BOUND)
+            .size(0)
+            .run()
+            .facets.user.result
         )
-    elif histo_type == 'users_all':
-        existing_users = get_user_ids(user_type_mobile)
+    }
 
-        if require_submissions:
-            real_form_users = {
-                user_count['term'] for user_count in (
-                    FormES()
-                    .user_facet(size=USER_COUNT_UPPER_BOUND)
-                    .size(0)
-                    .run()
-                    .facets.user.result
-                )
-            }
-
-            real_sms_users = {
-                user_count['term'] for user_count in (
-                    SMSES()
-                    .terms_facet(
-                        'couch_recipient', 'user', USER_COUNT_UPPER_BOUND
-                    )
-                    .incoming_messages()
-                    .size(0)
-                    .run()
-                    .facets.user.result
-                )
-            }
-
-            filtered_real_users = (
-                existing_users & (real_form_users | real_sms_users)
+    real_sms_users = {
+        user_count['term'] for user_count in (
+            SMSES()
+            .terms_facet(
+                'couch_recipient', 'user', USER_COUNT_UPPER_BOUND
             )
-        else:
-            filtered_real_users = existing_users
-        result['terms']['_id'] = list(filtered_real_users)
-    return result
+            .incoming_messages()
+            .size(0)
+            .run()
+            .facets.user.result
+        )
+    }
+
+    return real_form_users | real_sms_users
 
 
 def get_case_owner_filters():
@@ -870,14 +878,12 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         user_type_mobile=None, is_cumulative=True, require_submissions=True,
         supply_points=False):
     additional_filters = []
-    if user_type_mobile is not None:
-        additional_filters.append(
-            get_user_type_filters(
-                histo_type,
-                user_type_mobile,
-                require_submissions,
-            )
-        )
+    if histo_type == 'forms' and user_type_mobile is not None:
+        additional_filters.append({
+            'terms': {
+                'form.meta.userID': list(get_user_ids(user_type_mobile))
+            }
+        })
     if histo_type == 'active_cases':
         additional_filters.append(get_case_owner_filters())
     if supply_points:

@@ -4,7 +4,7 @@ import traceback
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
@@ -192,9 +192,17 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
 
 @retry(5)
 def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups=False):
-    location = Location.view('commtrack/locations_by_code',
-                             key=[domain, ilsgateway_location.code.lower()],
-                             include_docs=True).first()
+    try:
+        sql_loc = SQLLocation.objects.get(
+            domain=domain,
+            external_id=int(ilsgateway_location.id)
+        )
+        location = Location.get(sql_loc.location_id)
+    except SQLLocation.DoesNotExist:
+        location = None
+    except SQLLocation.MultipleObjectsReturned:
+        return
+
     if not location:
         if ilsgateway_location.parent:
             loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',

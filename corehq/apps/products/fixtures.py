@@ -2,7 +2,7 @@ from corehq.apps.products.models import Product
 from corehq.apps.commtrack.fixtures import _simple_fixture_generator
 
 
-def product_fixture_generator(user, version, synclog, last_sync):
+def product_fixture_generator(user, version, case_sync_op=None, last_sync=None):
     fields = [
         'name',
         'unit',

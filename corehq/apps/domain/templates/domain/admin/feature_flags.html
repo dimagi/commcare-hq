@@ -1,0 +1,42 @@
+{% extends "settings/base_template.html" %}
+{% load i18n %}
+{% block main_column %}
+    <div class="row-fluid">
+        <div class="span6">
+            <p>
+                {% url 'toggle_list' as toggle_url %}
+                {% blocktrans %}
+                    Feature Flags are superuser-only things that can be turn on features for individual users or projects.
+                    They can be edited manually at the <a href="{{ toggle_url }}">Feature Flag edit UI</a> (also super-only).
+                    In addition, some feature flags are randomly enabled by a domain.
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                    You can see a list of all enabled flags for this domain here.
+                    This does not include any flags set for users within the domain.
+                {% endblocktrans %}
+            </p>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span6">
+            <table class="table table-striped">
+                <thead>
+                    <th>{% trans "Feature" %}</th>
+                    <th>{% trans "Enabled?" %}</th>
+                    <th>{% trans "Edit" %}</th>
+                </thead>
+                <tbody>
+                    {% for feature, enabled in flags %}
+                    <tr {% if enabled %}class="info"{% endif %}>
+                        <td>{{ feature.label }}</td>
+                        <td>{{ enabled }}</td>
+                        <td><a href="{% url 'edit_toggle' feature.slug %}">{% trans "change" %}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

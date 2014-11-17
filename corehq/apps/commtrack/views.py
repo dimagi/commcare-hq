@@ -176,7 +176,7 @@ def api_query_supply_point(request, domain):
             return HttpResponse(json.dumps(loc_to_payload(loc)), 'text/json')
 
         except ResourceNotFound:
-            return HttpResponseNotFound(json.dumps({'message': 'no location with is %s found' % id}, 'text/json'))
+            return HttpResponseNotFound(json.dumps({'message': 'no location with id %s found' % id}, 'text/json'))
 
     else:
         LIMIT = 100

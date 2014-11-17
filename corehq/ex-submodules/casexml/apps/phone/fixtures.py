@@ -32,13 +32,13 @@ class FixtureGenerator(object):
                 if func:
                     self._generator_funcs.append(func)
 
-    def get_fixtures(self, user, version, synclog, last_sync=None):
+    def get_fixtures(self, user, version, case_sync_op=None, last_sync=None):
         """
         Gets all fixtures associated with an OTA restore operation
         """
         if version == V1: 
             return []  # V1 phones will never use or want fixtures
-        return itertools.chain(*[func(user, version, synclog, last_sync)
+        return itertools.chain(*[func(user, version, case_sync_op, last_sync)
                                  for func in self._generator_funcs])
 
 

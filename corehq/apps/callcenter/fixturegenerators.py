@@ -31,7 +31,7 @@ def should_sync(domain, last_sync, utcnow=None):
     return False
 
 
-def indicators_fixture_generator(user, version, synclog, last_sync):
+def indicators_fixture_generator(user, version, case_sync_op=None, last_sync=None):
     assert isinstance(user, CommCareUser)
 
     domain = user.project
@@ -44,7 +44,7 @@ def indicators_fixture_generator(user, version, synclog, last_sync):
         return fixtures
 
     try:
-        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user, synclog=synclog)))
+        fixtures.append(gen_fixture(user, CallCenterIndicators(domain, user, case_sync_op=case_sync_op)))
     except Exception:  # blanket exception catching intended
         notify_exception(None, 'problem generating callcenter fixture', details={
             'user_id': user._id,
@@ -79,7 +79,11 @@ def gen_fixture(user, indicator_set):
     name = indicator_set.name
     data = indicator_set.get_data()
 
-    fixture = ElementTree.Element('fixture', attrib={'id': 'indicators:%s' % name, 'user_id': user.user_id})
+    fixture = ElementTree.Element('fixture', attrib={
+        'id': 'indicators:%s' % name,
+        'user_id': user.user_id,
+        'date': indicator_set.reference_date.isoformat()
+    })
     indicators_node = ElementTree.SubElement(fixture, 'indicators')
     for case_id, indicators in data.iteritems():
         group = ElementTree.SubElement(indicators_node, 'case', attrib={'id': case_id})

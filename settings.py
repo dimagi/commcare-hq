@@ -292,13 +292,13 @@ HQ_APPS = (
     'toggle',
     'touchforms.formplayer',
     'phonelog',
-    'hutch',
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
+    'corehq.util',
 
     # custom reports
     'a5288',
@@ -975,7 +975,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'hutch',
     'wisepill',
     'fri',
     'crs_reports',

@@ -21,10 +21,10 @@
                 for (var i = 3; i > 0; i--) {
                     $('td:nth-last-child(1),th:nth-last-child(1)', $("#report_table_met_report")).remove();
                 }
-                splitTable($(".table"), 1100);
+                splitTable($(".table"), 1700);
                 $('.hq-loading').hide();
                 window.print();
-            }, 2000);
+            }, 3000);
         })
     </script>
 {% endblock %}
@@ -32,7 +32,7 @@
 {% block reportcontent %}
     {% compress css %}
     <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
-    <style>
+    <style media="all">
         @page {
             size: A4 landscape;
         }
@@ -48,6 +48,18 @@
         }
         td > div > img {
             width: 100px !important;
+        }
+        tr {
+            height: 183px !important;
+        }
+
+    </style>
+    <style media="print">
+        tr {
+            height: 183px !important;
+        }
+        td > div > img {
+            width: 140px !important;
         }
     </style>
     {% endcompress %}

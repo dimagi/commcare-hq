@@ -205,7 +205,7 @@ class StockReportParser(object):
                 keyword = next()
             except StopIteration:
                 if not found_product_for_action:
-                    raise SMSError('product expected for action "%s"' % action_code)
+                    raise SMSError('product expected for action "%s"' % action)
                 break
 
             old_action = action

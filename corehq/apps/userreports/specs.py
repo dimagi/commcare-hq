@@ -72,7 +72,7 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('choice_list')
     choices = ListProperty(required=True)
-    select_style = StringProperty()
+    select_style = StringProperty(choices=['single', 'multiple'])
 
     def get_operator(self):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
@@ -84,7 +84,8 @@ class BaseFilterSpec(JsonObject):
 
 def _getter_from_property_reference(spec):
     if spec.property_name:
-        assert not spec.property_path, spec.property_name
+        assert not spec.property_path, \
+            'indicator {} has both a name and path specified! you must only pick one.'.format(spec.property_name)
         return DictGetter(property_name=spec.property_name)
     else:
         assert spec.property_path, spec.property_name

@@ -15,6 +15,7 @@ class UserES(HQESQuery):
             created,
             mobile_users,
             web_users,
+            user_ids,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -47,3 +48,6 @@ def demo_users():
 
 def created(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('created_on', gt, gte, lt, lte)
+
+def user_ids(user_ids):
+    return filters.term("_id", list(user_ids))

@@ -905,6 +905,7 @@ def export_case_transactions(request, domain, case_id):
 
     headers = [
         _('case id'),
+        _('case name'),
         _('section'),
         _('date'),
         _('product_id'),
@@ -917,6 +918,7 @@ def export_case_transactions(request, domain, case_id):
     def _make_row(transaction):
         return [
             transaction.case_id,
+            case.name,
             transaction.section_id,
             transaction.report.date if transaction.report_id else '',
             transaction.product_id,

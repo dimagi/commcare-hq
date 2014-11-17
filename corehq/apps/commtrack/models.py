@@ -925,6 +925,7 @@ class CommTrackUser(CommCareUser):
             del data['commtrack_location']
 
             instance = super(CommTrackUser, cls).wrap(data)
+            instance.save()
 
             try:
                 original_location_object = Location.get(original_location)
