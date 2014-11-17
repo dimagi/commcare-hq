@@ -6,7 +6,7 @@ from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
-from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, load_xmlobject_from_string
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
@@ -326,14 +326,32 @@ class Sort(AbstractTemplate):
     direction = StringField('@direction')
 
 
+class Style(XmlObject):
+    ROOT_NAME = 'style'
+
+    # Add choices to the strings?
+    horz_align = StringField("@horz-align")
+    vert_align = StringField("@vert-align")
+    font_size = StringField("@font-size")
+    css_id = StringField("@css-id")
+    # Should I be making a separate Grid class instead?
+    grid_height = StringField("grid/@grid-height")
+    grid_width = StringField("grid/@grid-width")
+    grid_x = StringField("grid/@grid-x")
+    grid_y = StringField("grid/@grid-y")
+
+
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
     ORDER = ('header', 'template', 'sort_node')
 
     sort = StringField('@sort')
+    style = NodeField('style', Style)
     header = NodeField('header', Header)
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
+    # Should I disallow sort_node if background is present? (and vice versa)
+    background = NodeField('background/text', Text)
 
 
 class DetailVariable(XmlObject):
@@ -778,30 +796,35 @@ class SuiteGenerator(SuiteGeneratorBase):
                         )
 
                         if detail_column_infos:
-                            d = Detail(
-                                id=self.id_strings.detail(module, detail_type),
-                                title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
-                            )
-
-                            variables = list(self.detail_variables(module, detail, detail_column_infos))
-                            if variables:
-                                d.variables.extend(variables)
-
-                            for column_info in detail_column_infos:
-                                fields = get_column_generator(
-                                    self.app, module, detail,
-                                    detail_type=detail_type, *column_info
-                                ).fields
-                                d.fields.extend(fields)
-
-                            try:
-                                if not self.app.enable_multi_sort:
-                                    d.fields[0].sort = 'default'
-                            except IndexError:
-                                pass
-                            else:
-                                # only yield the Detail if it has Fields
+                            if detail.custom_xml:
+                                d = load_xmlobject_from_string(detail.custom_xml, xmlclass=Detail)
                                 r.append(d)
+                            else:
+
+                                d = Detail(
+                                    id=self.id_strings.detail(module, detail_type),
+                                    title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
+                                )
+
+                                variables = list(self.detail_variables(module, detail, detail_column_infos))
+                                if variables:
+                                    d.variables.extend(variables)
+
+                                for column_info in detail_column_infos:
+                                    fields = get_column_generator(
+                                        self.app, module, detail,
+                                        detail_type=detail_type, *column_info
+                                    ).fields
+                                    d.fields.extend(fields)
+
+                                try:
+                                    if not self.app.enable_multi_sort:
+                                        d.fields[0].sort = 'default'
+                                except IndexError:
+                                    pass
+                                else:
+                                    # only yield the Detail if it has Fields
+                                    r.append(d)
 
         return r
 

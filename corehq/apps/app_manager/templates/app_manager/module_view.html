@@ -256,6 +256,10 @@
         </div>
         {% endif %}
         <div id="{{ detail.type }}-detail-screen-config-body">
+            <div id="{{ detail.type }}-detail-screen-custom-xml" data-bind="visible: enabled">
+                <legend>{% trans "Custom Case List XML" %}</legend>
+                <textarea class="span6" data-bind="value: xml"></textarea>
+            </div>
             <div id="{{ detail.type }}-detail-screen-config">
                 <legend>
                     {% trans "Display Properties" %}
@@ -418,11 +422,6 @@
                 </div>
              </div>
             {% endif %}
-
-            <div id="{{ detail.type }}-detail-screen-custom-xml" data-bind="visible: enabled">
-                <legend>{% trans "Custom Case List XML" %}</legend>
-                <textarea class="span6" data-bind="value: xml"></textarea>
-            </div>
         </div>
     </div>
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
