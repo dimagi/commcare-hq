@@ -39,7 +39,7 @@ def should_sync_locations(last_sync, location_db):
     return False
 
 
-def location_fixture_generator(user, version, synclog, last_sync):
+def location_fixture_generator(user, version, case_sync_op=None, last_sync=None):
     project = user.project
     if (not project or not project.commtrack_enabled
         or not project.commtrack_settings

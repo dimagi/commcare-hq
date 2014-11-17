@@ -103,7 +103,7 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixture, = fixturegenerators.item_lists(self.user, V2, None, last_sync=None)
+        fixture, = fixturegenerators.item_lists(self.user, V2)
 
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
