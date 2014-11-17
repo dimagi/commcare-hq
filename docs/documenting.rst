@@ -133,6 +133,10 @@ documents, I find two particularly useful:
   `Sublime Wrap Plus`_. Hard-wrapped lines make documentation easy to
   read in a console, or editor that doesn't soft-wrap lines (i.e. most
   code editors).
+* Vim has a command ``gq`` to reflow a block of text (``:help gq``). It
+  uses the value of ``textwidth`` to wrap (``:setl tw=75``).  Also check
+  out ``:help autoformat``.  Syntastic has a rst linter.  To make a line a
+  header, just ``yypVr=`` (or whatever symbol you want).
 
 
 .. _Sublime Wrap Plus: https://github.com/ehuss/Sublime-Wrap-Plus
