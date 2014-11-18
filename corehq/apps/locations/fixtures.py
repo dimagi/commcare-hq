@@ -1,6 +1,5 @@
 from collections import defaultdict
 from xml.etree import ElementTree
-from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.commtrack.util import unicode_slug
 
 
@@ -46,8 +45,7 @@ def location_fixture_generator(user, version, case_sync_op=None, last_sync=None)
         or not project.commtrack_settings.sync_location_fixtures):
             return []
 
-    rewrapped_user = CommTrackUser.wrap(user.to_json())
-    location_db = _location_footprint(rewrapped_user.locations)
+    location_db = _location_footprint(user.locations)
 
     if not should_sync_locations(last_sync, location_db):
         return []
@@ -56,7 +54,7 @@ def location_fixture_generator(user, version, case_sync_op=None, last_sync=None)
                                {'id': 'commtrack:locations',
                                 'user_id': user.user_id})
 
-    loc_types = project.commtrack_settings.location_types
+    loc_types = project.location_types
     type_to_slug_mapping = dict((ltype.name, ltype.code) for ltype in loc_types)
 
     def location_type_lookup(location_type):

@@ -1,4 +1,5 @@
-from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
@@ -58,7 +59,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
 
 
 def location_hierarchy_config(domain):
-    return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types]
+    return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).location_types]
 
 
 def defined_location_types(domain):
@@ -108,7 +109,7 @@ def location_custom_properties(domain, loc_type):
 
 
 def get_loc_config(domain):
-    return dict((lt.name, lt) for lt in Domain.get_by_name(domain).commtrack_settings.location_types)
+    return dict((lt.name, lt) for lt in Domain.get_by_name(domain).location_types)
 
 
 def lookup_by_property(domain, prop_name, val, scope, root=None):
@@ -174,7 +175,7 @@ def get_default_column_data(domain, location_types):
         'values': {}
     }
 
-    if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
+    if Domain.get_by_name(domain).individual_consumption_defaults:
         products = Product.by_domain(domain)
 
         supply_point_map = SupplyPointCase.get_location_map_by_domain(domain)

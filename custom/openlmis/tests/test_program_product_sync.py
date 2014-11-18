@@ -1,7 +1,7 @@
 import json
 import os
 from django.test import TestCase
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from custom.openlmis.api import Program
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from custom.openlmis.commtrack import sync_openlmis_program, bootstrap_domain

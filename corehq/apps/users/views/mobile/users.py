@@ -45,7 +45,6 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
-from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.util import get_download_context, expose_download
@@ -133,7 +132,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
         # currently only support one location on the UI
-        linked_loc = CommTrackUser.wrap(self.editable_user.to_json()).location
+        linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         return CommtrackUserForm(domain=self.domain, initial={'supply_point': initial_id})
 

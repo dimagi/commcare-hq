@@ -2,10 +2,17 @@ from datetime import datetime
 from corehq.apps.commtrack.models import SupplyPointCase
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
 from dimagi.utils.dates import get_business_day_of_month_before
-from corehq.apps.domain.models import Domain
 from django.db.models.aggregates import Max
 
 GROUPS = ('A', 'B', 'C')
+
+
+def get_next_meta_url(has_next, meta, next_url):
+    if not meta.get('next', False):
+        has_next = False
+    else:
+        next_url = meta['next'].split('?')[1]
+    return has_next, next_url
 
 
 def get_groups(groups):
@@ -49,3 +56,9 @@ def supply_points_with_latest_status_by_datespan(sps, status_type, status_value,
         status_type=status_type,
         status_value=status_value).distinct().values_list("supply_point", flat=True)
     return [SupplyPointCase.get(id) for id in ids]
+
+
+def ils_bootstrap_domain_test_task(domain, endpoint):
+    ils_config = ILSGatewayConfig.for_domain(domain)
+    from custom.ilsgateway.commtrack import bootstrap_domain
+    return bootstrap_domain(ils_config, endpoint)

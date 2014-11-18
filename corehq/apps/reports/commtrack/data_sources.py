@@ -1,7 +1,8 @@
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState, SQLLocation
+from corehq.apps.commtrack.models import SupplyPointCase, StockState, SQLLocation
+from corehq.apps.products.models import Product
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource

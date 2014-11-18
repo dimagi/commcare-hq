@@ -114,16 +114,16 @@ PRBAC_DEMO = StaticToggle(
     'Roles and permissions'
 )
 
-ACCOUNTING_PREVIEW = StaticToggle(
-    'accounting_preview',
-    'Accounting preview',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
     [NAMESPACE_USER]
+)
+
+GRAPH_CREATION = StaticToggle(
+    'graph-creation',
+    'Case list/detail graph creation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 INVOICE_TRIGGER = StaticToggle(

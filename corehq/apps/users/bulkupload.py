@@ -14,7 +14,6 @@ from dimagi.utils.excel import (flatten_json, json_to_headers,
 from soil import DownloadBase
 
 from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
-from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -154,12 +153,10 @@ class UserLocMapping(object):
         Calculate which locations need added or removed, then submit
         one caseblock to handle this
         """
-        user = CommTrackUser.get_by_username(self.username)
+        user = CommCareUser.get_by_username(self.username)
         if not user:
             raise UserUploadError(_('no username with {} found!'.format(self.username)))
 
-        # have to rewrap since we need to force it to a commtrack user
-        user = CommTrackUser.wrap(user.to_json())
         current_locations = user.locations
         current_location_codes = [loc.site_code for loc in current_locations]
 
@@ -430,7 +427,7 @@ class GroupNameError(Exception):
 
 
 def get_location_rows(domain):
-    users = CommTrackUser.by_domain(domain)
+    users = CommCareUser.by_domain(domain)
 
     mappings = []
     for user in users:

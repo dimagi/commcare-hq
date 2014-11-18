@@ -2,7 +2,7 @@ import logging
 import re
 from dimagi.utils.dates import force_to_datetime
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.commtrack.models import CommTrackUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
@@ -79,7 +79,7 @@ def _get_location(form):
         user_id = form['auth_context']['user_id']
         if not user_id:
             return None
-        user = CommTrackUser.get(user_id)
+        user = CommCareUser.get(user_id)
         try:
             loc = user.location
         except ResourceNotFound:

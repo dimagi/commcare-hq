@@ -1,5 +1,5 @@
 from sqlagg import CountUniqueColumn
-from sqlagg.filters import LTE, AND, EQ, OR, GTE
+from sqlagg.filters import LTE, AND, EQ, OR, GTE, NOTEQ
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.world_vision.sqldata import BaseSqlData
@@ -34,36 +34,33 @@ class AnteNatalCareServiceOverview(BaseSqlData):
     def columns(self):
         return [
 
-            DatabaseColumn("Total pregnant",
-                CountUniqueColumn('doc_id', alias="total_pregnant"),
-            ),
-            DatabaseColumn("ANC3",
-                CountUniqueColumn('doc_id', alias="anc_3", filters=self.filters + [EQ('anc_3', 'yes')]),
-            ),
+            DatabaseColumn("Total pregnant", CountUniqueColumn('doc_id', alias="total_pregnant")),
+            DatabaseColumn("ANC3", CountUniqueColumn('doc_id', alias="anc_3",
+                                                     filters=self.filters + [EQ('anc_3', 'yes')])),
             DatabaseColumn("TT Completed (TT2 or Booster)",
-                CountUniqueColumn('doc_id', alias="tt_completed",
-                                  filters=self.filters + [OR([EQ('tt_2', 'yes'), EQ('tt_booster', 'yes')])]),
-            ),
+                           CountUniqueColumn('doc_id', alias="tt_completed",
+                                             filters=self.filters + [OR([EQ('tt_2', 'yes'),
+                                                                         EQ('tt_booster', 'yes')])])),
             DatabaseColumn("Taking IFA tablets",
-                CountUniqueColumn('doc_id', alias="ifa_tablets", filters=self.filters + [EQ('iron_folic', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="ifa_tablets",
+                                             filters=self.filters + [EQ('iron_folic', 'yes')])),
             DatabaseColumn("Completed 100 IFA tablets",
-                CountUniqueColumn('doc_id', alias="100_tablets", filters=self.filters + [EQ('completed_100_ifa', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="100_tablets",
+                                             filters=self.filters + [AND([EQ('completed_100_ifa', 'yes'),
+                                                                          NOTEQ('delivery_date', 'empty')])])),
             DatabaseColumn("ANC3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="anc_3_eligible",
-                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('edd', 'today_plus_56')])]),
-            ),
+                           CountUniqueColumn('doc_id', alias="anc_3_eligible",
+                                             filters=self.filters + [AND([EQ('anc_2', 'yes'),
+                                                                          LTE('edd', 'today_plus_56')])])),
             DatabaseColumn("TT Completed (TT2 or Booster) Total Eligible",
-                CountUniqueColumn('doc_id', alias="tt_completed_eligible",
-                                  filters=self.filters + [OR([EQ('tt_1', 'yes'), EQ('previous_tetanus', 'yes')])]),
-            ),
-            DatabaseColumn("Taking IFA tablets Total Eligible",
-                CountUniqueColumn('doc_id', alias="ifa_tablets_eligible"),
-            ),
+                           CountUniqueColumn('doc_id', alias="tt_completed_eligible",
+                                             filters=self.filters + [OR([EQ('tt_1', 'yes'),
+                                                                         EQ('previous_tetanus', 'yes')])])),
+            DatabaseColumn("Taking IFA tablets Total Eligible", CountUniqueColumn('doc_id',
+                                                                                  alias="ifa_tablets_eligible")),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
-                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('edd', 'today_plus_85')]),
-            )
+                           CountUniqueColumn('doc_id', alias="100_tablets_eligible",
+                                             filters=self.filters + [NOTEQ('delivery_date', 'empty')]))
         ]
 
 

@@ -109,6 +109,12 @@ class ParentCasePropertyBuilder(object):
         return set(p[0] for p in parent_types)
 
     @memoized
+    def get_other_case_sharing_apps_in_domain(self):
+        from corehq.apps.app_manager.models import get_apps_in_domain
+        apps = get_apps_in_domain(self.app.domain, include_remote=False)
+        return [a for a in apps if a.case_sharing and a.id != self.app.id]
+
+    @memoized
     def get_properties(self, case_type, already_visited=(),
                        include_shared_properties=True):
         if case_type in already_visited:
@@ -133,13 +139,12 @@ class ParentCasePropertyBuilder(object):
                 case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
             from corehq.apps.app_manager.models import get_apps_in_domain
-            for app in get_apps_in_domain(self.app.domain, include_remote=False):
-                if app.case_sharing:
-                    case_properties.update(
-                        get_case_properties(
-                            app, [case_type], include_shared_properties=False
-                        ).get(case_type, [])
-                    )
+            for app in self.get_other_case_sharing_apps_in_domain():
+                case_properties.update(
+                    get_case_properties(
+                        app, [case_type], include_shared_properties=False
+                    ).get(case_type, [])
+                )
 
         return case_properties
 
@@ -150,12 +155,12 @@ class ParentCasePropertyBuilder(object):
     def get_case_property_map(self, case_types,
                               include_shared_properties=True):
         case_types = sorted(case_types)
-        return dict(
-            (case_type, sorted(self.get_properties(
+        return {
+            case_type: sorted(self.get_properties(
                 case_type, include_shared_properties=include_shared_properties
-            )))
+            ))
             for case_type in case_types
-        )
+        }
 
 
 def get_case_properties(app, case_types, defaults=(),
