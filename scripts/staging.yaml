@@ -71,8 +71,8 @@ branches:
   - vellum-staging # J$ 11/13
   - edit-build-messages  # Ethan 11/17
   - custom_location_data  # Ethan & tw 11/17
-  - hq-dropdown+locations-for-everyone # tw 11/18
-  - custom_location_data+locations-for-everyone # tw 11/18
+  - hq-dropdown+locations-for-everyone2 # tw 11/18
+  - custom_location_data+locations-for-everyone2 # tw 11/18
   - locations-for-everyone # tw 11/18
 submodules:
   submodules/couchlog-src:
