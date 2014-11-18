@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, time
 from functools import partial
-from django.utils.formats import date_format
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from custom.ilsgateway.reports.utils import get_this_lead_time, get_avg_lead_time, rr_format_percent, \
+    get_default_contact_for_location, get_span, make_url
 from dimagi.utils.dates import get_business_day_of_month
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.graph_models import PieChart
@@ -13,6 +14,8 @@ from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, Deliv
 from django.utils.translation import ugettext as _
 from django.utils import html
 from django.utils.dateformat import format
+
+
 
 
 def format_percent(float_number):
@@ -185,10 +188,10 @@ class DistrictSummaryData(ILSData):
         if self.config['org_summary']:
 
             def prepare_processing_info(data):
-                numbers = {}
-                numbers['total'] = data[0] - (data[1].total + data[2].total)
-                numbers['complete'] = 0
-                return numbers
+                return {
+                    'total': data[0] - (data[1].total + data[2].total),
+                    'complete': 0
+                }
 
             org_summary = self.config['org_summary']
             total = org_summary.total_orgs
@@ -308,11 +311,6 @@ class RRStatus(ILSData):
 
     @property
     def rows(self):
-        def format_percent(numerator, denominator):
-            if numerator and denominator:
-                return "%.1f%%" % ((float(numerator) / float(denominator)) * 100.0)
-            else:
-                return "No data"
         rows = []
         location = Location.get(self.config['location_id'])
         for child in location.children:
@@ -325,30 +323,30 @@ class RRStatus(ILSData):
             except OrganizationSummary.DoesNotExist:
                 return []
 
-            rr_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                               org_summary=org_summary)
+            rr_data = GroupSummary.objects.get(
+                title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                org_summary=org_summary
+            )
 
-            fp_partial = partial(format_percent, denominator=rr_data.total)
+            fp_partial = partial(rr_format_percent, denominator=rr_data.total)
 
             total_responses = 0
             total_possible = 0
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=datetime(int(self.config['year']), int(self.config['month']), 1),
-                org_summary__supply_point=child._id, title='rr_fac'
+                org_summary__supply_point=child._id,
+                title='rr_fac'
             )
+
             for g in group_summaries:
                 if g:
                     total_responses += g.responded
                     total_possible += g.total
-            hist_resp_rate = format_percent(total_responses, total_possible)
-            try:
-                from custom.ilsgateway import RRreport
-                url = html.escape(RRreport.get_url(
-                    domain=self.config['domain']) +
-                    '?location_id=%s&month=%s&year=%s' %
-                    (child._id, self.config['month'], self.config['year']))
-            except KeyError:
-                url = None
+            hist_resp_rate = rr_format_percent(total_responses, total_possible)
+
+            args = (child._id, self.config['month'], self.config['year'])
+            from custom.ilsgateway import RRreport
+            url = make_url(RRreport, self.config['domain'], '?location_id=%s&month=%s&year=%s', args)
 
             rows.append(
                 [
@@ -358,35 +356,40 @@ class RRStatus(ILSData):
                     fp_partial(rr_data.not_submitted),
                     fp_partial(rr_data.not_responding),
                     hist_resp_rate
-                ])
+                ]
+            )
 
         return rows
 
     @property
     def headers(self):
-        return [
-            'Name',
-            '% Facilities Submitting R&R On Time',
-            "% Facilities Submitting R&R Late",
-            "% Facilities With R&R Not Submitted",
-            "% Facilities Not Responding To R&R Reminder",
-            "Historical Response Rate"
-        ]
+        return DataTablesHeader(
+            DataTablesColumn(_('Name')),
+            DataTablesColumn(_('% Facilities Submitting R&R On Time')),
+            DataTablesColumn(_("% Facilities Submitting R&R Late")),
+            DataTablesColumn(_("% Facilities With R&R Not Submitted")),
+            DataTablesColumn(_("% Facilities Not Responding To R&R Reminder")),
+            DataTablesColumn(_("Historical Response Rate"))
+        )
 
 
 class RRReportingHistory(ILSData):
     show_table = True
-    title = "R&R Reporting History"
     slug = "rr_reporting_history"
     show_chart = False
 
+    def __init__(self, config=None, css_class='row_chart'):
+        super(RRReportingHistory, self).__init__(config, css_class)
+        self.config = config or {}
+        self.css_class = css_class
+        month = self.config.get('month')
+        if month:
+            self.title = "R&R Reporting History (Group %s)" % DeliveryGroups(int(month)).current_submitting_group()
+        else:
+            self.title = "R&R Reporting History"
+
     @property
     def rows(self):
-        def format_percent(numerator, denominator):
-            if numerator and denominator:
-                return "%.1f%%" % ((float(numerator) / float(denominator)) * 100.0)
-            else:
-                return "No data"
         rows = []
         location = Location.get(self.config['location_id'])
         dg = DeliveryGroups().submitting(location.children, int(self.config['month']))
@@ -397,62 +400,46 @@ class RRReportingHistory(ILSData):
                 org_summary__date__lte=datetime(int(self.config['year']), int(self.config['month']), 1),
                 org_summary__supply_point=child._id, title='rr_fac'
             )
+
             for g in group_summaries:
                 if g:
                     total_responses += g.responded
                     total_possible += g.total
-            hist_resp_rate = format_percent(total_responses, total_possible)
-            try:
-                from custom.ilsgateway import RRreport
-                url = html.escape(RRreport.get_url(
-                    domain=self.config['domain']) +
-                    '?location_id=%s&month=%s&year=%s' %
-                    (child._id, self.config['month'], self.config['year']))
-            except KeyError:
-                url = None
+            hist_resp_rate = rr_format_percent(total_responses, total_possible)
+            from custom.ilsgateway import FacilityDetailsReport
+            url = make_url(FacilityDetailsReport, self.config['domain'], '?location_id=%s', (child._id, ))
+
             rr_value = randr_value(child._id, int(self.config['month']), int(self.config['year']))
+            contact = get_default_contact_for_location(self.config['domain'], child._id)
 
-            def _default_contact(location_id):
-                users = CommCareUser.by_domain(self.config['domain'])
-                for user in users:
-                    if user.get_domain_membership(self.config['domain']).location_id == location_id:
-                        return user
-                return None
-
-            def get_span(rr_value):
-                if rr_value:
-                    return '<span class="icon-ok" style="color:green"/>%s'
-                else:
-                    return '<span class="icon-warning-sign" style="color:orange"/>%s'
-
-            contact = _default_contact(child._id)
             if contact:
                 role = contact.user_data.get('role') or ""
-                contact_string = "%s %s (%s) %s" % (contact.first_name, contact.last_name, role,
-                                                    contact.default_phone_number)
+                args = (contact.first_name, contact.last_name, role, contact.default_phone_number)
+                contact_string = "%s %s (%s) %s" % args
             else:
                 contact_string = ""
 
             rows.append(
                 [
                     child.site_code,
-                    child.name,
+                    link_format(child.name, url),
                     get_span(rr_value) % (format(rr_value, "d M Y") if rr_value else "Not reported"),
                     contact_string,
                     hist_resp_rate
-                ])
+                ]
+            )
 
         return rows
 
     @property
     def headers(self):
-        return [
-            'Code',
-            'Facility Name',
-            'R&R Status',
-            'Contact',
-            'Historical Response Rate'
-        ]
+        return DataTablesHeader(
+            DataTablesColumn(_('Code')),
+            DataTablesColumn(_('Facility Name')),
+            DataTablesColumn(_('R&R Status')),
+            DataTablesColumn(_('Contact')),
+            DataTablesColumn(_('Historical Response Rate'))
+        )
 
 
 class LeadTimeHistory(ILSData):
@@ -463,10 +450,10 @@ class LeadTimeHistory(ILSData):
 
     @property
     def headers(self):
-        return [
-            'Name',
-            'Average Lead Time In Days'
-        ]
+        return DataTablesHeader(
+            DataTablesColumn(_('Name')),
+            DataTablesColumn(_('Average Lead Time In Days'))
+        )
 
     @property
     def rows(self):
@@ -478,39 +465,47 @@ class LeadTimeHistory(ILSData):
                 org_summary = OrganizationSummary.objects.get(supply_point=child._id, date=date)
             except OrganizationSummary.DoesNotExist:
                 continue
+
             avg_lead_time = org_summary.average_lead_time_in_days
+
             if avg_lead_time:
                 avg_lead_time = "%.1f" % avg_lead_time
             else:
                 avg_lead_time = "None"
 
-            try:
-                from custom.ilsgateway import DeliveryReport
-                url = html.escape(DeliveryReport.get_url(
-                    domain=self.config['domain']) + '?location_id=%s&month=%s&year=%s' %
-                                  (child._id, self.config['month'], self.config['year']))
-            except KeyError:
-                url = None
+            from custom.ilsgateway import DeliveryReport
+            args = (child._id, self.config['month'], self.config['year'])
+            url = make_url(DeliveryReport, self.config['domain'], '?location_id=%s&month=%s&year=%s', args)
+
             rows.append([link_format(child.name, url), avg_lead_time])
         return rows
 
 
 class DeliveryStatus(ILSData):
     show_table = True
-    title = "Delivery Status"
     slug = "delivery_status"
     show_chart = False
 
+    def __init__(self, config=None, css_class='row_chart'):
+        super(DeliveryStatus, self).__init__(config, css_class)
+        self.config = config or {}
+        self.css_class = css_class
+        month = self.config.get('month')
+        if month:
+            self.title = "Delivery Status: Group " + DeliveryGroups(int(month)).current_delivering_group()
+        else:
+            self.title = "Delivery Status"
+
     @property
     def headers(self):
-        return [
-            'Code',
-            'Facility Name',
-            'Delivery Status',
-            'Delivery Date',
-            # 'This Cycle Lead Time',
-            # 'Average Lead Time In Days'
-        ]
+        return DataTablesHeader(
+            DataTablesColumn(_('Code')),
+            DataTablesColumn(_('Facility Name')),
+            DataTablesColumn(_('Delivery Status')),
+            DataTablesColumn(_('Delivery Date')),
+            DataTablesColumn(_('This Cycle Lead Time')),
+            DataTablesColumn(_('Average Lead Time In Days'))
+        )
 
     @property
     def rows(self):
@@ -518,11 +513,34 @@ class DeliveryStatus(ILSData):
         location = Location.get(self.config['location_id'])
         dg = DeliveryGroups().delivering(location.children, int(self.config['month']))
         for child in dg:
-            latest = latest_status_or_none(child._id, SupplyPointStatusTypes.DELIVERY_FACILITY,
-                                           int(self.config['month']), int(self.config['year']))
+            latest = latest_status_or_none(
+                child._id,
+                SupplyPointStatusTypes.DELIVERY_FACILITY,
+                int(self.config['month']),
+                int(self.config['year'])
+            )
             status_name = latest.name if latest else ""
             status_date = format(latest.status_date, "d M Y") if latest else "None"
-            rows.append([child.site_code, child.name, status_name, status_date])
+
+            from custom.ilsgateway import FacilityDetailsReport
+            url = make_url(FacilityDetailsReport, self.config['domain'], '?location_id=%s', (child._id, ))
+
+            cycle_lead_time = get_this_lead_time(
+                child._id,
+                int(self.config['month']),
+                int(self.config['year'])
+            )
+            avg_lead_time = get_avg_lead_time(child._id, int(self.config['month']), int(self.config['year']))
+            rows.append(
+                [
+                    child.site_code,
+                    link_format(child.name, url),
+                    status_name,
+                    status_date,
+                    cycle_lead_time,
+                    avg_lead_time
+                ]
+            )
         return rows
 
 

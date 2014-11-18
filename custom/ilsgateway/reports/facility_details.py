@@ -1,12 +1,8 @@
-from datetime import datetime, timedelta
-from casexml.apps.stock.models import StockTransaction
-from django.template.loader import render_to_string
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.reports import ILSData
 from custom.ilsgateway.reports.base_report import MultiReport
 from dimagi.utils.decorators.memoized import memoized
