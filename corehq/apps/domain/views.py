@@ -1531,6 +1531,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         return app_forms
 
     @property
+    @memoized
+    def published_fixtures(self):
+        return [f.copy_from for f in FixtureDataType.by_domain(self.published_snapshot._id)]
+
+    @property
     def fixture_forms(self):
         fixture_forms = []
         for fixture in FixtureDataType.by_domain(self.domain_object.name):
@@ -1542,8 +1547,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 fixture_forms.append((fixture,
                                   SnapshotFixtureForm(
                                       initial={
-                                          'publish': (self.published_snapshot is None
-                                                      or self.published_snapshot == self.domain_object)
+                                          'publish': (self.published_snapshot == self.domain_object
+                                                      or fixture._id in self.published_fixtures)
                                       }, prefix=fixture._id)))
 
         return fixture_forms

@@ -767,6 +767,9 @@ class Domain(Document, SnapshotMixin):
 
             new_doc.domain = new_domain_name
 
+            if doc_type == 'FixtureDataType':
+                new_doc.copy_from = id
+
         if self.is_snapshot and doc_type == 'Application':
             new_doc.prepare_multimedia_for_exchange()
 
