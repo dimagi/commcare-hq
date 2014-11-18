@@ -3,7 +3,8 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from corehq.apps.commtrack.models import Product, SQLProduct, StockState
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.products.models import Product
 from dimagi.utils.couch.database import iter_docs
 
 class Migration(DataMigration):

@@ -15,7 +15,7 @@ from django.utils.html import escape
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.utils import get_current_ledger_transactions
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 
 register = template.Library()
 
@@ -43,12 +43,12 @@ def render_case(case, options):
     Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
     Change to kwargs when we're on a version of Django that does.
     """
-    # todo: what are these doing here?
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_definition
     case = wrapped_case(case)
     timezone = options.get('timezone', pytz.utc)
     _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
     display = options.get('display') or case.get_display_config()
+    show_transaction_export = options.get('show_transaction_export') or False
     get_case_url = options['get_case_url']
 
     data = copy.deepcopy(case.to_full_dict())
@@ -79,7 +79,9 @@ def render_case(case, options):
     actions = case.to_json()['actions']
     actions.reverse()
 
-    tz_abbrev = timezone.localize(datetime.datetime.now()).tzname()
+    the_time_is_now = datetime.datetime.now()
+    tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
+    tz_abbrev = timezone.localize(the_time_is_now).tzname()
 
     # ledgers
     def _product_name(product_id):
@@ -114,6 +116,8 @@ def render_case(case, options):
             "timezone": timezone
         },
         "ledgers": ledgers,
+        "timezone_offset": tz_offset_ms,
+        "show_transaction_export": show_transaction_export,
     })
 
 

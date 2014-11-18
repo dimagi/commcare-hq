@@ -108,6 +108,3 @@ def save(transform, database):
 def get_deleted_doc_rev(database, id):
     # strange couch voodoo magic for deleted docs
     return database.get(id, open_revs="all")[0]['ok']['_rev']
-
-
-global_config = DomainSyncConfig()

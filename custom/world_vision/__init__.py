@@ -1,6 +1,7 @@
 from custom.world_vision.reports.child_report import ChildTTCReport
 from custom.world_vision.reports.mixed_report import MixedTTCReport
 from custom.world_vision.reports.mother_report import MotherTTCReport
+from collections import OrderedDict
 
 DEFAULT_REPORT_CLASS = MixedTTCReport
 
@@ -14,14 +15,14 @@ CUSTOM_REPORTS = (
     )),
 )
 
-REASON_FOR_CLOSURE_MAPPING = {
-    'change_of_location': 'Migration',
-    'end_of_pregnancy': 'End of care (Postpartum Completed)',
-    'not_pregnant': 'Not Pregnant (mostly  incorrect registrations)',
-    'abortion': 'Abortion',
-    'death': 'Death',
-    'unknown': 'Unknown'
-}
+REASON_FOR_CLOSURE_MAPPING = OrderedDict((
+    ('change_of_location', 'Migration'),
+    ('end_of_pregnancy', 'End of care (Postpartum Completed)'),
+    ('not_pregnant', 'Not Pregnant (mostly  incorrect registrations)'),
+    ('abortion', 'Abortion'),
+    ('death', 'Death'),
+    ('unknown', 'Unknown')
+))
 
 CLOSED_CHILD_CASES_BREAKDOWN = {
     'death': 'Death',
@@ -44,18 +45,18 @@ CHILD_DEATH_TYPE = {
     'child_death': 'Child deaths (> 1yr)'
 }
 
-CHILD_CAUSE_OF_DEATH = {
-    'ari': 'ARI',
-    'fever': 'Fever',
-    'dysentery': 'Dysentery or diarrhea',
-    'injury': 'Injury or accident',
-    'malnutrition': 'Malnutrition',
-    'cholera': 'Cholera',
-    'measles': 'Measles',
-    'meningitis': 'Meningitis',
-    'other': 'Other',
-    'unknown': 'Unknown'
-}
+CHILD_CAUSE_OF_DEATH = OrderedDict((
+    ('ari', 'ARI'),
+    ('fever', 'Fever'),
+    ('dysentery', 'Dysentery or diarrhea'),
+    ('injury', 'Injury or accident'),
+    ('malnutrition', 'Malnutrition'),
+    ('cholera', 'Cholera'),
+    ('measles', 'Measles'),
+    ('meningitis', 'Meningitis'),
+    ('other', 'Other'),
+    ('', 'Unknown')
+))
 
 FAMILY_PLANNING_METHODS = {
     'condom': 'Condom',
@@ -120,7 +121,7 @@ MOTHER_INDICATOR_TOOLTIPS = {
         "abortions": "Number of reported abortions"
     },
     "postnatal_care_details": {
-        "pnc_1": "delivery within 48 hrs",
+        "pnc_1": "Mothers visited by Front Line Worker within 48 hours of delivery",
         "pnc_2": "Mothers visited by Front Line Worker within 2-4 days of delivery",
         "pnc_3": "Mothers visited by Front Line Worker within 5-7 days of delivery",
         "pnc_4": "Mothers visited by Front Line Worker within 21-42 days of delivery",
@@ -157,7 +158,8 @@ CHILD_INDICATOR_TOOLTIPS = {
         "vita2_eligible": "Children more than  18 months old",
         "dpt_opv_booster_eligible": "Children more than  18 months old",
         "vita3_eligible": "Children more than  23 months old",
-        "fully_immunized": "Children more than  9 months old"
+        "fully_immunized": "Children who received all vaccines from BCG to Measles",
+        "fully_immunized_eligible": "Children more than 9 months old"
     },
     "nutrition_details": {
         "colostrum_feeding": "Children who had colostrum milk within 1 hour of birth",

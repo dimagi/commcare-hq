@@ -1,5 +1,5 @@
 {% extends "reports_core/filters/filter_base.html" %}
-{% block controls %}
+{% block filter-controls %}
     <select name="{{ filter.name }}">
         {% for choice in filter.choices %}
             <option value="{{ choice.value }}">{{ choice.display }}</option>

@@ -156,7 +156,7 @@
                             "advanced": "",
                             "enum": {},
                             "field": "filter",
-                            "filter_xpath": ". = 'danny'",
+                            "filter_xpath": "",
                             "format": "filter",
                             "header": {
                                 "en": "Filter"
@@ -193,6 +193,7 @@
                         }
                     ],
                     "doc_type": "Detail",
+                    "filter": "(filter = 'danny')",
                     "type": "case_short"
                 },
                 {
@@ -299,7 +300,7 @@
                             "advanced": "",
                             "enum": {},
                             "field": "filter",
-                            "filter_xpath": ". = 'danny'",
+                            "filter_xpath": "",
                             "format": "filter",
                             "header": {
                                 "en": "Filter"

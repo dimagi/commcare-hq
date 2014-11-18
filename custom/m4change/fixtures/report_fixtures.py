@@ -29,7 +29,7 @@ def get_last_month():
 def get_last_day_of_month(month_start, today):
     return today.day if month_start.month == today.month else calendar.monthrange(month_start.year, month_start.month)[1]
 
-def generator(user, version, last_sync):
+def generator(user, version, case_sync_op=None, last_sync=None):
     if user.domain in M4CHANGE_DOMAINS:
         domain = Domain.get_by_name(user.domain)
         location_id = get_commtrack_location_id(user, domain)

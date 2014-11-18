@@ -65,7 +65,7 @@ class VhndMonthly(fluff.Calculator):
             if form.xmlns == BIRTH_PREP_XMLNS and is_equals(form, "pregnancy_month_%s", "attendance_vhnd_%s"):
                 yield case_date_group(form)
                 break
-            elif form.xmlns in CHILDREN_FORMS and form.form['child_1']['child1_attendance_vhnd'] == 1:
+            elif form.xmlns in CHILDREN_FORMS and form.xpath('form/child_1/child1_attendance_vhnd') == 1:
                 yield case_date_group(form)
                 break
 

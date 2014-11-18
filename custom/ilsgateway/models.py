@@ -2,11 +2,15 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
 from django.db import models
+from corehq.apps.products.models import Product
+from corehq.apps.locations.models import SQLLocation
+from dimagi.utils.dates import force_to_datetime
 
 
-class ILSMigrationCheckpoint(models.Model):
+class LogisticsMigrationCheckpoint(models.Model):
     domain = models.CharField(max_length=100)
     date = models.DateTimeField(null=True)
+    start_date = models.DateTimeField(null=True)
     api = models.CharField(max_length=100)
     limit = models.PositiveIntegerField()
     offset = models.PositiveIntegerField()
@@ -54,6 +58,8 @@ class ILSGatewayConfig(Document):
                                             doc_type='ILSGatewayConfig')
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L68
 class SupplyPointStatusValues(object):
     RECEIVED = "received"
     NOT_RECEIVED = "not_received"
@@ -65,6 +71,8 @@ class SupplyPointStatusValues(object):
                NOT_SUBMITTED, REMINDER_SENT, ALERT_SENT]
 
 
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L78
 class SupplyPointStatusTypes(object):
     DELIVERY_FACILITY = "del_fac"
     DELIVERY_DISTRICT = "del_dist"
@@ -80,8 +88,8 @@ class SupplyPointStatusTypes(object):
                             SupplyPointStatusValues.RECEIVED: "Delivery received",
                             SupplyPointStatusValues.NOT_RECEIVED: "Delivery Not Received"},
         DELIVERY_DISTRICT: {SupplyPointStatusValues.REMINDER_SENT: "Waiting Delivery Confirmation",
-                           SupplyPointStatusValues.RECEIVED: "Delivery received",
-                           SupplyPointStatusValues.NOT_RECEIVED: "Delivery not received"},
+                            SupplyPointStatusValues.RECEIVED: "Delivery received",
+                            SupplyPointStatusValues.NOT_RECEIVED: "Delivery not received"},
         R_AND_R_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Waiting R&R sent confirmation",
                            SupplyPointStatusValues.SUBMITTED: "R&R Submitted From Facility to District",
                            SupplyPointStatusValues.NOT_SUBMITTED: "R&R Not Submitted"},
@@ -92,8 +100,12 @@ class SupplyPointStatusTypes(object):
         SUPERVISION_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Supervision Reminder Sent",
                                SupplyPointStatusValues.RECEIVED: "Supervision Received",
                                SupplyPointStatusValues.NOT_RECEIVED: "Supervision Not Received"},
-        LOSS_ADJUSTMENT_FACILITY: {SupplyPointStatusValues.REMINDER_SENT: "Lost/Adjusted Reminder sent to Facility"},
-        DELINQUENT_DELIVERIES: {SupplyPointStatusValues.ALERT_SENT: "Delinquent deliveries summary sent to District"},
+        LOSS_ADJUSTMENT_FACILITY: {
+            SupplyPointStatusValues.REMINDER_SENT: "Lost/Adjusted Reminder sent to Facility"
+        },
+        DELINQUENT_DELIVERIES: {
+            SupplyPointStatusValues.ALERT_SENT: "Delinquent deliveries summary sent to District"
+        },
     }
 
     @classmethod
@@ -105,6 +117,7 @@ class SupplyPointStatusTypes(object):
         return type in cls.CHOICE_MAP and value in cls.CHOICE_MAP[type]
 
 
+# Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L124
 class SupplyPointStatus(models.Model):
     status_type = models.CharField(choices=((k, k) for k in SupplyPointStatusTypes.CHOICE_MAP.keys()),
                                    max_length=50)
@@ -112,10 +125,11 @@ class SupplyPointStatus(models.Model):
                                     choices=((c, c) for c in SupplyPointStatusValues.CHOICES))
     status_date = models.DateTimeField(default=datetime.utcnow)
     supply_point = models.CharField(max_length=100, db_index=True)
+    external_id = models.PositiveIntegerField(null=True, db_index=True)
 
     def save(self, *args, **kwargs):
         if not SupplyPointStatusTypes.is_legal_combination(self.status_type, self.status_value):
-            raise ValueError("%s and %s is not a legal value combination" % \
+            raise ValueError("%s and %s is not a legal value combination" %
                              (self.status_type, self.status_value))
         super(SupplyPointStatus, self).save(*args, **kwargs)
 
@@ -126,6 +140,13 @@ class SupplyPointStatus(models.Model):
     def name(self):
         return SupplyPointStatusTypes.get_display_name(self.status_type, self.status_value)
 
+    @classmethod
+    def wrap_from_json(cls, obj, location_id):
+        obj['supply_point'] = location_id
+        obj['external_id'] = obj['id']
+        del obj['id']
+        return cls(**obj)
+
     class Meta:
         verbose_name = "Facility Status"
         verbose_name_plural = "Facility Statuses"
@@ -133,13 +154,282 @@ class SupplyPointStatus(models.Model):
         ordering = ('-status_date',)
 
 
+# Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L170
 class DeliveryGroupReport(models.Model):
     supply_point = models.CharField(max_length=100, db_index=True)
     quantity = models.IntegerField()
-    report_date = models.DateTimeField(auto_now_add=True, default=datetime.now())
+    report_date = models.DateTimeField(default=datetime.now())
     message = models.CharField(max_length=100, db_index=True)
     delivery_group = models.CharField(max_length=1)
+    external_id = models.PositiveIntegerField(null=True, db_index=True)
 
     class Meta:
         ordering = ('-report_date',)
 
+    @classmethod
+    def wrap_from_json(cls, obj, location_id):
+        obj['supply_point'] = location_id
+        obj['external_id'] = obj['id']
+        del obj['id']
+        return cls(**obj)
+
+
+# Ported from: https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L170
+# https://github.com/dimagi/rapidsms-logistics/blob/master/logistics/warehouse_models.py#L14
+class ReportingModel(models.Model):
+    """
+    A model to encapsulate aggregate (data warehouse) data used by a report.
+    """
+    date = models.DateTimeField()                   # viewing time period
+    supply_point = models.CharField(max_length=100, db_index=True)
+    create_date = models.DateTimeField(editable=False)
+    update_date = models.DateTimeField(editable=False)
+    external_id = models.PositiveIntegerField(db_index=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.create_date = datetime.utcnow()
+        self.update_date = datetime.utcnow()
+        super(ReportingModel, self).save(*args, **kwargs)
+
+    class Meta:
+        abstract = True
+
+
+# Ported from: https://github.com/dimagi/rapidsms-logistics/blob/master/logistics/warehouse_models.py#L44
+class SupplyPointWarehouseRecord(models.Model):
+    """
+    When something gets updated in the warehouse, create a record of having
+    done that.
+    """
+    supply_point = models.CharField(max_length=100, db_index=True)
+    create_date = models.DateTimeField()
+
+
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L9
+class OrganizationSummary(ReportingModel):
+    total_orgs = models.PositiveIntegerField(default=0)
+    average_lead_time_in_days = models.FloatField(default=0)
+
+    def __unicode__(self):
+        return "%s: %s/%s" % (self.supply_point, self.date.month, self.date.year)
+
+
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L16
+class GroupSummary(models.Model):
+    """
+    Warehouse data related to a particular category of reporting
+    (e.g. stock on hand summary)
+    """
+    org_summary = models.ForeignKey('OrganizationSummary')
+    title = models.CharField(max_length=50, blank=True, null=True)  # SOH
+    total = models.PositiveIntegerField(default=0)
+    responded = models.PositiveIntegerField(default=0)
+    on_time = models.PositiveIntegerField(default=0)
+    complete = models.PositiveIntegerField(default=0)  # "complete" = submitted or responded
+    external_id = models.PositiveIntegerField(db_index=True, null=True)
+
+    @classmethod
+    def wrap_form_json(cls, obj, location_id):
+        org_summary_id = obj['org_summary']['id']
+        del obj['org_summary']['id']
+        obj['org_summary']['external_id'] = org_summary_id
+        obj['org_summary']['supply_point'] = location_id
+        obj['org_summary']['create_date'] = force_to_datetime(obj['org_summary']['create_date'])
+        obj['org_summary']['update_date'] = force_to_datetime(obj['org_summary']['update_date'])
+        obj['org_summary']['date'] = force_to_datetime(obj['org_summary']['date'])
+        try:
+            obj['org_summary'] = OrganizationSummary.objects.get(external_id=org_summary_id)
+        except OrganizationSummary.DoesNotExist:
+            obj['org_summary'] = OrganizationSummary.objects.create(**obj['org_summary'])
+        obj['external_id'] = obj['id']
+        del obj['id']
+        return cls(**obj)
+
+    @property
+    def late(self):
+        return self.complete - self.on_time
+
+    @property
+    def not_responding(self):
+        return self.total - self.responded
+
+    def is_delivery_or_supervision_facility(self):
+        return self.title in [SupplyPointStatusTypes.DELIVERY_FACILITY,
+                              SupplyPointStatusTypes.SUPERVISION_FACILITY]
+
+    @property
+    def received(self):
+        assert self.is_delivery_or_supervision_facility()
+        return self.complete
+
+    @property
+    def not_received(self):
+        assert self.title in self.is_delivery_or_supervision_facility()
+        return self.responded - self.complete
+
+    @property
+    def sup_received(self):
+        assert self.title in SupplyPointStatusTypes.SUPERVISION_FACILITY
+        return self.complete
+
+    @property
+    def sup_not_received(self):
+        assert self.title == SupplyPointStatusTypes.SUPERVISION_FACILITY
+        return self.responded - self.complete
+
+    @property
+    def del_received(self):
+        assert self.title == SupplyPointStatusTypes.DELIVERY_FACILITY
+        return self.complete
+
+    @property
+    def del_not_received(self):
+        assert self.title == SupplyPointStatusTypes.DELIVERY_FACILITY
+        return self.responded - self.complete
+
+    @property
+    def not_submitted(self):
+        assert self.title in [SupplyPointStatusTypes.SOH_FACILITY,
+                              SupplyPointStatusTypes.R_AND_R_FACILITY]
+        return self.responded - self.complete
+
+    def __unicode__(self):
+        return "%s - %s" % (self.org_summary, self.title)
+
+
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L78
+class ProductAvailabilityData(ReportingModel):
+    product = models.CharField(max_length=100, db_index=True)
+    total = models.PositiveIntegerField(default=0)
+    with_stock = models.PositiveIntegerField(default=0)
+    without_stock = models.PositiveIntegerField(default=0)
+    without_data = models.PositiveIntegerField(default=0)
+
+    @classmethod
+    def wrap_from_json(cls, obj, domain, location_id):
+        product = Product.get_by_code(domain, obj['product'])
+        obj['product'] = product._id
+        obj['supply_point'] = location_id
+        obj['external_id'] = obj['id']
+        del obj['id']
+        return cls(**obj)
+
+
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L85
+class ProductAvailabilityDashboardChart(object):
+    label_color = {
+        "Stocked out": "#a30808",
+        "Not Stocked out": "#7aaa7a",
+        "No Stock Data": "#efde7f"
+    }
+    width = 900
+    height = 300
+    div = "product_availability_summary_plot_placeholder"
+    legenddiv = "product_availability_summary_legend"
+    xaxistitle = "Products"
+    yaxistitle = "Facilities"
+
+
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L97
+class Alert(ReportingModel):
+    type = models.CharField(max_length=50, blank=True, null=True)
+    number = models.PositiveIntegerField(default=0)
+    text = models.TextField()
+    url = models.CharField(max_length=100, blank=True, null=True)
+    expires = models.DateTimeField()
+
+
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/models.py#L11
+class DeliveryGroups(object):
+    """
+        There are three delivery groups of facilities: A, B, C.
+        Every month groups have different roles starting from the state below.
+        Submitting group: January = A
+        Processing group: January = C
+        Delivering group: January = B
+        Next month A will be changed to B, B to C and C to B.
+    """
+
+    GROUPS = ('A', 'B', 'C')
+
+    def __init__(self, month=None, facs=None):
+        self.month = month if month else datetime.utcnow().month
+        self.facs = facs
+
+    def current_submitting_group(self, month=None):
+        month = month if month else self.month
+        return self.GROUPS[(month + 2) % 3]
+
+    def current_processing_group(self, month=None):
+        month = month if month else self.month
+        return self.current_submitting_group(month=(month + 2))
+
+    def current_delivering_group(self, month=None):
+        month = month if month else self.month
+        return self.current_submitting_group(month=(month + 1))
+
+    def delivering(self, facs=None, month=None):
+        if not facs:
+            facs = self.facs
+        if not facs:
+            return []
+        return filter(lambda f: self.current_delivering_group(month) in f.metadata.get('groups', []), facs)
+
+    def processing(self, facs=None, month=None):
+        if not facs:
+            facs = self.facs
+        if not facs:
+            return []
+        return filter(lambda f: self.current_processing_group(month) in f.metadata.get('groups', []), facs)
+
+    def submitting(self, facs=None, month=None):
+        if not facs:
+            facs = self.facs
+        if not facs:
+            return []
+        return filter(lambda f: self.current_submitting_group(month) in f.metadata.get('groups', []), facs)
+
+
+# Ported from:
+# https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L97
+class ReportRun(models.Model):
+    """
+    Log of whenever the warehouse models get updated.
+    """
+    start = models.DateTimeField()  # the start of the period covered (from a data perspective)
+    end = models.DateTimeField()   # the end of the period covered (from a data perspective)
+    start_run = models.DateTimeField()        # when this started
+    end_run = models.DateTimeField(null=True)  # when this finished
+    complete = models.BooleanField(default=False)
+    has_error = models.BooleanField(default=False)
+    domain = models.CharField(max_length=60)
+
+    @classmethod
+    def last_success(cls, domain):
+        """
+        The last successful execution of a report, or None if no records found.
+        """
+        qs = cls.objects.filter(complete=True, has_error=False, domain=domain)
+        return qs.order_by("-start_run")[0] if qs.count() else None
+
+
+class HistoricalLocationGroup(models.Model):
+    location_id = models.ForeignKey(SQLLocation)
+    date = models.DateField()
+    group = models.CharField(max_length=1)
+
+    class Meta:
+        unique_together = ('location_id', 'date', 'group')
+
+
+class RequisitionReport(models.Model):
+    location_id = models.CharField(max_length=100, db_index=True)
+    submitted = models.BooleanField(default=False)
+    report_date = models.DateTimeField(default=datetime.utcnow)

@@ -1,8 +1,9 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, AutoSelectCase, AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-    LoadUpdateAction, AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, WORKFLOW_PREVIOUS, Module, \
-    AdvancedModule
+from corehq.apps.app_manager.models import (Application, AutoSelectCase,
+    AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
+    AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
+    Module, AdvancedModule)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -29,7 +30,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def _test_generic_suite(self, app_tag, suite_tag=None):
         suite_tag = suite_tag or app_tag
         app = Application.wrap(self.get_json(app_tag))
-        # print app.create_suite()
         self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
     def _test_app_strings(self, app_tag):
@@ -80,12 +80,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_advanced_suite_case_list_filter(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         clinic_module = app.get_module(0)
-        clinic_module.case_details.short.columns.append(DetailColumn(
-            header={"en": "Filter"},
-            format='filter',
-            filter_xpath=". = 'danny'",
-            field='filter'
-        ))
+        clinic_module.case_details.short.filter = "(filter = 'danny')"
         clinic_module_id = clinic_module.unique_id
         app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
@@ -156,6 +151,51 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
+
+    def test_schedule(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        mod = app.get_module(1)
+        mod.has_schedule = True
+        f1 = mod.get_form(0)
+        f2 = mod.get_form(1)
+        f3 = mod.get_form(2)
+        f1.schedule = FormSchedule(
+            anchor='edd',
+            expires=120,
+            post_schedule_increment=15,
+            visits=[
+                ScheduleVisit(due=5, late_window=4),
+                ScheduleVisit(due=10, late_window=9),
+                ScheduleVisit(due=20, late_window=5)
+            ]
+        )
+
+        f2.schedule = FormSchedule(
+            anchor='dob',
+            visits=[
+                ScheduleVisit(due=7, late_window=4),
+                ScheduleVisit(due=15)
+            ]
+        )
+
+        f3.schedule = FormSchedule(
+            anchor='dob',
+            visits=[
+                ScheduleVisit(due=9, late_window=1),
+                ScheduleVisit(due=11)
+            ]
+        )
+        mod.case_details.short.columns.append(
+            DetailColumn(
+                header={'en': 'Next due'},
+                model='case',
+                field='schedule:nextdue',
+                format='plain',
+            )
+        )
+        suite = app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('schedule-fixture'), suite, './fixture')
+        self.assertXmlPartialEqual(self.get_xml('schedule-entry'), suite, "./detail[@id='m1_case_short']")
 
     def test_picture_format(self):
         self._test_generic_suite('app_picture_format', 'suite-picture-format')
@@ -236,6 +276,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         child_form.requires = 'case'
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
+
+    def test_graphing(self):
+        self._test_generic_suite('app_graphing', 'suite-graphing')
 
 
 class RegexTest(SimpleTestCase):

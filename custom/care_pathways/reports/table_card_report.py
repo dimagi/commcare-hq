@@ -9,7 +9,7 @@ class TableCardReport(CareBaseReport):
     name = 'Table Report Card'
     slug = 'table_card_report'
     report_title = 'Table Report Card'
-    report_template_path = "care_pathways/multi_report.html"
+    report_template_path = "care_pathways/table_card_report.html"
 
     @property
     @memoized
@@ -20,11 +20,9 @@ class TableCardReport(CareBaseReport):
             table_card_group_by= self.request.GET.get('group_by', ''),
         ))
 
-        return [
-                TableCardSqlData(self.domain, config, self.request_params),
+        return [TableCardSqlData(self.domain, config, self.request_params),
                 TableCardReportGrouppedPercentSqlData(self.domain, config, self.request_params),
-                TableCardReportIndividualPercentSqlData(self.domain, config, self.request_params)
-        ]
+                TableCardReportIndividualPercentSqlData(self.domain, config, self.request_params)]
 
     @property
     def report_context(self):
@@ -79,30 +77,28 @@ class TableCardReport(CareBaseReport):
     @property
     def fields(self):
         filters = [GeographyFilter,
-              TableCardGroupByFilter,
-              PPTYearFilter,
-              TableCardTypeFilter,
-              GenderFilter,
-              GroupLeadershipFilter,
-              CBTNameFilter,
-              ]
+                   PPTYearFilter,
+                   GenderFilter,
+                   GroupLeadershipFilter,
+                   CBTNameFilter]
         if self.domain == 'pathways-india-mis':
             filters.append(ScheduleFilter)
+        filters.append(TableCardTypeFilter)
+        filters.append(TableCardGroupByFilter)
         return filters
 
     def get_chart(self, rows, columns, x_label, y_label):
-        chart = MultiBarChart('% of Groups Receiving Grades', x_axis=Axis(x_label), y_axis=Axis(y_label))
-        chart.forceY = [0, 100]
-        chart.height = 700
-        chart.rotateLabels = -90
-        chart.marginBottom = 390
+        chart = MultiBarChart('% of Groups Receiving Grades', x_axis=Axis(x_label), y_axis=Axis(y_label, '.0%'))
+        chart.height = 400
+        chart.rotateLabels = -60
+        chart.marginBottom = 90
         chart.marginLeft = 100
         self._chart_data(chart, columns, rows)
         return [chart]
 
     def _chart_data(self, chart, columns, rows):
         def p2f(column):
-            return float(column.strip('%'))
+            return float(column.strip('%')) / 100.0
 
         if rows:
             charts = [[], [], [], []]

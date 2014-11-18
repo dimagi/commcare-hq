@@ -10,11 +10,19 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/less/bootstrap.less' %}" />
+                  href="{% new_static 'style/less/bootstrap.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+                  href="{% new_static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/font-commcare.less' %}" />
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/style.less' %}" />
         {% endcompress %}
 
         {% compress css %}
@@ -50,6 +58,8 @@
                 <nav class="collapse navbar-collapse" role="navigation">
                     <ul class="nav navbar-nav">
                         <li><a href="{% url 'styleguide_forms' %}">Forms</a></li>
+                        <li><a href="{% url 'styleguide_icons' %}">Icons</a></li>
+                        <li><a href="{% url 'styleguide_colors' %}">Colors</a></li>
                     </ul>
                 </nav>
             </div>

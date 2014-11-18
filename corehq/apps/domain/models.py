@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from itertools import imap
 import hashlib
 import json
 import logging
@@ -11,8 +12,9 @@ from couchdbkit.ext.django.schema import (
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.cache import cache
-from corehq.apps.appstore.models import Review, SnapshotMixin
+from corehq.apps.appstore.models import SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -512,16 +514,18 @@ class Domain(Document, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
+
         cache_key = _domain_cache_key(name)
-        MISSING = object()
-        res = cache.get(cache_key, MISSING)
-        if res != MISSING:
-            return res
-        else:
-            domain = cls._get_by_name(name, strict)
-            # 30 mins, so any unforeseen invalidation bugs aren't too bad.
-            cache.set(cache_key, domain, 30*60)
-            return domain
+        if not strict:
+            MISSING = object()
+            res = cache.get(cache_key, MISSING)
+            if res != MISSING:
+                return res
+
+        domain = cls._get_by_name(name, strict)
+        # 30 mins, so any unforeseen invalidation bugs aren't too bad.
+        cache.set(cache_key, domain, 30*60)
+        return domain
 
     @classmethod
     def _get_by_name(cls, name, strict=False):
@@ -595,9 +599,15 @@ class Domain(Document, SnapshotMixin):
 
     @classmethod
     def get_all(cls, include_docs=True):
-        # todo: this should use iter_docs
-        return Domain.view("domain/not_snapshots",
-                            include_docs=include_docs).all()
+        domains = Domain.view("domain/not_snapshots", include_docs=False).all()
+        if not include_docs:
+            return domains
+        else:
+            return imap(cls, iter_docs(cls.get_db(), [d['id'] for d in domains]))
+
+    @classmethod
+    def get_all_names(cls):
+        return [d['key'] for d in Domain.get_all(include_docs=False)]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
@@ -899,31 +909,6 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.hqmedia.utils import most_restrictive
         licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check) if m.license]
         return most_restrictive(licenses)
-
-    @classmethod
-    def popular_sort(cls, domains):
-        sorted_list = []
-        MIN_REVIEWS = 1.0
-
-        domains = [(domain, Review.get_average_rating_by_app(domain.copied_from._id), Review.get_num_ratings_by_app(domain.copied_from._id)) for domain in domains]
-        domains = [(domain, avg or 0.0, num or 0) for domain, avg, num in domains]
-
-        total_average_sum = sum(avg for domain, avg, num in domains)
-        total_average_count = len(domains)
-        if not total_average_count:
-            return []
-        total_average = (total_average_sum / total_average_count)
-
-        for domain, average_rating, num_ratings in domains:
-            if num_ratings == 0:
-                sorted_list.append((0.0, domain))
-            else:
-                weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
-                sorted_list.append((weighted_rating, domain))
-
-        sorted_list = [domain for weighted_rating, domain in sorted(sorted_list, key=lambda domain: domain[0], reverse=True)]
-
-        return sorted_list
 
     @classmethod
     def hit_sort(cls, domains):

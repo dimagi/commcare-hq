@@ -123,7 +123,7 @@ var charts = (function() {
                 for (j = 0; j < config.y_axis_columns.length; j++) {
                     record = valuesDict[config.y_axis_columns[j]];
                     record.values.push({
-                        x: current[config.x_axis_column],
+                        x: current[config.x_axis_column] || '',
                         y: current[config.y_axis_columns[j]]
                     });
                 }

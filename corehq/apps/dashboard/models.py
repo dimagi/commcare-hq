@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from corehq import Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized
@@ -51,6 +52,7 @@ class Tile(object):
         """
         tile_context = {
             'slug': self.tile_config.slug,
+            'helpText': self.tile_config.help_text,
         }
         tile_context.update(self.context_processor.context)
         return tile_context
@@ -62,7 +64,8 @@ class TileConfiguration(object):
 
     def __init__(self, title, slug, icon, context_processor_class,
                  url=None, urlname=None, is_external_link=False,
-                 visibility_check=None, url_generator=None):
+                 visibility_check=None, url_generator=None,
+                 help_text=None):
         """
         :param title: The title of the tile
         :param slug: The tile's slug
@@ -76,6 +79,7 @@ class TileConfiguration(object):
         user.
         :param url_generator: a labmda that accepts a request and returns
         a string that is the url the tile will take the user to if it's clicked
+        :param help_text: (optional) text that will appear on hover of tile
         """
         if not issubclass(context_processor_class, BaseTileContextProcessor):
             raise TileConfigurationError(
@@ -91,6 +95,7 @@ class TileConfiguration(object):
         self.visibility_check = (visibility_check
                                  or self._default_visibility_check)
         self.url_generator = url_generator or self._default_url_generator
+        self.help_text = help_text
 
     @property
     def ng_directive(self):
@@ -280,6 +285,7 @@ class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
 class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     """Generates the Paginated context for the Applications Tile.
     """
+
     @property
     def total(self):
         # todo: optimize this at some point. unfortunately applications_brief

@@ -9,7 +9,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, Product, StockState
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, RequisitionCase, StockState
+from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
@@ -162,7 +163,7 @@ class CommTrackSubmissionTest(CommTrackTest):
     def setUp(self):
         super(CommTrackSubmissionTest, self).setUp()
         self.user = self.users[0]
-        loc2 = make_loc('loc1')
+        loc2 = make_loc('loc2')
         self.sp2 = make_supply_point(self.domain.name, loc2)
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

@@ -16,17 +16,23 @@ function format_date(isodatestring) {
     }
     //parse nad format the date timestamps - seconds since epoch into date object
     var date = new Date(isodatestring.split('+')[0]);
+
+    // Get the TZ offset based the project's timezone and create a new date
+    // object with that as it's "UTC" date
+    var _configuredTZOffset = CASE_DETAILS.timezone_offset;
+    date = new Date(date.getTime() + _configuredTZOffset);
+
     // hours part from the timestamp
-    var hours = pad_zero(date.getHours());
+    var hours = pad_zero(date.getUTCHours());
     // minutes part from the timestamp
-    var minutes = pad_zero(date.getMinutes());
+    var minutes = pad_zero(date.getUTCMinutes());
 
     // seconds part from the timestamp
-    var seconds = pad_zero(date.getSeconds());
+    var seconds = pad_zero(date.getUTCSeconds());
 
-    var year = date.getFullYear();
-    var month = date.getMonth() + 1;
-    var day = date.getDate();
+    var year = date.getUTCFullYear();
+    var month = date.getUTCMonth() + 1;
+    var day = date.getUTCDate();
 
     //return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + second_str;
     //return  year + '/' + month + '/' + day;

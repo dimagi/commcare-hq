@@ -13,6 +13,13 @@ class ReportDataSource(object):
         """
         self.config = config
 
+    def configure(self, config):
+        """
+        :param config: dictionary containing configuration for this data source.
+         Overrides any config supplied to the constructor.
+        """
+        self.config = config
+
     def slugs(self):
         """
         Intention: Override

@@ -20,6 +20,9 @@ function HQReportDataTables(options) {
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
+    // a list of functions to call back to after ajax.
+    // see user configurable charts for an example usage
+    self.extraCallbacks = options.extraCallbacks;
     self.datatable = null;
     self.rendered = false;
 
@@ -100,19 +103,24 @@ function HQReportDataTables(options) {
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
                     var custom_callback = function(data) {
                         var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
+                        var i;
                         if ('total_row' in data) {
                             self.render_footer_row('ajax_total_row', data['total_row']);
                         }
                         if ('statistics_rows' in data) {
-                            for (var i = 0; i < data['statistics_rows'].length; i++){
-                               self.render_footer_row('ajax_stat_row-' + i, data['statistics_rows'][i]);
+                            for (i = 0; i < data.statistics_rows.length; i++){
+                               self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                             }
                         }
                         applyBootstrapMagic();
                         if ('context' in data){
                             load(data['context'], ICON_PATH);
                         }
-
+                        if (self.extraCallbacks) {
+                            for (i = 0; i < self.extraCallbacks.length; i++) {
+                                self.extraCallbacks[i](data);
+                            }
+                        }
                         return result
                     };
 

@@ -1,8 +1,8 @@
-from sqlagg import CountUniqueColumn
+from sqlagg import CountUniqueColumn, AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn, calculate_total_row
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails
 
@@ -11,7 +11,6 @@ class MotherRegistrationDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'mother_registration_details'
     title = 'Mother Registration Details'
-    width = 50
 
     @property
     def filters(self):
@@ -108,8 +107,11 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
 
     @property
     def filters(self):
-        filter = super(ClosedMotherCasesBreakdown, self).filters
-        filter.append(NOTEQ('closed_on', 'empty'))
+        filter = super(ClosedMotherCasesBreakdown, self).filters[1:]
+        if 'strsd' in self.config:
+            filter.append(GTE('closed_on', 'strsd'))
+        if 'stred' in self.config:
+            filter.append(LTE('closed_on', 'stred'))
         return filter
 
     @property
@@ -183,6 +185,7 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
 
 
 class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
+    slug = 'ante_natal_care_service_overview_extended'
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
@@ -207,99 +210,85 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
     @property
     def columns(self):
         return [
-            DatabaseColumn("Total pregnant",
-                CountUniqueColumn('doc_id', alias="total_pregnant"),
-            ),
-            DatabaseColumn("No ANC",
-                CountUniqueColumn('doc_id', alias="no_anc", filters=self.filters + [NOTEQ('anc_1', 'yes')]),
-            ),
-            DatabaseColumn("ANC1",
-                CountUniqueColumn('doc_id', alias="anc_1", filters=self.filters + [EQ('anc_1', 'yes')]),
-            ),
-            DatabaseColumn("ANC2",
-                CountUniqueColumn('doc_id', alias="anc_2", filters=self.filters + [EQ('anc_2', 'yes')]),
-            ),
-            DatabaseColumn("ANC3",
-                CountUniqueColumn('doc_id', alias="anc_3", filters=self.filters + [EQ('anc_3', 'yes')]),
-            ),
-            DatabaseColumn("ANC4",
-                CountUniqueColumn('doc_id', alias="anc_4", filters=self.filters + [EQ('anc_4', 'yes')]),
-            ),
-            DatabaseColumn("TT1",
-                CountUniqueColumn('doc_id', alias="tt_1", filters=self.filters + [EQ('tt_1', 'yes')]),
-            ),
-            DatabaseColumn("TT2",
-                CountUniqueColumn('doc_id', alias="tt_2", filters=self.filters + [EQ('tt_2', 'yes')]),
-            ),
-            DatabaseColumn("TT Booster",
-                CountUniqueColumn('doc_id', alias="tt_booster", filters=self.filters + [EQ('tt_booster', 'yes')]),
-            ),
+            DatabaseColumn("Total pregnant", CountUniqueColumn('doc_id', alias="total_pregnant")),
+            DatabaseColumn("No ANC", CountUniqueColumn('doc_id', alias="no_anc",
+                                                       filters=self.filters + [NOTEQ('anc_1', 'yes')])),
+            DatabaseColumn("ANC1", CountUniqueColumn('doc_id', alias="anc_1",
+                                                     filters=self.filters + [EQ('anc_1', 'yes')])),
+            DatabaseColumn("ANC2", CountUniqueColumn('doc_id', alias="anc_2",
+                                                     filters=self.filters + [EQ('anc_2', 'yes')])),
+            DatabaseColumn("ANC3", CountUniqueColumn('doc_id', alias="anc_3",
+                                                     filters=self.filters + [EQ('anc_3', 'yes')])),
+            DatabaseColumn("ANC4", CountUniqueColumn('doc_id', alias="anc_4",
+                                                     filters=self.filters + [EQ('anc_4', 'yes')])),
+            DatabaseColumn("TT1", CountUniqueColumn('doc_id', alias="tt_1",
+                                                    filters=self.filters + [EQ('tt_1', 'yes')])),
+            DatabaseColumn("TT2", CountUniqueColumn('doc_id', alias="tt_2",
+                                                    filters=self.filters + [EQ('tt_2', 'yes')])),
+            DatabaseColumn("TT Booster", CountUniqueColumn('doc_id', alias="tt_booster",
+                                                           filters=self.filters + [EQ('tt_booster', 'yes')])),
             DatabaseColumn("TT Completed (TT2 or Booster)",
-                CountUniqueColumn('doc_id', alias="tt_completed",
-                                  filters=self.filters + [OR([EQ('tt_2', 'yes'), EQ('tt_booster', 'yes')])]),
-            ),
-            DatabaseColumn("IFA tablets",
-                CountUniqueColumn('doc_id', alias="ifa_tablets", filters=self.filters + [EQ('iron_folic', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="tt_completed",
+                                             filters=self.filters + [OR([EQ('tt_2', 'yes'),
+                                                                         EQ('tt_booster', 'yes')])])),
+            DatabaseColumn("IFA tablets", CountUniqueColumn('doc_id', alias="ifa_tablets",
+                                                            filters=self.filters + [EQ('iron_folic', 'yes')])),
             DatabaseColumn("Completed 100 IFA tablets",
-                CountUniqueColumn('doc_id', alias="100_tablets", filters=self.filters + [EQ('completed_100_ifa', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="100_tablets",
+                                             filters=self.filters + [AND([EQ('completed_100_ifa', 'yes'),
+                                                                          NOTEQ('delivery_date', 'empty')])])),
             DatabaseColumn("Clinically anemic mothers",
-                CountUniqueColumn('doc_id', alias="clinically_anemic", filters=self.filters + [EQ('anemia_signs', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="clinically_anemic",
+                                             filters=self.filters + [EQ('anemia_signs', 'yes')])),
             DatabaseColumn("Number of pregnant mother referrals due to danger signs",
-                CountUniqueColumn('doc_id', alias="danger_signs", filters=self.filters + [EQ('currently_referred', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="danger_signs",
+                                             filters=self.filters + [EQ('currently_referred', 'yes')])),
             DatabaseColumn("Knows closest health facility",
-                CountUniqueColumn('doc_id', alias="knows_closest_facility", filters=self.filters + [EQ('knows_closest_facility', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="knows_closest_facility",
+                                             filters=self.filters + [EQ('knows_closest_facility', 'yes')])),
             DatabaseColumn("No ANC Total Eligible",
-                CountUniqueColumn('doc_id', alias="no_anc_eligible", filters=self.filters + [LTE('edd', 'today_plus_196')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="no_anc_eligible",
+                                             filters=self.filters + [LTE('edd', 'today_plus_196')])),
             DatabaseColumn("ANC1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="anc_1_eligible", filters=self.filters + [LTE('edd', 'today_plus_196')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="anc_1_eligible",
+                                             filters=self.filters + [LTE('edd', 'today_plus_196')])),
             DatabaseColumn("ANC2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="anc_2_eligible",
-                                  filters=self.filters + [AND([EQ('anc_1', 'yes'), LTE('edd', 'today_plus_112')])]),
-            ),
+                           CountUniqueColumn('doc_id', alias="anc_2_eligible",
+                                             filters=self.filters + [AND([EQ('anc_1', 'yes'),
+                                                                          LTE('edd', 'today_plus_112')])])),
             DatabaseColumn("ANC3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="anc_3_eligible",
-                                  filters=self.filters + [AND([EQ('anc_2', 'yes'), LTE('edd', 'today_plus_56')])]),
-            ),
+                           CountUniqueColumn('doc_id', alias="anc_3_eligible",
+                                             filters=self.filters + [AND([EQ('anc_2', 'yes'),
+                                                                          LTE('edd', 'today_plus_56')])])),
             DatabaseColumn("ANC4 Total Eligible",
-                CountUniqueColumn('doc_id', alias="anc_4_eligible",
-                                  filters=self.filters + [AND([EQ('anc_3', 'yes'), LTE('edd', 'today_plus_35')])]),
-            ),
+                           CountUniqueColumn('doc_id', alias="anc_4_eligible",
+                                             filters=self.filters + [AND([EQ('anc_3', 'yes'),
+                                                                          LTE('edd', 'today_plus_35')])])),
             DatabaseColumn("TT1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="tt_1_eligible", filters=self.filters + [NOTEQ('previous_tetanus', 'yes')]),
-            ),
-            DatabaseColumn("TT2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="tt_2_eligible", filters=self.filters + [EQ('tt_1', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="tt_1_eligible",
+                                             filters=self.filters + [NOTEQ('previous_tetanus', 'yes')])),
+            DatabaseColumn("TT2 Total Eligible", CountUniqueColumn('doc_id', alias="tt_2_eligible",
+                                                                   filters=self.filters + [EQ('tt_1', 'yes')])),
             DatabaseColumn("TT Booster Total Eligible",
-                CountUniqueColumn('doc_id', alias="tt_booster_eligible", filters=self.filters + [EQ('previous_tetanus', 'yes')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="tt_booster_eligible",
+                                             filters=self.filters + [EQ('previous_tetanus', 'yes')])),
             DatabaseColumn("TT Completed (TT2 or Booster) Total Eligible",
-                CountUniqueColumn('doc_id', alias="tt_completed_eligible",
-                                  filters=self.filters + [OR([EQ('tt_1', 'yes'), EQ('previous_tetanus', 'yes')])]),
-            ),
+                           CountUniqueColumn('doc_id', alias="tt_completed_eligible",
+                                             filters=self.filters + [OR([EQ('tt_1', 'yes'),
+                                                                         EQ('previous_tetanus', 'yes')])])),
             DatabaseColumn("Taking IFA tablets Total Eligible",
-                CountUniqueColumn('doc_id', alias="ifa_tablets_eligible"),
-            ),
+                           CountUniqueColumn('doc_id', alias="ifa_tablets_eligible")),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
-                CountUniqueColumn('doc_id', alias="100_tablets_eligible", filters=self.filters + [LTE('edd', 'today_plus_85')]),
-            ),
+                           CountUniqueColumn('doc_id', alias="100_tablets_eligible",
+                                             filters=self.filters + [NOTEQ('delivery_date', 'empty')])),
             DatabaseColumn("Clinically anemic mothers Total Eligible",
-                CountUniqueColumn('doc_id', alias="clinically_anemic_eligible"),
-            ),
+                           CountUniqueColumn('doc_id', alias="clinically_anemic_eligible")),
             DatabaseColumn("Number of mother referrals due to danger signs Total Eligible",
-                CountUniqueColumn('doc_id', alias="danger_signs_eligible"),
-            ),
+                           CountUniqueColumn('doc_id', alias="danger_signs_eligible")),
             DatabaseColumn("Know closest health facility Total Eligible",
-                CountUniqueColumn('doc_id', alias="knows_closest_facility_eligible"),
-            )
+                           CountUniqueColumn('doc_id', alias="knows_closest_facility_eligible"))
         ]
+
 
 class DeliveryMothersIds(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
@@ -332,6 +321,8 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     chart_y_label = ''
     show_total = True
     total_row_name = "Total live births"
+    accordion_start = False
+    accordion_end = False
 
     @property
     def headers(self):
@@ -372,7 +363,8 @@ class DeliveryStillBirthDetails(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
     slug = 'delivery_still_birth_details'
     title = ''
-    width = '50'
+    accordion_start = False
+    accordion_end = True
 
     @property
     def filters(self):
@@ -418,6 +410,7 @@ class PostnatalCareOverview(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    accordion_end = False
 
     @property
     def filters(self):
@@ -450,21 +443,27 @@ class PostnatalCareOverview(BaseSqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn("PNC 1 visit in 0-2 days",
+            DatabaseColumn(
+                "PNC visits in 48 hours of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_1", filters=self.filters + [EQ('pp_1_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 2 visit in 2-4 days",
+            DatabaseColumn(
+                "PNC visits within 2-4 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_2", filters=self.filters + [EQ('pp_2_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 3 visit in 5-7 days",
+            DatabaseColumn(
+                "PNC visits within 5-7 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_3", filters=self.filters + [EQ('pp_3_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 4 visit in 21-42 days",
+            DatabaseColumn(
+                "PNC visits within 21-42 days of delivery",
                 CountUniqueColumn('doc_id', alias="pnc_4", filters=self.filters + [EQ('pp_4_done', 'yes')]),
             ),
-            DatabaseColumn("PNC 1 visits Total Eligible",
+            DatabaseColumn(
+                "PNC 1 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_1_eligible",
-                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today')])]),
+                                  filters=self.filters + [AND([NOTEQ('delivery_date', 'empty'),
+                                                               LTE('delivery_date', 'today')])]),
             ),
             DatabaseColumn("PNC 2 visits Total Eligible",
                 CountUniqueColumn('doc_id', alias="pnc_2_eligible",
@@ -563,6 +562,7 @@ class DeliveryPlaceDetailsExtended(DeliveryPlaceDetails):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    slug = 'delivery_place_details_extended'
 
     @property
     def columns(self):
@@ -587,6 +587,9 @@ class DeliveryPlaceMotherDetails(DeliveryPlaceDetails):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    slug = 'delivery_place_mother_details'
+    accordion_start = False
+    accordion_end = False
 
     @property
     def columns(self):
@@ -609,3 +612,57 @@ class DeliveryPlaceMotherDetails(DeliveryPlaceDetails):
     @property
     def rows(self):
         return super(DeliveryPlaceMotherDetails, self).rows[1:]
+
+
+class NumberOfPNCVisits(BaseSqlData):
+    table_name = "fluff_WorldVisionMotherFluff"
+    slug = 'number_of_pnc_visits'
+    title = ''
+    show_total = True
+    total_row_name = "Total mothers who delivered more than 42 days ago"
+    show_charts = True
+    chart_x_label = ''
+    chart_y_label = ''
+    accordion_start = False
+    accordion_end = True
+
+    @property
+    def rows(self):
+        result = []
+        rows = super(NumberOfPNCVisits, self).rows
+        counter = {k: 0 for k in range(0, 5)}
+
+        for row in rows:
+            counter[row[-1]['html']] += 1
+
+        for k, v in counter.iteritems():
+            percent = self.percent_fn(len(rows), v)
+            result.append([{'sort_key': "Mothers with %d PNC visits within 42 days of delivery" % k,
+                            'html': "Mothers with %d PNC visits within 42 days of delivery" % k},
+                           {'sort_key': v, 'html': v},
+                           {'sort_key': 'percentage', 'html': percent}])
+        return result
+
+    @property
+    def group_by(self):
+        return ['doc_id', 'pp_1_done', 'pp_2_done', 'pp_3_done', 'pp_4_done']
+
+    @property
+    def filters(self):
+        filters = super(NumberOfPNCVisits, self).filters
+        filters.append(AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today_minus_42')]))
+        return filters
+
+    @property
+    def columns(self):
+        def format_pnc_count(*args):
+            return sum([1 if arg == 'yes' else 0 for arg in args])
+
+        return [
+            DatabaseColumn("PP 1", SimpleColumn('pp_1_done', alias='pp_1_done')),
+            DatabaseColumn("PP 2", SimpleColumn('pp_2_done', alias='pp_2_done')),
+            DatabaseColumn("PP 3", SimpleColumn('pp_3_done', alias='pp_3_done')),
+            DatabaseColumn("PP 4", SimpleColumn('pp_4_done', alias='pp_4_done')),
+            AggregateColumn('PNC Count', format_pnc_count,
+                            [AliasColumn('pp_1_done'), AliasColumn('pp_2_done'), AliasColumn('pp_3_done'),
+                             AliasColumn('pp_4_done')])]

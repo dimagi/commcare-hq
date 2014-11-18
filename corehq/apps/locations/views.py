@@ -9,7 +9,8 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
-from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
+from corehq.apps.commtrack.models import LocationType, SupplyPointCase
+from corehq.apps.products.models import Product
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse
@@ -21,6 +22,7 @@ import json
 
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
 from custom.openlmis.tasks import bootstrap_domain_task
 from soil.util import expose_download, get_download_context
 from corehq.apps.commtrack.tasks import import_locations_async
@@ -53,11 +55,18 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @property
+    def show_inactive(self):
+        return json.loads(self.request.GET.get('show_inactive', 'false'))
+
+    @property
     def page_context(self):
         selected_id = self.request.GET.get('selected')
         return {
             'selected_id': selected_id,
-            'locations': load_locs_json(self.domain, selected_id),
+            'locations': load_locs_json(
+                self.domain, selected_id, self.show_inactive
+            ),
+            'show_inactive': self.show_inactive,
         }
 
 
@@ -165,6 +174,32 @@ class NewLocationView(BaseLocationView):
                 urllib.urlencode({'selected': self.location_form.location._id})
             ))
         return self.get(request, *args, **kwargs)
+
+
+@domain_admin_required
+def archive_location(request, domain, loc_id):
+    loc = Location.get(loc_id)
+    loc.archive()
+    return json_response({
+        'success': True,
+        'message': _("Location '{location_name}' has successfully been {action}.").format(
+            location_name=loc.name,
+            action="archived",
+        )
+    })
+
+
+@domain_admin_required
+def unarchive_location(request, domain, loc_id):
+    loc = Location.get(loc_id)
+    loc.unarchive()
+    return json_response({
+        'success': True,
+        'message': _("Location '{location_name}' has successfully been {action}.").format(
+            location_name=loc.name,
+            action="unarchived",
+        )
+    })
 
 
 class EditLocationView(NewLocationView):

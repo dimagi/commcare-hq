@@ -1,7 +1,7 @@
 {
     "_id": "c7f10caeafbe25bb787440133dec0d28",
     "domain": "gsid",
-    "doc_type": "IndicatorConfiguration",
+    "doc_type": "DataSourceConfiguration",
     "referenced_doc_type": "XFormInstance",
     "table_id": "hiv_test",
     "display_name": "HIV Tests",

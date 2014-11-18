@@ -48,5 +48,6 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
         couch_user.to_casexml_user(), since, version, state,
         items=items,
         stock_settings=stock_settings,
+        domain=project
     )
     return restore_config.get_response()
