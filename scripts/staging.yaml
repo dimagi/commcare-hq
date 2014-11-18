@@ -57,12 +57,12 @@ branches:
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
   - bulk-app-translate+edit-build-messages  # Ethan 11/17 (trivial)
-  - bulk-app-translate+logos  # Ethan 11/18
+#  - bulk-app-translate+logos  # Ethan 11/18 (removed by Nick P)
   - bulk-app-translate # Noah 9/18
   - case-detail-tabs+share-fixtures # Noah 11/15
   - case-detail-tabs # Noah 11/6
   - share-fixtures # j$ 10/29
-#  - logos # Nick P 10/31
+#  - logos # Nick P 10/31 (removed by Nick P)
   - hq-dropdown # sravan 5/7
   # - photo-export # J$ 11/4
   - custom-data-choices  # Ethan 11/09
