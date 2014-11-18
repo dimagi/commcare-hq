@@ -4,6 +4,7 @@ from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
+from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
 
 
 CUSTOM_REPORTS = (
@@ -13,6 +14,7 @@ CUSTOM_REPORTS = (
         StockOnHandReport,
         RRreport,
         FacilityDetailsReport,
-        DeliveryReport
+        DeliveryReport,
+        SupervisionReport,
     )),
 )

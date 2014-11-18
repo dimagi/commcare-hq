@@ -97,7 +97,7 @@ class RegistrationData(ILSData):
                  == location.location_id]
         if users:
             return [[u.full_name, u.user_data['role'], u.phone_number, u.email] for u in users]
-        
+
 
 class FacilityDetailsReport(MultiReport):
 
