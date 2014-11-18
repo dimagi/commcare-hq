@@ -5,26 +5,9 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.reports import ILSData
 from custom.ilsgateway.tanzania.reports.base_report import MultiReport
+from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
-
-
-def decimal_format(value):
-    if value == 0:
-        return '<span class="icon-remove" style="color:red"/> %.0f' % value
-    elif not value:
-        return '<span style="color:grey"/> No Data'
-    else:
-        return '%.0f' % value
-
-
-def float_format(value):
-    if value == 0:
-        return '<span class="icon-remove" style="color:red"/> %.2f' % value
-    elif not value:
-        return '<span style="color:grey">No Data</span>'
-    else:
-        return '%.2f' % value
 
 
 class InventoryHistoryData(ILSData):

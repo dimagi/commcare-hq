@@ -7,6 +7,7 @@ from custom.ilsgateway import FacilityDetailsReport
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania.reports import ILSData, format_percent, latest_status_or_none, link_format
 from custom.ilsgateway.tanzania.reports.stock_on_hand import DetailsReport
+from custom.ilsgateway.tanzania.reports.utils import make_url
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from django.utils import html
@@ -21,7 +22,7 @@ class SupervisionSummaryData(ILSData):
         super_data = []
         if self.config['org_summary']:
             super_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                                               org_summary=self.config['org_summary'])
+                                                  org_summary=self.config['org_summary'])
         return super_data
 
 
@@ -30,7 +31,6 @@ class SupervisionData(ILSData):
     slug = 'supervision_table'
     show_chart = False
     show_table = True
-
 
     @property
     def headers(self):
@@ -50,11 +50,11 @@ class SupervisionData(ILSData):
             for loc in locations:
                 facilities = SQLLocation.objects.filter(parent=loc).count()
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
-                                                              self.config['enddate']),
-                                                 supply_point=loc.location_id)[0]
+                                                                 self.config['enddate']),
+                                                                 supply_point=loc.location_id)[0]
 
                 soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                                                org_summary=org_summary)
+                                                    org_summary=org_summary)
 
                 total_responses = 0
                 total_possible = 0
@@ -71,14 +71,9 @@ class SupervisionData(ILSData):
                 else:
                     response_rate = "<span class='no_data'>None</span>"
 
-                try:
-                    url = html.escape(SupervisionReport.get_url(
-                        domain=self.config['domain']) +
-                        '?location_id=%s&month=%s&year=%s' %
-                        (loc.location_id, self.config['month'], self.config['year']) +
-                        '&products='.join(self.config['products']))
-                except KeyError:
-                    url = None
+                url = make_url(SupervisionReport, self.config['domain'],
+                               '?location_id=%s&month=%s&year=%s',
+                               (loc.location_id, self.config['month'], self.config['year']))
 
                 rows.append([
                     link_format(loc.name, url),
@@ -89,12 +84,12 @@ class SupervisionData(ILSData):
                 ])
         return rows
 
+
 class DistrictSupervisionData(ILSData):
     title = 'Supervision'
     slug = 'district_supervision_table'
     show_chart = False
     show_table = True
-
 
     @property
     def headers(self):
@@ -135,7 +130,7 @@ class DistrictSupervisionData(ILSData):
                     url = None
 
                 latest = latest_status_or_none(loc.location_id, SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                                          int(self.config['month']), int(self.config['year']))
+                                               int(self.config['month']), int(self.config['year']))
 
                 rows.append([
                     loc.site_code,

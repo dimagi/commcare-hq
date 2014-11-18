@@ -3,6 +3,7 @@ from custom.ilsgateway.tanzania.reports import RandRSubmissionData, DistrictSumm
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from custom.ilsgateway.tanzania.reports.base_report import MultiReport
+from custom.ilsgateway.tanzania.reports.utils import make_url
 from dimagi.utils.decorators.memoized import memoized
 from django.utils import html
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
@@ -26,10 +27,9 @@ class DashboardReport(MultiReport):
 
     @property
     def report_facilities_url(self):
-        try:
-            return html.escape(StockOnHandReport.get_url(
-                domain=self.domain) +
-                '?location_id=%s&month=%s&year=%s' %
-                (self.request_params['location_id'], self.request_params['month'], self.request_params['year']))
-        except KeyError:
-            return None
+        return html.escape(make_url(
+            StockOnHandReport,
+            self.domain,
+            '?location_id=%s&month=%s&year=%s',
+            (self.request_params['location_id'], self.request_params['month'], self.request_params['year'])
+        ))

@@ -3,7 +3,7 @@ from datetime import timedelta, datetime, time
 from django.db.models import Q
 from django.template.defaultfilters import floatformat
 from corehq.apps.commtrack.models import SQLProduct, StockState
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
@@ -11,12 +11,46 @@ from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from django.utils import html
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, ProductAvailabilityData, \
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
-from custom.ilsgateway.tanzania.reports import ProductAvailabilitySummary, ILSData, format_percent, link_format
+from custom.ilsgateway.tanzania.reports import ProductAvailabilitySummary, ILSData, link_format
 from custom.ilsgateway.tanzania.reports.base_report import MultiReport
 from custom.ilsgateway.tanzania.reports.dashboard_report import SohSubmissionData
+from custom.ilsgateway.tanzania.reports.randr import RRreport
+from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
+from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from django.utils.translation import ugettext as _
+from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
+from custom.ilsgateway.tanzania.reports.utils import format_percent, make_url
 from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
 from dimagi.utils.decorators.memoized import memoized
+
+
+def product_format(ret, srs, month):
+    NO_DATA = -1
+    STOCKOUT = 0.00
+    LOW = 3
+    ADEQUATE = 6
+
+    mos = float(ret)
+    text = '%s'
+    if mos == NO_DATA:
+        text = '<span style="color:grey">%s</span>'
+    elif mos == STOCKOUT:
+        text = '<span class="icon-remove" style="color:red"/>%s'
+    elif mos < LOW:
+        text = '<span class="icon-warning-sign" style="color:orange"/>%s'
+    elif mos <= ADEQUATE:
+        text = '<span class="icon-ok" style="color:green"/>%s'
+    elif mos > ADEQUATE:
+        text = '<span class="icon-arrow-up" style="color:purple"/>%s'
+
+    if month:
+        if srs:
+            return text % ('%.2f' % mos)
+        return text % 'No Data'
+    else:
+        if srs:
+            return text % ('%.0f' % srs.stock_on_hand)
+        return text % 'No Data'
 
 
 class DetailsReport(MultiReport):
@@ -44,44 +78,43 @@ class DetailsReport(MultiReport):
 
     @property
     def report_stockonhand_url(self):
-        try:
-            from custom.ilsgateway.tanzania.reports.randr import RRreport
-            return html.escape(StockOnHandReport.get_url(
-                domain=self.domain) +
-                '?location_id=%s&month=%s&year=%s' %
-                (self.request_params['location_id'], self.request_params['month'], self.request_params['year']))
-        except KeyError:
-            return None
+        return html.escape(make_url(StockOnHandReport,
+                                    self.domain,
+                                    '?location_id=%s&month=%s&year=%s',
+                                    (self.request_params['location_id'],
+                                     self.request_params['month'],
+                                     self.request_params['year'])))
 
     @property
     def report_rand_url(self):
-        try:
-            from custom.ilsgateway import RRreport
-            return html.escape(RRreport.get_url(
-                domain=self.domain) +
-                '?location_id=%s&month=%s&year=%s' %
-                (self.request_params['location_id'], self.request_params['month'], self.request_params['year']))
-        except KeyError:
-            return None
+        return html.escape(make_url(RRreport,
+                                    self.domain,
+                                    '?location_id=%s&month=%s&year=%s',
+                                    (self.request_params['location_id'],
+                                     self.request_params['month'],
+                                     self.request_params['year'])))
 
     @property
     def report_supervision_url(self):
-        return 'test3'
+        return html.escape(make_url(SupervisionReport,
+                                    self.domain,
+                                    '?location_id=%s&month=%s&year=%s',
+                                    (self.request_params['location_id'],
+                                     self.request_params['month'],
+                                     self.request_params['year'])))
 
     @property
     def report_delivery_url(self):
-        try:
-            from custom.ilsgateway import DeliveryReport
-            return html.escape(DeliveryReport.get_url(
-                domain=self.domain) +
-                '?location_id=%s&month=%s&year=%s' %
-                (self.request_params['location_id'], self.request_params['month'], self.request_params['year']))
-        except KeyError:
-            return None
+        return html.escape(make_url(DeliveryReport,
+                                    self.domain,
+                                    '?location_id=%s&month=%s&year=%s',
+                                    (self.request_params['location_id'],
+                                     self.request_params['month'],
+                                     self.request_params['year'])))
 
     @property
     def report_unrecognizedmessages_url(self):
-        return 'test5'
+        return None
 
 
 class SohPercentageTableData(ILSData):
@@ -124,11 +157,11 @@ class SohPercentageTableData(ILSData):
             location = Location.get(self.config['location_id'])
             for loc in location.children:
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
-                                                              self.config['enddate']),
-                                                 supply_point=loc._id)[0]
+                                                                 self.config['enddate']),
+                                                                 supply_point=loc._id)[0]
 
                 soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SOH_FACILITY,
-                                                org_summary=org_summary)
+                                                    org_summary=org_summary)
                 facs = Location.filter_by_type(self.config['domain'], 'FACILITY', loc)
                 facs_count = (float(len(list(facs))) or 1)
                 soh_on_time = soh_data.on_time * 100 / facs_count
@@ -139,14 +172,12 @@ class SohPercentageTableData(ILSData):
                     case_id__in=fac_ids, quantity__lte=0,
                     report__date__month=int(self.config['month']),
                     report__date__year=int(self.config['year'])).count() or 0) / facs_count
-                try:
-                    url = html.escape(StockOnHandReport.get_url(
-                        domain=self.config['domain']) +
-                        '?location_id=%s&month=%s&year=%s' %
-                        (loc._id, self.config['month'], self.config['year']) +
-                        '&products='.join(self.config['products']))
-                except KeyError:
-                    url = None
+
+                url = make_url(
+                    StockOnHandReport,
+                    self.config['domain'],
+                    '?location_id=%s&month=%s&year=%s',
+                    (loc._id, self.config['month'], self.config['year']))
 
                 row_data = [
                     link_format(loc.name, url),
@@ -219,11 +250,13 @@ class DistrictSohPercentageTableData(ILSData):
         soh_month = True
         if self.config['soh_month']:
             soh_month = False
-
-        return html.escape(StockOnHandReport.get_url(
-                domain=self.config['domain']) +
-                '?location_id=%s&month=%s&year=%s&soh_month=%s' %
-                (self.config['location_id'], self.config['month'], self.config['year'], soh_month))
+        return html.escape(make_url(StockOnHandReport,
+                                    self.config['domain'],
+                                    '?location_id=%s&month=%s&year=%s&soh_month=%s',
+                                    (self.config['location_id'],
+                                     self.config['month'],
+                                     self.config['year'],
+                                    soh_month)))
 
     @property
     def title_url_name(self):
@@ -261,16 +294,16 @@ class DistrictSohPercentageTableData(ILSData):
                                                  domain=self.config['domain']).order_by('code')
 
         if self.config['location_id']:
-            location = Location.get(self.config['location_id'])
-            for loc in location.children:
-                supply_point = loc.linked_supply_point()
+            locations = SQLLocation.get(parent_location_id=self.config['location_id'])
+            for loc in locations:
+                supply_point = loc.supply_point_id
 
                 def get_last_reported():
                     last_bd_of_the_month = get_business_day_of_month(int(self.config['year']),
                                                                      int(self.config['month']),
                                                                      -1)
                     st = StockTransaction.objects.filter(
-                        case_id=supply_point._id,
+                        case_id=supply_point,
                         type='stockonhand',
                         report__date__lte=last_bd_of_the_month
                     ).order_by('-report__date')
@@ -282,16 +315,17 @@ class DistrictSohPercentageTableData(ILSData):
                                                              last_of_last_month.month,
                                                              -1), time())
                     if st:
-                        status = _reported_on_time(last_bd_of_last_month, st[0].report.date)
-                        return status, st[0].report.date.date()
+                        sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
+                        return sts, st[0].report.date.date()
                     else:
-                        status = OnTimeStates.NO_DATA
-                        return status, None
+                        sts = OnTimeStates.NO_DATA
+                        return sts, None
 
                 def get_hisp_resp_rate():
-                    statuses = SupplyPointStatus.objects.filter(supply_point=loc._id,
+                    statuses = SupplyPointStatus.objects.filter(supply_point=loc.location_id,
                                                                 status_type=SupplyPointStatusTypes.SOH_FACILITY)
-                    if not statuses: return None
+                    if not statuses:
+                        return None
                     status_month_years = set([(x.status_date.month, x.status_date.year) for x in statuses])
                     denom = len(status_month_years)
                     num = 0
@@ -301,44 +335,43 @@ class DistrictSohPercentageTableData(ILSData):
                             Q(status_value=SupplyPointStatusValues.NOT_SUBMITTED) |
                             Q(status_value=SupplyPointStatusValues.RECEIVED) |
                             Q(status_value=SupplyPointStatusValues.NOT_RECEIVED)).order_by("-status_date")
-                        if f.count(): num += 1
+                        if f.count():
+                            num += 1
 
                     return float(num)/float(denom), num, denom
 
                 status, last_reported = get_last_reported()
                 hisp = get_hisp_resp_rate()
 
-                try:
-                    from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
-                    url = html.escape(FacilityDetailsReport.get_url(
-                        domain=self.config['domain']) +
-                        '?location_id=%s' % loc._id)
-                except KeyError:
-                    url = None
+                url = make_url(FacilityDetailsReport, self.config['domain'], '?location_id=%s', (loc.location_id,))
 
                 row_data = [
                     loc.site_code,
                     link_format(loc.name, url),
                     loc.metadata['groups'][0] if 'groups' in loc.metadata else '?',
                     icon_format(status, last_reported),
-                    "<span title='%d of %d'>%s%%</span>" % (hisp[1], hisp[2], floatformat(hisp[0]*100.0)) if hisp else "No data"
+                    "<span title='%d of %d'>%s%%</span>" % (hisp[1],
+                                                            hisp[2],
+                                                            floatformat(hisp[0]*100.0)) if hisp else "No data"
                 ]
 
                 for product in products:
                     last_of_the_month = get_day_of_month(int(self.config['year']), int(self.config['month']), -1)
                     first_of_the_next_month = last_of_the_month + timedelta(days=1)
                     try:
-                        srs = StockTransaction.objects.filter(report__date__lt=first_of_the_next_month, case_id=supply_point._id, product_id=product.product_id).order_by("-report__date")[0]
+                        srs = StockTransaction.objects.filter(
+                            report__date__lt=first_of_the_next_month,
+                            case_id=supply_point,
+                            product_id=product.product_id).order_by("-report__date")[0]
                     except IndexError:
                         srs = None
 
                     if srs:
-                        ss = StockState.objects.get(case_id=supply_point._id, product_id=product.product_id)
+                        ss = StockState.objects.get(case_id=supply_point, product_id=product.product_id)
 
                         def calculate_months_remaining(stock_state, quantity):
                             consumption = stock_state.get_monthly_consumption()
-                            if consumption is not None and consumption > 0 \
-                              and quantity is not None:
+                            if consumption is not None and consumption > 0 and quantity is not None:
                                 return float(quantity) / float(consumption)
                             elif quantity == 0:
                                 return 0
@@ -354,35 +387,6 @@ class DistrictSohPercentageTableData(ILSData):
                 rows.append(row_data)
 
         return rows
-
-
-def product_format(ret, srs, month):
-    NO_DATA = -1
-    STOCKOUT = 0.00
-    LOW = 3
-    ADEQUATE = 6
-
-    mos = float(ret)
-    text = '%s'
-    if mos == NO_DATA:
-        text = '<span style="color:grey">%s</span>'
-    elif mos == STOCKOUT:
-        text = '<span class="icon-remove" style="color:red"/>%s'
-    elif mos < LOW:
-        text = '<span class="icon-warning-sign" style="color:orange"/>%s'
-    elif mos <= ADEQUATE:
-        text = '<span class="icon-ok" style="color:green"/>%s'
-    elif mos > ADEQUATE:
-        text = '<span class="icon-arrow-up" style="color:purple"/>%s'
-
-    if month:
-        if srs:
-            return text % ('%.2f' % mos)
-        return text % 'No Data'
-    else:
-        if srs:
-            return text % ('%.0f' % srs.stock_on_hand)
-        return text % 'No Data'
 
 
 class StockOnHandReport(DetailsReport):
@@ -406,7 +410,7 @@ class StockOnHandReport(DetailsReport):
         config = self.report_config
         data_providers = []
         if config['org_summary']:
-            location = Location.get(config['org_summary'].supply_point)
+            location = SQLLocation.objects.get(location_id=config['org_summary'].supply_point)
 
             data_providers = [
                 SohSubmissionData(config=config, css_class='row_chart_all'),
