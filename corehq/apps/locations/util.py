@@ -1,5 +1,6 @@
-from corehq.apps.commtrack.models import Product, SupplyPointCase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized

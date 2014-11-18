@@ -1,5 +1,5 @@
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.models import Product, SQLProduct
+from corehq.apps.products.models import Product, SQLProduct
 
 
 class ProductsTest(CommTrackTest):

@@ -51,7 +51,9 @@ class TDHInfantClassificationFluff(fluff.IndicatorDocument):
 
     case_id = flat_field(lambda f: f.form['case']['@case_id'])
     user_id = flat_field(lambda f: f.form['case']['@user_id'])
-    username = flat_field(lambda f: f.form['meta']['username'])
+    tablet_login_id = flat_field(lambda f: f.form['meta']['username'])
+    author_id = flat_field(lambda f: f.form.get('selected_user_id', ''))
+    author_name = flat_field(lambda f: f.form.get('selected_user_name', ''))
     L_hfa = flat_field(lambda f: f.form.get('L_hfa', ''))
     L_wfa = flat_field(lambda f: f.form.get('L_wfa', ''))
     L_wfh = flat_field(lambda f: f.form.get('L_wfh', ''))
@@ -197,7 +199,9 @@ class TDHNewbornClassificationFluff(fluff.IndicatorDocument):
 
     case_id = flat_field(lambda f: f.form['case']['@case_id'])
     user_id = flat_field(lambda f: f.form['case']['@user_id'])
-    username = flat_field(lambda f: f.form['meta']['username'])
+    tablet_login_id = flat_field(lambda f: f.form['meta']['username'])
+    author_id = flat_field(lambda f: f.form.get('selected_user_id', ''))
+    author_name = flat_field(lambda f: f.form.get('selected_user_name', ''))
     L_hfa = flat_field(lambda f: f.form.get('L_hfa', ''))
     L_wfa = flat_field(lambda f: f.form.get('L_wfa', ''))
     L_wfh = flat_field(lambda f: f.form.get('L_wfh', ''))
@@ -354,7 +358,9 @@ class TDHChildClassificationFluff(fluff.IndicatorDocument):
 
     case_id = flat_field(lambda f: f.form['case']['@case_id'])
     user_id = flat_field(lambda f: f.form['case']['@user_id'])
-    username = flat_field(lambda f: f.form['meta']['username'])
+    tablet_login_id = flat_field(lambda f: f.form['meta']['username'])
+    author_id = flat_field(lambda f: f.form.get('selected_user_id', ''))
+    author_name = flat_field(lambda f: f.form.get('selected_user_name', ''))
     L_hfa = flat_field(lambda f: f.form.get('L_hfa', ''))
     L_wfa = flat_field(lambda f: f.form.get('L_wfa', ''))
     L_wfh = flat_field(lambda f: f.form.get('L_wfh', ''))

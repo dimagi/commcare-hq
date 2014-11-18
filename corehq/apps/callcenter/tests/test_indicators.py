@@ -3,7 +3,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
-from corehq.apps.callcenter.utils import sync_user_cases
+from corehq.apps.callcenter.utils import sync_user_cases, FakeSyncOp
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
@@ -137,16 +137,33 @@ class CallCenterTests(BaseCCTests):
         clear_data()
 
     def check_cc_indicators(self, data_set, expected):
-        super(CallCenterTests, self)._test_indicators(self.cc_user, data_set, expected)
+        self._test_indicators(self.cc_user, data_set, expected)
         expected_no_data = expected_standard_indicators(no_data=True)
-        super(CallCenterTests, self)._test_indicators(self.cc_user_no_data, data_set, expected_no_data)
+        self._test_indicators(self.cc_user_no_data, data_set, expected_no_data)
 
     def test_standard_indicators(self):
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
+        self.assertEqual(
+            set(indicator_set.user_to_case_map.keys()),
+            set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
+
+    def test_sync_log(self):
+        user_case = get_case_by_domain_hq_user_id(
+            self.cc_domain.name,
+            self.cc_user.get_id,
+            include_docs=True
+        )
+        sync_op = FakeSyncOp([user_case])
+
+        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, case_sync_op=sync_op, custom_cache=locmem_cache)
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.cc_user.get_id])
+        self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))
+        self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id]))
+        self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
 
     def test_custom_indicators(self):
         expected = {'totalCases': 0L}
@@ -179,10 +196,14 @@ class CallCenterTests(BaseCCTests):
             domain=self.cc_domain.name,
             indicators=expected_indicators
         )
-        locmem_cache.set(cache_key(self.cc_user.get_id), cached_data.to_json())
 
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.cc_user.get_id, self.cc_user_no_data.get_id]))
+        locmem_cache.set(cache_key(self.cc_user.get_id, indicator_set.reference_date), cached_data.to_json())
+
+        self.assertEqual(
+            set(indicator_set.user_to_case_map.keys()),
+            set([self.cc_user.get_id, self.cc_user_no_data.get_id])
+        )
         self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user_no_data.get_id]))
         self.check_cc_indicators(indicator_set.get_data(), expected_indicators)
@@ -192,7 +213,7 @@ class CallCenterTests(BaseCCTests):
         Test to verify that only data belonging to users managed by the supervisor is returned.
         """
         indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user_no_data, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set())
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [])
         self.assertEqual(indicator_set.users_needing_data, set())
         self.assertEqual(indicator_set.owners_needing_data, set())
         self.assertEqual(indicator_set.get_data(), {})
@@ -237,7 +258,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         in final data set.
         """
         indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id]))
         self._test_indicators(self.user, indicator_set.get_data(), expected_standard_indicators())
@@ -287,7 +308,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         Ensure that indicators include cases owned by a case sharing group the user is part of.
         """
         indicator_set = CallCenterIndicators(self.domain, self.supervisor, custom_cache=locmem_cache)
-        self.assertEqual(indicator_set.all_user_ids, set([self.user.get_id]))
+        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, self.group.get_id]))
         expected = expected_standard_indicators()

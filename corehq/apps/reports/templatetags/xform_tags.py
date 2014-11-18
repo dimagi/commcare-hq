@@ -151,10 +151,10 @@ def render_form(form, domain, options):
     else:
         user_info = get_doc_info_by_id(domain, meta_userID)
 
+    edit_session_data = {'user_id': meta_userID}
     if len(case_blocks) == 1 and case_blocks[0].get(case_id_attr):
-        edit_session_data = {"case_id": case_blocks[0].get(case_id_attr)}
-    else:
-        edit_session_data = {}
+        edit_session_data["case_id"] = case_blocks[0].get(case_id_attr)
+
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,

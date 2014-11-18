@@ -27,7 +27,7 @@ import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles, Domain
 from casexml.apps.case.cleanup import rebuild_case, close_case
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
 from corehq.util.couch import get_document_or_404
@@ -905,6 +905,7 @@ def export_case_transactions(request, domain, case_id):
 
     headers = [
         _('case id'),
+        _('case name'),
         _('section'),
         _('date'),
         _('product_id'),
@@ -917,6 +918,7 @@ def export_case_transactions(request, domain, case_id):
     def _make_row(transaction):
         return [
             transaction.case_id,
+            case.name,
             transaction.section_id,
             transaction.report.date if transaction.report_id else '',
             transaction.product_id,

@@ -4,7 +4,8 @@ from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, parent_child
 import itertools
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
-from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.products.models import Product
 from decimal import Decimal, InvalidOperation
 from django.utils.translation import ugettext as _
 from corehq.apps.custom_data_fields.views import add_prefix

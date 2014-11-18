@@ -15,7 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from soil.util import expose_download, get_download_context
 
-from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
+from corehq.apps.commtrack.models import LocationType, SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.commtrack.views import BaseCommTrackManageView
@@ -24,6 +24,7 @@ from corehq.apps.custom_data_fields.views import CustomDataFieldsMixin
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.products.models import Product
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location

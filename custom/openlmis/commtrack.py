@@ -1,7 +1,9 @@
 import logging
 from django.dispatch import Signal
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import Program, SupplyPointCase, Product, RequisitionCase
+from corehq.apps.commtrack.models import SupplyPointCase, RequisitionCase
+from corehq.apps.programs.models import Program
+from corehq.apps.products.models import Product
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser
