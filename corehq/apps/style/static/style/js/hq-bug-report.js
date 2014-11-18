@@ -5,6 +5,7 @@ $(function () {
         $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
         $hqwebappBugReportCancel = $('#bug-report-cancel'),
         $ccFormGroup = $("#bug-report-cc-form-group"),
+        $issueSubjectFormGroup = $("#bug-report-subject-form-group"),
         isBugReportSubmitting = false;
 
     $hqwebappBugReportModal.on('show.bs.modal', function() {
@@ -19,6 +20,12 @@ $(function () {
     });
 
     $hqwebappBugReportForm.submit(function() {
+        var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
+        if (isDescriptionEmpty) {
+            $issueSubjectFormGroup.addClass('has-error has-feedback');
+            $issueSubjectFormGroup.find(".label-danger").removeClass('hide');
+        }
+
         var emailAddresses = $(this).find("input[name='cc']").val();
         emailAddresses = emailAddresses.replace(/ /g, "").split(",");
         for (var index in emailAddresses){
@@ -28,6 +35,9 @@ $(function () {
                 $ccFormGroup.find(".label-danger").removeClass('hide');
                 return false;
             }
+        }
+        if (isDescriptionEmpty) {
+            return false;
         }
         var $submitButton = $(this).find("button[type='submit']");
         if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("complete-text")) {
