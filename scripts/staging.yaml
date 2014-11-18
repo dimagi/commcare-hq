@@ -46,7 +46,6 @@ branches:
 # this branch didn't exist on github
 #  - bulk-app-translate+double-management # SK 11/10
   - double-management+case-detail-tabs # Noah 11/6
-#  - staging  # Ethan 11/09 - Too many effing merge conflicts
   - ptop-reindex  # DR 11/5
   - historical-forms  # DR 11/4
 #  - add-build-ui
@@ -57,6 +56,7 @@ branches:
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
+  - bulk-app-translate+edit-build-messages  # Ethan 11/17 (trivial)
   - bulk-app-translate # Noah 9/18
   - case-detail-tabs+share-fixtures # Noah 11/15
   - case-detail-tabs # Noah 11/6
@@ -70,6 +70,8 @@ branches:
   - vellum-staging # J$ 11/13
   - product-app+bulk-app-translate # tw 11/13
   - product-app # tw 11/13
+  - edit-build-messages  # Ethan 11/17
+  - custom_location_data  # Ethan & tw 11/17
 submodules:
   submodules/couchlog-src:
     branches:

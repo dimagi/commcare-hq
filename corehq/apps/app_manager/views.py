@@ -36,7 +36,7 @@ from corehq.apps.app_manager.translations import (
     get_translation,
     process_bulk_app_translation_upload
 )
-from corehq.apps.commtrack.models import Program
+from corehq.apps.programs.models import Program
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form

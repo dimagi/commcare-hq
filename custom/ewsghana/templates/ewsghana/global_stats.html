@@ -1,0 +1,51 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% block main_column %}
+<h2>Global stats</h2>
+<table class="table table-striped">
+    <thead>
+        <tr role="row">
+            <th>Object</th>
+            <th>Count</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr role="row">
+            <td>Supply Points</td>
+            <td>{{ supply_points }}</td>
+        </tr>
+        <tr role="row">
+            <td>Facilities</td>
+            <td>{{ facilities }}</td>
+        </tr>
+       <tr role='row'>
+            <td>Contacts</td>
+            <td>{{ contacts }}</td>
+        </tr>
+       <tr role='row'>
+            <td>Web Users</td>
+            <td>{{ web_users }}</td>
+        </tr>
+       <tr role='row'>
+            <td>Products</td>
+            <td>{{ products }}</td>
+        </tr>
+       <tr role='row'>
+            <td>Product stocks</td>
+            <td>{{ product_stocks }}</td>
+        </tr>
+       <tr role='row'>
+            <td>Stock transactions</td>
+            <td>{{ stock_transactions }}</td>
+        </tr>
+       <tr role='row'>
+            <td>Inbound messages</td>
+            <td>{{ inbound_messages }}</td>
+        </tr>
+       <tr role='row'>
+            <td>Outbound messages</td>
+            <td>{{ outbound_messages }}</td>
+        </tr>
+    </tbody>
+
+</table>
+{% endblock %}

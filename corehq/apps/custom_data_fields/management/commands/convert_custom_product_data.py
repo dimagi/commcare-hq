@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import iter_docs
 

@@ -8,14 +8,16 @@ from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
 from custom.api.utils import apply_updates
-from custom.ilsgateway.api import ILSGatewayEndpoint
-from corehq.apps.commtrack.models import Product, LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
+from corehq.apps.commtrack.models import LocationType, SupplyPointCase, CommTrackUser, CommtrackConfig, \
     CommtrackActionConfig
+from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
+from corehq.apps.products.models import Product
 from dimagi.utils.dates import force_to_datetime
-from custom.ilsgateway.models import ILSMigrationCheckpoint, HistoricalLocationGroup
+from custom.ilsgateway.models import LogisticsMigrationCheckpoint, HistoricalLocationGroup
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
+from custom.ilsgateway.utils import get_next_meta_url
 
 
 def retry(retry_max):
@@ -203,14 +205,14 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
         return
 
     if not location:
-        if ilsgateway_location.parent:
+        if ilsgateway_location.parent_id:
             loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                              key=[domain, str(ilsgateway_location.parent)],
+                                              key=[domain, str(ilsgateway_location.parent_id)],
                                               reduce=False,
                                               include_docs=True).first()
             if not loc_parent:
-                parent = endpoint.get_location(ilsgateway_location.parent)
-                loc_parent = sync_ilsgateway_location(domain, endpoint, Loc.from_json(parent))
+                parent = endpoint.get_location(ilsgateway_location.parent_id)
+                loc_parent = sync_ilsgateway_location(domain, endpoint, Loc(parent))
             else:
                 loc_parent = loc_parent.location
             location = Location(parent=loc_parent)
@@ -225,7 +227,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
             location.latitude = float(ilsgateway_location.latitude)
         if ilsgateway_location.longitude:
             location.longitude = float(ilsgateway_location.longitude)
-        location.location_type = ilsgateway_location.location_type
+        location.location_type = ilsgateway_location.type
         location.site_code = ilsgateway_location.code
         location.external_id = str(ilsgateway_location.id)
         location.save()
@@ -236,7 +238,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
             'name': ilsgateway_location.name,
             'latitude': float(ilsgateway_location.latitude) if ilsgateway_location.latitude else None,
             'longitude': float(ilsgateway_location.longitude) if ilsgateway_location.longitude else None,
-            'location_type': ilsgateway_location.location_type,
+            'location_type': ilsgateway_location.type,
             'site_code': ilsgateway_location.code.lower(),
             'external_id': str(ilsgateway_location.id),
             'metadata': {}
@@ -258,7 +260,7 @@ def sync_ilsgateway_location(domain, endpoint, ilsgateway_location, fetch_groups
             params=dict(with_historical_groups=1)
         )
 
-        historical_groups = Loc.from_json(location_object).historical_groups
+        historical_groups = Loc(**location_object).historical_groups
     else:
         historical_groups = {}
     for date, groups in historical_groups.iteritems():
@@ -303,10 +305,7 @@ def smsusers_sync(project, endpoint, checkpoint, **kwargs):
         for user in users:
             sync_ilsgateway_smsuser(project, user)
 
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1] if meta['next'] else None
+        has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
 def locations_sync(project, endpoint, checkpoint, **kwargs):
@@ -321,10 +320,7 @@ def locations_sync(project, endpoint, checkpoint, **kwargs):
         for location in locations:
             sync_ilsgateway_location(project, endpoint, location, fetch_groups=True)
 
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1] if meta['next'] else None
+        has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
 def commtrack_settings_sync(project):
@@ -348,12 +344,12 @@ def commtrack_settings_sync(project):
     config.save()
 
 
-def bootstrap_domain(ilsgateway_config):
+def bootstrap_domain(ilsgateway_config, endpoint=None):
     domain = ilsgateway_config.domain
     start_date = datetime.today()
-    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
+    endpoint = endpoint if endpoint else TanzaniaEndpoint.from_config(ilsgateway_config)
     try:
-        checkpoint = ILSMigrationCheckpoint.objects.get(domain=domain)
+        checkpoint = LogisticsMigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
         date = checkpoint.date
         limit = checkpoint.limit
@@ -363,8 +359,8 @@ def bootstrap_domain(ilsgateway_config):
             checkpoint.save()
         else:
             start_date = checkpoint.start_date
-    except ILSMigrationCheckpoint.DoesNotExist:
-        checkpoint = ILSMigrationCheckpoint()
+    except LogisticsMigrationCheckpoint.DoesNotExist:
+        checkpoint = LogisticsMigrationCheckpoint()
         checkpoint.domain = domain
         checkpoint.start_date = start_date
         api = 'product'

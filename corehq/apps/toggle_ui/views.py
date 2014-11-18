@@ -3,6 +3,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from corehq import Domain
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.toggles import all_toggles
@@ -48,6 +49,10 @@ class ToggleEditView(ToggleBaseView):
         return reverse(self.urlname, args=[self.toggle_slug])
 
     @property
+    def expanded(self):
+        return self.request.GET.get('expand') == 'true'
+
+    @property
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
@@ -64,10 +69,18 @@ class ToggleEditView(ToggleBaseView):
 
     @property
     def page_context(self):
-        return {
-            'toggle_meta': self.toggle_meta(),
+        toggle_meta = self.toggle_meta()
+        context = {
+            'toggle_meta': toggle_meta,
             'toggle': self.get_toggle(),
+            'expanded': self.expanded,
         }
+        if self.expanded:
+            context['domain_toggle_list'] = sorted(
+                [(row['key'], toggle_meta.enabled(row['key'])) for row in Domain.get_all(include_docs=False)],
+                key=lambda domain_tup: (not domain_tup[1], domain_tup[0])
+            )
+        return context
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()

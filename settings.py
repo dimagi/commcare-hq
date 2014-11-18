@@ -225,6 +225,8 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
+    'corehq.apps.products',
+    'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'couchforms',
@@ -321,6 +323,7 @@ HQ_APPS = (
     'custom.hope',
     'custom.openlmis',
     'custom.ilsgateway',
+    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -468,8 +471,8 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-    "corehq.apps.commtrack.fixtures.product_fixture_generator",
-    "corehq.apps.commtrack.fixtures.program_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
@@ -958,6 +961,8 @@ COUCHDB_APPS = [
     'phone',
     'pillowtop',
     'pillow_retry',
+    'products',
+    'programs',
     'reminders',
     'reports',
     'sofabed',
@@ -991,6 +996,7 @@ COUCHDB_APPS = [
     'accounting',
     'succeed',
     'ilsgateway',
+    'ewsghana',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -1052,7 +1058,8 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
-    'custom.ilsgateway.handler.handle',
+    'custom.ilsgateway.tanzania.handler.handle',
+    'custom.ewsghana.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1233,6 +1240,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
+    'custom.ewsghana',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1275,6 +1283,7 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
+    'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
