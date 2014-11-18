@@ -28,7 +28,7 @@ class LeadTimeHistory(ILSData):
 
     @property
     def rows(self):
-        locations = SQLLocation.objects.filter(parent_location_id=self.config['location_id'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         date = datetime(int(self.config['year']), int(self.config['month']), 1)
         rows = []
         for loc in locations:
@@ -80,7 +80,7 @@ class DeliveryStatus(ILSData):
     @property
     def rows(self):
         rows = []
-        locations = SQLLocation.objects.filter(parent_location_id=self.config['location_id'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         dg = DeliveryGroups().delivering(locations, int(self.config['month']))
         for child in dg:
             latest = latest_status_or_none(
@@ -136,3 +136,9 @@ class DeliveryReport(DetailsReport):
             else:
                 data_providers.append(DeliveryStatus(config=config, css_class='row_chart_all'))
         return data_providers
+
+    @property
+    def report_context(self):
+        ret = super(DeliveryReport, self).report_context
+        ret['view_mode'] = 'delivery'
+        return ret

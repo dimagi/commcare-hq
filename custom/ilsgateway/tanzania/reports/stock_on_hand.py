@@ -226,7 +226,7 @@ class DistrictSohPercentageTableData(ILSData):
                                                  domain=self.config['domain']).order_by('code')
 
         if self.config['location_id']:
-            locations = SQLLocation.get(parent_location_id=self.config['location_id'])
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 supply_point = loc.supply_point_id
 

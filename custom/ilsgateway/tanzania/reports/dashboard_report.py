@@ -28,9 +28,10 @@ class DashboardReport(MultiReport):
 
     @property
     def report_facilities_url(self):
+        config = self.report_config
         return html.escape(make_url(
             StockOnHandReport,
             self.domain,
             '?location_id=%s&month=%s&year=%s',
-            (self.request_params['location_id'], self.request_params['month'], self.request_params['year'])
+            (config['location_id'], config['month'], config['year'])
         ))

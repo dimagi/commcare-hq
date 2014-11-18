@@ -23,7 +23,7 @@ class RRStatus(ILSData):
     @property
     def rows(self):
         rows = []
-        locations = SQLLocation.objects.filter(parent_location_id=self.config['location_id'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
         for child in locations:
             try:
                 org_summary = OrganizationSummary.objects.get(
@@ -173,3 +173,9 @@ class RRreport(DetailsReport):
             else:
                 data_providers.append(RRReportingHistory(config=config, css_class='row_chart_all'))
         return data_providers
+
+    @property
+    def report_context(self):
+        ret = super(RRreport, self).report_context
+        ret['view_mode'] = 'ror'
+        return ret
