@@ -273,9 +273,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     indices = SchemaListProperty(CommCareCaseIndex)
     case_attachments = SchemaDictProperty(CommCareCaseAttachment)
     
-    # TODO: move to commtrack.models.SupplyPointCases (and full regression test)
-    location_id = StringProperty()
-
     server_modified_on = DateTimeProperty()
 
     def __unicode__(self):
