@@ -120,6 +120,12 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
     [NAMESPACE_USER]
 )
 
+GRAPH_CREATION = StaticToggle(
+    'graph-creation',
+    'Case list/detail graph creation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 INVOICE_TRIGGER = StaticToggle(
     'invoice_trigger',
     'Accounting Trigger Invoices',
