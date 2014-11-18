@@ -1,19 +1,12 @@
-from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
-from casexml.apps.stock.models import DocDomainMapping
 from datetime import datetime
+
+from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
 from django.db import models
+
+from casexml.apps.stock.models import DocDomainMapping
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.dates import force_to_datetime
-
-
-class LogisticsMigrationCheckpoint(models.Model):
-    domain = models.CharField(max_length=100)
-    date = models.DateTimeField(null=True)
-    start_date = models.DateTimeField(null=True)
-    api = models.CharField(max_length=100)
-    limit = models.PositiveIntegerField()
-    offset = models.PositiveIntegerField()
 
 
 class ILSGatewayConfig(Document):

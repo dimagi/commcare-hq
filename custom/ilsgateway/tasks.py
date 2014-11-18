@@ -12,16 +12,15 @@ from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from couchforms.models import XFormInstance
-from custom.ilsgateway.api import Location
-from custom.ilsgateway.commtrack import bootstrap_domain as ils_bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
-    sync_ilsgateway_product
+from custom.ilsgateway.api import Location, ILSGatewayEndpoint
+from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, commtrack_settings_sync, \
+    sync_ilsgateway_location, sync_ilsgateway_product
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
 from dimagi.utils.dates import force_to_datetime
 
 
-
+LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -29,13 +28,15 @@ def migration_task():
     configs = ILSGatewayConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            ils_bootstrap_domain(config)
+            commtrack_settings_sync(config.domain, LOCATION_TYPES)
+            ils_bootstrap_domain(config, ILSGatewayEndpoint.from_config(config))
 
 
 @task
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
-    return ils_bootstrap_domain(ils_config)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
+    return ils_bootstrap_domain(ils_config, ILSGatewayEndpoint.from_config(ils_config))
 
 # District Moshi-Rural
 ILS_FACILITIES = [906, 907, 908, 909]
@@ -178,8 +179,8 @@ def get_delivery_group_reports(domain, endpoint, facilities):
 def ils_stock_data_task(domain):
     ilsgateway_config = ILSGatewayConfig.for_domain(domain)
     domain = ilsgateway_config.domain
-    endpoint = TanzaniaEndpoint.from_config(ilsgateway_config)
-    commtrack_settings_sync(domain)
+    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
     get_locations(domain, endpoint, ILS_FACILITIES)
@@ -187,6 +188,7 @@ def ils_stock_data_task(domain):
     get_stock_transaction(domain, endpoint, ILS_FACILITIES)
     get_supply_point_statuses(domain, endpoint, ILS_FACILITIES)
     get_delivery_group_reports(domain, endpoint, ILS_FACILITIES)
+
 
 # Temporary for staging
 @task

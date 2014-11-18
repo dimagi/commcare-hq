@@ -1,10 +1,6 @@
 from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
 from casexml.apps.stock.models import DocDomainMapping
-from datetime import datetime
-from django.db import models
-from corehq.apps.commtrack.models import Product
-from corehq.apps.locations.models import SQLLocation
-from dimagi.utils.dates import force_to_datetime
+
 
 class EWSGhanaConfig(Document):
     enabled = BooleanProperty(default=False)

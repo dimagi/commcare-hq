@@ -13,9 +13,10 @@ from django.views.decorators.http import require_POST
 from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
-from custom.ilsgateway.models import LogisticsMigrationCheckpoint, ILSGatewayConfig, ReportRun
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import ils_stock_data_task, report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
+from custom.logistics.models import MigrationCheckpoint
 
 
 class GlobalStats(BaseDomainView):
@@ -65,8 +66,8 @@ class BaseConfigView(BaseCommTrackManageView):
     @property
     def page_context(self):
         try:
-            checkpoint = LogisticsMigrationCheckpoint.objects.get(domain=self.domain)
-        except LogisticsMigrationCheckpoint.DoesNotExist:
+            checkpoint = MigrationCheckpoint.objects.get(domain=self.domain)
+        except MigrationCheckpoint.DoesNotExist:
             checkpoint = None
 
         try:

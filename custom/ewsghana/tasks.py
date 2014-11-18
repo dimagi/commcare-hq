@@ -1,26 +1,40 @@
 from celery.task import task
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, SQLProduct
-from couchforms.models import XFormInstance
+from corehq.apps.commtrack.models import StockState, Product
 from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ilsgateway.commtrack import bootstrap_domain as ils_bootstrap_domain, commtrack_settings_sync,\
-    sync_ilsgateway_product
-from dimagi.utils.dates import force_to_datetime
-from custom.ewsghana.commtrack import bootstrap_domain
+from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, \
+    sync_ilsgateway_product, bootstrap_domain, commtrack_settings_sync
 from custom.ilsgateway.tasks import get_locations, get_product_stock, get_stock_transaction
+
+
+EXTENSIONS = {
+    'location_facility': ews_location_extension,
+    'location_district': ews_location_extension,
+    'location_region': ews_location_extension,
+    'webuser': ews_webuser_extension,
+    'smsuser': ews_smsuser_extension
+}
+
+
+LOCATION_TYPES = ["national", "region", "district", "facility"]
+
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def migration_task():
     configs = EWSGhanaConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            ils_bootstrap_domain(config)
+            commtrack_settings_sync(config.domain, LOCATION_TYPES)
+            ils_bootstrap_domain(config, GhanaEndpoint.from_config(config), EXTENSIONS)
+
 
 @task
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
-    return bootstrap_domain(ews_config)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
+    return bootstrap_domain(ews_config, GhanaEndpoint.from_config(ews_config), EXTENSIONS)
 
 # District Ashanti
 EWS_FACILITIES = [109, 110, 624, 626, 922, 908, 961, 948, 956, 967]
@@ -31,7 +45,7 @@ def ews_stock_data_task(domain):
     ewsghana_config = EWSGhanaConfig.for_domain(domain)
     domain = ewsghana_config.domain
     endpoint = GhanaEndpoint.from_config(ewsghana_config)
-    commtrack_settings_sync(domain)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
     get_locations(domain, endpoint, EWS_FACILITIES)
