@@ -1,5 +1,7 @@
 import json
-from corehq.apps.commtrack.models import Product, Program, CommtrackConfig, OpenLMISConfig
+from corehq.apps.commtrack.models import CommtrackConfig, OpenLMISConfig
+from corehq.apps.programs.models import Program
+from corehq.apps.products.models import Product
 from corehq.apps.commtrack.tests.util import TEST_DOMAIN
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.requisitions import create_requisition

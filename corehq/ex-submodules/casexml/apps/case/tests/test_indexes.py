@@ -11,6 +11,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.models import User
 from django.test import TestCase, SimpleTestCase
+from couchforms.models import XFormError
 from dimagi.utils.parsing import json_format_datetime
 
 USER_ID = 'test-index-user'
@@ -146,11 +147,10 @@ class IndexTest(TestCase):
     def testBadIndexReference(self):
         block = CaseBlock(create=True, case_id=self.CASE_ID, user_id=USER_ID, version=V2,
                           index={'bad': ('bad-case', 'not-an-existing-id')})
-        try:
-            post_case_blocks([block.as_xml()])
-            self.fail("Submitting against a bad case in an index should fail!")
-        except IllegalCaseId:
-            pass
+        xform = post_case_blocks([block.as_xml()])
+        self.assertIsInstance(xform, XFormError)
+        self.assertEqual(xform.doc_type, 'XFormError')
+        self.assertIn('IllegalCaseId', xform.problem)
 
     def testBadIndexReferenceDomain(self):
         case_in_other_domain = self.MOTHER_CASE_ID
@@ -165,5 +165,10 @@ class IndexTest(TestCase):
         block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID, version=V2,
                           index={'bad': ('bad-case', case_in_other_domain)})
 
-        with self.assertRaisesRegexp(IllegalCaseId, 'Bad case id'):
-            post_case_blocks([block.as_xml()], form_extras={'domain': child_domain})
+        xform = post_case_blocks([block.as_xml()],
+                                 form_extras={'domain': child_domain})
+
+        self.assertIsInstance(xform, XFormError)
+        self.assertEqual(xform.doc_type, 'XFormError')
+        self.assertIn('IllegalCaseId', xform.problem)
+        self.assertIn('Bad case id', xform.problem)

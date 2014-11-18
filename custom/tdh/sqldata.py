@@ -222,10 +222,10 @@ class InfantClassification(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'username', 'vaccines', 'visit_date', 'weight', 'height', 'muac', 'temp', 'zscore_hfa',
-                'mean_hfa', 'zscore_wfa', 'mean_wfa', 'zscore_wfh', 'mean_wfh', 'classification_deshydratation',
-                'classification_diahree', 'classification_infection', 'classification_malnutrition',
-                'classification_vih', 'bcg']
+        return ['case_id', 'tablet_login_id', 'author_id', 'author_name', 'visit_date',
+                'weight', 'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa',
+                'zscore_wfh', 'mean_wfh', 'classification_deshydratation', 'classification_diahree',
+                'classification_infection', 'classification_malnutrition', 'classification_vih', 'bcg']
 
 
 class InfantClassificationExtended(BaseSqlData):
@@ -261,10 +261,10 @@ class NewbornClassification(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'username', 'vaccines', 'visit_date', 'weight', 'height', 'muac', 'temp', 'zscore_hfa',
-                'mean_hfa', 'zscore_wfa', 'mean_wfa', 'zscore_wfh', 'mean_wfh', 'classification_infection',
-                'classification_malnutrition', 'classification_occular', 'classification_poids',
-                'classification_vih', 'bcg', 'opv_0']
+        return ['case_id', 'tablet_login_id', 'author_id', 'author_name', 'visit_date',
+                'weight', 'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa',
+                'zscore_wfh', 'mean_wfh', 'classification_infection', 'classification_malnutrition',
+                'classification_occular', 'classification_poids', 'classification_vih', 'bcg', 'opv_0']
 
 
 class NewbornClassificationExtended(BaseSqlData):
@@ -300,14 +300,14 @@ class ChildClassification(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'username', 'vaccines', 'visit_date', 'weight', 'height', 'muac', 'temp', 'zscore_hfa',
-                'mean_hfa', 'zscore_wfa', 'mean_wfa', 'zscore_wfh', 'mean_wfh', 'classification_anemie',
-                'classification_deshydratation', 'classification_diahree', 'classification_dysenterie',
-                'classification_malnutrition', 'classification_oreille', 'classification_paludisme',
-                'classification_pneumonie', 'classification_rougeole', 'classification_vih',
-                'classifications_graves', 'bcg', 'measles_1', 'measles_2', 'opv_0', 'opv_1', 'opv_2', 'opv_3',
-                'penta_1', 'penta_2', 'penta_3', 'pneumo_1', 'pneumo_2', 'pneumo_3', 'rotavirus_1', 'rotavirus_2',
-                'rotavirus_3', 'yf']
+        return ['case_id', 'tablet_login_id', 'author_id', 'author_name', 'visit_date', 'weight',
+                'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa', 'zscore_wfh',
+                'mean_wfh', 'classification_anemie', 'classification_deshydratation', 'classification_diahree',
+                'classification_dysenterie', 'classification_malnutrition', 'classification_oreille',
+                'classification_paludisme', 'classification_pneumonie', 'classification_rougeole',
+                'classification_vih', 'classifications_graves', 'bcg', 'measles_1', 'measles_2', 'opv_0', 'opv_1',
+                'opv_2', 'opv_3', 'penta_1', 'penta_2', 'penta_3', 'pneumo_1', 'pneumo_2', 'pneumo_3',
+                'rotavirus_1', 'rotavirus_2', 'rotavirus_3', 'yf']
 
 
 class ChildClassificationExtended(BaseSqlData):
@@ -347,7 +347,7 @@ class EnrollChild(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'dob', 'sex', 'village']
+        return ['case_id', 'dob', 'name', 'sex', 'village']
 
     @property
     def headers(self):
@@ -395,11 +395,10 @@ class InfantTreatment(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'classification_deshydratation', 'classification_diahree', 'classification_infection',
-                'classification_malnutrition', 'classification_vih', 'antibio',
-                'deshydratation_severe_sans_infection_title', 'incapable_nourrir_title', 'infection_grave_title',
-                'infection_locale_title', 'pas_infection_title', 'probleme_alimentation_title',
-                'signe_deshydratation_infection_title', 'vih_pas_infection_title', 'vih_possible_title']
+        return ['case_id', 'classification_vih', 'antibio', 'deshydratation_severe_sans_infection_title',
+                'incapable_nourrir_title', 'infection_grave_title', 'infection_locale_title', 'pas_infection_title'
+                , 'probleme_alimentation_title', 'signe_deshydratation_infection_title', 'vih_pas_infection_title',
+                'vih_possible_title']
 
 
 class InfantTreatmentExtended(BaseSqlData):
@@ -443,9 +442,7 @@ class NewbornTreatment(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'classification_occular', 'classification_poids', 'classification_infection',
-                'classification_malnutrition', 'classification_vih', 'antibio',
-                'conjonctivite_title', 'fable_poids_title', 'incapable_nourrir_title',
+        return ['case_id', 'antibio', 'conjonctivite_title', 'fable_poids_title', 'incapable_nourrir_title',
                 'hypothermie_moderee_title', 'infection_grave_title', 'infection_grave_no_ref_title',
                 'infection_locale_title', 'infection_peu_probable_title', 'maladie_grave_title',
                 'pas_de_faible_poids_title', 'pas_de_probleme_alimentation_title', 'pas_infection_occulaire_title',
@@ -494,10 +491,7 @@ class ChildTreatment(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'classification_anemie', 'classification_deshydratation', 'classification_diahree',
-                'classification_dysenterie', 'classification_malnutrition', 'classification_oreille',
-                'classification_paludisme', 'classification_pneumonie', 'classification_rougeole',
-                'classification_vih', 'antibio', 'artemether', 'deparasitage', 'perfusion_p1_b', 'perfusion_p2_b',
+        return ['case_id', 'antibio', 'artemether', 'deparasitage', 'perfusion_p1_b', 'perfusion_p2_b',
                 'vitamine_a', 'anemie_title', 'anemie_grave_title', 'antecedent_rougeole_title',
                 'deshydratation_severe_grave_title', 'deshydratation_severe_pas_grave_perfusion_title',
                 'diahree_persistante_title', 'dysenterie_title', 'infection_aigue_oreille_title', 'mam_title',

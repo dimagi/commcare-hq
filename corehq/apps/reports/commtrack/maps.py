@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard.maps import GenericMapReport

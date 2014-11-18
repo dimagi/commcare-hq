@@ -1,9 +1,9 @@
-from custom.ilsgateway.reports.alerts import AlertReport
-from custom.ilsgateway.reports.dashboard_report import DashboardReport
-from custom.ilsgateway.reports.delivery import DeliveryReport
-from custom.ilsgateway.reports.randr import RRreport
-from custom.ilsgateway.reports.facility_details import FacilityDetailsReport
-from custom.ilsgateway.reports.stock_on_hand import StockOnHandReport
+from custom.ilsgateway.tanzania.reports.alerts import AlertReport
+from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
+from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
+from custom.ilsgateway.tanzania.reports.randr import RRreport
+from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
+from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 
 
 CUSTOM_REPORTS = (

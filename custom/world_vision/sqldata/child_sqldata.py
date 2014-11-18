@@ -261,10 +261,32 @@ class ChildrenDeathsByMonth(BaseSqlData):
     @property
     def rows(self):
         rows = sorted(super(ChildrenDeathsByMonth, self).rows, key=lambda r: (r[1], r[0]))
+        if 'startdate' in self.config:
+            start_year = int(self.config['startdate'][:4])
+            start_month = int(self.config['startdate'][5:7])
+            end_year = int(self.config['enddate'][:4])
+            end_month = int(self.config['enddate'][5:7])
+            for year in range(start_year, end_year + 1):
+                if year == end_year:
+                    rows.extend([[unicode(i), unicode(year), {'sort_key': 0, 'html': 0}]
+                                 for i in range(start_month, end_month + 1)
+                                 if [unicode(i), unicode(year)] not in [[row[0], row[1]] for row in rows]])
+                else:
+                    rows.extend([[unicode(i), unicode(year), {'sort_key': 0, 'html': 0}]
+                                 for i in range(start_month, 13)
+                                 if [unicode(i), unicode(year)] not in [[row[0], row[1]] for row in rows]])
+                    start_month = 1
+        else:
+            year = self.config['enddate'][:4]
+            rows.extend([[unicode(i), year, {'sort_key': 0, 'html': 0}] for i in range(1, 13)
+                         if [unicode(i), year] not in [[row[0], row[1]] for row in rows]])
+
+        rows = sorted(rows, key=lambda r: (r[1], int(r[0])))
+
         sum_of_deaths = 0
         for row in rows:
             sum_of_deaths += row[2]['sort_key']
-            row[0] = calendar.month_name[int(row[0])]
+            row[0] = calendar.month_name[int(row[0])] + ' ' + row[1]
             del row[1]
 
         for row in rows:
@@ -542,31 +564,40 @@ class ImmunizationDetailsFirstYear(ImmunizationOverview):
         ]
         cols2 = [
             DatabaseColumn("OPV0 Total Eligible",
-                CountUniqueColumn('doc_id', alias="opv0_eligible", filters=self.filters)
-            ),
+                           CountUniqueColumn('doc_id', alias="opv0_eligible", filters=self.filters)),
             DatabaseColumn("HEP0 Total Eligible",
-                CountUniqueColumn('doc_id', alias="hep0_eligible", filters=self.filters)
-            ),
+                           CountUniqueColumn('doc_id', alias="hep0_eligible", filters=self.filters)),
             DatabaseColumn("OPV1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="opv1_eligible", filters=self.filters + [LTE('dob', 'today_minus_40')])
-            ),
+                           CountUniqueColumn('doc_id', alias="opv1_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_40')])),
             DatabaseColumn("HEP1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="hep1_eligible", filters=self.filters + [LTE('dob', 'today_minus_40')])
-            ),
+                           CountUniqueColumn('doc_id', alias="hep1_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_40')])),
             DatabaseColumn("DPT1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt1_eligible", filters=self.filters + [LTE('dob', 'today_minus_40')])
-            ),
+                           CountUniqueColumn('doc_id', alias="dpt1_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_40')])),
             DatabaseColumn("OPV2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="opv2_eligible", filters=self.filters + [LTE('dob', 'today_minus_75')])
-            ),
+                           CountUniqueColumn('doc_id', alias="opv2_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_75')])),
             DatabaseColumn("HEP2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="hep2_eligible", filters=self.filters + [LTE('dob', 'today_minus_75')])
-            ),
+                           CountUniqueColumn('doc_id', alias="hep2_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_75')])),
             DatabaseColumn("DPT2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt2_eligible", filters=self.filters + [LTE('dob', 'today_minus_75')])
-            )
+                           CountUniqueColumn('doc_id', alias="dpt2_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_75')]))
         ]
-        return columns[:1] + cols1 + columns[1:-5] + cols2 + columns[-5:]
+        cols3 = [
+            DatabaseColumn("VitA1",
+                           CountUniqueColumn('doc_id', alias="vita1", filters=self.filters + [EQ('vita1', 'yes')]))
+        ]
+        cols4 = [
+            DatabaseColumn("VitA1 Total Eligible",
+                           CountUniqueColumn('doc_id', alias="vita1_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_273')]))
+        ]
+        return columns[:1] + cols1 + columns[1:5] + cols3 + columns[5:-5] \
+            + cols2 + columns[-5:-1] + cols4 + columns[-1:]
+
 
 class ImmunizationDetailsSecondYear(ImmunizationOverview):
     title = 'Immunization Overview (1 - 2 yrs)'
@@ -575,31 +606,23 @@ class ImmunizationDetailsSecondYear(ImmunizationOverview):
     @property
     def columns(self):
         return [
-            DatabaseColumn("VitA1",
-                CountUniqueColumn('doc_id', alias="vita1", filters=self.filters + [EQ('vita1', 'yes')])
-            ),
-            DatabaseColumn("VitA2",
-                CountUniqueColumn('doc_id', alias="vita2", filters=self.filters + [EQ('vita2', 'yes')])
-            ),
+            DatabaseColumn("VitA2", CountUniqueColumn('doc_id', alias="vita2",
+                                                      filters=self.filters + [EQ('vita2', 'yes')])),
             DatabaseColumn("DPT-OPT Booster",
-                CountUniqueColumn('doc_id', alias="dpt_opv_booster", filters=self.filters + [EQ('dpt_opv_booster', 'yes')])
-            ),
+                           CountUniqueColumn('doc_id', alias="dpt_opv_booster",
+                                             filters=self.filters + [EQ('dpt_opv_booster', 'yes')])),
             DatabaseColumn("VitA3",
-                CountUniqueColumn('doc_id', alias="vita3", filters=self.filters + [EQ('vita3', 'yes')])
-            ),
-            DatabaseColumn("VitA1 Total Eligible",
-                CountUniqueColumn('doc_id', alias="vita1_eligible", filters=self.filters + [LTE('dob', 'today_minus_273')])
-            ),
+                           CountUniqueColumn('doc_id', alias="vita3",
+                                             filters=self.filters + [EQ('vita3', 'yes')])),
             DatabaseColumn("VitA2 Total Eligible",
-                CountUniqueColumn('doc_id', alias="vita2_eligible", filters=self.filters + [LTE('dob', 'today_minus_547')])
-            ),
+                           CountUniqueColumn('doc_id', alias="vita2_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_547')])),
             DatabaseColumn("DPT-OPT Booster Total Eligible",
-                CountUniqueColumn('doc_id', alias="dpt_opv_booster_eligible", filters=self.filters + [LTE('dob', 'today_minus_548')])
-            ),
+                           CountUniqueColumn('doc_id', alias="dpt_opv_booster_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_548')])),
             DatabaseColumn("VitA3 Total Eligible",
-                CountUniqueColumn('doc_id', alias="vita3_eligible", filters=self.filters + [LTE('dob', 'today_minus_700')])
-            )
-
+                           CountUniqueColumn('doc_id', alias="vita3_eligible",
+                                             filters=self.filters + [LTE('dob', 'today_minus_700')]))
         ]
 
 

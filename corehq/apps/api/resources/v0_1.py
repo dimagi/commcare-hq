@@ -202,6 +202,18 @@ class CommCareUserResource(UserResource):
                            lte=now)
                 .run()
             ).total
+            first_of_this_month = datetime.datetime(now.year, now.month, 1)
+            first_of_last_month = (first_of_this_month - datetime.timedelta(days=1)).replace(day=1)
+            extras['submitted_last_month'] = (form_es_base
+                .submitted(gte=first_of_last_month,
+                           lte=first_of_this_month)
+                .run()
+            ).total
+            extras['completed_last_month'] = (form_es_base
+                .completed(gte=first_of_last_month,
+                           lte=first_of_this_month)
+                .run()
+            ).total
             bundle.data['extras'] = extras
         return super(UserResource, self).dehydrate(bundle)
 

@@ -122,6 +122,8 @@ def _get_default_tile_configurations():
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
 
+    can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
+
     def _can_access_sms(request):
         try:
             ensure_request_has_privilege(request, privileges.OUTBOUND_SMS)
@@ -137,7 +139,7 @@ def _get_default_tile_configurations():
             return False
 
     can_use_messaging = lambda request: (
-        (_can_access_reminders or _can_access_sms)
+        (_can_access_reminders(request) or _can_access_sms(request))
         and not request.couch_user.is_commcare_user()
         and request.couch_user.can_edit_data()
     )
@@ -163,6 +165,15 @@ def _get_default_tile_configurations():
             visibility_check=can_view_reports,
             help_text=_('View worker monitoring reports and inspect '
                         'project data'),
+        ),
+        TileConfiguration(
+            title=_('CommTrack Setup'),
+            slug='commtrack_setup',
+            icon='fcc fcc-commtrack',
+            context_processor_class=IconContext,
+            urlname='default_commtrack_setup',
+            visibility_check=can_view_commtrack_setup,
+            help_text=_("Update CommTrack Settings"),
         ),
         TileConfiguration(
             title=_('Data'),

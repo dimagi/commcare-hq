@@ -26,7 +26,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -116,7 +116,10 @@ class DomainViewMixin(object):
     """
         Paving the way for a world of entirely class-based views.
         Let's do this, guys. :-)
+
+        Set strict_domain_fetching to True in subclasses to bypass the cache.
     """
+    strict_domain_fetching = False
 
     @property
     @memoized
@@ -127,7 +130,7 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain_object(self):
-        domain = Domain.get_by_name(self.domain, strict=True)
+        domain = Domain.get_by_name(self.domain, strict=self.strict_domain_fetching)
         if not domain:
             raise Http404()
         return domain
@@ -261,6 +264,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
     """
         The base class for all the edit project information views.
     """
+    strict_domain_fetching = True
 
     @property
     def autocomplete_fields(self):
@@ -1442,6 +1446,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     template_name = 'domain/create_snapshot.html'
     urlname = 'domain_create_snapshot'
     page_title = ugettext_noop("Publish New Version")
+    strict_domain_fetching = True
 
     @property
     def parent_pages(self):
@@ -1861,6 +1866,7 @@ class OrgSettingsView(BaseAdminProjectSettingsView):
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
+    strict_domain_fetching = True
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
@@ -1884,6 +1890,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = ugettext_noop("Project Information")
     template_name = 'domain/internal_settings.html'
+    strict_domain_fetching = True
 
     @property
     @memoized
@@ -2139,6 +2146,31 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
+
+
+class FeatureFlagsView(BaseAdminProjectSettingsView):
+    urlname = 'domain_feature_flags'
+    page_title = ugettext_noop("Feature Flags")
+    template_name = 'domain/admin/feature_flags.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
+
+    @memoized
+    def enabled_flags(self):
+        def _sort_key(toggle_enabled_tuple):
+            return (not toggle_enabled_tuple[1], toggle_enabled_tuple[0].label)
+        return sorted(
+            [(toggle, toggle.enabled(self.domain)) for toggle in all_toggles()],
+            key=_sort_key,
+        )
+
+    @property
+    def page_context(self):
+        return {
+            'flags': self.enabled_flags(),
+        }
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
