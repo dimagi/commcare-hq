@@ -1,15 +1,10 @@
 function (key, values) {
     var value = null,
         submissions = 0,
-        media = 0,
-        size = 0,
         i;
 
     for(i = 0; i < values.length; i += 1) {
         submissions += values[i].submissions || 0;
-        media += values[i].media || 0;
-        size += values[i].size || 0;
-
         if (value === null) {
             value = values[i];
         } else if ((value.app && values[i].app) || value.duplicate || values[i].duplicate) {
@@ -28,7 +23,5 @@ function (key, values) {
         }
     }
     value.submissions = submissions;
-    value.media = media;
-    value.size = size;
     return value;
 }
