@@ -1288,7 +1288,8 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh'
+    'tdhtesting': 'custom.tdh',
+    'rec': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
