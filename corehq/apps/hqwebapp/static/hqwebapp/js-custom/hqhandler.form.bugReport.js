@@ -15,15 +15,27 @@ $(function () {
         $("input#bug-report-subject").focus();
     });
 
+    var $ccAlert = $("#invalid-cc-alert");
+    var $descriptionAlert = $("#empty-issue-alert");
+    renderAlerts($ccAlert, $descriptionAlert);
+
     $hqwebappBugReportForm.submit(function() {
+        var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
+        if (isDescriptionEmpty) {
+            $descriptionAlert.show();
+        }
+
         var emailAddresses = $(this).find("input[name='cc']").val();
         emailAddresses = emailAddresses.replace(/ /g, "").split(",");
         for (var index in emailAddresses){
             var email = emailAddresses[index];
             if (email && !IsValidEmail(email)){
-                $("#hqwebapp-bugReportForm .alert").show();
+                $ccAlert.show();
                 return false;
             }
+        }
+        if (isDescriptionEmpty) {
+            return false
         }
         var $submitButton = $(this).find("button[type='submit']");
         if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("complete-text")) {
@@ -42,6 +54,22 @@ $(function () {
         return false;
     });
 
+    function renderAlerts($ccAlert, $descriptionAlert) {
+        var $alertBoxes = $("#hqwebapp-bugReportForm .alert");
+
+        $alertBoxes.hide();
+        
+        hideAlert($("#bug-report-cc"), $ccAlert);
+        hideAlert($("#bug-report-message"), $descriptionAlert);
+
+        function hideAlert($input, $boxToHide) {
+            $input.focus(
+                function(){
+                    $boxToHide.hide();
+                }
+            )
+        }
+    }
     function IsValidEmail(email) {
         var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
         return regex.test(email);
