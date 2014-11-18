@@ -1249,11 +1249,16 @@ def form_multimedia_export(request, domain, app_id):
     key = [domain, app_id, xmlns]
     stream_file = StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
+    zip_name = ''
     size = 0
     unknown_number = 0
     for f in XFormInstance.get_db().view("exports_forms/attachments",
-            start_key=key+[startdate], end_key=key + [enddate,{}], reduce=False):
+                                         start_key=key + [startdate],
+                                         end_key=key + [enddate, {}],
+                                         reduce=False):
         form = XFormInstance.get(f['id'])
+        if not zip_name:
+            zip_name = unidecode(form.form['@name'])
         base_filename = unidecode(form.form['@name'])
         base_filename += "-%s-"
         base_filename += unidecode(form.form['meta']['username'])
@@ -1274,5 +1279,5 @@ def form_multimedia_export(request, domain, app_id):
     zf.close()
     response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
     response['Content-Length'] = size + ZIP_FILE_OVERHEAD
-    response['Content-Disposition'] = 'attachment; filename=yourfiles.zip'
+    response['Content-Disposition'] = 'attachment; filename=%s.zip' % zip_name
     return response
