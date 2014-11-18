@@ -111,9 +111,17 @@ class ExcelExportReport(FormExportReportBase):
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
         unknown_forms = []
+        startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
+        # hash of xmlns to size of attachments
+        size_hash = {a['key'][2]: a['value'] for a in db.view('exports_forms/attachments',
+                                                              startkey=startkey,
+                                                              endkey=startkey+[{}],
+                                                              group_level=3,
+                                                              reduce=True,
+                                                              group=True)}
         for f in db.view('exports_forms/by_xmlns',
-                         startkey=[self.domain], endkey=[self.domain, {}], group=True,
+                         startkey=startkey, endkey=startkey+[{}], group=True,
                          stale=settings.COUCH_STALE_QUERY):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
@@ -130,7 +138,8 @@ class ExcelExportReport(FormExportReportBase):
                 unknown_forms.append(form)
 
             form['current_app'] = form.get('app')
-            form['size'] = sizeof_fmt(form['size'])
+            if form['xmlns'] in size_hash:
+                form['size'] = sizeof_fmt(size_hash[form['xmlns']])
             forms.append(form)
 
         if unknown_forms:

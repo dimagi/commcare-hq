@@ -1251,14 +1251,17 @@ def form_multimedia_export(request, domain, app_id):
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
     size = 0
     for f in XFormInstance.get_db().view("exports_forms/attachments",
-            start_key=key+[startdate], end_key=key + [enddate,{}]):
+            start_key=key+[startdate], end_key=key + [enddate,{}], reduce=False):
         form = XFormInstance.get(f['id'])
         base_filename = unidecode(form.form['@name'])
         base_filename += '-' + unidecode(form.form['meta']['username'])
         base_filename += '-' + f['id']
         for key in f['value']['attachments'].keys():
             extension = unicode(os.path.splitext(key)[1])
-            question_id = unicode('-'.join(find_question_id(form.form, key)))
+            try:
+                question_id = unicode('-'.join(find_question_id(form.form, key)))
+            except TypeError:
+                question_id= unicode('unknown')
             fname = (base_filename + '-' + unidecode(question_id) + extension)
             zi = zipfile.ZipInfo(fname, parse(f['value']['date']).timetuple())
             zf.writestr(zi, form.fetch_attachment(key, stream=True).read())
