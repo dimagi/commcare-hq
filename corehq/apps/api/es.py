@@ -216,6 +216,7 @@ class CaseES(ESView):
     """
     index = "hqcases"
 
+
 class ReportCaseES(ESView):
     index = 'report_cases'
 

@@ -2,7 +2,7 @@
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import distinct, func, alias
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, \

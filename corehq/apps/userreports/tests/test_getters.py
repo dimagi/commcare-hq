@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.userreports.getters import SimpleGetter, DictGetter, NestedDictGetter, TransformedGetter
+from corehq.apps.userreports.getters import DictGetter, NestedDictGetter, TransformedGetter
 
 
 class Foo(object):
@@ -7,24 +7,6 @@ class Foo(object):
     @property
     def foo(self):
         return 'success'
-
-
-class SimpleGetterTest(SimpleTestCase):
-
-    def setUp(self):
-        self.getter = SimpleGetter('foo')
-
-    def test_property(self):
-        self.assertEqual('success', self.getter(Foo()))
-
-    def test_property_missing(self):
-        class NotFoo(object):
-            pass
-
-        self.assertEqual(None, self.getter(NotFoo()))
-
-    def test_null(self):
-        self.assertEqual(None, self.getter(None))
 
 
 class DictGetterTest(SimpleTestCase):

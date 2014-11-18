@@ -14,6 +14,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from redis import ConnectionError
+from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 
 from dimagi.utils.mixins import UnicodeMixIn
@@ -429,6 +430,19 @@ class SubmissionPost(object):
                         try:
                             process_cases_with_casedb(instance, case_db)
                             process_stock(instance, case_db)
+                        except IllegalCaseId as e:
+                            error_message = '{}: {}'.format(
+                                type(e).__name__, unicode(e))
+                            logging.exception((
+                                u"Warning in case or stock processing "
+                                u"for form {}: {}."
+                            ).format(instance._id, error_message))
+                            instance.__class__ = XFormError
+                            instance.problem = error_message
+                            instance.save()
+                            response = self._get_open_rosa_response(instance,
+                                                                    None, None)
+                            return response, instance, cases
                         except Exception as e:
                             # Some things to consider here
                             # The following code saves the xform instance
@@ -497,17 +511,7 @@ class SubmissionPost(object):
                 elif instance.doc_type == 'XFormDuplicate':
                     assert len(xforms) == 1
                     instance.save()
-            if instance.doc_type == "XFormInstance":
-                response = self.get_success_response(instance,
-                                                     responses, errors)
-            else:
-                response = self.get_failure_response(instance)
-
-            # this hack is required for ODK
-            response["Location"] = self.location
-
-            # this is a magic thing that we add
-            response['X-CommCareHQ-FormID'] = instance.get_id
+            response = self._get_open_rosa_response(instance, responses, errors)
             return response, instance, cases
 
     def get_response(self):
@@ -536,6 +540,19 @@ class SubmissionPost(object):
     @staticmethod
     def get_failed_auth_response():
         return HttpResponseForbidden('Bad auth')
+
+    def _get_open_rosa_response(self, instance, responses, errors):
+        if instance.doc_type == "XFormInstance":
+            response = self.get_success_response(instance, responses, errors)
+        else:
+            response = self.get_failure_response(instance)
+
+        # this hack is required for ODK
+        response["Location"] = self.location
+
+        # this is a magic thing that we add
+        response['X-CommCareHQ-FormID'] = instance.get_id
+        return response
 
     @staticmethod
     def get_success_response(doc, responses, errors):
