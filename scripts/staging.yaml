@@ -69,8 +69,6 @@ branches:
   - export-user # SK 11/13
   - vellum-jquery-upgrade # Daniel 11/13
   - vellum-staging # J$ 11/13
-  - product-app+bulk-app-translate # tw 11/13
-  - product-app # tw 11/13
   - edit-build-messages  # Ethan 11/17
   - custom_location_data  # Ethan & tw 11/17
 submodules:
