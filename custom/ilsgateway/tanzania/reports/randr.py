@@ -3,13 +3,13 @@ from functools import partial
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
-from custom.ilsgateway.tanzania.reports import RandRSubmissionData, ILSData, rr_format_percent, \
-    make_url, link_format
-from custom.ilsgateway.tanzania.reports.utils import randr_value, get_default_contact_for_location, get_span
+from custom.ilsgateway.tanzania import ILSData, DetailsReport
+from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
+from custom.ilsgateway.tanzania.reports.utils import randr_value, get_default_contact_for_location, get_span, \
+    rr_format_percent, link_format, make_url
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
-from custom.ilsgateway.tanzania.reports.stock_on_hand import DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from django.utils.translation import ugettext as _
 

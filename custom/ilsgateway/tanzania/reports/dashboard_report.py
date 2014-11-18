@@ -1,12 +1,13 @@
-from custom.ilsgateway.tanzania.reports import RandRSubmissionData, DistrictSummaryData, SohSubmissionData, \
-    DeliverySubmissionData, ProductAvailabilitySummary
+from custom.ilsgateway.tanzania import MultiReport
+from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData, DistrictSummaryData, \
+    SohSubmissionData, DeliverySubmissionData, ProductAvailabilitySummary
+from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
+from custom.ilsgateway.tanzania.reports.utils import make_url
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
-from custom.ilsgateway.tanzania.reports.base_report import MultiReport
-from custom.ilsgateway.tanzania.reports.utils import make_url
 from dimagi.utils.decorators.memoized import memoized
 from django.utils import html
-from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
+
 
 
 class DashboardReport(MultiReport):

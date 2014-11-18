@@ -3,8 +3,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.tanzania.reports import ILSData
-from custom.ilsgateway.tanzania.reports.base_report import MultiReport
+from custom.ilsgateway.tanzania import ILSData, MultiReport
 from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _

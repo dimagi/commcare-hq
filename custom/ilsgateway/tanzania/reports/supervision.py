@@ -3,11 +3,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
-from custom.ilsgateway import FacilityDetailsReport
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
-from custom.ilsgateway.tanzania.reports import ILSData, format_percent, latest_status_or_none, link_format
-from custom.ilsgateway.tanzania.reports.stock_on_hand import DetailsReport
-from custom.ilsgateway.tanzania.reports.utils import make_url
+from custom.ilsgateway.tanzania import ILSData, DetailsReport
+from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
+from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from django.utils import html

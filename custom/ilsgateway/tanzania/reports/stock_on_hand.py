@@ -11,15 +11,11 @@ from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from django.utils import html
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, ProductAvailabilityData, \
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
-from custom.ilsgateway.tanzania.reports import ProductAvailabilitySummary, ILSData, link_format
-from custom.ilsgateway.tanzania.reports.base_report import MultiReport
-from custom.ilsgateway.tanzania.reports.dashboard_report import SohSubmissionData
-from custom.ilsgateway.tanzania.reports.randr import RRreport
-from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
+from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
+from custom.ilsgateway.tanzania.reports.mixins import ProductAvailabilitySummary, SohSubmissionData
 from django.utils.translation import ugettext as _
-from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-from custom.ilsgateway.tanzania.reports.utils import format_percent, make_url
+from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent, make_url
 from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
 from dimagi.utils.decorators.memoized import memoized
 
@@ -51,70 +47,6 @@ def product_format(ret, srs, month):
         if srs:
             return text % ('%.0f' % srs.stock_on_hand)
         return text % 'No Data'
-
-
-class DetailsReport(MultiReport):
-    with_tabs = True
-    flush_layout = True
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return True
-
-    @property
-    def report_context(self):
-        context = super(DetailsReport, self).report_context
-        context.update(
-            dict(
-                report_stockonhand_url=self.report_stockonhand_url,
-                report_rand_url=self.report_rand_url,
-                report_supervision_url=self.report_supervision_url,
-                report_delivery_url=self.report_delivery_url,
-                report_unrecognizedmessages_url=self.report_unrecognizedmessages_url,
-                with_tabs=True
-            )
-        )
-        return context
-
-    @property
-    def report_stockonhand_url(self):
-        return html.escape(make_url(StockOnHandReport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
-
-    @property
-    def report_rand_url(self):
-        return html.escape(make_url(RRreport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
-
-    @property
-    def report_supervision_url(self):
-        return html.escape(make_url(SupervisionReport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
-
-    @property
-    def report_delivery_url(self):
-        return html.escape(make_url(DeliveryReport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
-
-    @property
-    def report_unrecognizedmessages_url(self):
-        return None
 
 
 class SohPercentageTableData(ILSData):
