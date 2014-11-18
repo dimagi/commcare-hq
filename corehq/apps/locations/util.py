@@ -61,7 +61,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
 
 
 def location_hierarchy_config(domain):
-    return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types]
+    return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).location_types]
 
 
 def defined_location_types(domain):

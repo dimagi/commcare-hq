@@ -22,7 +22,10 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
+from casexml.apps.case.xml import V2
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
@@ -39,6 +42,8 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
+from dimagi.utils.parsing import json_format_datetime
+from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound
 
@@ -1300,7 +1305,134 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             self.__class__.__name__, item))
 
 
-class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
+class LocationUserMixin(DocumentSchema):
+    def get_location_map_case(self):
+        try:
+            from corehq.apps.commtrack.util import location_map_case_id
+            return CommCareCase.get(location_map_case_id(self))
+        except ResourceNotFound:
+            return None
+
+    def get_linked_supply_point_ids(self):
+        mapping = self.get_location_map_case()
+        if mapping:
+            return [index.referenced_id for index in mapping.indices]
+        return []
+
+    def get_linked_supply_points(self):
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        for doc in iter_docs(CommCareCase.get_db(), self.get_linked_supply_point_ids()):
+            yield SupplyPointCase.wrap(doc)
+
+    @property
+    def location(self):
+        """ Legacy method. To be removed when the site supports multiple locations """
+        if self.locations:
+            return self.locations[0]
+        else:
+            return None
+
+    @property
+    def locations(self):
+        from corehq.apps.locations.models import Location
+
+        def _gen():
+            location_ids = [sp.location_id for sp in self.get_linked_supply_points()]
+            for doc in iter_docs(Location.get_db(), location_ids):
+                yield Location.wrap(doc)
+
+        return list(_gen())
+
+    def supply_point_index_mapping(self, supply_point, clear=False):
+        from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
+
+        if supply_point:
+            return {
+                'supply_point-' + supply_point._id:
+                (
+                    supply_point.type,
+                    supply_point._id if not clear else ''
+                )
+            }
+        else:
+            raise LinkedSupplyPointNotFoundError(
+                "There was no linked supply point for the location."
+            )
+
+    def add_location(self, location, create_sp_if_missing=False):
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        sp = SupplyPointCase.get_or_create_by_location(location)
+
+        from corehq.apps.commtrack.util import submit_mapping_case_block
+        submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
+
+    def submit_location_block(self, caseblock):
+        from corehq.apps.hqcase.utils import submit_case_blocks
+
+        submit_case_blocks(
+            ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime)),
+            self.domain,
+            self.username,
+            self._id
+        )
+
+    def remove_location(self, location):
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        sp = SupplyPointCase.get_by_location(location)
+
+        mapping = self.get_location_map_case()
+
+        if mapping and location._id in [loc._id for loc in self.locations]:
+            caseblock = CaseBlock(
+                create=False,
+                case_id=mapping._id,
+                version=V2,
+                index=self.supply_point_index_mapping(sp, True)
+            )
+
+            self.submit_location_block(caseblock)
+
+    def clear_locations(self):
+        mapping = self.get_location_map_case()
+        if mapping:
+            mapping.delete()
+
+    def set_locations(self, locations):
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        if set([loc._id for loc in locations]) == set([loc._id for loc in self.locations]):
+            # don't do anything if the list passed is the same
+            # as the users current locations. the check is a little messy
+            # as we can't compare the location objects themself
+            return
+
+        self.clear_locations()
+
+        if not locations:
+            return
+
+        index = {}
+        for location in locations:
+            sp = SupplyPointCase.get_by_location(location)
+            index.update(self.supply_point_index_mapping(sp))
+
+        from corehq.apps.commtrack.util import location_map_case_id
+        caseblock = CaseBlock(
+            create=True,
+            case_type=USER_LOCATION_OWNER_MAP_TYPE,
+            case_id=location_map_case_id(self),
+            version=V2,
+            owner_id=self._id,
+            index=index
+        )
+
+        self.submit_location_block(caseblock)
+
+
+class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin, LocationUserMixin):
 
     domain = StringProperty()
     registering_device_id = StringProperty()
@@ -2110,6 +2242,7 @@ class UserCache(object):
             user = CouchUser.get_by_user_id(user_id)
             self.cache[user_id] = user
             return user
+
 
 from .signals import *
 from corehq.apps.domain.models import Domain

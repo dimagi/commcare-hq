@@ -363,6 +363,80 @@ class Audio(FormattedDetailColumn):
     template_form = 'audio'
 
 
+@register_format_type('graph')
+class Graph(FormattedDetailColumn):
+    template_form = "graph"
+
+    @property
+    def template(self):
+        template = sx.GraphTemplate(
+            form=self.template_form,
+            graph=sx.Graph(
+                type=self.column.graph_configuration.graph_type,
+                series=[
+                    sx.Series(
+                        nodeset=s.data_path,
+                        x_function=s.x_function,
+                        y_function=s.y_function,
+                        radius_function=s.radius_function,
+                        configuration=sx.ConfigurationGroup(
+                            configs=[
+                                # TODO: It might be worth wrapping
+                                #       these values in quotes (as appropriate)
+                                #       to prevent the user from having to
+                                #       figure out why their unquoted colors
+                                #       aren't working.
+                                sx.ConfigurationItem(id=k, xpath_function=v)
+                                for k, v in s.config.iteritems()]
+                        )
+                    )
+                    for s in self.column.graph_configuration.series],
+                configuration=sx.ConfigurationGroup(
+                    configs=(
+                        [
+                            sx.ConfigurationItem(id=k, xpath_function=v)
+                            for k, v
+                            in self.column.graph_configuration.config.iteritems()
+                        ] + [
+                            sx.ConfigurationItem(
+                                id=k,
+                                locale_id=self.id_strings.graph_configuration(
+                                    self.module,
+                                    self.detail_type,
+                                    self.column,
+                                    k
+                                )
+                            )
+                            for k, v
+                            in self.column.graph_configuration.locale_specific_config.iteritems()
+                        ]
+                    )
+                ),
+                annotations=[
+                    sx.Annotation(
+                        x=sx.Text(xpath_function=a.x),
+                        y=sx.Text(xpath_function=a.y),
+                        text=sx.Text(
+                            locale_id=self.id_strings.graph_annotation(
+                                self.module,
+                                self.detail_type,
+                                self.column,
+                                i
+                            )
+                        )
+                    )
+                    for i, a in enumerate(
+                        self.column.graph_configuration.annotations
+                    )]
+            )
+        )
+
+        # TODO: what are self.variables and do I need to care about them here?
+        # (see FormattedDetailColumn.template)
+
+        return template
+
+
 @register_type_processor(sx.FIELD_TYPE_ATTACHMENT)
 class AttachmentXpathGenerator(BaseXpathGenerator):
     @property

@@ -974,6 +974,18 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return []
 
     @memoized
+    def get_child_case_types(self):
+        '''
+        Return a list of each case type for which this Form opens a new child case.
+        :return:
+        '''
+        child_case_types = set()
+        for subcase in self.actions.subcases:
+            if subcase.close_condition.type == "never":
+                child_case_types.add(subcase.case_type)
+        return child_case_types
+
+    @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
         case_properties = set()
@@ -1008,6 +1020,28 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
 
+class GraphAnnotations(IndexedSchema):
+    display_text = DictProperty()
+    x = StringProperty()
+    y = StringProperty()
+
+
+class GraphSeries(DocumentSchema):
+    config = DictProperty()
+    data_path = StringProperty()
+    x_function = StringProperty()
+    y_function = StringProperty()
+    radius_function = StringProperty()
+
+
+class GraphConfiguration(DocumentSchema):
+    config = DictProperty()
+    locale_specific_config = DictProperty()
+    annotations = SchemaListProperty(GraphAnnotations)
+    graph_type = StringProperty()
+    series = SchemaListProperty(GraphSeries)
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -1030,6 +1064,7 @@ class DetailColumn(IndexedSchema):
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
+    graph_configuration = SchemaProperty(GraphConfiguration)
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
@@ -1283,6 +1318,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 needs_case_detail=True
             ))
         return errors
+
+    @memoized
+    def get_child_case_types(self):
+        '''
+        Return a list of each case type for which this module has a form that
+        opens a new child case of that type.
+        :return:
+        '''
+        child_case_types = set()
+        for form in self.get_forms():
+            if hasattr(form, 'get_child_case_types'):
+                child_case_types.update(form.get_child_case_types())
+        return child_case_types
 
 
 class Module(ModuleBase):
