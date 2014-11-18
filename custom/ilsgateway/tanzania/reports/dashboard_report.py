@@ -9,7 +9,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils import html
 
 
-
 class DashboardReport(MultiReport):
     title = "Dashboard report"
     fields = [AsyncLocationFilter, MonthFilter, YearFilter]

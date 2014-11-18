@@ -270,7 +270,7 @@ class DistrictSohPercentageTableData(ILSData):
                         if f.count():
                             num += 1
 
-                    return float(num)/float(denom), num, denom
+                    return float(num) / float(denom), num, denom
 
                 status, last_reported = get_last_reported()
                 hisp = get_hisp_resp_rate()
@@ -284,7 +284,7 @@ class DistrictSohPercentageTableData(ILSData):
                     icon_format(status, last_reported),
                     "<span title='%d of %d'>%s%%</span>" % (hisp[1],
                                                             hisp[2],
-                                                            floatformat(hisp[0]*100.0)) if hisp else "No data"
+                                                            floatformat(hisp[0] * 100.0)) if hisp else "No data"
                 ]
 
                 for product in products:

@@ -59,7 +59,6 @@ ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
               1117, 920, 769, 1005, 1009, 925, 1115, 907]
 
 
-
 def get_locations(domain, endpoint, facilities):
     for facility in facilities:
         location = endpoint.get_location(facility, params=dict(with_historical_groups=1))
@@ -207,6 +206,7 @@ def ils_stock_data_task(domain):
     get_supply_point_statuses(domain, endpoint, ILS_FACILITIES)
     get_delivery_group_reports(domain, endpoint, ILS_FACILITIES)
 
+
 # Temporary for staging
 @task
 def ils_clear_stock_data_task():
@@ -214,6 +214,7 @@ def ils_clear_stock_data_task():
     StockReport.objects.filter(domain='ilsgateway-test-1').delete()
     products = Product.ids_by_domain('ilsgateway-test-1')
     StockState.objects.filter(product_id__in=products).delete()
+
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task

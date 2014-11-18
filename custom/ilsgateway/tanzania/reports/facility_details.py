@@ -34,8 +34,7 @@ class InventoryHistoryData(ILSData):
             for stock in ss:
                 def calculate_months_remaining(stock_state, quantity):
                     consumption = stock_state.get_monthly_consumption()
-                    if consumption is not None and consumption > 0 \
-                      and quantity is not None:
+                    if consumption is not None and consumption > 0 and quantity is not None:
                         return float(quantity) / float(consumption)
                     elif quantity == 0:
                         return 0
