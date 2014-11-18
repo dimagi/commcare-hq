@@ -766,7 +766,6 @@ class MetReport(CaseReportMixin, BaseReport):
     name = ugettext_noop("Conditions Met Report")
     report_template_path = "opm/met_report.html"
     slug = "met_report"
-    #fix_left_col = True
     model = ConditionsMet
     exportable = False
     default_rows = 5
@@ -808,7 +807,9 @@ class MetReport(CaseReportMixin, BaseReport):
         else:
             rows = self.rows
 
-        #Strip user_id and owner_id columns
+        """
+        Strip user_id and owner_id columns
+        """
         for idx, row in enumerate(rows):
             row = row[0:16]
             row.extend(row[18:20])
@@ -817,8 +818,7 @@ class MetReport(CaseReportMixin, BaseReport):
             rows=rows
         )
         rendered_report = render_to_string(self.template_report, self.context,
-                                           context_instance=RequestContext(self.request)
-        )
+                                           context_instance=RequestContext(self.request))
         return HttpResponse(rendered_report)
 
     def _store_rows_in_redis(self, rows):
@@ -845,7 +845,7 @@ class MetReport(CaseReportMixin, BaseReport):
         self._store_rows_in_redis(rows)
 
         if not self.is_rendered_as_email:
-            return rows[self.pagination.start:(self.pagination.start+self.pagination.count)]
+            return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
         else:
             return rows
 
@@ -989,6 +989,7 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
         def request(self):
             request = HttpRequest()
             request.GET = QueryDict(None)
+            request.REQUEST = QueryDict(None)
             return request
 
         @property
