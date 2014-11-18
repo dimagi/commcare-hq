@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
-from corehq.apps.app_manager.models import Application, ApplicationBase, get_apps_in_domain
+from corehq.apps.app_manager.models import Application, get_apps_in_domain
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 
 
@@ -74,6 +74,8 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     description = forms.CharField(required=False)
     configured_filter = JsonField(expected_type=dict)
     configured_indicators = JsonField(expected_type=list)
+    named_filters = JsonField(required=False, expected_type=dict,
+                              label=_("Named filters (optional)"))
 
     def clean(self):
         cleaned_data = super(ConfigurableDataSourceEditForm, self).clean()

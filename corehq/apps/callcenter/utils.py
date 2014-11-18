@@ -8,6 +8,14 @@ from couchdbkit.exceptions import MultipleResultsFound
 from corehq.elastic import es_query
 
 
+class FakeSyncOp(object):
+    """
+    Fake version of CaseSyncOperation useful for testing
+    """
+    def __init__(self, cases):
+        self.actual_owned_cases = cases
+
+
 def sync_user_cases(commcare_user):
     """
     Each time a CommCareUser is saved this method gets called and creates or updates

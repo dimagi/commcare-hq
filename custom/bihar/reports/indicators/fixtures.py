@@ -12,7 +12,7 @@ hard_coded_group_filter = lambda group: bool((group.metadata or {}).get('awc-cod
 hard_coded_fixture_id = 'indicators:bihar-supervisor'
 
 
-def generator(user, version, synclog, last_sync):
+def generator(user, version, case_sync_op=None, last_sync=None):
     if user.domain in hard_coded_domains:
         groups = filter(hard_coded_group_filter, Group.by_user(user))
         if len(groups) == 1:

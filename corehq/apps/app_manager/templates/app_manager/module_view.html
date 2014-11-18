@@ -8,6 +8,7 @@
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
     <script>
     window.FEATURE_enable_enum_image = {{ enable_enum_image|BOOL }};
     window.FEATURE_enable_calc_xpaths = {{ enable_calc_xpaths|BOOL }};
@@ -17,11 +18,13 @@
 {% endblock %}
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
+    <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
     {% include 'hqwebapp/key_value_mapping.html' %}
+    {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
         {% if app.enable_multi_sort %}
@@ -49,7 +52,9 @@
                     edit: {{ edit|JSON }},
                     saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
                     parentModules: {{ parent_modules|JSON }},
+                    childCaseTypes: detail.child_case_types,
                     parentSelect: detail.parent_select,
+                    graphEnabled: {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }},
                     calculationEnabled: {{ enable_calc_xpaths|BOOL }}
                 });
 

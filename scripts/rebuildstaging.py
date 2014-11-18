@@ -227,7 +227,7 @@ def rebuild_staging(config, print_details=True, push=True):
     if merge_conflicts:
         print "You must fix the following merge conflicts before rebuilding:"
         for cwd, branch, config in merge_conflicts:
-            print "  [{cwd}] {branch} => {name}".format(
+            print "\n[{cwd}] {branch} => {name}".format(
                 cwd=format_cwd(cwd),
                 branch=branch,
                 name=config.name,

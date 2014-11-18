@@ -2,7 +2,7 @@ from custom.tdh.reports.child_consultation_history import ChildConsultationHisto
 from custom.tdh.reports.infant_consultation_history import InfantConsultationHistoryReport
 from custom.tdh.reports.newborn_consultation_history import NewbornConsultationHistoryReport
 
-TDH_DOMAINS = ('tdhtesting', )
+TDH_DOMAINS = ('tdhtesting', 'rec')
 
 ENROLL_CHILD_XMLNSES = ("http://openrosa.org/formdesigner/10753F54-3ABA-45BA-B2B4-3AFE7F558682", )
 INFANT_CLASSIFICATION_XMLNSES = ("http://openrosa.org/formdesigner/B70118AE-67BB-424E-8873-901C65ED748F", )

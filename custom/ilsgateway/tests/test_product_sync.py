@@ -1,7 +1,7 @@
 import json
 import os
 from django.test import TestCase
-from corehq.apps.commtrack.models import Product as Prod
+from corehq.apps.products.models import Product as Prod
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from custom.ilsgateway.api import Product
 from custom.ilsgateway.commtrack import sync_ilsgateway_product
