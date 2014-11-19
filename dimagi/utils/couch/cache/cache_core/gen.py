@@ -57,8 +57,11 @@ class GenerationCache(object):
         """
         Invalidate this cache by incrementing the generation
         """
-        current_generation = self._get_generation()
-        return rcache().incr(self.generation_key)
+        try:
+            return rcache().incr(self.generation_key)
+        except ValueError:
+            # there was likely no cached data to start with. that's fine.
+            pass
 
     def _mk_view_cache_key(self, view_name, params=None):
         """
@@ -114,7 +117,6 @@ class GenerationCache(object):
             cached_view = INTERRUPTED
 
         is_cache_hit = cached_view not in (MISSING, INTERRUPTED) and CACHE_VIEWS
-
         if include_docs:
             # include_docs=True results in couchdbkit remove the 'rows' result
             # and returns just the actual rows in an array
