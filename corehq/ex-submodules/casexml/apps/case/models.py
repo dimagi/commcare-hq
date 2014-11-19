@@ -273,9 +273,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     indices = SchemaListProperty(CommCareCaseIndex)
     case_attachments = SchemaDictProperty(CommCareCaseAttachment)
     
-    # TODO: move to commtrack.models.SupplyPointCases (and full regression test)
-    location_id = StringProperty()
-
     server_modified_on = DateTimeProperty()
 
     def __unicode__(self):
@@ -444,11 +441,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return cls
 
     @classmethod
-    def bulk_get_lite(cls, ids):
+    def bulk_get_lite(cls, ids, wrapper=None):
         for res in cls.get_db().view("case/get_lite", keys=ids,
                                  include_docs=False):
-            # cls.wrap is called in a lot of places; do they all need to be updated?
-            yield cls.get_wrap_class(res['value']).wrap(res['value'])
+            if wrapper is None:
+                wrapper = cls.get_wrap_class(res['value']).wrap(res['value'])
+            yield wrapper.wrap(res['value'])
 
     def get_preloader_dict(self):
         """

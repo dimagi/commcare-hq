@@ -96,6 +96,7 @@ class CaseAPIHelper(object):
         self.filters = filters
         self.include_children = include_children
 
+
     def iter_cases(self, ids):
         database = CommCareCase.get_db()
         if not self.strip_history:
@@ -103,7 +104,7 @@ class CaseAPIHelper(object):
                 yield CommCareCase.wrap(doc)
         else:
             for doc_ids in chunked(ids, 100):
-                for case in CommCareCase.bulk_get_lite(doc_ids):
+                for case in CommCareCase.bulk_get_lite(doc_ids, wrapper=CommCareCase):
                     yield case
 
     def _case_results(self, case_id_list):
