@@ -770,6 +770,15 @@ class MetReport(CaseReportMixin, BaseReport):
     exportable = False
     default_rows = 5
     ajax_pagination = True
+    cache_key = 'opm-report'
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s" % (self.blocks, self.gp, self.awcs)
+        redis_key += "&year=%s&month=%s&is_open=%s" % (self.request_params['year'], self.request_params['month'],
+                                                    self.request_params['is_open'])
+        return redis_key
 
     @property
     def total_records(self):
@@ -803,7 +812,7 @@ class MetReport(CaseReportMixin, BaseReport):
         rows = None
         cache = get_redis_client()
         if cache.exists(self.slug):
-            rows = pickle.loads(cache.get(self.slug))
+            rows = pickle.loads(cache.get(self.redis_key))
         else:
             rows = self.rows
 
@@ -823,12 +832,11 @@ class MetReport(CaseReportMixin, BaseReport):
 
     def _store_rows_in_redis(self, rows):
         r = get_redis_client()
-        r.set(self.slug, pickle.dumps(rows))
+        r.set(self.redis_key, pickle.dumps(rows))
         r.expire(self.slug, 60 * 60)
 
     @property
     def rows(self):
-
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
         col_id = None
         sort_dir = None
