@@ -776,8 +776,11 @@ class MetReport(CaseReportMixin, BaseReport):
     def redis_key(self):
         redis_key = self.cache_key + "_" + self.slug
         redis_key += "?blocks=%s&gps=%s&awcs=%s" % (self.blocks, self.gp, self.awcs)
-        redis_key += "&year=%s&month=%s&is_open=%s" % (self.request_params['year'], self.request_params['month'],
-                                                    self.request_params['is_open'])
+        redis_key += "&year=%s&month=%s&is_open=%s" % (
+            self.request_params.get('year'),
+            self.request_params.get('month'),
+            self.request_params.get('is_open'),
+        )
         return redis_key
 
     @property
