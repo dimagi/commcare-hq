@@ -290,9 +290,8 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
 class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
-    name = fields.CharField(attribute='name')
-
     modules = fields.ListField()
+
     def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
