@@ -1,5 +1,5 @@
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-CASE_INDEX = "hqcases_a62660e6bf12969af5b4e4477e18b2669f368f22"
+CASE_INDEX = "hqcases_2c507a39a7ce6341c6dd464d99da5719cd9dc752"
 
 
 CASE_MAPPING = {
