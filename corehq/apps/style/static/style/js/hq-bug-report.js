@@ -22,8 +22,7 @@ $(function () {
     $hqwebappBugReportForm.submit(function() {
         var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
         if (isDescriptionEmpty) {
-            $issueSubjectFormGroup.addClass('has-error has-feedback');
-            $issueSubjectFormGroup.find(".label-danger").removeClass('hide');
+            highlightInvalidField($issueSubjectFormGroup);
         }
 
         var emailAddresses = $(this).find("input[name='cc']").val();
@@ -31,8 +30,7 @@ $(function () {
         for (var index in emailAddresses){
             var email = emailAddresses[index];
             if (email && !IsValidEmail(email)){
-                $ccFormGroup.addClass('has-error has-feedback');
-                $ccFormGroup.find(".label-danger").removeClass('hide');
+                highlightInvalidField($ccFormGroup)
                 return false;
             }
         }
@@ -71,6 +69,15 @@ $(function () {
     function hqwebappBugReportSucccess(data) {
         isBugReportSubmitting = false;
         $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('complete');
+    }
+
+    function highlightInvalidField($element) {
+        $element.addClass('has-error has-feedback');
+        $element.find(".label-danger").removeClass('hide');
+        $element.find("input").focus(function(){
+            $element.removeClass("has-error has-feedback");
+            $element.find(".label-danger").addClass('hide');
+        });
     }
 
 });
