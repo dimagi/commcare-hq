@@ -1007,7 +1007,7 @@ class MessagingTab(UITab):
             items.append(
                 (_("CommTrack"), [
                     {'title': ugettext_lazy("Subscribe to SMS Reports"),
-                     'url': reverse(SubscribeSMSView.urlname, args=[self.domain])}, 
+                     'url': reverse(SubscribeSMSView.urlname, args=[self.domain])},
                 ])
             )
 
