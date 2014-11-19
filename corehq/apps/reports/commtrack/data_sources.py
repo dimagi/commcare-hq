@@ -17,6 +17,14 @@ from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
 
 
+def format_decimal(d):
+    # https://docs.python.org/2/library/decimal.html#decimal-faq
+    if d is not None:
+        return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
+    else:
+        return None
+
+
 class CommtrackDataSourceMixin(object):
 
     @property
@@ -100,6 +108,10 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
             ).distinct(
                 'product_id'
             )
+
+            # take a pass over the data to format the stock on hand
+            # values properly
+            stock_results = [(p, format_decimal(soh)) for p, soh in stock_results]
 
             yield (loc.name, stock_results)
 
@@ -221,13 +233,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             else:
                 return self.raw_product_states(stock_states, slugs)
 
-    def format_decimal(self, d):
-        # https://docs.python.org/2/library/decimal.html#decimal-faq
-        if d is not None:
-            return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
-        else:
-            return None
-
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
@@ -238,7 +243,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'months_remaining': state.months_remaining,
                 'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
-                'current_stock': self.format_decimal(state.stock_on_hand),
+                'current_stock': format_decimal(state.stock_on_hand),
                 'location_lineage': None,
                 'resupply_quantity_needed': state.resupply_quantity_needed
             }
@@ -251,7 +256,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for state in stock_states:
             if state.product_id in product_aggregation:
                 product = product_aggregation[state.product_id]
-                product['current_stock'] = self.format_decimal(
+                product['current_stock'] = format_decimal(
                     product['current_stock'] + state.stock_on_hand
                 )
 
@@ -282,7 +287,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                     'product_name': product.name,
                     'location_lineage': None,
                     'resupply_quantity_needed': None,
-                    'current_stock': self.format_decimal(state.stock_on_hand),
+                    'current_stock': format_decimal(state.stock_on_hand),
                     'count': 1,
                     'consumption': consumption,
                     'category': stock_category(
