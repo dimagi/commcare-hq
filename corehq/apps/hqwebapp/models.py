@@ -21,7 +21,6 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.models import Role, UserRole
 from django_prbac.utils import ensure_request_has_privilege
 
 from dimagi.utils.couch.database import get_db
@@ -746,7 +745,7 @@ class ApplicationsTab(UITab):
         apps = get_db().view('app_manager/applications_brief',
                              reduce=False,
                              startkey=key,
-                             endkey=key+[{}],).all()
+                             endkey=key + [{}],).all()
         submenu_context = []
         if not apps:
             return submenu_context
@@ -1033,7 +1032,7 @@ class MessagingTab(UITab):
                           'urlname': 'edit_sample'},
                          {'title': _("New Sample"),
                           'urlname': 'add_sample'},
-                        ]},
+                    ]},
                     {'title': _("Surveys"),
                      'url': reverse('survey_list', args=[self.domain]),
                      'subpages': [
@@ -1041,7 +1040,7 @@ class MessagingTab(UITab):
                           'urlname': 'edit_survey'},
                          {'title': _("New Survey"),
                           'urlname': 'add_survey'},
-                        ]},
+                    ]},
                 ])
             )
 
@@ -1151,8 +1150,6 @@ class ProjectUsersTab(UITab):
 
             from corehq.apps.users.views.mobile import \
                 EditCommCareUserView, ConfirmBillingAccountForExtraUsersView
-            from corehq.apps.users.views.mobile.custom_data_fields \
-                import UserFieldsView
             mobile_users_menu = [
                 {
                     'title': _('Mobile Workers'),
@@ -1330,7 +1327,7 @@ class ProjectSettingsTab(UITab):
                          'title': forward_name,
                          'urlname': 'add_form_repeater',
                      },
-                    ]}
+                ]}
             ])
 
             administration.append({
@@ -1453,7 +1450,7 @@ class AdminReportsTab(UITab):
                 (_('Administrative Reports'), [
                     {'title': _('System Info'),
                      'url': reverse('system_info')},
-                    ])]
+                ])]
 
         admin_operations = [
             {'title': _('View/Update Domain Information'),
@@ -1467,7 +1464,7 @@ class AdminReportsTab(UITab):
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
-                ])
+            ])
         return [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
@@ -1586,7 +1583,7 @@ class SMSAdminTab(UITab):
                   'urlname': 'add_backend'},
                  {'title': _('Edit Connection'),
                   'urlname': 'edit_backend'},
-                ]},
+            ]},
             {'title': _('SMS Country-Connection Map'),
              'url': reverse('global_backend_map')},
         ]))
