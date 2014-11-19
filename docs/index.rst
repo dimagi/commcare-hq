@@ -30,6 +30,7 @@ Welcome to CommCareHQ's documentation!
    translations
    profiling
    elasticsearch
+   dhis2_integration
    test_coverage
 
 Tips for documenting
