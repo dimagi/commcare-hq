@@ -760,6 +760,14 @@ class AliasedElasticPillow(BulkPillow):
     def calc_mapping_hash(self, mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
+
+    def get_unique_id(self):
+        """
+        a unique identifier for the pillow - typically the hash associated with the index
+        """
+        # for legacy reasons this is the default until we remove it.
+        return self.calc_meta()
+
     def calc_meta(self):
         raise NotImplementedError("Need to implement your own meta calculator")
 
@@ -842,7 +850,7 @@ class AliasedElasticPillow(BulkPillow):
         class name and the hashed name representation.
         """
         return "%s.%s.%s.%s" % (
-            self.__module__, self.__class__.__name__, self.calc_meta(), self._get_machine_id())
+            self.__module__, self.__class__.__name__, self.get_unique_id(), self._get_machine_id())
 
     def get_mapping_from_type(self, doc_dict):
         raise NotImplementedError("This must be implemented in this subclass!")
