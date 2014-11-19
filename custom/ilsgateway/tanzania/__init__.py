@@ -214,7 +214,6 @@ class DetailsReport(MultiReport):
                 report_rand_url=self.report_rand_url,
                 report_supervision_url=self.report_supervision_url,
                 report_delivery_url=self.report_delivery_url,
-                report_unrecognizedmessages_url=self.report_unrecognizedmessages_url,
                 with_tabs=True
             )
         )
@@ -259,7 +258,3 @@ class DetailsReport(MultiReport):
                                     (self.request_params['location_id'],
                                      self.request_params['month'],
                                      self.request_params['year'])))
-
-    @property
-    def report_unrecognizedmessages_url(self):
-        return None
