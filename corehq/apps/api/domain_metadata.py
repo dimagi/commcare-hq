@@ -45,8 +45,7 @@ class DomainMetadataResource(HqBaseResource):
         }
 
     def dehydrate_domain_properties(self, bundle):
-        domain = _get_domain(bundle)
-        return {term: domain[term] for term in domain}
+        return _get_domain(bundle)._doc
 
     def obj_get(self, bundle, **kwargs):
         domain = Domain.get_by_name(kwargs.get('domain'))
