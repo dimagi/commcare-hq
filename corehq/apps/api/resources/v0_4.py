@@ -6,7 +6,8 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
+    _safe_bool
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -329,7 +330,12 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
     def dehydrate(self, bundle):
         app_data = {}
         app_data.update(bundle.obj._doc)
-        app_data.update(bundle.data)
+        if _safe_bool(bundle, "extras"):
+            app_data.update(bundle.data)
+        else:
+            for extra_field in bundle.data:
+                if extra_field in app_data:
+                    del app_data[extra_field]
         return app_data
 
     def obj_get_list(self, bundle, domain, **kwargs):
