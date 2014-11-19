@@ -30,7 +30,7 @@ $(function () {
         for (var index in emailAddresses){
             var email = emailAddresses[index];
             if (email && !IsValidEmail(email)){
-                highlightInvalidField($ccFormGroup)
+                highlightInvalidField($ccFormGroup);
                 return false;
             }
         }
