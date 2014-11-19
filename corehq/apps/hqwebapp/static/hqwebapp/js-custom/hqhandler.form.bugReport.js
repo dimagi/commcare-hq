@@ -35,7 +35,7 @@ $(function () {
             }
         }
         if (isDescriptionEmpty) {
-            return false
+            return false;
         }
         var $submitButton = $(this).find("button[type='submit']");
         if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("complete-text")) {
@@ -67,7 +67,7 @@ $(function () {
                 function(){
                     $boxToHide.hide();
                 }
-            )
+            );
         }
     }
     function IsValidEmail(email) {
