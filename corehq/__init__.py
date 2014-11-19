@@ -93,13 +93,8 @@ def REPORTS(project):
         ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
-
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
-
-    if project.commconnect_enabled:
-        reports.insert(0, messaging)
-    else:
-        reports.append(messaging)
+    reports.append(messaging)
 
     reports.extend(_get_dynamic_reports(project))
     reports.extend(_get_configurable_reports(project))
