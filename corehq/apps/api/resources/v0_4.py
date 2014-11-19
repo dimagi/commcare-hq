@@ -327,6 +327,12 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
         elif app.doc_type == RemoteApp._doc_type:
             return []
 
+    def dehydrate(self, bundle):
+        app_data = {}
+        app_data.update(bundle.obj._doc)
+        app_data.update(bundle.data)
+        return app_data
+
     def obj_get_list(self, bundle, domain, **kwargs):
         return get_apps_in_domain(domain, include_remote=False)
 
