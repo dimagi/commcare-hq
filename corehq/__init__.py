@@ -94,8 +94,7 @@ def REPORTS(project):
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
 
-    messaging = (lambda project, user: (
-        ugettext_lazy("Logs") if project.commtrack_enabled else ugettext_lazy("Messaging")), messaging_reports)
+    messaging = (ugettext_lazy("Messaging"), messaging_reports)
 
     if project.commconnect_enabled:
         reports.insert(0, messaging)
