@@ -1252,7 +1252,7 @@ def form_multimedia_export(request, domain, app_id):
     zip_name = ''
     size = 0
     unknown_number = 0
-    for f in XFormInstance.get_db().view("exports_forms/attachments",
+    for f in XFormInstance.get_db().view("attachments/attachments",
                                          start_key=key + [startdate],
                                          end_key=key + [enddate, {}],
                                          reduce=False):

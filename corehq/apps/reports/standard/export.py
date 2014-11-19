@@ -114,7 +114,7 @@ class ExcelExportReport(FormExportReportBase):
         startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
         # hash of xmlns to size of attachments
-        size_hash = {a['key'][2]: a['value'] for a in db.view('exports_forms/attachments',
+        size_hash = {a['key'][2]: a['value'] for a in db.view('attachments/attachments',
                                                               startkey=startkey,
                                                               endkey=startkey+[{}],
                                                               group_level=3,
