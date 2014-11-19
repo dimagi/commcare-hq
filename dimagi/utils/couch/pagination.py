@@ -69,7 +69,14 @@ class DatatablesParams(object):
         self.desc = desc
         self.echo = echo
         self.search = search
-        
+
+    def __repr__(self):
+        return json.dumps({
+            'start': self.start,
+            'count': self.count,
+            'echo': self.echo,
+        }, indent=2)
+
     @classmethod
     def from_request_dict(cls, query):
         
@@ -86,7 +93,6 @@ class DatatablesParams(object):
         search = query.get("sSearch", "")
 
         return DatatablesParams(count, start, desc, echo, search)
-        
         
 
 class CouchPaginator(object):
