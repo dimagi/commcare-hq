@@ -79,10 +79,17 @@ def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
 
 
 def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
-    save_checkpoint(checkpoint, "webuser", limit, offset, kwargs.get('date', None))
-    for user in endpoint.get_webusers(**kwargs):
-        if user.email or user.username:
-            sync_ilsgateway_webuser(project, user)
+    has_next = True
+    next_url = None
+
+    while has_next:
+        meta, webusers = endpoint.get_webusers(next_url_params=next_url, **kwargs)
+        save_checkpoint(checkpoint, "webuser", meta.get('limit') or limit,
+                        meta.get('offset') or offset, kwargs.get('date', None))
+        for user in webusers:
+            if user.email or user.username:
+                sync_ilsgateway_webuser(project, user)
+        has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
 def locations_sync(project, endpoint, checkpoint, fetch_groups=True, **kwargs):
@@ -350,7 +357,7 @@ def commtrack_settings_sync(project, locations_types):
     config.save()
 
 
-def bootstrap_domain(config, endpoint, extensions=None):
+def bootstrap_domain(config, endpoint, extensions=None, **kwargs):
     domain = config.domain
     start_date = datetime.today()
     endpoint = endpoint.from_config(config)
@@ -377,11 +384,11 @@ def bootstrap_domain(config, endpoint, extensions=None):
     apis = [
         ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
         ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, type='facility'))),
+                                      filters=dict(date_updated__gte=date, type='facility'), **kwargs)),
         ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                      filters=dict(date_updated__gte=date, type='district'))),
+                                      filters=dict(date_updated__gte=date, type='district'), **kwargs)),
         ('location_region', partial(locations_sync, domain, endpoint, checkpoint, date=date,
-                                    filters=dict(date_updated__gte=date, type='region'))),
+                                    filters=dict(date_updated__gte=date, type='region'), **kwargs)),
         ('webuser', partial(webusers_sync, domain, endpoint, checkpoint, date=date,
                             filters=dict(user__date_joined__gte=date))),
         ('smsuser', partial(smsusers_sync, domain, endpoint, checkpoint, date=date,

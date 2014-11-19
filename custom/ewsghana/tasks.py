@@ -18,7 +18,7 @@ EXTENSIONS = {
 }
 
 
-LOCATION_TYPES = ["national", "region", "district", "facility"]
+LOCATION_TYPES = ["country", "region", "district", "facility"]
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -34,7 +34,7 @@ def migration_task():
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
     commtrack_settings_sync(domain, LOCATION_TYPES)
-    return bootstrap_domain(ews_config, GhanaEndpoint.from_config(ews_config), EXTENSIONS)
+    return bootstrap_domain(ews_config, GhanaEndpoint.from_config(ews_config), EXTENSIONS, fetch_groups=False)
 
 # District Ashanti
 EWS_FACILITIES = [109, 110, 624, 626, 922, 908, 961, 948, 956, 967]

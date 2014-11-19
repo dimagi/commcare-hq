@@ -1,11 +1,11 @@
 import json
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponseRedirect
-from corehq.apps.commtrack.models import CommtrackConfig
-from corehq.apps.products.models import Product
+from corehq.apps.commtrack.models import CommtrackConfig, StockState
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
@@ -17,6 +17,7 @@ from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import ils_stock_data_task, report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.models import MigrationCheckpoint
+from casexml.apps.stock.models import StockTransaction
 
 
 class GlobalStats(BaseDomainView):
@@ -27,31 +28,20 @@ class GlobalStats(BaseDomainView):
 
     @property
     def main_context(self):
-        try:
-            facilities = Location.filter_by_type_count(self.domain, 'FACILITY')
-        except TypeError:
-            facilities = 0
-
         contacts = CommCareUser.by_domain(self.domain, reduce=True)
         web_users = WebUser.by_domain(self.domain, reduce=True)
 
-        try:
-            products = len(Product.by_domain(self.domain))
-        except ResourceNotFound:
-            products = 0
-
         main_context = super(GlobalStats, self).main_context
         context = {
-            'supply_points': len(list(Location.by_domain(self.domain))),
-            'facilities': facilities,
+            'supply_points': SQLLocation.objects.filter(domain=self.domain).count(),
+            'facilities': SQLLocation.objects.filter(domain=self.domain, location_type='FACILITY').count(),
             'contacts': contacts[0]['value'] if contacts else 0,
             'web_users': web_users[0]['value'] if web_users else 0,
-            'products': products,
-            # TODO add next after the enlargement ILS migration
-            'product_stocks': 0,
-            'stock_transactions': 0,
-            'inbound_messages': 0,
-            'outbound_messages': 0
+            'products': SQLProduct.objects.filter(domain=self.domain).count(),
+            'product_stocks': StockState.objects.filter(sql_product__domain=self.domain).count(),
+            'stock_transactions': StockTransaction.objects.filter(report__domain=self.domain).count(),
+            'inbound_messages': SMSLog.count_incoming_by_domain(self.domain),
+            'outbound_messages': SMSLog.count_outgoing_by_domain(self.domain)
         }
         main_context.update(context)
         return main_context

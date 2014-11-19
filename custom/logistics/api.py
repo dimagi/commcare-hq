@@ -53,8 +53,7 @@ class LogisticsEndpoint(EndpointMixin):
 
     def get_webusers(self, **kwargs):
         meta, users = self.get_objects(self.webusers_url, **kwargs)
-        for user in users:
-            yield (self.models_map['webuser'])(user)
+        return meta, [(self.models_map['webuser'])(user) for user in users]
 
     def get_smsusers(self, **kwargs):
         meta, users = self.get_objects(self.smsusers_url, **kwargs)
@@ -74,5 +73,5 @@ class LogisticsEndpoint(EndpointMixin):
 
     def get_stocktransactions(self, **kwargs):
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
-        return meta, [self.models_map['stock_transaction'].from_json(stock_transaction)
+        return meta, [(self.models_map['stock_transaction'])(stock_transaction)
                       for stock_transaction in stock_transactions]

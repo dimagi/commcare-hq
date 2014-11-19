@@ -18,7 +18,7 @@ class EWSConfigView(BaseConfigView):
     sync_stock_url = 'ews_sync_stock_data'
     clear_stock_url = 'ews_clear_stock_data'
     page_title = ugettext_noop("EWS Ghana")
-    template_name = 'ilsgateway/ewsconfig.html'
+    template_name = 'ewsghana/ewsconfig.html'
     source = 'ewsghana'
 
 

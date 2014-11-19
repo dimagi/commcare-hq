@@ -7,3 +7,6 @@ CUSTOM_REPORTS = (
         AlertReport,
     )),
 )
+
+# For QA purposes it should be set to true.
+TEST = True
