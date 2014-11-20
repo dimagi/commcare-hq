@@ -291,6 +291,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
 class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
+    name = fields.CharField(attribute='name')
     modules = fields.ListField()
 
     def dehydrate_module(self, app, module, langs):
@@ -328,15 +329,13 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
             return []
 
     def dehydrate(self, bundle):
-        app_data = {}
-        app_data.update(bundle.obj._doc)
-        if _safe_bool(bundle, "extras"):
-            app_data.update(bundle.data)
+        if not _safe_bool(bundle, "extras"):
+            return super(ApplicationResource, self).dehydrate(bundle)
         else:
-            for extra_field in bundle.data:
-                if extra_field in app_data:
-                    del app_data[extra_field]
-        return app_data
+            app_data = {}
+            app_data.update(bundle.obj._doc)
+            app_data.update(bundle.data)
+            return app_data
 
     def obj_get_list(self, bundle, domain, **kwargs):
         return get_apps_in_domain(domain, include_remote=False)
