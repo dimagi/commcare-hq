@@ -52,17 +52,33 @@ class StockSettings(object):
 class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
+
+    :param user:            The mobile user requesting the restore
+    :param restore_id:      ID of the previous restore
+    :param version:         The version of the restore format
+    :param state_hash:      The case state hash string to use to verify the state of the phone
+    :param items:           Set to `True` to include the item count in the response
+    :param stock_settings:  CommTrack stock settings for the domain.
+                            If None, default settings will be used.
+    :param domain:          The domain object. An instance of `Domain`.
+    :param force_cache:     Set to `True` to force the response to be cached.
+                            Only applies if `restore_id` is empty.
+    :param cache_timeout:   Override the default cache timeout of 1 hour.
+                            Only applies if `restore_id` is empty.
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, stock_settings=None, domain=None):
+                 items=False, stock_settings=None, domain=None, force_cache=False, cache_timeout=None):
         self.user = user
         self.restore_id = restore_id
         self.version = version
         self.state_hash = state_hash
-        self.cache = get_redis_default_cache()
         self.items = items
         self.stock_settings = stock_settings or StockSettings()
         self.domain = domain
+        self.force_cache = force_cache
+        self.cache_timeout = cache_timeout or INITIAL_SYNC_CACHE_TIMEOUT
+
+        self.cache = get_redis_default_cache()
 
     @property
     @memoized
@@ -255,8 +271,8 @@ class RestoreConfig(object):
                 pass
         else:
             # on initial sync, only cache if the duration was longer than the threshold
-            if duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self.cache.set(self._initial_cache_key(), resp, INITIAL_SYNC_CACHE_TIMEOUT)
+            if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
+                self.cache.set(self._initial_cache_key(), resp, self.cache_timeout)
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",
