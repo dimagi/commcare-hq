@@ -221,6 +221,9 @@
         {% for app in applications %}
             <div id="application-{{ app.id }}">
                 <dl class="dl-horizontal">
+                    <dt>
+                        <h4 style="display: inline-block;">Application</h4>
+                    </dt>
                     <dd>
                         <h4 style="display: inline-block;">{{ app.name }}</h4>
                    </dd>
@@ -256,9 +259,18 @@
         {% endfor %}
     </div>
     <div id="fixtures-accordion">
+        {% if fixtures %}
+            <div class='alert alert-warning'>
+                Lookup Tables are not supported on our Community plan
+                <a href="http://www.commcarehq.org/software-plans/">http://www.commcarehq.org/software-plans/</a>
+            </div>
+        {% endif %}
         {% for fixture in fixtures %}
             <div id="fixtures-{{ fixture.id }}">
                 <dl class="dl-horizontal">
+                    <dt>
+                        <h4 style="display: inline-block;">Lookup Table</h4>
+                    </dt>
                     <dd>
                         <h4 style="display: inline-block;">{{ fixture.tag }}</h4>
                     </dd>
