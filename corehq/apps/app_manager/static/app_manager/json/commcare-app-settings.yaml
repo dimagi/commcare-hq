@@ -152,7 +152,7 @@
 - id: auto_gps_capture
   name: 'Auto Capture Location (all forms)'
   description: >
-    Have all forms automatically record the user's current geo-location
+    On CommCare Android, have this form automatically capture the user's current geo-location.
   widget: bool
   default: false
   since: '2.14'

@@ -133,23 +133,23 @@ class OpmCaseSqlData(SqlData):
 class OpmFormSqlData(SqlData):
     table_name = "fluff_OpmFormFluff"
 
-    def __init__(self, domain, case_id, datespan):
+    def __init__(self, domain, user_id, datespan):
         self.domain = domain
-        self.case_id = case_id
+        self.user_id = user_id
         self.datespan = datespan
 
     @property
     def filter_values(self):
         return dict(
             domain=self.domain,
-            case_id=self.case_id,
+            user_id=self.user_id,
             startdate=self.datespan.startdate_utc.date(),
             enddate=self.datespan.enddate_utc.date()
         )
 
     @property
     def group_by(self):
-        return ['case_id']
+        return ['user_id']
 
     @property
     def filters(self):
@@ -157,24 +157,24 @@ class OpmFormSqlData(SqlData):
             "domain = :domain",
             "date between :startdate and :enddate"
         ]
-        if self.case_id:
-            filters.append("case_id = :case_id")
+        if self.user_id:
+            filters.append("user_id = :user_id")
         return filters
 
     @property
     def columns(self):
         return [
-            DatabaseColumn("Case ID", SimpleColumn("case_id")),
+            DatabaseColumn("User ID", SimpleColumn("user_id")),
             DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
             DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
         ]
 
     @property
     def data(self):
-        if self.case_id is None:
+        if self.user_id is None:
             return super(OpmFormSqlData, self).data
-        if self.case_id in super(OpmFormSqlData, self).data:
-            return super(OpmFormSqlData, self).data[self.case_id]
+        if self.user_id in super(OpmFormSqlData, self).data:
+            return super(OpmFormSqlData, self).data[self.user_id]
         else:
             return None
 
@@ -458,6 +458,11 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     export_format_override = Format.UNZIPPED_CSV
     block = ''
 
+    _debug_data = []
+    @property
+    def debug(self):
+        return bool(self.request.GET.get('debug'))
+
     @property
     def show_html(self):
         return getattr(self, 'rendered_as', 'html') not in ('print', 'export')
@@ -562,11 +567,19 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         Returns a list of objects, each representing a row in the report
         """
         rows = []
+        self._debug_data = []
         for row in self.get_rows(self.datespan):
             try:
                 rows.append(self.get_row_data(row))
-            except InvalidRow:
-                pass
+            except InvalidRow as e:
+                if self.debug:
+                    import sys, traceback
+                    type, exc, tb = sys.exc_info()
+                    self._debug_data.append({
+                        'case_id': row._id,
+                        'message': e,
+                        'traceback': ''.join(traceback.format_tb(tb)),
+                    })
         return rows
 
     def get_row_data(self, row):
@@ -643,6 +656,7 @@ class CaseReportMixin(object):
         return OpenCloseFilter.case_status(self.request_params)
 
     def get_rows(self, datespan):
+
         def get_awc_filter(awcs):
             return get_nested_terms_filter("awc_name.#value", awcs)
 
@@ -674,6 +688,7 @@ class CaseReportMixin(object):
             query = query.filter(get_gp_filter(self.gp))
         elif self.block:
             query = query.filter(get_block_filter(self.block))
+
         result = query.run()
         return map(CommCareCase, iter_docs(CommCareCase.get_db(), result.ids))
 
@@ -702,6 +717,13 @@ class CaseReportMixin(object):
                 method, header, visible in self.model.method_map])
 
         sorted_rows = sorted(rows, key=lambda item: item[0])
+        if self.debug:
+            def _debug_item_to_row(debug_val):
+                num_cols = len(self.model.method_map) - 3
+                return [debug_val['case_id'], debug_val['message'], debug_val['traceback']] + [''] * num_cols
+
+            sorted_rows.extend([_debug_item_to_row(dbv) for dbv in self._debug_data])
+
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
@@ -739,6 +761,9 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     @property
     def rows(self):
         raw_rows = super(BeneficiaryPaymentReport, self).rows
+        if self.debug:
+            return raw_rows
+
         # Consolidate rows with the same account number
         accounts = OrderedDict()
         for row in raw_rows:

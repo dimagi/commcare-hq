@@ -1,6 +1,5 @@
-import calendar
 import datetime
-from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart, LineChart
+from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from custom.world_vision.sqldata import LOCATION_HIERARCHY
@@ -62,7 +61,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             weight_birth_25='2.5',
             newborn_death='newborn_death',
             infant_death='infant_death',
-            child_death='child_death'
+            child_death='child_death',
+            date_of_death='date_of_death'
         )
 
         if 'startdate' in self.request.GET and self.request.GET['startdate']:
@@ -78,7 +78,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
         for d in [35, 56, 84, 85, 112, 196]:
             config['today_plus_%d' % d] = (today + datetime.timedelta(days=d)).strftime("%Y-%m-%d")
 
-        for d in [2, 4, 21, 25, 40, 75, 106, 182, 183, 273, 365, 547, 548, 700, 730]:
+        for d in [2, 4, 21, 25, 40, 42, 75, 106, 182, 183, 273, 365, 547, 548, 700, 730]:
             config['today_minus_%d' % d] = (today - datetime.timedelta(days=d)).strftime("%Y-%m-%d")
 
         for d in [1, 3, 5, 6]:
@@ -92,7 +92,6 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                 location_list = self.request.GET.getlist(req_prop, [])
                 if location_list and location_list[0] != '0':
                     config.update({k: tuple(location_list)})
-                    break
         return config
 
     def get_report_context(self, data_provider):
@@ -111,8 +110,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                     total_row = data_provider.calculate_total_row(rows)
                 else:
                     total_row = list(calculate_total_row(rows))
-                    if total_row:
-                        total_row[0] = data_provider.total_row_name
+                if total_row:
+                    total_row[0] = data_provider.total_row_name
 
             if data_provider.show_charts:
                 charts = list(self.get_chart(
@@ -131,13 +130,13 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                 total_row=total_row,
                 datatables=data_provider.datatables,
                 start_at_row=0,
-                fix_column=data_provider.fix_left_col
+                fix_column=data_provider.fix_left_col,
+                accordion_start=data_provider.accordion_start,
+                accordion_end=data_provider.accordion_end
             ),
             charts=charts,
             chart_span=12
         )
-        if hasattr(data_provider, 'width'):
-            context['report_table']['width'] = data_provider.width
         return context
 
     def get_chart(self, rows, x_label, y_label, data_provider):
@@ -149,6 +148,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
                              [{'label': "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1]))),
                                'value': int(row[-1]['html'][:-1])} for row in rows[2:]], ['red', 'green'])
             chart.showLabels = False
+            chart.marginLeft = 20
+            chart.marginBottom = 20
         elif isinstance(data_provider, DeliveryPlaceDetailsExtended):
             chart = PieChart('', '', [{'label': _get_label_with_percentage(row),
                                        'value': int(row[-1]['html'][:-1])} for row in rows[1:]])
@@ -156,44 +157,51 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
         elif isinstance(data_provider, (PostnatalCareOverview, ImmunizationOverview)):
             chart = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
-            chart.marginBottom = 120
+            chart.marginBottom = 80
+            chart.marginLeft = 20
+
             if isinstance(data_provider, ImmunizationOverview):
                 chart.stacked = True
                 chart.add_dataset('Percentage',
                                   [{'x': row[0]['html'],
-                                    'y': int(row[3]['html'][:-1]) / 100} for row in rows],
+                                    'y': int(row[3]['html'][:-1]) / 100.0} for row in rows],
                                   color='green')
                 chart.add_dataset('Dropout Percentage',
                                   [{'x': row[0]['html'],
-                                    'y': int(row[-1]['html'][:-1]) / 100} for row in rows],
+                                    'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows],
                                   color='red')
             else:
                 chart.add_dataset('Percentage',
-                                  [{'x': row[0]['html'], 'y':int(row[-1]['html'][:-1]) / 100} for row in rows])
+                                  [{'x': row[0]['html'], 'y':int(row[-1]['html'][:-1]) / 100.0} for row in rows])
         elif isinstance(data_provider, AnteNatalCareServiceOverviewExtended):
             chart1 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart2 = MultiBarChart('', x_axis=Axis(x_label), y_axis=Axis(y_label, '.2%'))
             chart1.rotateLabels = -45
             chart2.rotateLabels = -45
-            chart1.marginBottom = 120
-            chart2.marginBottom = 120
+            chart1.marginBottom = 70
+            chart2.marginBottom = 70
+            chart1.marginLeft = 20
+            chart2.marginLeft = 20
+
             chart1.add_dataset('Percentage', [{'x': row[0]['html'],
-                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[1:6]])
+                                               'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows[1:6]])
             chart2.add_dataset('Percentage', [{'x': row[0]['html'],
-                                               'y': int(row[-1]['html'][:-1]) / 100} for row in rows[6:12]])
+                                               'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows[6:12]])
             return [chart1, chart2]
         elif isinstance(data_provider, ChildrenDeathsByMonth):
-            chart = LineChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"),
-                              y_axis=Axis(y_label, '.2%'))
+            chart = MultiBarChart('Seasonal Variation of Child Deaths', x_axis=Axis(x_label, dateFormat="%B"),
+                                  y_axis=Axis(y_label, '.2%'))
             chart.rotateLabels = -45
-            chart.marginBottom = 120
-            months_mapping = dict((v,k) for k,v in enumerate(calendar.month_abbr))
-            chart.add_dataset('Percentage', [{'x': datetime.date(1, months_mapping[row[0][:3]], 1),
-                                              'y': int(row[-1]['html'][:-1]) / 100} for row in rows])
+            chart.marginBottom = 70
+            chart.marginLeft = 20
+            chart.add_dataset('Percentage', [{'x': row[0],
+                                              'y': int(row[-1]['html'][:-1]) / 100.0} for row in rows])
         else:
             chart = PieChart('', '', [{'label': "%s [%s%%]" % (row[0]['html'], str(int(row[-1]['html'][:-1]))),
                                        'value': int(row[-1]['html'][:-1])} for row in rows])
             chart.showLabels = False
+            chart.marginLeft = 20
+            chart.marginBottom = 20
         return [chart]
 
     @property

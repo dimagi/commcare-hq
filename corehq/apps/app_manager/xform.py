@@ -1,10 +1,10 @@
 from collections import defaultdict
 import logging
-import warnings
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
+from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
@@ -22,8 +22,8 @@ def parse_xml(string):
 
 
 namespaces = dict(
-    jr = "{http://openrosa.org/javarosa}",
-    xsd = "{http://www.w3.org/2001/XMLSchema}",
+    jr="{http://openrosa.org/javarosa}",
+    xsd="{http://www.w3.org/2001/XMLSchema}",
     h='{http://www.w3.org/1999/xhtml}',
     f='{http://www.w3.org/2002/xforms}',
     ev="{http://www.w3.org/2001/xml-events}",
@@ -31,6 +31,7 @@ namespaces = dict(
     reg="{http://openrosa.org/user/registration}",
     cx2="{%s}" % V2_NAMESPACE,
     cc="{http://commcarehq.org/xforms}",
+    v="{http://commcarehq.org/xforms/vellum}",
 )
 
 
@@ -40,7 +41,11 @@ def _make_elem(tag, attr=None):
 
 
 def make_case_elem(tag, attr=None):
-        return _make_elem('{cx2}%s' % tag, attr)
+        return _make_elem(case_elem_tag(tag), attr)
+
+
+def case_elem_tag(tag):
+    return '{cx2}%s' % tag
 
 
 def get_case_parent_id_xpath(parent_path, case_id_xpath=None):
@@ -81,6 +86,9 @@ class WrappedAttribs(object):
     def __contains__(self, item):
         return self._get_item_name(item) in self.attrib
 
+    def __iter__(self):
+        raise NotImplementedError()
+
     def __setitem__(self, item, value):
         self.attrib[self._get_item_name(item)] = value
 
@@ -93,13 +101,24 @@ class WrappedAttribs(object):
     def __getitem__(self, item):
         return self.attrib[self._get_item_name(item)]
 
+    def __delitem__(self, item):
+        del self.attrib[self._get_item_name(item)]
+
+
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
-        self.namespaces=namespaces
+        self.namespaces = namespaces
+
+    def xpath(self, xpath, *args, **kwargs):
+        if self.xml is not None:
+            return [WrappedNode(n) for n in self.xml.xpath(
+                    xpath.format(**self.namespaces), *args, **kwargs)]
+        else:
+            return []
 
     def find(self, xpath, *args, **kwargs):
         if self.xml is not None:
@@ -240,7 +259,7 @@ def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
     whose xml can possibly be None to a function that always returns a valid WrappedNode or raises
-    an XFormException with the message given
+    an XFormError with the message given
 
     """
     def decorator(fn):
@@ -349,9 +368,15 @@ class CaseBlock(object):
             required="true()",
         )
 
-    def add_update_block(self, updates, make_relative=False):
+    @property
+    @memoized
+    def update_block(self):
         update_block = make_case_elem('update')
         self.elem.append(update_block)
+        return update_block
+
+    def add_update_block(self, updates, make_relative=False):
+        update_block = self.update_block
         if not updates:
             return
 
@@ -391,6 +416,8 @@ class CaseBlock(object):
                     resolved_path = relative_path(nodeset, resolved_path)
                 self.xform.add_bind(nodeset=nodeset, relevant=("count(%s) = 1" % resolved_path))
                 self.xform.add_bind(nodeset=nodeset + "/@src", calculate=resolved_path)
+
+        return update_block
 
     def is_attachment(self, ref):
         """Return true if there is an upload node with the given ref """
@@ -511,6 +538,15 @@ class XForm(WrappedNode):
     def video_references(self):
         return self.media_references(form="video")
 
+    def set_name(self, new_name):
+        title = self.find('{h}head/{h}title')
+        if title.exists():
+            title.xml.text = new_name
+        try:
+            self.data_node.set('name', "%s" % new_name)
+        except XFormError:
+            pass
+
     def normalize_itext(self):
         """
         Convert this:
@@ -572,6 +608,15 @@ class XForm(WrappedNode):
                 xf_string = replace_ref_s(xf_string, old_ref, new_ref)
 
         self.xml = parse_xml(xf_string)
+
+    def strip_vellum_ns_attributes(self):
+        # vellum_ns is wrapped in braces i.e. '{http...}'
+        vellum_ns = self.namespaces['v']
+        xpath = ".//*[@*[namespace-uri()='{v}']]".format(v=vellum_ns[1:-1])
+        for node in self.xpath(xpath):
+            for key in node.xml.attrib:
+                if key.startswith(vellum_ns):
+                    del node.attrib[key]
 
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
@@ -1085,8 +1130,8 @@ class XForm(WrappedNode):
             case_block = None
         else:
             extra_updates = {}
-
             case_block = CaseBlock(self)
+
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
@@ -1230,6 +1275,29 @@ class XForm(WrappedNode):
     def create_casexml_2_advanced(self, form):
         from corehq.apps.app_manager.util import split_path
 
+        def configure_visit_schedule_updates(update_block):
+            update_block.append(make_case_elem(SCHEDULE_PHASE))
+            last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
+            last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
+            update_block.append(make_case_elem(last_visit_num))
+
+            self.add_setvalue(
+                ref='case/update/{}'.format(SCHEDULE_PHASE),
+                value=str(form.id + 1)
+            )
+
+            last_visit_prop_xpath = SESSION_CASE_ID.case().slash(last_visit_num)
+            self.add_setvalue(
+                ref='case/update/{}'.format(last_visit_num),
+                value="if({0} = '', 1, int({0}) + 1)".format(last_visit_prop_xpath)
+            )
+
+            self.add_bind(
+                nodeset='case/update/{}'.format(last_visit_date),
+                type="xsd:dateTime",
+                calculate=self.resolve_path("meta/timeEnd")
+            )
+
         if not form.actions.get_all_actions():
             return
 
@@ -1253,7 +1321,17 @@ class XForm(WrappedNode):
 
         def check_case_type(action):
             if not form.get_app().case_type_exists(action.case_type):
-                raise CaseError("Case type (%s) for form (%s) does not exist" % (action.case_type, form.default_name()))
+                raise CaseError("Case type (%s) for form (%s) does not exist" % (
+                    action.case_type,
+                    form.default_name())
+                )
+
+        last_real_action = next(
+            (action for action in reversed(form.actions.load_update_cases) if not action.auto_select),
+            None
+        )
+
+        has_schedule = form.get_module().has_schedule and form.schedule and form.schedule.anchor
 
         for action in form.actions.load_update_cases:
             session_case_id = CaseIDXPath(session_var(action.case_session_var))
@@ -1272,16 +1350,21 @@ class XForm(WrappedNode):
                         value=id_xpath.case().property(property_xpath),
                     )
 
-            if action.case_properties or action.close_condition.type != 'never':
+            if action.case_properties or action.close_condition.type != 'never' or \
+                    (has_schedule and action == last_real_action):
                 update_case_block, path = create_case_block(action, session_case_id)
-                self.add_case_updates(
-                    update_case_block,
-                    action.case_properties,
-                    base_node_path=path,
-                    case_id_xpath=session_case_id)
+                if action.case_properties:
+                    self.add_case_updates(
+                        update_case_block,
+                        action.case_properties,
+                        base_node_path=path,
+                        case_id_xpath=session_case_id)
 
                 if action.close_condition.type != 'never':
                     update_case_block.add_close_block(self.action_relevance(action.close_condition))
+
+                if has_schedule:
+                    configure_visit_schedule_updates(update_case_block.update_block)
 
         repeat_contexts = defaultdict(int)
         for action in form.actions.open_cases:

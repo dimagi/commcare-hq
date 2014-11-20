@@ -2,7 +2,7 @@ from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
 from casexml.apps.stock.consumption import compute_consumption_or_default
-from casexml.apps.stock.utils import get_current_ledger_transactions
+from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -54,7 +54,7 @@ class RestoreConfig(object):
     A collection of attributes associated with an OTA restore
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, stock_settings=None):
+                 items=False, stock_settings=None, domain=None):
         self.user = user
         self.restore_id = restore_id
         self.version = version
@@ -62,6 +62,7 @@ class RestoreConfig(object):
         self.cache = get_redis_default_cache()
         self.items = items
         self.stock_settings = stock_settings or StockSettings()
+        self.domain = domain
 
     @property
     @memoized
@@ -87,7 +88,9 @@ class RestoreConfig(object):
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
     def get_stock_payload(self, syncop):
-        cases = [e.case for e in syncop.actual_cases_to_sync]
+        if self.domain and not self.domain.commtrack_enabled:
+            return
+
         from lxml.builder import ElementMaker
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
@@ -111,8 +114,11 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
-        for commtrack_case in cases:
-            current_ledgers = get_current_ledger_transactions(commtrack_case._id)
+        case_ids = [op.case._id for op in syncop.actual_cases_to_sync]
+        all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
+        for op in syncop.actual_cases_to_sync:
+            commtrack_case = op.case
+            current_ledgers = all_current_ledgers[commtrack_case._id]
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
@@ -162,10 +168,6 @@ class RestoreConfig(object):
 
         start_time = datetime.utcnow()
         sync_operation = user.get_case_updates(last_sync)
-        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
-                             for op in sync_operation.actual_cases_to_sync]
-        commtrack_elements = self.get_stock_payload(sync_operation)
-
         last_seq = str(get_db().info()["update_seq"])
 
         # create a sync log for this
@@ -190,11 +192,19 @@ class RestoreConfig(object):
         # registration block
         response.append(xml.get_registration_element(user))
         # fixture block
-        for fixture in generator.get_fixtures(user, self.version, last_sync):
+        for fixture in generator.get_fixtures(user, self.version, sync_operation, last_sync):
             response.append(fixture)
+
         # case blocks
+        case_xml_elements = (
+            xml.get_case_element(op.case, op.required_updates, self.version)
+            for op in sync_operation.actual_cases_to_sync
+        )
         for case_elem in case_xml_elements:
             response.append(case_elem)
+
+        # commtrack balance sections
+        commtrack_elements = self.get_stock_payload(sync_operation)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
@@ -203,6 +213,8 @@ class RestoreConfig(object):
 
         resp = xml.tostring(response)
         duration = datetime.utcnow() - start_time
+        synclog.duration = duration.seconds
+        synclog.save()
         self.set_cached_payload_if_necessary(resp, duration)
         return resp
 

@@ -25,6 +25,7 @@ from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.tasks import initiate_outbound_call
 from datetime import timedelta
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
@@ -99,16 +100,46 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
     return (verified_number, unverified_number)
 
 
+def get_message_template_params(case):
+    """
+    Data such as case properties can be referenced from reminder messages
+    such as {case.name} which references the case's name. Add to this result
+    all data that can be referenced from a reminder message.
+
+    The result is a dictionary where each key is the object's name and each
+    value is a dictionary of attributes to be referenced. Dictionaries can
+    also be nested, so a result here of {"case": {"parent": {"name": "joe"}}}
+    allows you to reference {case.parent.name} in a reminder message.
+
+    At the moment, the result here is of this structure:
+    {
+        "case": {
+            ...key:value case properties...
+            "parent": {
+                ...key:value parent case properties...
+            }
+        }
+    }
+    """
+    result = {"case": {}}
+    if case:
+        result["case"] = case.case_properties()
+
+    parent_case = case.parent if case else None
+    result["case"]["parent"] = {}
+    if parent_case:
+        result["case"]["parent"] = parent_case.case_properties()
+    return result
+
+
 def fire_sms_event(reminder, handler, recipients, verified_numbers, workflow=None):
     metadata = MessageMetadata(
         workflow=workflow or get_workflow(handler),
         reminder_id=reminder._id,
     )
     current_event = reminder.current_event
-    template_params = {}
     case = reminder.case
-    if case is not None:
-        template_params["case"] = case.case_properties()
+    template_params = get_message_template_params(case)
     for recipient in recipients:
         try:
             lang = recipient.get_language_code()
@@ -277,19 +308,26 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
                 else:
                     continue
 
-            # Close all currently open sessions
-            XFormsSession.close_all_open_sms_sessions(reminder.domain, recipient.get_id)
+            key = "start-sms-survey-for-contact-%s" % recipient.get_id
+            with CriticalSection([key], timeout=60):
+                # Close all currently open sessions
+                XFormsSession.close_all_open_sms_sessions(reminder.domain,
+                    recipient.get_id)
 
-            # Start the new session
-            if isinstance(recipient, CommCareCase) and not handler.force_surveys_to_use_triggered_case:
-                case_id = recipient.get_id
-            else:
-                case_id = reminder.case_id
-            session, responses = start_session(reminder.domain, recipient, app, module, form, case_id, case_for_case_submission=handler.force_surveys_to_use_triggered_case)
-            session.survey_incentive = handler.survey_incentive
-            session.workflow = get_workflow(handler)
-            session.reminder_id = reminder._id
-            session.save()
+                # Start the new session
+                if (isinstance(recipient, CommCareCase) and
+                    not handler.force_surveys_to_use_triggered_case):
+                    case_id = recipient.get_id
+                else:
+                    case_id = reminder.case_id
+                session, responses = start_session(reminder.domain, recipient,
+                    app, module, form, case_id, case_for_case_submission=
+                    handler.force_surveys_to_use_triggered_case)
+                session.survey_incentive = handler.survey_incentive
+                session.workflow = get_workflow(handler)
+                session.reminder_id = reminder._id
+                session.save()
+
             reminder.xforms_session_ids.append(session.session_id)
 
             # Send out first message

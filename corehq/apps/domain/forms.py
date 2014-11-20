@@ -29,7 +29,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
-from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase
+from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase, get_apps_in_domain
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, Domain)
@@ -384,7 +384,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 'secure_submissions', False)
             apps_to_save = []
             if secure_submissions != domain.secure_submissions:
-                for app in ApplicationBase.by_domain(domain.name):
+                for app in get_apps_in_domain(domain.name):
                     if app.secure_submissions != secure_submissions:
                         app.secure_submissions = secure_submissions
                         apps_to_save.append(app)
@@ -596,7 +596,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
     goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
-    commconnect_domain = BooleanField(label=ugettext_noop("Commconnect domain?"), required=False)
+    commconnect_domain = BooleanField(label=ugettext_noop("Uses messaging?"), required=False)
     commtrack_domain = BooleanField(label=ugettext_noop("Commtrack domain?"), required=False)
 
     def save(self, domain):

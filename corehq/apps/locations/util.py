@@ -1,5 +1,6 @@
-from corehq.apps.commtrack.models import Product, SupplyPointCase
-from corehq.apps.locations.models import Location, root_locations
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.products.models import Product
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext as _
@@ -9,7 +10,7 @@ from StringIO import StringIO
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 
 
-def load_locs_json(domain, selected_loc_id=None):
+def load_locs_json(domain, selected_loc_id=None, include_archived=False):
     """initialize a json location tree for drill-down controls on
     the client. tree is only partially initialized and branches
     will be filled in on the client via ajax.
@@ -23,21 +24,35 @@ def load_locs_json(domain, selected_loc_id=None):
         return {
             'name': loc.name,
             'location_type': loc.location_type,
-            'uuid': loc._id,
+            'uuid': loc.location_id,
+            'is_archived': loc.is_archived,
         }
-    loc_json = [loc_to_json(loc) for loc in root_locations(domain)]
+
+    loc_json = [
+        loc_to_json(loc) for loc in
+        SQLLocation.root_locations(
+            domain, include_archive_ancestors=include_archived
+        )
+    ]
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
-    selected = Location.get_in_domain(domain, selected_loc_id)
-    if selected:
-        lineage = list(Location.view('_all_docs', keys=selected.path, include_docs=True))
+    if selected_loc_id:
+        selected = SQLLocation.objects.get(
+            domain=domain,
+            location_id=selected_loc_id
+        )
+
+        lineage = selected.get_ancestors()
 
         parent = {'children': loc_json}
         for loc in lineage:
             # find existing entry in the json tree that corresponds to this loc
-            this_loc = [k for k in parent['children'] if k['uuid'] == loc._id][0]
-            this_loc['children'] = [loc_to_json(loc) for loc in loc.children]
+            this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
+            this_loc['children'] = [
+                loc_to_json(loc) for loc in
+                loc.child_locations(include_archive_ancestors=include_archived)
+            ]
             parent = this_loc
 
     return loc_json

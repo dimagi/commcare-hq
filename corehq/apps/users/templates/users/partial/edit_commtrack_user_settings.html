@@ -14,35 +14,3 @@
       <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommTrack Settings' %}</button>
     </div>
 </form>
-
-{% comment "CommTrack user roles are not doing anything for now" %}
-<form class="form form-horizontal"
-      method="post"
-      action="{% url "update_user_data" domain couch_user.user_id %}">
-    <input name="user-data" id="commtrack-user-data-input" type="hidden" />
-    <fieldset>
-        <legend>{% trans "CommTrack User Roles" %}</legend>
-        <div class="control-group">
-            <label class="control-label">{% trans 'Choose Roles' %}</label>
-            <div class="controls">
-                {% for _, role in commtrack.roles.items %}
-                    <label class="checkbox">
-                        <input class="user-data-role" type="checkbox"
-                            name="{{ role.slug }}" id="{{ role.slug }}"
-                            {% if role.selected %}checked="checked"{% endif %}>
-                        <strong>{{ role.name }}</strong>
-                    </label>
-                    <p class="help-block" style="margin-bottom: 20px;">
-                        {{ role.description }}
-                    </p>
-                {% endfor %}
-            </div>
-        </div>
-    </fieldset>
-    <div class="form-actions">
-        <button type="submit" class="btn btn-primary">
-            {% trans "Update Roles" %}
-        </button>
-    </div>
-</form>
-{% endcomment %}

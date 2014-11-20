@@ -278,7 +278,7 @@ class GenericPieChartReportTemplate(ProjectReport, GenericTabularReport):
                 }}},
         ]
         if self.location_id:
-            filter_criteria.append({"term": {"location_": self.location_id}})
+            filter_criteria.append({"term": {"location_id": self.location_id}})
         result = es.get('%s/_search' % es_config['index'], data={
                 "query": {"match_all": {}}, 
                 "size": 0, # no hits; only aggregated data

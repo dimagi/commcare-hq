@@ -210,7 +210,7 @@ INDICATOR_DATA = {
     "commconnect_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commconnect_domains",
-        "chart_title": "Total CommConnect Enabled Domains",
+        "chart_title": "Total Domains That Use Messaging",
         "histogram_type": "domains",
         "xaxis_label": "# domains",
     },
@@ -236,7 +236,7 @@ INDICATOR_DATA = {
     "active_commconnect_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_commconnect_domains",
-        "chart_title": "Active CommConnect Project Spaces (last 30 days)",
+        "chart_title": "Active Project Spaces That Use Messaging (last 30 days)",
         "get_request_params": {
             "add_form_domains": False,
         },
@@ -503,7 +503,7 @@ FACET_MAPPING = [
         {"facet": "internal.using_adm", "name": "ADM", "expanded": False},
         {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False},
         {"facet": "internal.commtrack_domain", "name": "CommTrack", "expanded": False},
-        {"facet": "internal.commconnect_domain", "name": "CommConnect", "expanded": False},
+        {"facet": "internal.commconnect_domain", "name": "Uses Messaging", "expanded": False},
         {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False},
     ]),
     ("Plans", False, [
@@ -654,10 +654,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
-                help_text=_("The number of mobile workers who have submitted a form in the last 30 days")),
-            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cc_users"),
+                help_text=_("The number of mobile workers who have submitted a form in the last 30 days.  Includes deactivated workers.")),
+            DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC,
+                             prop_name="cp_n_cc_users",
+                             help_text=_("Does not include deactivated users.")),
             DataTablesColumn(_("# Mobile Workers (Submitted Form)"), sort_type=DTSortType.NUMERIC,
-                             prop_name="cp_n_users_submitted_form"),
+                             prop_name="cp_n_users_submitted_form",
+                             help_text=_("Includes deactivated workers.")),
             DataTablesColumn(_("# Cases in last 60"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_60_day_cases",
                 help_text=_("The number of *currently open* cases created or updated in the last 60 days")),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_active_cases",
@@ -668,7 +671,9 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
-            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_web_users"),
+            DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC,
+                             prop_name="cp_n_web_users",
+                             help_text=_("Does not include deactivated users.")),
             DataTablesColumn(_("Notes"), prop_name="internal.notes"),
             DataTablesColumn(_("Services"), prop_name="internal.services"),
             DataTablesColumn(_("Project State"), prop_name="internal.project_state"),
@@ -681,7 +686,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
             DataTablesColumn(_("Active?"), prop_name="cp_is_active"),
-            DataTablesColumn(_("CommConnect?"), prop_name="internal.commconnect_domain"),
+            DataTablesColumn(_("Uses Messaging?"), prop_name="internal.commconnect_domain"),
             DataTablesColumn(_("CommTrack?"), prop_name="internal.commtrack_domain"),
         )
         return headers
@@ -942,7 +947,7 @@ class RealProjectSpacesReport(GlobalAdminReports):
 
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
-    name = ugettext_noop('CommConnect Project Spaces')
+    name = ugettext_noop('Project Spaces Using Messaging')
     default_params = {
         'es_is_test': 'false',
         'es_internal.commconnect_domain': 'true',

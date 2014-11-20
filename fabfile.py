@@ -793,7 +793,7 @@ def _deploy_without_asking():
         execute(clear_services_dir)
         set_supervisor_config()
 
-        do_migrate = env.should_migrate and needs_to_migrate()
+        do_migrate = env.should_migrate
         if do_migrate:
             execute(stop_pillows)
             execute(stop_celery_tasks)
@@ -815,16 +815,6 @@ def _deploy_without_asking():
     else:
         execute(services_restart)
         execute(record_successful_deploy)
-
-
-@roles(ROLES_DB_ONLY)
-def needs_to_migrate():
-    with cd(env.code_root):
-        result = sudo((
-            '%(virtualenv_root)s/bin/python manage.py '
-            'migrate --all --merge --list | grep "( )"' % env
-        ), quiet=True)
-        return result.return_code == 0
 
 
 @task
