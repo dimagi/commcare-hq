@@ -96,3 +96,12 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
                 stock_on_hand=instance.stock_on_hand,
                 subtype=const.TRANSACTION_SUBTYPE_INFERRED,
             )
+
+
+@receiver(pre_save, sender=StockTransaction)
+def populate_sql_product(sender, instance, *args, **kwargs):
+    # some day StockTransaction.sql_product should be the canonical source of
+    # the couch product_id, but until then lets not force people to
+    # look up the SQLProduct every time..
+    if not instance.sql_product_id and instance.product_id:
+        instance.sql_product = SQLProduct.objects.get(product_id=instance.product_id)

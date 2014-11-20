@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # as a one off default, that will let us afterwards track down any
         # (highly unlikely) cases where the data migration (0010) did
         # not give real values
-        unknown_product = orm['products.SQLProduct'].objects.get_or_create(name='uncategorized_migration_product')
+        unknown_product = orm['products.SQLProduct'].objects.get_or_create(name='uncategorized_migration_product')[0]
         
         # Changing field 'StockTransaction.sql_product'
         db.alter_column(u'stock_stocktransaction', 'sql_product_id', self.gf('django.db.models.fields.related.ForeignKey')(default=unknown_product.id, to=orm['products.SQLProduct']))
