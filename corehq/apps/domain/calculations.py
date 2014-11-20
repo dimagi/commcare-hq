@@ -93,6 +93,13 @@ def forms(domain, *args):
     row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
+def sms(domain, direction):
+    key = [domain, "SMSLog", direction]
+    row = get_db().view("sms/direction_by_domain",
+                        startkey=key,
+                        endkey=key + [{}]).one()
+    return row["value"] if row else 0
+
 def active(domain, *args):
     now = datetime.now()
     then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
@@ -158,15 +165,20 @@ def not_implemented(domain, *args):
     return '<p class="text-error">not implemented</p>'
 
 CALC_ORDER = [
-    'num_web_users', 'num_mobile_users', 'forms', 'cases', 'mobile_users--active', 'mobile_users--inactive', 'active_cases', 'cases_in_last--30',
-    'cases_in_last--60', 'cases_in_last--90', 'cases_in_last--120', 'active', 'first_form_submission',
-    'last_form_submission', 'has_app', 'web_users', 'active_apps', 'uses_reminders'
+    'num_web_users', 'num_mobile_users', 'forms', 'cases',
+    'mobile_users--active', 'mobile_users--inactive', 'active_cases',
+    'cases_in_last--30', 'cases_in_last--60', 'cases_in_last--90',
+    'cases_in_last--120', 'active', 'first_form_submission',
+    'last_form_submission', 'has_app', 'web_users', 'active_apps',
+    'uses_reminders', 'sms--I', 'sms--O'
 ]
 
 CALCS = {
     'num_web_users': "# web users",
     'num_mobile_users': "# mobile users",
     'forms': "# forms",
+    'sms--I': "# incoming SMS",
+    'sms--O': "# outgoing SMS",
     'cases': "# cases",
     'mobile_users--active': "# active mobile users",
     'mobile_users--inactive': "# inactive mobile users",
@@ -188,6 +200,7 @@ CALC_FNS = {
     'num_web_users': num_web_users,
     "num_mobile_users": num_mobile_users,
     "forms": forms,
+    "sms": sms,
     "cases": cases,
     "mobile_users": active_mobile_users,
     "active_cases": not_implemented,
