@@ -34,7 +34,7 @@ class GlobalStats(BaseDomainView):
         main_context = super(GlobalStats, self).main_context
         context = {
             'supply_points': SQLLocation.objects.filter(domain=self.domain).count(),
-            'facilities': SQLLocation.objects.filter(domain=self.domain, location_type='FACILITY').count(),
+            'facilities': SQLLocation.objects.filter(domain=self.domain, location_type__iexact='FACILITY').count(),
             'contacts': contacts[0]['value'] if contacts else 0,
             'web_users': web_users[0]['value'] if web_users else 0,
             'products': SQLProduct.objects.filter(domain=self.domain).count(),

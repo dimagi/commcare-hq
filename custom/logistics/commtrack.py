@@ -345,7 +345,8 @@ def commtrack_settings_sync(project, locations_types):
                    for lt in config.location_types):
             allowed_parents = [locations_types[i - 1]] if i > 0 else [""]
             config.location_types.append(
-                LocationType(name=value, allowed_parents=allowed_parents, administrative=(value != 'facility')))
+                LocationType(name=value, allowed_parents=allowed_parents,
+                             administrative=(value.lower() != 'facility')))
     actions = [action.keyword for action in config.actions]
     if 'delivered' not in actions:
         config.actions.append(
