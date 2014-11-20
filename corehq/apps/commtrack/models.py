@@ -588,6 +588,7 @@ class SupplyPointCase(CommCareCase):
     A wrapper around CommCareCases to get more built in functionality
     specific to supply points.
     """
+    location_id = StringProperty()
 
     class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
@@ -599,12 +600,10 @@ class SupplyPointCase(CommCareCase):
     @property
     @memoized
     def location(self):
-        if hasattr(self, 'location_id'):
-            try:
-                return Location.get(self.location_id)
-            except ResourceNotFound:
-                pass
-        return None
+        try:
+            return Location.get(self.location_id)
+        except ResourceNotFound:
+            return None
 
     @classmethod
     def _from_caseblock(cls, domain, caseblock):
