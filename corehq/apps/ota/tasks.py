@@ -1,11 +1,11 @@
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.ota.views import get_restore_response
 from corehq.apps.users.models import CommCareUser
 
 
 @task
 def prime_restore(user_id, since=None, version='1.0', state=None, items=False, cache_timeout=None):
+    from corehq.apps.ota.views import get_restore_response
     try:
         couch_user = CommCareUser.get(user_id)
     except ResourceNotFound:

@@ -1,3 +1,4 @@
+from casexml.apps.case.xml import V2
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.tasks import prime_restore
@@ -22,8 +23,24 @@ def restore(request, domain):
 
 @require_superuser
 def prime_ota_restore_cache(request, domain):
+    params = get_restore_params(request)
+
     user_ids = CommCareUser.ids_by_domain(domain)
-    prime_restore.s(cache_timeout=24*60*60).map(user_ids)
+    cache_timeout = 24 * 60 * 60
+
+    def make_args(user_id):
+        return (
+            user_id,
+            params['since'],
+            params['version'],
+            params['state'],
+            params['items'],
+            cache_timeout
+        )
+
+    prime_restore.starmap(make_args(user_id) for user_id in user_ids).apply_async()
+
+    return HttpResponse()
 
 
 def get_restore_params(request):
