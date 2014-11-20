@@ -75,11 +75,14 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         transactions that occur during the day we are filtering
         for
         """
-        date = self.config.get('date')
-        if date:
+        # note: empty string is parsed as today's date
+        date = self.config.get('date', '')
+
+        try:
             date = parser.parse(date).date()
-        else:
+        except ValueError:
             date = datetime.now().date()
+
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
     def get_data(self, slugs=None):
