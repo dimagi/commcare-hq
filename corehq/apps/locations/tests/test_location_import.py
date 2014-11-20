@@ -201,7 +201,7 @@ class LocationImportTest(CommTrackTest):
         data = {
             'site_code': existing.site_code,
             'name': 'existingloc',
-            'default_pp': 77
+            'consumption': {'pp': 77},
         }
 
         import_location(self.domain.name, 'state', data)
