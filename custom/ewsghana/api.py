@@ -1,4 +1,4 @@
-from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty
+from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty
 from custom.ilsgateway.api import Product, ProductStock, StockTransaction
 from jsonobject import JsonObject
 from custom.logistics.api import LogisticsEndpoint
