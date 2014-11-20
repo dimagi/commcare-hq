@@ -1243,12 +1243,19 @@ def form_multimedia_export(request, domain, app_id):
         xmlns = request.GET.__getitem__("xmlns")
         startdate = request.GET.__getitem__("startdate")
         enddate = request.GET.__getitem__("enddate")
+        zip_name = request.GET.get("name", None)
     except ValueError:
         return HttpResponseBadRequest()
+
+    def filename(form, question_id, extension):
+        return "%s-%s-%s-%s.%s" % (form.form['@name'],
+                                   unidecode(question_id),
+                                   form.form['meta']['username'],
+                                   form._id, extension)
+
     key = [domain, app_id, xmlns]
     stream_file = StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
-    zip_name = ''
     size = 0
     unknown_number = 0
     for f in XFormInstance.get_db().view("attachments/attachments",
@@ -1258,24 +1265,20 @@ def form_multimedia_export(request, domain, app_id):
         form = XFormInstance.get(f['id'])
         if not zip_name:
             zip_name = unidecode(form.form['@name'])
-        base_filename = unidecode(form.form['@name'])
-        base_filename += "-%s-"
-        base_filename += unidecode(form.form['meta']['username'])
-        base_filename += '-' + f['id']
-        base_filename += "%s"
         for key in f['value']['attachments'].keys():
             extension = unicode(os.path.splitext(key)[1])
             try:
                 question_id = unicode('-'.join(find_question_id(form.form, key)))
             except TypeError:
-                question_id= unicode('unknown' + str(unknown_number))
+                question_id = unicode('unknown' + str(unknown_number))
                 unknown_number += 1
-            fname = base_filename % (unidecode(question_id), extension)
+            fname = filename(form, question_id, extension)
             zi = zipfile.ZipInfo(fname, parse(f['value']['date']).timetuple())
             zf.writestr(zi, form.fetch_attachment(key, stream=True).read())
             size += f['value']['attachments'][key]['length'] + 88 + 2 * len(fname)
 
     zf.close()
+
     response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
     response['Content-Length'] = size + 22  # overhead
     response['Content-Disposition'] = 'attachment; filename=%s.zip' % zip_name
