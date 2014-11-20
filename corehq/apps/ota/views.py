@@ -23,6 +23,13 @@ def restore(request, domain):
 
 @require_superuser
 def prime_ota_restore_cache(request, domain):
+    # TODO SK:
+    # * check if cache already exists and give option to override
+    # * support list of user_ids
+    # * store task IDs for tracking
+    # * view to check cache for user
+    # * view to check task status
+
     params = get_restore_params(request)
 
     user_ids = CommCareUser.ids_by_domain(domain)
