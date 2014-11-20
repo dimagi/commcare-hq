@@ -29,7 +29,9 @@ class CasePillow(HQPillow):
     default_mapping = CASE_MAPPING
 
     def get_unique_id(self):
-        return CASE_INDEX
+        # todo: this should be changed the next time someone touches this pillow
+        # return CASE_INDEX
+        return self.calc_meta()
 
     def change_trigger(self, changes_dict):
         doc_dict, lock = lock_manager(
