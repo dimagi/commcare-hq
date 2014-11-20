@@ -1,5 +1,7 @@
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CouchUser
+from corehq.apps.ota.tasks import prime_restore
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.util.view_utils import json_error
 from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig
@@ -16,6 +18,12 @@ def restore(request, domain):
     user = request.user
     couch_user = CouchUser.from_django_user(user)
     return get_restore_response(domain, couch_user, **get_restore_params(request))
+
+
+@require_superuser
+def prime_ota_restore_cache(request, domain):
+    user_ids = CommCareUser.ids_by_domain(domain)
+    prime_restore.s(cache_timeout=24*60*60).map(user_ids)
 
 
 def get_restore_params(request):
