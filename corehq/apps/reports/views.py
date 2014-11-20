@@ -1239,7 +1239,6 @@ def find_question_id(form, value):
 @login_and_domain_required
 @require_GET
 def form_multimedia_export(request, domain, app_id):
-    ZIP_FILE_OVERHEAD = 1024 * 1024
     try:
         xmlns = request.GET.__getitem__("xmlns")
         startdate = request.GET.__getitem__("startdate")
@@ -1274,10 +1273,10 @@ def form_multimedia_export(request, domain, app_id):
             fname = base_filename % (unidecode(question_id), extension)
             zi = zipfile.ZipInfo(fname, parse(f['value']['date']).timetuple())
             zf.writestr(zi, form.fetch_attachment(key, stream=True).read())
-            size += f['value']['attachments'][key]['length']
+            size += f['value']['attachments'][key]['length'] + 88 + 2 * len(fname)
 
     zf.close()
     response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
-    response['Content-Length'] = size + ZIP_FILE_OVERHEAD
+    response['Content-Length'] = size + 22  # overhead
     response['Content-Disposition'] = 'attachment; filename=%s.zip' % zip_name
     return response
