@@ -17,6 +17,10 @@ class DynamicPropertiesTest(SimpleTestCase):
         class CaseWithNewProperty(CommCareCase):
             new_property = StringProperty()
 
+            class Meta:
+                # For some reason this is necessary for travis
+                app_label = "case"
+
         case = CaseWithNewProperty(new_property='some property', bar='some other property')
         props = case.dynamic_case_properties()
         self.assertEqual(2, len(props))
