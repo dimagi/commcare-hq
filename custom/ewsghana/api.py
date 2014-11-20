@@ -15,18 +15,18 @@ class EWSUser(JsonObject):
     is_superuser = BooleanProperty()
     last_login = StringProperty()
     date_joined = StringProperty()
-    location = DecimalProperty()
-    supply_point = DecimalProperty()
+    location = IntegerProperty()
+    supply_point = IntegerProperty()
     sms_notifications = BooleanProperty()
     organization = StringProperty()
 
 
 class SMSUser(JsonObject):
-    id = DecimalProperty()
+    id = IntegerProperty()
     name = StringProperty()
     role = StringProperty()
     is_active = StringProperty()
-    supply_point = DecimalProperty()
+    supply_point = IntegerProperty()
     email = StringProperty()
     phone_numbers = ListProperty()
     backend = StringProperty()
@@ -37,8 +37,8 @@ class SMSUser(JsonObject):
 class Location(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
-    location_type = StringProperty()
-    parent = IntegerProperty()
+    type = StringProperty()
+    parent_id = IntegerProperty()
     latitude = StringProperty()
     longitude = StringProperty()
     code = StringProperty()
