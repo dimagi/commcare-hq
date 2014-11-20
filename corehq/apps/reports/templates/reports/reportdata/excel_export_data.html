@@ -183,7 +183,9 @@
             <th>{% trans "Form" %}</th>
             <th>{% trans "Custom Export" %}</th>
             <th>{% trans "Download" %}</th>
-            <th>{% trans "Download Multimedia" %}</th>
+            {% if is_previewer %}
+                <th>{% trans "Download Multimedia" %}</th>
+            {% endif %}
             <th>{% trans "Total Submissions" %}</th>
             <th>
                 {% trans "Add to Bulk Export" %} <i class="bulk-export-info icon-white icon-info-sign"></i>
@@ -298,15 +300,17 @@
                         {% trans "No Forms" %}
                     {% endif %}
                 </td>
-                <td class="cell-vertical-centered">
-                    {% if form.size > 0 and form.app.id %}
-                        <a href="{% url "form_multimedia_export" domain form.app.id %}?xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
-                           class="btn btn-primary dl-export" ><i
-                           class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
-                    {% else %}
-                        <span class="label">{% trans "No Multimedia" %}</span>
-                    {% endif %}
-                </td>
+                {% if is_previewer %}
+                    <td class="cell-vertical-centered">
+                        {% if form.size > 0 and form.app.id %}
+                            <a href="{% url "form_multimedia_export" domain form.app.id %}?xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
+                               class="btn btn-primary dl-export" ><i
+                               class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
+                        {% else %}
+                            <span class="label">{% trans "No Multimedia" %}</span>
+                        {% endif %}
+                    </td>
+                {% endif %}
                 <td>
                     {{ form.submissions }} {% if form.submissions %}
                     <i class="icon-info-sign all-users-all-time">
