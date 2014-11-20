@@ -8,6 +8,10 @@ class Migration(SchemaMigration):
 
     depends_on = (
         ('commtrack', '0012_auto__chg_field_sqlproduct_domain__add_field_stockstate_sql_location'),
+        # this migration has nothing to do with the below location migration
+        # dependency, but due to weirdness with stock/0009 depending
+        # on this, this is required to make the full migration process work
+        ('locations', '0003_auto__add_unique_sqllocation_location_id__add_unique_sqllocation_domai'),
     )
 
     def forwards(self, orm):

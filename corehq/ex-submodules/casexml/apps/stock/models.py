@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from casexml.apps.stock import const
 from decimal import Decimal
+from corehq.apps.products.models import SQLProduct
 
 
 class StockReport(models.Model):
@@ -21,8 +22,10 @@ class StockReport(models.Model):
     def __unicode__(self):
         return '{type} on {date} ({form})'.format(type=self.type, date=self.date, form=self.form_id)
 
+
 class StockTransaction(models.Model):
     report = models.ForeignKey(StockReport)
+    sql_product = models.ForeignKey(SQLProduct)
 
     section_id = models.CharField(max_length=100, db_index=True)
 
