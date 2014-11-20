@@ -962,7 +962,12 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 
     # todo deal with cached user dict here
     group = Group.get(group) if group else None
-    users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
+    users = get_all_users_by_domain(
+        domain,
+        group=group,
+        user_filter=user_filter,
+        include_inactive=True
+    )
     groups = Group.get_case_sharing_groups(domain)
 
     fd, path = tempfile.mkstemp()
