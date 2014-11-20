@@ -28,6 +28,9 @@ class CasePillow(HQPillow):
     es_index = CASE_INDEX
     default_mapping = CASE_MAPPING
 
+    def get_unique_id(self):
+        return CASE_INDEX
+
     def change_trigger(self, changes_dict):
         doc_dict, lock = lock_manager(
             super(CasePillow, self).change_trigger(changes_dict)
