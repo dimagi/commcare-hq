@@ -96,30 +96,11 @@ class ILSData(object):
 
 
 class ILSMixin(object):
-
-    @property
-    def report_facilities_url(self):
-        return None
-
-    @property
-    def report_stockonhand_url(self):
-        return None
-
-    @property
-    def report_rand_url(self):
-        return None
-
-    @property
-    def report_supervision_url(self):
-        return None
-
-    @property
-    def report_delivery_url(self):
-        return None
-
-    @property
-    def report_unrecognizedmessages_url(self):
-        return None
+    report_facilities_url = None
+    report_stockonhand_url = None
+    report_rand_url = None
+    report_supervision_url = None
+    report_delivery_url = None
 
 
 class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin):
@@ -208,15 +189,16 @@ class DetailsReport(MultiReport):
     @property
     def report_context(self):
         context = super(DetailsReport, self).report_context
-        context.update(
-            dict(
-                report_stockonhand_url=self.report_stockonhand_url,
-                report_rand_url=self.report_rand_url,
-                report_supervision_url=self.report_supervision_url,
-                report_delivery_url=self.report_delivery_url,
-                with_tabs=True
+        if 'location_id' in self.request_params:
+            context.update(
+                dict(
+                    report_stockonhand_url=self.report_stockonhand_url,
+                    report_rand_url=self.report_rand_url,
+                    report_supervision_url=self.report_supervision_url,
+                    report_delivery_url=self.report_delivery_url,
+                    with_tabs=True
+                )
             )
-        )
         return context
 
     @property

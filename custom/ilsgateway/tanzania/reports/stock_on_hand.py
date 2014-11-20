@@ -219,6 +219,49 @@ class DistrictSohPercentageTableData(ILSData):
     @property
     def rows(self):
         rows = []
+
+        def get_last_reported(supplypoint):
+            last_bd_of_the_month = get_business_day_of_month(int(self.config['year']),
+                                                             int(self.config['month']),
+                                                             -1)
+            st = StockTransaction.objects.filter(
+                case_id=supplypoint,
+                type='stockonhand',
+                report__date__lte=last_bd_of_the_month
+            ).order_by('-report__date')
+
+            last_of_last_month = datetime(int(self.config['year']),
+                                          int(self.config['month']),
+                                          1) - timedelta(days=1)
+            last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
+                                                     last_of_last_month.month,
+                                                     -1), time())
+            if st:
+                sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
+                return sts, st[0].report.date.date()
+            else:
+                sts = OnTimeStates.NO_DATA
+                return sts, None
+
+        def get_hisp_resp_rate(location):
+            statuses = SupplyPointStatus.objects.filter(supply_point=location.location_id,
+                                                        status_type=SupplyPointStatusTypes.SOH_FACILITY)
+            if not statuses:
+                return None
+            status_month_years = set([(x.status_date.month, x.status_date.year) for x in statuses])
+            denom = len(status_month_years)
+            num = 0
+            for s in status_month_years:
+                f = statuses.filter(status_date__month=s[0], status_date__year=s[1]).filter(
+                    Q(status_value=SupplyPointStatusValues.SUBMITTED) |
+                    Q(status_value=SupplyPointStatusValues.NOT_SUBMITTED) |
+                    Q(status_value=SupplyPointStatusValues.RECEIVED) |
+                    Q(status_value=SupplyPointStatusValues.NOT_RECEIVED)).order_by("-status_date")
+                if f.count():
+                    num += 1
+
+            return float(num) / float(denom), num, denom
+
         if not self.config['products']:
             products = SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')
         else:
@@ -230,50 +273,8 @@ class DistrictSohPercentageTableData(ILSData):
             for loc in locations:
                 supply_point = loc.supply_point_id
 
-                def get_last_reported():
-                    last_bd_of_the_month = get_business_day_of_month(int(self.config['year']),
-                                                                     int(self.config['month']),
-                                                                     -1)
-                    st = StockTransaction.objects.filter(
-                        case_id=supply_point,
-                        type='stockonhand',
-                        report__date__lte=last_bd_of_the_month
-                    ).order_by('-report__date')
-
-                    last_of_last_month = datetime(int(self.config['year']),
-                                                  int(self.config['month']),
-                                                  1) - timedelta(days=1)
-                    last_bd_of_last_month = datetime.combine(get_business_day_of_month(last_of_last_month.year,
-                                                             last_of_last_month.month,
-                                                             -1), time())
-                    if st:
-                        sts = _reported_on_time(last_bd_of_last_month, st[0].report.date)
-                        return sts, st[0].report.date.date()
-                    else:
-                        sts = OnTimeStates.NO_DATA
-                        return sts, None
-
-                def get_hisp_resp_rate():
-                    statuses = SupplyPointStatus.objects.filter(supply_point=loc.location_id,
-                                                                status_type=SupplyPointStatusTypes.SOH_FACILITY)
-                    if not statuses:
-                        return None
-                    status_month_years = set([(x.status_date.month, x.status_date.year) for x in statuses])
-                    denom = len(status_month_years)
-                    num = 0
-                    for s in status_month_years:
-                        f = statuses.filter(status_date__month=s[0], status_date__year=s[1]).filter(
-                            Q(status_value=SupplyPointStatusValues.SUBMITTED) |
-                            Q(status_value=SupplyPointStatusValues.NOT_SUBMITTED) |
-                            Q(status_value=SupplyPointStatusValues.RECEIVED) |
-                            Q(status_value=SupplyPointStatusValues.NOT_RECEIVED)).order_by("-status_date")
-                        if f.count():
-                            num += 1
-
-                    return float(num) / float(denom), num, denom
-
-                status, last_reported = get_last_reported()
-                hisp = get_hisp_resp_rate()
+                status, last_reported = get_last_reported(supply_point)
+                hisp = get_hisp_resp_rate(loc)
 
                 url = make_url(FacilityDetailsReport, self.config['domain'], '?location_id=%s', (loc.location_id,))
 
