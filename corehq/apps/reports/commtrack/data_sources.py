@@ -85,10 +85,25 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self, slugs=None):
         if self.active_location:
             current_location = self.active_location.sql_location
-            locations = [current_location] + list(current_location.get_descendants())
-        else:
-            locations = SQLLocation.objects.filter(domain=self.domain)
 
+            if current_location.supply_point_id:
+                locations = [current_location]
+            else:
+                locations = []
+
+            locations += list(
+                current_location.get_descendants().filter(
+                    supply_point_id__isnull=False
+                )
+            )
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                supply_point_id__isnull=False
+            )
+
+        # locations at this point will only have location objects
+        # that have supply points associated
         for loc in locations[:self.config.get('max_rows', 100)]:
             transactions = StockTransaction.objects.filter(
                 case_id=loc.supply_point_id,
