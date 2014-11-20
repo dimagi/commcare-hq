@@ -23,6 +23,7 @@ class StockReport(models.Model):
 
 class StockTransaction(models.Model):
     report = models.ForeignKey(StockReport)
+    sql_product = models.ForeignKey('commtrack.SQLProduct', null=True, blank=True)
 
     section_id = models.CharField(max_length=100, db_index=True)
 
