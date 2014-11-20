@@ -1,0 +1,37 @@
+[
+  {
+    "description": "Abacavir 300mg",
+    "is_active": true,
+    "name": "Abacavir 300mg",
+    "sms_code": "abc",
+    "units": "Tablet"
+  },
+  {
+    "description": "AL 20mg/120mg 1X6",
+    "is_active": true,
+    "name": "AL 20mg/120mg 1X6",
+    "sms_code": "ali",
+    "units": "tablets"
+  },
+  {
+    "description": "AL (20mg/120mg) 4x6",
+    "is_active": true,
+    "name": "AL 20mg/120mg 4x6",
+    "sms_code": "alk",
+    "units": "tablets"
+  },
+  {
+    "description": "A-L Dispersible (1X6)",
+    "is_active": false,
+    "name": "A-L Dispersible",
+    "sms_code": "ad",
+    "units": "Tablets"
+  },
+  {
+    "description": "Malaria",
+    "is_active": false,
+    "name": "A-L Suspension",
+    "sms_code": "al",
+    "units": "Tablets"
+  }
+]

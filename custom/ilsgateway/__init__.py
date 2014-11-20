@@ -18,3 +18,6 @@ CUSTOM_REPORTS = (
         SupervisionReport,
     )),
 )
+
+# For QA purposes it should be set to true.
+TEST = True

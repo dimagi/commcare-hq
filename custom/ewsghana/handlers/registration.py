@@ -8,6 +8,7 @@ from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import Languages
 
+
 class RegistrationHandler(KeywordHandler):
     def help(self):
         self.respond(REGISTER_HELP)

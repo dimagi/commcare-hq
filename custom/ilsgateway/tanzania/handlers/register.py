@@ -6,15 +6,16 @@ from corehq.apps.locations.models import Location
 
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.commtrack import add_location
 from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import REGISTER_HELP, Languages, \
     REGISTRATION_CONFIRM_DISTRICT, REGISTRATION_CONFIRM, Roles
+from custom.logistics.commtrack import add_location
 
 
 DISTRICT_PREFIXES = ['d', 'm', 'tb', 'tg', 'dm', 'mz', 'mt', 'mb', 'ir', 'tb', 'ms']
+
 
 class RegisterHandler(KeywordHandler):
     DISTRICT_REG_DELIMITER = ":"
