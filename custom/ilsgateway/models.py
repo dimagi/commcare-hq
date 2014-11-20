@@ -260,7 +260,7 @@ class GroupSummary(models.Model):
 
     @property
     def not_received(self):
-        assert self.title in self.is_delivery_or_supervision_facility()
+        assert self.is_delivery_or_supervision_facility()
         return self.responded - self.complete
 
     @property

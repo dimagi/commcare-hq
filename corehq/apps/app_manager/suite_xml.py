@@ -102,6 +102,51 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
+class ConfigurationItem(Text):
+    ROOT_NAME = "text"
+    id = StringField("@id")
+
+
+class ConfigurationGroup(XmlObject):
+    ROOT_NAME = 'configuration'
+    configs = NodeListField('text', ConfigurationItem)
+
+
+class Series(OrderedXmlObject):
+    ORDER = (
+        "configuration",
+        "x_function",
+        "y_function",
+        "radius_function",
+    )
+    ROOT_NAME = 'series'
+
+    nodeset = StringField('@nodeset')
+    configuration = NodeField('configuration', ConfigurationGroup)
+    x_function = StringField('x/@function')
+    y_function = StringField('y/@function')
+    radius_function = StringField("radius/@function")
+
+
+class Annotation(OrderedXmlObject):
+    ORDER = ("x", "y", "text")
+    ROOT_NAME = 'annotation'
+
+    # TODO: Specify the xpath without specifying "text" for the child (we want the Text class to specify the tag)
+    x = NodeField('x/text', Text)
+    y = NodeField('y/text', Text)
+    text = NodeField('text', Text)
+
+
+class Graph(XmlObject):
+    ROOT_NAME = 'graph'
+
+    type = StringField("@type", choices=["xy", "bubble"])
+    series = NodeListField('series', Series)
+    configuration = NodeField('configuration', ConfigurationGroup)
+    annotations = NodeListField('annotation', Annotation)
+
+
 class AbstractResource(OrderedXmlObject):
     ORDER = ('id', 'version', 'local', 'remote')
     LOCATION_TEMPLATE = 'resource/location[@authority="%s"]'
@@ -314,6 +359,12 @@ class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
 
+class GraphTemplate(Template):
+    # TODO: Is there a way to specify a default/static value for form?
+    form = StringField('@form', choices=['graph'])
+    graph = NodeField('graph', Graph)
+
+
 class Header(AbstractTemplate):
     ROOT_NAME = 'header'
 
@@ -395,8 +446,11 @@ class Detail(IdNode):
             for variable in self.variables:
                 result.add(variable.function)
         for field in self.fields:
-            result.add(field.header.text.xpath_function)
-            result.add(field.template.text.xpath_function)
+            try:
+                result.add(field.header.text.xpath_function)
+                result.add(field.template.text.xpath_function)
+            except AttributeError:
+                pass  # Its a Graph detail
         result.discard(None)
         return result
 

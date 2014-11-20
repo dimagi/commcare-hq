@@ -218,6 +218,7 @@ def ils_clear_stock_data_task():
     products = Product.ids_by_domain('ilsgateway-test-1')
     StockState.objects.filter(product_id__in=products).delete()
 
+
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task
 def report_run(domain):

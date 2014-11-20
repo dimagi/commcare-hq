@@ -97,6 +97,7 @@ class HQPillow(AliasedElasticPillow):
         """
         A cache/buffer for the _changes feed situation for xforms.
         """
+
         return doc_dict.get('domain', None)
 
     def get_type_string(self, doc_dict):

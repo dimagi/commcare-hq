@@ -277,6 +277,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
 
+    def test_graphing(self):
+        self._test_generic_suite('app_graphing', 'suite-graphing')
+
 
 class RegexTest(SimpleTestCase):
 

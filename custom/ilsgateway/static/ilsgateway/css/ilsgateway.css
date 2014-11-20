@@ -10,15 +10,15 @@
     margin: 20px;
 }
 
-.table {
-    width: 50% !important;
-}
-
 .module ul,
 .module li {
     margin: 0;
     padding: 0;
     list-style: none;
+}
+
+tr:nth-child(n+2) {
+    white-space: nowrap;
 }
 
 .module ul {

@@ -287,14 +287,13 @@ def populate_report_data(start_date, end_date, domain=None):
     else:
         facilities = Location.filter_by_type(domain, 'FACILITY')
         non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
-        non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
         non_facilities += list(Location.filter_by_type(domain, 'REGION'))
+        non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
 
     for fac in facilities:
         process_facility_warehouse_data(fac, start_date, end_date)
 
     # then populate everything above a facility off a warehouse table
-
     for org in non_facilities:
         process_non_facility_warehouse_data(org, start_date, end_date)
 
