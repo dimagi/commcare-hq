@@ -126,3 +126,19 @@ class CommtrackConfigGenerationCache(GenerationCache):
     views = [
         'commtrack/domain_config',
     ]
+
+
+class UserReportsDataSourceCache(GenerationCache):
+    generation_key = '#gen#userreports#datasource#'
+    doc_types = ['DataSourceConfiguration']
+    views = [
+        'userreports/data_sources_by_domain',
+    ]
+
+
+class UserReportsReportConfigCache(GenerationCache):
+    generation_key = '#gen#userreports#reportconfig#'
+    doc_types = ['ReportConfiguration']
+    views = [
+        'userreports/report_configs_by_domain',
+    ]

@@ -1,0 +1,121 @@
+{% extends "reports/standard/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block export %}
+    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+        <i class="icon icon-share"></i> {% trans "Export to Excel" %}
+    </a>
+    <label class="checkbox inline">
+        <input id="exportDetailed" type="checkbox"/>
+        {% trans "Generate detailed Excel Export?" %}
+    </label>
+{% endblock %}
+
+{% block js-inline %}
+    <script type="text/javascript">
+
+        function get_export_url() {
+            var params = window.location.search.substr(1);
+            if (params.length <= 1) {
+                if (standardHQReport.loadDatespanFromCookie()) {
+                    params = "startdate="+standardHQReport.datespan.startdate+
+                        "&enddate="+standardHQReport.datespan.enddate;
+                }
+            }
+            params += "&detailed=" + $('#exportDetailed').prop("checked");
+            return window.location.pathname.replace(standardHQReport.urlRoot,
+                standardHQReport.urlRoot+"export"+"/") + "?" + params;
+        }
+
+        var checkFilterAccordionToggleState = function () {
+            var _setShowFilterCookie = function (show) {
+                var showStr = show ? 'in' : '';
+                $.cookie(standardHQReport.toggleFiltersCookie, showStr, {path: standardHQReport.urlRoot, expires: 1});
+            };
+
+            if ($.cookie(standardHQReport.toggleFiltersCookie) === null) {
+                // default to showing filters
+                _setShowFilterCookie(true);
+            }
+            $(standardHQReport.filterAccordion).addClass($.cookie(standardHQReport.toggleFiltersCookie));
+
+            if ($.cookie(standardHQReport.toggleFiltersCookie) == 'in') {
+                $(standardHQReport.toggleFiltersButton).button('close');
+            } else {
+                $(standardHQReport.toggleFiltersButton).button('open');
+            }
+
+            $(standardHQReport.filterAccordion).on('hidden', function (data) {
+                if (!(data.target && $(data.target).hasClass('modal'))) {
+                    _setShowFilterCookie(false);
+                    $(standardHQReport.toggleFiltersButton).button('open');
+                }
+            });
+
+            $(standardHQReport.filterAccordion).on('show', function () {
+                _setShowFilterCookie(true);
+                $(standardHQReport.toggleFiltersButton).button('close');
+            });
+
+        };
+
+        var standardHQReport = new HQReport({
+            domain: '{{ domain }}',
+            urlRoot: '{{ report.url_root }}',
+            slug: {{ report.slug|JSON }},
+            subReportSlug: {{ report.sub_slug|JSON }},
+            type: {{ report.type|JSON }},
+            filterSet: {{ report.filter_set|JSON }},
+            needsFilters: {{ report.needs_filters|JSON }},
+
+            {% if request.datespan %}
+                datespan: {
+                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
+                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
+                },
+            {% endif %}
+        });
+
+        standardHQReport.init = function () {
+            checkFilterAccordionToggleState();
+            standardHQReport.resetFilterState();
+            if (standardHQReport.needsFilters) {
+                standardHQReport.filterSubmitButton.button('reset').addClass('btn-primary');
+            }
+             $(standardHQReport.exportReportButton).click(function (e) {
+                e.preventDefault();
+                window.location.href = get_export_url();
+             });
+        };
+
+        standardHQReport.init();
+
+        var asyncHQReport = new HQAsyncReport({
+            standardReport: standardHQReport
+        });
+        asyncHQReport.init();
+
+        $('.report-description-popover').popover({
+            placement: 'right',
+            trigger: 'hover'
+        });
+
+        $('.form-actions button').on( "click", function() {
+            function daydiff(start, end) {
+                return (end-start)/(1000*60*60*24);
+            }
+            var startdate = new Date($('#report_filter_datespan_startdate').attr("value"));
+            var enddate = new Date($('#report_filter_datespan_enddate').attr("value"));
+            if (daydiff(startdate, enddate) > 30) {
+                startdate = enddate;
+                startdate.setDate(startdate.getDate() - 30);
+                var twoDigitMonth = (startdate.getMonth() + 1) + "";
+                if (twoDigitMonth.length == 1)  twoDigitMonth = "0" + twoDigitMonth;
+                var twoDigitDate = startdate.getDate() + "";
+                if (twoDigitDate.length == 1) twoDigitDate= "0" + twoDigitDate;
+                $('#report_filter_datespan_startdate').attr("value", startdate.getFullYear() + '-' + twoDigitMonth + '-' + twoDigitDate);
+            }
+        });
+    </script>
+{% endblock %}

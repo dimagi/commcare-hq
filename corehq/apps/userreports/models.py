@@ -1,22 +1,22 @@
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
+from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
-from corehq.apps.userreports.filters import SinglePropertyValueFilter
-from corehq.apps.userreports.getters import DictGetter
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
-from corehq.apps.userreports.logic import EQUAL
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
-from fluff.filters import ANDFilter
 
 
-class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, Document):
-
+class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCouchDocumentMixin, Document):
+    """
+    A data source configuration. These map 1:1 with database tables that get created.
+    Each data source can back an arbitrary number of reports.
+    """
     domain = StringProperty(required=True)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -31,22 +31,27 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, Document
     @property
     def filter(self):
         extras = (
-            [FilterFactory.from_spec(self.configured_filter,
-                                     self.named_filter_objects)]
+            [self.configured_filter]
             if self.configured_filter else []
         )
-        return ANDFilter([
-            SinglePropertyValueFilter(
-                getter=DictGetter('domain'),
-                operator=EQUAL,
-                reference_value=self.domain
-            ),
-            SinglePropertyValueFilter(
-                getter=DictGetter('doc_type'),
-                operator=EQUAL,
-                reference_value=self.referenced_doc_type
-            ),
-        ] + extras
+        built_in_filters = [
+            {
+                'type': 'property_match',
+                'property_name': 'domain',
+                'property_value': self.domain,
+            },
+            {
+                'type': 'property_match',
+                'property_name': 'doc_type',
+                'property_value': self.referenced_doc_type,
+            },
+        ]
+        return FilterFactory.from_spec(
+            {
+                'type': 'and',
+                'filters': built_in_filters + extras,
+            },
+            context=self.named_filter_objects,
         )
 
     @property
@@ -104,7 +109,10 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, Document
             yield cls.wrap(result)
 
 
-class ReportConfiguration(UnicodeMixIn, Document):
+class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+    """
+    A report configuration. These map 1:1 with reports that show up in the UI.
+    """
     domain = StringProperty(required=True)
     config_id = StringProperty(required=True)
     title = StringProperty()
@@ -138,6 +146,12 @@ class ReportConfiguration(UnicodeMixIn, Document):
     @property
     def table_id(self):
         return self.config.table_id
+
+    def get_ui_filter(self, filter_slug):
+        for filter in self.ui_filters:
+            if filter.name == filter_slug:
+                return filter
+        return None
 
     def validate(self, required=True):
         super(ReportConfiguration, self).validate(required)

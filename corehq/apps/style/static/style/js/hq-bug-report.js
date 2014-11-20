@@ -5,6 +5,7 @@ $(function () {
         $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
         $hqwebappBugReportCancel = $('#bug-report-cancel'),
         $ccFormGroup = $("#bug-report-cc-form-group"),
+        $issueSubjectFormGroup = $("#bug-report-subject-form-group"),
         isBugReportSubmitting = false;
 
     $hqwebappBugReportModal.on('show.bs.modal', function() {
@@ -19,15 +20,22 @@ $(function () {
     });
 
     $hqwebappBugReportForm.submit(function() {
+        var isDescriptionEmpty = !$("#bug-report-subject").val() && !$("#bug-report-message").val();
+        if (isDescriptionEmpty) {
+            highlightInvalidField($issueSubjectFormGroup);
+        }
+
         var emailAddresses = $(this).find("input[name='cc']").val();
         emailAddresses = emailAddresses.replace(/ /g, "").split(",");
         for (var index in emailAddresses){
             var email = emailAddresses[index];
             if (email && !IsValidEmail(email)){
-                $ccFormGroup.addClass('has-error has-feedback');
-                $ccFormGroup.find(".label-danger").removeClass('hide');
+                highlightInvalidField($ccFormGroup);
                 return false;
             }
+        }
+        if (isDescriptionEmpty) {
+            return false;
         }
         var $submitButton = $(this).find("button[type='submit']");
         if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("complete-text")) {
@@ -61,6 +69,15 @@ $(function () {
     function hqwebappBugReportSucccess(data) {
         isBugReportSubmitting = false;
         $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('complete');
+    }
+
+    function highlightInvalidField($element) {
+        $element.addClass('has-error has-feedback');
+        $element.find(".label-danger").removeClass('hide');
+        $element.find("input").focus(function(){
+            $element.removeClass("has-error has-feedback");
+            $element.find(".label-danger").addClass('hide');
+        });
     }
 
 });

@@ -102,6 +102,51 @@ class Text(XmlObject):
     locale_id = StringField('locale/@id')
 
 
+class ConfigurationItem(Text):
+    ROOT_NAME = "text"
+    id = StringField("@id")
+
+
+class ConfigurationGroup(XmlObject):
+    ROOT_NAME = 'configuration'
+    configs = NodeListField('text', ConfigurationItem)
+
+
+class Series(OrderedXmlObject):
+    ORDER = (
+        "configuration",
+        "x_function",
+        "y_function",
+        "radius_function",
+    )
+    ROOT_NAME = 'series'
+
+    nodeset = StringField('@nodeset')
+    configuration = NodeField('configuration', ConfigurationGroup)
+    x_function = StringField('x/@function')
+    y_function = StringField('y/@function')
+    radius_function = StringField("radius/@function")
+
+
+class Annotation(OrderedXmlObject):
+    ORDER = ("x", "y", "text")
+    ROOT_NAME = 'annotation'
+
+    # TODO: Specify the xpath without specifying "text" for the child (we want the Text class to specify the tag)
+    x = NodeField('x/text', Text)
+    y = NodeField('y/text', Text)
+    text = NodeField('text', Text)
+
+
+class Graph(XmlObject):
+    ROOT_NAME = 'graph'
+
+    type = StringField("@type", choices=["xy", "bubble"])
+    series = NodeListField('series', Series)
+    configuration = NodeField('configuration', ConfigurationGroup)
+    annotations = NodeListField('annotation', Annotation)
+
+
 class AbstractResource(OrderedXmlObject):
     ORDER = ('id', 'version', 'local', 'remote')
     LOCATION_TEMPLATE = 'resource/location[@authority="%s"]'
@@ -314,6 +359,12 @@ class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
 
+class GraphTemplate(Template):
+    # TODO: Is there a way to specify a default/static value for form?
+    form = StringField('@form', choices=['graph'])
+    graph = NodeField('graph', Graph)
+
+
 class Header(AbstractTemplate):
     ROOT_NAME = 'header'
 
@@ -395,8 +446,11 @@ class Detail(IdNode):
             for variable in self.variables:
                 result.add(variable.function)
         for field in self.fields:
-            result.add(field.header.text.xpath_function)
-            result.add(field.template.text.xpath_function)
+            try:
+                result.add(field.header.text.xpath_function)
+                result.add(field.template.text.xpath_function)
+            except AttributeError:
+                pass  # Its a Graph detail
         result.discard(None)
         return result
 
@@ -886,17 +940,11 @@ class SuiteGenerator(SuiteGeneratorBase):
             )
 
     def get_filter_xpath(self, module, delegation=False):
-        from corehq.apps.app_manager.detail_screen import Filter
-        short_detail = module.case_details.short
-        filters = []
-        for column in short_detail.get_columns():
-            if column.format == 'filter':
-                filters.append("(%s)" % Filter(self.app, module, short_detail, column).filter_xpath)
-        if filters:
-            xpath = '[%s]' % (' and '.join(filters))
+        filter = module.case_details.short.filter
+        if filter:
+            xpath = '[%s]' % filter
         else:
             xpath = ''
-
         if delegation:
             xpath += "[index/parent/@case_type = '%s']" % module.case_type
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
@@ -1488,10 +1536,21 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
+            descriptor = None
+            if self.app.build_version >= '2.9':
+                type_mapping = {"CommCareImage": "Image",
+                                "CommCareAudio": "Audio",
+                                "CommCareVideo": "Video"}
+                descriptor = u"{filetype} File: {name}".format(
+                    filetype=type_mapping.get(m.media_type, "Media"),
+                    name=name
+                )
+
             yield MediaResource(
                 id=self.id_strings.media_resource(m.unique_id, name),
                 path=install_path,
                 version=m.version,
+                descriptor=descriptor,
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),

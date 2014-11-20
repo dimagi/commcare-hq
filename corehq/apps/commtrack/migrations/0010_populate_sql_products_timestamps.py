@@ -1,6 +1,6 @@
 # encoding: utf-8
 from south.v2 import DataMigration
-from corehq.apps.commtrack.models import Product, SQLProduct
+from corehq.apps.products.models import Product
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -13,11 +13,11 @@ class Migration(DataMigration):
 
         for product in iter_docs(Product.get_db(), product_ids):
             try:
-                sql_product = SQLProduct.objects.get(product_id=product['_id'])
-            except SQLProduct.DoesNotExist:
+                sql_product = orm.SQLProduct.objects.get(product_id=product['_id'])
+            except orm.SQLProduct.DoesNotExist:
                 # weird - something failed syncing products. force creation now by resaving it.
                 Product.wrap(product).save()
-                sql_product = SQLProduct.objects.get(product_id=product['_id'])
+                sql_product = orm.SQLProduct.objects.get(product_id=product['_id'])
 
             if 'last_modified' in product.keys() and product['last_modified']:
                 sql_product.created_at = product['last_modified']

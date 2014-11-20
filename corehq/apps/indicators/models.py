@@ -569,7 +569,7 @@ class CountUniqueCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
         all_emitted_values = [r['value'] for r in results]
         all_emitted_values = set(all_emitted_values)
         value = len(all_emitted_values)
-        return (value, all_emitted_values) if is_debug else value
+        return (value, list(all_emitted_values)) if is_debug else value
 
     @classmethod
     def get_nice_name(cls):

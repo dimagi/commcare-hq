@@ -27,7 +27,7 @@ import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles, Domain
 from casexml.apps.case.cleanup import rebuild_case, close_case
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
 from corehq.util.couch import get_document_or_404
@@ -172,7 +172,6 @@ def export_data(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    group, users = util.get_group_params(domain, **json_request(req.GET))
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
 
     kwargs = {"format": req.GET.get("format", Format.XLS_2007),
@@ -194,6 +193,7 @@ def export_data(req, domain):
                 return False
         filter = _ufilter
     else:
+        group = util.get_group(**json_request(req.GET))
         filter = SerializableFunction(util.group_filter, group=group)
 
     errors_filter = instances if not include_errors else None
@@ -905,6 +905,7 @@ def export_case_transactions(request, domain, case_id):
 
     headers = [
         _('case id'),
+        _('case name'),
         _('section'),
         _('date'),
         _('product_id'),
@@ -917,6 +918,7 @@ def export_case_transactions(request, domain, case_id):
     def _make_row(transaction):
         return [
             transaction.case_id,
+            case.name,
             transaction.section_id,
             transaction.report.date if transaction.report_id else '',
             transaction.product_id,
@@ -962,7 +964,12 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 
     # todo deal with cached user dict here
     group = Group.get(group) if group else None
-    users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
+    users = get_all_users_by_domain(
+        domain,
+        group=group,
+        user_filter=user_filter,
+        include_inactive=True
+    )
     groups = Group.get_case_sharing_groups(domain)
 
     fd, path = tempfile.mkstemp()

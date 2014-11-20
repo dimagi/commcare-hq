@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from corehq.apps.commtrack.models import Program
+from corehq.apps.programs.models import Program
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.util import get_or_create_default_program
 

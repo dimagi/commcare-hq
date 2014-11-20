@@ -40,10 +40,28 @@
         .table-nonfluid {
            width: auto;
         }
-        .table tr td:nth-child(1) {width:400px;}
-        .table tr td:nth-child(2) {width:100px;}
-        .table tr td:nth-child(3) {width:100px;}
-        .table tr td:nth-child(4) {width:100px;}
+        .table tr td:nth-child(1) {width:230px;}
+        .table tr td:nth-child(n + 2) {width:120px;}
+
+        table {
+            display: inline-block;
+            float: left;
+        }
+        .row ~ table {
+            margin-top: 200px;
+            display: inline-block;
+        }
+        .accordion-inner {
+            width: 100%;
+        }
+        table + .row, .row + .row {
+            width: 45%;
+            float:right;
+            display: inline-block;
+        }
+        svg {
+            overflow: visible;
+        }
     </style>
 
     {% for thisreport in reports %}

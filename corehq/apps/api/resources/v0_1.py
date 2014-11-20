@@ -4,6 +4,7 @@ from functools import wraps
 import json
 
 # Django imports
+import datetime
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
@@ -17,6 +18,7 @@ from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.es import FormES
 from corehq.apps.users.decorators import require_permission, require_permission_raw
 from couchforms.models import XFormInstance
 
@@ -29,6 +31,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin
+from dimagi.utils.parsing import string_to_boolean
 
 
 def determine_authtype(request):
@@ -133,7 +136,9 @@ class SuperuserAuthentication(LoginAndDomainAuthentication):
             require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
             api_auth,
         ]
-        return self._auth_test(request, wrappers=wrappers, **kwargs)
+        # passing the domain is a hack to work around non-domain-specific requests
+        # failing on auth
+        return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)
 
 
 class CustomResourceMeta(object):
@@ -178,8 +183,45 @@ class CommCareUserResource(UserResource):
         object_class = CommCareUser
         resource_name = 'user'
 
+    def dehydrate(self, bundle):
+        show_extras = _safe_bool(bundle, 'extras')
+        if show_extras:
+            extras = {}
+            now = datetime.datetime.utcnow()
+            form_es_base = (FormES()
+                .domain(bundle.request.domain)
+                .user_id([bundle.obj._id])
+            )
+            extras['submitted_last_30'] = (form_es_base
+                .submitted(gte=now - datetime.timedelta(days=30),
+                           lte=now)
+                .run()
+            ).total
+            extras['completed_last_30'] = (form_es_base
+                .completed(gte=now - datetime.timedelta(days=30),
+                           lte=now)
+                .run()
+            ).total
+            first_of_this_month = datetime.datetime(now.year, now.month, 1)
+            first_of_last_month = (first_of_this_month - datetime.timedelta(days=1)).replace(day=1)
+            extras['submitted_last_month'] = (form_es_base
+                .submitted(gte=first_of_last_month,
+                           lte=first_of_this_month)
+                .run()
+            ).total
+            extras['completed_last_month'] = (form_es_base
+                .completed(gte=first_of_last_month,
+                           lte=first_of_this_month)
+                .run()
+            ).total
+            bundle.data['extras'] = extras
+        return super(UserResource, self).dehydrate(bundle)
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
+
+
+        show_archived = _safe_bool(bundle, 'archived')
         group_id = bundle.request.GET.get('group')
         if group_id:
             group = Group.get(group_id)
@@ -187,7 +229,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            return list(CommCareUser.by_domain(domain, strict=True))
+            return list(CommCareUser.by_domain(domain, strict=True, is_active=not show_archived))
 
 
 class WebUserResource(UserResource):
@@ -289,3 +331,9 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         resource_name = 'form'
         serializer = XFormInstanceSerializer()
+
+def _safe_bool(bundle, param, default=False):
+    try:
+        return string_to_boolean(bundle.request.GET.get(param))
+    except ValueError:
+        return default

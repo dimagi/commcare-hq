@@ -43,8 +43,8 @@ def seconds_till_midnight(timezone):
     return (midnight_in_tz - now_in_tz).total_seconds()
 
 
-def cache_key(user_id):
-    return 'callcenter_{}'.format(user_id)
+def cache_key(user_id, date):
+    return 'callcenter_{}_{}'.format(user_id, date.isoformat())
 
 
 class CachedIndicators(JsonObject):
@@ -83,37 +83,46 @@ class CallCenterIndicators(object):
 
     See https://help.commcarehq.or/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application
     for user docs.
+
+    :param domain:          the domain object
+    :param user:            the user to generate the fixture for
+    :param case_sync_op:    the CaseSyncOperation object for the user. This is used to get the users' cases.
+                            if not supplied the users' cases will get re-calculated
+    :param custom_cache:    used in testing to verify caching
+    :param override_date:   used in testing
+
     """
     no_value = 0
     name = 'call-center'
 
-    def __init__(self, domain, user, custom_cache=None, override_date=None):
+    def __init__(self, domain, user, case_sync_op=None, custom_cache=None, override_date=None):
         self.domain = domain
         self.user = user
         self.data = defaultdict(dict)
         self.cc_case_type = self.domain.call_center_config.case_type
         self.cache = custom_cache or cache
-        if override_date and isinstance(override_date, datetime):
-            self.override_date = override_date.date()
-        else:
-            self.override_date = override_date
+        self.case_sync_op = case_sync_op or CaseSyncOperation(user, None)
 
         try:
             self.timezone = pytz.timezone(self.domain.default_timezone)
         except pytz.UnknownTimeZoneError:
             self.timezone = pytz.utc
 
+        if override_date and isinstance(override_date, datetime):
+            override_date = override_date.date()
+
+        self.reference_date = override_date or datetime.now(self.timezone).date()
+
     @property
     def date_ranges(self):
-        last_midnight = self.override_date or datetime.now(self.timezone).date()
-        weekago = last_midnight - timedelta(days=7)
-        weekago2 = last_midnight - timedelta(days=14)
-        daysago30 = last_midnight - timedelta(days=30)
-        daysago60 = last_midnight - timedelta(days=60)
+        weekago = self.reference_date - timedelta(days=7)
+        weekago2 = self.reference_date - timedelta(days=14)
+        daysago30 = self.reference_date - timedelta(days=30)
+        daysago60 = self.reference_date - timedelta(days=60)
         return [
-            ('week0', weekago, last_midnight),
+            ('week0', weekago, self.reference_date),
             ('week1', weekago2, weekago),
-            ('month0', daysago30, last_midnight),
+            ('month0', daysago30, self.reference_date),
             ('month1', daysago60, daysago30),
         ]
 
@@ -125,20 +134,18 @@ class CallCenterIndicators(object):
 
     @property
     @memoized
-    def all_user_ids(self):
-        """
-        :return: Set of all user_ids that we need to produce data for.
-        """
-        all_owned_cases = CaseSyncOperation(self.user, None).actual_owned_cases
-        relevant_cases = filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
+    def call_center_cases(self):
+        all_owned_cases = self.case_sync_op.actual_owned_cases
+        return filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
 
-        ids = {getattr(case, 'hq_user_id', None) for case in relevant_cases}
-        try:
-            ids.remove(None)
-        except KeyError:
-            pass
-
-        return ids
+    @property
+    @memoized
+    def user_to_case_map(self):
+        return {
+            case.hq_user_id: case.case_id
+            for case in self.call_center_cases
+            if hasattr(case, 'hq_user_id') and case.hq_user_id
+        }
 
     @property
     @memoized
@@ -146,7 +153,8 @@ class CallCenterIndicators(object):
         """
         :return: Dictionary of user_id -> CachedIndicators
         """
-        cached = self.cache.get_many([cache_key(user_id) for user_id in self.all_user_ids])
+        keys = [cache_key(user_id, self.reference_date) for user_id in self.user_to_case_map.keys()]
+        cached = self.cache.get_many(keys)
         data = {data['user_id']: CachedIndicators.wrap(data) for data in cached.values()}
         return data
 
@@ -156,7 +164,7 @@ class CallCenterIndicators(object):
         """
         :return: Set of user_ids for whom we need to generate data
         """
-        ids = self.all_user_ids - set(self.cached_data.keys())
+        ids = set(self.user_to_case_map.keys()) - set(self.cached_data.keys())
         return ids
 
     @property
@@ -201,10 +209,6 @@ class CallCenterIndicators(object):
                 mapping[user_id].add(group.get_id)
 
         return mapping
-
-    @property
-    def user_to_case_map(self):
-        return get_callcenter_case_mapping(self.domain.name, self.users_needing_data)
 
     def _add_data(self, queryset, indicator_name, transformer=None):
         """
@@ -452,7 +456,11 @@ class CallCenterIndicators(object):
                             domain=self.domain.name,
                             indicators=indicators
                         )
-                        cache.set(cache_key(user_id), cache_data.to_json(), cache_timeout)
+                        self.cache.set(
+                            cache_key(user_id, self.reference_date),
+                            cache_data.to_json(),
+                            cache_timeout
+                        )
                         final_data[user_case_id] = indicators
 
         for cache_data in self.cached_data.itervalues():

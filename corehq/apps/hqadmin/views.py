@@ -37,6 +37,8 @@ from restkit import Resource
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
+from corehq.apps.callcenter.utils import FakeSyncOp
+from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -997,24 +999,28 @@ def doc_in_es(request):
     query = {"filter":
                 {"ids": {
                     "values": [doc_id]}}}
-    es_doc = {}
-    index_found = ''
+
+    def to_json(doc):
+        return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
+
+    found_indices = {}
+    doc_type = couch_doc.get('doc_type')
+    es_doc_type = None
     for index, url in ES_URLS.items():
         res = run_query(url, query)
         if res['hits']['total'] == 1:
             es_doc = res['hits']['hits'][0]['_source']
-            index_found = index
-            break
-    doc_type = couch_doc.get('doc_type') or es_doc.get('doc_type', "Unknown")
-    def to_json(doc):
-        return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
+            found_indices[index] = to_json(es_doc)
+            es_doc_type = es_doc_type or es_doc.get('doc_type')
+
+    doc_type = doc_type or es_doc_type or 'Unknown'
+
     context = {
         "doc_id": doc_id,
-        "status": "found" if es_doc else "NOT FOUND!",
+        "status": "found" if found_indices else "NOT FOUND!",
         "doc_type": doc_type,
         "couch_doc": to_json(couch_doc),
-        "es_doc": to_json(es_doc),
-        "index": index_found
+        "found_indices": found_indices,
     }
     return render(request, "hqadmin/doc_in_es.html", context)
 
@@ -1023,16 +1029,38 @@ def doc_in_es(request):
 def callcenter_test(request):
     user_id = request.GET.get("user_id")
     date_param = request.GET.get("date")
+    enable_caching = request.GET.get('cache')
+    doc_id = request.GET.get('doc_id')
 
-    if not user_id:
-        return render(request, "hqadmin/callcenter_test.html", {})
+    if not user_id and not doc_id:
+        return render(request, "hqadmin/callcenter_test.html", {"enable_caching": enable_caching})
 
     error = None
-    try:
-        user = CommCareUser.get(user_id)
-    except ResourceNotFound:
-        user = None
-        error = "User Not Found"
+    user = None
+    user_case = None
+    domain = None
+    if user_id:
+        try:
+            user = CommCareUser.get(user_id)
+            domain = user.project
+        except ResourceNotFound:
+            error = "User Not Found"
+    elif doc_id:
+        try:
+            doc = CommCareUser.get_db().get(doc_id)
+            doc_type = doc.get('doc_type', None)
+            if doc_type == 'CommCareUser':
+                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], include_docs=True)
+            elif doc_type == 'CommCareCase':
+                if doc.get('hq_user_id'):
+                    user_case = CommCareCase.wrap(doc)
+                else:
+                    error = 'Case ID does does not refer to a Call Center Case'
+        except ResourceNotFound:
+            error = "User Not Found"
+
+    if user_case:
+        domain = Domain.get_by_name(user_case['domain'])
 
     try:
         query_date = dateutil.parser.parse(date_param)
@@ -1050,10 +1078,16 @@ def callcenter_test(request):
             'case': CommCareCase.get(case_id),
         }
 
-    if user:
-        domain = user.project
-        dummy_cache = cache.get_cache('django.core.cache.backends.dummy.DummyCache')
-        cci = CallCenterIndicators(domain, user, custom_cache=dummy_cache, override_date=query_date)
+    if user or user_case:
+        sync_op = FakeSyncOp([user_case]) if user_case else None
+        custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        cci = CallCenterIndicators(
+            domain,
+            user,
+            case_sync_op=sync_op,
+            custom_cache=custom_cache,
+            override_date=query_date
+        )
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:
         data = {}
@@ -1062,6 +1096,8 @@ def callcenter_test(request):
         "error": error,
         "mobile_user": user,
         "date": query_date.strftime("%Y-%m-%d"),
+        "enable_caching": enable_caching,
         "data": data,
+        "doc_id": doc_id
     }
     return render(request, "hqadmin/callcenter_test.html", context)

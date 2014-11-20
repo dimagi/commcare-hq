@@ -191,6 +191,7 @@ DEFAULT_APPS = (
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
+    'mptt',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -224,6 +225,8 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
+    'corehq.apps.products',
+    'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'couchforms',
@@ -238,6 +241,7 @@ HQ_APPS = (
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
+    'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
@@ -288,13 +292,13 @@ HQ_APPS = (
     'toggle',
     'touchforms.formplayer',
     'phonelog',
-    'hutch',
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
+    'corehq.util',
 
     # custom reports
     'a5288',
@@ -318,7 +322,9 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.logistics',
     'custom.ilsgateway',
+    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -328,6 +334,7 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
+    'custom.tdh',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -465,8 +472,8 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-    "corehq.apps.commtrack.fixtures.product_fixture_generator",
-    "corehq.apps.commtrack.fixtures.program_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
@@ -937,6 +944,7 @@ COUCHDB_APPS = [
     'couchforms',
     'couchexport',
     'ctable',
+    'custom_data_fields',
     'hqadmin',
     'domain',
     'facilities',
@@ -954,6 +962,8 @@ COUCHDB_APPS = [
     'phone',
     'pillowtop',
     'pillow_retry',
+    'products',
+    'programs',
     'reminders',
     'reports',
     'sofabed',
@@ -967,7 +977,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'hutch',
     'wisepill',
     'fri',
     'crs_reports',
@@ -988,10 +997,12 @@ COUCHDB_APPS = [
     'accounting',
     'succeed',
     'ilsgateway',
+    'ewsghana',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
     ('userreports', 'meta'),
+    ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
@@ -1001,7 +1012,8 @@ COUCHDB_APPS = [
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
-    ('wvindia2', 'wvindia2')
+    ('wvindia2', 'wvindia2'),
+    'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1047,7 +1059,8 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
-    'custom.ilsgateway.handler.handle',
+    'custom.ilsgateway.tanzania.handler.handle',
+    'custom.ewsghana.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1162,7 +1175,13 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-
+        'custom.tdh.models.TDHEnrollChildFluffPillow',
+        'custom.tdh.models.TDHInfantClassificationFluffPillow',
+        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
+        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
+        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
+        'custom.tdh.models.TDHChildClassificationFluffPillow',
+        'custom.tdh.models.TDHChildTreatmentFluffPillow',
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1187,6 +1206,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1220,6 +1241,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
+    'custom.ewsghana',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1262,10 +1284,14 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
+    'ilsgateway-test-2': 'custom.ilsgateway',
+    'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'tdhtesting': 'custom.tdh',
+    'rec': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

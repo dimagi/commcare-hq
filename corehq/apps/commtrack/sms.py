@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
@@ -10,14 +11,18 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import datetime
 from corehq.apps.commtrack.util import get_supply_point
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.models import Product, CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
+from corehq.apps.commtrack.models import CommtrackConfig, StockTransaction, CommTrackUser, RequisitionTransaction, RequisitionCase
+from corehq.apps.products.models import Product
 from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.locations.models import Location
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
-from corehq.apps.commtrack.exceptions import NotAUserClassError
+from corehq.apps.commtrack.exceptions import (
+    NoDefaultLocationException,
+    NotAUserClassError,
+)
 
 import uuid
 
@@ -120,6 +125,11 @@ class StockReportParser(object):
         action = self.C.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
             # TODO: support single-action by product, as well as by action?
+            if not self.location.get('case'):
+                raise NoDefaultLocationException(
+                    _("You have not been registered with a default location yet."
+                      "  Please register a default location for this user.")
+                )
             self.case_id = self.location['case']._id
             _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
         elif action and action.action in [
@@ -204,7 +214,7 @@ class StockReportParser(object):
                 keyword = next()
             except StopIteration:
                 if not found_product_for_action:
-                    raise SMSError('product expected for action "%s"' % action_code)
+                    raise SMSError('product expected for action "%s"' % action)
                 break
 
             old_action = action
@@ -236,18 +246,6 @@ class StockReportParser(object):
                 continue
 
             raise SMSError('do not recognize keyword "%s"' % keyword)
-
-    # TODO determine if this is needed for anything, fix or delete
-    def requisition_bulk_action(self, action, args):
-        if args:
-            raise SMSError('extra arguments at end')
-
-        yield stockreport.BulkRequisitionResponse(
-            domain=self.domain,
-            action_type=action.action_type,
-            action_name=action.action_name,
-            location_id=self.location.location_[-1],
-        )
 
     def transaction_factory(self, baseclass):
         return lambda **kwargs: baseclass(
