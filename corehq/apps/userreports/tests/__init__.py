@@ -1,4 +1,5 @@
 from .test_app_manager_integration import *
+from .test_expressions import *
 from .test_filters import *
 from .test_getters import *
 from .test_indicator_config import *
