@@ -70,6 +70,7 @@ branches:
   - custom_location_data+locations-for-everyone # tw 11/18
   - custom_location_data  # Ethan & tw 11/17
   - locations-for-everyone # tw 11/18
+  - ucr-auto-form # ts 11/21
 submodules:
   submodules/couchlog-src:
     branches:
