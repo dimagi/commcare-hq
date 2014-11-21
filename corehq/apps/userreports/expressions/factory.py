@@ -2,7 +2,7 @@ import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.getters.specs import PropertyNameMatchGetterSpec, PropertyPathMatchGetterSpec
+from corehq.apps.userreports.expressions.specs import PropertyNameMatchGetterSpec, PropertyPathMatchGetterSpec
 
 
 class ExpressionFactory(object):
