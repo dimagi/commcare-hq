@@ -4,7 +4,7 @@ import json
 import tempfile
 import re
 import zipfile
-from cStringIO import StringIO
+import cStringIO
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from unidecode import unidecode
@@ -1228,6 +1228,7 @@ def export_report(request, domain, export_hash, format):
         return HttpResponseNotFound(_("That report was not found. Please remember"
                                       " that download links expire after 24 hours."))
 
+
 def find_question_id(form, value):
     for k, v in form.iteritems():
         if isinstance(v, dict):
@@ -1239,6 +1240,7 @@ def find_question_id(form, value):
                 return [k]
 
     return None
+
 
 @require_form_view_permission
 @login_and_domain_required
@@ -1259,7 +1261,7 @@ def form_multimedia_export(request, domain, app_id):
                                    form._id, extension)
 
     key = [domain, app_id, xmlns]
-    stream_file = StringIO()
+    stream_file = cStringIO.StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
     size = 0
     unknown_number = 0

@@ -94,7 +94,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
 
 def sizeof_fmt(num):
-    for x in ['bytes','KB','MB','GB','TB']:
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
         num /= 1024.0
@@ -119,12 +119,12 @@ class ExcelExportReport(FormExportReportBase):
         if is_previewer:
             size_hash = {a['key'][2]: a['value'] for a in db.view('attachments/attachments',
                                                                   startkey=startkey,
-                                                                  endkey=startkey+[{}],
+                                                                  endkey=startkey + [{}],
                                                                   group_level=3,
                                                                   reduce=True,
                                                                   group=True)}
         for f in db.view('exports_forms/by_xmlns',
-                         startkey=startkey, endkey=startkey+[{}], group=True,
+                         startkey=startkey, endkey=startkey + [{}], group=True,
                          stale=settings.COUCH_STALE_QUERY):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
