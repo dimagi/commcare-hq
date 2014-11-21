@@ -78,6 +78,31 @@ class PropertyMatchFilterTest(SimpleTestCase):
         self.assertFalse(self.get_path_filter().filter({'foo': 'bar'}))
 
 
+class EqualityFilterTest(PropertyMatchFilterTest):
+
+    def get_filter(self):
+        return FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'getter': {
+                'type': 'property_name_match',
+                'property_name': 'foo',
+            },
+            'operator': 'eq',
+            'property_value': 'bar',
+        })
+
+    def get_path_filter(self):
+        return FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'getter': {
+                'type': 'property_path_match',
+                'property_path': ['path', 'to', 'foo'],
+            },
+            'operator': 'eq',
+            'property_value': 'bar',
+        })
+
+
 class ConfigurableANDFilterTest(SimpleTestCase):
 
     def setUp(self):
