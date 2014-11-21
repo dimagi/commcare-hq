@@ -120,6 +120,13 @@
         color: #ffff00;
         text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
     }
+    .build .edit-comment-pencil {
+        display: none;
+        pull: right;
+    }
+    .build:hover .edit-comment-pencil {
+        display: inline;
+    }
 </style>
 {% endblock %}
 {% block form-view %}
@@ -237,12 +244,13 @@
                     {% endif %}
                     <td>
                         <div data-bind="visible: !editing_comment()">
-                            <a href="#" data-bind="click: function () {editing_comment(true);}">
-                                <span class="icon-pencil"></span>
-                            </a>
                             <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
                             <span data-bind="text: build_comment"></span>
                             <b data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</b>
+                            <a class="edit-comment-pencil pull-right" href="#"
+                               data-bind="click: function () {editing_comment(true);}">
+                                <span class="icon-pencil"></span>
+                            </a>
                         </div>
                         <div data-bind="visible: editing_comment()">
                             <input type="text" data-bind="value: new_comment"></input>
