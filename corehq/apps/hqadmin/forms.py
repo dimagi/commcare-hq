@@ -26,7 +26,8 @@ class BrokenBuildsForm(forms.Form):
 
 class PrimeRestoreCacheForm(forms.Form):
     domain = forms.CharField(
-        label='Domain'
+        label='Domain',
+        required=False
     )
     version = forms.ChoiceField(
         label='Output version',
@@ -62,11 +63,11 @@ class PrimeRestoreCacheForm(forms.Form):
         self.helper.label_class = 'col-lg-2'
         self.helper.field_class = 'col-lg-4'
         self.helper.layout = crispy.Layout(
-            'domain',
             'version',
             'cache_timeout',
             'overwrite_cache',
             'all_users',
+            'domain',
             'users',
             FormActions(
                 StrictButton(
@@ -86,4 +87,6 @@ class PrimeRestoreCacheForm(forms.Form):
         if not self.user_ids and not cleaned_data['all_users']:
             raise forms.ValidationError("Please supply user IDs or select the 'All Users' option")
 
+        if cleaned_data['all_users'] and not cleaned_data['domain']:
+            raise forms.ValidationError("Please supply a domain to select users from.")
         return cleaned_data
