@@ -16,6 +16,7 @@ _constant_expression = functools.partial(_simple_expression_generator, ConstantG
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 
+
 def _conditional_expression(spec):
     wrapped = ConditionalExpressionSpec.wrap(spec)
     return ConditionalExpression(
@@ -23,6 +24,7 @@ def _conditional_expression(spec):
         ExpressionFactory.from_spec(wrapped.expression_if_true),
         ExpressionFactory.from_spec(wrapped.expression_if_false),
     )
+
 
 class ExpressionFactory(object):
     spec_map = {
