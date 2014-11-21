@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta, time
+from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
