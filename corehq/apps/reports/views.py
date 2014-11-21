@@ -4,7 +4,7 @@ import json
 import tempfile
 import re
 import zipfile
-from cStringIO import StringIO
+import cStringIO
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from unidecode import unidecode
@@ -50,6 +50,7 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
@@ -1228,6 +1229,7 @@ def export_report(request, domain, export_hash, format):
         return HttpResponseNotFound(_("That report was not found. Please remember"
                                       " that download links expire after 24 hours."))
 
+
 def find_question_id(form, value):
     for k, v in form.iteritems():
         if isinstance(v, dict):
@@ -1240,51 +1242,57 @@ def find_question_id(form, value):
 
     return None
 
+
+@toggles.MULTIMEDIA_EXPORT.required_decorator()
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
 def form_multimedia_export(request, domain, app_id):
     try:
-        xmlns = request.GET.__getitem__("xmlns")
-        startdate = request.GET.__getitem__("startdate")
-        enddate = request.GET.__getitem__("enddate")
+        xmlns = request.GET["xmlns"]
+        startdate = request.GET["startdate"]
+        enddate = request.GET["enddate"]
         zip_name = request.GET.get("name", None)
-    except ValueError:
+    except KeyError:
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
-        return "%s-%s-%s-%s.%s" % (form.form['@name'],
+        return "%s-%s-%s-%s.%s" % (form['form']['@name'],
                                    unidecode(question_id),
-                                   form.form['meta']['username'],
-                                   form._id, extension)
+                                   form['form']['meta']['username'],
+                                   form['_id'], extension)
 
     key = [domain, app_id, xmlns]
-    stream_file = StringIO()
+    stream_file = cStringIO.StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
-    size = 0
+    size = 22  # overhead for a zipfile
     unknown_number = 0
-    for f in XFormInstance.get_db().view("attachments/attachments",
+    form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
                                          start_key=key + [startdate],
                                          end_key=key + [enddate, {}],
-                                         reduce=False):
-        form = XFormInstance.get(f['id'])
+                                         reduce=False)}
+    for form in iter_docs(XFormInstance.get_db(), form_ids):
+        f = XFormInstance.wrap(form)
         if not zip_name:
-            zip_name = unidecode(form.form['@name'])
-        for key in f['value']['attachments'].keys():
+            zip_name = unidecode(form['form']['@name'])
+        for key in form['_attachments'].keys():
+            if form['_attachments'][key]['content_type'] == 'text/xml':
+                continue
             extension = unicode(os.path.splitext(key)[1])
             try:
-                question_id = unicode('-'.join(find_question_id(form.form, key)))
+                question_id = unicode('-'.join(find_question_id(form['form'], key)))
             except TypeError:
                 question_id = unicode('unknown' + str(unknown_number))
                 unknown_number += 1
             fname = filename(form, question_id, extension)
-            zi = zipfile.ZipInfo(fname, parse(f['value']['date']).timetuple())
-            zf.writestr(zi, form.fetch_attachment(key, stream=True).read())
-            size += f['value']['attachments'][key]['length'] + 88 + 2 * len(fname)
+            zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
+            zf.writestr(zi, f.fetch_attachment(key, stream=True).read())
+            # includes overhead for file in zipfile
+            size += f['_attachments'][key]['length'] + 88 + 2 * len(fname)
 
     zf.close()
 
     response = HttpResponse(stream_file.getvalue(), mimetype="application/zip")
-    response['Content-Length'] = size + 22  # overhead
+    response['Content-Length'] = size
     response['Content-Disposition'] = 'attachment; filename=%s.zip' % zip_name
     return response
