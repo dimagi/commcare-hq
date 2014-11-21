@@ -20072,19 +20072,19 @@ msgstr "शर्त 1"
 
 #: custom/opm/beneficiary.py:596
 msgid "Condition 2"
-msgstr "शर्त2"
+msgstr "शर्त 2"
 
 #: custom/opm/beneficiary.py:597
 msgid "Condition 3"
-msgstr "शर्त3"
+msgstr "शर्त 3"
 
 #: custom/opm/beneficiary.py:598
 msgid "Condition 4"
-msgstr "शर्त4"
+msgstr "शर्त 4"
 
 #: custom/opm/beneficiary.py:599
 msgid "Condition 5"
-msgstr "शर्त5"
+msgstr "शर्त 5"
 
 #: custom/opm/beneficiary.py:602
 msgid "Owner Id"

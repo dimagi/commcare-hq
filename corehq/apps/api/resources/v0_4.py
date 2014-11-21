@@ -6,7 +6,8 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
+    _safe_bool
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -291,8 +292,8 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
-
     modules = fields.ListField()
+
     def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
@@ -326,6 +327,15 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
             return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
         elif app.doc_type == RemoteApp._doc_type:
             return []
+
+    def dehydrate(self, bundle):
+        if not _safe_bool(bundle, "extras"):
+            return super(ApplicationResource, self).dehydrate(bundle)
+        else:
+            app_data = {}
+            app_data.update(bundle.obj._doc)
+            app_data.update(bundle.data)
+            return app_data
 
     def obj_get_list(self, bundle, domain, **kwargs):
         return get_apps_in_domain(domain, include_remote=False)

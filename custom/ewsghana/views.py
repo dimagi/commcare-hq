@@ -7,9 +7,9 @@ from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_stock_data_task
 from custom.ilsgateway.views import GlobalStats, BaseConfigView
 
 
-class GlobalStats(GlobalStats):
-
+class EWSGlobalStats(GlobalStats):
     template_name = "ewsghana/global_stats.html"
+
 
 class EWSConfigView(BaseConfigView):
     config = EWSGhanaConfig
@@ -18,7 +18,7 @@ class EWSConfigView(BaseConfigView):
     sync_stock_url = 'ews_sync_stock_data'
     clear_stock_url = 'ews_clear_stock_data'
     page_title = ugettext_noop("EWS Ghana")
-    template_name = 'ilsgateway/ewsconfig.html'
+    template_name = 'ewsghana/ewsconfig.html'
     source = 'ewsghana'
 
 
