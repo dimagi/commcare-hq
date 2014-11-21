@@ -259,12 +259,6 @@
         {% endfor %}
     </div>
     <div id="fixtures-accordion">
-        {% if fixtures %}
-            <div class='alert alert-warning'>
-                Lookup Tables are not supported on our Community plan
-                <a href="http://www.commcarehq.org/software-plans/">http://www.commcarehq.org/software-plans/</a>
-            </div>
-        {% endif %}
         {% for fixture in fixtures %}
             <div id="fixtures-{{ fixture.id }}">
                 <dl class="dl-horizontal">
@@ -283,6 +277,13 @@
                 </dl>
             </div>
         {% endfor %}
+        {% if fixtures %}
+            <div class='alert alert-warning'>
+                Lookup Tables are not supported on our Community plan.
+                <a href="http://www.commcarehq.org/software-plans/">Learn more
+                    about our pricing plans here</a>
+            </div>
+        {% endif %}
     </div>
     <div>
         <form id="new-project-form" method="post" class="form-inline" action="{% url "domain_copy_snapshot" project %}">
