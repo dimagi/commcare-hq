@@ -5,13 +5,14 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.conditional import ConditionalExpression
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
-    ConditionalExpressionSpec
+    ConditionalExpressionSpec, ConstantGetterSpec
 from corehq.apps.userreports.factory import FilterFactory
 
 
 def _simple_expression_generator(wrapper_class, spec):
     return wrapper_class.wrap(spec).expression
 
+_constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 
@@ -25,6 +26,7 @@ def _conditional_expression(spec):
 
 class ExpressionFactory(object):
     spec_map = {
+        'constant': _constant_expression,
         'property_name': _property_name_expression,
         'property_path': _property_path_expression,
         'conditional': _conditional_expression,

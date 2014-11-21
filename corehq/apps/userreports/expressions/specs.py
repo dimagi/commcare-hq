@@ -1,6 +1,16 @@
 from jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
+from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.specs import TypeProperty
+
+
+class ConstantGetterSpec(JsonObject):
+    type = TypeProperty('constant')
+    constant = DefaultProperty(required=True)
+
+    @property
+    def expression(self):
+        return lambda item: self.constant
 
 
 class PropertyNameGetterSpec(JsonObject):
