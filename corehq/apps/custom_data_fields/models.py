@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import (Document, StringProperty,
-    BooleanProperty, SchemaListProperty)
+    BooleanProperty, SchemaListProperty, StringListProperty)
 from jsonobject import JsonObject
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
@@ -28,6 +28,7 @@ class CustomDataField(JsonObject):
     is_required = BooleanProperty()
     label = StringProperty()
     is_system = BooleanProperty()
+    choices = StringListProperty()
 
 
 class CustomDataFieldsDefinition(Document):
@@ -81,20 +82,34 @@ class CustomDataFieldsDefinition(Document):
         """
         Returns a validator to be used in bulk import
         """
-        def validate_custom_fields(custom_fields):
-            errors = []
-            missing_keys = []
-            for field in self.get_fields():
-                if field.is_required and not custom_fields.get(field.slug, None):
-                    missing_keys.append(field.slug)
-            if missing_keys:
-                errors.append(_(
+        def validate_choices(field, value):
+            if field.choices and value and value not in field.choices:
+                return _(
+                    "'{value}' is not a valid choice for {slug}, the available "
+                    "options are: {options}."
+                ).format(
+                    value=value,
+                    slug=field.slug,
+                    options=', '.join(field.choices),
+                )
+
+        def validate_required(field, value):
+            if field.is_required and not value:
+                return _(
                     "Cannot create or update a {entity} without "
-                    "the required field(s): {fields}."
+                    "the required field: {field}."
                 ).format(
                     entity=data_field_class.entity_string,
-                    fields=', '.join(missing_keys)
-                ))
-            return ' '.join(errors)
+                    field=field.slug
+                )
+
+        def validate_custom_fields(custom_fields):
+            errors = []
+            for field in self.fields:
+                value = custom_fields.get(field.slug, None)
+                errors.append(validate_required(field, value))
+                errors.append(validate_choices(field, value))
+
+            return ' '.join(filter(None, errors))
 
         return validate_custom_fields
