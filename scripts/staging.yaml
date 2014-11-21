@@ -64,7 +64,6 @@ branches:
 #  - logos # Nick P 10/31 (removed by Nick P)
   - hq-dropdown+locations-for-everyone # tw 11/18
   - hq-dropdown # sravan 5/7
-  - photo-export # J$ 11/4
   - custom-data-choices  # Ethan 11/09
   - export-user # SK 11/13
   - vellum-jquery-upgrade # Daniel 11/13
