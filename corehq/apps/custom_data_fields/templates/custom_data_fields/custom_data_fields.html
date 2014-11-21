@@ -19,9 +19,9 @@
         ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
 
         $('form[id="custom-fields-form"]').on("change", null, null, function() {
-            $(":submit").prop("disabled", false);
+            $("#save-custom-fields").prop("disabled", false);
         }).on("input", null, null, function() {
-            $(":submit").prop("disabled", false);
+            $("#save-custom-fields").prop("disabled", false);
         })
 
         $('.modal-footer button').on("click", function() {

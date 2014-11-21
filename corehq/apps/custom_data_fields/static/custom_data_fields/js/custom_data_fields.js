@@ -17,6 +17,7 @@ function CustomDataField () {
 
     self.removeChoice = function (choice) {
         self.choices.remove(choice);
+        $("#save-custom-fields").prop("disabled", false);
     };
 
     self.init = function (field) {
