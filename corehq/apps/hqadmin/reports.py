@@ -968,7 +968,7 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('Project Spaces Using Messaging')
     default_params = {
         'es_is_test': 'false',
-        'es_cp_n_sms_ever': 'true',
+        'es_cp_sms_ever': 'true',
     }
     indicators = [
         'commconnect_domain_count',
