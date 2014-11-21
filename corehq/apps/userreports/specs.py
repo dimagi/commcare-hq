@@ -2,7 +2,7 @@ from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.getters import DictGetter, NestedDictGetter, TransformedGetter, transform_date
-from corehq.apps.userreports.logic import IN_MULTISELECT, EQUAL
+from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL
 
 
 def TypeProperty(value):

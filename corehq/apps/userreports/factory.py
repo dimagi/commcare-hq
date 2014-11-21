@@ -6,7 +6,7 @@ from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorS
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
-from corehq.apps.userreports.logic import EQUAL
+from corehq.apps.userreports.operators import EQUAL
 from fluff.filters import ANDFilter, ORFilter, CustomFilter, NOTFilter
 
 
