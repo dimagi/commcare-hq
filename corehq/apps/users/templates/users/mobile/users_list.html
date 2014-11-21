@@ -150,11 +150,6 @@
                         {% trans "Edit User Fields" %}
                     </a>
                 {% endif %}
-                {% if request|toggle_enabled:"PRIME_OTA_RESTORE_CACHE" %}
-                    <a class="btn" href="{% url "prime_ota_restore_cache" domain %}">
-                        {% trans "Prime OTA restore cache" %}
-                    </a>
-                {% endif %}
             </div>
         </div>
     </div>

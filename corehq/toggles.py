@@ -209,9 +209,3 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     'Sync the full location hierarchy when syncing location fixtures',
     [NAMESPACE_DOMAIN]
 )
-
-PRIME_OTA_RESTORE_CACHE = StaticToggle(
-    'prime_ota_restore',
-    'Prime the OTA restore cache for users',
-    [NAMESPACE_USER]
-)
