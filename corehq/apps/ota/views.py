@@ -1,8 +1,5 @@
-from casexml.apps.case.xml import V2
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.models import Domain
-from corehq.apps.ota.tasks import prime_restore
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import json_error
 from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig

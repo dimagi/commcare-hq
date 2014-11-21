@@ -27,4 +27,4 @@ def prime_restore(user_ids, version=V1, cache_timeout=None, overwrite_cache=Fals
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         )
-        DownloadBase.set_progress(prime_restore, i+1, total)
+        DownloadBase.set_progress(prime_restore, i + 1, total)
