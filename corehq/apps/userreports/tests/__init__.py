@@ -9,7 +9,7 @@ from .test_report_config import *
 from .test_report_filters import *
 from .test_utils import *
 
-from corehq.apps.userreports.getters import recursive_lookup
+from corehq.apps.userreports.expressions.getters import recursive_lookup
 
 __test__ = {
     'recursive_lookup': recursive_lookup

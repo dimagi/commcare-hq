@@ -1,5 +1,5 @@
 from jsonobject import JsonObject, StringProperty, ListProperty
-from corehq.apps.userreports.getters import DictGetter, NestedDictGetter
+from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.specs import TypeProperty
 
 
