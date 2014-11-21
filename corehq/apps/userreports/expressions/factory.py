@@ -14,7 +14,7 @@ class ExpressionFactory(object):
     @classmethod
     def from_spec(cls, spec):
         try:
-            return cls.spec_map[spec['type']].wrap(spec).getter
+            return cls.spec_map[spec['type']].wrap(spec).expression
         except KeyError:
             raise BadSpecError(_('Invalid getter type: {}. Valid options are: {}').format(
                 spec['type'],

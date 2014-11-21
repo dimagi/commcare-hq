@@ -8,7 +8,7 @@ class PropertyNameGetterSpec(JsonObject):
     property_name = StringProperty(required=True)
 
     @property
-    def getter(self):
+    def expression(self):
         return DictGetter(self.property_name)
 
 
@@ -17,5 +17,5 @@ class PropertyPathGetterSpec(JsonObject):
     property_path = ListProperty(unicode, required=True)
 
     @property
-    def getter(self):
+    def expression(self):
         return NestedDictGetter(self.property_path)
