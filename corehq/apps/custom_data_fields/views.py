@@ -1,8 +1,7 @@
 import json
-import re
 
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator, validate_slug
+from django.core.validators import validate_slug
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 from django import forms
@@ -12,7 +11,8 @@ from crispy_forms.layout import Layout, Fieldset, Div, HTML
 
 from dimagi.utils.decorators.memoized import memoized
 
-from .models import CustomDataFieldsDefinition, CustomDataField, CUSTOM_DATA_FIELD_PREFIX
+from .models import (CustomDataFieldsDefinition, CustomDataField,
+                     validate_reserved_words, CUSTOM_DATA_FIELD_PREFIX)
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -27,7 +27,6 @@ class CustomDataFieldsForm(forms.Form):
         for slug in slugs:
             if slugs.count(slug) > 1:
                 errors.add(_("Key '{}' was duplicated, key names must be unique.".format(slug)))
-
         return errors
 
     def clean_data_fields(self):
@@ -52,10 +51,7 @@ class CustomDataFieldsForm(forms.Form):
 class XmlSlugField(forms.SlugField):
     default_validators = [
         validate_slug,
-        RegexValidator(
-            re.compile(r'^(?!xml)', flags=re.IGNORECASE),
-            _('Properties cannot begin with "xml"'), 'invalid_xml'
-        )
+        validate_reserved_words,
     ]
 
 
@@ -71,7 +67,9 @@ class CustomDataFieldForm(forms.Form):
         required=True,
         error_messages={
             'required': _('All fields are required'),
-            'invalid': _('Key fields must consist only of letters, numbers, underscores or hyphens.')
+            'invalid': _('Key fields must consist only of letters, numbers, '
+                         'underscores or hyphens.'),
+            'reserved': _(),
         }
     )
     is_required = forms.BooleanField(required=False)

@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import (Document, StringProperty,
     BooleanProperty, SchemaListProperty)
 from jsonobject import JsonObject
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 
@@ -8,7 +9,18 @@ CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # This list is used to grandfather in existing data, any new fields should use
 # the system prefix defined below
 SYSTEM_FIELDS = ["commtrack-supply-point"]
-SYSTEM_PREFIX = "__"
+SYSTEM_PREFIX = "commcare"
+
+
+def validate_reserved_words(value):
+    if value in SYSTEM_FIELDS:
+        raise ValidationError(_('You may not use "{}" as a field name')
+                              .format(value))
+    for prefix in [SYSTEM_PREFIX, 'xml']:
+        if value.startswith(prefix):
+            raise ValidationError(_('Field names may not begin with "{}"')
+                                  .format(prefix))
+
 
 
 class CustomDataField(JsonObject):
