@@ -3,7 +3,7 @@ import os
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.app_manager import get_case_data_sources, \
-    get_default_case_property_datatypes
+    get_default_case_property_datatypes, get_form_data_sources
 
 
 class AppManagerDataSourceConfigTest(SimpleTestCase):
@@ -61,3 +61,12 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
                     result.column.datatype,
                     default_case_property_datatypes[result.column.id]
                 )
+
+    def testSimpleFormManagement(self):
+        app = Application.wrap(self.get_json('simple_app.json'))
+        self.assertEqual('userreports_test', app.domain)
+        data_sources = get_form_data_sources(app)
+        self.assertEqual(1, len(data_sources)) # Test for multiple forms?
+        for indicator in data_sources['New Ticket'].configured_indicators:
+            self.assertIsNotNone(indicator)
+

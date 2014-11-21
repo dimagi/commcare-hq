@@ -7,13 +7,13 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
 from corehq import toggles
-from corehq.apps.userreports.app_manager import get_case_data_source
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm, \
-    ConfigurableDataSourceFromAppForm
+    ConfigurableDataSourceFromAppForm, ConfigurableFormDataSourceFromAppForm
 from corehq.util.couch import get_document_or_404
 from dimagi.utils.web import json_response
 
@@ -116,6 +116,22 @@ def create_data_source_from_app(request, domain):
     context['form'] = form
     return render(request, 'userreports/data_source_from_app.html', context)
 
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def create_form_data_source_from_app(request, domain):
+    if request.method == 'POST':
+        form = ConfigurableFormDataSourceFromAppForm(domain, request.POST)
+        if form.is_valid():
+            # save config
+            data_source = get_form_data_source(form.app, form.form)
+            data_source.save()
+            messages.success(request, _("Data source created for '{}'".format(form.form.default_name())))
+            HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
+    else:
+        form = ConfigurableFormDataSourceFromAppForm(domain)
+    context = _shared_context(domain)
+    context['form'] = form
+    return render(request, 'userreports/data_source_from_app.html', context)
+
 
 def _edit_data_source_shared(request, domain, config):
     if request.method == 'POST':
@@ -155,6 +171,7 @@ def rebuild_data_source(request, domain, config_id):
             config.display_name
         )
     )
+
     rebuild_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 

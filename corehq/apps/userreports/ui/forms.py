@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
-from corehq.apps.app_manager.models import Application, get_apps_in_domain
+from corehq.apps.app_manager.models import Application, get_apps_in_domain, Form
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 
 
@@ -121,4 +121,39 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         # set the app property on the form so we don't have to go back to the DB for it
         # there may be a better way to do this.
         self.app = app
+        return cleaned_data
+
+
+class ConfigurableFormDataSourceFromAppForm(forms.Form):
+
+    app_id = forms.ChoiceField()
+    form_id = forms.ChoiceField()
+
+    def __init__(self, domain, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', _('Save Changes')))
+        super(ConfigurableFormDataSourceFromAppForm, self).__init__(*args, **kwargs)
+        apps = get_apps_in_domain(domain, full=True, include_remote=False)
+        self.fields['app_id'] = forms.ChoiceField(
+            label=_('Application'),
+            choices=[(app._id, app.name) for app in apps]
+        )
+        self.fields['form_id'] = forms.ChoiceField(
+            label=_('Module - Form'),
+            choices=[(form.get_unique_id(), form.get_module().default_name() + ' - ' + form.default_name())
+                     for form in set([form for app in apps for form in app.get_forms()])]
+        )
+
+    def clean(self):
+        cleaned_data = super(ConfigurableFormDataSourceFromAppForm, self).clean()
+        app = Application.get(cleaned_data['app_id'])
+        form = Form.get_form(cleaned_data['form_id'])
+        if form.get_app()._id != app._id:
+            raise ValidationError(_('Form name {} not found in application {}').format(
+                form.default_name(),
+                app.name
+            ))
+        self.app = app
+        self.form = form
         return cleaned_data
