@@ -686,12 +686,15 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
             DataTablesColumn(_("Active?"), prop_name="cp_is_active"),
-            DataTablesColumn(_("Uses Messaging?"), prop_name="internal.commconnect_domain"),
             DataTablesColumn(_("CommTrack?"), prop_name="internal.commtrack_domain"),
             DataTablesColumn(_("# Outgoing SMS"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_out_sms"),
             DataTablesColumn(_("# Incoming SMS"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_in_sms"),
+            DataTablesColumn(_("# SMS Ever"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_sms_ever"),
+            DataTablesColumn(_("# SMS in last 30"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_sms_30_d"),
         )
         return headers
 
@@ -712,8 +715,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             10: "cp_n_cases",
             11: "cp_n_forms",
             14: "cp_n_web_users",
-            28: "cp_n_out_sms",
-            29: "cp_n_in_sms",
+            27: "cp_n_out_sms",
+            28: "cp_n_in_sms",
+            29: "cp_n_sms_ever",
+            30: "cp_n_sms_30_d",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -774,6 +779,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     format_bool(dom.get('internal', {}).get('commtrack_domain')),
                     dom.get('cp_n_out_sms', _("Not yet calculated")),
                     dom.get('cp_n_in_sms', _("Not yet calculated")),
+                    dom.get('cp_n_sms_ever', _("Not yet calculated")),
+                    dom.get('cp_n_sms_30_d', _("Not yet calculated")),
                 ]
 
 
