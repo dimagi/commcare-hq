@@ -50,6 +50,7 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
@@ -1256,34 +1257,37 @@ def form_multimedia_export(request, domain, app_id):
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
-        return "%s-%s-%s-%s.%s" % (form.form['@name'],
+        return "%s-%s-%s-%s.%s" % (form['form']['@name'],
                                    unidecode(question_id),
-                                   form.form['meta']['username'],
-                                   form._id, extension)
+                                   form['form']['meta']['username'],
+                                   form['_id'], extension)
 
     key = [domain, app_id, xmlns]
     stream_file = cStringIO.StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
     size = 0
     unknown_number = 0
-    for f in XFormInstance.get_db().view("attachments/attachments",
+    form_ids = {f['id'] for f in  XFormInstance.get_db().view("attachments/attachments",
                                          start_key=key + [startdate],
                                          end_key=key + [enddate, {}],
-                                         reduce=False):
-        form = XFormInstance.get(f['id'])
+                                         reduce=False)}
+    for form in iter_docs(XFormInstance.get_db(), form_ids):
+        f = XFormInstance.wrap(form)
         if not zip_name:
-            zip_name = unidecode(form.form['@name'])
-        for key in f['value']['attachments'].keys():
+            zip_name = unidecode(form['form']['@name'])
+        for key in form['_attachments'].keys():
+            if form['_attachments'][key]['content_type'] == 'text/xml':
+                continue
             extension = unicode(os.path.splitext(key)[1])
             try:
-                question_id = unicode('-'.join(find_question_id(form.form, key)))
+                question_id = unicode('-'.join(find_question_id(form['form'], key)))
             except TypeError:
                 question_id = unicode('unknown' + str(unknown_number))
                 unknown_number += 1
             fname = filename(form, question_id, extension)
-            zi = zipfile.ZipInfo(fname, parse(f['value']['date']).timetuple())
-            zf.writestr(zi, form.fetch_attachment(key, stream=True).read())
-            size += f['value']['attachments'][key]['length'] + 88 + 2 * len(fname)
+            zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
+            zf.writestr(zi, f.fetch_attachment(key, stream=True).read())
+            size += f['_attachments'][key]['length'] + 88 + 2 * len(fname)
 
     zf.close()
 
