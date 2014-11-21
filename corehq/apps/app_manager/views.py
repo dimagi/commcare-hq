@@ -797,6 +797,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': json.dumps(get_sort_elements(module.goal_details.short)),
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
+                    'child_case_types': list(module.get_child_case_types()),
                 },
                 {
                     'label': _('Task List'),
@@ -807,6 +808,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': json.dumps(get_sort_elements(module.task_details.short)),
                     'short': module.task_details.short,
                     'long': module.task_details.long,
+                    'child_case_types': list(module.get_child_case_types()),
                 },
             ],
         }
@@ -822,6 +824,7 @@ def get_module_view_context_and_template(app, module):
                 'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
                 'short': module.case_details.short,
                 'long': module.case_details.long,
+                'child_case_types': list(module.get_child_case_types()),
             }]
 
             if app.commtrack_enabled:
@@ -833,6 +836,7 @@ def get_module_view_context_and_template(app, module):
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
                     'sort_elements': json.dumps(get_sort_elements(module.product_details.short)),
                     'short': module.product_details.short,
+                    'child_case_types': list(module.get_child_case_types()),
                 })
 
             return details
@@ -855,6 +859,7 @@ def get_module_view_context_and_template(app, module):
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
+                    'child_case_types': list(module.get_child_case_types()),
                 },
             ],
         }

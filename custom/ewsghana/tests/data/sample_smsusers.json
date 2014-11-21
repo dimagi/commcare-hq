@@ -1,0 +1,26 @@
+[
+  {
+    "backend": "smsgh",
+    "email": null,
+    "family_name": "",
+    "id": 2342,
+    "is_active": "True",
+    "name": "Test1",
+    "phone_numbers": ["+2222222222"],
+    "role": "Other",
+    "supply_point": 324,
+    "to": ""
+  },
+  {
+    "backend": "smsgh",
+    "email": null,
+    "family_name": "",
+    "id": 338,
+    "is_active": "False",
+    "name": "Test2",
+    "phone_numbers": ["+22223333"],
+    "role": "Nurse",
+    "supply_point": 43,
+    "to": ""
+  }
+]

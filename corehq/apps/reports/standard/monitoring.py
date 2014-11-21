@@ -272,7 +272,7 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         else:
             end = json_format_datetime(modified_before)
 
-        return get_db().view('case/by_date_modified',
+        return get_db().view('case/by_date_modified_owner',
             startkey=key + [start],
             endkey=key + [end],
             group=True,

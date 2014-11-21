@@ -5,8 +5,8 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.api import SMSUser
-from custom.ilsgateway.commtrack import sync_ilsgateway_smsuser, smsusers_sync
-from custom.ilsgateway.models import LogisticsMigrationCheckpoint
+from custom.logistics.commtrack import sync_ilsgateway_smsuser, smsusers_sync
+from custom.logistics.models import MigrationCheckpoint
 
 TEST_DOMAIN = 'ilsgateway-commtrack-smsusers-test'
 
@@ -39,7 +39,7 @@ class SMSUsersSyncTest(TestCase):
 
     def test_smsusers_migration(self):
         from custom.ilsgateway.tests import MockEndpoint
-        checkpoint = LogisticsMigrationCheckpoint(
+        checkpoint = MigrationCheckpoint(
             domain=TEST_DOMAIN,
             start_date=datetime.now(),
             date=datetime.now(),

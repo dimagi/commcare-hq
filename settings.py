@@ -322,6 +322,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.logistics',
     'custom.ilsgateway',
     'custom.ewsghana',
     'custom.m4change',
@@ -1283,12 +1284,14 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
+    'ilsgateway-test-2': 'custom.ilsgateway',
     'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh'
+    'tdhtesting': 'custom.tdh',
+    'rec': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

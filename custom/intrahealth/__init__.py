@@ -69,7 +69,7 @@ def get_rupture_products(form):
 
 def _get_location(form):
     loc = None
-    if 'location_id' in form.form:
+    if form.form.get('location_id'):
         loc_id = form.form['location_id']
         try:
             loc = Location.get(loc_id)

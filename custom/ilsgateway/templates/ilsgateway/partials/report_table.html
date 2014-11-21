@@ -2,34 +2,16 @@
 {% load report_tags %}
 {% load i18n %}
 
-
-{% if thisreport.show_chart %}
-    {% if charts %}
-        <div class="{{ thisreport.css_class }}">
-            <h4 class="media-heading">{{ report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-            {% for chart in charts %}
-                {% if chart.data.0.values %}
-                    {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-                    <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
-                        <svg style='height: {{ chart.height }}px'> </svg>
-                    </div>
-                {% else %}
-                    <span>{% trans "No facilities are due to submit data in this month" %}</span>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endif %}
-
-
-{% if thisreport.show_table %}
 <div class="{{ thisreport.css_class }} module">
-    <h4 class="media-heading">{{ report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+    <h4 class="media-heading">{{ report_table.title }}<br/></h4>
+      {% if report_table.subtitle %}
+        <span style="color: slategray">{{ report_table.subtitle }}</span>
+      {% endif %}
     {% if report_table.rows %}
         <ul class="stats">
             <li>
                 <div class="report">{{ report_table.rows.total }}</div>
-                <div class="caption">{% trans 'Facilities' %}</div>
+                <div class="caption"><a href="{{ report_facilities_url }}">{% trans 'Facilities' %}</a></div>
             </li>
             <li>
                 <div class="report">Group {{ report_table.rows.submitting_group }}: {% trans 'Submitting' %}</div>
@@ -58,5 +40,12 @@
         <span>{% trans "No facilities are due to submit data in this month" %}</span>
     {% endif %}
 </div>
-{% endif %}
 
+
+{% block js-inline %}
+    {% for chart in thisreport.charts %}
+        {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
+            {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
+        {% endwith %}
+    {% endfor %}
+{% endblock %}

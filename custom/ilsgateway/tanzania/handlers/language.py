@@ -9,7 +9,7 @@ class LanguageHandler(KeywordHandler):
         self.respond(LANGUAGE_HELP)
 
     def handle(self):
-        if self.user:
+        if not self.user:
             self.respond(LANGUAGE_CONTACT_REQUIRED)
         language = self.args[0].lower()
         for code, name in settings.LANGUAGES:

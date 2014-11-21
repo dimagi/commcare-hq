@@ -12,16 +12,15 @@ from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from couchforms.models import XFormInstance
-from custom.ilsgateway.api import Location
-from custom.ilsgateway.commtrack import bootstrap_domain as ils_bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
-    sync_ilsgateway_product
+from custom.ilsgateway.api import Location, ILSGatewayEndpoint
+from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, commtrack_settings_sync, \
+    sync_ilsgateway_location, sync_ilsgateway_product
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.tanzania.api import TanzaniaEndpoint
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
 from dimagi.utils.dates import force_to_datetime
 
 
-
+LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -29,16 +28,38 @@ def migration_task():
     configs = ILSGatewayConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            ils_bootstrap_domain(config)
+            commtrack_settings_sync(config.domain, LOCATION_TYPES)
+            ils_bootstrap_domain(config, ILSGatewayEndpoint.from_config(config))
 
 
 @task
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
-    return ils_bootstrap_domain(ils_config)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
+    return ils_bootstrap_domain(ils_config, ILSGatewayEndpoint.from_config(ils_config))
 
 # District Moshi-Rural
-ILS_FACILITIES = [906, 907, 908, 909]
+ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
+                  652, 765, 1010, 657, 1173, 1037, 965, 749, 1171, 980,
+                  1180, 1033, 975, 1056, 970, 742, 985, 2194, 935, 1128,
+                  1172, 773, 916, 1194, 4862, 1003, 994, 1034, 1113, 1167,
+                  949, 987, 986, 960, 1046, 942, 972, 21, 952, 930,
+                  1170, 1067, 006, 752, 747, 1176, 746, 755, 1102, 924,
+                  744, 1109, 760, 922, 945, 988, 927, 1045, 1060, 938,
+                  1041, 1101, 1107, 939, 910, 934, 929, 1111, 1174, 1044,
+                  1008, 914, 1040, 1035, 1126, 1203, 912, 990, 908, 654,
+                  1051, 1110, 983, 771, 1068, 756, 4807, 973, 1013, 911,
+                  1048, 1196, 917, 1127, 963, 1032, 1164, 951, 918, 999,
+                  923, 1049, 1000, 1165, 915, 1036, 1121, 758, 1054, 1042,
+                  4861, 1007, 1053, 954, 761, 1002, 748, 919, 976, 1177,
+                  1179, 1001, 743, 762, 741, 959, 1119, 772, 941, 956, 964,
+                  1014, 953, 754, 1202, 1166, 977, 757, 961, 759, 997, 947, 1112, 978, 1124,
+                  768, 937, 1195, 913, 906, 1043, 1178, 992, 1038, 957, 1106, 767, 979, 1012,
+                  926, 1120, 933, 1066, 1105, 943, 1047, 1063, 1004, 958, 751, 763, 1011, 936,
+                  1114, 932, 984, 656, 653, 946, 1058, 931, 770, 1108, 909, 1118, 1062, 745, 1065,
+                  955, 1052, 753, 944, 1061, 1069, 1104, 996, 4860, 950, 993, 1064, 1175, 1059, 1050,
+                  968, 928, 989, 967, 966, 750, 981, 1055, 766, 1123, 1039, 1103, 655, 1125, 774, 991,
+                  1117, 920, 769, 1005, 1009, 925, 1115, 907]
 
 
 def get_locations(domain, endpoint, facilities):
@@ -178,8 +199,8 @@ def get_delivery_group_reports(domain, endpoint, facilities):
 def ils_stock_data_task(domain):
     ilsgateway_config = ILSGatewayConfig.for_domain(domain)
     domain = ilsgateway_config.domain
-    endpoint = TanzaniaEndpoint.from_config(ilsgateway_config)
-    commtrack_settings_sync(domain)
+    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
     get_locations(domain, endpoint, ILS_FACILITIES)
@@ -188,6 +209,7 @@ def ils_stock_data_task(domain):
     get_supply_point_statuses(domain, endpoint, ILS_FACILITIES)
     get_delivery_group_reports(domain, endpoint, ILS_FACILITIES)
 
+
 # Temporary for staging
 @task
 def ils_clear_stock_data_task():
@@ -195,6 +217,7 @@ def ils_clear_stock_data_task():
     StockReport.objects.filter(domain='ilsgateway-test-1').delete()
     products = Product.ids_by_domain('ilsgateway-test-1')
     StockState.objects.filter(product_id__in=products).delete()
+
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task
