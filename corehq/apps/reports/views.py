@@ -1267,7 +1267,7 @@ def form_multimedia_export(request, domain, app_id):
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
     size = 22  # overhead for a zipfile
     unknown_number = 0
-    form_ids = {f['id'] for f in  XFormInstance.get_db().view("attachments/attachments",
+    form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
                                          start_key=key + [startdate],
                                          end_key=key + [enddate, {}],
                                          reduce=False)}
