@@ -41,7 +41,7 @@ def _build_property_match_filter(spec, context):
     )
     wrapped = PropertyMatchFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
-        getter=wrapped.getter,
+        expression=wrapped.getter,
         operator=EQUAL,
         reference_value=wrapped.property_value,
     )
@@ -50,7 +50,7 @@ def _build_property_match_filter(spec, context):
 def _build_boolean_expression_filter(spec, context):
     wrapped = BooleanExpressionFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
-        getter=ExpressionFactory.from_spec(wrapped.expression),
+        expression=ExpressionFactory.from_spec(wrapped.expression),
         operator=get_operator(wrapped.operator),
         reference_value=wrapped.property_value,
     )
@@ -140,7 +140,7 @@ def _build_choice_list_indicator(spec, context):
             display_name=_construct_display(choice),
             column_id=_construct_column(choice),
             filter=SinglePropertyValueFilter(
-                getter=wrapped_spec.getter,
+                expression=wrapped_spec.getter,
                 operator=wrapped_spec.get_operator(),
                 reference_value=choice,
             )
