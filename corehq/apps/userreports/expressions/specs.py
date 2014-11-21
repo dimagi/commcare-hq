@@ -3,8 +3,8 @@ from corehq.apps.userreports.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.specs import TypeProperty
 
 
-class PropertyNameMatchGetterSpec(JsonObject):
-    type = TypeProperty('property_name_match')
+class PropertyNameGetterSpec(JsonObject):
+    type = TypeProperty('property_name')
     property_name = StringProperty(required=True)
 
     @property
@@ -12,8 +12,8 @@ class PropertyNameMatchGetterSpec(JsonObject):
         return DictGetter(self.property_name)
 
 
-class PropertyPathMatchGetterSpec(JsonObject):
-    type = TypeProperty('property_path_match')
+class PropertyPathGetterSpec(JsonObject):
+    type = TypeProperty('property_path')
     property_path = ListProperty(unicode, required=True)
 
     @property

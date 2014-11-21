@@ -85,9 +85,9 @@ class ExpressionFromSpecTest(SimpleTestCase):
                 'type': 'not_a_valid_type',
             })
 
-    def test_property_name_match(self):
+    def test_property_name_expression(self):
         getter = ExpressionFactory.from_spec({
-            'type': 'property_name_match',
+            'type': 'property_name',
             'property_name': 'foo',
         })
         self.assertEqual(DictGetter, type(getter))
@@ -96,19 +96,19 @@ class ExpressionFromSpecTest(SimpleTestCase):
     def test_property_name_no_name(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
-                'type': 'property_name_match',
+                'type': 'property_name',
             })
 
     def test_property_name_empty_name(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
-                'type': 'property_name_match',
+                'type': 'property_name',
                 'property_name': None,
             })
 
-    def test_property_path_match(self):
+    def test_property_path_expression(self):
         getter = ExpressionFactory.from_spec({
-            'type': 'property_path_match',
+            'type': 'property_path',
             'property_path': ['path', 'to', 'foo'],
         })
         self.assertEqual(NestedDictGetter, type(getter))
@@ -117,13 +117,13 @@ class ExpressionFromSpecTest(SimpleTestCase):
     def test_property_path_no_path(self):
         with self.assertRaises(BadSpecError):
             ExpressionFactory.from_spec({
-                'type': 'property_path_match',
+                'type': 'property_path',
             })
 
     def test_property_path_empty_path(self):
         for empty_path in ([], None):
             with self.assertRaises(BadSpecError):
                 ExpressionFactory.from_spec({
-                    'type': 'property_path_match',
+                    'type': 'property_path',
                     'property_path': empty_path,
                 })

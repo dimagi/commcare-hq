@@ -2,13 +2,13 @@ import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.expressions.specs import PropertyNameMatchGetterSpec, PropertyPathMatchGetterSpec
+from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec
 
 
 class ExpressionFactory(object):
     spec_map = {
-        'property_name_match': PropertyNameMatchGetterSpec,
-        'property_path_match': PropertyPathMatchGetterSpec,
+        'property_name': PropertyNameGetterSpec,
+        'property_path': PropertyPathGetterSpec,
     }
 
     @classmethod
