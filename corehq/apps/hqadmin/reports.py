@@ -427,6 +427,8 @@ ES_PREFIX = "es_"
 DOMAIN_FACETS = [
     "cp_is_active",
     "cp_has_app",
+    "cp_sms_ever",
+    "cp_sms_30_d",
     "uses reminders",
     "project_type",
     "area",
@@ -505,6 +507,8 @@ FACET_MAPPING = [
         {"facet": "internal.commtrack_domain", "name": "CommTrack", "expanded": False},
         {"facet": "internal.commconnect_domain", "name": "Uses Messaging", "expanded": False},
         {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False},
+        {"facet": "cp_sms_ever", "name": "Used Messaging Ever", "expanded": False},
+        {"facet": "cp_sms_30_d", "name": "Used Messaging Last 30 days", "expanded": False},
     ]),
     ("Plans", False, [
         {"facet": "project_type", "name": "Project Type", "expanded": False},
