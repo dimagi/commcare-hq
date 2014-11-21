@@ -12,15 +12,18 @@ SYSTEM_FIELDS = ["commtrack-supply-point"]
 SYSTEM_PREFIX = "commcare"
 
 
-def validate_reserved_words(value):
+def _validate_reserved_words(value):
     if value in SYSTEM_FIELDS:
-        raise ValidationError(_('You may not use "{}" as a field name')
-                              .format(value))
+        return _('You may not use "{}" as a field name').format(value)
     for prefix in [SYSTEM_PREFIX, 'xml']:
         if value.startswith(prefix):
-            raise ValidationError(_('Field names may not begin with "{}"')
-                                  .format(prefix))
+            return _('Field names may not begin with "{}"').format(prefix)
 
+
+def validate_reserved_words(value):
+    error = _validate_reserved_words(value)
+    if error is not None:
+        raise ValidationError(error)
 
 
 class CustomDataField(JsonObject):
@@ -109,7 +112,7 @@ class CustomDataFieldsDefinition(Document):
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
-
+                errors.append(_validate_reserved_words(value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields
