@@ -5,6 +5,47 @@ import datetime
 
 
 class CouchAttachmentsBuilder(object):
+    """
+    Helper for saving attachments on doc save rather than as a separate step.
+    Example usage:
+
+    Instead of the normal 1 + N request save where N is the # of attachments:
+
+        foo = Foo()
+        foo.save()
+        foo.put_attachment(
+            name=filename,
+            content=content,
+            content_type=mime_type
+        )
+
+    You can use the following to do a single-request save:
+
+        foo = Foo()
+
+        attachment_builder = CouchAttachmentsBuilder(foo._attachments)
+        attachment_builder.add(
+            name=filename,
+            content=content,
+            content_type=mime_type
+        )
+        foo._attachments = attachment_builder.to_json()
+
+        foo.save(encode_attachments=False)
+
+
+        # or bulk save
+        Foo.get_db().bulk_save([foo, ...])
+
+    NB: If you save without encode_attachments=False
+    (here or later on down the line)
+    then your attachment content will end up base64 encoded!
+    That's a real thing that's happened in the past,
+    so be careful who you're passing this object on to!
+    (Think signals, etc. where you have no control over who uses it next
+    and how/whether they call .save() on the object.)
+
+    """
     def __init__(self, original=None):
         self._dict = original or {}
 
