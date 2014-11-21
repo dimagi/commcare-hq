@@ -83,7 +83,7 @@ class EqualityFilterTest(PropertyMatchFilterTest):
     def get_filter(self):
         return FilterFactory.from_spec({
             'type': 'boolean_expression',
-            'getter': {
+            'expression': {
                 'type': 'property_name_match',
                 'property_name': 'foo',
             },
@@ -94,7 +94,7 @@ class EqualityFilterTest(PropertyMatchFilterTest):
     def get_path_filter(self):
         return FilterFactory.from_spec({
             'type': 'boolean_expression',
-            'getter': {
+            'expression': {
                 'type': 'property_path_match',
                 'property_path': ['path', 'to', 'foo'],
             },
@@ -108,7 +108,7 @@ class BooleanExpressionFilterTest(SimpleTestCase):
     def get_filter(self, operator, value):
         return FilterFactory.from_spec({
             'type': 'boolean_expression',
-            'getter': {
+            'expression': {
                 'type': 'property_name_match',
                 'property_name': 'foo',
             },

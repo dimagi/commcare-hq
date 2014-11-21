@@ -5,7 +5,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.getters.specs import PropertyNameMatchGetterSpec, PropertyPathMatchGetterSpec
 
 
-class GetterFactory(object):
+class ExpressionFactory(object):
     spec_map = {
         'property_name_match': PropertyNameMatchGetterSpec,
         'property_path_match': PropertyPathMatchGetterSpec,

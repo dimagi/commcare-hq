@@ -102,7 +102,7 @@ class BooleanExpressionFilterSpec(BaseFilterSpec):
     type = TypeProperty('boolean_expression')
     operator = StringProperty(choices=OPERATORS.keys())
     property_value = DefaultProperty(required=True)
-    getter = DictProperty(required=True)
+    expression = DictProperty(required=True)
 
 
 class PropertyMatchFilterSpec(BaseFilterSpec):

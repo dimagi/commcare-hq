@@ -2,7 +2,7 @@ import json
 import warnings
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.getters.factory import GetterFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
     IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec, BooleanExpressionFilterSpec
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -50,7 +50,7 @@ def _build_property_match_filter(spec, context):
 def _build_boolean_expression_filter(spec, context):
     wrapped = BooleanExpressionFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
-        getter=GetterFactory.from_spec(wrapped.getter),
+        getter=ExpressionFactory.from_spec(wrapped.expression),
         operator=get_operator(wrapped.operator),
         reference_value=wrapped.property_value,
     )
