@@ -21,35 +21,6 @@ def restore(request, domain):
     return get_restore_response(domain, couch_user, **get_restore_params(request))
 
 
-@require_superuser
-def prime_ota_restore_cache(request, domain):
-    # TODO SK:
-    # * check if cache already exists and give option to override
-    # * support list of user_ids
-    # * store task IDs for tracking
-    # * view to check cache for user
-    # * view to check task status
-
-    params = get_restore_params(request)
-
-    user_ids = CommCareUser.ids_by_domain(domain)
-    cache_timeout = 24 * 60 * 60
-
-    def make_args(user_id):
-        return (
-            user_id,
-            params['since'],
-            params['version'],
-            params['state'],
-            params['items'],
-            cache_timeout
-        )
-
-    prime_restore.starmap(make_args(user_id) for user_id in user_ids).apply_async()
-
-    return HttpResponse()
-
-
 def get_restore_params(request):
     """
     Given a request, get the relevant restore parameters out with sensible defaults
@@ -64,7 +35,8 @@ def get_restore_params(request):
 
 
 def get_restore_response(domain, couch_user, since=None, version='1.0',
-                         state=None, items=False, force_cache=False, cache_timeout=None):
+                         state=None, items=False, force_cache=False,
+                         cache_timeout=None, overwrite_cache=False):
     # not a view just a view util
     if not couch_user.is_commcare_user():
         return HttpResponse("No linked chw found for %s" % couch_user.username,
@@ -82,6 +54,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
         stock_settings=stock_settings,
         domain=project,
         force_cache=force_cache,
-        cache_timeout=cache_timeout
+        cache_timeout=cache_timeout,
+        overwrite_cache=overwrite_cache
     )
     return restore_config.get_response()

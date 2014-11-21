@@ -65,9 +65,12 @@ class RestoreConfig(object):
                             Only applies if `restore_id` is empty.
     :param cache_timeout:   Override the default cache timeout of 1 hour.
                             Only applies if `restore_id` is empty.
+    :param overwrite_cache: Ignore any previously cached value and re-generate the restore response.
+                            Only applies if `restore_id` is empty.
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, stock_settings=None, domain=None, force_cache=False, cache_timeout=None):
+                 items=False, stock_settings=None, domain=None, force_cache=False,
+                 cache_timeout=None, overwrite_cache=False):
         self.user = user
         self.restore_id = restore_id
         self.version = version
@@ -77,6 +80,7 @@ class RestoreConfig(object):
         self.domain = domain
         self.force_cache = force_cache
         self.cache_timeout = cache_timeout or INITIAL_SYNC_CACHE_TIMEOUT
+        self.overwrite_cache = overwrite_cache
 
         self.cache = get_redis_default_cache()
 
@@ -256,7 +260,7 @@ class RestoreConfig(object):
     def get_cached_payload(self):
         if self.sync_log:
             return self.sync_log.get_cached_payload(self.version)
-        else:
+        elif not self.overwrite_cache:
             return self.cache.get(self._initial_cache_key())
 
     def set_cached_payload_if_necessary(self, resp, duration):
