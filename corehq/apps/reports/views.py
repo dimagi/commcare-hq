@@ -1248,11 +1248,11 @@ def find_question_id(form, value):
 @require_GET
 def form_multimedia_export(request, domain, app_id):
     try:
-        xmlns = request.GET.__getitem__("xmlns")
-        startdate = request.GET.__getitem__("startdate")
-        enddate = request.GET.__getitem__("enddate")
+        xmlns = request.GET["xmlns"]
+        startdate = request.GET["startdate"]
+        enddate = request.GET["enddate"]
         zip_name = request.GET.get("name", None)
-    except ValueError:
+    except KeyError:
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
