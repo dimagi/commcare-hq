@@ -143,6 +143,8 @@ class ExcelExportReport(FormExportReportBase):
             form['current_app'] = form.get('app')
             if is_multimedia_previewer and form['xmlns'] in size_hash:
                 form['size'] = sizeof_fmt(size_hash[form['xmlns']])
+            else:
+                form['size'] = None
             forms.append(form)
 
         if unknown_forms:
