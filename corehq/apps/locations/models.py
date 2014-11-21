@@ -128,7 +128,11 @@ class Location(CachedCouchDocumentMixin, Document):
         ]
 
         sql_location, _ = SQLLocation.objects.get_or_create(
-            location_id=self._id
+            location_id=self._id,
+            defaults={
+                'domain': self.domain,
+                'site_code': self.site_code
+            }
         )
 
         for prop in properties_to_sync:

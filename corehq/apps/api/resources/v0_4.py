@@ -6,7 +6,8 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
+    _safe_bool
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -15,7 +16,7 @@ from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form, get_app
+from corehq.apps.app_manager.models import get_apps_in_domain, Application, RemoteApp, Form, get_app
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
@@ -291,8 +292,8 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
-
     modules = fields.ListField()
+
     def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
@@ -327,16 +328,17 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
         elif app.doc_type == RemoteApp._doc_type:
             return []
 
+    def dehydrate(self, bundle):
+        if not _safe_bool(bundle, "extras"):
+            return super(ApplicationResource, self).dehydrate(bundle)
+        else:
+            app_data = {}
+            app_data.update(bundle.obj._doc)
+            app_data.update(bundle.data)
+            return app_data
+
     def obj_get_list(self, bundle, domain, **kwargs):
-        # There should be few enough apps per domain that doing an explicit refresh for each is OK.
-        # This is the easiest way to filter remote apps
-        # Later we could serialize them to their URL or whatevs but it is not that useful yet
-        application_bases = ApplicationBase.by_domain(domain)
-
-        # This wraps in the appropriate class so that is_remote_app() returns the correct answer
-        applications = [get_app(domain, application_base.id) for application_base in application_bases]
-
-        return [app for app in applications if not app.is_remote_app()]
+        return get_apps_in_domain(domain, include_remote=False)
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])

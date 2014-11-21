@@ -1455,12 +1455,6 @@ class TriggerInvoiceForm(forms.Form):
             )
         )
 
-    def clean_domain(self):
-        domain = self.cleaned_data['domain']
-        if not toggles.ACCOUNTING_PREVIEW.enabled(domain):
-            raise ValidationError("Not an Accounting Preview domain.")
-        return domain
-
     def trigger_invoice(self):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
@@ -1683,7 +1677,7 @@ class AdjustBalanceForm(forms.Form):
             raise ValidationError("Received invalid adjustment type: %s"
                                   % adjustment_type)
 
-    def adjust_balance(self):
+    def adjust_balance(self, web_user=None):
         CreditLine.add_credit(
             -self.amount,
             account=self.invoice.subscription.account,
@@ -1691,6 +1685,7 @@ class AdjustBalanceForm(forms.Form):
             note=self.cleaned_data['note'],
             invoice=self.invoice,
             reason=self.cleaned_data['method'],
+            web_user=web_user,
         )
         self.invoice.update_balance()
         self.invoice.save()

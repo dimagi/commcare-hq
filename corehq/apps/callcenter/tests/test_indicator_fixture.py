@@ -18,6 +18,10 @@ class MockIndicatorSet(object):
     def get_data(self):
         return self.indicators
 
+    @property
+    def reference_date(self):
+        return datetime.strptime("2014-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
+
 
 class CallcenterFixtureTests(SimpleTestCase):
     def test_callcenter_fixture_format(self):
@@ -29,7 +33,7 @@ class CallcenterFixtureTests(SimpleTestCase):
 
         fixture = gen_fixture(user, indicator_set)
         check_xml_line_by_line(self, """
-        <fixture id="indicators:test" user_id="{userid}">
+        <fixture date="2014-01-01T00:00:00" id="indicators:test" user_id="{userid}">
             <indicators>
                 <case id="user_case1">
                     <i1>1</i1>
