@@ -2,7 +2,7 @@ from celery.task import task
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, Product
 from custom.ewsghana.api import GhanaEndpoint
-from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension
+from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, \
     sync_ilsgateway_product, bootstrap_domain, commtrack_settings_sync
@@ -10,6 +10,7 @@ from custom.ilsgateway.tasks import get_locations, get_product_stock, get_stock_
 
 
 EXTENSIONS = {
+    'product': ews_product_extension,
     'location_facility': ews_location_extension,
     'location_district': ews_location_extension,
     'location_region': ews_location_extension,

@@ -1,3 +1,6 @@
+from corehq.apps.programs.models import Program
+
+
 def ews_smsuser_extension(sms_user, user):
     sms_user.user_data['to'] = user.to
     if user.family_name != '':
@@ -19,3 +22,18 @@ def ews_location_extension(location, loc):
     location.metadata['supervised_by'] = loc.supervised_by
     location.save()
     return location
+
+def ews_product_extension(couch_product, product):
+    print product
+    program = Program.get_by_code(couch_product.domain, product.program.code)
+    print program
+    if program is None:
+        program = Program(domain=couch_product.domain)
+        program.name = product.program.name
+        program.code = product.program.code.lower()
+        program._doc_type_attr = "Program"
+        program.save()
+    couch_product.program_id = program._id
+    couch_product.save()
+
+    return couch_product

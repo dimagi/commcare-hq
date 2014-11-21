@@ -359,6 +359,7 @@ def commtrack_settings_sync(project, locations_types):
 
 
 def bootstrap_domain(config, endpoint, extensions=None, **kwargs):
+    print config
     domain = config.domain
     start_date = datetime.today()
     endpoint = endpoint.from_config(config)
