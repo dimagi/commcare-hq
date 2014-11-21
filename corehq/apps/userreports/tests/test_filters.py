@@ -148,6 +148,34 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertFalse(filter.filter({'foo': 'ab cd'}))
         self.assertFalse(filter.filter({'foo': 'd e f'}))
 
+    def test_less_than(self):
+        filter = self.get_filter('lt', 3)
+        for match in (-10, 0, 2):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (3, 11, '2'):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
+    def test_less_than_equal(self):
+        filter = self.get_filter('lte', 3)
+        for match in (-10, 0, 2, 3):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (4, 11, '2'):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
+    def test_greater_than(self):
+        filter = self.get_filter('gt', 3)
+        for match in (4, 11, '2'):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (-10, 0, 2, 3):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
+    def test_greater_than_equal(self):
+        filter = self.get_filter('gte', 3)
+        for match in (3, 11, '2'):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (-10, 0, 2):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
 
 class ConfigurableANDFilterTest(SimpleTestCase):
 
