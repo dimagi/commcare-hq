@@ -1,4 +1,4 @@
-from jsonobject import JsonObject, StringProperty, ListProperty
+from jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.specs import TypeProperty
 
@@ -19,3 +19,10 @@ class PropertyPathGetterSpec(JsonObject):
     @property
     def expression(self):
         return NestedDictGetter(self.property_path)
+
+
+class ConditionalExpressionSpec(JsonObject):
+    type = TypeProperty('conditional')
+    test = DictProperty(required=True)
+    expression_if_true = DictProperty(required=True)
+    expression_if_false = DictProperty(required=True)

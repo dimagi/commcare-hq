@@ -55,3 +55,57 @@ class ExpressionFromSpecTest(SimpleTestCase):
                     'property_path': empty_path,
                 })
 
+
+class ConditionalExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        # doc.true_value if doc.test == 'match' else doc.false_value
+        spec = {
+            'type': 'conditional',
+            'test': {
+                # any valid filter can go here
+                'type': 'boolean_expression',
+                'expression': {
+                    'type': 'property_name',
+                    'property_name': 'test',
+                },
+                'operator': 'eq',
+                'property_value': 'match',
+            },
+            'expression_if_true': {
+                'type': 'property_name',
+                'property_name': 'true_value',
+            },
+            'expression_if_false': {
+                'type': 'property_name',
+                'property_name': 'false_value',
+            },
+        }
+        self.expression = ExpressionFactory.from_spec(spec)
+
+    def testConditionIsTrue(self):
+        self.assertEqual('correct', self.expression({
+            'test': 'match',
+            'true_value': 'correct',
+            'false_value': 'incorrect',
+        }))
+
+    def testConditionIsFalse(self):
+        self.assertEqual('incorrect', self.expression({
+            'test': 'non-match',
+            'true_value': 'correct',
+            'false_value': 'incorrect',
+        }))
+
+    def testConditionIsMissing(self):
+        self.assertEqual('incorrect', self.expression({
+            'true_value': 'correct',
+            'false_value': 'incorrect',
+        }))
+
+    def testResultIsMissing(self):
+        self.assertEqual(None, self.expression({
+            'test': 'match',
+            'false_value': 'incorrect',
+        }))
+
