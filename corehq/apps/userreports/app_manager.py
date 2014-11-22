@@ -102,14 +102,25 @@ def get_form_data_source(app, form):
         ret.update(_get_indicator_data_type(data_type,options))
         return ret
 
+    def _downcase_and_remove_spaces(string):
+        import unidecode
+        string = unidecode.unidecode(string)
+        return '_'.join(string.lower().split(' '))
+
     langs = xform.get_languages()
     questions = xform.get_questions(langs) # questions map to columns (indicators)
 
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='Form',
-        table_id=form_name,
+        table_id=_downcase_and_remove_spaces(form_name),
         display_name=form_name,
+        configured_filter={
+            "type": "property_match",
+            "property_name": "xmlns",
+            "property_path": [],
+            "property_value": xform.data_node.tag_xmlns
+        },
         configured_indicators=[
             _make_indicator(q) for q in questions
         ]
