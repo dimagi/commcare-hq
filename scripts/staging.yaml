@@ -55,7 +55,6 @@ branches:
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
-#  - bulk-app-translate+logos  # Ethan 11/18 (removed by Nick P)
   - bulk-app-translate # Noah 9/18
   - case-detail-tabs+share-fixtures # Noah 11/15
   - case-detail-tabs # Noah 11/6
@@ -66,11 +65,13 @@ branches:
   - custom-data-choices  # Ethan 11/09
   - vellum-staging # J$ 11/13
   - custom_location_data+locations-for-everyone # tw 11/18
+  - custom_location_data+system-custom-data  # Ethan 11/24
   - custom_location_data  # Ethan & tw 11/17
   - locations-for-everyone # tw 11/18
   - ucr-auto-form # ts 11/21
   - custom-case-list-pane # Noah 11/24
   - menu-multimedia # Biyeun 11/24
+  - system-custom-data  # Ethan 11/24
 submodules:
   submodules/couchlog-src:
     branches:
