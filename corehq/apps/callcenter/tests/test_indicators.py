@@ -16,11 +16,6 @@ from django.core import cache
 locmem_cache = cache.get_cache('django.core.cache.backends.locmem.LocMemCache')
 
 
-class FakeSyncOp(object):
-    def __init__(self, cases):
-        self.actual_owned_cases = cases
-
-
 def create_domain_and_user(domain_name, username):
     domain = create_domain(domain_name)
     user = CommCareUser.create(domain_name, username, '***')
