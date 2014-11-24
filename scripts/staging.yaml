@@ -71,6 +71,7 @@ branches:
   - custom_location_data  # Ethan & tw 11/17
   - locations-for-everyone # tw 11/18
   - ucr-auto-form # ts 11/21
+  - custom-case-list-pane # Noah 11/24
 submodules:
   submodules/couchlog-src:
     branches:
