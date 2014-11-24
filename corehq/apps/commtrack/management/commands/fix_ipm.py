@@ -46,7 +46,7 @@ class Command(BaseCommand):
 
                     print 'Updating XFormInstance:', doc['_id']
                     to_save.append(instance)
-        except:
+        except Exception:
             print 'Failed to save XFormInstance:', doc['_id']
 
         if len(to_save) > 500:
