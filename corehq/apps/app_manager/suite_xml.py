@@ -834,16 +834,13 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                         if detail_column_infos:
 
-                            variables = list(self.detail_variables(module, detail, detail_column_infos))
-
+                            # TODO: Pull this out
                             def build_detail(tabs, id, title, start, end):
                                 """
                                 Recursively builds the Detail object.
                                 (Details can contain other details for each of their tabs)
                                 """
                                 d = Detail(id=id, title=title)
-                                if variables:
-                                    d.variables.extend(variables)
                                 if tabs:
                                     tab_spans = detail.get_tab_spans()
                                     for tab in tabs:
@@ -863,6 +860,9 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                                 else:
                                     # Base case (has no tabs)
+                                    variables = list(self.detail_variables(module, detail, detail_column_infos[start:end]))
+                                    if variables:
+                                        d.variables.extend(variables)
                                     for column_info in detail_column_infos[start:end]:
                                         fields = get_column_generator(
                                             self.app, module, detail,
