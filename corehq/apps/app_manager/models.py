@@ -21,7 +21,7 @@ from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError, DocTypeError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -93,9 +93,6 @@ DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
-
-DEFAULT_MODULE_NAME = ugettext_noop("Untitled Module")
-DEFAULT_FORM_NAME = ugettext_noop("Untitled Form")
 
 def _rename_key(dct, old, new):
     if old in dct:
@@ -1386,7 +1383,7 @@ class Module(ModuleBase):
             )]
         )
         module = Module(
-            name={(lang or 'en'): name or DEFAULT_MODULE_NAME},
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -1399,7 +1396,7 @@ class Module(ModuleBase):
 
     def new_form(self, name, lang, attachment=''):
         form = Form(
-            name={lang if lang else "en": name if name else DEFAULT_FORM_NAME},
+            name={lang if lang else "en": name if name else _("Untitled Form")},
         )
         self.forms.append(form)
         form = self.get_form(-1)
@@ -1715,7 +1712,7 @@ class AdvancedModule(ModuleBase):
         )
 
         module = AdvancedModule(
-            name={(lang or 'en'): name or DEFAULT_MODULE_NAME},
+            name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -1741,7 +1738,7 @@ class AdvancedModule(ModuleBase):
 
     def new_form(self, name, lang, attachment=''):
         form = AdvancedForm(
-            name={lang if lang else "en": name if name else DEFAULT_FORM_NAME},
+            name={lang if lang else "en": name if name else _("Untitled Form")},
         )
         self.forms.append(form)
         form = self.get_form(-1)
