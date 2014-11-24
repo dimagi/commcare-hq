@@ -38,6 +38,20 @@
     </span>
 </script>
 
+<script type="text/html" id="CommcareSettings.widgets.image_uploader">
+    <a data-toggle="modal" data-bind="
+        attr: {href: href},
+        click: triggerUpload
+    ">Upload</a>
+    {% for uploader in uploaders %}
+        <div data-bind="if: is_uploader('{{ uploader.slug }}')">
+            {% include 'hqmedia/partials/multimedia_uploader.html' %}
+        </div>
+    {% endfor %}
+</script>
+
+{% include 'hqmedia/partials/multimedia_js.html' %}
+
 <script type="text/html" id="CommcareSettings.widgets.text">
     <span data-bind="visible: $root.edit">
         <input type="text" class="span6" data-bind="
