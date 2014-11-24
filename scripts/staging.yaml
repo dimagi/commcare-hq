@@ -55,8 +55,7 @@ branches:
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
   - double-management # SK 10/15
-  - bulk-app-translate+edit-build-messages  # Ethan 11/17 (trivial)
-#  - bulk-app-translate+logos  # Ethan 11/18 (removed by Nick P) 
+#  - bulk-app-translate+logos  # Ethan 11/18 (removed by Nick P)
   - bulk-app-translate # Noah 9/18
   - case-detail-tabs+share-fixtures # Noah 11/15
   - case-detail-tabs # Noah 11/6
@@ -66,7 +65,6 @@ branches:
   - hq-dropdown # sravan 5/7
   - custom-data-choices  # Ethan 11/09
   - vellum-staging # J$ 11/13
-  - edit-build-messages  # Ethan 11/17
   - custom_location_data+locations-for-everyone # tw 11/18
   - custom_location_data  # Ethan & tw 11/17
   - locations-for-everyone # tw 11/18
