@@ -59,12 +59,10 @@ def get_form_data_sources(app):
 
     for module in app.modules:
         for form in module.forms:
-            xform = XForm(form.source)
-            langs = xform.get_languages()
-            form_name = form.default_name()
-            forms = {form_name: get_form_data_source(app, form)}
+            forms = {form.xmlns: get_form_data_source(app, form)}
 
     return forms
+
 
 DATATYPE_MAP = {
     "Select": "single",
@@ -75,8 +73,9 @@ DATATYPE_MAP = {
 def get_form_data_source(app, form):
     xform = XForm(form.source)
     form_name = form.default_name()
+
     def _get_indicator_data_type(data_type, options):
-        if data_type is "date":
+        if data_type == "date":
             return {"datatype": "date"}
         if data_type in ("Select", "MSelect"):
             return {
@@ -96,7 +95,7 @@ def get_form_data_source(app, form):
         ret = {
             "type": "raw",
             "column_id": value,
-            'property_name': value,
+            'property_path': ['form', value],
             "display_name": value,
         }
         ret.update(_get_indicator_data_type(data_type,options))
