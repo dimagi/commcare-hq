@@ -23,7 +23,7 @@ OPERATORS = {
 }
 
 
-def get_operator(slug=''):
+def get_operator(slug):
     try:
         return OPERATORS[slug.lower()]
     except KeyError:
