@@ -108,7 +108,7 @@ def create_data_source_from_app(request, domain):
             # save config
             data_source = get_case_data_source(form.app, form.cleaned_data['case_type'])
             data_source.save()
-            messages.success(request, _("Data source created for '{}'".format(form.cleaned_data['case_type'])))
+            messages.success(request, _(u"Data source created for '{}'".format(form.cleaned_data['case_type'])))
             HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
     else:
         form = ConfigurableDataSourceFromAppForm(domain)
@@ -157,7 +157,7 @@ def delete_data_source(request, domain, config_id):
     adapter.drop_table()
     config.delete()
     messages.success(request,
-                     _('Data source "{}" has been deleted.'.format(config.display_name)))
+                     _(u'Data source "{}" has been deleted.'.format(config.display_name)))
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
