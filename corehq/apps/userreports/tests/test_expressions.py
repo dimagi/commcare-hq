@@ -4,6 +4,24 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.getters import NestedDictGetter, DictGetter
 
 
+class ConstantExpressionTest(SimpleTestCase):
+
+    def test_property_name_expression(self):
+        for constant in (7.2, 'hello world', ['a', 'list'], {'a': 'dict'}):
+            getter = ExpressionFactory.from_spec({
+                'type': 'constant',
+                'constant': constant,
+            })
+            self.assertEqual(constant, getter({}))
+            self.assertEqual(constant, getter({'some': 'random stuff'}))
+
+    def test_invalid_constant(self):
+        with self.assertRaises(BadSpecError):
+            ExpressionFactory.from_spec({
+                'type': 'constant',
+            })
+
+
 class ExpressionFromSpecTest(SimpleTestCase):
 
     def test_invalid_type(self):
