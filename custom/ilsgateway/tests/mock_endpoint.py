@@ -1,6 +1,6 @@
 import json
 import os
-from custom.ilsgateway.api import ILSGatewayEndpoint, Location
+from custom.ilsgateway.api import ILSGatewayEndpoint
 
 
 class MockEndpoint(ILSGatewayEndpoint):

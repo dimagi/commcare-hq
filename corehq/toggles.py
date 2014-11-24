@@ -209,3 +209,8 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     'Sync the full location hierarchy when syncing location fixtures',
     [NAMESPACE_DOMAIN]
 )
+
+MULTIMEDIA_EXPORT = StaticToggle(
+    'multimedia_export',
+    'Export multimedia from forms'
+)

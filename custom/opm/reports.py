@@ -9,6 +9,7 @@ that until we actually have another use case for it.
 from collections import defaultdict, OrderedDict
 import datetime
 import logging
+import pickle
 import simplejson
 import re
 from dateutil import parser
@@ -40,7 +41,7 @@ from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
-
+from dimagi.utils.couch import get_redis_client
 from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
@@ -790,10 +791,26 @@ class MetReport(CaseReportMixin, BaseReport):
     name = ugettext_noop("Conditions Met Report")
     report_template_path = "opm/met_report.html"
     slug = "met_report"
-    fix_left_col = True
     model = ConditionsMet
     exportable = False
     default_rows = 5
+    ajax_pagination = True
+    cache_key = 'opm-report'
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s" % (self.blocks, self.gp, self.awcs)
+        redis_key += "&year=%s&month=%s&is_open=%s" % (
+            self.request_params.get('year'),
+            self.request_params.get('month'),
+            self.request_params.get('is_open'),
+        )
+        return redis_key
+
+    @property
+    def total_records(self):
+        return len(super(MetReport, self).rows)
 
     @property
     def headers(self):
@@ -817,23 +834,55 @@ class MetReport(CaseReportMixin, BaseReport):
         self.is_rendered_as_email = True
         self.use_datatables = False
         self.override_template = "opm/met_print_report.html"
+        self.update_report_context()
+        self.pagination.count = 1000000
 
-        return HttpResponse(self._async_context()['report'])
+        rows = None
+        cache = get_redis_client()
+        if cache.exists(self.slug):
+            rows = pickle.loads(cache.get(self.redis_key))
+        else:
+            rows = self.rows
 
-    @property
-    def fixed_cols_spec(self):
-        return dict(num=9, width=900)
+        """
+        Strip user_id and owner_id columns
+        """
+        for idx, row in enumerate(rows):
+            row = row[0:16]
+            row.extend(row[18:20])
+            rows[idx] = row
+        self.context['report_table'].update(
+            rows=rows
+        )
+        rendered_report = render_to_string(self.template_report, self.context,
+                                           context_instance=RequestContext(self.request))
+        return HttpResponse(rendered_report)
+
+    def _store_rows_in_redis(self, rows):
+        r = get_redis_client()
+        r.set(self.redis_key, pickle.dumps(rows))
+        r.expire(self.slug, 60 * 60)
 
     @property
     def rows(self):
+        sort_cols = int(self.request.GET.get('iSortingCols', 0))
+        col_id = None
+        sort_dir = None
+        if sort_cols > 0:
+            for x in range(sort_cols):
+                col_key = 'iSortCol_%d' % x
+                sort_dir = self.request.GET['sSortDir_%d' % x]
+                col_id = int(self.request.GET[col_key])
+        rows = super(MetReport, self).rows
+        if sort_dir == 'asc':
+            rows.sort(key=lambda x: x[col_id])
+        elif sort_dir == 'desc':
+            rows.sort(key=lambda x: x[col_id], reverse=True)
+        self._store_rows_in_redis(rows)
+
         if not self.is_rendered_as_email:
-            return super(MetReport, self).rows
+            return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
         else:
-            rows = super(MetReport, self).rows
-            for idx, row in enumerate(rows):
-                row = row[0:16]
-                row.extend(row[18:20])
-                rows[idx] = row
             return rows
 
 class UsersIdsData(SqlData):
@@ -976,6 +1025,7 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
         def request(self):
             request = HttpRequest()
             request.GET = QueryDict(None)
+            request.REQUEST = QueryDict(None)
             return request
 
         @property
