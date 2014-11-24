@@ -1,4 +1,3 @@
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
@@ -109,6 +108,7 @@ def lookup_by_property(domain, prop_name, val, scope, root=None):
 
 def get_location_data_model(domain):
     from .views import LocationFieldsView
+    from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
     return CustomDataFieldsDefinition.get_or_create(
         domain,
         LocationFieldsView.field_type,
