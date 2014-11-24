@@ -1,6 +1,7 @@
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports.models import DataSourceConfiguration
+import unidecode
 
 
 def get_case_data_sources(app):
@@ -36,7 +37,7 @@ def get_case_data_source(app, case_type):
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
-        table_id=case_type,
+        table_id=_clean_table_name(app.domain, case_type),
         display_name=case_type,
         configured_filter={
             'type': 'property_match',
@@ -101,18 +102,12 @@ def get_form_data_source(app, form):
         ret.update(_get_indicator_data_type(data_type,options))
         return ret
 
-    def _downcase_and_remove_spaces(string):
-        import unidecode
-        string = unidecode.unidecode(string)
-        return '_'.join(string.lower().split(' '))
-
-    langs = xform.get_languages()
-    questions = xform.get_questions(langs) # questions map to columns (indicators)
+    questions = xform.get_questions([])
 
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='XFormInstance',
-        table_id=_downcase_and_remove_spaces(form_name),
+        table_id=_clean_table_name(app.domain, form_name),
         display_name=form_name,
         configured_filter={
             "type": "property_match",
@@ -124,3 +119,13 @@ def get_form_data_source(app, form):
             _make_indicator(q) for q in questions
         ]
     )
+
+
+def _clean_table_name(domain, readable_name):
+    """
+    Slugifies and truncates readable name to make a valid configurable report table name.
+    """
+    name_slug = '_'.join(unidecode.unidecode(readable_name).lower().split(' '))
+    # 63 = max postgres table name, 24 = table name prefix + hash overhead
+    max_length = 63 - len(domain) - 24
+    return name_slug[:max_length]
