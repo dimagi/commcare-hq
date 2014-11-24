@@ -298,10 +298,14 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
     def form_path(self):
         return self.request.POST.get('path', '')
 
-    def validate_file(self):
+    @property
+    def file_ext(self):
         def file_ext(filename):
             _, extension = os.path.splitext(filename)
             return extension
+        return file_ext(self.uploaded_file.name)
+
+    def validate_file(self):
         def possible_extensions(filename):
             possible_type = guess_type(filename)[0]
             if not possible_type:
@@ -313,9 +317,11 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
         base_type = self.mime_type.split('/')[0]
         if base_type not in self.valid_base_types():
             raise BadMediaFileException("Not a valid %s file." % self.media_class.get_nice_name().lower())
-        ext = file_ext(self.uploaded_file.name)
-        if ext.lower() not in possible_extensions(self.form_path):
-            raise BadMediaFileException("File %s has an incorrect file type (%s)." % (self.uploaded_file.name, ext))
+        if self.file_ext.lower() not in possible_extensions(self.form_path):
+            raise BadMediaFileException(
+                "File %s has an incorrect file type (%s)."
+                % (self.uploaded_file.name, self.file_ext)
+            )
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
@@ -347,6 +353,29 @@ class ProcessImageFileUploadView(BaseProcessFileUploadView):
     @classmethod
     def valid_base_types(cls):
         return ['image']
+
+
+class ProcessIconFileUploadView(ProcessImageFileUploadView):
+    name = "hqmedia_uploader_logo"
+
+    @property
+    def form_path(self):
+        return ("jr://file/commcare/image/%s%s"
+                % (self.filename, self.file_ext))
+
+    @property
+    def filename(self):
+        return self.kwargs.get('logo_name')
+
+    def process_upload(self):
+        if self.app.icon_refs is None:
+            self.app.icon_refs = {}
+        ref = super(
+            ProcessIconFileUploadView, self
+        ).process_upload()
+        self.app.icon_refs[self.filename] = ref['ref']
+        self.app.save()
+        return ref
 
 
 class ProcessAudioFileUploadView(BaseProcessFileUploadView):
