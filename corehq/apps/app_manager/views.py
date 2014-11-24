@@ -118,6 +118,8 @@ from corehq.apps.app_manager.models import (
     get_app,
     load_case_reserved_words,
     str_to_cls,
+    DEFAULT_MODULE_NAME,
+    DEFAULT_FORM_NAME,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
@@ -1053,8 +1055,8 @@ def new_app(req, domain):
     cls = str_to_cls[type]
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
-        app.add_module(Module.new_module("Untitled Module", lang))
-        app.new_form(0, "Untitled Form", lang)
+        app.add_module(Module.new_module(DEFAULT_MODULE_NAME, lang))
+        app.new_form(0, DEFAULT_FORM_NAME, lang)
     else:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
     if req.project.secure_submissions:
@@ -1076,8 +1078,8 @@ def default_new_app(req, domain):
         domain, _("Untitled Application"), lang=lang,
         application_version=APP_V2
     )
-    app.add_module(Module.new_module(_("Untitled Module"), lang))
-    app.new_form(0, "Untitled Form", lang)
+    app.add_module(Module.new_module(DEFAULT_MODULE_NAME, lang))
+    app.new_form(0, DEFAULT_FORM_NAME, lang)
     if req.project.secure_submissions:
         app.secure_submissions = True
     _clear_app_cache(req, domain)
@@ -1096,7 +1098,7 @@ def new_module(req, domain, app_id):
     if module_type == 'case':
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+        app.new_form(module_id, DEFAULT_FORM_NAME, lang)
         app.save()
         response = back_to_main(req, domain, app_id=app_id, module_id=module_id)
         response.set_cookie('suppress_build_errors', 'yes')
@@ -1134,7 +1136,7 @@ def _new_careplan_module(req, domain, app, name, lang):
 def _new_advanced_module(req, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
     module_id = module.id
-    app.new_form(module_id, _("Untitled Form"), lang)
+    app.new_form(module_id, DEFAULT_FORM_NAME, lang)
 
     app.save()
     response = back_to_main(req, domain, app_id=app.id, module_id=module_id)

@@ -31,6 +31,7 @@ import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles, Domain
 from casexml.apps.case.cleanup import rebuild_case, close_case
+from corehq.apps.app_manager.models import DEFAULT_FORM_NAME
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
@@ -1086,7 +1087,7 @@ def form_data(request, domain, instance_id):
     try:
         form_name = context['instance'].form["@name"]
     except KeyError:
-        form_name = "Untitled Form"
+        form_name = DEFAULT_FORM_NAME
 
     context.update({
         "slug": inspect.SubmitHistory.slug,
