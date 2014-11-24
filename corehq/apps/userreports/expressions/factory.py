@@ -33,6 +33,7 @@ class ExpressionFactory(object):
         'property_path': _property_path_expression,
         'conditional': _conditional_expression,
     }
+
     @classmethod
     def from_spec(cls, spec):
         try:

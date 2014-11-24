@@ -123,13 +123,6 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertFalse(filter.filter({'foo': 'non-match'}))
         self.assertFalse(filter.filter({'foo': None}))
 
-    def test_equal(self):
-        match = 'match'
-        filter = self.get_filter('not_eq', match)
-        self.assertFalse(filter.filter({'foo': match}))
-        self.assertTrue(filter.filter({'foo': 'non-match'}))
-        self.assertTrue(filter.filter({'foo': None}))
-
     def test_in(self):
         values = ['a', 'b', 'c']
         filter = self.get_filter('in', values)

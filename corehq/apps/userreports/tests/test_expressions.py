@@ -126,4 +126,3 @@ class ConditionalExpressionTest(SimpleTestCase):
             'test': 'match',
             'false_value': 'incorrect',
         }))
-

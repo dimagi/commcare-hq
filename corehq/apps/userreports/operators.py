@@ -22,6 +22,7 @@ OPERATORS = {
     'gte': GREATER_THAN_EQUAL,
 }
 
+
 def get_operator(slug=''):
     try:
         return OPERATORS[slug.lower()]

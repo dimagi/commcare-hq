@@ -1,6 +1,5 @@
 
 
-
 class ConditionalExpression(object):
 
     def __init__(self, test_function, expression_if_true, expression_if_false):
