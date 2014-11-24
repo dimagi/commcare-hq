@@ -2,6 +2,7 @@ import re
 from custom.ewsghana.handlers.registration import RegistrationHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
 from custom.ewsghana.handlers.undo import UndoHandler
+from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
@@ -11,8 +12,8 @@ def handle(verified_contact, text, msg=None):
     user = verified_contact.owner if verified_contact else None
     domain = user.domain
 
-    # if domain and not ILSGatewayConfig.for_domain(domain):
-    #     return False
+    if domain and not EWSGhanaConfig.for_domain(domain):
+        return False
 
     args = text.split()
     if not args:

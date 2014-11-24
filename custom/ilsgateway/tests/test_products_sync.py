@@ -5,8 +5,8 @@ from django.test import TestCase
 from corehq.apps.commtrack.models import Product as Prod
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from custom.ilsgateway.api import Product
-from custom.ilsgateway.commtrack import sync_ilsgateway_product, products_sync
-from custom.ilsgateway.models import LogisticsMigrationCheckpoint
+from custom.logistics.commtrack import sync_ilsgateway_product, products_sync
+from custom.logistics.models import MigrationCheckpoint
 
 TEST_DOMAIN = 'ilsgateway-commtrack-product-test'
 
@@ -31,7 +31,7 @@ class ProductSyncTest(TestCase):
 
     def test_locations_migration(self):
         from custom.ilsgateway.tests import MockEndpoint
-        checkpoint = LogisticsMigrationCheckpoint(
+        checkpoint = MigrationCheckpoint(
             domain=TEST_DOMAIN,
             start_date=datetime.now(),
             date=datetime.now(),

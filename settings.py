@@ -322,6 +322,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.logistics',
     'custom.ilsgateway',
     'custom.ewsghana',
     'custom.m4change',

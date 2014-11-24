@@ -1,0 +1,34 @@
+[
+  {
+    "date_joined": "2013-08-22T15:26:46.933471",
+    "email": "test1@yahoo.co.uk",
+    "first_name": "Test1",
+    "is_active": true,
+    "is_staff": false,
+    "is_superuser": false,
+    "last_login": "2013-08-22T15:29:46.076977",
+    "last_name": "Test1",
+    "location": 319,
+    "organization": "TestOrg1",
+    "password": "sha1$4b8dd$8acea54703614eea2fbb4bf7fd6ee9465a67ff53",
+    "sms_notifications": true,
+    "supply_point": null,
+    "username": "test1"
+  },
+  {
+    "date_joined": "2013-01-09T11:07:06.941715",
+    "email": "test1@yahoo.com",
+    "first_name": "Test2",
+    "is_active": true,
+    "is_staff": false,
+    "is_superuser": false,
+    "last_login": "2013-01-09T11:10:46.676279",
+    "last_name": "Test2",
+    "location": 366,
+    "organization": "TestOrg2",
+    "password": "sha1$a2d46$57f1712b2fbe5e129206b45fa3fa5c14d9f879be",
+    "sms_notifications": false,
+    "supply_point": 370,
+    "username": "test2"
+  }
+]

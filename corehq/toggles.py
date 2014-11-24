@@ -203,3 +203,14 @@ NEW_CASE_PROCESSING = PredicatablyRandomToggle(
     namespace=NAMESPACE_DOMAIN,
     randomness=0.05,
 )
+
+SYNC_ALL_LOCATIONS = StaticToggle(
+    'sync_all_locations',
+    'Sync the full location hierarchy when syncing location fixtures',
+    [NAMESPACE_DOMAIN]
+)
+
+MULTIMEDIA_EXPORT = StaticToggle(
+    'multimedia_export',
+    'Export multimedia from forms'
+)

@@ -231,7 +231,6 @@ def get_groups(request, domain, user_id):
 
 @cloudcare_api
 def get_cases(request, domain):
-
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
     else:
