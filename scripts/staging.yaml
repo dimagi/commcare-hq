@@ -47,7 +47,8 @@ branches:
 #  - bulk-app-translate+double-management # SK 11/10
   - double-management+custom-case-list-pane+case-detail-tabs # Noah 11/24
   - double-management+custom-case-list-pane # Noah 11/24
-  - double-management+case-detail-tabs # Noah 11/6
+  # Uncomment the following branch if double-management+custom-case-list-pane+case-detail-tabs is removed
+  # - double-management+case-detail-tabs # Noah 11/6
   - historical-forms  # DR 11/4
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
