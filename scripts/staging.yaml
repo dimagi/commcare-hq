@@ -65,6 +65,7 @@ branches:
   - custom-data-choices  # Ethan 11/09
   - vellum-staging # J$ 11/13
   - custom_location_data+locations-for-everyone # tw 11/18
+  - custom_location_data+system-custom-data+locations-for-everyone  # Ethan 11/24 (yo dawg i herd u like conflict resolution branches...)
   - custom_location_data+system-custom-data  # Ethan 11/24
   - custom_location_data  # Ethan & tw 11/17
   - locations-for-everyone # tw 11/18
