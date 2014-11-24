@@ -173,7 +173,7 @@
                         {% endif %}
                     </div>
                 </div>
-                {% include "app_manager/partials/nav_menu_media.html" with item=module %}
+                {% include "app_manager/partials/nav_menu_media.html" %}
                 {% endblock %}
             </fieldset>
         </form>
@@ -436,3 +436,7 @@
 </div>
 </div>
 {% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endblock modals %}
