@@ -459,6 +459,8 @@ def parse_users(group_memoizer, users, user_data_fields):
         ), key=alphanumeric_sort_key)
 
     def _parse_custom_data(user):
+        # TODO convert to
+        # user_data_model.get_model_and_uncategorized(user.user_data)
         if not user.user_data:
             return {}, {}
         model_data = {}

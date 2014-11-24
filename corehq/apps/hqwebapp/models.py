@@ -415,6 +415,7 @@ class CommTrackSetupTab(UITab):
             LocationImportView,
             LocationImportStatusView,
             LocationSettingsView,
+            LocationFieldsView,
         )
 
 
@@ -458,6 +459,10 @@ class CommTrackSetupTab(UITab):
                     {
                         'title': LocationImportStatusView.page_title,
                         'urlname': LocationImportStatusView.urlname,
+                    },
+                    {
+                        'title': LocationFieldsView.page_name(),
+                        'urlname': LocationFieldsView.urlname,
                     },
                 ]
             },
