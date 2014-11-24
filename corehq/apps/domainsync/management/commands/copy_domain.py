@@ -197,7 +197,7 @@ class Command(BaseCommand):
 
         if result and 'doc' in result:
             domain_doc = Domain.wrap(result['doc'])
-            dt = DocumentTransform(domain_doc, sourcedb)
+            dt = DocumentTransform(domain_doc._obj, sourcedb)
             save(dt, self.targetdb)
         else:
             print "Domain doc not found for domain %s." % domain

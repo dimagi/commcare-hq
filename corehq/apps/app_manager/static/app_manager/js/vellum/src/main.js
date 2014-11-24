@@ -8,7 +8,7 @@ require.config({
             "jquery", 
             "jquery-ui", 
             "jquery.bootstrap", 
-            "css/css!../lib/jquery-ui/redmond/jquery-ui-1.8.14.custom"
+            "css/css!../bower_components/jquery-ui/themes/redmond/jquery-ui"
         ], 
         "local-deps": [
             "underscore", 
@@ -18,7 +18,7 @@ require.config({
             "jquery.bootstrap-better-typeahead", 
             "save-button", 
             "css/css!../lib/codemirror/codemirror", 
-            "css/css!../lib/jstree/default/style", 
+            "css/css!../bower_components/jstree/dist/themes/default/style", 
             "css/css!../lib/fancybox/jquery.fancybox-1.3.4", 
             "css/css!yui-combo"
         ], 

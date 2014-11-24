@@ -61,7 +61,7 @@ def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
         include_docs=True,
         reduce=False
     )
-    cases = CommCareCase.view('case/by_date_modified',
+    cases = CommCareCase.view('case/by_date_modified_owner',
         startkey=[domain, {}, {}],
         endkey=[domain, {}, {}, {}],
         include_docs=True,

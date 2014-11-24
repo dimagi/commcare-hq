@@ -6,7 +6,7 @@ from django.template.context import Context
 from django.template.loader import render_to_string
 import pytz
 import warnings
-from corehq.apps.commtrack.models import Program
+from corehq.apps.programs.models import Program
 from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.users import get_user_toggle

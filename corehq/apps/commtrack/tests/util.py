@@ -12,7 +12,7 @@ from corehq.apps.commtrack.util import get_default_requisition_config
 from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.sms.backend import test
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload

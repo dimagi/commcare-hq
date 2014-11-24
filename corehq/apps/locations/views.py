@@ -9,7 +9,8 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
-from corehq.apps.commtrack.models import LocationType, Product, SupplyPointCase
+from corehq.apps.commtrack.models import LocationType, SupplyPointCase
+from corehq.apps.products.models import Product
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse

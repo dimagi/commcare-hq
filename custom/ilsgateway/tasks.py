@@ -1,22 +1,26 @@
 from datetime import datetime
 from decimal import Decimal
 import logging
+
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
+
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState, SupplyPointCase, Product, SQLProduct
+from corehq.apps.commtrack.models import StockState, SupplyPointCase
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from couchforms.models import XFormInstance
-from custom.ilsgateway.api import ILSGatewayEndpoint, Location
-from custom.ilsgateway.commtrack import bootstrap_domain, sync_ilsgateway_location, commtrack_settings_sync,\
-    sync_ilsgateway_product
-
+from custom.ilsgateway.api import Location, ILSGatewayEndpoint
+from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, commtrack_settings_sync, \
+    sync_ilsgateway_location, sync_ilsgateway_product
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.warehouse_updater import populate_report_data
-
+from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
 from dimagi.utils.dates import force_to_datetime
+
+
+LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -24,43 +28,60 @@ def migration_task():
     configs = ILSGatewayConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            bootstrap_domain(config)
+            commtrack_settings_sync(config.domain, LOCATION_TYPES)
+            ils_bootstrap_domain(config, ILSGatewayEndpoint.from_config(config))
 
 
 @task
-def bootstrap_domain_task(domain):
-    ilsgateway_config = ILSGatewayConfig.for_domain(domain)
-    return bootstrap_domain(ilsgateway_config)
+def ils_bootstrap_domain_task(domain):
+    ils_config = ILSGatewayConfig.for_domain(domain)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
+    return ils_bootstrap_domain(ils_config, ILSGatewayEndpoint.from_config(ils_config))
 
 # District Moshi-Rural
-FACILITIES = [906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,
-              917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927,
-              928, 929, 930, 931, 932, 933, 934, 935, 936, 937, 938,
-              939, 941, 942, 943, 944, 946, 947, 948, 949, 950, 951,
-              952, 953, 954, 955, 4860, 654]
+ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
+                  652, 765, 1010, 657, 1173, 1037, 965, 749, 1171, 980,
+                  1180, 1033, 975, 1056, 970, 742, 985, 2194, 935, 1128,
+                  1172, 773, 916, 1194, 4862, 1003, 994, 1034, 1113, 1167,
+                  949, 987, 986, 960, 1046, 942, 972, 21, 952, 930,
+                  1170, 1067, 006, 752, 747, 1176, 746, 755, 1102, 924,
+                  744, 1109, 760, 922, 945, 988, 927, 1045, 1060, 938,
+                  1041, 1101, 1107, 939, 910, 934, 929, 1111, 1174, 1044,
+                  1008, 914, 1040, 1035, 1126, 1203, 912, 990, 908, 654,
+                  1051, 1110, 983, 771, 1068, 756, 4807, 973, 1013, 911,
+                  1048, 1196, 917, 1127, 963, 1032, 1164, 951, 918, 999,
+                  923, 1049, 1000, 1165, 915, 1036, 1121, 758, 1054, 1042,
+                  4861, 1007, 1053, 954, 761, 1002, 748, 919, 976, 1177,
+                  1179, 1001, 743, 762, 741, 959, 1119, 772, 941, 956, 964,
+                  1014, 953, 754, 1202, 1166, 977, 757, 961, 759, 997, 947, 1112, 978, 1124,
+                  768, 937, 1195, 913, 906, 1043, 1178, 992, 1038, 957, 1106, 767, 979, 1012,
+                  926, 1120, 933, 1066, 1105, 943, 1047, 1063, 1004, 958, 751, 763, 1011, 936,
+                  1114, 932, 984, 656, 653, 946, 1058, 931, 770, 1108, 909, 1118, 1062, 745, 1065,
+                  955, 1052, 753, 944, 1061, 1069, 1104, 996, 4860, 950, 993, 1064, 1175, 1059, 1050,
+                  968, 928, 989, 967, 966, 750, 981, 1055, 766, 1123, 1039, 1103, 655, 1125, 774, 991,
+                  1117, 920, 769, 1005, 1009, 925, 1115, 907]
 
 
-def get_locations(domain, endpoint):
-    for facility in FACILITIES:
+def get_locations(domain, endpoint, facilities):
+    for facility in facilities:
         location = endpoint.get_location(facility, params=dict(with_historical_groups=1))
-        sync_ilsgateway_location(domain, endpoint, Location.from_json(location))
+        sync_ilsgateway_location(domain, endpoint, Location(location))
 
 
-def get_product_stock(domain, endpoint):
-    for facility in FACILITIES:
+def get_product_stock(domain, endpoint, facilities):
+    for facility in facilities:
         has_next = True
         next_url = ""
-
         while has_next:
             meta, product_stocks = endpoint.get_productstocks(next_url_params=next_url,
                                                               filters=dict(supply_point=facility))
             for product_stock in product_stocks:
                 case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(product_stock.supply_point_id)],
+                                            key=[domain, str(product_stock.supply_point)],
                                             reduce=False,
                                             include_docs=True,
                                             limit=1).first()
-                product = Product.get_by_code(domain, product_stock.product_code)
+                product = Product.get_by_code(domain, product_stock.product)
                 try:
                     stock_state = StockState.objects.get(section_id='stock',
                                                          case_id=case._id,
@@ -85,7 +106,7 @@ def get_product_stock(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-def get_stock_transaction(domain, endpoint):
+def get_stock_transaction(domain, endpoint, facilities):
     # Faking xform
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
@@ -93,7 +114,7 @@ def get_stock_transaction(domain, endpoint):
         xform = XFormInstance(_id='ilsgateway-xform')
         xform.save()
 
-    for facility in FACILITIES:
+    for facility in facilities:
         has_next = True
         next_url = ""
 
@@ -103,11 +124,11 @@ def get_stock_transaction(domain, endpoint):
                                                                                    order_by='date')))
             for stocktransaction in stocktransactions:
                 case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(stocktransaction.supply_point_id)],
+                                            key=[domain, str(stocktransaction.supply_point)],
                                             reduce=False,
                                             include_docs=True,
                                             limit=1).first()
-                product = Product.get_by_code(domain, stocktransaction.product_code)
+                product = Product.get_by_code(domain, stocktransaction.product)
                 try:
                     StockTransaction.objects.get(case_id=case._id,
                                                  product_id=product._id,
@@ -131,8 +152,8 @@ def get_stock_transaction(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-def get_supply_point_statuses(domain, endpoint):
-    for facility in FACILITIES:
+def get_supply_point_statuses(domain, endpoint, facilities):
+    for facility in facilities:
         has_next = True
         next_url = ""
 
@@ -153,8 +174,8 @@ def get_supply_point_statuses(domain, endpoint):
                 next_url = meta['next'].split('?')[1]
 
 
-def get_delivery_group_reports(domain, endpoint):
-    for facility in FACILITIES:
+def get_delivery_group_reports(domain, endpoint, facilities):
+    for facility in facilities:
         has_next = True
         next_url = ""
         while has_next:
@@ -175,23 +196,23 @@ def get_delivery_group_reports(domain, endpoint):
 
 
 @task
-def stock_data_task(domain):
+def ils_stock_data_task(domain):
     ilsgateway_config = ILSGatewayConfig.for_domain(domain)
     domain = ilsgateway_config.domain
     endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
-    commtrack_settings_sync(domain)
+    commtrack_settings_sync(domain, LOCATION_TYPES)
     for product in endpoint.get_products():
         sync_ilsgateway_product(domain, product)
-    get_locations(domain, endpoint)
-    get_product_stock(domain, endpoint)
-    get_stock_transaction(domain, endpoint)
-    get_supply_point_statuses(domain, endpoint)
-    get_delivery_group_reports(domain, endpoint)
+    get_locations(domain, endpoint, ILS_FACILITIES)
+    get_product_stock(domain, endpoint, ILS_FACILITIES)
+    get_stock_transaction(domain, endpoint, ILS_FACILITIES)
+    get_supply_point_statuses(domain, endpoint, ILS_FACILITIES)
+    get_delivery_group_reports(domain, endpoint, ILS_FACILITIES)
 
 
 # Temporary for staging
 @task
-def clear_stock_data_task():
+def ils_clear_stock_data_task():
     StockTransaction.objects.filter(report__domain='ilsgateway-test-1').delete()
     StockReport.objects.filter(domain='ilsgateway-test-1').delete()
     products = Product.ids_by_domain('ilsgateway-test-1')
