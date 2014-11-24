@@ -434,7 +434,7 @@ class ApplicationMediaReference(object):
                  media_class=None, is_menu_media=False, app_lang=None):
 
         if not isinstance(path, basestring):
-            raise ValueError("path should be a string")
+            path = ''
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):
@@ -517,29 +517,13 @@ class HQMediaMixin(Document):
         media = []
         self.media_form_errors = False
 
-        def _add_menu_media(item, **kwargs):
-            if item.media_image:
-                media.append(ApplicationMediaReference(item.media_image,
-                                                       media_class=CommCareImage,
-                                                       is_menu_media=True, **kwargs))
-            if item.media_audio:
-                media.append(ApplicationMediaReference(item.media_audio,
-                                                       media_class=CommCareAudio,
-                                                       is_menu_media=True, **kwargs))
-
-
         for m, module in enumerate(self.get_modules()):
-            media_kwargs = {
-                'module_name': module.name,
-                'module_id': m,
-                'app_lang': self.default_language,
-            }
-            _add_menu_media(module, **media_kwargs)
+            media.extend(self.get_menu_media(module, m).values())
             for f_order, f in enumerate(module.get_forms()):
-                media_kwargs['form_name'] = f.name
-                media_kwargs['form_id'] = f.unique_id
-                media_kwargs['form_order'] = f_order
-                _add_menu_media(f, **media_kwargs)
+                media_kwargs = self.get_media_ref_kwargs(
+                    module, m, form=f, form_index=f_order)
+                media.extend(self.get_menu_media(
+                    module, m, form=f, form_index=f_order).values())
                 try:
                     parsed = f.wrapped_xform()
                     if not parsed.exists():
@@ -558,6 +542,33 @@ class HQMediaMixin(Document):
                     self.media_form_errors = True
         return media
 
+    def get_menu_media(self, module, module_index, form=None, form_index=None,
+                       as_json=False):
+        media_kwargs = self.get_media_ref_kwargs(
+            module, module_index, form=form, form_index=form_index,
+            is_menu_media=True)
+        menu_media = {}
+        item = form or module
+        if item.media_image or as_json:
+            image_ref = ApplicationMediaReference(
+                item.media_image,
+                media_class=CommCareImage,
+                **media_kwargs
+            )
+            if as_json:
+                image_ref = image_ref.as_dict()
+            menu_media['image'] = image_ref
+        if item.media_audio or as_json:
+            audio_ref = ApplicationMediaReference(
+                item.media_audio,
+                media_class=CommCareAudio,
+                **media_kwargs
+            )
+            if as_json:
+                audio_ref = audio_ref.as_dict()
+            menu_media['audio'] = audio_ref
+        return menu_media
+
     @property
     @memoized
     def all_media_paths(self):
@@ -566,6 +577,18 @@ class HQMediaMixin(Document):
     @memoized
     def get_all_paths_of_type(self, media_class_name):
         return set([m.path for m in self.all_media if m.media_class.__name__ == media_class_name])
+
+    def get_media_ref_kwargs(self, module, module_index, form=None,
+                             form_index=None, is_menu_media=False):
+        return {
+            'app_lang': self.default_language,
+            'module_name': module.name,
+            'module_id': module_index,
+            'form_name': form.name if form else None,
+            'form_id': form.unique_id if form else None,
+            'form_order': form_index,
+            'is_menu_media': is_menu_media,
+        }
 
     def remove_unused_mappings(self):
         """
