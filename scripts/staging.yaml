@@ -70,6 +70,7 @@ branches:
   - locations-for-everyone # tw 11/18
   - ucr-auto-form # ts 11/21
   - custom-case-list-pane # Noah 11/24
+  - menu-multimedia-uploader # Biyeun 11/24
 submodules:
   submodules/couchlog-src:
     branches:
