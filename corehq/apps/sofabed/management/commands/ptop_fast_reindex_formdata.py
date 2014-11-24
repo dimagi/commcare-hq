@@ -4,9 +4,6 @@ from couchforms.models import XFormInstance
 
 DEVICEREPORT = 'http://code.javarosa.org/devicereport'
 
-CHUNK_SIZE = 500
-POOL_SIZE = 15
-
 
 class Command(PtopReindexer):
     help = "Fast reindex of SQL form data index"

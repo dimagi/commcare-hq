@@ -1,4 +1,4 @@
-DOMAIN_INDEX="hqdomains_79df75dfc271bbb8a64550b10a929f2d"
+DOMAIN_INDEX="hqdomains_da273aa8d2cf04c231535fed72f0f778"
 DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
            'created': None},
  'date_detection': False,
@@ -69,6 +69,8 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
                 'cp_n_inactive_cases': {'type': 'long'},
                 'cp_n_users_submitted_form': {'type': 'long'},
                 'cp_n_web_users': {'type': 'long'},
+                'cp_n_out_sms': {'type': 'long'},
+                'cp_n_in_sms': {'type': 'long'},
                 'cp_last_updated': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                     'type': 'date'},
                 'creating_user': {'type': 'string'},

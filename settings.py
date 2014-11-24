@@ -322,6 +322,7 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.logistics',
     'custom.ilsgateway',
     'custom.ewsghana',
     'custom.m4change',
@@ -433,11 +434,19 @@ BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
-# email settings: these ones are the custom hq ones
+# These are non-standard setting names that are used in localsettings
+# The standard variables are then set to these variables after localsettings
+# Todo: Change to use standard settings variables
+# Todo: Will require changing salt pillar and localsettings template
+# Todo: or more likely in ansible once that's a thing
 EMAIL_LOGIN = "user@domain.com"
 EMAIL_PASSWORD = "changeme"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
+# These are the normal Django settings
+EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
+
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
@@ -1029,8 +1038,8 @@ EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
-EMAIL_USE_TLS = True
-SEND_BROKEN_LINK_EMAILS = True
+# EMAIL_USE_TLS and SEND_BROKEN_LINK_EMAILS are set above
+# so they can be overridden in localsettings (e.g. in a dev environment)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -1283,12 +1292,14 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
+    'ilsgateway-test-2': 'custom.ilsgateway',
     'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh'
+    'tdhtesting': 'custom.tdh',
+    'rec': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

@@ -120,6 +120,12 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
     [NAMESPACE_USER]
 )
 
+GRAPH_CREATION = StaticToggle(
+    'graph-creation',
+    'Case list/detail graph creation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 INVOICE_TRIGGER = StaticToggle(
     'invoice_trigger',
     'Accounting Trigger Invoices',
@@ -196,4 +202,15 @@ NEW_CASE_PROCESSING = PredicatablyRandomToggle(
     'Use new case processing/rebuild logic',
     namespace=NAMESPACE_DOMAIN,
     randomness=0.05,
+)
+
+SYNC_ALL_LOCATIONS = StaticToggle(
+    'sync_all_locations',
+    'Sync the full location hierarchy when syncing location fixtures',
+    [NAMESPACE_DOMAIN]
+)
+
+MULTIMEDIA_EXPORT = StaticToggle(
+    'multimedia_export',
+    'Export multimedia from forms'
 )

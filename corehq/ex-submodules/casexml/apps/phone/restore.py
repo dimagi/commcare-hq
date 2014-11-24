@@ -2,7 +2,7 @@ from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
 from casexml.apps.stock.consumption import compute_consumption_or_default
-from casexml.apps.stock.utils import get_current_ledger_transactions
+from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -91,7 +91,6 @@ class RestoreConfig(object):
         if self.domain and not self.domain.commtrack_enabled:
             return
 
-        cases = [e.case for e in syncop.actual_cases_to_sync]
         from lxml.builder import ElementMaker
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
@@ -115,8 +114,11 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
-        for commtrack_case in cases:
-            current_ledgers = get_current_ledger_transactions(commtrack_case._id)
+        case_ids = [op.case._id for op in syncop.actual_cases_to_sync]
+        all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
+        for op in syncop.actual_cases_to_sync:
+            commtrack_case = op.case
+            current_ledgers = all_current_ledgers[commtrack_case._id]
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
@@ -166,10 +168,6 @@ class RestoreConfig(object):
 
         start_time = datetime.utcnow()
         sync_operation = user.get_case_updates(last_sync)
-        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
-                             for op in sync_operation.actual_cases_to_sync]
-        commtrack_elements = self.get_stock_payload(sync_operation)
-
         last_seq = str(get_db().info()["update_seq"])
 
         # create a sync log for this
@@ -196,9 +194,17 @@ class RestoreConfig(object):
         # fixture block
         for fixture in generator.get_fixtures(user, self.version, sync_operation, last_sync):
             response.append(fixture)
+
         # case blocks
+        case_xml_elements = (
+            xml.get_case_element(op.case, op.required_updates, self.version)
+            for op in sync_operation.actual_cases_to_sync
+        )
         for case_elem in case_xml_elements:
             response.append(case_elem)
+
+        # commtrack balance sections
+        commtrack_elements = self.get_stock_payload(sync_operation)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
