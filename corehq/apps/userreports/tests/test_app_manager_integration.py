@@ -67,6 +67,6 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         self.assertEqual('userreports_test', app.domain)
         data_sources = get_form_data_sources(app)
         self.assertEqual(1, len(data_sources))
-        for indicator in data_sources['New Ticket'].configured_indicators:
+        data_source = data_sources['http://openrosa.org/formdesigner/AF6F83BA-09A9-4773-9177-AB51EA6CF802']
+        for indicator in data_source.configured_indicators:
             self.assertIsNotNone(indicator)
-
