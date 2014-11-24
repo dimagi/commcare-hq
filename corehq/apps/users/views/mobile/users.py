@@ -1,9 +1,7 @@
 from collections import defaultdict
-import copy
 import json
 import csv
 import io
-import uuid
 import re
 
 from couchdbkit import ResourceNotFound
@@ -20,15 +18,14 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import can_add_extra_mobile_workers
-from corehq.apps.custom_data_fields.views import CustomDataEditor
+from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
@@ -43,7 +40,6 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
-from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
