@@ -135,12 +135,12 @@ def create_form_data_source_from_app(request, domain):
 
 def _edit_data_source_shared(request, domain, config):
     if request.method == 'POST':
-        form = ConfigurableDataSourceEditForm(config, request.POST)
+        form = ConfigurableDataSourceEditForm(domain, config, request.POST)
         if form.is_valid():
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
     else:
-        form = ConfigurableDataSourceEditForm(config)
+        form = ConfigurableDataSourceEditForm(domain, config)
     context = _shared_context(domain)
     context.update({
         'form': form,

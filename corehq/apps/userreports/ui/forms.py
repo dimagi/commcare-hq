@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
 from corehq.apps.app_manager.models import Application, get_apps_in_domain, Form
+from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 
 
@@ -76,6 +77,19 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     configured_indicators = JsonField(expected_type=list)
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"))
+
+    def __init__(self, domain, *args, **kwargs):
+        self.domain = domain
+        super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
+
+    def clean_table_id(self):
+        table_id = self.cleaned_data['table_id']
+        table_name = get_table_name(self.domain, table_id)
+        if len(table_name) > 63:  # max table name length for postgres
+            raise ValidationError(
+                _('Table id is too long. Your table id and domain name must add up to fewer than 40 characters')
+            )
+        return table_id
 
     def clean(self):
         cleaned_data = super(ConfigurableDataSourceEditForm, self).clean()
