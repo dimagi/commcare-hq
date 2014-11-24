@@ -124,8 +124,7 @@ def create_form_data_source_from_app(request, domain):
             # save config
             data_source = get_form_data_source(form.app, form.form)
             data_source.save()
-            messages.success(request, _("Data source created for '{}'".format(form.form.default_name())))
-            print data_source._id
+            messages.success(request, _(u"Data source created for '{}'".format(form.form.default_name())))
             HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
     else:
         form = ConfigurableFormDataSourceFromAppForm(domain)
