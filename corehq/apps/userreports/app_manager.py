@@ -111,7 +111,7 @@ def get_form_data_source(app, form):
 
     return DataSourceConfiguration(
         domain=app.domain,
-        referenced_doc_type='Form',
+        referenced_doc_type='XFormInstance',
         table_id=_downcase_and_remove_spaces(form_name),
         display_name=form_name,
         configured_filter={
