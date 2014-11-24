@@ -12,7 +12,7 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'app_manager', name)) as f:
             return json.loads(f.read())
 
-    def testSimpleCaseManagement(self):
+    def test_simple_case_management(self):
         app = Application.wrap(self.get_json('simple_app.json'))
         self.assertEqual('userreports_test', app.domain)
         data_sources = get_case_data_sources(app)
@@ -62,11 +62,11 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
                     default_case_property_datatypes[result.column.id]
                 )
 
-    def testSimpleFormManagement(self):
+    def test_simple_form_management(self):
         app = Application.wrap(self.get_json('simple_app.json'))
         self.assertEqual('userreports_test', app.domain)
         data_sources = get_form_data_sources(app)
-        self.assertEqual(1, len(data_sources)) # Test for multiple forms?
+        self.assertEqual(1, len(data_sources))
         for indicator in data_sources['New Ticket'].configured_indicators:
             self.assertIsNotNone(indicator)
 
