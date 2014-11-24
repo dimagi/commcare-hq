@@ -1183,10 +1183,11 @@ class Detail(IndexedSchema):
 
     def get_tab_spans(self):
         '''
-        TODO: Write doc string
+        Return the starting and ending indices into self.columns deliminating
+        the columns that should be in each tab.
         :return:
         '''
-        tabs = [t for t in self.get_tabs()]
+        tabs = list(self.get_tabs())
         ret = []
         for tab in tabs:
             try:

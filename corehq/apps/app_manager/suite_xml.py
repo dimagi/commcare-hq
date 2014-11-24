@@ -886,7 +886,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 len(detail_column_infos)
                             )
                             if d:
-                                #print d.serialize(pretty=True)
                                 r.append(d)
         return r
 
