@@ -3,13 +3,12 @@ from corehq.apps.locations.models import Location
 from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.util import defined_location_types, parent_child
 import itertools
-from soil import DownloadBase
-from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from decimal import Decimal, InvalidOperation
 from django.utils.translation import ugettext as _
+from corehq.apps.custom_data_fields.views import add_prefix
 
 
 class LocationCache(object):
@@ -184,22 +183,19 @@ def import_location(domain, location_type, location_data, parent_child_map=None)
     if lat and lon:
         form_data['coordinates'] = '%s, %s' % (lat, lon)
 
-    properties = {}
-    consumption = []
-    for k, v in data.iteritems():
-        if k.startswith('default_'):
-            consumption.append((k[8:], v))
-        else:
-            properties[(location_type, k)] = v
+    consumption = data.get('consumption', {}).items()
+
+    metadata = data.get('data', {})
+    metadata.update(data.get('uncategorized_data', {}))
+    form_data.update(add_prefix(metadata))
 
     return submit_form(
         domain,
         parent,
         form_data,
-        properties,
         existing,
         location_type,
-        consumption
+        consumption,
     )
 
 
@@ -229,12 +225,9 @@ def _process_parent_site_code(parent_site_code, domain, location_type, parent_ch
         raise LocationImportError(_('Parent with site code {0} does not exist in this project').format(parent_site_code))
 
 
-def no_changes_needed(domain, existing, properties, form_data, consumption, sp=None):
+def no_changes_needed(domain, existing, form_data, consumption, sp=None):
     if not existing:
         return False
-    for prop, val in properties.iteritems():
-        if getattr(existing, prop[1], None) != val:
-            return False
     for key, val in form_data.iteritems():
         if getattr(existing, key, None) != val:
             return False
@@ -251,17 +244,16 @@ def no_changes_needed(domain, existing, properties, form_data, consumption, sp=N
     return True
 
 
-def submit_form(domain, parent, form_data, properties, existing, location_type, consumption):
+def submit_form(domain, parent, form_data, existing, location_type, consumption):
     # don't save if there is nothing to save
-    if no_changes_needed(domain, existing, properties, form_data, consumption):
+    if no_changes_needed(domain, existing, form_data, consumption):
         return {
             'id': existing._id,
             'message': 'no changes for %s %s' % (location_type, existing.name)
         }
 
-    form_data.update(properties)
-
-    form = make_form(domain, parent, form_data, existing)
+    location = existing or Location(domain=domain, parent=parent)
+    form = LocationForm(location, form_data)
     form.strict = False  # optimization hack to turn off strict validation
     if form.is_valid():
         loc = form.save()
@@ -318,18 +310,3 @@ def submit_form(domain, parent, form_data, properties, existing, location_type, 
             'id': None,
             'message': message
         }
-
-# TODO i think the parent param will not be necessary once the TODO in LocationForm.__init__ is done
-def make_form(domain, parent, data, existing=None):
-    """simulate a POST payload from the location create/edit page"""
-    location = existing or Location(domain=domain, parent=parent)
-
-    def make_payload(k, v):
-        if hasattr(k, '__iter__'):
-            prefix, propname = k
-            prefix = 'props_%s' % prefix
-        else:
-            prefix, propname = 'main', k
-        return ('%s-%s' % (prefix, propname), v)
-    payload = dict(make_payload(k, v) for k, v in data.iteritems())
-    return LocationForm(location, payload)

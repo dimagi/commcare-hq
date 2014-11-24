@@ -106,6 +106,9 @@ $(function() {
             <a class="btn btn-info" href="{% url "location_import" domain %}">
                 <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
             </a>
+            <a class="btn" href="{% url "location_fields_view" domain %}">
+                {% trans "Edit Location Fields" %}
+            </a>
         </div>
     </div>
 </div>
