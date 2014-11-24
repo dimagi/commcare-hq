@@ -366,8 +366,6 @@ def default(req, domain):
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
     """
-    if toggles.DASHBOARD_PREVIEW.enabled(req.couch_user.username):
-        return HttpResponseRedirect(reverse('dashboard_default', args=[domain]))
     return view_app(req, domain)
 
 
@@ -2665,6 +2663,18 @@ def upload_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+@require_deploy_apps
+def update_build_comment(request, domain, app_id):
+    build_id = request.POST.get('build_id')
+    try:
+        build = SavedAppBuild.get(build_id)
+    except ResourceNotFound:
+        raise Http404()
+    build.build_comment = request.POST.get('comment')
+    build.save()
+    return json_response({'status': 'success'})
 
 
 common_module_validations = [

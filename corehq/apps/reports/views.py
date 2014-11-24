@@ -402,7 +402,13 @@ def export_all_form_metadata_async(req, domain):
     datespan = req.datespan if req.GET.get("startdate") and req.GET.get("enddate") else None
     group_id = req.GET.get("group")
     ufilter =  UserTypeFilter.get_user_filter(req)[0]
-    users = list(util.get_all_users_by_domain(domain=domain, group=group_id, user_filter=ufilter, simplified=True))
+    users = util.get_all_users_by_domain(
+        domain=domain,
+        group=group_id,
+        user_filter=ufilter,
+        simplified=True,
+        include_inactive=True
+    )
     user_ids = filter(None, [u["user_id"] for u in users])
     format = req.GET.get("format", Format.XLS_2007)
     filename = "%s_forms" % domain
