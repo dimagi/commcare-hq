@@ -8,7 +8,7 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from decimal import Decimal, InvalidOperation
 from django.utils.translation import ugettext as _
-from corehq.apps.custom_data_fields.views import add_prefix
+from corehq.apps.custom_data_fields.edit_entity import add_prefix
 
 
 class LocationCache(object):

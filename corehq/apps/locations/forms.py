@@ -5,7 +5,7 @@ from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 
-from corehq.apps.custom_data_fields.views import CustomDataEditor
+from corehq.apps.custom_data_fields import CustomDataEditor
 
 from .models import Location
 from .signals import location_created, location_edited
