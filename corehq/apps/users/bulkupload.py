@@ -15,7 +15,7 @@ from soil import DownloadBase
 
 from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
 from corehq.apps.commtrack.models import CommTrackUser
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 

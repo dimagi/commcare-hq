@@ -20,6 +20,10 @@ def _validate_reserved_words(value):
             return _('Field names may not begin with "{}"').format(prefix)
 
 
+def is_system_key(value):
+    return bool(_validate_reserved_words(value))
+
+
 def validate_reserved_words(value):
     error = _validate_reserved_words(value)
     if error is not None:
@@ -30,7 +34,6 @@ class CustomDataField(JsonObject):
     slug = StringProperty()
     is_required = BooleanProperty()
     label = StringProperty()
-    is_system = BooleanProperty()
     choices = StringListProperty()
 
 
@@ -41,23 +44,14 @@ class CustomDataFieldsDefinition(Document):
     field_type = StringProperty()
     base_doc = "CustomDataFieldsDefinition"
     domain = StringProperty()
-    _fields = SchemaListProperty(CustomDataField)
+    fields = SchemaListProperty(CustomDataField)
 
-    def get_fields(self, required_only=False, include_system=False):
+    def get_fields(self, required_only=False):
         def _is_match(field):
             if required_only and not field.is_required:
                 return False
-            if not include_system and field.is_system:
-                return False
             return True
-        return filter(_is_match, self._fields)
-
-    def has_fields(self):
-        return bool(self.get_fields())
-
-    def set_fields(self, fields):
-        system_fields = [f for f in self._fields if f.is_system]
-        self._fields = fields + system_fields
+        return filter(_is_match, self.fields)
 
     @classmethod
     def get_or_create(cls, domain, field_type):

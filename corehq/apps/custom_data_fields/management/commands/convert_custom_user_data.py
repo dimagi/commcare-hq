@@ -19,6 +19,7 @@ class Command(BaseCommand):
                 domain,
                 'UserFields'
             )
+            had_fields = bool(fields_definition.fields)
 
             user_ids = (CommCareUser.ids_by_domain(domain) +
                         CommCareUser.ids_by_domain(domain, is_active=False))
@@ -27,16 +28,19 @@ class Command(BaseCommand):
             for user in iter_docs(CommCareUser.get_db(), user_ids):
                 user_data = user.get('user_data', {})
                 for key in user_data.keys():
-                    if key and key not in existing_field_slugs:
+                    if (key and key not in existing_field_slugs
+                        and not cdm.is_system_key(key)):
                         existing_field_slugs.add(key)
                         fields_definition.fields.append(cdm.CustomDataField(
                             slug=key,
                             label=key,
                             is_required=False,
-                            is_system=key in cdm.SYSTEM_FIELDS,
                         ))
 
+            for field in fields_definition.fields:
+                if cdm.is_system_key(field.slug):
+                    fields_definition.fields.remove(field)
             # Only save a definition for domains which use custom user data
-            if fields_definition.fields:
+            if fields_definition.fields or had_fields:
                 fields_definition.save()
             print 'finished domain "{}"'.format(domain.name)

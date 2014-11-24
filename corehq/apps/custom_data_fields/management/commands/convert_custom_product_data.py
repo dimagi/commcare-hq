@@ -20,6 +20,7 @@ class Command(BaseCommand):
                     domain['name'],
                     'ProductFields'
                 )
+                had_fields = bool(fields_definition.fields)
 
                 product_ids = Product.ids_by_domain(domain['name'])
 
@@ -35,10 +36,12 @@ class Command(BaseCommand):
                                 slug=key,
                                 label=key,
                                 is_required=False,
-                                is_system=key in cdm.SYSTEM_FIELDS
                             ))
 
+                for field in fields_definition.fields:
+                    if cdm.is_system_key(field.slug):
+                        fields_definition.fields.remove(field)
                 # Only save a definition for domains which use custom product data
-                if fields_definition.fields:
+                if fields_definition.fields or had_fields:
                     fields_definition.save()
-            print 'finished domain "{}"'.format(domain.name)
+            print 'finished domain "{}"'.format(domain['name'])
