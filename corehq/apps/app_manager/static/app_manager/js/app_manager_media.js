@@ -14,8 +14,7 @@ var AppMenuMediaManager = function (o) {
     self.uploadController = o.uploadController;
 
     self.customPath = ko.observable(o.ref.path || '');
-    self.useCustomPath = ko.observable(self.customPath() !== self.defaultPath
-        && self.refHasPath());
+    self.useCustomPath = ko.observable(self.customPath() !== self.defaultPath && self.refHasPath());
     
     self.showCustomPath = ko.computed(function () {
         return self.useCustomPath();
@@ -33,7 +32,7 @@ var AppMenuMediaManager = function (o) {
     });
 
     self.currentPath = ko.computed(function () {
-        if (self.savedPath().length === 0) {
+        if (self.savedPath().length == 0) {
             return self.defaultPath;
         }
         return self.savedPath();
@@ -107,7 +106,7 @@ var AppMenuMediaManager = function (o) {
             isMediaMatched: self.isMediaMatched,
             getUrl: self.url,
             m_id: self.objectId
-        }
+        };
     };
 
     self.passToUploadController = function () {
