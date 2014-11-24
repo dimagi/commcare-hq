@@ -89,15 +89,14 @@ def get_form_data_source(app, form):
         return {"datatype": "string"}
 
     def _make_indicator(question):
-        value = question['value'].split('/')[-1]  # /data/question_name -> question_name
+        path = question['value'].split('/')
         data_type = question['type']
         options = question.get('options')
-
         ret = {
             "type": "raw",
-            "column_id": value,
-            'property_path': ['form', value],
-            "display_name": value,
+            "column_id": path[-1],
+            'property_path': ['form'] + path[2:],
+            "display_name": path[-1],
         }
         ret.update(_get_indicator_data_type(data_type,options))
         return ret
