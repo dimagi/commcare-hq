@@ -78,6 +78,10 @@ class MultimediaImageUploadController(BaseMultimediaFileUploadController):
         ]
 
 
+class MultimediaIconUploadController(MultimediaImageUploadController):
+    media_type = ugettext_noop("logo")
+
+
 class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
     media_type = ugettext_noop("audio")
 
