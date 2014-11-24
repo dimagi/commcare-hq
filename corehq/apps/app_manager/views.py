@@ -2687,7 +2687,6 @@ def upload_bulk_ui_translations(request, domain, app_id):
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
 
 
-<<<<<<< HEAD
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
 
