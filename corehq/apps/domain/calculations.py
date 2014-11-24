@@ -104,16 +104,16 @@ def sms(domain, direction):
 
 
 def sms_in_last(domain, days=None):
-    q = SMSES().domain(domain).size(0)
+    query = SMSES().domain(domain).size(0)
 
     if days:
-        q = q.received(date.today() - relativedelta(days=30))
+        query = query.received(date.today() - relativedelta(days=30))
 
-    return q.run().total
+    return query.run().total
 
 
 def sms_in_last_bool(domain, days=None):
-    return True if sms_in_last(domain, days) > 0 else False
+    return sms_in_last(domain, days) > 0
 
 
 def active(domain, *args):
