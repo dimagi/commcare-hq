@@ -7,6 +7,10 @@ class JsonApiError(Exception):
     pass
 
 
+class Dhis2ApiQueryError(JsonApiError):
+    pass
+
+
 class JsonApiRequest(object):
     """
     Wrap requests with URL, header and authentication for DHIS2 API
@@ -96,3 +100,110 @@ class Dhis2OrgUnit(object):
         item.delete()
 
 Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, 'dhis2', 'dhis2_org_unit')
+
+
+def dhis2_entities_to_dicts(json):
+    """
+    Parse the list of lists returned by a DHIS2 API entity request,
+    and return it as a list of dictionaries.
+
+    The DHIS2 API returns entity instances with a list of headers, and
+    then a list of lists, as if it was dumping a spreadsheet. e.g. ::
+
+        {
+            'headers': [
+                {
+                    'name': 'instance',
+                    'column': 'Instance',
+                    'type': 'java.lang.String',
+                    'hidden': False,
+                    'meta': False
+                },
+                {
+                    'name': 'ou',
+                    'column': 'Org unit',
+                    'type': 'java.lang.String',
+                    'hidden': False,
+                    'meta': False
+                },
+                {
+                    'name': 'dv3nChNSIxy',
+                    'column': 'First name',
+                    'type': 'java.lang.String',
+                    'hidden': False,
+                    'meta': False
+                },
+                {
+                    'name': 'hwlRTFIFSUq',
+                    'column': 'Last name',
+                    'type': 'java.lang.String',
+                    'hidden': False,
+                    'meta': False
+                }
+            ],
+            'rows': [
+                [
+                    'GpetderUTA7',
+                    'Qw7c6Ckb0XC',
+                    'Tesmi',
+                    'Petros'
+                ],
+                [
+                    'LTxvKtKq48t',
+                    'Qw7c6Ckb0XC',
+                    'Luwam',
+                    'Rezene'
+                ],
+            ]
+        }
+
+    Header "name" values like "dv3nChNSIxy" and "hwlRTFIFSUq" are not
+    friendly, and so the returned dictionary uses the "column" value
+    as key. The return value for this example would be ::
+
+        [
+            {
+                'Instance': 'GpetderUTA7',
+                'Org unit': 'Qw7c6Ckb0XC',
+                'First name: 'Tesmi',
+                'Last name': 'Petros'
+            },
+            {
+                'Instance': 'LTxvKtKq48t',
+                'Org unit': 'Qw7c6Ckb0XC',
+                'First name: 'Luwam',
+                'Last name': 'Rezene'
+            }
+        ]
+
+    The row value of "Tracked entity" will look like "cyl5vuJ5ETQ".
+    This isn't very friendly either. But the entity name is given in
+    "metaData", which looks like this: ::
+
+        "metaData": {
+            "pager": {
+                "page": 1,
+                "total": 50,
+                "pageSize": 50,
+                "pageCount": 1
+            },
+            "names": {
+                "cyl5vuJ5ETQ": "Person"
+            }
+        }
+
+    So we look up tracked entity names, and include them in the dictionary.
+
+    """
+    entities = []
+    for row in json['rows']:
+        entity = {}
+        for i, item in enumerate(row):
+            if json['headers'][i]['column'] == 'Tracked entity':
+                # Look up the name of the tracked entity
+                item = json['metaData']['names'][item]
+            entity[json['headers'][i]['column']] = item
+        entities.append(entity)
+    return entities
+
+
