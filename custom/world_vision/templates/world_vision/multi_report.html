@@ -38,13 +38,11 @@
 
     <style>
         .mother_report .table-nonfluid, .child_report .table-nonfluid{
-           width: auto;
+           width: 55%;
         }
 
-        .mother_report .table tr td:nth-child(1) {width:250px;}
-        .child_report .table tr td:nth-child(1) {width:350px;}
-        .mother_report .table tr td:nth-child(n + 2){width:130px;}
-        .child_report .table tr td:nth-child(n + 2) {width:200px;}
+        .mother_report .table tr td:nth-child(1), .child_report .table tr td:nth-child(1) {width:150px;}
+        .mother_report .table tr td:nth-child(n + 2), .child_report .table tr td:nth-child(n + 2) {width:100px;}
 
         .mother_report table, .child_report table {
             display: inline-block;
@@ -60,7 +58,7 @@
             width: 100%;
         }
         .mother_report table + .row, .mother_report .row + .row, .child_report table + .row, .child_report .row + .row {
-            width: 50%;
+            width: 45%;
             float:right;
             display: inline-block;
         }
