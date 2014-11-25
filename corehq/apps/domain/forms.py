@@ -124,6 +124,19 @@ class SnapshotApplicationForm(forms.Form):
             'attribution_notes'
         ]
 
+
+class SnapshotFixtureForm(forms.Form):
+    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
+    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_noop("A detailed technical description of the table"))
+
+    def __init__(self, *args, **kwargs):
+        super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = [
+            'publish',
+            'description',
+        ]
+
 class SnapshotSettingsForm(SnapshotSettingsMixin):
     title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
