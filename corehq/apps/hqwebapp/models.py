@@ -323,8 +323,7 @@ class DashboardTab(UITab):
     @property
     def is_viewable(self):
         return (self.domain and self.project and not self.project.is_snapshot
-                and self.couch_user
-                and toggles.DASHBOARD_PREVIEW.enabled(self.couch_user.username))
+                and self.couch_user)
 
 
 class ReportsTab(UITab):
@@ -357,11 +356,11 @@ class CommTrackSetupTab(UITab):
         # circular import
         from corehq.apps.commtrack.views import (
             CommTrackSettingsView,
-            ProductListView,
             DefaultConsumptionView,
-            ProgramListView,
             SMSSettingsView,
         )
+        from corehq.apps.programs.views import ProgramListView
+        from corehq.apps.products.views import ProductListView
         from corehq.apps.locations.views import (
             LocationsListView,
             LocationSettingsView,
@@ -394,15 +393,19 @@ class CommTrackSetupTab(UITab):
         # circular import
         from corehq.apps.commtrack.views import (
             CommTrackSettingsView,
+            DefaultConsumptionView,
+            SMSSettingsView,
+        )
+        from corehq.apps.programs.views import (
+            ProgramListView,
+            NewProgramView,
+            EditProgramView,
+        )
+        from corehq.apps.products.views import (
             ProductListView,
             NewProductView,
             EditProductView,
             ProductFieldsView,
-            DefaultConsumptionView,
-            ProgramListView,
-            NewProgramView,
-            EditProgramView,
-            SMSSettingsView,
         )
         from corehq.apps.locations.views import (
             LocationsListView,
@@ -1057,6 +1060,8 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
+        from corehq.apps.domain.views import FeatureFlagsView, FeaturePreviewsView
+
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
 
@@ -1135,8 +1140,8 @@ class ProjectSettingsTab(UITab):
             ])
 
             administration.append({
-                    'title': _('Feature Previews'),
-                    'url': reverse('feature_previews', args=[self.domain])
+                    'title': _(FeaturePreviewsView.page_title),
+                    'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
             })
             items.append((_('Project Administration'), administration))
 
@@ -1189,10 +1194,12 @@ class ProjectSettingsTab(UITab):
             {
                 'title': _(EditInternalCalculationsView.page_title),
                 'url': reverse(EditInternalCalculationsView.urlname, args=[self.domain])
+            },
+            {
+                'title': _(FeatureFlagsView.page_title),
+                'url': reverse(FeatureFlagsView.urlname, args=[self.domain])
             }]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
-
-
 
         return items
 

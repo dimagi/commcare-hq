@@ -51,6 +51,11 @@ def _create_custom_app_strings(app, lang):
                 if column.format in ('enum', 'enum-image'):
                     for item in column.enum:
                         yield id_strings.detail_column_enum_variable(module, detail_type, column, item.key), trans(item.value)
+                elif column.format == "graph":
+                    for index, item in enumerate(column.graph_configuration.annotations):
+                        yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
+                    for property, values in column.graph_configuration.locale_specific_config.iteritems():
+                        yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
         if hasattr(module, 'case_list'):

@@ -2,7 +2,7 @@ from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
 from casexml.apps.stock.consumption import compute_consumption_or_default
-from casexml.apps.stock.utils import get_current_ledger_transactions
+from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -52,17 +52,37 @@ class StockSettings(object):
 class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
+
+    :param user:            The mobile user requesting the restore
+    :param restore_id:      ID of the previous restore
+    :param version:         The version of the restore format
+    :param state_hash:      The case state hash string to use to verify the state of the phone
+    :param items:           Set to `True` to include the item count in the response
+    :param stock_settings:  CommTrack stock settings for the domain.
+                            If None, default settings will be used.
+    :param domain:          The domain object. An instance of `Domain`.
+    :param force_cache:     Set to `True` to force the response to be cached.
+                            Only applies if `restore_id` is empty.
+    :param cache_timeout:   Override the default cache timeout of 1 hour.
+                            Only applies if `restore_id` is empty.
+    :param overwrite_cache: Ignore any previously cached value and re-generate the restore response.
+                            Only applies if `restore_id` is empty.
     """
     def __init__(self, user, restore_id="", version=V1, state_hash="",
-                 items=False, stock_settings=None, domain=None):
+                 items=False, stock_settings=None, domain=None, force_cache=False,
+                 cache_timeout=None, overwrite_cache=False):
         self.user = user
         self.restore_id = restore_id
         self.version = version
         self.state_hash = state_hash
-        self.cache = get_redis_default_cache()
         self.items = items
         self.stock_settings = stock_settings or StockSettings()
         self.domain = domain
+        self.force_cache = force_cache
+        self.cache_timeout = cache_timeout or INITIAL_SYNC_CACHE_TIMEOUT
+        self.overwrite_cache = overwrite_cache
+
+        self.cache = get_redis_default_cache()
 
     @property
     @memoized
@@ -91,7 +111,6 @@ class RestoreConfig(object):
         if self.domain and not self.domain.commtrack_enabled:
             return
 
-        cases = [e.case for e in syncop.actual_cases_to_sync]
         from lxml.builder import ElementMaker
         E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
 
@@ -115,8 +134,11 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
-        for commtrack_case in cases:
-            current_ledgers = get_current_ledger_transactions(commtrack_case._id)
+        case_ids = [op.case._id for op in syncop.actual_cases_to_sync]
+        all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
+        for op in syncop.actual_cases_to_sync:
+            commtrack_case = op.case
+            current_ledgers = all_current_ledgers[commtrack_case._id]
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
@@ -166,10 +188,6 @@ class RestoreConfig(object):
 
         start_time = datetime.utcnow()
         sync_operation = user.get_case_updates(last_sync)
-        case_xml_elements = [xml.get_case_element(op.case, op.required_updates, self.version)
-                             for op in sync_operation.actual_cases_to_sync]
-        commtrack_elements = self.get_stock_payload(sync_operation)
-
         last_seq = str(get_db().info()["update_seq"])
 
         # create a sync log for this
@@ -194,11 +212,19 @@ class RestoreConfig(object):
         # registration block
         response.append(xml.get_registration_element(user))
         # fixture block
-        for fixture in generator.get_fixtures(user, self.version, synclog, last_sync):
+        for fixture in generator.get_fixtures(user, self.version, sync_operation, last_sync):
             response.append(fixture)
+
         # case blocks
+        case_xml_elements = (
+            xml.get_case_element(op.case, op.required_updates, self.version)
+            for op in sync_operation.actual_cases_to_sync
+        )
         for case_elem in case_xml_elements:
             response.append(case_elem)
+
+        # commtrack balance sections
+        commtrack_elements = self.get_stock_payload(sync_operation)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
@@ -234,7 +260,7 @@ class RestoreConfig(object):
     def get_cached_payload(self):
         if self.sync_log:
             return self.sync_log.get_cached_payload(self.version)
-        else:
+        elif not self.overwrite_cache:
             return self.cache.get(self._initial_cache_key())
 
     def set_cached_payload_if_necessary(self, resp, duration):
@@ -249,8 +275,8 @@ class RestoreConfig(object):
                 pass
         else:
             # on initial sync, only cache if the duration was longer than the threshold
-            if duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self.cache.set(self._initial_cache_key(), resp, INITIAL_SYNC_CACHE_TIMEOUT)
+            if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
+                self.cache.set(self._initial_cache_key(), resp, self.cache_timeout)
 
 
 def generate_restore_payload(user, restore_id="", version=V1, state_hash="",

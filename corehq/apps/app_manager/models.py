@@ -699,6 +699,7 @@ class FormBase(DocumentSchema):
         xform.exclude_languages(app.build_langs)
         xform.set_default_language(app.build_langs[0])
         xform.normalize_itext()
+        xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
     def render_xform(self):
@@ -989,6 +990,18 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return []
 
     @memoized
+    def get_child_case_types(self):
+        '''
+        Return a list of each case type for which this Form opens a new child case.
+        :return:
+        '''
+        child_case_types = set()
+        for subcase in self.actions.subcases:
+            if subcase.close_condition.type == "never":
+                child_case_types.add(subcase.case_type)
+        return child_case_types
+
+    @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
         case_properties = set()
@@ -1023,6 +1036,28 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
 
+class GraphAnnotations(IndexedSchema):
+    display_text = DictProperty()
+    x = StringProperty()
+    y = StringProperty()
+
+
+class GraphSeries(DocumentSchema):
+    config = DictProperty()
+    data_path = StringProperty()
+    x_function = StringProperty()
+    y_function = StringProperty()
+    radius_function = StringProperty()
+
+
+class GraphConfiguration(DocumentSchema):
+    config = DictProperty()
+    locale_specific_config = DictProperty()
+    annotations = SchemaListProperty(GraphAnnotations)
+    graph_type = StringProperty()
+    series = SchemaListProperty(GraphSeries)
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -1045,6 +1080,7 @@ class DetailColumn(IndexedSchema):
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
+    graph_configuration = SchemaProperty(GraphConfiguration)
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
@@ -1145,6 +1181,7 @@ class Detail(IndexedSchema):
     get_columns = IndexedSchema.Getter('columns')
 
     sort_elements = SchemaListProperty(SortElement)
+    filter = StringProperty()
 
     @parse_int([1])
     def get_column(self, i):
@@ -1153,18 +1190,6 @@ class Detail(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
-
-    def filter_xpath(self):
-        filters = []
-        for i,column in enumerate(self.columns):
-            if column.format == 'filter':
-                value = dot_interpolate(
-                    column.filter_xpath,
-                    '%s_%s_%s' % (column.model, column.field, i + 1)
-                )
-                filters.append("(%s)" % value)
-        xpath = ' and '.join(filters)
-        return partial_escape(xpath)
 
 
 class CaseList(IndexedSchema):
@@ -1292,15 +1317,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                             'key': key,
                             'module': self.get_module_info(),
                         }
-            elif column.format == 'filter':
-                try:
-                    etree.XPath(column.filter_xpath or '')
-                except etree.XPathSyntaxError:
-                    yield {
-                        'type': 'invalid filter xpath',
-                        'module': self.get_module_info(),
-                        'column': column,
-                    }
             elif column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
@@ -1352,6 +1368,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                     })
 
         return errors
+
+    @memoized
+    def get_child_case_types(self):
+        '''
+        Return a list of each case type for which this module has a form that
+        opens a new child case of that type.
+        :return:
+        '''
+        child_case_types = set()
+        for form in self.get_forms():
+            if hasattr(form, 'get_child_case_types'):
+                child_case_types.update(form.get_child_case_types())
+        return child_case_types
 
 
 class Module(ModuleBase):
@@ -1467,6 +1496,13 @@ class Module(ModuleBase):
         except Exception:
             return []
 
+    @property
+    def case_list_filter(self):
+        try:
+            return self.case_details.short.filter
+        except AttributeError:
+            return None
+
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
         for sort_element in self.detail_sort_elements:
@@ -1477,6 +1513,15 @@ class Module(ModuleBase):
                     'type': 'invalid sort field',
                     'field': sort_element.field,
                     'module': self.get_module_info(),
+                })
+        if self.case_list_filter:
+            try:
+                etree.XPath(self.case_list_filter)
+            except etree.XPathSyntaxError:
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.get_module_info(),
+                    'filter': self.case_list_filter,
                 })
         if self.parent_select.active and not self.parent_select.module_id:
             errors.append({

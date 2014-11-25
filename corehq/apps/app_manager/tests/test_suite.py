@@ -80,12 +80,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_advanced_suite_case_list_filter(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         clinic_module = app.get_module(0)
-        clinic_module.case_details.short.columns.append(DetailColumn(
-            header={"en": "Filter"},
-            format='filter',
-            filter_xpath=". = 'danny'",
-            field='filter'
-        ))
+        clinic_module.case_details.short.filter = "(filter = 'danny')"
         clinic_module_id = clinic_module.unique_id
         app.get_module(1).get_form(0).actions.load_update_cases[0].details_module = clinic_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
@@ -281,6 +276,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         child_form.requires = 'case'
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
+
+    def test_graphing(self):
+        self._test_generic_suite('app_graphing', 'suite-graphing')
 
     def test_case_list_registration_form(self):
         app = Application.wrap(self.get_json('app'))

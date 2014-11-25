@@ -89,6 +89,32 @@ def detail_column_enum_variable(module, detail_type, column, key):
     )
 
 
+@pattern('m%d.%s.%s_%s_%s.graph.key.%s')
+def graph_configuration(module, detail_type, column, key):
+    field = column.field.replace('#', '')
+    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.key.{key}".format(
+        module=module,
+        detail_type=detail_type,
+        d=column,
+        field=field,
+        d_id=column.id + 1,
+        key=key
+    )
+
+
+@pattern('m%d.%s.%s_%s_%s.graph.a.%d')
+def graph_annotation(module, detail_type, column, annotation_index):
+    field = column.field.replace('#', '')
+    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.a.{a_id}".format(
+        module=module,
+        detail_type=detail_type,
+        d=column,
+        field=field,
+        d_id=column.id + 1,
+        a_id=annotation_index
+    )
+
+
 @pattern('modules.m%d')
 def module_locale(module):
     return u"modules.m{module.id}".format(module=module)

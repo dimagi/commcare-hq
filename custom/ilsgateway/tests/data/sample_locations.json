@@ -1,0 +1,68 @@
+[
+    {
+        "code": "DM520053",
+        "date_updated": "2014-11-10T08:31:53.020929",
+        "groups": ["B"],
+        "id": 2632,
+        "latitude": "-5.8333330000",
+        "longitude": "35.7666670000",
+        "name": "Zanka  Dispensary",
+        "parent_id": 2625,
+        "type": "FACILITY",
+        "historical_groups": {
+            "2013-04-01": ["A"],
+            "2013-05-01": ["A"],
+            "2013-06-01": ["A"],
+            "2013-07-01": ["A"],
+            "2013-08-01": ["A"],
+            "2013-09-01": ["A"],
+            "2013-10-01": ["A"],
+            "2013-11-01": ["A"],
+            "2013-12-01": ["A"],
+            "2014-01-01": ["A"],
+            "2014-02-01": ["A"],
+            "2014-03-01": ["A"],
+            "2014-04-01": ["A", "B"],
+            "2014-05-01": ["B"]
+        }
+    },
+    {
+
+        "id" : 1,
+        "name": "MOHSW",
+        "type": "MOHSW",
+        "parent_id": null,
+        "latitude": "-10.6676087700",
+        "longitude": "39.1621900200",
+        "code": "MOHSW-MOHSW",
+        "groups": ["A"],
+        "historical_groups":
+        {}
+    },
+    {
+        "code": "DISTRICT-Bahi",
+        "date_updated": "2014-07-17T00:00:00",
+        "groups": [],
+        "historical_groups": {},
+        "id": 2625,
+        "latitude": "",
+        "longitude": "",
+        "name": "Bahi",
+        "parent_id": 13,
+        "type": "DISTRICT"
+    },
+
+    {
+        "code": "REGION-DODOMA",
+        "date_updated": "2014-07-17T00:00:00",
+        "groups": [], "historical_groups": {},
+        "id": 13,
+        "latitude": "",
+        "longitude": "",
+        "name": "DODOMA",
+        "parent_id": 1,
+        "type": "REGION"
+    }
+
+
+]

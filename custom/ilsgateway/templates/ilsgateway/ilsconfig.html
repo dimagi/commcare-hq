@@ -144,13 +144,13 @@
         };
 
         $("#sync_stock_data").click(function() {
-            var url = '{% url 'sync_stock_data' domain %}';
+            var url = '{% url sync_stock_url domain %}';
             var successMessage = "{% trans "Sync started" %}";
             _post(this, url, {success: successMessage});
         });
 
         $("#clear_stock_data").click(function() {
-            var url = '{% url 'clear_stock_data' domain %}';
+            var url = '{% url clear_stock_url domain %}';
             var successMessage = "{% trans "Started" %}";
             _post(this, url, {success: successMessage});
         });

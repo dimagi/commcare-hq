@@ -1455,12 +1455,6 @@ class TriggerInvoiceForm(forms.Form):
             )
         )
 
-    def clean_domain(self):
-        domain = self.cleaned_data['domain']
-        if not toggles.ACCOUNTING_PREVIEW.enabled(domain):
-            raise ValidationError("Not an Accounting Preview domain.")
-        return domain
-
     def trigger_invoice(self):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])

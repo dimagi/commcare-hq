@@ -17,6 +17,7 @@ from corehq.apps.domain.decorators import require_superuser
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import apply_update
+from corehq.apps.fixtures.models import FixtureDataType
 
 
 SNAPSHOT_FACETS = ['project_type', 'license', 'author.exact']
@@ -72,6 +73,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
     return render(request, template, {
         "project": dom,
         "applications": dom.full_applications(include_builds=False),
+        "fixtures": FixtureDataType.by_domain(dom.name),
         "copies": copies,
         "images": images,
         "audio": audio,

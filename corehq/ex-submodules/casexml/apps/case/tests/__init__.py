@@ -5,6 +5,7 @@ try:
     from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
     from .test_bugs import *
     from .test_dbcache import *
+    from .test_dynamic_properties import *
     from .test_exclusion import *
     from .test_force_save import *
     from .test_from_xform import *

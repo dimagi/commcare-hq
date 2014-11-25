@@ -1,5 +1,6 @@
 from corehq.apps.commtrack.tests.util import CommTrackTest
-from corehq.apps.commtrack.models import Program, Product, SQLProduct
+from corehq.apps.programs.models import Program
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.commtrack.util import make_program
 from couchdbkit import ResourceNotFound
 
