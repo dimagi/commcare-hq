@@ -817,9 +817,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                                     ),
                                     stack=Stack()
                                 )
-                                frame = CreateFrame()
-                                frame.add_command(self.id_strings.menu(module))
+                                frame = PushFrame()
                                 frame.add_command(self.id_strings.form_command(form))
+                                frame.add_datum(StackDatum(id=CASE_ID_AUTOGEN, value='uuid()'))
                                 d.action.stack.add_frame(frame)
 
                             try:
