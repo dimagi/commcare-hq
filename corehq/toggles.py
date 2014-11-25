@@ -209,3 +209,10 @@ MULTIMEDIA_EXPORT = StaticToggle(
     'multimedia_export',
     'Export multimedia from forms'
 )
+
+NO_VELLUM = StaticToggle(
+    'no_vellum',
+    'Allow disabling Form Builder per form '
+    '(for custom forms that Vellum breaks)',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
