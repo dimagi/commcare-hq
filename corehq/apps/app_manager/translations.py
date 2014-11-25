@@ -246,7 +246,8 @@ def process_modules_and_forms_sheet(rows, app):
             if translation:
                 document.name[lang] = translation
             else:
-                document.name.pop(lang, None)
+                if lang in document.name:
+                    del document.name[lang]
 
         if (has_at_least_one_translation(row, 'label_for_cases', app.langs)
                 and hasattr(document, 'case_label')):
@@ -255,7 +256,8 @@ def process_modules_and_forms_sheet(rows, app):
                 if translation:
                     document.case_label[lang] = translation
                 else:
-                    document.case_label.pop(lang, None)
+                    if lang in document.case_label:
+                        del document.case_label[lang]
 
         image = row.get('icon_filepath', None)
         audio = row.get('audio_filepath', None)
@@ -487,7 +489,8 @@ def update_case_list_translations(sheet, rows, app):
                     if translation:
                         language_dict[lang] = translation
                     else:
-                        language_dict.pop(lang, None)
+                        if lang in language_dict:
+                            del language_dict[lang]
             else:
                 msgs.append((
                     messages.error,
