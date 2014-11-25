@@ -517,13 +517,29 @@ class HQMediaMixin(Document):
         media = []
         self.media_form_errors = False
 
+        def _add_menu_media(item, **kwargs):
+            if item.media_image:
+                media.append(ApplicationMediaReference(item.media_image,
+                                                       media_class=CommCareImage,
+                                                       is_menu_media=True, **kwargs))
+            if item.media_audio:
+                media.append(ApplicationMediaReference(item.media_audio,
+                                                       media_class=CommCareAudio,
+                                                       is_menu_media=True, **kwargs))
+
+
         for m, module in enumerate(self.get_modules()):
-            media.extend(self.get_menu_media(module, m).values())
+            media_kwargs = {
+                'module_name': module.name,
+                'module_id': m,
+                'app_lang': self.default_language,
+            }
+            _add_menu_media(module, **media_kwargs)
             for f_order, f in enumerate(module.get_forms()):
-                media_kwargs = self.get_media_ref_kwargs(
-                    module, m, form=f, form_index=f_order)
-                media.extend(self.get_menu_media(
-                    module, m, form=f, form_index=f_order).values())
+                media_kwargs['form_name'] = f.name
+                media_kwargs['form_id'] = f.unique_id
+                media_kwargs['form_order'] = f_order
+                _add_menu_media(f, **media_kwargs)
                 try:
                     parsed = f.wrapped_xform()
                     if not parsed.exists():

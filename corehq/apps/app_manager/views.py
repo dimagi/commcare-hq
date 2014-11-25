@@ -958,7 +958,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     # update multimedia context for forms and modules.
     menu_host = form or module
-    if menu_host:
+    if menu_host and toggles.MENU_MULTIMEDIA_UPLOAD.enabled(req.user.username):
 
         default_file_name = 'module%s' % module_id
         if form_id:

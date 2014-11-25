@@ -179,6 +179,12 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+MENU_MULTIMEDIA_UPLOAD = StaticToggle(
+    'menu_multimedia_upload',
+    'Menu Multimedia Upload (Module & Form)',
+    [NAMESPACE_USER]
+)
+
 
 VIEW_SYNC_HISTORY = StaticToggle(
     'sync_history_report',
