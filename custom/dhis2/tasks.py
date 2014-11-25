@@ -29,7 +29,7 @@ def sync_org_units():
             org_unit.delete()
 
 
-def push_child_entities():
+def push_child_entities(children):
     """
     Register child entities in DHIS2 and enroll them in the Pediatric
     Nutrition Assessment and Underlying Risk Assessment programs.
@@ -39,7 +39,7 @@ def push_child_entities():
     pass
 
 
-def pull_child_entities():
+def pull_child_entities(children):
     """
     Create new child cases for nutrition tracking in CommCare.
     """
@@ -99,7 +99,7 @@ def get_children_only_theirs():
     top = get_top_org_unit()
     child_entity = get_entity_id('Person')  # TODO: 'Child'
     cchq_case_id = get_te_attr_id('cchq_case_id')  # TODO: 'CCHQ Case ID'?
-    their_child_entities = []
+    # NOTE: Because we don't have an "UNSET" filter, we will need to iterate all, and append the unset ones to a list
     request = JsonApiRequest(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     __, json = request.get(
         'trackedEntityInstances',
@@ -110,12 +110,7 @@ def get_children_only_theirs():
             'ouMode': 'DESCENDANTS',
             'attribute': cchq_case_id + ':UNSET'  # cchq_case_id  # TODO: ":UNSET"?!
         })
-    child_entities = dhis2_entities_to_dicts(json)
-    if child_entities:
-        their_child_entities.extend(child_entities)
-
-
-
+    return dhis2_entities_to_dicts(json)
 
 
 def get_children_only_ours():
