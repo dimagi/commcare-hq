@@ -73,6 +73,7 @@ branches:
   - custom-case-list-pane # Noah 11/24
   - system-custom-data  # Ethan 11/24
   - event-tracking-wrapper # Nick P 11/25
+  - quickview # Simon 11/25
 submodules:
   submodules/couchlog-src:
     branches:
