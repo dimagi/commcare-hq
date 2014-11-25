@@ -98,7 +98,7 @@ def get_form_data_source(app, form):
             'property_path': ['form'] + path[2:],
             "display_name": path[-1],
         }
-        ret.update(_get_indicator_data_type(data_type,options))
+        ret.update(_get_indicator_data_type(data_type, options))
         return ret
 
     questions = xform.get_questions([])

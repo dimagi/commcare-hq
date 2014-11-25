@@ -116,6 +116,7 @@ def create_data_source_from_app(request, domain):
     context['form'] = form
     return render(request, 'userreports/data_source_from_app.html', context)
 
+
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_form_data_source_from_app(request, domain):
     if request.method == 'POST':
