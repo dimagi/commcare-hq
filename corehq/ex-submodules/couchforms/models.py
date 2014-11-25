@@ -253,7 +253,8 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return None
 
     def get_xml(self):
-        if ATTACHMENT_NAME in self._attachments and 'data' in self._attachments[ATTACHMENT_NAME]:
+        if (self._attachments and ATTACHMENT_NAME in self._attachments
+                and 'data' in self._attachments[ATTACHMENT_NAME]):
             return base64.b64decode(self._attachments[ATTACHMENT_NAME]['data'])
         try:
             return self.fetch_attachment(ATTACHMENT_NAME)
