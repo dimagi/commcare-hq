@@ -168,6 +168,19 @@
             });
         </script>
     {% endif %}
+    <script>
+        $('#open_checker').click(function() {
+            if(ga !== undefined) {
+                ga('send', 'event', 'App Builder', 'Manage Multimedia');
+            }
+        });
+
+        $('#download_zip').click(function() {
+            if(ga !== undefined) {
+                ga('send', 'event', 'App Builder', 'Download Multimedia');
+            }
+        });
+    </script>
 {% endblock %}
 
 {% block title %}
@@ -253,7 +266,7 @@
                     {% if edit %}
                         <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
                         <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
-                        <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
+                        <p><a id="open_checker" target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
                             {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
                     {% endif %}
                     <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
