@@ -307,7 +307,9 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
             dehydrated['case_type'] = module.case_type
 
-            dehydrated['case_properties'] = app_manager_util.get_case_properties(app, [module.case_type], defaults=['name'])[module.case_type]
+            dehydrated['case_properties'] = app_manager_util.get_case_properties(
+                app, [module.case_type], defaults=['name']
+            )[module.case_type]
 
             dehydrated['forms'] = []
             for form in module.forms:
