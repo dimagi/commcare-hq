@@ -18,11 +18,12 @@
                                         click: passToUploadController
                                    }"
                         data-target="#{{ multimedia.upload_managers.icon.slug }}">
+                    <i class="icon icon-cloud-upload"></i>
                     <span data-bind="visible: isMediaMatched">
-                        <i class="icon icon-share-alt"></i> {% trans 'Replace Icon' %}
+                        {% trans 'Replace Icon' %}
                     </span>
                     <span data-bind="visible: isMediaUnmatched">
-                        <i class="icon icon-plus"></i> {% trans 'Add Icon' %}
+                        {% trans 'Upload Icon' %}
                     </span>
                 </button>
                 <button type="button"
@@ -103,11 +104,12 @@
                                         click: passToUploadController
                                    }"
                         data-target="#{{ multimedia.upload_managers.audio.slug }}">
+                    <i class="icon icon-cloud-upload"></i>
                     <span data-bind="visible: isMediaMatched">
-                        <i class="icon icon-share-alt"></i> {% trans 'Replace Audio' %}
+                        {% trans 'Replace Audio' %}
                     </span>
                     <span data-bind="visible: isMediaUnmatched">
-                        <i class="icon icon-plus"></i> {% trans 'Add Audio' %}
+                        {% trans 'Upload Audio' %}
                     </span>
                 </button>
                 <button type="button"
