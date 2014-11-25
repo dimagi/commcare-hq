@@ -998,7 +998,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
         json = self.to_json()
-        return sorted([(key, json[key]) for key in self.dynamic_properties()
+        wrapped_case = self
+        if type(self) != CommCareCase:
+            wrapped_case = CommCareCase.wrap(self._doc)
+
+        return sorted([(key, json[key]) for key in wrapped_case.dynamic_properties()
                        if re.search(r'^[a-zA-Z]', key)])
 
     def save(self, **params):

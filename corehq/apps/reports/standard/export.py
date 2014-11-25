@@ -94,7 +94,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
 
 def sizeof_fmt(num):
-    for x in ['bytes','KB','MB','GB','TB']:
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
         num /= 1024.0
@@ -114,17 +114,17 @@ class ExcelExportReport(FormExportReportBase):
         unknown_forms = []
         startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
-        # hash of xmlns to size of attachments
-        is_previewer = toggles.MULTIMEDIA_EXPORT.enabled(self.request.user.username)
-        if is_previewer:
+        is_multimedia_previewer = toggles.MULTIMEDIA_EXPORT.enabled(self.request.user.username)
+        if is_multimedia_previewer:
+            # hash of xmlns to size of attachments
             size_hash = {a['key'][2]: a['value'] for a in db.view('attachments/attachments',
                                                                   startkey=startkey,
-                                                                  endkey=startkey+[{}],
+                                                                  endkey=startkey + [{}],
                                                                   group_level=3,
                                                                   reduce=True,
                                                                   group=True)}
         for f in db.view('exports_forms/by_xmlns',
-                         startkey=startkey, endkey=startkey+[{}], group=True,
+                         startkey=startkey, endkey=startkey + [{}], group=True,
                          stale=settings.COUCH_STALE_QUERY):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
@@ -141,8 +141,10 @@ class ExcelExportReport(FormExportReportBase):
                 unknown_forms.append(form)
 
             form['current_app'] = form.get('app')
-            if is_previewer and form['xmlns'] in size_hash:
+            if is_multimedia_previewer and form['xmlns'] in size_hash:
                 form['size'] = sizeof_fmt(size_hash[form['xmlns']])
+            else:
+                form['size'] = None
             forms.append(form)
 
         if unknown_forms:
@@ -256,7 +258,7 @@ class ExcelExportReport(FormExportReportBase):
             group_exports=[group.form_exports for group in groups
                 if group.form_exports],
             report_slug=self.slug,
-            is_previewer=is_previewer
+            is_multimedia_previewer=is_multimedia_previewer
         )
         return context
 

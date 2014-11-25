@@ -2,7 +2,7 @@ from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from custom.ewsghana.reminders import REGISTER_HELP, REGISTRATION_CONFIRM
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.commtrack import add_location
+from custom.logistics.commtrack import add_location
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler

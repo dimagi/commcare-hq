@@ -627,9 +627,11 @@ class Domain(Document, SnapshotMixin):
                             (self.name, str(result[1]))
                 )
 
-    def save_copy(self, new_domain_name=None, user=None, ignore=None):
+    def save_copy(self, new_domain_name=None, user=None, ignore=None,
+                  copy_by_id=None):
         from corehq.apps.app_manager.models import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.fixtures.models import FixtureDataItem
 
         ignore = ignore if ignore is not None else []
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
@@ -661,7 +663,19 @@ class Domain(Document, SnapshotMixin):
                 delattr(new_domain, field)
 
         new_comps = {}  # a mapping of component's id to it's copy
+
+        def copy_data_items(old_type_id, new_type_id):
+            for item in FixtureDataItem.by_data_type(self.name, old_type_id):
+                comp = self.copy_component(item.doc_type, item._id,
+                                           new_domain_name, user=user)
+                comp.data_type_id = new_type_id
+                comp.save()
+
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
+            if (copy_by_id and res['value']['_id'] not in copy_by_id and
+                res['value']['doc_type'] in ('Application', 'RemoteApp',
+                                             'FixtureDataType')):
+                continue
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()
                 if app:
@@ -670,8 +684,11 @@ class Domain(Document, SnapshotMixin):
                     comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
             elif res['value']['doc_type'] not in ignore:
                 comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                if res['value']['doc_type'] == 'FixtureDataType':
+                    copy_data_items(res['value']['_id'], comp._id)
             else:
                 comp = None
+
             if comp:
                 new_comps[res['value']['_id']] = comp
 
@@ -715,10 +732,13 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
         from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
         str_to_cls = {
             'UserRole': UserRole,
             'CaseReminderHandler': CaseReminderHandler,
+            'FixtureDataType': FixtureDataType,
+            'FixtureDataItem': FixtureDataItem,
         }
         db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
@@ -747,17 +767,20 @@ class Domain(Document, SnapshotMixin):
 
             new_doc.domain = new_domain_name
 
+            if doc_type == 'FixtureDataType':
+                new_doc.copy_from = id
+
         if self.is_snapshot and doc_type == 'Application':
             new_doc.prepare_multimedia_for_exchange()
 
         new_doc.save()
         return new_doc
 
-    def save_snapshot(self, ignore=None):
+    def save_snapshot(self, ignore=None, copy_by_id=None):
         if self.is_snapshot:
             return self
         else:
-            copy = self.save_copy(ignore=ignore)
+            copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
             if copy is None:
                 return None
             copy.is_snapshot = True

@@ -366,8 +366,6 @@ def default(req, domain):
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
     """
-    if toggles.DASHBOARD_PREVIEW.enabled(req.couch_user.username):
-        return HttpResponseRedirect(reverse('dashboard_default', args=[domain]))
     return view_app(req, domain)
 
 
@@ -1030,6 +1028,15 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         except IndexError:
             return bail(req, domain, app_id, not_found="form")
 
+    if form.no_vellum:
+        messages.warning(req, _(
+            "You tried to edit this form in the Form Builder. "
+            "However, your administrator has locked this form against editing "
+            "in the form builder, so we have redirected you to "
+            "the form's front page instead."
+        ))
+        return back_to_main(req, domain, app_id=app_id,
+                            unique_form_id=form.unique_id)
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
@@ -1570,6 +1577,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.post_form_workflow = req.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
         form.auto_gps_capture = req.POST['auto_gps_capture'] == 'true'
+    if should_edit('no_vellum'):
+        form.no_vellum = req.POST['no_vellum'] == 'true'
 
     _handle_media_edits(req, form, should_edit, resp)
 
@@ -2665,6 +2674,18 @@ def upload_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+@require_deploy_apps
+def update_build_comment(request, domain, app_id):
+    build_id = request.POST.get('build_id')
+    try:
+        build = SavedAppBuild.get(build_id)
+    except ResourceNotFound:
+        raise Http404()
+    build.build_comment = request.POST.get('comment')
+    build.save()
+    return json_response({'status': 'success'})
 
 
 common_module_validations = [
