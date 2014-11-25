@@ -25,8 +25,11 @@
             <div class="control-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
-
-                {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+                {% if multimedia %}
+                    {% include "app_manager/partials/nav_menu_media.html" %}
+                {% else %}
+                    {% include "app_manager/partials/nav_menu_media.old.html" with item=form %}
+                {% endif %}
 
             </div>
         </div>
