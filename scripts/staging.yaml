@@ -71,8 +71,8 @@ branches:
   - locations-for-everyone # tw 11/18
   - ucr-auto-form # ts 11/21
   - custom-case-list-pane # Noah 11/24
-  # - menu-multimedia # Biyeun 11/24  # needs a non-trivial resolution branch with double-management
   - system-custom-data  # Ethan 11/24
+  - event-tracking-wrapper # Nick P 11/25
 submodules:
   submodules/couchlog-src:
     branches:
