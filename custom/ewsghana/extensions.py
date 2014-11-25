@@ -23,11 +23,10 @@ def ews_location_extension(location, loc):
     location.save()
     return location
 
+
 def ews_product_extension(couch_product, product):
-    print product
     program = Program.get_by_code(couch_product.domain, product.program.code)
-    print program
-    if program is None:
+    if not program:
         program = Program(domain=couch_product.domain)
         program.name = product.program.name
         program.code = product.program.code.lower()

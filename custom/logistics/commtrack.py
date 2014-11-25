@@ -359,7 +359,6 @@ def commtrack_settings_sync(project, locations_types):
 
 
 def bootstrap_domain(config, endpoint, extensions=None, **kwargs):
-    print config
     domain = config.domain
     start_date = datetime.today()
     endpoint = endpoint.from_config(config)
@@ -384,7 +383,7 @@ def bootstrap_domain(config, endpoint, extensions=None, **kwargs):
         offset = 0
 
     apis = [
-        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
+        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date, **kwargs)),
         ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
                                       filters=dict(date_updated__gte=date, type='facility'), **kwargs)),
         ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,

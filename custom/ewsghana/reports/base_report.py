@@ -1,8 +1,9 @@
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
+from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
 
 
-class MultiReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin):
+class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
@@ -59,7 +60,6 @@ class MultiReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMi
             show_chart=data_provider.show_chart,
             charts=data_provider.charts if data_provider.show_chart else [],
             chart_span=12,
-            css_class=data_provider.css_class
         )
 
         return context
