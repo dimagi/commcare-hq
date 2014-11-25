@@ -323,7 +323,7 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
             return dehydrated
         except Exception as e:
             return {
-                'error': str(e)
+                'error': unicode(e)
             }
 
     def dehydrate_modules(self, bundle):
