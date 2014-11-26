@@ -26,8 +26,23 @@
         ga('set', 'dimension3', '{% if request.couch_user.is_commcare_user %}yes{% else %}no{% endif %}');
         ga('send', 'pageview');
 
+        function gaTrackLink($link, eventCategory, eventAction, eventLabel, eventValue) {
+            /* send ga info while still respecting ctrl/cmd-click (open in new window) */
+            $link.click(function (event) {
+                var $this = $(this);
+                if (event.metaKey) {
+                    ga_track_event(eventCategory, eventAction, eventLabel, eventValue);
+                } else {
+                    event.preventDefault();
+                    ga_track_event(eventCategory, eventAction, eventLabel, eventValue, {
+                        'hitCallback': function () {
+                            document.location = $this.attr('href');
+                        }
+                    });
+                }
+            });
+        }
     </script>
-{% endif %}
 
 <script>
     /*

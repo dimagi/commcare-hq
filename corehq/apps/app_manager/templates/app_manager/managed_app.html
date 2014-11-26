@@ -118,22 +118,10 @@
     </script>
     <script>
         $(document).ready(function() {
-            $('#edit_label').click(function () {
-                ga_track_event('App Builder', 'Open Form', 'Edit Label', {
-                    'hitCallback': function () {
-                        document.location = $('#edit_label').attr('href');
-                    }
-                });
-            });
+            gaTrackLink($('#edit_label'), 'App Builder', 'Open Form', 'Edit Label');
             {% for module in app.get_modules %}
                 {% for form in module.get_forms %}
-                    $('#edit_pen_{{ module.id }}_{{ form.id }}').click(function() {
-                        ga_track_event('App Builder', 'Open Form', 'Edit Pen', {
-                            'hitCallback': function () {
-                                document.location = $('#edit_pen_{{ module.id }}_{{ form.id }}').attr('href');
-                            }
-                        });
-                    });
+                    gaTrackLink($('#edit_pen_{{ module.id }}_{{ form.id }}'), 'App Builder', 'Open Form', 'Edit Pen');
                 {% endfor %}
             {% endfor %}
         });
