@@ -48,6 +48,33 @@
             {% if not app.is_remote_app %}
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#success-message').get(0));
             {% endif %}
+
+            var multimedia_tab = (function () {
+                var self = {};
+                self.load_state = ko.observable(null);
+                self.multimedia_page_html = ko.observable('');
+                self.load_if_necessary = function () {
+                    if (!self.load_state() || self.load_state() === 'error') {
+                        self.load_state('loading');
+                        $.ajax({
+                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}'
+                        }).success(function (content) {
+                            self.load_state('loaded');
+                            self.multimedia_page_html(content);
+                        }).error(function () {
+                            alert('Oops, there was a problem loading this section. Please try again.');
+                            self.load_state('error');
+                        });
+                    }
+                };
+                return self;
+            }());
+            ko.applyBindings(multimedia_tab, $("#multimedia").get(0));
+            $('#multimedia-shower').on('show', function () {
+                if (multimedia_tab.load_state() === null) {
+                    multimedia_tab.load_if_necessary();
+                }
+            });
         });
 
     </script>
@@ -258,18 +285,13 @@
 
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
-                {% if multimedia %}
-                    {% if edit %}
-                        <h3 style="text-align: left;">{% trans 'Manage Multimedia' %}</h3>
-                        <p>{% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}</p>
-                        <p><a id="open_checker" target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url "hqmedia_references" domain app.get_id %}"><i class="icon icon-check"></i>
-                            {% blocktrans %}Multimedia Reference Checker</a> (opens in a new window){% endblocktrans %}</p>
-                    {% endif %}
-                    <h3 style="margin-top: 1em; text-align: left;">{% trans 'Download Multimedia Zip' %}</h3>
-                    {% include "hqmedia/partials/multimedia_zip_notice.html" %}
-                {% else %}
-                    {% blocktrans %}No Multimedia{% endblocktrans %}
-                {% endif %}
+                <div data-bind="if: load_state() === 'loading'">
+                    <i class="icon-large icon-refresh icon-spin" style="margin: 70px 0 0 200px;"></i>
+                </div>
+                <div data-bind="html: multimedia_page_html"></div>
+                <div data-bind="if: load_state() === 'error'">
+                    <button class="btn" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                </div>
             </div>
 
         {% endif %}
