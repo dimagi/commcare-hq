@@ -105,7 +105,11 @@
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% if not is_user_registration %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=form image_default="jr://file/commcare/image/form_name.png" audio_default="jr://file/commcare/audio/form_name.mp3" %}
+        {% if multimedia %}
+            {% include "app_manager/partials/nav_menu_media_js.html" %}
+        {% else %}
+            {% include "app_manager/partials/nav_menu_media_js.old.html" with item=form image_default="jr://file/commcare/image/form_name.png" audio_default="jr://file/commcare/audio/form_name.mp3" %}
+        {% endif %}
     {% endif %}
     <script>
         $(function(){
@@ -197,8 +201,12 @@
                 {% endif %}
 
                 ko.applyBindings({
-                    auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }}),
+                    auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
                 }, $('#auto-gps-capture').get(0));
+                ko.applyBindings({
+                    no_vellum: ko.observable({{ form.no_vellum|JSON }})
+                }, $('#no-vellum').get(0));
+
             {% endif %}
 
             {% if allow_cloudcare %}
@@ -247,15 +255,24 @@
 
     {% if edit %}
     <div class="btn-group">
+        {% if not form.no_vellum %}
         <a id="edit_label" href="{% if is_user_registration %}
                                     {% url "user_registration_source" domain app.id %}
                                  {% else %}
                                     {% url "form_source" domain app.id module.id form.id %}
                                  {% endif %}
-                                 " class="btn btn-primary">
+                                 "
+                                 class="btn btn-primary">
             <i class="icon-pencil"></i>
             {% trans "Edit" %}
         </a>
+        {% else %}
+        <button class="btn btn-primary disabled" disabled="disabled"
+                title="{% trans "Your administrator has locked this form from edits through the form builder"|force_escape %}">
+            <i class="icon-pencil"></i>
+            {% trans "Edit" %}
+        </button>
+        {% endif %}
         {% if allow_cloudcare %}
             {% if form.source and not is_user_registration %}
             <a id="cloudcare-preview-url" href="#" target="_blank" class="btn">
@@ -345,3 +362,9 @@
     {% endif %}
     <div id="questions"></div>
 {% endblock %}
+
+{% block modals %}{{ block.super }}
+{% if multimedia %}
+    {% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endif %}
+{% endblock modals %}

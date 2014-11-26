@@ -1,0 +1,24 @@
+{% load hq_shared_tags %}
+<script>
+    $(function () {
+        var viewModel = {
+            mediaImage: ko.observable({{ item.media_image|JSON }}),
+            defaultImageValue: {{ image_default|JSON }},
+            mediaAudio: ko.observable({{ item.media_audio|JSON }}),
+            defaultAudioValue: {{ audio_default|JSON }},
+            mediaAudioAllowed: {{ app.profile.features.sense|JSON }} == "true"
+        };
+
+        if ($('#{{ qualifier|default_if_none:"" }}media_image').length) {
+            ko.applyBindings(viewModel, $('#{{ qualifier|default_if_none:"" }}media_image').get(0));
+        }
+        if ($('#{{ qualifier|default_if_none:"" }}media_audio').length) {
+            ko.applyBindings(viewModel, $('#{{ qualifier|default_if_none:"" }}media_audio').get(0));
+        }
+        $(document).on('correction', function (e, key, value) {
+            if (viewModel[key] !== undefined) {
+                viewModel[key](value);
+            }
+        });
+    });
+</script>

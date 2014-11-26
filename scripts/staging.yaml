@@ -69,10 +69,10 @@ branches:
   - custom_location_data+system-custom-data  # Ethan 11/24
   - custom_location_data  # Ethan & tw 11/17
   - locations-for-everyone # tw 11/18
-  - ucr-auto-form # ts 11/21
   - custom-case-list-pane # Noah 11/24
-  # - menu-multimedia # Biyeun 11/24  # needs a non-trivial resolution branch with double-management
   - system-custom-data  # Ethan 11/24
+  - event-tracking-wrapper # Nick P 11/25
+  - quickview # Simon 11/25
 submodules:
   submodules/couchlog-src:
     branches:
@@ -84,7 +84,7 @@ submodules:
     branches:
       - static-tags # Nick P 5/20
       # Danny 8/12. If form validation seems wonky on staging, just remove this
-      - clean-up-api
+      # - clean-up-api  # removed by cory on nov 25 per above. http://manage.dimagi.com/default.asp?148170
       - update-jar # J$ 11/10
   submodules/touchforms-src:
     branches:

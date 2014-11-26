@@ -179,6 +179,12 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+MENU_MULTIMEDIA_UPLOAD = StaticToggle(
+    'menu_multimedia_upload',
+    'Menu Multimedia Upload (Module & Form)',
+    [NAMESPACE_USER]
+)
+
 
 VIEW_SYNC_HISTORY = StaticToggle(
     'sync_history_report',
@@ -208,4 +214,11 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 MULTIMEDIA_EXPORT = StaticToggle(
     'multimedia_export',
     'Export multimedia from forms'
+)
+
+NO_VELLUM = StaticToggle(
+    'no_vellum',
+    'Allow disabling Form Builder per form '
+    '(for custom forms that Vellum breaks)',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

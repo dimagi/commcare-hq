@@ -8,7 +8,7 @@
             <label class="control-label">{% trans "Form Name" %}</label>
             <div class="controls">
                 {% if edit %}
-                    {% input_trans form.name langs %}
+                    {{ form.name|input_trans:langs|safe }}
                 {% else %}
                     {{ form.name|html_trans:langs|safe }}
                 {% endif %}
@@ -25,9 +25,11 @@
             <div class="control-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
-
-                {% include "app_manager/partials/nav_menu_media.html" with item=module ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
-
+                {% if multimedia %}
+                    {% include "app_manager/partials/nav_menu_media.html" %}
+                {% else %}
+                    {% include "app_manager/partials/nav_menu_media.old.html" with item=module ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+                {% endif %}
             </div>
         </div>
 

@@ -1,5 +1,7 @@
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports.models import DataSourceConfiguration
+import unidecode
 
 
 def get_case_data_sources(app):
@@ -35,7 +37,7 @@ def get_case_data_source(app, case_type):
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
-        table_id=case_type,
+        table_id=_clean_table_name(app.domain, case_type),
         display_name=case_type,
         configured_filter={
             'type': 'property_match',
@@ -46,3 +48,83 @@ def get_case_data_source(app, case_type):
             _make_indicator(property) for property in property_builder.get_properties(case_type)
         ]
     )
+
+
+def get_form_data_sources(app):
+    """
+    Returns a dict mapping forms to DataSourceConfiguration objects
+
+    This is never used, except for testing that each form in an app will source correctly
+    """
+    forms = {}
+
+    for module in app.modules:
+        for form in module.forms:
+            forms = {form.xmlns: get_form_data_source(app, form)}
+
+    return forms
+
+
+DATATYPE_MAP = {
+    "Select": "single",
+    "MSelect": "multiple"
+}
+
+
+def get_form_data_source(app, form):
+    xform = XForm(form.source)
+    form_name = form.default_name()
+
+    def _get_indicator_data_type(data_type, options):
+        if data_type == "date":
+            return {"datatype": "date"}
+        if data_type in ("Select", "MSelect"):
+            return {
+                "type": "choice_list",
+                "select_style": DATATYPE_MAP[data_type],
+                "choices": [
+                    option['value'] for option in options
+                ],
+            }
+        return {"datatype": "string"}
+
+    def _make_indicator(question):
+        path = question['value'].split('/')
+        data_type = question['type']
+        options = question.get('options')
+        ret = {
+            "type": "raw",
+            "column_id": path[-1],
+            'property_path': ['form'] + path[2:],
+            "display_name": path[-1],
+        }
+        ret.update(_get_indicator_data_type(data_type, options))
+        return ret
+
+    questions = xform.get_questions([])
+
+    return DataSourceConfiguration(
+        domain=app.domain,
+        referenced_doc_type='XFormInstance',
+        table_id=_clean_table_name(app.domain, form_name),
+        display_name=form_name,
+        configured_filter={
+            "type": "property_match",
+            "property_name": "xmlns",
+            "property_path": [],
+            "property_value": xform.data_node.tag_xmlns
+        },
+        configured_indicators=[
+            _make_indicator(q) for q in questions
+        ]
+    )
+
+
+def _clean_table_name(domain, readable_name):
+    """
+    Slugifies and truncates readable name to make a valid configurable report table name.
+    """
+    name_slug = '_'.join(unidecode.unidecode(readable_name).lower().split(' '))
+    # 63 = max postgres table name, 24 = table name prefix + hash overhead
+    max_length = 63 - len(domain) - 24
+    return name_slug[:max_length]

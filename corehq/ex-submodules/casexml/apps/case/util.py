@@ -6,6 +6,7 @@ from django.conf import settings
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
+from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
 
 
@@ -77,7 +78,11 @@ def get_case_xform_ids(case_id):
                                           reduce=False,
                                           startkey=[case_id],
                                           endkey=[case_id, {}])
-    return list(set([row['key'][1] for row in results]))
+
+    # also have to add commtrack forms, which may not appear in the form --> case index
+    commtrack_reports = StockReport.objects.filter(stocktransaction__case_id=case_id)
+    commtrack_forms = commtrack_reports.values_list('form_id', flat=True).distinct()
+    return list(set([row['key'][1] for row in results] + list(commtrack_forms)))
 
 
 def update_sync_log_with_checks(sync_log, xform, cases, case_db,
