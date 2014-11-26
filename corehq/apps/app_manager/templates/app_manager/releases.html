@@ -63,15 +63,9 @@
     function track_deploy_type(type) {
         ga_track_event('App Manager', 'Deploy Type', type);
     }
-
-    function track_deploy_type_and_redirect(type, href) {
-        ga_track_event('App Manager', 'Deploy Type', type, {
-            'hitCallback': function () {
-                document.location = href;
-            }
-        });
-        return false;
-    }
+    $(function () {
+        gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
+    });
 </script>
 {% endblock %}
 
@@ -510,9 +504,8 @@
                     {% if request.user.is_superuser %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" data-bind="
+                                <a class="accordion-toggle view-source-files-link" data-bind="
                                     attr: {href: $root.url('source', id)},
-                                    click: function() { track_deploy_type_and_redirect('View Source Files', $root.url('source', id)); },
                                 ">
                                     {% trans "View Source Files" %}
                                 </a>

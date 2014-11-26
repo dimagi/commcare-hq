@@ -26,9 +26,9 @@
         ga('set', 'dimension3', '{% if request.couch_user.is_commcare_user %}yes{% else %}no{% endif %}');
         ga('send', 'pageview');
 
-        function gaTrackLink($link, eventCategory, eventAction, eventLabel, eventValue) {
+        function gaTrackLink($link_or_selector, eventCategory, eventAction, eventLabel, eventValue) {
             /* send ga info while still respecting ctrl/cmd-click (open in new window) */
-            $link.click(function (event) {
+            var eventHandler = function (event) {
                 var $this = $(this);
                 if (event.metaKey) {
                     ga_track_event(eventCategory, eventAction, eventLabel, eventValue);
@@ -40,7 +40,13 @@
                         }
                     });
                 }
-            });
+            };
+            if (typeof $link_or_selector == 'string') {
+                $(document).on('click', $link_or_selector, eventHandler);
+            } else {
+                $link_or_selector.click(eventHandler);
+            }
+
         }
     </script>
 
