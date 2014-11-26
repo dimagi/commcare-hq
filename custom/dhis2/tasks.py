@@ -1,6 +1,6 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
-from custom.dhis2.models import JsonApiRequest, JsonApiError, Dhis2OrgUnit, dhis2_entities_to_dicts, Dhis2ApiQueryError
+from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
 from django.conf import settings
 
 
@@ -55,7 +55,8 @@ def get_children_only_theirs():
     """
     Returns a list of child entities that don't have cchq_case_id set
     """
-    return get_instances_with_unset('Child', 'cchq_case_id')  # TODO: 'CCHQ Case ID'?
+    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    return dhis2_api.get_instances_with_unset('Child', 'cchq_case_id')  # TODO: 'CCHQ Case ID'?
 
 
 def get_children_only_ours():
