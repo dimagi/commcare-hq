@@ -40,6 +40,7 @@ def get_download_context(download_id, check_state=False):
     is_ready = False
     context = {}
     download_data = DownloadBase.get(download_id)
+    context['has_file'] = bool(download_data)
     if download_data is None:
         download_data = DownloadBase(download_id=download_id)
 

@@ -22,6 +22,7 @@
         {% if progress.total %}
             <p class="help-inline">
                 {% trans "Processed" %} {{ progress.percent }}%
+                ( {{ progress.current }} of {{ progress.total }} )
             </p>
         {% else %}
         {% endif %}
