@@ -4,6 +4,9 @@ from custom.dhis2.models import JsonApiRequest, JsonApiError, Dhis2OrgUnit, dhis
 from django.conf import settings
 
 
+# TODO: Handle timeouts gracefully
+
+
 @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
 def sync_org_units():
     """
@@ -48,69 +51,11 @@ def pull_child_entities(children):
     pass
 
 
-def get_top_org_unit():
-    """
-    Return the top-most organisation unit.
-
-    We expect this to be a country.
-    """
-    # TODO: Is there a better way to do this?
-    request = JsonApiRequest(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    __, org_units_json = request.get('organisationUnits', params={'links': 'false'})
-    org_unit = org_units_json['organisationUnits'][0]
-    while True:
-        __, org_unit = request.get('organisationUnits/' + org_unit['id'])
-        if 'parent' not in org_unit:
-            break
-    return org_unit
-
-
-def get_resource_id(resource, name):
-    """
-    Returns the ID of the given resource type with the given name
-    """
-    request = JsonApiRequest(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    __, json = request.get(resource, params={'links': 'false', 'query': name})
-    if not json[resource]:
-        return None
-    if len(json[resource]) > 1:
-        raise Dhis2ApiQueryError('Query returned multiple results')
-    return json[resource][0]['id']
-
-
-def get_entity_id(name):
-    """
-    Returns the ID of the given entity type
-    """
-    return get_resource_id('trackedEntities', name)
-
-
-def get_te_attr_id(name):
-    """
-    Returns the ID of the given tracked entity attribute
-    """
-    return get_resource_id('trackedEntityAttributes', name)
-
-
 def get_children_only_theirs():
     """
     Returns a list of child entities that don't have cchq_case_id set
     """
-    top = get_top_org_unit()
-    child_entity = get_entity_id('Person')  # TODO: 'Child'
-    cchq_case_id = get_te_attr_id('cchq_case_id')  # TODO: 'CCHQ Case ID'?
-    # NOTE: Because we don't have an "UNSET" filter, we will need to iterate all, and append the unset ones to a list
-    request = JsonApiRequest(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    __, json = request.get(
-        'trackedEntityInstances',
-        params={
-            'paging': 'false', 'links': 'false',
-            'trackedEntity': child_entity,
-            'ou': top['id'],
-            'ouMode': 'DESCENDANTS',
-            'attribute': cchq_case_id + ':UNSET'  # cchq_case_id  # TODO: ":UNSET"?!
-        })
-    return dhis2_entities_to_dicts(json)
+    return get_instances_with_unset('Child', 'cchq_case_id')  # TODO: 'CCHQ Case ID'?
 
 
 def get_children_only_ours():

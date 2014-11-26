@@ -5,6 +5,7 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 from unittest import skip
+from custom.dhis2.models import Dhis2Api
 
 from django.test import TestCase
 
@@ -60,3 +61,18 @@ class TaskTest(TestCase):
         send_nutrition_data should update DHIS2 with received nutrition data
         """
         pass
+
+
+class MockOutThisTest(TestCase):
+
+    host = 'http://dhis1.internal.commcarehq.org:8080/dhis'
+    username = 'admin'
+    password = 'district'
+
+    def test_list_instances(self):
+        """
+        Get a list of tracked entity instances
+        """
+        dhis2_api = Dhis2Api(self.host, self.username, self.password)
+        instances = dhis2_api.get_instances_with_unset('Child', 'Favourite Colour')
+        self.assertIsNotNone(instances)
