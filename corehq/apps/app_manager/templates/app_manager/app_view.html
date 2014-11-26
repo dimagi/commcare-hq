@@ -170,15 +170,11 @@
     {% endif %}
     <script>
         $('#open_checker').click(function() {
-            if(ga !== undefined) {
-                ga('send', 'event', 'App Builder', 'Manage Multimedia');
-            }
+            ga_track_event('App Builder', 'Manage Multimedia');
         });
 
         $('#download_zip').click(function() {
-            if(ga !== undefined) {
-                ga('send', 'event', 'App Builder', 'Download Multimedia');
-            }
+            ga_track_event('App Builder', 'Download Multimedia');
         });
     </script>
 {% endblock %}
