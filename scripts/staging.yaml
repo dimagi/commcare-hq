@@ -44,8 +44,6 @@ trunk: master
 name: autostaging
 branches:
 # this branch didn't exist on github
-#  - bulk-app-translate+double-management # SK 11/10
-#  - double-management+custom-case-list-pane+case-detail-tabs # Noah 11/24
   - historical-forms  # DR 11/4
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
@@ -54,10 +52,7 @@ branches:
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
-# - double-management # SK 10/15
   - bulk-app-translate # Noah 9/18
-  - case-detail-tabs+share-fixtures # Noah 11/15
-  - case-detail-tabs # Noah 11/6
 #  - share-fixtures # j$ 10/29
 #  - logos # Nick P 10/31 (removed by Nick P)
   - hq-dropdown+locations-for-everyone # tw 11/18
