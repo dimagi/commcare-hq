@@ -43,8 +43,7 @@
 trunk: master
 name: autostaging
 branches:
-# this branch didn't exist on github
-  - historical-forms  # DR 11/4
+  - gaTrackLink  # Danny 11/26
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
