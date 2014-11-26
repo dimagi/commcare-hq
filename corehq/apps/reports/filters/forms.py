@@ -508,7 +508,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance.show_unknown:
             return True
         for param in params:
-            if param['slug'] == 'app_id':
+            if param['slug'] == 'app':
                 return True
         return False
 
