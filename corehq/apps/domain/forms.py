@@ -124,6 +124,19 @@ class SnapshotApplicationForm(forms.Form):
             'attribution_notes'
         ]
 
+
+class SnapshotFixtureForm(forms.Form):
+    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
+    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_noop("A detailed technical description of the table"))
+
+    def __init__(self, *args, **kwargs):
+        super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = [
+            'publish',
+            'description',
+        ]
+
 class SnapshotSettingsForm(SnapshotSettingsMixin):
     title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
@@ -596,7 +609,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
     goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
-    commconnect_domain = BooleanField(label=ugettext_noop("Uses messaging?"), required=False)
     commtrack_domain = BooleanField(label=ugettext_noop("Commtrack domain?"), required=False)
 
     def save(self, domain):

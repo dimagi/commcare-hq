@@ -2,7 +2,7 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% if report_table.accordion_start %}
+{% if report_table.accordion_start and not report_table.is_mixed_report %}
     <div class="accordion" id="accordion_{{ report_table.slug }}">
         <div class="accordion-heading">
           <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion_{{ report_table.slug }}" href="#collapse_{{ report_table.slug }}">
@@ -14,68 +14,69 @@
             <div class="accordion-inner">
 {% endif %}
 
-        <table id="report_table_{{ report_table.slug }}" class="table table-nonfluid datatable" {% if pagination.filter %} data-filter="true"{% endif %}
-                >
-            <thead>
-                {%  if report_table.headers.complex %}
-                    {{ report_table.headers.render_html|safe }}
-                {% else %}
+        {% if not report_table.chart_only %}
+            <table id="report_table_{{ report_table.slug }}" class="table table-nonfluid datatable" {% if pagination.filter %} data-filter="true"{% endif %}
+                    >
+                <thead>
+                    {%  if report_table.headers.complex %}
+                        {{ report_table.headers.render_html|safe }}
+                    {% else %}
+                        <tr>
+                            {% for header in report_table.headers %}
+                                <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                                    <i class="icon-white"></i>
+                                    {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                                    {% if header.help_text %}
+                                        <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                                    {% endif %}
+                                </th>
+                            {% endfor %}
+                        </tr>
+                    {% endif %}
+                </thead>
+                <tbody>
+                {% block tabular-body %}
+                {% if report_table.pagination.is_on %}
                     <tr>
-                        {% for header in report_table.headers %}
-                            <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                                <i class="icon-white"></i>
-                                {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
-                                {% if header.help_text %}
-                                    <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
-                                {% endif %}
-                            </th>
-                        {% endfor %}
+                        <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+                            {% trans "Fetching additional data, please wait..." %}
+                        </td>
                     </tr>
                 {% endif %}
-            </thead>
-            <tbody>
-            {% block tabular-body %}
-            {% if report_table.pagination.is_on %}
-                <tr>
-                    <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                        {% trans "Fetching additional data, please wait..." %}
-                    </td>
-                </tr>
-            {% endif %}
-            {% for row in report_table.rows %}
-                <tr>
-                    {% for col in row %}
-                        {% include 'world_vision/partials/tabular_cell.html' %}
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-            {% endblock %}
-            </tbody>
-            {% if report_table.total_row and report_table.rows %}
-                <tfoot>
-                <tr>
-                    {% for col in report_table.total_row %}
-                        <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
-                    {% endfor %}
-                </tr>
-                </tfoot>
-            {% endif %}
-        </table>
+                {% for row in report_table.rows %}
+                    <tr>
+                        {% for col in row %}
+                            {% include 'world_vision/partials/tabular_cell.html' %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                {% endblock %}
+                </tbody>
+                {% if report_table.total_row and report_table.rows %}
+                    <tfoot>
+                    <tr>
+                        {% for col in report_table.total_row %}
+                            <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        {% endif %}
 
-
-        {% if charts %}
+        {% if charts and not report_table.table_only %}
             {% for chart in charts %}
             <div class="row">
                 {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-                <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span6 hide">
-                    <svg style='height: {{ chart.height }}px'> </svg>
+                <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span6 hide" style="width: 80%">
+                    <svg style='height: {{ chart.height }}px; width: 100%'> </svg>
                 </div>
             </div>
             {% endfor %}
 
         {% endif %}
 
-    {% if report_table.accordion_end %}
+    {% if report_table.accordion_end and not report_table.is_mixed_report %}
         </div>
     </div>
 </div>

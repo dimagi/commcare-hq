@@ -35,9 +35,16 @@
         <li>
             <a href="{% url 'create_configurable_data_source_from_app' domain %}">
                 <i class="icon-plus icon-blue"></i>
-                <span class="muted">{% trans "Add data source from application" %}</span>
+                <span class="muted">{% trans "Case data source from application" %}</span>
             </a>
         </li>
+        <li>
+            <a href="{% url 'create_configurable_form_data_source_from_app' domain %}">
+                <i class="icon-plus icon-blue"></i>
+                <span class="muted">{% trans "Form data source from application" %}</span>
+            </a>
+        </li>
+
 </ul>
 </nav>
 {% endblock %}

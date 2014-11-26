@@ -32,7 +32,15 @@ from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
-from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.apps.hqmedia.controller import (
+    MultimediaImageUploadController,
+    MultimediaAudioUploadController,
+)
+from corehq.apps.hqmedia.views import (
+    DownloadMultimediaZip,
+    ProcessImageFileUploadView,
+    ProcessAudioFileUploadView,
+)
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
@@ -118,7 +126,7 @@ from corehq.apps.app_manager.models import (
     get_app,
     load_case_reserved_words,
     str_to_cls,
-)
+    DetailTab)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -366,8 +374,6 @@ def default(req, domain):
     reverse() to. (I guess I should use url(..., name="default")
     in url.py instead?)
     """
-    if toggles.DASHBOARD_PREVIEW.enabled(req.couch_user.username):
-        return HttpResponseRedirect(reverse('dashboard_default', args=[domain]))
     return view_app(req, domain)
 
 
@@ -950,6 +956,36 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if app:
             context.update(get_app_view_context(req, app))
 
+    # update multimedia context for forms and modules.
+    menu_host = form or module
+    if menu_host and toggles.MENU_MULTIMEDIA_UPLOAD.enabled(req.user.username):
+
+        default_file_name = 'module%s' % module_id
+        if form_id:
+            default_file_name = '%s_form%s' % (default_file_name, form_id)
+
+        context.update({
+            'multimedia': {
+                'menu_refs': app.get_menu_media(
+                    module, module_id, form=form, form_index=form_id, as_json=True
+                ),
+                "references": app.get_references(),
+                "object_map": app.get_object_map(),
+                'upload_managers': {
+                    'icon': MultimediaImageUploadController(
+                        "hqimage",
+                        reverse(ProcessImageFileUploadView.name,
+                                args=[app.domain, app.get_id])
+                    ),
+                    'audio': MultimediaAudioUploadController(
+                        "hqaudio", reverse(ProcessAudioFileUploadView.name,
+                                args=[app.domain, app.get_id])
+                    ),
+                },
+                'default_file_name': default_file_name,
+            }
+        })
+
     error = req.GET.get('error', '')
 
     context.update({
@@ -1030,6 +1066,15 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         except IndexError:
             return bail(req, domain, app_id, not_found="form")
 
+    if form.no_vellum:
+        messages.warning(req, _(
+            "You tried to edit this form in the Form Builder. "
+            "However, your administrator has locked this form against editing "
+            "in the form builder, so we have redirected you to "
+            "the form's front page instead."
+        ))
+        return back_to_main(req, domain, app_id=app_id,
+                            unique_form_id=form.unique_id)
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
@@ -1375,6 +1420,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     detail_type = params.get('type')
     short = params.get('short', None)
     long = params.get('long', None)
+    tabs = params.get('tabs', None)
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
@@ -1399,6 +1445,9 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         detail.short.columns = map(DetailColumn.wrap, short)
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
+    if tabs is not None and long is not None:
+        # Tabs only apply to the case detail page
+        detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
@@ -1573,6 +1622,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.post_form_workflow = req.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
         form.auto_gps_capture = req.POST['auto_gps_capture'] == 'true'
+    if should_edit('no_vellum'):
+        form.no_vellum = req.POST['no_vellum'] == 'true'
 
     _handle_media_edits(req, form, should_edit, resp)
 

@@ -3,6 +3,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from casexml.apps.stock import const
 from decimal import Decimal
+from corehq.apps.products.models import SQLProduct
 
 
 class StockReport(models.Model):
@@ -21,8 +22,10 @@ class StockReport(models.Model):
     def __unicode__(self):
         return '{type} on {date} ({form})'.format(type=self.type, date=self.date, form=self.form_id)
 
+
 class StockTransaction(models.Model):
     report = models.ForeignKey(StockReport)
+    sql_product = models.ForeignKey(SQLProduct)
 
     section_id = models.CharField(max_length=100, db_index=True)
 
@@ -93,3 +96,12 @@ def create_reconciliation_transaction(sender, instance, *args, **kwargs):
                 stock_on_hand=instance.stock_on_hand,
                 subtype=const.TRANSACTION_SUBTYPE_INFERRED,
             )
+
+
+@receiver(pre_save, sender=StockTransaction)
+def populate_sql_product(sender, instance, *args, **kwargs):
+    # some day StockTransaction.sql_product should be the canonical source of
+    # the couch product_id, but until then lets not force people to
+    # look up the SQLProduct every time..
+    if not instance.sql_product_id and instance.product_id:
+        instance.sql_product = SQLProduct.objects.get(product_id=instance.product_id)

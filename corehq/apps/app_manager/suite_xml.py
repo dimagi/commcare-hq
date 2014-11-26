@@ -442,6 +442,7 @@ class Detail(IdNode):
 
     title = NodeField('title/text', Text)
     fields = NodeListField('field', Field)
+    details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
 
     def _init_variables(self):
@@ -834,12 +835,64 @@ class SuiteGenerator(SuiteGeneratorBase):
                 resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
 
+    def build_detail(self, module, detail_type, detail, detail_column_infos,
+                     tabs, id, title, start, end):
+        """
+        Recursively builds the Detail object.
+        (Details can contain other details for each of their tabs)
+        """
+        from corehq.apps.app_manager.detail_screen import get_column_generator
+        d = Detail(id=id, title=title)
+        if tabs:
+            tab_spans = detail.get_tab_spans()
+            for tab in tabs:
+                sub_detail = self.build_detail(
+                    module,
+                    detail_type,
+                    detail,
+                    detail_column_infos,
+                    [],
+                    None,
+                    Text(locale_id=self.id_strings.detail_tab_title_locale(
+                        module, detail_type, tab
+                    )),
+                    tab_spans[tab.id][0],
+                    tab_spans[tab.id][1]
+                )
+                if sub_detail:
+                    d.details.append(sub_detail)
+            if len(d.details):
+                return d
+            else:
+                return None
+
+        else:
+            # Base case (has no tabs)
+            variables = list(
+                self.detail_variables(module, detail, detail_column_infos[start:end])
+            )
+            if variables:
+                d.variables.extend(variables)
+            for column_info in detail_column_infos[start:end]:
+                fields = get_column_generator(
+                    self.app, module, detail,
+                    detail_type=detail_type, *column_info
+                ).fields
+                d.fields.extend(fields)
+            try:
+                if not self.app.enable_multi_sort:
+                    d.fields[0].sort = 'default'
+            except IndexError:
+                pass
+            else:
+                # only yield the Detail if it has Fields
+                return d
+
     @property
     @memoized
     def details(self):
 
         r = []
-        from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
@@ -854,32 +907,21 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 d = load_xmlobject_from_string(detail.custom_xml, xmlclass=Detail)
                                 r.append(d)
                             else:
-
-                                d = Detail(
-                                    id=self.id_strings.detail(module, detail_type),
-                                    title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
+                                d = self.build_detail(
+                                    module,
+                                    detail_type,
+                                    detail,
+                                    detail_column_infos,
+                                    list(detail.get_tabs()),
+                                    self.id_strings.detail(module, detail_type),
+                                    Text(locale_id=self.id_strings.detail_title_locale(
+                                        module, detail_type
+                                    )),
+                                    0,
+                                    len(detail_column_infos)
                                 )
-
-                                variables = list(self.detail_variables(module, detail, detail_column_infos))
-                                if variables:
-                                    d.variables.extend(variables)
-
-                                for column_info in detail_column_infos:
-                                    fields = get_column_generator(
-                                        self.app, module, detail,
-                                        detail_type=detail_type, *column_info
-                                    ).fields
-                                    d.fields.extend(fields)
-
-                                try:
-                                    if not self.app.enable_multi_sort:
-                                        d.fields[0].sort = 'default'
-                                except IndexError:
-                                    pass
-                                else:
-                                    # only yield the Detail if it has Fields
+                                if d:
                                     r.append(d)
-
         return r
 
     def detail_variables(self, module, detail, detail_column_infos):
