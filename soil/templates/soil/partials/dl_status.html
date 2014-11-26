@@ -1,11 +1,26 @@
 {% load i18n %}
-{% if is_ready %}
+{% if error %}
+    <h4>{% trans "There was an error processing your request" %}</h4>
+    <p class="alert alert-error">{{ error }}</p>
+{% elif is_ready %}
     <div id="ready_{{ download_id }}">
-    <p class="alert alert-success">{% trans "Your export is ready." %}</p>
-    <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
-        <i class="icon icon-white icon-download-alt"></i>
-        {% trans "Download File Now" %}
-    </a>
+    {% if has_file %}
+        <p class="alert alert-success">{% trans "Your export is ready." %}</p>
+        <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
+            <i class="icon icon-white icon-download-alt"></i>
+            {% trans "Download File Now" %}
+        </a>
+    {% else %}
+        <p class="alert alert-success">{% trans "Process complete." %}</p>
+    {% endif %}
+    {% if result %}
+        <h4>{% trans "Results" %}</h4>
+        <ul>
+        {% for message in result %}
+            <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
     <script type="text/javascript">
         $("#export-download-status .loading-indicator").addClass('hide');
     </script>
