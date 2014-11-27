@@ -558,12 +558,14 @@ def get_translation(id, lang, form, media=None):
     if media:
         xpath += "[@form='%s']" % media
         value_node = form.itext_node.find(xpath)
-        return value_node.xml.text if value_node.exists() else ""
+        trans = value_node.xml.text if value_node.exists() else ""
+        return trans if trans is not None else ""
     else:
         try:
             value_node = next(
                 n for n in form.itext.findall(xpath) if 'form' not in n.attrib
             )
-            return value_node.xml.text
+            trans = value_node.xml.text
+            return trans if trans is not None else ""
         except StopIteration:
             return ""
