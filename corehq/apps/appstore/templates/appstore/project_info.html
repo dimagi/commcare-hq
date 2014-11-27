@@ -221,6 +221,9 @@
         {% for app in applications %}
             <div id="application-{{ app.id }}">
                 <dl class="dl-horizontal">
+                    <dt>
+                        <h4 style="display: inline-block;">Application</h4>
+                    </dt>
                     <dd>
                         <h4 style="display: inline-block;">{{ app.name }}</h4>
                    </dd>
@@ -254,6 +257,33 @@
                 </dl>
             </div>
         {% endfor %}
+    </div>
+    <div id="fixtures-accordion">
+        {% for fixture in fixtures %}
+            <div id="fixtures-{{ fixture.id }}">
+                <dl class="dl-horizontal">
+                    <dt>
+                        <h4 style="display: inline-block;">Lookup Table</h4>
+                    </dt>
+                    <dd>
+                        <h4 style="display: inline-block;">{{ fixture.tag }}</h4>
+                    </dd>
+                    {% if fixture.description %}
+                        <dt>{% trans 'Description' %}</dt>
+                        <dd>
+                            {{ fixture.description|linebreaks }}
+                        </dd>
+                    {% endif %}
+                </dl>
+            </div>
+        {% endfor %}
+        {% if fixtures %}
+            <div class='alert alert-warning'>
+                Lookup Tables are not supported on our Community plan.
+                <a href="http://www.commcarehq.org/software-plans/">Learn more
+                    about our pricing plans here</a>
+            </div>
+        {% endif %}
     </div>
     <div>
         <form id="new-project-form" method="post" class="form-inline" action="{% url "domain_copy_snapshot" project %}">

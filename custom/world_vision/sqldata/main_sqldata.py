@@ -122,6 +122,7 @@ class ImmunizationOverview(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    chart_only = True
 
     @property
     def headers(self):

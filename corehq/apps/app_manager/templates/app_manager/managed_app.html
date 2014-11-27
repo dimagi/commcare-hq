@@ -259,7 +259,7 @@
                                             {{ form.name|html_trans:langs }}
                                             </span>
                                         </a>
-                                        {% if edit %}
+                                        {% if edit and not form.no_vellum %}
                                             <div class="edit-form-pencil pull-right">
                                                 <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
