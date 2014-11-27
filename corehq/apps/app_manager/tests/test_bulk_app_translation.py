@@ -4,6 +4,7 @@ import os
 
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.translations import \
     process_bulk_app_translation_upload
 
@@ -69,3 +70,15 @@ class BulkAppTranslationTest(SimpleTestCase):
             module.case_details.short.columns[0].header['fra'],
             'Nom'
         )
+
+
+class BulkAppTranslationFormTest(SimpleTestCase, TestFileMixin):
+
+    file_path = "data", "bulk_app_translation", "form_modifications"
+
+    def test_removing_form_translations(self):
+        app = Application.wrap(self.get_json("app"))
+        with codecs.open(self.get_path("modifications", "xlsx")) as f:
+            process_bulk_app_translation_upload(app, f)
+        form = app.get_module(0).get_form(0)
+        self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
