@@ -107,7 +107,7 @@ class RestoreConfig(object):
                                         actual=parsed_hash,
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
-    def get_stock_payload(self, syncop):
+    def get_stock_payload(self, cases):
         if self.domain and not self.domain.commtrack_enabled:
             return
 
@@ -134,11 +134,11 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
-        case_ids = [op.case._id for op in syncop.actual_cases_to_sync]
+        case_ids = [case.case_id for case in cases]
         all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
-        for op in syncop.actual_cases_to_sync:
-            commtrack_case = op.case
-            current_ledgers = all_current_ledgers[commtrack_case._id]
+        for commtrack_case in cases:
+            case_id = commtrack_case.case_id
+            current_ledgers = all_current_ledgers[case_id]
 
             section_product_map = defaultdict(lambda: [])
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
@@ -150,7 +150,7 @@ class RestoreConfig(object):
                 section_product_map[section_id] = sorted_product_ids
                 section_timestamp_map[section_id] = as_of
                 yield E.balance(*(transaction_to_xml(e) for e in transactions),
-                                **{'entity-id': commtrack_case._id, 'date': as_of, 'section-id': section_id})
+                                **{'entity-id': case_id, 'date': as_of, 'section-id': section_id})
 
             for section_id, consumption_section_id in self.stock_settings.section_to_consumption_types.items():
 
@@ -162,7 +162,7 @@ class RestoreConfig(object):
                         else section_product_map[section_id]
 
                     consumption_entries = filter(lambda e: e is not None, [
-                        consumption_entry(commtrack_case._id, p, section_id)
+                        consumption_entry(case_id, p, section_id)
                         for p in consumption_product_ids
                     ])
 
@@ -170,7 +170,7 @@ class RestoreConfig(object):
                         yield E.balance(
                             *consumption_entries,
                             **{
-                                'entity-id': commtrack_case._id,
+                                'entity-id': case_id,
                                 'date': section_timestamp_map[section_id],
                                 'section-id': consumption_section_id,
                             }
@@ -224,7 +224,8 @@ class RestoreConfig(object):
             response.append(case_elem)
 
         # commtrack balance sections
-        commtrack_elements = self.get_stock_payload(sync_operation)
+        case_state = [CaseState.from_case(c) for c in sync_operation.actual_cases_to_sync]
+        commtrack_elements = self.get_stock_payload(case_state)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
