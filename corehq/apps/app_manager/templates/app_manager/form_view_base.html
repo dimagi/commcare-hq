@@ -203,9 +203,11 @@
                 ko.applyBindings({
                     auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
                 }, $('#auto-gps-capture').get(0));
+                {% if request|toggle_enabled:'NO_VELLUM' %}
                 ko.applyBindings({
                     no_vellum: ko.observable({{ form.no_vellum|JSON }})
                 }, $('#no-vellum').get(0));
+                {% endif %}
 
             {% endif %}
 
