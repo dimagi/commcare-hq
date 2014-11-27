@@ -6,11 +6,13 @@ from django.db.models.query_utils import Q
 from jsonobject import JsonObject
 from jsonobject.properties import DictProperty, StringProperty
 import pytz
+from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.caselogic import CaseSyncOperation
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import get_callcenter_case_mapping
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.sofabed.models import FormData, CaseData
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 import logging
 
@@ -101,7 +103,6 @@ class CallCenterIndicators(object):
         self.data = defaultdict(dict)
         self.cc_case_type = self.domain.call_center_config.case_type
         self.cache = custom_cache or cache
-        self.case_sync_op = case_sync_op or CaseSyncOperation(user, None)
 
         try:
             self.timezone = pytz.timezone(self.domain.default_timezone)
@@ -135,8 +136,18 @@ class CallCenterIndicators(object):
     @property
     @memoized
     def call_center_cases(self):
-        all_owned_cases = self.case_sync_op.actual_owned_cases
-        return filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
+        keys = [["open type owner", self.cc_case_type, owner_id] for owner_id in self.user.get_owner_ids()]
+        all_owned_cases = []
+        for key in keys:
+            cases = CommCareCase.view(
+                'case/all_cases',
+                startkey=key,
+                endkey=key + [{}]
+            ).all()
+
+            all_owned_cases.extend(cases)
+
+        return all_owned_cases
 
     @property
     @memoized
