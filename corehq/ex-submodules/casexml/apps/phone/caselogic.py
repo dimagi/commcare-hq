@@ -199,6 +199,9 @@ class BatchedCaseSyncOperation(object):
         self.last_sync = last_sync
         self.chunk_size = chunk_size
         self.domain = self.user.domain
+        self.all_relevant_cases_dict = {}
+        self.actual_cases_to_sync = []
+        self.actual_owned_cases = []
         self.actual_relevant_cases_global = {}
         self.actual_owned_cases_global = {}
         self.actual_cases_to_sync_global = {}
@@ -212,11 +215,12 @@ class BatchedCaseSyncOperation(object):
             'limit': chunk_size,
         }
         logger.debug(
-            "BatchedCaseSyncOperation: user(%s) owners(%s)",
+            "BatchSyncOp: user(%s) owners(%s)",
             self.user.user_id,
             [key[0] for key in self.owner_keys]
         )
         self.next_key()
+        self.complete = False
 
     def next_key(self):
         if self.owner_keys:
@@ -226,7 +230,8 @@ class BatchedCaseSyncOperation(object):
             self.case_query_kwargs['startkey'] = None
 
     def view_results_chunk(self):
-        logger.debug("BatchedCaseSyncOperation: query args: %s", self.case_query_kwargs)
+        logger.debug("BatchSyncOp: query args: %s", self.case_query_kwargs)
+        logger.debug("BatchSyncOp: remaining owner keys: %s", self.owner_keys)
         if not self.case_query_kwargs['startkey']:
             return
 
@@ -239,28 +244,38 @@ class BatchedCaseSyncOperation(object):
         for result in results:
             yield result
 
-        logger.debug("BatchedCaseSyncOperation: len_results: %s", len_results)
+        logger.debug("BatchSyncOp: len_results: %s", len_results)
         if len_results >= self.chunk_size:
             self.case_query_kwargs['startkey_docid'] = result['id']
             self.case_query_kwargs['skip'] = 1
         else:
             self.next_key()
-            self.view_results_chunk()
+            for result in self.view_results_chunk():
+                yield result
 
-    def _update_global_state(self, global_set, case_liset, case_getter=None):
+    def _update_global_state(self, global_set, case_list, case_getter=None):
         case_getter = case_getter if case_getter else lambda case: case
-        global_set.update({
-            case_getter(item).case_id: CaseState.from_case(case_getter(item)) for item in case_liset
-        })
+        new_items = []
+        for item in case_list:
+            state = CaseState.from_case(case_getter(item))
+            if state.case_id not in global_set:
+                global_set[state.case_id] = state
+                new_items.append(item)
+
+        return new_items
 
     def prepare_chunk(self):
-        self.actual_owned_cases = self._actual_owned_cases()
-        if self.actual_owned_cases:
-            self.all_relevant_cases_dict = self._all_relevant_cases_dict(self.actual_owned_cases)
-            actual_relevant_cases = set(self.all_relevant_cases_dict.values())
+        if self.complete:
+            return False
 
-            self._update_global_state(self.actual_relevant_cases_global, actual_relevant_cases)
-            self._update_global_state(self.actual_owned_cases_global, self.actual_owned_cases)
+        actual_owned_cases = self._actual_owned_cases()
+        if actual_owned_cases:
+            self.actual_owned_cases = self._update_global_state(self.actual_owned_cases_global, actual_owned_cases)
+            self.all_relevant_cases_dict = self._all_relevant_cases_dict(self.actual_owned_cases)
+            actual_relevant_cases = self._update_global_state(
+                self.actual_relevant_cases_global,
+                self.all_relevant_cases_dict.values()
+            )
 
             potential_to_sync = self.get_potentail_cases(actual_relevant_cases)
             self.actual_cases_to_sync = self._actual_cases_to_sync(potential_to_sync)
@@ -283,8 +298,10 @@ class BatchedCaseSyncOperation(object):
                 self.actual_cases_to_sync,
                 case_getter=lambda update: update.case
             )
+            self.complete = True
             return True
 
+        self.complete = True
         return False
 
     def get_potentail_cases(self, cases):
@@ -300,7 +317,7 @@ class BatchedCaseSyncOperation(object):
             return not self.domain or self.domain == case.domain
 
         cases = [CommCareCase.wrap(result['value']) for result in self.view_results_chunk()]
-        return set(filter(_user_case_domain_match, cases))
+        return filter(_user_case_domain_match, cases)
 
     def _actual_cases_to_sync(self, all_potential_to_sync):
         # the world to sync involves

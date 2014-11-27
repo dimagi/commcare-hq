@@ -178,6 +178,9 @@ class RestoreConfig(object):
                         )
 
     def get_payload(self):
+        import resource
+        print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+
         user = self.user
         last_sync = self.sync_log
 
@@ -211,9 +214,8 @@ class RestoreConfig(object):
         response.append(xml.get_registration_element(user))
 
         # fixture block
-        # TODO: can we pass something to case_sync_op? Needs case_id, case_type, hq_user_id
-        # for fixture in generator.get_fixtures(user, self.version, case_sync_op=None, last_sync=last_sync):
-        #     response.append(fixture)
+        for fixture in generator.get_fixtures(user, self.version, case_sync_op=None, last_sync=last_sync):
+            response.append(fixture)
 
         sync_operation = BatchedCaseSyncOperation(user, last_sync)
         while sync_operation.prepare_chunk():
@@ -244,6 +246,7 @@ class RestoreConfig(object):
         synclog.duration = duration.seconds
         synclog.save()
         self.set_cached_payload_if_necessary(resp, duration)
+        print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         return resp
 
     def get_response(self):
