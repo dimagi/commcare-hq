@@ -15,3 +15,27 @@
 
     </script>
 {% endif %}
+
+<script>
+    /*
+    A wrapper function for Google Analytics event tracking.
+
+    Avoids duplicating checks that GA has been loaded.
+
+    Returns true if the event is tracked, and false otherwise.
+     */
+    function ga_track_event() {
+        if(typeof ga !== 'undefined') {
+            var args = ['send', 'event'];
+            for(var i in arguments) {
+                args.push(arguments[i]);
+            }
+            if(arguments.length > 3 && arguments[3].hitCallback) {
+                event.preventDefault();
+            }
+            ga.apply(null, args);
+            return true;
+        }
+        return false;
+    }
+</script>

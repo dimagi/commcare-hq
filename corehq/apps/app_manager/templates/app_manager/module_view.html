@@ -22,7 +22,11 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
+    {% if multimedia %}
+        {% include "app_manager/partials/nav_menu_media_js.html" %}
+    {% else %}
+        {% include "app_manager/partials/nav_menu_media_js.old.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
+    {% endif %}
     {% include 'hqwebapp/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
@@ -78,10 +82,10 @@
                     $(this).val(valueNoSpaces);
                 }
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
-                    $(this).closest('.control-group').addClass('error')
+                    $(this).closest('.control-group').addClass('error');
                     $('#case_type_error').css('display', 'inline');
                 } else {
-                    $(this).closest('.control-group').removeClass('error')
+                    $(this).closest('.control-group').removeClass('error');
                     $('#case_type_error').css('display', 'none');
                 }
             });
@@ -173,7 +177,11 @@
                         {% endif %}
                     </div>
                 </div>
-                {% include "app_manager/partials/nav_menu_media.html" with item=module %}
+                {% if multimedia %}
+                    {% include "app_manager/partials/nav_menu_media.html" %}
+                {% else %}
+                    {% include "app_manager/partials/nav_menu_media.old.html" with item=module %}
+                {% endif %}
                 {% endblock %}
             </fieldset>
         </form>
@@ -426,9 +434,17 @@
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
         <div id="{{ detail.type }}-detail-screen-detail-config-body">
             <div id="{{ detail.type }}-detail-screen-detail-config">
+
                 <legend>
                     {% trans "Display Properties" %}
                 </legend>
+
+                <div class="add-tab" data-bind="if: {{ request|toggle_enabled:"DETAIL_LIST_TABS"|BOOL }}">
+                    <a href="#" data-bind="click: addTab">
+                        <i class="icon-plus"></i>
+                        Add a tab
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -436,3 +452,7 @@
 </div>
 </div>
 {% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endblock modals %}

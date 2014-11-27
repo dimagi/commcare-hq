@@ -122,7 +122,7 @@ def render_form(form, domain, options):
         })
 
     # Form Metadata tab
-    meta = form.top_level_tags().get('meta', {})
+    meta = form.top_level_tags().get('meta', None) or {}
     definition = get_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
     if 'auth_context' in form:
