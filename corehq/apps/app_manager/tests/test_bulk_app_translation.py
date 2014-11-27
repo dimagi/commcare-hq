@@ -74,6 +74,17 @@ class BulkAppTranslationTest(SimpleTestCase):
 
 class BulkAppTranslationFormTest(SimpleTestCase, TestFileMixin):
 
+    # Note:
+    # This test seeks to demonstrate that the bulk app translator behaves the
+    # same way as the bulk form translator in vellum on STAGING at the moment
+    # (9257af38c646cf91575ded602d4a20e16959b7da).
+    # Vellum's bulk app translator on prod seems to not know how to handle
+    # deleted translations at the moment.
+    #
+    # There is one difference in the behavior:
+    # - Bulk app translator allows for empty <text> nodes, and will not remove
+    #   a <text> node if all <value> (translation) nodes are removed from it.
+
     file_path = "data", "bulk_app_translation", "form_modifications"
 
     def test_removing_form_translations(self):
