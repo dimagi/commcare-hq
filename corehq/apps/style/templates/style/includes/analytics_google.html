@@ -34,10 +34,17 @@
                     ga_track_event(eventCategory, eventAction, eventLabel, eventValue);
                 } else {
                     event.preventDefault();
-                    ga_track_event(eventCategory, eventAction, eventLabel, eventValue, {
-                        'hitCallback': function () {
+                    var callbackCalled = false;
+                    var callback = function () {
+                        if (!callbackCalled) {
                             document.location = $this.attr('href');
+                            callbackCalled = true;
                         }
+                    };
+                    // hitCallback doesn't get called if you can't reach analytics.js
+                    setTimeout(callback, 2000);
+                    ga_track_event(eventCategory, eventAction, eventLabel, eventValue, {
+                        'hitCallback': callback
                     });
                 }
             };
