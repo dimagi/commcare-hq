@@ -1,5 +1,6 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
+from corehq.apps.es.cases import CaseES
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
 from django.conf import settings
 
@@ -63,7 +64,15 @@ def get_children_only_ours():
     """
     Returns a list of new child cases which don't have dhis2_organization_unit_id set
     """
-    pass
+    domain = 'barproject'
+    # query = CaseES()\
+    #     .domain(domain)\
+    #     .filter(
+    #         {'or': [{'missing': {'field': 'dhis2_organization_unit_id'}},
+    #                 {'dhis2_organization_unit_id': ''}]})
+    query = CaseES().domain(domain).filter({'missing': {'field': 'dhis2_organization_unit_id'}})
+    result = query.run()
+    return result
 
 
 @periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04

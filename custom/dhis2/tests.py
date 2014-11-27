@@ -6,6 +6,7 @@ Replace this with more appropriate tests for your application.
 """
 from unittest import skip
 from custom.dhis2.models import Dhis2Api
+from custom.dhis2.tasks import get_children_only_ours
 
 from django.test import TestCase
 
@@ -65,14 +66,19 @@ class TaskTest(TestCase):
 
 class MockOutThisTest(TestCase):
 
-    host = 'http://dhis1.internal.commcarehq.org:8080/dhis'
-    username = 'admin'
-    password = 'district'
+    # host = 'http://dhis1.internal.commcarehq.org:8080/dhis'
+    # username = 'admin'
+    # password = 'district'
+    #
+    # def test_list_their_instances(self):
+    #     """
+    #     Get a list of tracked entity instances
+    #     """
+    #     dhis2_api = Dhis2Api(self.host, self.username, self.password)
+    #     instances = dhis2_api.get_instances_with_unset('Child', 'Favourite Colour')
+    #     self.assertIsNotNone(instances)
 
-    def test_list_instances(self):
-        """
-        Get a list of tracked entity instances
-        """
-        dhis2_api = Dhis2Api(self.host, self.username, self.password)
-        instances = dhis2_api.get_instances_with_unset('Child', 'Favourite Colour')
-        self.assertIsNotNone(instances)
+    def test_list_our_instances(self):
+        import ipdb ; ipdb.set_trace() ###
+        result = get_children_only_ours()
+        self.assertIsNotNone(result)
