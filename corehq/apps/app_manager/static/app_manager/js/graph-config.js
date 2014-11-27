@@ -489,7 +489,7 @@ var XYGraphSeries = function(original, childCaseTypes){
     GraphSeries.apply(this, [original, childCaseTypes]);
     var self = this;
     self.configPropertyOptions = self.configPropertyOptions.concat(['point-style', 'secondary-y']);
-    self.configPropertyHints['point-style'] = "'none', 'circle', or 'x'";
+    self.configPropertyHints['point-style'] = "'none', 'circle', 'x', 'diamond', ..."; //triangle and square are also options
     self.configPropertyHints['secondary-y'] = 'ex: false';
 
 };
