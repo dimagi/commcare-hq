@@ -353,52 +353,35 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     new_translation = ""
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
+                    # in this language is empty, fall back to another language
+                    for l in app.langs:
+                        fallback = row[get_col_key(trans_type, l)]
+                        fallback = "" if fallback == "None" else fallback
+                        if fallback:
+                            new_translation = fallback
+                            break
 
+                # Case1:    Translation should exist, Translation exists
+                # Case2:    Translation should exist, Translation dne
+                # Case3:    Translation should not exist, Translation exists
+                # Case4:    Translation should not exist, Translation dne
 
-                    # If the cell corresponding to the label for this question
-                    # in this language is empty, use the default language's
-                    # label.
-                    # NOTE: This won't help us if we're on the default
-                    # language right now
-                    new_translation = row[get_col_key(
-                        trans_type, app.langs[0]
-                    )]
-                    if new_translation == "None":
-                        new_translation = ""
-
-                if new_translation is not None:
-                    if new_translation == "" and not value_node.exists():
-                        # There wasn't a value here previously, so don't update it
-                        pass
-                    else:
-                        # Either:
-                            # 1) the user has supplied a translation where one
-                            #    did not previously exist, so we update add the
-                            #    translation.
-                            # 2) the user has "cleared" a translation that previously
-                            #    existed, so we fill its value node with ""
-
-                        # PROBLEM:
-                        #   - Are the rules the same for defaults as they are for media?
-                        #   - What should happen when the default lang is deleted but others are not?
-                        #   - What should happen when a non-default lang is deleted but the default is not?
-
-                        # create a value node if it doesn't already exist
-                        if not value_node.exists():
-                            e = etree.Element(
-                                "{f}value".format(**namespaces), attributes
-                            )
-                            text_node.xml.append(e)
-                            value_node = WrappedNode(e)
-                        # Update the translation
-                        value_node.xml.text = new_translation
+                if new_translation:
+                    # Create the node if it does not already exist
+                    if not value_node.exists():
+                        e = etree.Element(
+                            "{f}value".format(**namespaces), attributes
+                        )
+                        text_node.xml.append(e)
+                        value_node = WrappedNode(e)
+                    # Update the translation
+                    value_node.xml.text = new_translation
                 else:
-                    # Remove the value node if it already exists
+                    # Remove the node if it already exists
                     if value_node.exists():
                         value_node.xml.getparent().remove(value_node.xml)
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
-    print form.source
     return msgs
 
 
