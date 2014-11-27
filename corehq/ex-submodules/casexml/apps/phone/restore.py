@@ -1,6 +1,7 @@
 from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
+from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
 from dimagi.utils.decorators.memoized import memoized
@@ -187,19 +188,16 @@ class RestoreConfig(object):
             return cached_payload
 
         start_time = datetime.utcnow()
-        sync_operation = user.get_case_updates(last_sync)
-        last_seq = str(get_db().info()["update_seq"])
-
         # create a sync log for this
         previous_log_id = last_sync.get_id if last_sync else None
-
-        synclog = SyncLog(user_id=user.user_id, last_seq=last_seq,
-                          owner_ids_on_phone=user.get_owner_ids(),
-                          date=datetime.utcnow(), previous_log_id=previous_log_id,
-                          cases_on_phone=[CaseState.from_case(c) for c in \
-                                          sync_operation.actual_owned_cases],
-                          dependent_cases_on_phone=[CaseState.from_case(c) for c in \
-                                                    sync_operation.actual_extended_cases])
+        last_seq = str(get_db().info()["update_seq"])
+        synclog = SyncLog(
+            user_id=user.user_id,
+            last_seq=last_seq,
+            owner_ids_on_phone=user.get_owner_ids(),
+            date=datetime.utcnow(),
+            previous_log_id=previous_log_id,
+        )
         synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
@@ -211,20 +209,29 @@ class RestoreConfig(object):
         response.append(xml.get_sync_element(synclog.get_id))
         # registration block
         response.append(xml.get_registration_element(user))
-        # fixture block
-        for fixture in generator.get_fixtures(user, self.version, sync_operation, last_sync):
-            response.append(fixture)
 
-        # case blocks
-        case_xml_elements = (
-            xml.get_case_element(op.case, op.required_updates, self.version)
-            for op in sync_operation.actual_cases_to_sync
-        )
-        for case_elem in case_xml_elements:
-            response.append(case_elem)
+        # fixture block
+        # TODO: can we pass something to case_sync_op? Needs case_id, case_type, hq_user_id
+        # for fixture in generator.get_fixtures(user, self.version, case_sync_op=None, last_sync=last_sync):
+        #     response.append(fixture)
+
+        sync_operation = BatchedCaseSyncOperation(user, last_sync)
+        while sync_operation.prepare_chunk():
+            # case blocks
+            case_xml_elements = (
+                xml.get_case_element(op.case, op.required_updates, self.version)
+                for op in sync_operation.actual_cases_to_sync
+            )
+            for case_elem in case_xml_elements:
+                response.append(case_elem)
+
+        # update synclog with case lists
+        synclog.cases_on_phone = sync_operation.actual_owned_cases_global.values()
+        synclog.dependent_cases_on_phone = sync_operation.actual_extended_cases_global
+        synclog.save(**get_safe_write_kwargs())
 
         # commtrack balance sections
-        case_state = [CaseState.from_case(c) for c in sync_operation.actual_cases_to_sync]
+        case_state = sync_operation.actual_cases_to_sync_global.values()
         commtrack_elements = self.get_stock_payload(case_state)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)

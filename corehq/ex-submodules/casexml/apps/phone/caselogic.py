@@ -8,7 +8,10 @@ import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 from casexml.apps.case.xform import CaseDbCache
+from casexml.apps.phone.models import CaseState
 from dimagi.utils.decorators.memoized import memoized
+
+logger = logging.getLogger(__name__)
 
 
 def get_related_cases(initial_case_list, domain, strip_history=False, search_up=True):
@@ -186,9 +189,152 @@ class CaseSyncOperation(object):
             return case
 
 
+class BatchedCaseSyncOperation(object):
+    """
+    A record of a user's sync operation
+    """
+
+    def __init__(self, user, last_sync, chunk_size=1000):
+        self.user = user
+        self.last_sync = last_sync
+        self.chunk_size = chunk_size
+        self.domain = self.user.domain
+        self.actual_relevant_cases_global = {}
+        self.actual_owned_cases_global = {}
+        self.actual_cases_to_sync_global = {}
+
+        try:
+            self.owner_keys = [[owner_id, False] for owner_id in self.user.get_owner_ids()]
+        except AttributeError:
+            self.owner_keys = [[self.user.user_id, False]]
+
+        self.case_query_kwargs = {
+            'limit': chunk_size,
+        }
+        logger.debug(
+            "BatchedCaseSyncOperation: user(%s) owners(%s)",
+            self.user.user_id,
+            [key[0] for key in self.owner_keys]
+        )
+        self.next_key()
+
+    def next_key(self):
+        if self.owner_keys:
+            self.case_query_kwargs['startkey'] = self.owner_keys.pop()
+            self.case_query_kwargs['endkey'] = self.case_query_kwargs['startkey']
+        else:
+            self.case_query_kwargs['startkey'] = None
+
+    def view_results_chunk(self):
+        logger.debug("BatchedCaseSyncOperation: query args: %s", self.case_query_kwargs)
+        if not self.case_query_kwargs['startkey']:
+            return
+
+        results = CommCareCase.get_db().view(
+            "case/by_owner_lite",
+            **self.case_query_kwargs
+        )
+        len_results = len(results)
+
+        for result in results:
+            yield result
+
+        logger.debug("BatchedCaseSyncOperation: len_results: %s", len_results)
+        if len_results >= self.chunk_size:
+            self.case_query_kwargs['startkey_docid'] = result['id']
+            self.case_query_kwargs['skip'] = 1
+        else:
+            self.next_key()
+            self.view_results_chunk()
+
+    def _update_global_state(self, global_set, case_liset, case_getter=None):
+        case_getter = case_getter if case_getter else lambda case: case
+        global_set.update({
+            case_getter(item).case_id: CaseState.from_case(case_getter(item)) for item in case_liset
+        })
+
+    def prepare_chunk(self):
+        self.actual_owned_cases = self._actual_owned_cases()
+        if self.actual_owned_cases:
+            self.all_relevant_cases_dict = self._all_relevant_cases_dict(self.actual_owned_cases)
+            actual_relevant_cases = set(self.all_relevant_cases_dict.values())
+
+            self._update_global_state(self.actual_relevant_cases_global, actual_relevant_cases)
+            self._update_global_state(self.actual_owned_cases_global, self.actual_owned_cases)
+
+            potential_to_sync = self.get_potentail_cases(actual_relevant_cases)
+            self.actual_cases_to_sync = self._actual_cases_to_sync(potential_to_sync)
+            self._update_global_state(
+                self.actual_cases_to_sync_global,
+                self.actual_cases_to_sync,
+                case_getter=lambda update: update.case
+            )
+            return True
+        elif self.last_sync:
+            other_cases_on_phone = set([
+                self._get_case(case_id) for case_id
+                in self.last_sync.get_footprint_of_cases_on_phone()
+                if case_id not in self.actual_relevant_cases_global
+            ])
+            potential_to_sync = self.get_potentail_cases(other_cases_on_phone)
+            self.actual_cases_to_sync = self._actual_cases_to_sync(potential_to_sync)
+            self._update_global_state(
+                self.actual_cases_to_sync_global,
+                self.actual_cases_to_sync,
+                case_getter=lambda update: update.case
+            )
+            return True
+
+        return False
+
+    def get_potentail_cases(self, cases):
+        return filter_cases_modified_elsewhere_since_sync(list(cases), self.last_sync)
+
+    @property
+    def actual_extended_cases_global(self):
+        # should only be called once all chunks have been completed
+        return list(set(self.actual_relevant_cases_global.values()) - set(self.actual_owned_cases_global.values()))
+
+    def _actual_owned_cases(self):
+        def _user_case_domain_match(case):
+            return not self.domain or self.domain == case.domain
+
+        cases = [CommCareCase.wrap(result['value']) for result in self.view_results_chunk()]
+        return set(filter(_user_case_domain_match, cases))
+
+    def _actual_cases_to_sync(self, all_potential_to_sync):
+        # the world to sync involves
+        # Union(cases on the phone, footprint of those,
+        #       cases the server thinks are the phone's, footprint of those)
+        # intersected with:
+        # (cases modified by someone else since the last sync)
+
+        # TODO: clean this up. Basically everything is a set of cases,
+        # but in order to do proper comparisons we use IDs so all of these
+        # operations look much more complicated than they should be.
+        actual_cases_to_sync = []
+        for case in all_potential_to_sync:
+            sync_update = CaseSyncUpdate(case, self.last_sync)
+            if sync_update.required_updates:
+                actual_cases_to_sync.append(sync_update)
+
+        return actual_cases_to_sync
+
+    def _all_relevant_cases_dict(self, actual_owned_cases):
+        return get_footprint(actual_owned_cases, domain=self.user.domain)
+
+    def _get_case(self, case_id):
+        if case_id in self.all_relevant_cases_dict:
+            return self.all_relevant_cases_dict[case_id]
+        else:
+            case = CommCareCase.get_with_rebuild(case_id)
+            self.all_relevant_cases_dict[case_id] = case
+            return case
+
+
 def get_case_updates(user, last_sync):
     """
-    Given a user, get the open/updated cases since the last sync 
+    Given a user, get the open/updated cases since the last sync
     operation.  This returns a CaseSyncOperation object containing
     various properties about cases that should sync.
     """
