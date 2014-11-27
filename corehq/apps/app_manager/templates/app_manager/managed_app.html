@@ -170,7 +170,7 @@
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
-            <a href="{% url "view_app" domain app.id %}multimedia/?edit={{ edit|BOOL }}#multimedia" data-toggle="tab">
+            <a id="multimedia-shower" href="{% url "view_app" domain app.id %}multimedia/?edit={{ edit|BOOL }}#multimedia" data-toggle="tab">
                 <i class="icon-picture"></i>
                 {% trans "Multimedia" %}
             </a>
