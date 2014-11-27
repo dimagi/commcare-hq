@@ -361,11 +361,6 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             new_translation = fallback
                             break
 
-                # Case1:    Translation should exist, Translation exists
-                # Case2:    Translation should exist, Translation dne
-                # Case3:    Translation should not exist, Translation exists
-                # Case4:    Translation should not exist, Translation dne
-
                 if new_translation:
                     # Create the node if it does not already exist
                     if not value_node.exists():
