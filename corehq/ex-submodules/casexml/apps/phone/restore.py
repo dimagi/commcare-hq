@@ -25,6 +25,7 @@ from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
 
+logger = logging.getLogger(__name__)
 
 # how long a cached payload sits around for (in seconds).
 INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
@@ -218,23 +219,25 @@ class RestoreConfig(object):
             response.append(fixture)
 
         sync_operation = BatchedCaseSyncOperation(user, last_sync)
-        while sync_operation.prepare_chunk():
+        for batch in sync_operation.batches():
+            logger.debug(batch)
+
             # case blocks
             case_xml_elements = (
                 xml.get_case_element(op.case, op.required_updates, self.version)
-                for op in sync_operation.actual_cases_to_sync
+                for op in batch.case_updates_to_sync
             )
             for case_elem in case_xml_elements:
                 response.append(case_elem)
+            print 'Memory usage: %s' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
-        # update synclog with case lists
-        synclog.cases_on_phone = sync_operation.actual_owned_cases_global.values()
-        synclog.dependent_cases_on_phone = sync_operation.actual_extended_cases_global
+        sync_state = sync_operation.global_state
+        synclog.cases_on_phone = sync_state.actual_owned_cases
+        synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
         synclog.save(**get_safe_write_kwargs())
 
         # commtrack balance sections
-        case_state = sync_operation.actual_cases_to_sync_global.values()
-        commtrack_elements = self.get_stock_payload(case_state)
+        commtrack_elements = self.get_stock_payload(sync_state.all_synced_cases)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
