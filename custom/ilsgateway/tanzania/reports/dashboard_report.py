@@ -1,3 +1,4 @@
+from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.tanzania import MultiReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData, DistrictSummaryData, \
     SohSubmissionData, DeliverySubmissionData, ProductAvailabilitySummary
@@ -11,7 +12,7 @@ from django.utils import html
 
 class DashboardReport(MultiReport):
     title = "Dashboard report"
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
     name = "Dashboard report"
     slug = 'ils_dashboard_report'
 
@@ -31,6 +32,6 @@ class DashboardReport(MultiReport):
         return html.escape(make_url(
             StockOnHandReport,
             self.domain,
-            '?location_id=%s&month=%s&year=%s',
-            (config['location_id'], config['month'], config['year'])
+            '?location_id=%s&month=%s&year=%s&filter_by_program=%s%s',
+            (config['location_id'], config['month'], config['year'], config['program'], config['prd_part_url'])
         ))
