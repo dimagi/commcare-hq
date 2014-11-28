@@ -7,12 +7,9 @@ from jsonobject import JsonObject
 from jsonobject.properties import DictProperty, StringProperty
 import pytz
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.caselogic import CaseSyncOperation
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import get_callcenter_case_mapping
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.sofabed.models import FormData, CaseData
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 import logging
 
