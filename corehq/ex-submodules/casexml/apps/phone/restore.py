@@ -111,7 +111,7 @@ class RestoreConfig(object):
                                         actual=parsed_hash,
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
-    def get_stock_payload(self, cases):
+    def get_stock_payload(self, case_state_list):
         if self.domain and not self.domain.commtrack_enabled:
             return
 
@@ -138,9 +138,9 @@ class RestoreConfig(object):
             if consumption_value is not None:
                 return entry_xml(product_id, consumption_value)
 
-        case_ids = [case.case_id for case in cases]
+        case_ids = [case.case_id for case in case_state_list]
         all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
-        for commtrack_case in cases:
+        for commtrack_case in case_state_list:
             case_id = commtrack_case.case_id
             current_ledgers = all_current_ledgers[case_id]
 
@@ -256,8 +256,8 @@ class RestoreConfig(object):
             response.append(case_elem)
 
         # commtrack balance sections
-        case_state = [CaseState.from_case(c) for c in sync_operation.actual_cases_to_sync]
-        commtrack_elements = self.get_stock_payload(case_state)
+        case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
+        commtrack_elements = self.get_stock_payload(case_state_list)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
