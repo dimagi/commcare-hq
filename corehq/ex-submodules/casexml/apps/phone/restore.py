@@ -255,7 +255,8 @@ class RestoreConfig(object):
             response.append(case_elem)
 
         # commtrack balance sections
-        commtrack_elements = self.get_stock_payload(sync_operation)
+        case_state = [CaseState.from_case(c) for c in sync_operation.actual_cases_to_sync]
+        commtrack_elements = self.get_stock_payload(case_state)
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
