@@ -18,7 +18,7 @@ from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.filters import RawFilter, IN
+from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
 
 from dimagi.utils.couch.database import iter_docs
@@ -26,7 +26,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn
+from sqlagg.columns import SimpleColumn, SumColumn, CountUniqueColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
@@ -228,6 +228,7 @@ class OpmHealthStatusSqlData(SqlData):
             user_id=self.user_id,
             startdate=str(self.datespan.startdate_utc.date()),
             enddate=str(self.datespan.enddate_utc.date()),
+            lmp_total=1
         )
         return filter
 
@@ -285,16 +286,21 @@ class OpmHealthStatusSqlData(SqlData):
 
         return [
             DatabaseColumn('# of Beneficiaries Registered',
-                SumColumn('beneficiaries_registered_total',
+                CountUniqueColumn('account_number',
                     alias="beneficiaries",
                     filters=self.wrapped_sum_column_filters_extended),
                 format_fn=normal_format),
-            AggColumn(
+            AggregateColumn(
                 '# of Pregnant Women Registered',
-                alias='beneficiaries',
-                sum_slug='lmp_total',
+                format_percent,
+                [
+                    AliasColumn('beneficiaries'),
+                    CountUniqueColumn(
+                        'account_number',
+                        filters=self.wrapped_sum_column_filters_extended + [EQFilter('lmp_total', 'lmp_total')]),
+                ],
                 slug='lmp',
-                extended=True,
+                format_fn=ret_val,
             ),
             AggregateColumn('# of Mothers of Children Aged 3 Years and Below Registered',
                 format_percent,
@@ -1156,6 +1162,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             raise Exception("It doesn't look like this machine is configured for "
                             "excel export. To export to excel you have to run the "
                             "command:  easy_install xlutils")
+        self.pagination.count = 1000000
         headers = self.headers
         formatted_rows = self.rows
 
