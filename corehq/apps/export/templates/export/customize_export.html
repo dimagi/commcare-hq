@@ -346,7 +346,22 @@
                 self.save = function () {
                     self.save.state('saving');
                     $.post(self.urls.save(), self.output()).done(function (data) {
-                        window.location.href = data.redirect;
+
+                        var redirect = function(){
+                            window.location.href = data.redirect;
+                        };
+
+                        // If the button had said "Create"
+                        if (!self.custom_export._id || !self.custom_export._id()){
+                            // Record an event
+                            ga_track_event('Form Exports', 'Custom export creation', "", {
+                                'hitCallback': function(){
+                                    redirect();
+                                }
+                            });
+                        } else {
+                            redirect();
+                        }
                     }).fail(function (response) {
                         var data = $.parseJSON(response.responseText);
                         self.save.state('error');
