@@ -304,7 +304,7 @@ class CaseSyncBatch(object):
         """
         return []
 
-    def _get_potentail_cases(self, cases):
+    def _get_potential_cases(self, cases):
         return filter_cases_modified_elsewhere_since_sync(list(cases), self.last_sync)
 
     def _case_sync_updates(self, all_potential_to_sync):
@@ -332,7 +332,7 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
             "case/get_lite",
             keys=list(other_case_ids_on_phone)
         ).all()
-        potential_to_sync = self._get_potentail_cases(other_cases_on_phone)
+        potential_to_sync = self._get_potential_cases(other_cases_on_phone)
         case_sync_updates = self._case_sync_updates(potential_to_sync)
         self.global_state.update_synced_cases(case_sync_updates)
         return case_sync_updates
@@ -370,7 +370,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
         all_relevant_cases_dict = self._all_relevant_cases_dict(actual_owned_cases)
         actual_relevant_cases = self.global_state.update_relevant_cases(all_relevant_cases_dict.values())
 
-        potential_to_sync = self._get_potentail_cases(actual_relevant_cases)
+        potential_to_sync = self._get_potential_cases(actual_relevant_cases)
         case_sync_updates = self._case_sync_updates(potential_to_sync)
         self.global_state.update_synced_cases(case_sync_updates)
 
