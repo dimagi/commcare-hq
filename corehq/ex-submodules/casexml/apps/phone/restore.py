@@ -202,6 +202,7 @@ class RestoreConfig(object):
             date=datetime.utcnow(),
             previous_log_id=previous_log_id
         )
+        synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
         response = get_response_element(
