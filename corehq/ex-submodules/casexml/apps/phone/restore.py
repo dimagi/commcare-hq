@@ -1,7 +1,6 @@
 from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
-import resource
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
@@ -223,9 +222,7 @@ class RestoreConfig(object):
         else:
             payload_fn = self._get_case_payload
 
-        logger.debug('Memory usage: %s (kb)', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         response = payload_fn(response, user, last_sync, synclog)
-        logger.debug('Memory usage: %s (kb)', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         if self.items:
             response.attrib['items'] = '%d' % len(response.getchildren())
@@ -277,8 +274,6 @@ class RestoreConfig(object):
             )
             for case_elem in case_xml_elements:
                 response.append(case_elem)
-
-            logger.debug('Memory usage: %s (kb)', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         sync_state = sync_operation.global_state
         synclog.cases_on_phone = sync_state.actual_owned_cases
