@@ -111,7 +111,8 @@ class ProductAvailabilitySummary(ILSData):
         if self.config['org_summary']:
             product_availability = ProductAvailabilityData.objects.filter(
                 date__range=(self.config['startdate'], self.config['enddate']),
-                supply_point=self.config['org_summary'].supply_point)
+                supply_point=self.config['org_summary'].supply_point,
+                product__in=self.config['products'])
         return product_availability
 
     @property
