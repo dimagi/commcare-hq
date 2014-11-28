@@ -219,4 +219,5 @@ Refer to these resources which provide good information on memory profiling:
 * `Using heapy <http://smira.ru/wp-content/uploads/2011/08/heapy.html>`_
 * `Diving into python memory <https://github.com/CyrilPeponnet/cyrilpeponnet.github.com/blob/master/_posts/2014-09-18-diving-into-python-memory.md>`_
 * `Memory usage graphs with ps <http://brunogirin.blogspot.com.au/2010/09/memory-usage-graphs-with-ps-and-gnuplot.html>`_
+    * `while true; do ps -C python -o etimes=,pid=,%mem=,vsz= >> mem.txt; sleep 1; done`
 
