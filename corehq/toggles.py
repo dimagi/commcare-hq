@@ -228,3 +228,9 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+BATCHED_RESTORE = StaticToggle(
+    'batched_restore',
+    'Batch OTA restore response generation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)

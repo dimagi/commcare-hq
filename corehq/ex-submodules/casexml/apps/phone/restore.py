@@ -1,9 +1,11 @@
 from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
+import resource
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
+from corehq.toggles import BATCHED_RESTORE
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -179,9 +181,6 @@ class RestoreConfig(object):
                         )
 
     def get_payload(self):
-        import resource
-        print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-
         user = self.user
         last_sync = self.sync_log
 
@@ -192,17 +191,17 @@ class RestoreConfig(object):
             return cached_payload
 
         start_time = datetime.utcnow()
+        last_seq = str(get_db().info()["update_seq"])
+
         # create a sync log for this
         previous_log_id = last_sync.get_id if last_sync else None
-        last_seq = str(get_db().info()["update_seq"])
         synclog = SyncLog(
             user_id=user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=user.get_owner_ids(),
             date=datetime.utcnow(),
-            previous_log_id=previous_log_id,
+            previous_log_id=previous_log_id
         )
-        synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
         response = get_response_element(
@@ -218,6 +217,53 @@ class RestoreConfig(object):
         for fixture in generator.get_fixtures(user, self.version, case_sync_op=None, last_sync=last_sync):
             response.append(fixture)
 
+        if BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username):
+            payload_fn = self._get_case_payload_batched
+        else:
+            payload_fn = self._get_case_payload
+
+        logger.debug('Memory usage: %s (kb)', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        response = payload_fn(response, user, last_sync, synclog)
+        logger.debug('Memory usage: %s (kb)', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+
+        if self.items:
+            response.attrib['items'] = '%d' % len(response.getchildren())
+
+        resp = xml.tostring(response)
+        duration = datetime.utcnow() - start_time
+        synclog.duration = duration.seconds
+        synclog.save()
+        self.set_cached_payload_if_necessary(resp, duration)
+        return resp
+
+    def _get_case_payload(self, response, user, last_sync, synclog):
+        sync_operation = user.get_case_updates(last_sync)
+        synclog.cases_on_phone = [
+            CaseState.from_case(c) for c in sync_operation.actual_owned_cases
+        ]
+        synclog.dependent_cases_on_phone = [
+            CaseState.from_case(c) for c in sync_operation.actual_extended_cases
+        ]
+        synclog.save(**get_safe_write_kwargs())
+
+        # case blocks
+        case_xml_elements = (
+            xml.get_case_element(op.case, op.required_updates, self.version)
+            for op in sync_operation.actual_cases_to_sync
+        )
+        for case_elem in case_xml_elements:
+            response.append(case_elem)
+
+        # commtrack balance sections
+        commtrack_elements = self.get_stock_payload(sync_operation)
+        for ct_elem in commtrack_elements:
+            response.append(ct_elem)
+
+        return response
+
+    def _get_case_payload_batched(self, response, user, last_sync, synclog):
+        synclog.save(**get_safe_write_kwargs())
+
         sync_operation = BatchedCaseSyncOperation(user, last_sync)
         for batch in sync_operation.batches():
             logger.debug(batch)
@@ -229,7 +275,8 @@ class RestoreConfig(object):
             )
             for case_elem in case_xml_elements:
                 response.append(case_elem)
-            print 'Memory usage: %s' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+
+            logger.debug('Memory usage: %s (kb)', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
         sync_state = sync_operation.global_state
         synclog.cases_on_phone = sync_state.actual_owned_cases
@@ -241,16 +288,7 @@ class RestoreConfig(object):
         for ct_elem in commtrack_elements:
             response.append(ct_elem)
 
-        if self.items:
-            response.attrib['items'] = '%d' % len(response.getchildren())
-
-        resp = xml.tostring(response)
-        duration = datetime.utcnow() - start_time
-        synclog.duration = duration.seconds
-        synclog.save()
-        self.set_cached_payload_if_necessary(resp, duration)
-        print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        return resp
+        return response
 
     def get_response(self):
         try:
