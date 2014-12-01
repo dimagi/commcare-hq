@@ -234,3 +234,9 @@ CUSTOM_DATA_CHOICES = StaticToggle(
     "Custom Data Choices - optionally specify choices for custom data fields",
     [NAMESPACE_DOMAIN],
 )
+
+BATCHED_RESTORE = StaticToggle(
+    'batched_restore',
+    'Batch OTA restore response generation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
