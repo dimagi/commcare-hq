@@ -210,3 +210,12 @@ Additional references
 ^^^^^^^^^^^^^^^^^^^^^
 * http://django-extensions.readthedocs.org/en/latest/runprofileserver.html
 
+Memory profiling
+~~~~~~~~~~~~~~~~
+
+Refer to these resources which provide good information on memory profiling:
+
+* http://chase-seibert.github.io/blog/2013/08/03/diagnosing-memory-leaks-python.html
+* http://smira.ru/wp-content/uploads/2011/08/heapy.html
+* https://github.com/CyrilPeponnet/cyrilpeponnet.github.com/blob/master/_posts/2014-09-18-diving-into-python-memory.md
+

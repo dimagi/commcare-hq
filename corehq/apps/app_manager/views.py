@@ -126,7 +126,7 @@ from corehq.apps.app_manager.models import (
     get_app,
     load_case_reserved_words,
     str_to_cls,
-)
+    DetailTab)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -558,25 +558,6 @@ def get_app_view_context(request, app):
     build_spec_setting['options_map'] = options_map
     build_spec_setting['default_app_version'] = app.application_version
 
-    if app.get_doc_type() == 'Application':
-        try:
-            # todo remove get_media_references
-            multimedia = app.get_media_references()
-        except ProcessTimedOut:
-            notify_exception(request)
-            messages.warning(request, (
-                "We were unable to check if your forms had errors. "
-                "Refresh the page and we will try again."
-            ))
-            multimedia = {
-                'references': {},
-                'form_errors': True,
-                'missing_refs': False,
-            }
-        context.update({
-            'multimedia': multimedia,
-        })
-
     context.update({
         'bulk_upload': {
             'action': reverse('upload_translations',
@@ -628,16 +609,25 @@ def _clear_app_cache(request, domain):
         cache.delete(key)
 
 
+def _get_edit(request, domain):
+    if getattr(request, 'couch_user', None):
+        return (
+            (request.GET.get('edit', 'true') == 'true') and
+            (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+        )
+    else:
+        return False
+
+
 def get_apps_base_context(request, domain, app):
 
     lang, langs = get_langs(request, app)
 
+    edit = _get_edit(request, domain)
+
     if getattr(request, 'couch_user', None):
-        edit = ((request.GET.get('edit', 'true') == 'true') and
-                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser))
         timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
-        edit = False
         timezone = None
 
     context = {
@@ -1051,6 +1041,35 @@ def view_app(req, domain, app_id=None):
     return view_generic(req, domain, app_id)
 
 
+@require_deploy_apps
+def multimedia_ajax(request, domain, app_id, template='app_manager/partials/multimedia_ajax.html'):
+    app = get_app(domain, app_id)
+    if app.get_doc_type() == 'Application':
+        try:
+            # todo remove get_media_references
+            multimedia = app.get_media_references()
+        except ProcessTimedOut:
+            notify_exception(request)
+            messages.warning(request, (
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            ))
+            multimedia = {
+                'references': {},
+                'form_errors': True,
+                'missing_refs': False,
+            }
+        context = {
+            'multimedia': multimedia,
+            'domain': domain,
+            'app': app,
+            'edit': _get_edit(request, domain)
+        }
+        return render(request, template, context)
+    else:
+        raise Http404()
+
+
 @require_can_edit_apps
 def form_source(req, domain, app_id, module_id, form_id):
     return form_designer(req, domain, app_id, module_id, form_id)
@@ -1456,6 +1475,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     detail_type = params.get('type')
     short = params.get('short', None)
     long = params.get('long', None)
+    tabs = params.get('tabs', None)
     filter = params.get('filter', ())
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
@@ -1479,6 +1499,9 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         detail.short.columns = map(DetailColumn.wrap, short)
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
+    if tabs is not None and long is not None:
+        # Tabs only apply to the case detail page
+        detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.

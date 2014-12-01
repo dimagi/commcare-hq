@@ -54,16 +54,13 @@
             }
         });
 
-        {% if GOOGLE_ANALYTICS_ID %}
-            $('#publish-now-button').on('click', function() {
-                event.preventDefault();
-                ga('send', 'event', 'Exchange', 'Publish Now', '?', {
-                    'hitCallback': function() {
-                        $('#snapshot-form').submit();
-                    }
-                });
+        $('#publish-now-button').on('click', function() {
+            ga_track_event('Exchange', 'Publish Now', '?', {
+                'hitCallback': function() {
+                    $('#snapshot-form').submit();
+                }
             });
-        {% endif %}
+        });
     });
 </script>
 {% endblock %}

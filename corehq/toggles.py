@@ -120,6 +120,12 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
     [NAMESPACE_USER]
 )
 
+DETAIL_LIST_TABS = StaticToggle(
+    'detail-list-tabs',
+    'Tabs in the case detail list',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -202,7 +208,7 @@ NEW_CASE_PROCESSING = PredicatablyRandomToggle(
     'new_case_processing',
     'Use new case processing/rebuild logic',
     namespace=NAMESPACE_DOMAIN,
-    randomness=0.05,
+    randomness=0.25,
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(

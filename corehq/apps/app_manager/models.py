@@ -1059,6 +1059,18 @@ class GraphConfiguration(DocumentSchema):
     series = SchemaListProperty(GraphSeries)
 
 
+class DetailTab(IndexedSchema):
+    """
+    Represents a tab in the case detail screen on the phone. Ex:
+        {
+            'name': 'Medical',
+            'starting_index': 3
+        }
+    """
+    header = DictProperty()
+    starting_index = IntegerProperty()
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -1181,8 +1193,27 @@ class Detail(IndexedSchema):
     columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
 
+    tabs = SchemaListProperty(DetailTab)
+    get_tabs = IndexedSchema.Getter('tabs')
+
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
+
+    def get_tab_spans(self):
+        '''
+        Return the starting and ending indices into self.columns deliminating
+        the columns that should be in each tab.
+        :return:
+        '''
+        tabs = list(self.get_tabs())
+        ret = []
+        for tab in tabs:
+            try:
+                end = tabs[tab.id + 1].starting_index
+            except IndexError:
+                end = len(self.columns)
+            ret.append((tab.starting_index, end))
+        return ret
 
     @parse_int([1])
     def get_column(self, i):
