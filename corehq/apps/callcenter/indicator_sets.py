@@ -6,9 +6,8 @@ from django.db.models.query_utils import Q
 from jsonobject import JsonObject
 from jsonobject.properties import DictProperty, StringProperty
 import pytz
-from casexml.apps.phone.caselogic import CaseSyncOperation
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import get_callcenter_case_mapping
 from corehq.apps.reports.filters.select import CaseTypeMixin
 from corehq.apps.sofabed.models import FormData, CaseData
 from dimagi.utils.decorators.memoized import memoized
@@ -86,8 +85,6 @@ class CallCenterIndicators(object):
 
     :param domain:          the domain object
     :param user:            the user to generate the fixture for
-    :param case_sync_op:    the CaseSyncOperation object for the user. This is used to get the users' cases.
-                            if not supplied the users' cases will get re-calculated
     :param custom_cache:    used in testing to verify caching
     :param override_date:   used in testing
 
@@ -95,13 +92,13 @@ class CallCenterIndicators(object):
     no_value = 0
     name = 'call-center'
 
-    def __init__(self, domain, user, case_sync_op=None, custom_cache=None, override_date=None):
+    def __init__(self, domain, user, custom_cache=None, override_date=None, override_cases=None):
         self.domain = domain
         self.user = user
         self.data = defaultdict(dict)
         self.cc_case_type = self.domain.call_center_config.case_type
         self.cache = custom_cache or cache
-        self.case_sync_op = case_sync_op or CaseSyncOperation(user, None)
+        self.override_cases = override_cases
 
         try:
             self.timezone = pytz.timezone(self.domain.default_timezone)
@@ -135,8 +132,26 @@ class CallCenterIndicators(object):
     @property
     @memoized
     def call_center_cases(self):
-        all_owned_cases = self.case_sync_op.actual_owned_cases
-        return filter(lambda case: case.type == self.cc_case_type, all_owned_cases)
+        if self.override_cases:
+            return self.override_cases
+
+        keys = [
+            ["open type owner", self.domain.name, self.cc_case_type, owner_id]
+            for owner_id in self.user.get_owner_ids()
+        ]
+        all_owned_cases = []
+        for key in keys:
+            cases = CommCareCase.view(
+                'case/all_cases',
+                startkey=key,
+                endkey=key + [{}],
+                reduce=False,
+                include_docs=True
+            ).all()
+
+            all_owned_cases.extend(cases)
+
+        return all_owned_cases
 
     @property
     @memoized
