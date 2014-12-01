@@ -4,9 +4,10 @@
             <text><locale id="case_list_form.m0"/></text>
         </display>
         <stack>
-            <create>
+            <push>
                 <command>m0-f0</command>
-            </create>
+                <datum id="case_id_autogen" value="uuid()"/>
+            </push>
         </stack>
     </action>
 </partial>

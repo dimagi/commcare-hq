@@ -176,9 +176,10 @@
             <media image="jr://file/commcare/image/new_case.png" audio="jr://file/commcare/audio/new_case.mp3"/>
         </display>
         <stack>
-            <create>
+            <push>
                 <command>m0-f0</command>
-            </create>
+                <datum id="case_id_autogen" value="uuid()"/>
+            </push>
         </stack>
     </action>
 </detail>
