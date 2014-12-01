@@ -1,6 +1,6 @@
 function (doc) {
     // !code util/mvp.js
-    if(isChildVisitForm(doc)
+    if(isChildVisitForm(doc) ||
        isChildWelfareForm(doc)) {
         var indicators = get_indicators(doc);
 
