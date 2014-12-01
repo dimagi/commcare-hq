@@ -67,6 +67,7 @@ branches:
   - system-custom-data  # Ethan 11/24
   - quickview # Simon 11/25
   - fix-form-filtering # Nick P 11/26
+  - double-management # SK 12/1
 submodules:
   submodules/couchlog-src:
     branches:
