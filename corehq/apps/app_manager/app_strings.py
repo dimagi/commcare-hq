@@ -72,7 +72,10 @@ def _create_custom_app_strings(app, lang):
             yield id_strings.form_locale(form), maybe_add_index(form_name)
 
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
-            yield id_strings.case_list_form_locale(module), trans(module.case_list_form.label) or "Create a new Case"
+            yield (
+                id_strings.case_list_form_locale(module),
+                trans(module.case_list_form.label) or "Create a new Case"
+            )
 
 
 class AppStringsBase(object):
