@@ -871,6 +871,24 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_type=detail_type, *column_info
                 ).fields
                 d.fields.extend(fields)
+
+            if module.module_type == 'basic' and not module.parent_select.active and \
+                    module.case_list_form.form_id and detail_type.endswith('short'):
+                # add form action to detail
+                form = module.get_form_by_unique_id(module.case_list_form.form_id)
+                d.action = Action(
+                    display=Display(
+                        text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
+                        media_image=module.case_list_form.media_image,
+                        media_audio=module.case_list_form.media_audio,
+                    ),
+                    stack=Stack()
+                )
+                frame = PushFrame()
+                frame.add_command(self.id_strings.form_command(form))
+                frame.add_datum(StackDatum(id=CASE_ID_AUTOGEN, value='uuid()'))
+                d.action.stack.add_frame(frame)
+
             try:
                 if not self.app.enable_multi_sort:
                     d.fields[0].sort = 'default'
@@ -896,24 +914,20 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                         if detail_column_infos:
 
-                            variables = list(self.detail_variables(module, detail, detail_column_infos))
-                            if variables:
-                                d.variables.extend(variables)
-
-                            for column_info in detail_column_infos:
-                                fields = get_column_generator(
-                                    self.app, module, detail,
-                                    detail_type=detail_type, *column_info
-                                ).fields
-                                d.fields.extend(fields)
-
-                            try:
-                                if not self.app.enable_multi_sort:
-                                    d.fields[0].sort = 'default'
-                            except IndexError:
-                                pass
-                            else:
-                                # only yield the Detail if it has Fields
+                            d = self.build_detail(
+                                module,
+                                detail_type,
+                                detail,
+                                detail_column_infos,
+                                list(detail.get_tabs()),
+                                self.id_strings.detail(module, detail_type),
+                                Text(locale_id=self.id_strings.detail_title_locale(
+                                    module, detail_type
+                                )),
+                                0,
+                                len(detail_column_infos)
+                            )
+                            if d:
                                 r.append(d)
         return r
 
