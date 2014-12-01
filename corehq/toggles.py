@@ -120,6 +120,12 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
     [NAMESPACE_USER]
 )
 
+DETAIL_LIST_TABS = StaticToggle(
+    'detail-list-tabs',
+    'Tabs in the case detail list',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
@@ -179,6 +185,12 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+MENU_MULTIMEDIA_UPLOAD = StaticToggle(
+    'menu_multimedia_upload',
+    'Menu Multimedia Upload (Module & Form)',
+    [NAMESPACE_USER]
+)
+
 
 VIEW_SYNC_HISTORY = StaticToggle(
     'sync_history_report',
@@ -196,7 +208,7 @@ NEW_CASE_PROCESSING = PredicatablyRandomToggle(
     'new_case_processing',
     'Use new case processing/rebuild logic',
     namespace=NAMESPACE_DOMAIN,
-    randomness=0.05,
+    randomness=0.25,
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
@@ -208,4 +220,17 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 MULTIMEDIA_EXPORT = StaticToggle(
     'multimedia_export',
     'Export multimedia from forms'
+)
+
+NO_VELLUM = StaticToggle(
+    'no_vellum',
+    'Allow disabling Form Builder per form '
+    '(for custom forms that Vellum breaks)',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+BATCHED_RESTORE = StaticToggle(
+    'batched_restore',
+    'Batch OTA restore response generation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

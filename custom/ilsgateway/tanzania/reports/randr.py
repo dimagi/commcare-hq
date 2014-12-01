@@ -2,6 +2,7 @@ from datetime import datetime
 from functools import partial
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
@@ -118,7 +119,9 @@ class RRReportingHistory(ILSData):
                     total_possible += g.total
             hist_resp_rate = rr_format_percent(total_responses, total_possible)
 
-            url = make_url(FacilityDetailsReport, self.config['domain'], '?location_id=%s', (child._id, ))
+            url = make_url(FacilityDetailsReport, self.config['domain'],
+                           '?location_id=%s&filter_by_program=%s%s',
+                           (child._id, self.config['program'], self.config['prd_part_url']))
 
             rr_value = randr_value(child._id, int(self.config['month']), int(self.config['year']))
             contact = get_default_contact_for_location(self.config['domain'], child._id)
@@ -159,7 +162,7 @@ class RRreport(DetailsReport):
     title = 'R & R'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
 
     @property
     @memoized

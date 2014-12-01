@@ -4,8 +4,6 @@ from dimagi.utils.dates import force_to_datetime
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import Location
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
-from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
