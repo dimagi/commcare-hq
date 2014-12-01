@@ -146,8 +146,9 @@ class EditCommCareUserView(BaseFullEditUserView):
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.custom_data.form,
         }
-        if self.request.project.commtrack_enabled:
+        if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
             context.update({
+                'commtrack_enabled': self.request.project.commtrack_enabled,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
                 },

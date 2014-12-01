@@ -198,7 +198,8 @@ class BaseEditUserView(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
             self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['supply_point']
-            self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
+            if self.request.project.commtrack_enabled:
+                self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
