@@ -100,15 +100,34 @@
                                     {% trans "Label" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Label" %}"
-                                          data-content="{% blocktrans with entity_string=view.entity_string %}
+                                          data-content="{% blocktrans with entity_string=view.entity_string|lower %}
                                               The field label that users will see when adding or editing
                                               a {{ entity_string }} in CommCareHQ.
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
-                                <th class="span1">{% trans "Required" %}</th>
+                                <th class="span1">
+                                    {% trans "Required" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Required" %}"
+                                          data-content="{% blocktrans with entity_string=view.entity_string|lower %}
+                                              A value for this field must be provided when creating or
+                                              editing a {{ entity_string }}.  Bulk import will fail
+                                              unless this field is provided.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
                                 {% if request|toggle_enabled:"CUSTOM_DATA_CHOICES" %}
-                                <th class="span3">{% trans "Choices" %}</th>
+                                <th class="span3">
+                                    {% trans "Choices" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Choices" %}"
+                                          data-content="{% blocktrans %}
+                                              Provides a drop-down list of choices for this field
+                                              instead of free text entry.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
                                 {% endif %}
                                 <th class="span1">{% trans "Delete" %}</th>
                             </tr>
