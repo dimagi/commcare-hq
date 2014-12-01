@@ -30,6 +30,15 @@
     </script>
 {% endblock %}
 
+{% block head %}
+{{ block.super }}
+    <style>
+        ul.choices-list > li {
+            padding-top: 5px;
+        }
+    </style>
+{% endblock %}
+
 {% block main_column %}
     <form id="custom-fields-form"
           action="."
@@ -119,7 +128,7 @@
                                     <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
                                         <i class="icon-plus"></i> {% trans "Add Choice" %}
                                     </a>
-                                    <ul data-bind="foreach: choices" class="unstyled">
+                                    <ul data-bind="foreach: choices" class="unstyled choices-list">
                                         <li>
                                             <input type="text" data-bind="value: value"/>
                                             <a type="button"
