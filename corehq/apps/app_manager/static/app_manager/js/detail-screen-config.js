@@ -622,26 +622,20 @@ var DetailScreenConfig = (function () {
                     {isTab: true, header: tabs[i].header}
                 );
             }
-            var $addTabDiv = $('.add-tab', this.$location);
-            if ($addTabDiv.length) {
-                ko.applyBindings(
-                    {
-                        addTab: function(){
-                            var col = that.initColumnAsColumn(Column.init({
-                                isTab: true,
-                                model: 'tab'
-                            }, that));
-                            // This copies the add-column event handler, but
-                            // puts it first and doesn't copy the object.
-                            that.columns.splice(0, 0, col);
-                            var $tr = that.addColumn(col, that.$columns, 0);
-                            $tr.detach().insertBefore(that.$columns.find('tr:nth-child(1)'));
-                            $tr.hide().fadeIn('slow');
-                            that.fire('change');
-                        }
-                    },
-                    $addTabDiv.get(0)
-                );
+            if (this.columnKey === 'long') {
+                this.addTab = function() {
+                    var col = that.initColumnAsColumn(Column.init({
+                        isTab: true,
+                        model: 'tab'
+                    }, that));
+                    // This copies the add-column event handler, but
+                    // puts it first and doesn't copy the object.
+                    that.columns.splice(0, 0, col);
+                    var $tr = that.addColumn(col, that.$columns, 0);
+                    $tr.detach().insertBefore(that.$columns.find('tr:nth-child(1)'));
+                    $tr.hide().fadeIn('slow');
+                    that.fire('change');
+                };
             }
 
             // Filters are a type of DetailColumn on the server. Don't display
@@ -1056,26 +1050,21 @@ var DetailScreenConfig = (function () {
             }
 
             if (spec.state.short !== undefined) {
-                var shortScreen = addScreen(spec.state, "short", this.$listHome);
+                this.shortScreen = addScreen(spec.state, "short", this.$listHome);
+                // Set up filter
+                var filter_xpath = spec.state.short.filter;
+                this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, this.shortScreen.saveButton);
+                // Set up SortRows
+                this.sortRows = new SortRows(this.properties, spec.edit, this.shortScreen.saveButton);
             }
             if (spec.state.long !== undefined) {
-                addScreen(spec.state, "long", this.$detailHome);
+                this.longScreen = addScreen(spec.state, "long", this.$detailHome);
             }
-
-            // Set up filter
-            var filter_xpath = spec.state.short.filter;
-            this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, shortScreen.saveButton);
-            // Set up SortRows
-            this.sortRows = new SortRows(this.properties, spec.edit, shortScreen.saveButton);
         };
         DetailScreenConfig.init = function (spec) {
             var ds = new DetailScreenConfig(spec);
             var type = spec.state.type;
-            var $sortRowsHome = $('#' + type + '-detail-screen-sort');
-            var $filterHome = $('#' + type + '-filter');
             var $parentSelectHome = $('#' + type + '-detail-screen-parent');
-            ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
-            ko.applyBindings(ds.filter, $filterHome.get(0));
             if ($parentSelectHome.get(0) && ds.hasOwnProperty('parentSelect')){
                 ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
                 $parentSelectHome.on('change', '*', function () {
