@@ -839,7 +839,7 @@ class MetReport(CaseReportMixin, BaseReport):
 
         rows = None
         cache = get_redis_client()
-        if cache.exists(self.slug):
+        if cache.exists(self.redis_key):
             rows = pickle.loads(cache.get(self.redis_key))
         else:
             rows = self.rows
@@ -847,10 +847,8 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         Strip user_id and owner_id columns
         """
-        for idx, row in enumerate(rows):
-            row = row[0:16]
-            row.extend(row[18:20])
-            rows[idx] = row
+
+        rows = [row[0:15] + row[17:] for row in rows]
         self.context['report_table'].update(
             rows=rows
         )
