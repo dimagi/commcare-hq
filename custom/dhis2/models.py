@@ -4,10 +4,16 @@ import requests
 
 
 class JsonApiError(Exception):
+    """
+    JsonApiError is raised for HTTP or socket errors.
+    """
     pass
 
 
 class Dhis2ApiQueryError(JsonApiError):
+    """
+    Dhis2ApiQueryError is raised when the API returns an unexpected response.
+    """
     pass
 
 
@@ -56,6 +62,49 @@ class Dhis2Api(object):
 
     def __init__(self, host, username, password):
         self._request = JsonApiRequest(host, username, password)
+        self._tracked_entity_attributes = {  # Cached known tracked entity attribute names and IDs
+            # Prepopulate with attributes that are not tracked entity attributes. This allows us to treat all
+            # attributes the same when adding tracked entity instances, and avoid trying to look up tracked entity
+            # attribute IDs for attributes that are not tracked entity attributes.
+            'Instance': 'instance',
+            'Created': 'created',
+            'Last updated': 'lastupdated',
+            'Org unit': 'ou',
+            'Tracked entity': 'te',
+        }
+
+    def _fetch_tracked_entity_attributes(self):
+        __, json = self._request.get('trackedEntityAttributes', params={'links': 'false', 'paging': 'false'})
+        for te in json['trackedEntityAttributes']:
+            self._tracked_entity_attributes[te['name']] = te['id']
+
+    def add_te_inst(self, data, te_name=None, ou_id=None):
+        """
+        Add a tracked entity instance
+
+        :param data: A dictionary of data to post to the API
+        :param te_name: Name of the tracked entity. Add or override its ID in data.
+        :param ou_id: Add or override organisation unit ID in data.
+
+        .. Note:: If te_name is not specified, then `data` must include the
+                  *ID* of the tracked entity, not its name.
+
+        """
+        if te_name:
+            data['Tracked entity'] = self.get_te_id(te_name)
+        if ou_id:
+            data['Org unit'] = ou_id
+        # Convert data keys to tracked entity attribute IDs
+        if any(key not in self._tracked_entity_attributes for key in data):
+            # We are going to have to fetch at least one tracked entity attribute ID. Fetch them all to avoid multiple
+            # API requests.
+            self._fetch_tracked_entity_attributes()
+        inst = {}
+        for key, value in data.iteritems():
+            attr_id = self.get_te_attr_id(key)
+            inst[attr_id] = value
+        result = self._request.post('trackedEntityInstances', inst)
+        return result
 
     def get_top_org_unit(self):
         """
@@ -95,29 +144,66 @@ class Dhis2Api(object):
         """
         Returns the ID of the given tracked entity attribute
         """
-        return self.get_resource_id('trackedEntityAttributes', name)
+        if name not in self._tracked_entity_attributes:
+            # Note: self.get_resource_id returns None if name not found
+            self._tracked_entity_attributes[name] = self.get_resource_id('trackedEntityAttributes', name)
+        return self._tracked_entity_attributes[name]
 
-    def get_instances_with_unset(self, te_name, attr_name):
+    def gen_instances_with_unset(self, te_name, attr_name):
         """
-        Returns a list of tracked entity instances with given attribute name unset
+        Returns a list of tracked entity instances with the given attribute name unset
         """
-        # TODO: Is there a better way to do this?
         top_ou = self.get_top_org_unit()
         te_id = self.get_te_id(te_name)
         attr_id = self.get_te_attr_id(attr_name)
-        # Because we don't have an "UNSET" filter, we need to fetch all and build a list of the unset ones
-        __, json = self._request.get(
-            'trackedEntityInstances',
-            params={
-                'paging': 'false',  # This might be a very bad idea. TODO: Use paging
-                'links': 'false',
-                'trackedEntity': te_id,
-                'ou': top_ou['id'],
-                'ouMode': 'DESCENDANTS',
-                'attribute': attr_id
-            })
-        instances = self.entities_to_dicts(json)
-        return [inst for inst in instances if not inst.get(attr_name)]
+        page = 1
+        while True:
+            # Because we don't have an "UNSET" filter, we need to fetch all and yield the unset ones
+            __, json = self._request.get(
+                'trackedEntityInstances',
+                params={
+                    'paging': 'true',
+                    'page': page,
+                    'links': 'false',
+                    'trackedEntity': te_id,
+                    'ou': top_ou['id'],
+                    'ouMode': 'DESCENDANTS',
+                    'attribute': attr_id
+                })
+            instances = self.entities_to_dicts(json)
+            for inst in instances:
+                if not inst.get(attr_name):
+                    yield inst
+            if page < json['metaData']['pager']['pageCount']:
+                page += 1
+                continue
+
+    def gen_instances_with_equals(self, te_name, attr_name, attr_value):
+        """
+        Yields tracked entity instances with the given attribute set to the given value
+        """
+        top_ou = self.get_top_org_unit()
+        te_id = self.get_te_id(te_name)
+        attr_id = self.get_te_attr_id(attr_name)
+        page = 1
+        while True:
+            __, json = self._request.get(
+                'trackedEntityInstances',
+                params={
+                    'paging': 'true',
+                    'page': page,
+                    'links': 'false',
+                    'trackedEntity': te_id,
+                    'ou': top_ou['id'],
+                    'ouMode': 'DESCENDANTS',
+                    'attribute': attr_id + ':EQ:' + attr_value
+                })
+            instances = self.entities_to_dicts(json)
+            for inst in instances:
+                yield inst
+            if page < json['metaData']['pager']['pageCount']:
+                page += 1
+                continue
 
     @staticmethod
     def entities_to_dicts(json):
@@ -245,6 +331,7 @@ class FixtureManager(object):
             yield self.model_class(_fixture_id=item.get_id, **item.fields)
 
 
+# TODO: Keep on eye on if/where this is used. Remove if unused.
 class Dhis2OrgUnit(object):
     """
     Simplify the management of DHIS2 Organisation Units, which are
