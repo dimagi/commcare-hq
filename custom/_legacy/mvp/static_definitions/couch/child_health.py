@@ -131,7 +131,9 @@ COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
                 indicator_key="muac_reading"
             ),
             child_length_reading=dict(
-                description="No. children aged 3-24 months receiving on-time routine length measurement (every 90 days) during the time period",
+                description="No. children aged 3-24 months receiving on-time "
+                            "routine length measurement (every 90 days) "
+                            "during the time period",
                 title="# 3-24 month Children receiving on-time Length (90 days)",
                 indicator_key="length_reading"
             ),
