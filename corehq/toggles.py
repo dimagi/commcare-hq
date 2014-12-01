@@ -229,6 +229,12 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+CUSTOM_DATA_CHOICES = StaticToggle(
+    'custom_data_choices',
+    "Custom Data Choices - optionally specify choices for custom data fields",
+    [NAMESPACE_DOMAIN],
+)
+
 BATCHED_RESTORE = StaticToggle(
     'batched_restore',
     'Batch OTA restore response generation',
