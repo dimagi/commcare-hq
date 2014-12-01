@@ -186,13 +186,7 @@
     </script>
     <script>
         {% for app in apps %}
-            $('#view_button_{{ app.get_id }}').click(function() {
-                ga_track_event('Exchange', 'View button', '{{ app.get_id }}', {
-                    'hitCallback': function () {
-                        document.location = $('#view_button_{{ app.get_id }}').attr('href');
-                    }
-                });
-            });
+            gaTrackLink($('#view_button_{{ app.get_id }}'), 'Exchange', 'View button', '{{ app.get_id }}');
         {% endfor %}
     </script>
 {% endblock %}
