@@ -36,7 +36,6 @@ from restkit import Resource
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
-from corehq.apps.callcenter.utils import FakeSyncOp
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.ota.tasks import prime_restore
 from couchexport.export import export_raw, export_from_tables
@@ -1082,14 +1081,13 @@ def callcenter_test(request):
         }
 
     if user or user_case:
-        sync_op = FakeSyncOp([user_case]) if user_case else None
         custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
         cci = CallCenterIndicators(
             domain,
             user,
-            case_sync_op=sync_op,
             custom_cache=custom_cache,
-            override_date=query_date
+            override_date=query_date,
+            override_cases=[user_case] if user_case else None
         )
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:

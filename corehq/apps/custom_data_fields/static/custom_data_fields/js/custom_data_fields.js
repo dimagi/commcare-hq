@@ -1,8 +1,55 @@
-function CustomDataField (field) {
+function Choice (choice) {
     var self = this;
-    self.slug = ko.observable(field.slug);
-    self.label = ko.observable(field.label);
-    self.is_required = ko.observable(field.is_required);
+    self.value = ko.observable(choice);
+}
+
+
+function CustomDataField () {
+    var self = this;
+    self.slug = ko.observable();
+    self.label = ko.observable();
+    self.is_required = ko.observable();
+    self.choices = ko.observableArray();
+
+    self.addChoice = function () {
+        self.choices.push(new Choice());
+    };
+
+    self.removeChoice = function (choice) {
+        self.choices.remove(choice);
+        $("#save-custom-fields").prop("disabled", false);
+    };
+
+    self.init = function (field) {
+        self.slug(field.slug);
+        self.label(field.label);
+        self.is_required(field.is_required);
+        self.choices(field.choices.map(function (choice) {
+            return new Choice(choice);
+        }));
+    };
+
+    self.serialize = function () {
+        var choices = [];
+        var choicesToRemove = [];
+        _.each(self.choices(), function (choice) {
+            if (choice.value()) {
+                choices.push(choice.value());
+            } else {
+                choicesToRemove.push(choice);
+            }
+        });
+        _.each(choicesToRemove, function (choice) {
+            self.removeChoice(choice);
+        });
+
+        return {
+            'slug': self.slug(),
+            'label': self.label(),
+            'is_required': self.is_required(),
+            'choices': choices,
+        };
+    };
 }
 
 
@@ -11,7 +58,7 @@ function CustomDataFieldsModel () {
     self.data_fields = ko.observableArray();
 
     self.addField = function () {
-        self.data_fields.push(new CustomDataField('', false));
+        self.data_fields.push(new CustomDataField());
     };
 
     self.removeField = function (field) {
@@ -27,7 +74,9 @@ function CustomDataFieldsModel () {
 
     self.init = function (initialFields) {
         _.each(initialFields, function (field) {
-            self.data_fields.push(new CustomDataField(field));
+            custom_field = new CustomDataField();
+            custom_field.init(field);
+            self.data_fields.push(custom_field);
         });
     };
 
@@ -36,11 +85,7 @@ function CustomDataFieldsModel () {
         var fieldsToRemove = [];
         _.each(self.data_fields(), function (field) {
             if(field.slug() || field.label()) {
-                fields.push({
-                    'slug': field.slug(),
-                    'label': field.label(),
-                    'is_required': field.is_required(),
-                });
+                fields.push(field.serialize());
             } else {
                 fieldsToRemove.push(field);
             }
@@ -65,6 +110,3 @@ function CustomDataFieldsModel () {
     };
 
 }
-
-
-

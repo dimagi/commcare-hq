@@ -9,6 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from django.utils import html
+from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, ProductAvailabilityData, \
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
@@ -79,8 +80,8 @@ class SohPercentageTableData(ILSData):
     def rows(self):
         rows = []
         if not self.config['products']:
-            prd_id = [p.product_id for p in
-                      SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')]
+            prd_id = SQLProduct.objects.filter(domain=self.config['domain'])\
+                .order_by('code').values_list('product_id')
         else:
             prd_id = self.config['products']
 
@@ -184,11 +185,13 @@ class DistrictSohPercentageTableData(ILSData):
             soh_month = False
         return html.escape(make_url(StockOnHandReport,
                                     self.config['domain'],
-                                    '?location_id=%s&month=%s&year=%s&soh_month=%s',
+                                    '?location_id=%s&month=%s&year=%s&soh_month=%s&filter_by_program=%s%s',
                                     (self.config['location_id'],
                                      self.config['month'],
                                      self.config['year'],
-                                    soh_month)))
+                                     soh_month,
+                                     self.config['program'],
+                                     self.config['prd_part_url'])))
 
     @property
     def title_url_name(self):
@@ -276,7 +279,9 @@ class DistrictSohPercentageTableData(ILSData):
                 status, last_reported = get_last_reported(supply_point)
                 hisp = get_hisp_resp_rate(loc)
 
-                url = make_url(FacilityDetailsReport, self.config['domain'], '?location_id=%s', (loc.location_id,))
+                url = make_url(FacilityDetailsReport, self.config['domain'],
+                           '?location_id=%s&filter_by_program=%s%s',
+                           (loc.location_id, self.config['program'], self.config['prd_part_url']))
 
                 row_data = [
                     loc.site_code,
@@ -328,14 +333,7 @@ class StockOnHandReport(DetailsReport):
     title = 'Stock On Hand'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
-
-    @property
-    def report_config(self):
-        config = super(StockOnHandReport, self).report_config
-        # TODO add support for product filter
-        config.update(dict(products=[]))
-        return config
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
 
     @property
     @memoized

@@ -109,7 +109,7 @@
             {% bootstrap_fieldset app_form %}
         {% endfor %}
         {% for fixture, fixture_form in fixture_forms %}
-            <h3>{% trans Lookup Table%}: {{ fixture.tag }}</h3>
+            <h3>{% trans "Lookup Table" %}: {{ fixture.tag }}</h3>
             {% bootstrap_fieldset fixture_form %}
         {% endfor %}
         <input type="hidden" name="publish_on_submit" value="yes" id="id_publish_on_submit">

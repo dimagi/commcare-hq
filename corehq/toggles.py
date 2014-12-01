@@ -234,3 +234,15 @@ DOUBLE_MANAGEMENT = StaticToggle(
     'Case list actions a.k.a. double management',
     [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
+
+CUSTOM_DATA_CHOICES = StaticToggle(
+    'custom_data_choices',
+    "Custom Data Choices - optionally specify choices for custom data fields",
+    [NAMESPACE_DOMAIN],
+)
+
+BATCHED_RESTORE = StaticToggle(
+    'batched_restore',
+    'Batch OTA restore response generation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
