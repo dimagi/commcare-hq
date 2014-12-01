@@ -1,5 +1,6 @@
 import logging
 from django.core.management import BaseCommand
+import sys
 from corehq.apps.app_manager.models import Application
 from dimagi.utils.couch.database import iter_docs
 
@@ -65,8 +66,8 @@ class Command(BaseCommand):
                     for column in detail.get_columns():
                         graph_config = getattr(getattr(column, "graph_configuration", None), "config", {})
                         for axis in ["x", "y"]:
-                            old_property = axis+"-label-count"
-                            new_property = axis+"-labels"
+                            old_property = axis + "-label-count"
+                            new_property = axis + "-labels"
                             count = graph_config.get(old_property, None)
                             if count is not None:
                                 graph_config[new_property] = count
