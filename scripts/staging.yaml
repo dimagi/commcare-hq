@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - gaTrackLink-rebase
   - historical-forms  # Danny 12/1
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
