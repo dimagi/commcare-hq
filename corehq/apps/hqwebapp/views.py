@@ -193,23 +193,13 @@ def redirect_to_default(req, domain=None):
             if domains[0]:
                 domain = domains[0].name
 
-                if toggles.DASHBOARD_PREVIEW.enabled(req.couch_user.username):
-                    url = reverse('dashboard_default', args=[domain])
-                    if (req.couch_user.is_commcare_user()
-                        and not is_mobile_worker_with_report_access(
-                            req.couch_user, domain)):
-                        url = reverse("cloudcare_main", args=[domain, ""])
-
-                elif req.couch_user.is_commcare_user():
-                    if not is_mobile_worker_with_report_access(
-                            req.couch_user, domain):
-                        url = reverse("cloudcare_main", args=[domain, ""])
-                    else:
-                        url = reverse("saved_reports", args=[domain])
-                elif req.couch_user.can_view_reports(domain) or req.couch_user.get_viewable_reports(domain):
-                    url = reverse('corehq.apps.reports.views.default', args=[domain])
+                if (req.couch_user.is_commcare_user()
+                    and not is_mobile_worker_with_report_access(
+                        req.couch_user, domain)):
+                    url = reverse("cloudcare_main", args=[domain, ""])
                 else:
-                    url = reverse('corehq.apps.app_manager.views.default', args=[domain])
+                    url = reverse('dashboard_default', args=[domain])
+
             else:
                 raise Http404
         else:

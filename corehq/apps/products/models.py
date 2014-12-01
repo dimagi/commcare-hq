@@ -32,7 +32,7 @@ class Product(Document):
     is_archived = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
 
-    def _sync_product(self):
+    def sync_to_sql(self):
         properties_to_sync = [
             ('product_id', '_id'),
             'domain',
@@ -85,7 +85,7 @@ class Product(Document):
 
         result = super(Product, self).save(*args, **kwargs)
 
-        self._sync_product()
+        self.sync_to_sql()
 
         return result
 

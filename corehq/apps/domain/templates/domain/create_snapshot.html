@@ -21,6 +21,9 @@
         {% for app, app_form in app_forms %}
         ids.push({{app.id|JSON}});
         {% endfor %}
+        {% for fixture, fixture_form in fixture_forms %}
+        ids.push({{fixture.id|JSON}});
+        {% endfor %}
 
         _.each(ids, function (id) {
             var publish = $('#id_' + id + '-publish');
@@ -51,16 +54,13 @@
             }
         });
 
-        {% if GOOGLE_ANALYTICS_ID %}
-            $('#publish-now-button').on('click', function() {
-                event.preventDefault();
-                ga('send', 'event', 'Exchange', 'Publish Now', '?', {
-                    'hitCallback': function() {
-                        $('#snapshot-form').submit();
-                    }
-                });
+        $('#publish-now-button').on('click', function() {
+            ga_track_event('Exchange', 'Publish Now', '?', {
+                'hitCallback': function() {
+                    $('#snapshot-form').submit();
+                }
             });
-        {% endif %}
+        });
     });
 </script>
 {% endblock %}
@@ -105,8 +105,12 @@
             </div>
         </div>
         {% for app, app_form in app_forms %}
-            <h3>Application: {{ app.name }}</h3>
+        <h3>{% trans "Application" %}: {{ app.name }}</h3>
             {% bootstrap_fieldset app_form %}
+        {% endfor %}
+        {% for fixture, fixture_form in fixture_forms %}
+            <h3>{% trans "Lookup Table" %}: {{ fixture.tag }}</h3>
+            {% bootstrap_fieldset fixture_form %}
         {% endfor %}
         <input type="hidden" name="publish_on_submit" value="yes" id="id_publish_on_submit">
     </fieldset>

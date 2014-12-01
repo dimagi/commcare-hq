@@ -154,6 +154,10 @@ def update_calculated_properties():
             "cp_last_updated": datetime.now().strftime(DATE_FORMAT),
             "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
             "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
+            "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
+            "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
+            "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
+            "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
         }
         if calced_props['cp_first_form'] == 'No forms':
             del calced_props['cp_first_form']

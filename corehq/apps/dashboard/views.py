@@ -11,16 +11,16 @@ from corehq.apps.dashboard.models import (
     AppsPaginatedContext,
     IconContext,
     ReportsPaginatedContext, Tile)
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.style.decorators import preview_boostrap3
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
 
-@toggles.DASHBOARD_PREVIEW.required_decorator()
+@login_and_domain_required
 def dashboard_default(request, domain):
     key = [domain]
     apps = Application.get_db().view(
@@ -39,7 +39,6 @@ def dashboard_default(request, domain):
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
-    @method_decorator(toggles.DASHBOARD_PREVIEW.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         request.preview_bootstrap3 = True
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)

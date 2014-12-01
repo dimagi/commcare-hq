@@ -1,8 +1,9 @@
 from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.getters import DictGetter, NestedDictGetter, TransformedGetter, transform_date
-from corehq.apps.userreports.logic import IN_MULTISELECT, EQUAL
+from corehq.apps.userreports.expressions.getters import (DictGetter, NestedDictGetter, TransformedGetter,
+                                                         transform_date)
+from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL, OPERATORS
 
 
 def TypeProperty(value):
@@ -96,6 +97,13 @@ def _transform_from_datatype(datatype):
     return {
         'date': transform_date
     }.get(datatype)
+
+
+class BooleanExpressionFilterSpec(BaseFilterSpec):
+    type = TypeProperty('boolean_expression')
+    operator = StringProperty(choices=OPERATORS.keys())
+    property_value = DefaultProperty(required=True)
+    expression = DictProperty(required=True)
 
 
 class PropertyMatchFilterSpec(BaseFilterSpec):

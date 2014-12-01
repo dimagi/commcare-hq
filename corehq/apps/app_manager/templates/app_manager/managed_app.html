@@ -116,32 +116,28 @@
             }, 0);
         });
     </script>
-    {% if GOOGLE_ANALYTICS_ID %}
-        <script>
-            $(document).ready(function() {
-                $('#edit_label').click(function () {
-                    event.preventDefault();
-                    ga('send', 'event', 'App Builder', 'Open Form', 'Edit Label', {
-                        'hitCallback': function () {
-                            document.location = $('#edit_label').attr('href');
-                        }
-                    });
+    <script>
+        $(document).ready(function() {
+            $('#edit_label').click(function () {
+                ga_track_event('App Builder', 'Open Form', 'Edit Label', {
+                    'hitCallback': function () {
+                        document.location = $('#edit_label').attr('href');
+                    }
                 });
-                {% for module in app.get_modules %}
-                    {% for form in module.get_forms %}
-                        $('#edit_pen_{{ module.id }}_{{ form.id }}').click(function() {
-                            event.preventDefault();
-                            ga('send', 'event', 'App Builder', 'Open Form', 'Edit Pen', {
-                                'hitCallback': function () {
-                                    document.location = $('#edit_pen_{{ module.id }}_{{ form.id }}').attr('href');
-                                }
-                            });
-                        });
-                    {% endfor %}
-                {% endfor %}
             });
-        </script>
-    {% endif %}
+            {% for module in app.get_modules %}
+                {% for form in module.get_forms %}
+                    $('#edit_pen_{{ module.id }}_{{ form.id }}').click(function() {
+                        ga_track_event('App Builder', 'Open Form', 'Edit Pen', {
+                            'hitCallback': function () {
+                                document.location = $('#edit_pen_{{ module.id }}_{{ form.id }}').attr('href');
+                            }
+                        });
+                    });
+                {% endfor %}
+            {% endfor %}
+        });
+    </script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -174,7 +170,7 @@
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
-            <a href="{% url "view_app" domain app.id %}multimedia/?edit={{ edit|BOOL }}#multimedia" data-toggle="tab">
+            <a id="multimedia-shower" href="{% url "view_app" domain app.id %}multimedia/?edit={{ edit|BOOL }}#multimedia" data-toggle="tab">
                 <i class="icon-picture"></i>
                 {% trans "Multimedia" %}
             </a>
@@ -259,7 +255,7 @@
                                             {{ form.name|html_trans:langs }}
                                             </span>
                                         </a>
-                                        {% if edit %}
+                                        {% if edit and not form.no_vellum %}
                                             <div class="edit-form-pencil pull-right">
                                                 <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
