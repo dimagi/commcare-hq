@@ -16,6 +16,10 @@
     <script>
         var customDataFieldsModel = new CustomDataFieldsModel();
         customDataFieldsModel.init({{ custom_fields|JSON }});
+        customDataFieldsModel.data_fields.subscribe(function() {
+            $("#save-custom-fields").prop("disabled", false);
+        });
+
         ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
 
         $('form[id="custom-fields-form"]').on("change", null, null, function() {
@@ -128,8 +132,9 @@
                                     <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
                                         <i class="icon-plus"></i> {% trans "Add Choice" %}
                                     </a>
-                                    <ul data-bind="foreach: choices" class="unstyled choices-list">
-                                        <li>
+                                    <ul data-bind="sortable: choices" class="unstyled choices-list">
+                                        <li data-bind="attr: {'data-order': _sortableOrder}">
+                                            <i class="icon-sort sortable-handle"></i>
                                             <input type="text" data-bind="value: value"/>
                                             <a type="button"
                                                class="btn btn-danger"
