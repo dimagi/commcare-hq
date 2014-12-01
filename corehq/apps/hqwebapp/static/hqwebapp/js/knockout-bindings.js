@@ -598,8 +598,14 @@ ko.bindingHandlers.multiTypeahead = {
     }
 };
 
-ko.bindingHandlers.element = {
-    init: function(element, valueAccessor) {
-        $(element).append(valueAccessor());
+/**
+ * A custom knockout binding that replaces the element's contents with a jquery
+ * element.
+ * @type {{update: update}}
+ */
+ko.bindingHandlers.jqueryElement = {
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        $(element).empty();
+        $(element).append(ko.unwrap(valueAccessor()));
     }
 };

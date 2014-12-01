@@ -30,18 +30,15 @@
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
-        {% if app.enable_multi_sort %}
-            window.enableNewSort = true;
-        {% else %}
-            window.enableNewSort = false;
-        {% endif %}
-
         $(function () {
+            COMMCAREHQ.app_manager.module_view = {
+                /* for sharing variables between essentially separate parts of the ui */
+                requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
+            };
+
             var details = {{ details|JSON }};
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var $list_home = $("#" + detail.type + "-detail-screen-config");
-                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config");
                 var detailScreenConfig = DetailScreenConfig.init({
                     state: {
                         type: detail.type,
@@ -58,8 +55,11 @@
                     childCaseTypes: detail.child_case_types,
                     parentSelect: detail.parent_select,
                     graphEnabled: {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }},
-                    calculationEnabled: {{ enable_calc_xpaths|BOOL }}
+                    calculationEnabled: {{ enable_calc_xpaths|BOOL }},
+                    contextVariables: COMMCAREHQ.app_manager.module_view
                 });
+                var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
+                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
 
                 ko.applyBindings(detailScreenConfig, $list_home.get(0));
                 ko.applyBindings(detailScreenConfig, $detail_home.get(0));
@@ -91,14 +91,6 @@
                     $('#case_type_error').css('display', 'none');
                 }
             });
-        });
-        $(function () {
-            COMMCAREHQ.app_manager.module_view = {
-                requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
-            };
-            if ($('#detail-screen-config-warning').length) {
-                ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#detail-screen-config-warning').get(0));
-            }
         });
         $(function () {
             COMMCAREHQ.app_manager.setupValidation(
@@ -255,28 +247,10 @@
 
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-        {% if detail.type == 'case' %}
-        <div class="alert alert-warning" id="detail-screen-config-warning"
-             data-bind="visible: !requires_case_details()">
-            {% blocktrans %}
-                This module doesn't currently use a case list.
-                Changes made here will have no effect until you use:
-                <ol>
-                    <li>forms that require a case or</li>
-                    <li>select the <strong>Case List Menu Item</strong> setting.</li>
-                </ol>
-            {% endblocktrans %}
-        </div>
-        {% endif %}
-        <div id="{{ detail.type }}-detail-screen-config-body">
-            {% include 'app_manager/partials/case_list_properties.html' %}
-
-        </div>
+        {% include 'app_manager/partials/case_list.html' %}
     </div>
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
-        <div id="{{ detail.type }}-detail-screen-detail-config-body">
-            {% include 'app_manager/partials/detail_properties.html' %}
-        </div>
+        {% include 'app_manager/partials/case_detail.html' %}
     </div>
     {% endfor %}
 </div>

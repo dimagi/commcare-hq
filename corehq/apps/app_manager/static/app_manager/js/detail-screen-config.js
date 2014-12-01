@@ -74,18 +74,6 @@ var CC_DETAIL_SCREEN = {
 
 };
 
-/**
- * A custom knockout binding that replaces the element's contents with a jquery
- * element.
- * @type {{update: update}}
- */
-ko.bindingHandlers.jqueryElement = {
-    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-        $(element).empty();
-        $(element).append(ko.unwrap(valueAccessor()));
-    }
-};
-
 // saveButton is a required parameter
 var SortRow = function(params){
     var self = this;
@@ -844,22 +832,6 @@ var DetailScreenConfig = (function () {
                 if (!this.edit && _.isEmpty(this.columns)) {
                     $('<p/>').text(DetailScreenConfig.message.EMPTY_SCREEN).appendTo($box);
                 } else {
-                    if (this.edit) {
-                        if (window.enableNewSort) {
-
-                            // $location id is in this form: "-detail-screen-config"
-                            // so $detailBody id will be in this form: "-detail-screen-config-body"
-                            var $detailBody = $("#" + this.$location.attr("id") + "-body");
-
-                            $('<div id="saveBtn" class="clearfix">')
-                                .append(this.saveButton.ui)
-                                .prependTo($detailBody);
-                        } else {
-                            $('<div class="clearfix">')
-                                .append(this.saveButton.ui)
-                                .prependTo($box);
-                        }
-                    }
                     this.$columns = $('</tbody>');
 
                     // Add the "Add Property" button
@@ -1015,6 +987,7 @@ var DetailScreenConfig = (function () {
             this.saveUrl = spec.saveUrl;
             this.graphEnabled = spec.graphEnabled;
             this.calculationEnabled = spec.calculationEnabled;
+            this.contextVariables = spec.contextVariables;
 
             /**
              * Add a Screen to this DetailScreenConfig
@@ -1062,16 +1035,7 @@ var DetailScreenConfig = (function () {
             }
         };
         DetailScreenConfig.init = function (spec) {
-            var ds = new DetailScreenConfig(spec);
-            var type = spec.state.type;
-            var $parentSelectHome = $('#' + type + '-detail-screen-parent');
-            if ($parentSelectHome.get(0) && ds.hasOwnProperty('parentSelect')){
-                ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
-                $parentSelectHome.on('change', '*', function () {
-                    ds.screens[0].fire('change');
-                });
-            }
-            return ds;
+            return new DetailScreenConfig(spec);
         };
         return DetailScreenConfig;
     }());
@@ -1164,3 +1128,15 @@ var DetailScreenConfig = (function () {
 
     return DetailScreenConfig;
 }());
+
+
+ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
+    init: function (element, valueAccessor) {
+        var $root = valueAccessor();
+        setTimeout(function () {
+            $(element).on('change', '*', function () {
+                $root.shortScreen.fire('change');
+            });
+        }, 0);
+    }
+};

@@ -1,15 +1,13 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-<div id="{{ detail.type }}-detail-screen-detail-config">
-    <div data-bind="saveButton: longScreen.saveButton, visible: $root.edit"></div>
-    <legend>
-        {% trans "Display Properties" %}
-    </legend>
-    <div data-bind="element: $detailHome"></div>
-    {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
-        <a href="#" data-bind="click: longScreen.addTab">
-            <i class="icon-plus"></i>
-            Add a tab
-        </a>
-    {% endif %}
-</div>
+<div data-bind="saveButton: longScreen.saveButton, visible: $root.edit"></div>
+<legend>
+    {% trans "Display Properties" %}
+</legend>
+<div data-bind="jqueryElement: $detailHome"></div>
+{% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
+    <a href="#" data-bind="click: longScreen.addTab">
+        <i class="icon-plus"></i>
+        Add a tab
+    </a>
+{% endif %}
