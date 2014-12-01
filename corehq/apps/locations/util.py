@@ -60,7 +60,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
 
 
 def location_hierarchy_config(domain):
-    return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).location_types]
+    return [(loc_type.name, [p or None for p in loc_type.allowed_parents])
+            for loc_type in Domain.get_by_name(domain).location_types]
 
 
 def defined_location_types(domain):
@@ -118,7 +119,7 @@ def get_location_data_model(domain):
 class LocationExporter(object):
     def __init__(self, domain, include_consumption=False):
         self.domain = domain
-        self.commtrack_settings = Domain.get_by_name(domain).commtrack_settings
+        self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
 
@@ -132,14 +133,14 @@ class LocationExporter(object):
     def include_consumption(self):
         if bool(
             self.include_consumption_flag and
-            self.commtrack_settings.individual_consumption_defaults
+            self.domain_obj.commtrack_settings.individual_consumption_defaults
         ):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
             self.product_codes = [p.code for p in self.products]
             self.supply_point_map = SupplyPointCase.get_location_map_by_domain(self.domain)
             self.administrative_types = {
-                lt.name for lt in self.commtrack_settings.location_types
+                lt.name for lt in self.domain_obj.location_types
                 if lt.administrative
 
             }
@@ -210,7 +211,7 @@ class LocationExporter(object):
 
     def get_export_dict(self):
         return [self._loc_type_dict(loc_type.name)
-                for loc_type in self.commtrack_settings.location_types]
+                for loc_type in self.domain_obj.location_types]
 
 
 def dump_locations(response, domain, include_consumption=False):
