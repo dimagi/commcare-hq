@@ -999,10 +999,10 @@ var DetailScreenConfig = (function () {
         return Screen;
     }());
     DetailScreenConfig = (function () {
-        var DetailScreenConfig = function ($listHome, $detailHome, spec) {
+        var DetailScreenConfig = function (spec) {
             var that = this;
-            this.$listHome = $listHome;
-            this.$detailHome = $detailHome;
+            this.$listHome = $('<div/>');
+            this.$detailHome = $('<div/>');
             this.properties = spec.properties;
             this.screens = [];
             this.model = spec.model || 'case';
@@ -1068,8 +1068,8 @@ var DetailScreenConfig = (function () {
             // Set up SortRows
             this.sortRows = new SortRows(this.properties, spec.edit, shortScreen.saveButton);
         };
-        DetailScreenConfig.init = function ($listHome, $detailHome, spec) {
-            var ds = new DetailScreenConfig($listHome, $detailHome, spec);
+        DetailScreenConfig.init = function (spec) {
+            var ds = new DetailScreenConfig(spec);
             var type = spec.state.type;
             var $sortRowsHome = $('#' + type + '-detail-screen-sort');
             var $filterHome = $('#' + type + '-filter');

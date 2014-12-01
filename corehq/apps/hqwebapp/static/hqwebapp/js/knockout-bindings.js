@@ -596,4 +596,10 @@ ko.bindingHandlers.multiTypeahead = {
             source: contacts
         }).focus();
     }
-}
+};
+
+ko.bindingHandlers.element = {
+    init: function(element, valueAccessor) {
+        $(element).append(valueAccessor());
+    }
+};

@@ -42,7 +42,7 @@
                 var detail = details[i];
                 var $list_home = $("#" + detail.type + "-detail-screen-config");
                 var $detail_home = $("#" + detail.type + "-detail-screen-detail-config");
-                var detailScreenConfig = DetailScreenConfig.init($list_home, $detail_home, {
+                var detailScreenConfig = DetailScreenConfig.init({
                     state: {
                         type: detail.type,
                         short: detail.short,
@@ -60,6 +60,9 @@
                     graphEnabled: {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }},
                     calculationEnabled: {{ enable_calc_xpaths|BOOL }}
                 });
+
+                ko.applyBindings(detailScreenConfig, $list_home.get(0));
+                ko.applyBindings(detailScreenConfig, $detail_home.get(0));
 
                 if (detail.sort_elements) {
                     var parsedSortRows = JSON.parse(detail.sort_elements);
@@ -266,12 +269,8 @@
         </div>
         {% endif %}
         <div id="{{ detail.type }}-detail-screen-config-body">
-            <div id="{{ detail.type }}-detail-screen-config">
-                <legend>
-                    {% trans "Display Properties" %}
-                </legend>
-            </div>
-            <div id="{{ detail.type }}-list-filtering-and-sorting">
+            {% include 'app_manager/partials/case_list_properties.html' %}
+            <div>
                 <legend>
                     {% trans "Filtering and Sorting" %}
                 </legend>
@@ -432,19 +431,7 @@
     </div>
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
         <div id="{{ detail.type }}-detail-screen-detail-config-body">
-            <div id="{{ detail.type }}-detail-screen-detail-config">
-
-                <legend>
-                    {% trans "Display Properties" %}
-                </legend>
-
-                <div class="add-tab" data-bind="if: {{ request|toggle_enabled:"DETAIL_LIST_TABS"|BOOL }}">
-                    <a href="#" data-bind="click: addTab">
-                        <i class="icon-plus"></i>
-                        Add a tab
-                    </a>
-                </div>
-            </div>
+            {% include 'app_manager/partials/detail_properties.html' %}
         </div>
     </div>
     {% endfor %}
