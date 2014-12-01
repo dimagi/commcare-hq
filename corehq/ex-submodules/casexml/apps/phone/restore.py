@@ -1,3 +1,4 @@
+from StringIO import StringIO
 from collections import defaultdict
 import hashlib
 from couchdbkit import ResourceConflict
@@ -50,6 +51,53 @@ class StockSettings(object):
         self.consumption_config = consumption_config
         self.default_product_list = default_product_list or []
         self.force_consumption_case_filter = force_consumption_case_filter or (lambda case: False)
+
+
+class EtreeRestoreResponse(object):
+    def __init__(self, username, items=False):
+        self.items = items
+        self.response = get_response_element(
+            "Successfully restored account %s!" % username,
+            ResponseNature.OTA_RESTORE_SUCCESS)
+
+    def append(self, xml):
+        self.response.append(xml)
+
+    def __str__(self):
+        if self.items:
+            self.response.attrib['items'] = '%d' % len(self.response.getchildren())
+        return xml.tostring(self.response)
+
+
+class StringRestoreResponse(object):
+    start_tag_template = '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
+    items_template = ' items="{}"'
+    message_template = '<message nature="{nature}">{message}</message>'
+    closing_tag = '</OpenRosaResponse>'
+
+    def __init__(self, username, items=False):
+        self.items = items
+        self.num_items = 0
+        self.response = StringIO()
+        self.append(self.message_template.format(
+            message="Successfully restored account %s!" % username,
+            nature=ResponseNature.OTA_RESTORE_SUCCESS
+        ))
+
+    def append(self, xml_element):
+        self.num_items += 1
+        if isinstance(xml_element, basestring):
+            self.response.write(xml_element)
+        else:
+            self.response.write(xml.tostring(xml_element))
+
+    def __str__(self):
+        items = self.items_template.format(self.num_items) if self.items else ''
+        return '{start}{body}{end}'.format(
+            start=self.start_tag_template.format(items=items),
+            body=self.response.getvalue(),
+            end=self.closing_tag
+        )
 
 
 class RestoreConfig(object):
@@ -204,9 +252,12 @@ class RestoreConfig(object):
         synclog.save(**get_safe_write_kwargs())
 
         # start with standard response
-        response = get_response_element(
-            "Successfully restored account %s!" % user.username,
-            ResponseNature.OTA_RESTORE_SUCCESS)
+        batch_enabled = BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username)
+        logger.debug('Batch restore enabled: %s', batch_enabled)
+        if batch_enabled:
+            response = StringRestoreResponse(user.username, items=self.items)
+        else:
+            response = EtreeRestoreResponse(user.username, items=self.items)
 
         # add sync token info
         response.append(xml.get_sync_element(synclog.get_id))
@@ -217,17 +268,10 @@ class RestoreConfig(object):
         for fixture in generator.get_fixtures(user, self.version, case_sync_op=None, last_sync=last_sync):
             response.append(fixture)
 
-        if BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username):
-            payload_fn = self._get_case_payload_batched
-        else:
-            payload_fn = self._get_case_payload
-
+        payload_fn = self._get_case_payload_batched if batch_enabled else self._get_case_payload
         response = payload_fn(response, user, last_sync, synclog)
 
-        if self.items:
-            response.attrib['items'] = '%d' % len(response.getchildren())
-
-        resp = xml.tostring(response)
+        resp = str(response)
         duration = datetime.utcnow() - start_time
         synclog.duration = duration.seconds
         synclog.save()
