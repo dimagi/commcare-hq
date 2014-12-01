@@ -228,3 +228,9 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+CUSTOM_DATA_CHOICES = StaticToggle(
+    'custom_data_choices',
+    "Custom Data Choices - optionally specify choices for custom data fields",
+    [NAMESPACE_DOMAIN],
+)
