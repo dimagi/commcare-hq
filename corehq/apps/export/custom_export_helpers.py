@@ -25,6 +25,16 @@ class AbstractProperty(object):
         raise NotImplementedError()
 
 
+class DEID(object):
+    options = (
+        ('', ''),
+        (_('Sensitive ID'), 'couchexport.deid.deid_ID'),
+        (_('Sensitive Date'), 'couchexport.deid.deid_date'),
+    )
+    json_options = [{'label': label, 'value': value}
+                    for label, value in options]
+
+
 class CustomExportHelper(object):
 
     ExportSchemaClass = AbstractProperty()
@@ -62,15 +72,6 @@ class CustomExportHelper(object):
             col.doc_type == 'StockExportColumn'
             for col in self.custom_export.tables[0].columns
         ) if self.custom_export.tables else False
-
-    class DEID(object):
-        options = (
-            ('', ''),
-            (_('Sensitive ID'), 'couchexport.deid.deid_ID'),
-            (_('Sensitive Date'), 'couchexport.deid.deid_date'),
-        )
-        json_options = [{'label': label, 'value': value}
-                        for label, value in options]
 
     def __init__(self, request, domain, export_id=None):
         self.request = request
@@ -158,7 +159,7 @@ class CustomExportHelper(object):
         return {
             'custom_export': self.custom_export,
             'default_order': self.default_order,
-            'deid_options': self.DEID.json_options,
+            'deid_options': DEID.json_options,
             'presave': self.presave,
             'export_stock': self.export_stock,
             'DeidExportReport_name': DeidExportReport.name,
