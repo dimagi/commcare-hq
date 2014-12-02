@@ -60,9 +60,9 @@ class BaseSqlData(SqlData):
         formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
-    #this is copy/paste from the
-    #https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/sqlreport.py#L383
-    #we added possibility to sum Float values
+    # this is copy/paste from the
+    # https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/sqlreport.py#L383
+    # we added possibility to sum Float values
     def calculate_total_row(self, rows):
         total_row = []
         if len(rows) > 0:

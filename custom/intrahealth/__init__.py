@@ -10,7 +10,6 @@ from corehq.util.translation import localize
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
 from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
 from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
-from sqlalchemy import func
 
 from django.utils.dateformat import format
 
