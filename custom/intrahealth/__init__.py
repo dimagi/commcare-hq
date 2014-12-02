@@ -39,7 +39,7 @@ CUSTOM_REPORTS = (
     )),
 )
 
-PRODUCT_NAMES = {
+_PRODUCT_NAMES = {
     u'diu': [u"diu"],
     u'jadelle': [u"jadelle"],
     u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
@@ -50,6 +50,8 @@ PRODUCT_NAMES = {
     u'cu': [u"cu"],
     u'collier': [u"collier"]
 }
+
+PRODUCT_NAMES = {v: k for k, values in _PRODUCT_NAMES.iteritems() for v in values}
 
 PRODUCT_MAPPING = {
     "collier": "Collier",
@@ -78,14 +80,14 @@ def get_products_code(form, property):
     if 'products' in form.form:
         for product in form.form['products']:
             if property in product:
-                try:
-                    prd = SQLProduct.objects.get(name=product[property], domain=get_domain(form))
-                except SQLProduct.DoesNotExist:
-                    for k, v in PRODUCT_NAMES.iteritems():
-                        if product[property].lower() in v:
-                            prd = SQLProduct.objects.get(name__iexact=k,
-                                                         domain=get_domain(form))
-                products.append(prd.code)
+                k = PRODUCT_NAMES.get(product[property].lower())
+                if k is not None:
+                    try:
+                        code = SQLProduct.objects.get(name__iexact=k,
+                                                      domain=get_domain(form)).code
+                        products.append(code)
+                    except SQLProduct.DoesNotExist:
+                        pass
     return products
 
 
@@ -102,14 +104,14 @@ def get_rupture_products_code(form):
     for k, v in form.form.iteritems():
         if re.match("^rupture.*hv$", k):
             product_name = PRODUCT_MAPPING[k[8:-3]]
-            try:
-                for k, v in PRODUCT_NAMES.iteritems():
-                    if product_name.lower() in v:
-                        prd = SQLProduct.objects.get(name__iexact=k,
-                                                     domain=get_domain(form))
-                        result.append(prd.code)
-            except SQLProduct.DoesNotExist:
-                pass
+            k = PRODUCT_NAMES.get(product_name.lower())
+            if k is not None:
+                try:
+                    prd = SQLProduct.objects.get(name__iexact=k,
+                                                 domain=get_domain(form))
+                    result.append(prd.code)
+                except SQLProduct.DoesNotExist:
+                    pass
     return result
 
 
