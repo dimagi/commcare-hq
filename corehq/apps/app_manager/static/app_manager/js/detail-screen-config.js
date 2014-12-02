@@ -839,12 +839,12 @@ var DetailScreenConfig = (function () {
                     var buttonDropdownItems = [
                         $('<li class="add-property-item"><a>Property</a></li>')
                     ];
-                    if (this.config.calculationEnabled){
+                    if (window.feature_previews.CALC_XPATHS) {
                         buttonDropdownItems.push(
                             $('<li class="add-calculation-item"><a>Calculation</a></li>')
                         );
                     }
-                    if (this.config.graphEnabled){
+                    if (window.toggles.GRAPH_CREATION) {
                         buttonDropdownItems.push(
                             $('<li class="add-graph-item"><a>Graph</a></li>')
                         );
@@ -985,8 +985,6 @@ var DetailScreenConfig = (function () {
             }
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
-            this.graphEnabled = spec.graphEnabled;
-            this.calculationEnabled = spec.calculationEnabled;
             this.contextVariables = spec.contextVariables;
 
             /**
@@ -1109,20 +1107,20 @@ var DetailScreenConfig = (function () {
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
-    if (window.FEATURE_mm_case_properties) {
+    if (window.toggles.MM_CASE_PROPERTIES) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
             {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT}
         );
     }
 
-    if (window.FEATURE_enable_enum_image) {
+    if (window.feature_previews.ENUM_IMAGE) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
         );
     }
 
-    if (window.FEATURE_enable_calc_xpaths) {
+    if (window.feature_previews.CALC_XPATHS) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
         );

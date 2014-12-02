@@ -9,9 +9,16 @@
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
     <script>
-    window.FEATURE_enable_enum_image = {{ enable_enum_image|BOOL }};
-    window.FEATURE_enable_calc_xpaths = {{ enable_calc_xpaths|BOOL }};
-    window.FEATURE_mm_case_properties = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
+    if (window.toggles === undefined) {
+        window.toggles = {};
+    }
+    if (window.feature_previews === undefined) {
+        window.feature_previews = {};
+    }
+    window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
+    window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
+    window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
+    window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
@@ -55,8 +62,6 @@
                     parentModules: {{ parent_modules|JSON }},
                     childCaseTypes: detail.child_case_types,
                     parentSelect: detail.parent_select,
-                    graphEnabled: {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }},
-                    calculationEnabled: {{ enable_calc_xpaths|BOOL }},
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

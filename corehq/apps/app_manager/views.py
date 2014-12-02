@@ -934,12 +934,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = (
-            feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
-        )
-        module_context["enable_enum_image"] = (
-            feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
-        )
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
