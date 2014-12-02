@@ -296,7 +296,8 @@
                                     display: column.display,
                                     transform: column.transform() || null, // it doesn't save '' well
                                     is_sensitive: Boolean(is_sensitive),
-                                    doc_type: column.doc_type
+                                    doc_type: column.doc_type,
+                                    num_columns: column.num_columns
                                 };
                             })
                         }
@@ -514,6 +515,9 @@
                                     ">
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
+                                    <span data-bind="if: doc_type() === 'MultiSelectColumn'">
+                                        <input class="input" type="number" data-bind="visible: doc_type === 'MultiSelectColumn', value: num_columns" />
+                                    </span>
                                 </td>
                                 {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
