@@ -574,11 +574,13 @@ class DomainDeploymentForm(forms.Form):
         except Exception:
             return False
 
+
 def tuple_of_copies(a_list, blank=True):
     ret = [(item, item) for item in a_list]
     if blank:
         ret.insert(0, ('', '---'))
     return tuple(ret)
+
 
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
