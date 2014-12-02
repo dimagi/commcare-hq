@@ -143,6 +143,7 @@ class OpmHealthStatusAllInfoFluff(fluff.IndicatorDocument):
     suffering = case_calcs.ChildrenInfo(prop='child%s_suffer_diarrhea')
     excbreastfed = case_calcs.BreastFed()
     measlesvacc = case_calcs.ChildrenInfo(prop='child%s_child_measlesvacc')
+    account_number = flat_field(lambda case: case.get_case_property('bank_account_number'))
 
 
 class OPMHierarchyFluff(fluff.IndicatorDocument):
