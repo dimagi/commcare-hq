@@ -651,6 +651,12 @@ class CaseReportMixin(object):
     extra_row_objects = []
     is_rendered_as_email = False
 
+    @memoized
+    def column_index(self, key):
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == key:
+                return i
+
     @property
     def case_status(self):
         return OpenCloseFilter.case_status(self.request_params)
@@ -752,12 +758,6 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
-    @memoized
-    def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
-            if k == key:
-                return i
-
     @property
     def rows(self):
         raw_rows = super(BeneficiaryPaymentReport, self).rows
@@ -847,8 +847,10 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         Strip user_id and owner_id columns
         """
+        for row in rows:
+            del row[self.column_index('owner_id')]
+            del row[self.column_index('case_id')]
 
-        rows = [row[0:15] + row[17:] for row in rows]
         self.context['report_table'].update(
             rows=rows
         )
