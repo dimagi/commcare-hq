@@ -124,9 +124,33 @@ def get_children_only_ours(domain):
     """
     Returns a list of new child cases which don't have dhis2_organization_unit_id set
     """
-    # TODO: Fetch cases where dhis2_organisation_unit_id is set and dhis2_te_inst_id is empty
+    # Fetch cases where dhis2_organisation_unit_id is set and dhis2_te_inst_id is empty
+
+    # query = CaseES().domain(domain).filter({
+    #     # dhis2_organisation_unit_id is not empty
+    #     'not': {
+    #         'or': [
+    #             {'dhis2_organisation_unit_id': None},
+    #             {'dhis2_organisation_unit_id': ''}
+    #         ]
+    #     }
+    # }).filter({
+    #     # dhis2_te_inst_id is empty
+    #     'or': [
+    #         {'dhis2_te_inst_id': None},
+    #         {'dhis2_te_inst_id': ''}
+    #     ]
+    # })
+
+    # query = CaseES().domain(domain).filter({
+    #     # dhis2_organisation_unit_id is not empty
+    #     'not': {'dhis2_organisation_unit_id': ''}
+    # }).filter({
+    #     # dhis2_te_inst_id is empty
+    #     'dhis2_te_inst_id': ''
+    # })
+
     query = CaseES().domain(DOMAIN).filter({'missing': {'field': 'dhis2_organization_unit_id'}})
-    # query = CaseES().domain(domain)
     result = query.run()
     return result.hits if result.total else []
 

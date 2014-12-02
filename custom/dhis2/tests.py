@@ -95,6 +95,6 @@ class MockOutThisTest(TestCase):
         self.assertNotEqual(len(result), 0)
 
     def test_push_child_entities(self):
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         children = get_children_only_ours(self.domain)
         push_child_entities(children)
