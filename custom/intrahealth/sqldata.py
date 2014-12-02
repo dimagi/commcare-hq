@@ -348,8 +348,8 @@ class DateSource(BaseSqlData):
     @property
     def filters(self):
         filters = super(DateSource, self).filters
-        if 'PPS_name' in self.config:
-            filters.append(EQ("PPS_name", "PPS_name"))
+        if 'location_id' in self.config:
+            filters.append(EQ('location_id', 'location_id'))
         return filters
 
     @property
@@ -382,8 +382,8 @@ class RecapPassageData(BaseSqlData):
     @property
     def filters(self):
         filters = super(RecapPassageData, self).filters
-        if 'PPS_name' in self.config:
-            filters.append(EQ("PPS_name", "PPS_name"))
+        if 'location_id' in self.config:
+            filters.append(EQ("location_id", "location_id"))
         return filters
 
     @property

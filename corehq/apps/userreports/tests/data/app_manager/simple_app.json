@@ -1,361 +1,339 @@
 {
+  "_attachments": {
+    "ea910ab28ec66f8ced39aa7cdcd3b92880f134fb.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>New Ticket</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/AF6F83BA-09A9-4773-9177-AB51EA6CF802\" uiVersion=\"1\" version=\"1\" name=\"New Ticket\">\n\t\t\t\t\t<name />\n\t\t\t\t\t<category />\n\t\t\t\t\t<priority>3</priority>\n\t\t\t\t\t<starred />\n\t\t\t\t\t<estimate />\n\t\t\t\t\t<date_question />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" required=\"true()\" />\n\t\t\t<bind nodeset=\"/data/category\" required=\"false()\" />\n\t\t\t<bind nodeset=\"/data/priority\" required=\"true()\" />\n\t\t\t<bind nodeset=\"/data/starred\" required=\"false()\" />\n\t\t\t<bind nodeset=\"/data/estimate\" type=\"xsd:int\" required=\"true()\" />\n\t\t\t<bind nodeset=\"/data/date_question\" type=\"xsd:date\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>Enter a summary of the issue.</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-label\">\n\t\t\t\t\t\t<value>Set category:</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-bug-label\">\n\t\t\t\t\t\t<value>bug</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-feature-label\">\n\t\t\t\t\t\t<value>feature</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-support-label\">\n\t\t\t\t\t\t<value>support issue</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-schedule-label\">\n\t\t\t\t\t\t<value>schedule item</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-label\">\n\t\t\t\t\t\t<value>Set Priority</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-1-label\">\n\t\t\t\t\t\t<value>1</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-2-label\">\n\t\t\t\t\t\t<value>2</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-3-label\">\n\t\t\t\t\t\t<value>3</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-4-label\">\n\t\t\t\t\t\t<value>4</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-5-label\">\n\t\t\t\t\t\t<value>5</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"starred-label\">\n\t\t\t\t\t\t<value>Star this ticket?</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"starred-yes-label\">\n\t\t\t\t\t\t<value>yes</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"starred-no-label\">\n\t\t\t\t\t\t<value>no</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"estimate-label\">\n\t\t\t\t\t\t<value>Estimate (in hours)</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"date_question-label\">\n\t\t\t\t\t\t<value>Date opened</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t\t<select ref=\"/data/category\">\n\t\t\t<label ref=\"jr:itext('category-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-bug-label')\" />\n\t\t\t\t<value>bug</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-feature-label')\" />\n\t\t\t\t<value>feature</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-support-label')\" />\n\t\t\t\t<value>support</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-schedule-label')\" />\n\t\t\t\t<value>schedule</value>\n\t\t\t</item>\n\t\t</select>\n\t\t<select1 ref=\"/data/priority\">\n\t\t\t<label ref=\"jr:itext('priority-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-1-label')\" />\n\t\t\t\t<value>1</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-2-label')\" />\n\t\t\t\t<value>2</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-3-label')\" />\n\t\t\t\t<value>3</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-4-label')\" />\n\t\t\t\t<value>4</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-5-label')\" />\n\t\t\t\t<value>5</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<select1 ref=\"/data/starred\">\n\t\t\t<label ref=\"jr:itext('starred-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('starred-yes-label')\" />\n\t\t\t\t<value>yes</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('starred-no-label')\" />\n\t\t\t\t<value>no</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<input ref=\"/data/estimate\">\n\t\t\t<label ref=\"jr:itext('estimate-label')\" />\n\t\t</input>\n\t\t<input ref=\"/data/date_question\">\n\t\t\t<label ref=\"jr:itext('date_question-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
+  },
+  "admin_password": null,
+  "admin_password_charset": "n",
+  "application_version": "2.0",
+  "attribution_notes": null,
+  "auto_gps_capture": false,
+  "build_broken": false,
+  "build_broken_reason": null,
+  "build_comment": null,
+  "build_langs": [
+    "en"
+  ],
+  "build_signed": true,
+  "build_spec": {
+    "build_number": null,
+    "doc_type": "BuildSpec",
+    "latest": true,
+    "version": "2.16.1"
+  },
+  "built_on": null,
+  "built_with": {
+    "build_number": null,
+    "datetime": null,
+    "doc_type": "BuildRecord",
+    "latest": null,
+    "signed": true,
+    "version": null
+  },
+  "cached_properties": {},
+  "case_sharing": false,
+  "cloudcare_enabled": true,
+  "comment_from": null,
+  "commtrack_enabled": false,
+  "commtrack_requisition_mode": null,
+  "copy_history": [],
+  "deployment_date": null,
+  "description": null,
+  "doc_type": "Application",
   "domain": "userreports_test",
-  "build_langs":[
+  "is_released": false,
+  "langs": [
     "en"
   ],
-  "auto_gps_capture":false,
-  "deployment_date":null,
-  "user_type":null,
-  "text_input":"roman",
-  "secure_submissions":true,
-  "build_broken":false,
-  "show_user_registration":false,
-  "phone_model":null,
-  "build_signed":true,
-  "recipients":"",
-  "copy_history":[
-
-  ],
-  "is_released":false,
-  "application_version":"2.0",
-  "platform":"nokia/s40",
-  "admin_password":null,
-  "build_spec":{
-    "doc_type":"BuildSpec",
-    "version":"2.5.0",
-    "build_number":null,
-    "latest":true
-  },
-  "admin_password_charset":"n",
-  "success_message":{
-
-  },
-  "profile":{
-    "features":{
-      "users":"true",
-      "sense":"false"
-    },
-    "properties":{
-      "cc-send-procedure":"cc-send-http",
-      "log_prop_daily":"log_never",
-      "unsent-number-limit":"5",
-      "cc-autoup-freq":"freq-never",
-      "log_prop_weekly":"log_short",
-      "cc-content-valid":"no",
-      "cc-send-unsent":"cc-su-auto",
-      "loose_media":"no",
-      "restore-tolerance":"loose",
-      "purge-freq":"0",
-      "server-tether":"push-only",
-      "password_format":"n",
-      "extra_key_action":"audio",
-      "cc-user-mode":"cc-u-normal",
-      "user_reg_server":"required",
-      "cc-entry-mode":"cc-entry-quick",
-      "ViewStyle":"v_chatterbox",
-      "logenabled":"Enabled"
-    }
-  },
-  "comment_from":null,
-  "cloudcare_enabled":true,
-  "description":null,
-  "user_registration":{
-    "doc_type":"UserRegistrationForm",
-    "xmlns":null,
-    "name":{
-
-    },
-    "password_path":"password",
-    "auto_gps_capture":false,
-    "show_count":false,
-    "version":null,
-    "post_form_workflow":"default",
-    "form_type":"user_registration",
-    "username_path":"username",
-    "unique_id":"fb5f45810809bb1dd36d8d270bcdb024d82d35f1",
-    "data_paths":{
-
-    }
-  },
-  "translations":{
-
-  },
-  "built_on":null,
-  "built_with":{
-    "doc_type":"BuildRecord",
-    "build_number":null,
-    "signed":true,
-    "datetime":null,
-    "version":null,
-    "latest":null
-  },
-  "multimedia_map":{
-
-  },
-  "langs":[
-    "en"
-  ],
-  "use_custom_suite":false,
-  "build_comment":null,
-  "build_broken_reason":null,
-  "doc_type":"Application",
-  "cached_properties":{
-
-  },
-  "name":"CommBugz",
-  "modules":[
+  "modules": [
     {
-      "case_label":{
-        "en":"Cases"
-      },
-      "doc_type":"Module",
-      "name":{
-        "en":"Ticket Tracking"
-      },
-      "referral_list":{
-        "doc_type":"CaseList",
-        "label":{
-
+      "case_details": {
+        "doc_type": "DetailPair",
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "graph_configuration": {
+                "annotations": [],
+                "config": {},
+                "doc_type": "GraphConfiguration",
+                "graph_type": null,
+                "locale_specific_config": {},
+                "series": []
+              },
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "display": "long",
+          "doc_type": "Detail",
+          "filter": null,
+          "sort_elements": []
         },
-        "show":false
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "graph_configuration": {
+                "annotations": [],
+                "config": {},
+                "doc_type": "GraphConfiguration",
+                "graph_type": null,
+                "locale_specific_config": {},
+                "series": []
+              },
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "display": "short",
+          "doc_type": "Detail",
+          "filter": null,
+          "sort_elements": []
+        }
       },
-      "media_image":null,
-      "parent_select":{
-        "active":false,
-        "module_id":null,
-        "relationship":"parent",
-        "doc_type":"ParentSelect"
+      "case_label": {
+        "en": "Cases"
       },
-      "task_list":{
-        "doc_type":"CaseList",
-        "label":{
-
-        },
-        "show":false
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
       },
-      "case_list":{
-        "doc_type":"CaseList",
-        "label":{
-
-        },
-        "show":false
-      },
-      "forms":[
+      "case_type": "ticket",
+      "doc_type": "Module",
+      "forms": [
         {
-          "doc_type":"Form",
-          "xmlns":"http://openrosa.org/formdesigner/AF6F83BA-09A9-4773-9177-AB51EA6CF802",
-          "form_filter":"",
-          "name":{
-            "en":"New Ticket"
-          },
-          "auto_gps_capture":false,
-          "show_count":false,
-          "requires":"none",
-          "actions":{
-            "doc_type":"FormActions",
-            "subcases":[
-
-            ],
-            "update_case":{
-              "doc_type":"UpdateCaseAction",
-              "update":{
-                "category":"/data/category",
-                "priority":"/data/priority",
-                "starred":"/data/starred",
-                "estimate":"/data/estimate"
+          "actions": {
+            "case_preload": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": null,
+                "question": null,
+                "type": "always"
               },
-              "condition":{
-                "answer":null,
-                "question":null,
-                "type":"always",
-                "operator":null,
-                "doc_type":"FormActionCondition"
-              }
+              "doc_type": "PreloadAction",
+              "preload": {}
             },
-            "close_referral":{
-              "doc_type":"FormAction",
-              "condition":{
-                "operator":"=",
-                "doc_type":"FormActionCondition",
-                "answer":null,
-                "question":null,
-                "type":"never"
-              }
-            },
-            "open_referral":{
-              "name_path":null,
-              "doc_type":"OpenReferralAction",
-              "condition":{
-                "operator":"=",
-                "doc_type":"FormActionCondition",
-                "answer":null,
-                "question":null,
-                "type":"never"
+            "close_case": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": null,
+                "question": null,
+                "type": "never"
               },
-              "followup_date":null
+              "doc_type": "FormAction"
             },
-            "open_case":{
-              "name_path":"/data/name",
-              "doc_type":"OpenCaseAction",
-              "external_id":null,
-              "condition":{
-                "operator":null,
-                "doc_type":"FormActionCondition",
-                "answer":null,
-                "question":null,
-                "type":"always"
-              }
-            },
-            "update_referral":{
-              "doc_type":"UpdateReferralAction",
-              "followup_date":null,
-              "condition":{
-                "operator":"=",
-                "doc_type":"FormActionCondition",
-                "answer":null,
-                "question":null,
-                "type":"never"
-              }
-            },
-            "referral_preload":{
-              "preload":{
-
+            "close_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": "=",
+                "question": null,
+                "type": "never"
               },
-              "doc_type":"PreloadAction",
-              "condition":{
-                "operator":"=",
-                "doc_type":"FormActionCondition",
-                "answer":null,
-                "question":null,
-                "type":"never"
-              }
+              "doc_type": "FormAction"
             },
-            "case_preload":{
-              "preload":{
-
+            "doc_type": "FormActions",
+            "open_case": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": null,
+                "question": null,
+                "type": "always"
               },
-              "doc_type":"PreloadAction",
-              "condition":{
-                "answer":null,
-                "question":null,
-                "type":"always",
-                "operator":null,
-                "doc_type":"FormActionCondition"
+              "doc_type": "OpenCaseAction",
+              "external_id": null,
+              "name_path": "/data/name"
+            },
+            "open_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": "=",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "OpenReferralAction",
+              "followup_date": null,
+              "name_path": null
+            },
+            "referral_preload": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": "=",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "PreloadAction",
+              "preload": {}
+            },
+            "subcases": [],
+            "update_case": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": null,
+                "question": null,
+                "type": "always"
+              },
+              "doc_type": "UpdateCaseAction",
+              "update": {
+                "category": "/data/category",
+                "estimate": "/data/estimate",
+                "priority": "/data/priority",
+                "starred": "/data/starred"
               }
             },
-            "close_case":{
-              "doc_type":"FormAction",
-              "condition":{
-                "operator":null,
-                "doc_type":"FormActionCondition",
-                "answer":null,
-                "question":null,
-                "type":"never"
-              }
+            "update_referral": {
+              "condition": {
+                "answer": null,
+                "doc_type": "FormActionCondition",
+                "operator": "=",
+                "question": null,
+                "type": "never"
+              },
+              "doc_type": "UpdateReferralAction",
+              "followup_date": null
             }
           },
-          "version":null,
-          "media_image":null,
-          "post_form_workflow":"default",
-          "form_type":"module_form",
-          "media_audio":null,
-          "unique_id":"ea5f443fc6fada2a2a7600332d4f3d3bce056762"
+          "auto_gps_capture": false,
+          "doc_type": "Form",
+          "form_filter": "",
+          "form_type": "module_form",
+          "media_audio": null,
+          "media_image": null,
+          "name": {
+            "en": "New Ticket"
+          },
+          "post_form_workflow": "default",
+          "requires": "none",
+          "show_count": false,
+          "unique_id": "ea910ab28ec66f8ced39aa7cdcd3b92880f134fb",
+          "version": null,
+          "xmlns": "http://openrosa.org/formdesigner/AF6F83BA-09A9-4773-9177-AB51EA6CF802"
         }
       ],
-      "case_type":"ticket",
-      "module_type":"basic",
-      "put_in_root":true,
-      "referral_label":{
-        "en":"Referrals"
+      "media_audio": null,
+      "media_image": null,
+      "module_type": "basic",
+      "name": {
+        "en": "Ticket Tracking"
       },
-      "case_details":{
-        "doc_type":"DetailPair",
-        "short":{
-          "doc_type":"Detail",
-          "sort_elements":[
-
-          ],
-          "columns":[
-            {
-              "doc_type":"DetailColumn",
-              "filter_xpath":"",
-              "format":"plain",
-              "late_flag":30,
-              "enum":[
-
-              ],
-              "header":{
-                "en":"Name"
-              },
-              "time_ago_interval":365.25,
-              "calc_xpath":".",
-              "field":"name",
-              "model":"case",
-              "advanced":""
-            }
-          ],
-          "display":"short"
+      "parent_select": {
+        "active": false,
+        "doc_type": "ParentSelect",
+        "module_id": null,
+        "relationship": "parent"
+      },
+      "put_in_root": true,
+      "ref_details": {
+        "doc_type": "DetailPair",
+        "long": {
+          "columns": [],
+          "display": "long",
+          "doc_type": "Detail",
+          "filter": null,
+          "sort_elements": []
         },
-        "long":{
-          "doc_type":"Detail",
-          "sort_elements":[
-
-          ],
-          "columns":[
-            {
-              "doc_type":"DetailColumn",
-              "filter_xpath":"",
-              "format":"plain",
-              "late_flag":30,
-              "enum":[
-
-              ],
-              "header":{
-                "en":"Name"
-              },
-              "time_ago_interval":365.25,
-              "calc_xpath":".",
-              "field":"name",
-              "model":"case",
-              "advanced":""
-            }
-          ],
-          "display":"long"
+        "short": {
+          "columns": [],
+          "display": "short",
+          "doc_type": "Detail",
+          "filter": null,
+          "sort_elements": []
         }
       },
-      "media_audio":null,
-      "unique_id":"5c15aad583a48d9b09576c52044b69504ad778fd",
-      "ref_details":{
-        "doc_type":"DetailPair",
-        "short":{
-          "doc_type":"Detail",
-          "sort_elements":[
-
-          ],
-          "columns":[
-
-          ],
-          "display":"short"
-        },
-        "long":{
-          "doc_type":"Detail",
-          "sort_elements":[
-
-          ],
-          "columns":[
-
-          ],
-          "display":"long"
-        }
-      }
+      "referral_label": {
+        "en": "Referrals"
+      },
+      "referral_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "task_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "unique_id": "5c15aad583a48d9b09576c52044b69504ad778fd"
     }
   ],
-  "_attachments":{
-    "ea5f443fc6fada2a2a7600332d4f3d3bce056762.xml":"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<h:html xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:orx=\"http://openrosa.org/jr/xforms\" xmlns=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\" xmlns:vellum=\"http://commcarehq.org/xforms/vellum\">\n\t<h:head>\n\t\t<h:title>New Ticket</h:title>\n\t\t<model>\n\t\t\t<instance>\n\t\t\t\t<data xmlns:jrm=\"http://dev.commcarehq.org/jr/xforms\" xmlns=\"http://openrosa.org/formdesigner/AF6F83BA-09A9-4773-9177-AB51EA6CF802\" uiVersion=\"1\" version=\"1\" name=\"New Ticket\">\n\t\t\t\t\t<name />\n\t\t\t\t\t<category />\n\t\t\t\t\t<priority>3</priority>\n\t\t\t\t\t<starred />\n\t\t\t\t\t<estimate />\n\t\t\t\t</data>\n\t\t\t</instance>\n\t\t\t<bind nodeset=\"/data/name\" type=\"xsd:string\" required=\"true()\" />\n\t\t\t<bind nodeset=\"/data/category\" required=\"false()\" />\n\t\t\t<bind nodeset=\"/data/priority\" required=\"true()\" />\n\t\t\t<bind nodeset=\"/data/starred\" required=\"false()\" />\n\t\t\t<bind nodeset=\"/data/estimate\" type=\"xsd:int\" required=\"true()\" />\n\t\t\t<itext>\n\t\t\t\t<translation lang=\"en\" default=\"\">\n\t\t\t\t\t<text id=\"name-label\">\n\t\t\t\t\t\t<value>Enter a summary of the issue.</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-label\">\n\t\t\t\t\t\t<value>Set category:</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-bug-label\">\n\t\t\t\t\t\t<value>bug</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-feature-label\">\n\t\t\t\t\t\t<value>feature</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-support-label\">\n\t\t\t\t\t\t<value>support issue</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"category-schedule-label\">\n\t\t\t\t\t\t<value>schedule item</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-label\">\n\t\t\t\t\t\t<value>Set Priority</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-1-label\">\n\t\t\t\t\t\t<value>1</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-2-label\">\n\t\t\t\t\t\t<value>2</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-3-label\">\n\t\t\t\t\t\t<value>3</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-4-label\">\n\t\t\t\t\t\t<value>4</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"priority-5-label\">\n\t\t\t\t\t\t<value>5</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"starred-label\">\n\t\t\t\t\t\t<value>Star this ticket?</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"starred-yes-label\">\n\t\t\t\t\t\t<value>yes</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"starred-no-label\">\n\t\t\t\t\t\t<value>no</value>\n\t\t\t\t\t</text>\n\t\t\t\t\t<text id=\"estimate-label\">\n\t\t\t\t\t\t<value>Estimate (in hours)</value>\n\t\t\t\t\t</text>\n\t\t\t\t</translation>\n\t\t\t</itext>\n\t\t</model>\n\t</h:head>\n\t<h:body>\n\t\t<input ref=\"/data/name\">\n\t\t\t<label ref=\"jr:itext('name-label')\" />\n\t\t</input>\n\t\t<select1 ref=\"/data/category\">\n\t\t\t<label ref=\"jr:itext('category-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-bug-label')\" />\n\t\t\t\t<value>bug</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-feature-label')\" />\n\t\t\t\t<value>feature</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-support-label')\" />\n\t\t\t\t<value>support</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('category-schedule-label')\" />\n\t\t\t\t<value>schedule</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<select1 ref=\"/data/priority\">\n\t\t\t<label ref=\"jr:itext('priority-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-1-label')\" />\n\t\t\t\t<value>1</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-2-label')\" />\n\t\t\t\t<value>2</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-3-label')\" />\n\t\t\t\t<value>3</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-4-label')\" />\n\t\t\t\t<value>4</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('priority-5-label')\" />\n\t\t\t\t<value>5</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<select1 ref=\"/data/starred\">\n\t\t\t<label ref=\"jr:itext('starred-label')\" />\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('starred-yes-label')\" />\n\t\t\t\t<value>yes</value>\n\t\t\t</item>\n\t\t\t<item>\n\t\t\t\t<label ref=\"jr:itext('starred-no-label')\" />\n\t\t\t\t<value>no</value>\n\t\t\t</item>\n\t\t</select1>\n\t\t<input ref=\"/data/estimate\">\n\t\t\t<label ref=\"jr:itext('estimate-label')\" />\n\t\t</input>\n\t</h:body>\n</h:html>"
+  "multimedia_map": {},
+  "name": "Contact Tracing",
+  "phone_model": null,
+  "platform": "nokia/s40",
+  "profile": {
+    "features": {
+      "sense": "false",
+      "users": "true"
+    },
+    "properties": {
+      "ViewStyle": "v_chatterbox",
+      "cc-autoup-freq": "freq-never",
+      "cc-content-valid": "no",
+      "cc-entry-mode": "cc-entry-quick",
+      "cc-send-procedure": "cc-send-http",
+      "cc-send-unsent": "cc-su-auto",
+      "cc-user-mode": "cc-u-normal",
+      "extra_key_action": "audio",
+      "log_prop_daily": "log_never",
+      "log_prop_weekly": "log_short",
+      "logenabled": "Enabled",
+      "loose_media": "no",
+      "password_format": "n",
+      "purge-freq": "0",
+      "restore-tolerance": "loose",
+      "server-tether": "push-only",
+      "unsent-number-limit": "5",
+      "user_reg_server": "required"
+    }
   },
-  "attribution_notes":null,
-  "commtrack_enabled":false,
-  "commtrack_requisition_mode":null,
-  "translation_strategy":"select-known",
-  "case_sharing":false
+  "recipients": "",
+  "secure_submissions": true,
+  "show_user_registration": false,
+  "success_message": {},
+  "text_input": "roman",
+  "translation_strategy": "select-known",
+  "translations": {},
+  "use_custom_suite": false,
+  "user_registration": {
+    "auto_gps_capture": false,
+    "data_paths": {},
+    "doc_type": "UserRegistrationForm",
+    "form_type": "user_registration",
+    "name": {},
+    "password_path": "password",
+    "post_form_workflow": "default",
+    "show_count": false,
+    "unique_id": "3ddb33ef006c8ef9295ec24973833f0f825fc6ad",
+    "username_path": "username",
+    "version": null,
+    "xmlns": null
+  },
+  "user_type": null
 }

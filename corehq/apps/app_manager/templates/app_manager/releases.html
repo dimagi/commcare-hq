@@ -61,24 +61,11 @@
 </script>
 <script>
     function track_deploy_type(type) {
-        if (ga !== undefined) {
-            ga('send', 'event', 'App Manager', 'Deploy Type', type);
-        }
+        ga_track_event('App Manager', 'Deploy Type', type);
     }
-
-    function track_deploy_type_and_redirect(type, href) {
-        {% if GOOGLE_ANALYTICS_ID %}
-            if (ga !== undefined) {
-                ga('send', 'event', 'App Manager', 'Deploy Type', type, {
-                    'hitCallback': function () {
-                        document.location = href;
-                    }
-                });
-            }
-        {% else %}
-            return true;
-        {% endif %}
-    }
+    $(function () {
+        gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
+    });
 </script>
 {% endblock %}
 
@@ -226,7 +213,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { if (ga !== undefined) { ga('send', 'event', 'App Manager', 'Deploy Button', '{{ app.id }}'); } }
+                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -517,9 +504,8 @@
                     {% if request.user.is_superuser %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" data-bind="
+                                <a class="accordion-toggle view-source-files-link" data-bind="
                                     attr: {href: $root.url('source', id)},
-                                    click: function() { track_deploy_type_and_redirect('View Source Files', $root.url('source', id)); },
                                 ">
                                     {% trans "View Source Files" %}
                                 </a>

@@ -25,8 +25,11 @@
             <div class="control-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
-
-                {% include "app_manager/partials/nav_menu_media.html" with item=form %}
+                {% if multimedia %}
+                    {% include "app_manager/partials/nav_menu_media.html" %}
+                {% else %}
+                    {% include "app_manager/partials/nav_menu_media.old.html" with item=form %}
+                {% endif %}
 
             </div>
         </div>
@@ -66,6 +69,28 @@
                 {% include "app_manager/partials/form_gps_capture.html" %}
 
             </div>
+            {% if request|toggle_enabled:'NO_VELLUM' %}
+            <div class="control-group">
+                <label class="control-label">
+                    {% trans "Disallow editing form in Form Builder" %}
+                    <span class="hq-help-template"
+                          data-title="{% trans "Disallow editing form in Form Builder" %}"
+                          data-content="{% blocktrans %}For custom forms that the Form Builder breaks,
+                                        use this option to disallow editing in the Form Builder.{% endblocktrans %}"
+                    ></span>
+                </label>
+                <div class="controls" id="no-vellum">
+                    {% if edit %}
+                         <input type="checkbox" value="true"
+                                data-bind="checked: no_vellum"/>
+                    {% else %}
+                        <input type="checkbox" value="true" disabled="disabled"
+                               data-bind="checked: no_vellum"/>
+                    {% endif %}
+                    <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </form>
 </div>

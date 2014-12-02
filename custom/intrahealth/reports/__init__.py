@@ -7,6 +7,7 @@ from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.util.translation import localize
 from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 from django.utils.translation import ugettext as _
+from dimagi.utils.decorators.memoized import memoized
 
 
 def get_localized_months():
@@ -16,10 +17,12 @@ def get_localized_months():
 
 
 class IntraHealthLocationMixin(object):
+
     @property
+    @memoized
     def location(self):
-        loc = Location.get(self.request.GET.get('location_id'))
-        return loc
+        if self.request.GET.get('location_id'):
+            return Location.get(self.request.GET.get('location_id'))
 
 
 class IntraHealthReportConfigMixin(object):
