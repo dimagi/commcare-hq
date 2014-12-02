@@ -672,7 +672,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     def get_labels(cls):
         return [
             (_('Application'), _("Select an Application") if cls.use_only_last
-                                    else _("Show Forms in all Applications"), 'app'),
+                                    else _("Show Forms in all Applications"), 'app_id'),
             (_('Module'), _("Select a Module") if cls.use_only_last
                                     else _("Show Forms from all Modules in selected Application"), 'module'),
             (_('Form'), _("Select a Form") if cls.use_only_last
