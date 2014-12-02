@@ -43,7 +43,9 @@
 trunk: master
 name: autostaging
 branches:
-  - gaTrackLink-rebase
+  - double-managment+refactor-case-list
+  - custom-case-list-pane+refactor-case-list
+  - refactor-case-list
   - historical-forms  # Danny 12/1
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
@@ -54,7 +56,6 @@ branches:
   - masterlist-workflow # j$  10/8
   - bulk-app-translate # Noah 9/18
 #  - share-fixtures # j$ 10/29
-#  - logos # Nick P 10/31 (removed by Nick P)
   - hq-dropdown+locations-for-everyone # tw 11/18
   - hq-dropdown # sravan 5/7
   - custom-data-choices  # Ethan 11/09
@@ -69,6 +70,7 @@ branches:
   - quickview # Simon 11/25
   - fix-form-filtering # Nick P 11/26
   - double-management # SK 12/1
+  - logo-uploader # Nick P 12/2
 submodules:
   submodules/couchlog-src:
     branches:
@@ -90,3 +92,4 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
       - debug-yui # Nick P 11/4
+      - logos # Nick P 12/2

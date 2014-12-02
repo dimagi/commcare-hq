@@ -1835,7 +1835,7 @@ class PaymentRecord(models.Model):
 
 class CreditAdjustment(models.Model):
     """
-    A record of any addition (positive amounts) s or deductions (negative amounts) that contributed to the
+    A record of any additions (positive amounts) or deductions (negative amounts) that contributed to the
     current balance of the associated CreditLine.
     """
     credit_line = models.ForeignKey(CreditLine, on_delete=models.PROTECT)

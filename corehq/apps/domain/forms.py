@@ -879,6 +879,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         self.plan_version, web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
                     )
                     subscription.is_active = True
+                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        subscription.do_not_invoice = True
                     subscription.save()
             else:
                 subscription = Subscription.new_domain_subscription(
