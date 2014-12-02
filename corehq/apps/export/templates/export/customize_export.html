@@ -353,15 +353,25 @@
 
                         // If the button had said "Create"
                         if (!self.custom_export._id || !self.custom_export._id()){
-                            // Record an event
-                            ga_track_event('Form Exports', 'Custom export creation', "", {
-                                'hitCallback': function(){
-                                    redirect();
-                                }
-                            });
-                        } else {
-                            redirect();
+
+                            var event_category = null;
+                            if (self.custom_export.type() == "form"){
+                                event_category = 'Form Exports';
+                            } else if (self.custom_export.type() == "case"){
+                                event_category = 'Case Exports'
+                            }
+
+                            if (event_category) {
+                                // Record an event
+                                ga_track_event('Form Exports', 'Custom export creation', "", {
+                                    'hitCallback': function () {
+                                        redirect();
+                                    }
+                                });
+                                return;
+                            }
                         }
+                        redirect();
                     }).fail(function (response) {
                         var data = $.parseJSON(response.responseText);
                         self.save.state('error');
