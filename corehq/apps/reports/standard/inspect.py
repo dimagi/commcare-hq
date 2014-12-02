@@ -91,7 +91,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
     def _es_extra_filters(self):
         if FormsByApplicationFilter.has_selections(self.request):
             def form_filter(form):
-                app_id = form.get('app_id', None)
+                app_id = form.get('app', None)
                 if app_id and app_id != MISSING_APP_ID:
                     return {'and': [{'term': {'xmlns.exact': form['xmlns']}},
                                     {'term': {'app_id': app_id}}]}
