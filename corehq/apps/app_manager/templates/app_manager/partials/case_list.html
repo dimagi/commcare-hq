@@ -113,7 +113,7 @@
                     <!-- ko if: $data instanceof SortRowTemplate -->
                     <td class="detail-screen-field control-group" data-bind="css: {error: showWarning}">
                         <div data-bind="jqueryElement: textField.ui"></div>
-                        <div data-bind="jqueryElement: warningElement, if: showWarning"></div>
+                        <div data-bind="jqueryElement: warningElement, visible: showWarning"></div>
                     </td>
                     <!-- /ko -->
 
