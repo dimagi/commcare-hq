@@ -45,6 +45,7 @@
                         short: detail.short,
                         long: detail.long
                     },
+                    sortRows: detail.sort_elements,
                     model: detail.model,
                     properties: detail.properties,
                     lang: {{ lang|JSON }},
@@ -63,17 +64,6 @@
 
                 ko.applyBindings(detailScreenConfig, $list_home.get(0));
                 ko.applyBindings(detailScreenConfig, $detail_home.get(0));
-
-                if (detail.sort_elements) {
-                    var parsedSortRows = JSON.parse(detail.sort_elements);
-                    for (var j = 0; j < parsedSortRows.length; j++) {
-                        detailScreenConfig.sortRows.addSortRow(
-                            parsedSortRows[j].field,
-                            parsedSortRows[j].type,
-                            parsedSortRows[j].direction
-                        );
-                    }
-                }
             }
         });
         $(function () {

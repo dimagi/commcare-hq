@@ -1029,6 +1029,15 @@ var DetailScreenConfig = (function () {
                 this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, this.shortScreen.saveButton);
                 // Set up SortRows
                 this.sortRows = new SortRows(this.properties, spec.edit, this.shortScreen.saveButton);
+                if (spec.sortRows) {
+                    for (var j = 0; j < spec.sortRows.length; j++) {
+                        this.sortRows.addSortRow(
+                            spec.sortRows[j].field,
+                            spec.sortRows[j].type,
+                            spec.sortRows[j].direction
+                        );
+                    }
+                }
             }
             if (spec.state.long !== undefined) {
                 this.longScreen = addScreen(spec.state, "long", this.$detailHome);
