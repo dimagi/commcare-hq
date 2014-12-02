@@ -596,4 +596,22 @@ ko.bindingHandlers.multiTypeahead = {
             source: contacts
         }).focus();
     }
-}
+};
+
+/**
+ * A custom knockout binding that replaces the element's contents with a jquery
+ * element.
+ * @type {{update: update}}
+ */
+ko.bindingHandlers.jqueryElement = {
+    init: function () {
+        // This excludes this element from ko.applyBindings
+        // which means that whatever controls that element
+        // is free to use its own knockout without conflicting
+        return {controlsDescendantBindings: true};
+    },
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        $(element).empty();
+        $(element).append(ko.unwrap(valueAccessor()));
+    }
+};

@@ -214,7 +214,7 @@ NEW_CASE_PROCESSING = PredicatablyRandomToggle(
     'new_case_processing',
     'Use new case processing/rebuild logic',
     namespace=NAMESPACE_DOMAIN,
-    randomness=0.05,
+    randomness=0.25,
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(

@@ -638,6 +638,8 @@ class FormExportSchema(HQExportSchema):
     def filter(self):
         user_ids = set(CouchUser.ids_by_domain(self.domain))
         user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
+        user_ids.add('demo_user')
+
         def _top_level_filter(form):
             # careful, closures used
             return form_matches_users(form, user_ids) or is_commconnect_form(form)

@@ -184,20 +184,17 @@
         $(window).load(assure_correct_spacing);
         $(window).resize(assure_correct_spacing);
     </script>
-    {% if GOOGLE_ANALYTICS_ID %}
-        <script>
-            {% for app in apps %}
-                $('#view_button_{{ app.get_id }}').click(function() {
-                    event.preventDefault();
-                    ga('send', 'event', 'Exchange', 'View button', '{{ app.get_id }}', {
-                        'hitCallback': function () {
-                            document.location = $('#view_button_{{ app.get_id }}').attr('href');
-                        }
-                    });
+    <script>
+        {% for app in apps %}
+            $('#view_button_{{ app.get_id }}').click(function() {
+                ga_track_event('Exchange', 'View button', '{{ app.get_id }}', {
+                    'hitCallback': function () {
+                        document.location = $('#view_button_{{ app.get_id }}').attr('href');
+                    }
                 });
-            {% endfor %}
-        </script>
-    {% endif %}
+            });
+        {% endfor %}
+    </script>
 {% endblock %}
 
 {% block sidebar %}
