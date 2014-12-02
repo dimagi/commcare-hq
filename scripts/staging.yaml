@@ -43,6 +43,8 @@
 trunk: master
 name: autostaging
 branches:
+  - double-managment+refactor-case-list
+  - custom-case-list-pane+refactor-case-list
   - refactor-case-list
   - historical-forms  # Danny 12/1
 #  - add-build-ui
