@@ -43,7 +43,8 @@
 trunk: master
 name: autostaging
 branches:
-  - gaTrackLink-rebase
+  - refactor-case-list
+  - historical-forms  # Danny 12/1
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
@@ -58,7 +59,7 @@ branches:
   - hq-dropdown # sravan 5/7
   - custom-data-choices  # Ethan 11/09
   - vellum-staging # J$ 11/13
-  - custom_location_data+locations-for-everyone # tw 11/18
+  - custom_location_data+locations-for-everyone  # tw & Ethan 11/18 this has more than just the obvious merge conflict resolution, please merge in when ready.
   - custom_location_data+system-custom-data+locations-for-everyone  # Ethan 11/24 (yo dawg i herd u like conflict resolution branches...)
   - custom_location_data+system-custom-data  # Ethan 11/24
   - custom_location_data  # Ethan & tw 11/17
@@ -67,6 +68,7 @@ branches:
   - system-custom-data  # Ethan 11/24
   - quickview # Simon 11/25
   - fix-form-filtering # Nick P 11/26
+  - double-management # SK 12/1
 submodules:
   submodules/couchlog-src:
     branches:

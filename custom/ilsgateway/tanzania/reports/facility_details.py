@@ -3,6 +3,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
+from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.tanzania import ILSData, MultiReport
 from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format
 from dimagi.utils.decorators.memoized import memoized
@@ -30,7 +31,9 @@ class InventoryHistoryData(ILSData):
         rows = []
         if self.config['location_id']:
             sp = SQLLocation.objects.get(location_id=self.config['location_id']).supply_point_id
-            ss = StockState.objects.filter(sql_product__is_archived=False, case_id=sp)
+            ss = StockState.objects.filter(sql_product__is_archived=False,
+                                           case_id=sp,
+                                           product_id__in=self.config['products'])
             for stock in ss:
                 def calculate_months_remaining(stock_state, quantity):
                     consumption = stock_state.get_monthly_consumption()
@@ -83,7 +86,7 @@ class RegistrationData(ILSData):
 class FacilityDetailsReport(MultiReport):
 
     title = "Facility Details Report"
-    fields = [AsyncLocationFilter]
+    fields = [AsyncLocationFilter, ProductByProgramFilter]
     name = "Facility Details"
     slug = 'facility_details'
     use_datatables = True

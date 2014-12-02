@@ -2231,7 +2231,7 @@ def _download_index_files(request):
                  if path.startswith('files/')]
     else:
         try:
-            files = sorted(request.app.create_all_files().items())
+            files = request.app.create_all_files().items()
         except Exception:
             messages.error(request, _(
                 "We were unable to get your files "
@@ -2240,7 +2240,7 @@ def _download_index_files(request):
                 "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
             ), extra_tags='html')
-    return files
+    return sorted(files)
 
 
 @safe_download

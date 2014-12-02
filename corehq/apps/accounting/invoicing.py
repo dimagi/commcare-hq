@@ -408,7 +408,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     def unit_description(self):
         if self.is_within_monthly_limit:
             return _(
-                "%(num_sms)d of %(monthly_limit)d included SMS  messages"
+                "%(num_sms)d of %(monthly_limit)d included SMS messages"
             ) % {
                 'num_sms': self.num_sms,
                 'monthly_limit': self.rate.monthly_limit,
