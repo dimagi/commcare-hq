@@ -279,6 +279,11 @@ class MultiSelectColumn(ComplexExportColumn):
         values = value.split(' ')
         return values + [None] * (self.max_columns - len(values))
 
+    def to_config_format(self, selected=True):
+        format = super(MultiSelectColumn, self).to_config_format(selected)
+        format['num_columns'] = self.num_columns
+        return format
+
 
 class ExportTable(DocumentSchema):
     """
