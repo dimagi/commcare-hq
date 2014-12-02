@@ -1045,7 +1045,8 @@ class CaseReminderHandler(Document):
             check_attr("case_type")
             check_attr("start_property")
             check_attr("start_match_type")
-            check_attr("start_value")
+            if self.start_match_type != MATCH_ANY_VALUE:
+                check_attr("start_value")
 
         if self.start_condition_type == ON_DATETIME:
             check_attr("start_datetime")
@@ -1089,8 +1090,8 @@ class CaseReminderHandler(Document):
 
         if self.event_interpretation == EVENT_AS_SCHEDULE:
             if self.schedule_length <= last_day:
-                raise IllegalModelStateException("schedule_length must be greater"
-                    "than last event's day_num")
+                raise IllegalModelStateException("schedule_length must be "
+                    "greater than last event's day_num")
         else:
             if self.schedule_length < 0:
                 raise IllegalModelStateException("schedule_length must be"
