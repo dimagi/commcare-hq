@@ -1,5 +1,6 @@
 import logging
 import re
+from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_datetime
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.commtrack.models import CommTrackUser
@@ -58,11 +59,21 @@ def get_products(form, property):
                 products.append(product[property])
     return products
 
+def get_products_code(form, property):
+    products = []
+    if 'products' in form.form:
+        for product in form.form['products']:
+            if property in product:
+                prd = SQLProduct.objects.get(name=product[property])
+                products.append(prd.code)
+    return products
+
 def get_rupture_products(form):
     result = []
     for k, v in form.form.iteritems():
         if re.match("^rupture.*hv$", k):
             result.append(PRODUCT_MAPPING[k[8:-3]])
+            print result
     return result
 
 def _get_location(form):

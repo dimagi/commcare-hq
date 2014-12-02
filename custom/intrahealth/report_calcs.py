@@ -1,3 +1,4 @@
+from corehq.apps.products.models import SQLProduct
 import fluff
 import re
 import logging
@@ -8,8 +9,10 @@ from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING
 def form_date(form):
     return form.received_on
 
+
 def real_date(form):
     return form.form['real_date']
+
 
 def numeric_value(val):
     number = 0
@@ -18,6 +21,11 @@ def numeric_value(val):
     except ValueError:
         logging.info('Bad value type: %s' %(val))
     return number
+
+
+def get_product_code(product_name):
+    return SQLProduct.objects.get(name=product_name).code
+
 
 class PPSRegistered(fluff.Calculator):
     @fluff.date_emitter
@@ -47,6 +55,7 @@ class PPSPlaned(fluff.Calculator):
             'value': 0
         }
 
+
 class Commandes(fluff.Calculator):
     @fluff.date_emitter
     def total(self, form):
@@ -57,15 +66,17 @@ class Commandes(fluff.Calculator):
                     yield {
                         'date': product['receivedMonthInner'],
                         'value': product['amountOrdered'],
-                        'group_by': [product['productName']]
+                        'group_by': [product['productName'], get_product_code(product['productName'])]
                     }
         elif 'productName' in form.form['products'] and 'receivedMonthInner' in form.form['products']\
             and form.form['products']['receivedMonthInner']:
             yield {
                 'date': form.form['products']['receivedMonthInner'],
                 'value': form.form['products']['amountOrdered'],
-                'group_by': [form.form['products']['productName']]
+                'group_by': [form.form['products']['productName'],
+                             get_product_code(form.form['products']['productName'])]
             }
+
 
 class Recus(fluff.Calculator):
     @fluff.date_emitter
@@ -77,15 +88,18 @@ class Recus(fluff.Calculator):
                     yield {
                         'date': product['receivedMonthInner'],
                         'value': product['amountReceived'],
-                        'group_by': [product['productName']]
+                        'group_by': [product['productName'], get_product_code(product['productName'])]
                     }
-        elif 'productName' in form.form['products'] and 'receivedMonthInner' in form.form['products']\
-            and form.form['products']['receivedMonthInner']:
+        elif 'productName' in form.form['products'] and \
+             'receivedMonthInner' in form.form['products'] and \
+             form.form['products']['receivedMonthInner']:
             yield {
                 'date': form.form['products']['receivedMonthInner'],
                 'value': form.form['products']['amountOrdered'],
-                'group_by': [form.form['products']['productName']]
+                'group_by': [form.form['products']['productName'],
+                             get_product_code(form.form['products']['productName'])]
             }
+
 
 class PPSConsumption(fluff.Calculator):
 
@@ -101,13 +115,14 @@ class PPSConsumption(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         'value': product[self.field],
-                        'group_by': [product['product_name']]
+                        'group_by': [product['product_name'], get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products'][self.field],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
 
@@ -141,13 +156,14 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        "group_by": [product['product_name'], get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['old_stock_total'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -159,13 +175,14 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'], get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['total_stock'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -177,14 +194,15 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'], get_product_code(product['product_name'])]
                 }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             val = numeric_value(form.form['products']['top_up']['transfer']['entry']['value']['@quantity'])
             yield {
                 'date': real_date(form),
                 'value': val,
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -196,13 +214,14 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'], get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['display_total_stock'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -214,13 +233,14 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'], get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['old_stock_pps'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -232,13 +252,15 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         "date": real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'],
+                                     get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['outside_receipts_amt'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -250,13 +272,14 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'],get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['actual_consumption'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -268,13 +291,15 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'],
+                                     get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['billed_consumption'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -286,13 +311,14 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": val if val >= 0 else 0,
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'], get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['pps_stock'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
     @fluff.date_emitter
@@ -304,13 +330,14 @@ class RecapPassage(fluff.Calculator):
                     yield {
                         'date': real_date(form),
                         "value": int(product['loss_amt']),
-                        "group_by": [product['product_name']]
+                        'group_by': [product['product_name'], get_product_code(product['product_name'])]
                     }
         elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
             yield {
                 'date': real_date(form),
                 'value': form.form['products']['loss_amt'],
-                'group_by': [form.form['products']['product_name']]
+                'group_by': [form.form['products']['product_name'],
+                             get_product_code(form.form['products']['product_name'])]
             }
 
 class DureeMoyenneLivraison(fluff.Calculator):

@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
     get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter, RAPTURE_XMLNSES, \
-    get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month
+    get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month, get_products_code
 
 from custom.utils.utils import flat_field
 
@@ -46,7 +46,8 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     deleted_types = IH_DELETED_TYPES
 
     domains = INTRAHEALTH_DOMAINS
-    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),)
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),
+                fluff.AttributeGetter('product_name', lambda f: get_products_code(f, 'productName')))
     save_direct_to_sql = True
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
@@ -64,7 +65,8 @@ class IntraHealthFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
     save_direct_to_sql = True
-    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
+                fluff.AttributeGetter('product_name', lambda f: get_products_code(f, 'product_name')))
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
@@ -88,7 +90,8 @@ class RecapPassageFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
-    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),)
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
+                fluff.AttributeGetter('product_name', lambda f: get_products_code(f, 'product_name')))
     save_direct_to_sql = True
 
     location_id = flat_field(get_location_id)
