@@ -2,9 +2,15 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
+from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_stock_data_task, ews_clear_stock_data_task
+from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_stock_data_task, ews_clear_stock_data_task, \
+    LOCATION_TYPES, EWS_FACILITIES
+from custom.ilsgateway.api import ILSGatewayEndpoint
+from custom.ilsgateway.models import ILSGatewayConfig
+from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction
 from custom.ilsgateway.views import GlobalStats, BaseConfigView
+from custom.logistics.tasks import stock_data_task
 
 
 class EWSGlobalStats(GlobalStats):
@@ -31,7 +37,14 @@ def sync_ewsghana(request, domain):
 @domain_admin_required
 @require_POST
 def ews_sync_stock_data(request, domain):
-    ews_stock_data_task.delay(domain)
+    apis = (
+        ('product_stock', get_product_stock),
+        ('stock_transaction', get_stock_transaction)
+    )
+    config = EWSGhanaConfig.for_domain(domain)
+    domain = config.domain
+    endpoint = GhanaEndpoint.from_config(config)
+    stock_data_task.delay(domain, endpoint, apis, LOCATION_TYPES, EWS_FACILITIES)
     return HttpResponse('OK')
 
 

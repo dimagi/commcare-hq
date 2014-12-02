@@ -72,13 +72,27 @@ def save_checkpoint(checkpoint, api, limit, offset, date, commit=True):
         checkpoint.save()
 
 
+def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id, commit=True):
+    save_checkpoint(checkpoint, api, limit, offset, date, False)
+    if external_id:
+        try:
+            location = SQLLocation.objects.get(domain=checkpoint.domain, external_id=int(external_id))
+        except SQLLocation.DoesNotExist:
+            return
+        checkpoint.location = location
+    else:
+        checkpoint.location = None
+    if commit:
+        checkpoint.save()
+
+
 def products_sync(domain, endpoint, checkpoint, limit, offset, **kwargs):
     save_checkpoint(checkpoint, "product", limit, offset, kwargs.get('date', None))
     for product in endpoint.get_products(**kwargs):
         sync_ilsgateway_product(domain, product)
 
 
-def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
+def webusers_sync(project, endpoint, checkpoint, limit, offset, extension=None, **kwargs):
     has_next = True
     next_url = None
 
@@ -88,11 +102,13 @@ def webusers_sync(project, endpoint, checkpoint, limit, offset, **kwargs):
                         meta.get('offset') or offset, kwargs.get('date', None))
         for user in webusers:
             if user.email or user.username:
-                sync_ilsgateway_webuser(project, user)
+                u = sync_ilsgateway_webuser(project, user)
+                if extension:
+                    extension(u, user)
         has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
 
-def locations_sync(project, endpoint, checkpoint, fetch_groups=True, **kwargs):
+def locations_sync(project, endpoint, checkpoint, fetch_groups=True, extension=None, **kwargs):
     has_next = True
     next_url = None
 
@@ -102,7 +118,9 @@ def locations_sync(project, endpoint, checkpoint, fetch_groups=True, **kwargs):
                         meta.get('limit') or kwargs.get('limit'), meta.get('offset') or kwargs.get('offset'),
                         kwargs.get('date', None))
         for location in locations:
-            sync_ilsgateway_location(project, endpoint, location, fetch_groups=fetch_groups)
+            loc = sync_ilsgateway_location(project, endpoint, location, fetch_groups=fetch_groups)
+            if extension:
+                extension(loc, location)
 
         has_next, next_url = get_next_meta_url(has_next, meta, next_url)
 
@@ -379,7 +397,7 @@ def bootstrap_domain(config, endpoint, extensions=None, **kwargs):
         checkpoint.start_date = start_date
         api = 'product'
         date = None
-        limit = 1000
+        limit = 100
         offset = 0
 
     apis = [
@@ -404,10 +422,10 @@ def bootstrap_domain(config, endpoint, extensions=None, **kwargs):
             if extension:
                 kwargs['extension'] = extension
             api[1](**kwargs)
-            limit = 1000
+            limit = 100
             offset = 0
 
-        save_checkpoint(checkpoint, 'product', 1000, 0, start_date, False)
+        save_checkpoint(checkpoint, 'product', 100, 0, start_date, False)
         checkpoint.start_date = None
         checkpoint.save()
     except ConnectionError as e:

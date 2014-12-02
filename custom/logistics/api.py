@@ -20,7 +20,7 @@ class LogisticsEndpoint(EndpointMixin):
         self.productstock_url = self._urlcombine(self.base_uri, '/productstocks/')
         self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
 
-    def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
+    def get_objects(self, url, params=None, filters=None, limit=100, offset=0, **kwargs):
         params = params if params else {}
         if filters:
             params.update(filters)

@@ -8,7 +8,7 @@
     {% endif %}
 {% endblock %}
 {% block enabled_section %}
-    {% if checkpoint %}
+    {% if checkpoint or stock_data_checkpoint %}
         <h3>Checkpoint status</h3>
         <table class="table table-bordered">
             <thead>
@@ -17,6 +17,7 @@
                     <th>Start date</th>
                     <th>Date</th>
                     <th>Checkpoint</th>
+                    <th>Location</th>
                 </tr>
             </thead>
             <tr>
@@ -36,6 +37,26 @@
                     {% endif %}
                 </td>
                 <td>{{ checkpoint.offset }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>{{ stock_data_checkpoint.api }}</td>
+                <td>
+                    {% if stock_data_checkpoint.start_date %}
+                        {{ stock_data_checkpoint.start_date }}
+                    {% else %}
+                        Not started yet.
+                    {% endif %}
+                </td>
+                <td>
+                    {% if stock_data_checkpoint.date %}
+                        {{ stock_data_checkpoint.date }}
+                    {% else %}
+                        initial migration
+                    {% endif %}
+                </td>
+                <td>{{ stock_data_checkpoint.offset }}</td>
+                <td>{{ stock_data_checkpoint.location.name }}</td>
             </tr>
 
         </table>

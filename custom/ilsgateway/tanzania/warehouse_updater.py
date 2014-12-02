@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+import itertools
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
@@ -273,7 +274,7 @@ def _get_test_locations(domain):
     return [Location.get(sql_location.location_id) for sql_location in sql_locations]
 
 
-def populate_report_data(start_date, end_date, domain=None):
+def populate_report_data(start_date, end_date, domain=None, runner=None):
     # first populate all the warehouse tables for all facilities
     # hard coded to know this is the first date with data
     start_date = max(start_date, default_start_date())
@@ -290,16 +291,30 @@ def populate_report_data(start_date, end_date, domain=None):
         non_facilities += list(Location.filter_by_type(domain, 'REGION'))
         non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
 
+    if runner.location_id:
+        loc = Location.get(runner.location_id)
+        if loc.location_type == 'FACILITY':
+            facilities = itertools.dropwhile(lambda x: x != runner.location_id, facilities)
+        else:
+            facilities = []
+            non_facilities = itertools.dropwhile(lambda x: x != runner.location_id, non_facilities)
+
     for fac in facilities:
+        runner.location_id = fac._id
+        runner.save()
         process_facility_warehouse_data(fac, start_date, end_date)
 
     # then populate everything above a facility off a warehouse table
     for org in non_facilities:
+        runner.location_id = org._id
+        runner.save()
         process_non_facility_warehouse_data(org, start_date, end_date)
 
     # finally go back through the history and initialize empty data for any
     # newly created facilities
     update_historical_data(domain)
+    runner.location_id = None
+    runner.save()
 
 
 def process_facility_warehouse_data(facility, start_date, end_date):
