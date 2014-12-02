@@ -92,3 +92,4 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
       - debug-yui # Nick P 11/4
+      - logos # Nick P 12/2
