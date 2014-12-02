@@ -295,7 +295,8 @@
                                     index: column.index,
                                     display: column.display,
                                     transform: column.transform() || null, // it doesn't save '' well
-                                    is_sensitive: Boolean(is_sensitive)
+                                    is_sensitive: Boolean(is_sensitive),
+                                    doc_type: column.doc_type
                                 };
                             })
                         }
@@ -386,6 +387,7 @@
                 presave: {{ presave|JSON }},
                 export_stock: {{ export_stock|JSON }},
                 deid_options: {{ deid_options|JSON }},
+                column_type_options: {{ column_type_options|JSON }},
                 urls: {
                     save: {{ request.get_full_path|safe|JSON }}
                 },
@@ -482,6 +484,7 @@
                                 {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
+                            <th>{% trans "Type" %}</th>
                             {% if helper.allow_deid %}
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
                             {% endif %}
@@ -504,6 +507,14 @@
 
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                <td class="input">
+                                    <select data-bind="
+                                        value: doc_type,
+                                        foreach: $root.column_type_options
+                                    ">
+                                        <option data-bind="value: value, text: label"></option>
+                                    </select>
+                                </td>
                                 {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
                                     <select data-bind="

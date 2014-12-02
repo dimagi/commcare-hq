@@ -1145,7 +1145,7 @@ class StockState(models.Model):
         unique_together = ('section_id', 'case_id', 'product_id')
 
 
-@register_column_type
+@register_column_type()
 class StockExportColumn(ComplexExportColumn):
     """
     A special column type for case exports. This will export a column

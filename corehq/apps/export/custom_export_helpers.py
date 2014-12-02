@@ -6,7 +6,7 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
-from couchexport.models import ExportTable, ExportSchema, ExportColumn
+from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
@@ -33,6 +33,13 @@ class DEID(object):
     )
     json_options = [{'label': label, 'value': value}
                     for label, value in options]
+
+
+class ColumnTypesOptions(object):
+    json_options = [
+        {'label': meta.label, 'value': value}
+        for value, meta in display_column_types.items() if meta.label
+    ]
 
 
 class CustomExportHelper(object):
@@ -160,6 +167,7 @@ class CustomExportHelper(object):
             'custom_export': self.custom_export,
             'default_order': self.default_order,
             'deid_options': DEID.json_options,
+            'column_type_options': ColumnTypesOptions.json_options,
             'presave': self.presave,
             'export_stock': self.export_stock,
             'DeidExportReport_name': DeidExportReport.name,
