@@ -1,12 +1,12 @@
 # coding=utf-8
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
-from sqlalchemy.sql.expression import distinct, func, alias
+from sqlalchemy.sql.expression import alias
 from corehq.apps.products.models import Product, SQLProduct
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, \
-    TableDataFormat, format_data, calculate_total_row
+    TableDataFormat, calculate_total_row
 from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
@@ -209,10 +209,9 @@ class DispDesProducts(BaseSqlData):
 
     @property
     def columns(self):
-
         return [
             DatabaseColumn('Product Name', SimpleColumn('product_code'),
-                           format_fn=lambda x: SQLProduct.objects.get(code=x).name),
+                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
         ]
@@ -395,7 +394,7 @@ class RecapPassageData(BaseSqlData):
         diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_code'),
-                           format_fn=lambda x: SQLProduct.objects.get(code=x).name),
+                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),

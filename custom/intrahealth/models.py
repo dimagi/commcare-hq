@@ -5,11 +5,13 @@ from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
     get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter, RAPTURE_XMLNSES, \
-    get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month, get_products_code
+    get_rupture_products, LIVRAISON_XMLNSES, get_pps_name, get_district_name, get_month, get_products_code, \
+    get_rupture_products_code
 
 from custom.utils.utils import flat_field
 
 IH_DELETED_TYPES = ('XFormArchived', 'XFormDuplicate', 'XFormDeprecated', 'XFormError')
+
 
 def _get_all_forms():
     form_filters = []
@@ -37,6 +39,7 @@ class CouvertureFluff(fluff.IndicatorDocument):
     registered = report_calcs.PPSRegistered()
     planned = report_calcs.PPSPlaned()
 
+
 class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ORFilter([
@@ -47,7 +50,7 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
 
     domains = INTRAHEALTH_DOMAINS
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),
-                fluff.AttributeGetter('product_name', lambda f: get_products_code(f, 'productName')))
+                fluff.AttributeGetter('product_code', lambda f: get_products_code(f, 'productName')))
     save_direct_to_sql = True
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
@@ -55,18 +58,21 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     commandes = report_calcs.Commandes()
     recus = report_calcs.Recus()
 
+
 class IntraHealthFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
         FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
-        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='district_name'),
+        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0],
+                                  property_path="form",
+                                  property_value='district_name'),
         IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='PPS_name')
     ])
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
     save_direct_to_sql = True
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
-                fluff.AttributeGetter('product_name', lambda f: get_products_code(f, 'product_name')))
+                fluff.AttributeGetter('product_code', lambda f: get_products_code(f, 'product_name')))
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
@@ -81,6 +87,7 @@ class IntraHealthFluff(fluff.IndicatorDocument):
     quantity = report_calcs.PPSConsumption('display_total_stock')
     cmm = report_calcs.PPSConsumption('default_consumption')
 
+
 class RecapPassageFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
@@ -91,7 +98,7 @@ class RecapPassageFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
-                fluff.AttributeGetter('product_name', lambda f: get_products_code(f, 'product_name')))
+                fluff.AttributeGetter('product_code', lambda f: get_products_code(f, 'product_name')))
     save_direct_to_sql = True
 
     location_id = flat_field(get_location_id)
@@ -112,7 +119,8 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
     save_direct_to_sql = True
-    group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),)
+    group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),
+                fluff.AttributeGetter('product_code', lambda f: get_rupture_products_code(f)))
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))

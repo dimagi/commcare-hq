@@ -10,6 +10,7 @@ from corehq.util.translation import localize
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
 from custom.intrahealth.reports.recap_passage_report import RecapPassageReport
 from custom.intrahealth.reports.tableu_de_board_report import TableuDeBoardReport
+from sqlalchemy import func
 
 from django.utils.dateformat import format
 
@@ -39,6 +40,18 @@ CUSTOM_REPORTS = (
     )),
 )
 
+PRODUCT_NAMES = {
+    u'diu': [u"diu"],
+    u'jadelle': [u"jadelle"],
+    u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
+    u'microlut/ovrette': [u"microlut/ovrette"],
+    u'microgynon/lof.': [u"microgynon/lof."],
+    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin"],
+    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin"],
+    u'cu': [u"cu"],
+    u'collier': [u"collier"]
+}
+
 PRODUCT_MAPPING = {
     "collier": "Collier",
     "cu": "CU",
@@ -51,6 +64,7 @@ PRODUCT_MAPPING = {
     "preservatif_masculin": "Preservatif Masculin"
 }
 
+
 def get_products(form, property):
     products = []
     if 'products' in form.form:
@@ -59,22 +73,46 @@ def get_products(form, property):
                 products.append(product[property])
     return products
 
+
 def get_products_code(form, property):
     products = []
     if 'products' in form.form:
         for product in form.form['products']:
             if property in product:
-                prd = SQLProduct.objects.get(name=product[property])
+                try:
+                    prd = SQLProduct.objects.get(name=product[property], domain=get_domain(form))
+                except SQLProduct.DoesNotExist:
+                    for k, v in PRODUCT_NAMES.iteritems():
+                        if product[property].lower() in v:
+                            prd = SQLProduct.objects.get(name__iexact=k,
+                                                         domain=get_domain(form))
                 products.append(prd.code)
     return products
+
 
 def get_rupture_products(form):
     result = []
     for k, v in form.form.iteritems():
         if re.match("^rupture.*hv$", k):
             result.append(PRODUCT_MAPPING[k[8:-3]])
-            print result
     return result
+
+
+def get_rupture_products_code(form):
+    result = []
+    for k, v in form.form.iteritems():
+        if re.match("^rupture.*hv$", k):
+            product_name = PRODUCT_MAPPING[k[8:-3]]
+            try:
+                for k, v in PRODUCT_NAMES.iteritems():
+                    if product_name.lower() in v:
+                        prd = SQLProduct.objects.get(name__iexact=k,
+                                                     domain=get_domain(form))
+                        result.append(prd.code)
+            except SQLProduct.DoesNotExist:
+                pass
+    return result
+
 
 def _get_location(form):
     loc = None
@@ -96,11 +134,14 @@ def _get_location(form):
 
     return loc
 
+
 def get_domain(form):
     return form.domain
 
+
 def get_prod_info(prod, property):
     return prod[property]
+
 
 def get_location_id(form):
     loc = _get_location(form)
@@ -108,9 +149,11 @@ def get_location_id(form):
         return None
     return loc._id
 
+
 def get_location_id_by_type(form, type):
     loc = get_location_by_type(form, type)
     return loc._id if loc else None
+
 
 def get_location_by_type(form, type):
     loc = _get_location(form)
@@ -121,6 +164,7 @@ def get_location_by_type(form, type):
         loc = Location.get(loc_id)
         if unicode(loc.location_type).lower().replace(" ", "") == type:
             return loc
+
 
 def get_real_date(form):
     date = ""
