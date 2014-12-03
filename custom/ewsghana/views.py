@@ -4,10 +4,8 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
 from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_stock_data_task, ews_clear_stock_data_task, \
+from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     LOCATION_TYPES, EWS_FACILITIES
-from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction
 from custom.ilsgateway.views import GlobalStats, BaseConfigView
 from custom.logistics.tasks import stock_data_task
@@ -33,6 +31,7 @@ class EWSConfigView(BaseConfigView):
 def sync_ewsghana(request, domain):
     ews_bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
+
 
 @domain_admin_required
 @require_POST

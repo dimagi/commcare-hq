@@ -82,7 +82,7 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, start_date, date,
                                    'product_stock',
                                    meta.get('limit') or limit,
                                    meta.get('offset') or offset,
-                                   start_date, facility, True)
+                                   date, facility, True)
         for product_stock in product_stocks:
             case = SupplyPointCase.view('hqcase/by_domain_external_id',
                                         key=[domain, str(product_stock.supply_point)],
@@ -129,7 +129,7 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, start_
                                    'stock_transaction',
                                    meta.get('limit') or limit,
                                    meta.get('offset') or offset,
-                                   start_date, facility, True)
+                                   date, facility, True)
         transactions_to_add = []
         with transaction.commit_on_success():
             for stocktransaction in stocktransactions:
@@ -146,9 +146,15 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, start_
                     domain=domain
                 )
                 report.save()
+                try:
+                    sql_product = SQLProduct.objects.get(product_id=product._id)
+                except SQLProduct.DoesNotExist:
+                    continue
+
                 transactions_to_add.append(StockTransaction(
                     case_id=case._id,
                     product_id=product._id,
+                    sql_product=sql_product,
                     section_id='stock',
                     type='stockonhand',
                     stock_on_hand=Decimal(stocktransaction.ending_balance),

@@ -50,8 +50,7 @@ def stock_data_task(domain, endpoint, apis, location_types, test_facilities=None
     facilities_copy = list(facilities)
     if location:
         facilities = itertools.dropwhile(lambda x: int(x) != int(location.external_id), facilities)
-    else:
-        facilities = facilities
+
     for idx, api in enumerate(apis_from_checkpoint):
         api[1](
             domain=domain,
