@@ -117,7 +117,6 @@
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
-                                {% if request|toggle_enabled:"CUSTOM_DATA_CHOICES" %}
                                 <th class="span3">
                                     {% trans "Choices" %}
                                     <span class="hq-help-template"
@@ -128,7 +127,6 @@
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
-                                {% endif %}
                                 <th class="span1">{% trans "Delete" %}</th>
                             </tr>
                         </thead>
@@ -146,7 +144,6 @@
                                 <td>
                                     <input type="checkbox" data-bind="checked: is_required"/>
                                 </td>
-                                {% if request|toggle_enabled:"CUSTOM_DATA_CHOICES" %}
                                 <td>
                                     <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
                                         <i class="icon-plus"></i> {% trans "Add Choice" %}
@@ -163,7 +160,6 @@
                                         </li>
                                     </ul>
                                 </td>
-                                {% endif %}
                                 <td>
                                     <a type="button"
                                        class="btn btn-danger"
