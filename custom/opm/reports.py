@@ -827,8 +827,8 @@ class MetReport(CaseReportMixin, BaseReport):
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
-                    if method != 'case_id' and method != 'owner_id'
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
     @property
@@ -854,7 +854,7 @@ class MetReport(CaseReportMixin, BaseReport):
         Strip user_id and owner_id columns
         """
         for row in rows:
-            del row[self.column_index('owner_id')]
+            del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
 
         self.context['report_table'].update(
