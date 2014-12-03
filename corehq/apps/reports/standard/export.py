@@ -106,6 +106,16 @@ class ExcelExportReport(FormExportReportBase):
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
 
+    def _get_domain_attachments_size(self):
+        # hash of app_id, xmlns to size of attachments
+        startkey = [self.domain]
+
+        db = Application.get_db()
+        view = db.view('attachments/attachments', startkey=startkey,
+                       endkey=startkey + [{}], group_level=3, reduce=True,
+                       group=True)
+        return {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
+
     @property
     def report_context(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
@@ -117,11 +127,7 @@ class ExcelExportReport(FormExportReportBase):
 
         is_multimedia_previewer = toggles.MULTIMEDIA_EXPORT.enabled(self.request.user.username)
         if is_multimedia_previewer:
-            # hash of xmlns to size of attachments
-            view = db.view('attachments/attachments', startkey=startkey,
-                           endkey=startkey + [{}], group_level=3, reduce=True,
-                           group=True)
-            size_hash = {(a['key'][1], a['key'][2]): a['value'] for a in view}
+            size_hash = self._get_domain_attachments_size()
 
         for f in db.view('exports_forms/by_xmlns',
                          startkey=startkey, endkey=startkey + [{}], group=True,
@@ -146,7 +152,7 @@ class ExcelExportReport(FormExportReportBase):
             else:
                 key = None
             if is_multimedia_previewer and key in size_hash:
-                form['size'] = sizeof_fmt(size_hash[key])
+                form['size'] = size_hash[key]
             else:
                 form['size'] = None
             forms.append(form)
