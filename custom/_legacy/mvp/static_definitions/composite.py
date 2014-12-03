@@ -118,6 +118,13 @@ COMPOSITE_INDICATORS = dict(
         numerator_slug="low_birth_weight",
         denominator_slug="birth_weight_registration",
     ),
+    length_reading_proportion=dict(
+        description="Proportion of children aged 3-24 months receiving on-time routine length measurement "
+                    "(every 90 days) during the time period",
+        title="% children aged 3-24 months receiving on-time length measurement (every 90 days)",
+        numerator_slug="child_length_reading",
+        denominator_slug="num_children_3to24months",
+    ),
 
     # CHW Visits
     households_routine_visit_past90days=dict(
