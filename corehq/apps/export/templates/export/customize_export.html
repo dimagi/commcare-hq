@@ -516,7 +516,7 @@
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
                                     <span data-bind="if: doc_type() === 'MultiSelectColumn'">
-                                        <input class="input" type="number" data-bind="visible: doc_type === 'MultiSelectColumn', value: num_columns" />
+                                        <input class="input" type="number" data-bind="value: num_columns" />
                                     </span>
                                 </td>
                                 {% if helper.allow_deid %}
