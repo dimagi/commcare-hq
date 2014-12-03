@@ -13,7 +13,6 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
     ]
 
     data_source = {
