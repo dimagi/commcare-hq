@@ -1,9 +1,11 @@
+import copy
 import datetime
 from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
@@ -1977,7 +1979,29 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
+            old_attrs = copy.copy(self.domain_object.internal)
             self.internal_settings_form.save(self.domain_object)
+            eula_props_changed = (old_attrs.custom_eula != self.domain_object.internal.custom_eula or
+                                  old_attrs.can_use_data != self.domain_object.internal.can_use_data)
+
+            if eula_props_changed and settings.EULA_CHANGE_EMAIL:
+                message = '\n'.join([
+                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '',
+                    'The properties changed were:',
+                    '- Custom eula: {eula_old} --> {eula_new}',
+                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
+                ]).format(
+                    user=self.request.couch_user.username,
+                    domain=self.domain,
+                    eula_old=old_attrs.custom_eula,
+                    eula_new=self.domain_object.internal.custom_eula,
+                    can_use_data_old=old_attrs.can_use_data,
+                    can_use_data_new=self.domain_object.internal.can_use_data,
+                )
+                send_mail('Custom EULA or data use flags changed for {}'.format(self.domain),
+                          message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL])
+
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
         else:
