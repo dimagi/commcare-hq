@@ -131,7 +131,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     using_adm = BooleanProperty()
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
-    can_use_data = BooleanProperty()
+    can_use_data = BooleanProperty(default=True)
     notes = StringProperty()
     organization_name = StringProperty()
     platform = StringListProperty()
