@@ -135,10 +135,20 @@ ko.bindingHandlers.sortable = {
             }
         });
     },
+    getList: function (valueAccessor) {
+        /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
+        var modelValue = valueAccessor(),
+            unwrappedValue = ko.utils.peekObservable(modelValue);
+            if ((!unwrappedValue) || typeof unwrappedValue.length == "number") {
+                return modelValue;
+            } else {
+                return unwrappedValue['data'];
+            }
+    },
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         // based on http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
         // note: although by this point we've deviated from that solution quite a bit
-        var list = valueAccessor();
+        var list = ko.bindingHandlers.sortable.getList(valueAccessor);
         var forceUpdate = function () {
             ko.bindingHandlers.sortable.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         };
@@ -189,7 +199,7 @@ ko.bindingHandlers.sortable = {
         return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var list = valueAccessor();
+        var list = ko.bindingHandlers.sortable.getList(valueAccessor);
         ko.bindingHandlers.sortable.updateSortableList(list);
         return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     }

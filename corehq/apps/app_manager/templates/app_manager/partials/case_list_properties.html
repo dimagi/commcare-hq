@@ -13,7 +13,11 @@
                 <th class="detail-screen-icon"></th>
             </tr>
         </thead>
-        <tbody class="detail-screen-columns" data-bind="sortable: columns">
+        <tbody class="detail-screen-columns" data-bind="sortable: {
+            data: columns,
+            afterAdd: function (elem) { $(elem).hide().fadeIn() },
+            beforeRemove: function (elem) { $(elem).fadeOut() }
+        }">
             <tr data-bind="css: {info: isTab}, attr: {'data-order': _sortableOrder}">
                 <td class="detail-screen-icon" data-bind="jqueryElement: $grip, visible: $root.edit"></td>
                 <!--ko if: !isTab -->
