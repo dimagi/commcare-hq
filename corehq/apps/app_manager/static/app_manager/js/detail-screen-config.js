@@ -654,9 +654,10 @@ var DetailScreenConfig = (function () {
             save: function () {
                 //Only save if property names are valid
                 var containsTab = false;
-                for (var i = 0; i < this.columns().length; i++){
-                    var column = this.columns()[i];
-                    if (! column.isTab) {
+                var columns = this.columns();
+                for (var i = 0; i < columns.length; i++){
+                    var column = columns[i];
+                    if (!column.isTab) {
                         if (!DetailScreenConfig.field_val_re.test(column.field.val())) {
                             // column won't have format_warning showing if it's empty
                             column.format_warning.show().parent().addClass('error');
@@ -668,7 +669,7 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 if (containsTab){
-                    if (! this.columns()[0].isTab){
+                    if (!columns[0].isTab) {
                         alert("All properties must be below a tab");
                         return;
                     }
@@ -684,21 +685,22 @@ var DetailScreenConfig = (function () {
                 });
             },
             serialize: function () {
+                var columns = this.columns();
                 var data = {
                     type: JSON.stringify(this.type)
                 };
 
                 // Add columns
                 data[this.columnKey] = JSON.stringify(_.map(
-                    _.filter(this.columns(), function(c){return ! c.isTab;}),
+                    _.filter(columns, function(c){return ! c.isTab;}),
                     function(c){return c.serialize();}
                 ));
 
                 // Add tabs
                 // calculate the starting index for each Tab
                 var acc = 0;
-                for (var j=0; j < this.columns().length; j++){
-                    var c = this.columns()[j];
+                for (var j = 0; j < columns.length; j++) {
+                    var c = columns[j];
                     if (c.isTab){
                         c.starting_index = acc;
                     } else {
@@ -706,7 +708,7 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 data.tabs = JSON.stringify(_.map(
-                    _.filter(this.columns(), function(c){return c.isTab;}),
+                    _.filter(columns, function(c){return c.isTab;}),
                     function(c){return c.serialize();}
                 ));
 
