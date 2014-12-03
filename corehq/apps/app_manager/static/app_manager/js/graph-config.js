@@ -303,7 +303,6 @@ var GraphViewModel = function(moduleOptions){
         // Axis labels:
         'x-labels',
         'y-labels',
-        // TODO: Migrate x-label-count and y-label-count...
         'secondary-y-labels',
         // other:
         'show-grid',
