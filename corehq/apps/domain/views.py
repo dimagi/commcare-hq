@@ -27,7 +27,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -1929,8 +1929,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @property
     @memoized
     def internal_settings_form(self):
+        can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(self.request.POST)
+            return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {}
         internal_attrs = [
             'sf_contract_id',
@@ -1948,20 +1949,23 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'self_started',
             'using_adm',
             'using_call_center',
-            'custom_eula',
-            'can_use_data',
             'project_manager',
             'phone_model',
             'goal_time_period',
             'goal_followup_rate',
             'commtrack_domain',
         ]
+        if can_edit_eula:
+            internal_attrs += [
+                'custom_eula',
+                'can_use_data',
+            ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        return DomainInternalForm(initial=initial)
+        return DomainInternalForm(can_edit_eula, initial=initial)
 
     @property
     def page_context(self):
