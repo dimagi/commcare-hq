@@ -41,7 +41,7 @@ def should_sync_locations(last_sync, location_db):
     return False
 
 
-def location_fixture_generator(user, version, case_sync_op=None, last_sync=None):
+def location_fixture_generator(user, version, last_sync=None):
     """
     By default this will generate a fixture for the users
     location and it's "footprint", meaning the path

@@ -212,7 +212,7 @@ class RestoreConfig(object):
         # registration block
         response.append(xml.get_registration_element(user))
         # fixture block
-        for fixture in generator.get_fixtures(user, self.version, sync_operation, last_sync):
+        for fixture in generator.get_fixtures(user, self.version, last_sync=last_sync):
             response.append(fixture)
 
         # case blocks
