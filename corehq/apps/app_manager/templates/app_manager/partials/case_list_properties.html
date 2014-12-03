@@ -1,0 +1,61 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div>
+    <p data-bind="text: DetailScreenConfig.message.EMPTY_SCREEN, visible: !$root.edit && _.isEmpty(columns)"></p>
+    <table class="table table-condensed detail-screen-table">
+        <thead>
+            <tr>
+                <th class="detail-screen-icon"></th>
+                <th class="detail-screen-field" data-bind="text: DetailScreenConfig.message.FIELD"></th>
+                <th class="detail-screen-header" data-bind="text: DetailScreenConfig.message.HEADER"></th>
+                <th class="detail-screen-format" data-bind="text: DetailScreenConfig.message.FORMAT"></th>
+                <th class="detail-screen-icon"></th>
+            </tr>
+        </thead>
+        <tbody class="detail-screen-columns" data-bind="sortable: columns">
+            <tr data-bind="css: {info: isTab}, attr: {'data-order': _sortableOrder}">
+                <td class="detail-screen-icon" data-bind="jqueryElement: $grip, visible: $root.edit"></td>
+                <!--ko if: !isTab -->
+                    <td class="detail-screen-field control-group"
+                        data-bind="css: {error: field.value && !DetailScreenConfig.field_val_re.test(field.value)}">
+                        <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
+                        <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
+                        <div data-bind="jqueryElement: format_warning,
+                                        visible: field.value && !DetailScreenConfig.field_val_re.test(field.value)"></div>
+                    </td>
+                    <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
+                    <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>
+                <!--/ko-->
+                <!--ko if: isTab -->
+                    <td colspan="3" data-bind="jqueryElement: header.ui"></td>
+                <!--/ko-->
+                <td class="detail-screen-icon" data-bind="jqueryElement: $delete, visible: $root.edit"></td>
+            </tr>
+        </tbody>
+        <tbody>
+            <tr>
+                <td></td>
+                <td colspan="4">
+                    <div class="btn-group">
+                        <button class="btn add-property-item" data-bind="click: addProperty">Add Property</button>
+                        {% if request|feature_preview_enabled:'CALC_XPATHS' or request|toggle_enabled:'GRAPH_CREATION' %}
+                        <button class="btn dropdown-toggle" data-toggle="dropdown">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li data-bind="click: addProperty"><a>Property</a></li>
+                            {% if request|feature_preview_enabled:'CALC_XPATHS' %}
+                            <li data-bind="click: addCalculation"><a>Calculation</a></li>
+                            {% endif %}
+                            {% if request|toggle_enabled:'GRAPH_CREATION' %}
+                            <li data-bind="click: addGraph"><a>Graph</a></li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
