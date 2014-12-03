@@ -116,6 +116,22 @@ class ExcelExportReport(FormExportReportBase):
                        group=True)
         return {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
 
+    def properties(self, size_hash):
+        properties = dict()
+        exports = self.get_saved_exports()
+        prop_url_query = '&properties='
+
+        for export in exports:
+            for table in export.tables:
+                prop = [c.display for c in table.columns]
+                properties[export.name] = {
+                    'xmlns': export.index[1],
+                    'query_url': prop_url_query + prop_url_query.join(prop),
+                    'size': size_hash.get((export.app_id, export.index[1]), None),
+                }
+
+        return properties
+
     @property
     def report_context(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
@@ -270,6 +286,8 @@ class ExcelExportReport(FormExportReportBase):
             report_slug=self.slug,
             is_multimedia_previewer=is_multimedia_previewer
         )
+        if is_multimedia_previewer:
+            context.update(property_hash=self.properties(size_hash))
         return context
 
 
