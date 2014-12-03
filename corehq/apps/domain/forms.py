@@ -615,8 +615,18 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
         self.can_edit_eula = can_edit_eula
         if self.can_edit_eula:
-            self.fields['custom_eula'] = ChoiceField(label=ugettext_noop("Custom Eula?"), choices=tf_choices('Yes', 'No'), required=False)
-            self.fields['can_use_data'] = ChoiceField(label=ugettext_noop("Data Usage?"), choices=tf_choices('Yes', 'No'), required=False)
+            self.fields['custom_eula'] = ChoiceField(
+                label=ugettext_noop("Custom Eula?"),
+                choices=tf_choices('Yes', 'No'),
+                required=False,
+                help_text='Set to "yes" if this project has a customized EULA as per their contract.'
+            )
+            self.fields['can_use_data'] = ChoiceField(
+                label=ugettext_noop("Can use project data?"),
+                choices=tf_choices('Yes', 'No'),
+                required=False,
+                help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
+            )
 
     def save(self, domain):
         kwargs = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
