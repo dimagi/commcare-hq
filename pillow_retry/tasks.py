@@ -7,7 +7,7 @@ from pillow_retry.models import PillowError
 from pillowtop.utils import import_pillow_string, get_pillow_by_name
 
 
-@task
+@task(queue='pillow_retry_queue')
 def process_pillow_retry(error_doc_id):
     # Redis error logged in get_redis_client
     try:
