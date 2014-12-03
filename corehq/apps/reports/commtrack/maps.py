@@ -49,10 +49,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         }
 
         products = sorted(
-            Product.by_domain(
-                self.domain,
-                include_archived=self.request.GET.get('archived_products', False)
-            ),
+            Product.by_domain(self.domain),
             key=lambda p: p.name
         )
 
