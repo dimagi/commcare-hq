@@ -149,6 +149,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
             context.update({
                 'commtrack_enabled': self.request.project.commtrack_enabled,
+                'locations_enabled': self.request.project.locations_enabled,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
                 },
