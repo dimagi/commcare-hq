@@ -47,7 +47,8 @@ class PrimeRestoreCacheForm(forms.Form):
     )
     overwrite_cache = forms.BooleanField(
         label='Overwrite existing cache',
-        help_text='This will ignore any existing cache and re-calculate the restore response for each user',
+        help_text=('This will ignore any existing cache and '
+                   're-calculate the restore response for each user'),
         required=False
     )
     all_users = forms.BooleanField(
@@ -56,7 +57,8 @@ class PrimeRestoreCacheForm(forms.Form):
     )
     users = forms.CharField(
         label='Only prime cache for these users',
-        help_text='One user_id per line',
+        help_text=('One username or user_id per line '
+                   '(username must be full username e.g. test@domain.commcarehq.org)'),
         widget=forms.Textarea(attrs={'rows': '30', 'cols': '50'}),
         required=False
     )
