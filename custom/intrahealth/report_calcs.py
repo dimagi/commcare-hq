@@ -5,7 +5,6 @@ import logging
 from corehq.apps.locations.models import Location
 from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES
 
-
 def form_date(form):
     return form.received_on
 
@@ -146,11 +145,18 @@ class RupturesDeStocks(fluff.Calculator):
         for k, v in form.form.iteritems():
             if re.match("^rupture.*hv$", k):
                 if 'date_rapportage' in form.form and form.form['date_rapportage']:
-                    yield {
-                        'date': form.form['date_rapportage'],
-                        'value': v,
-                        'group_by': [PRODUCT_MAPPING[k[8:-3]]]
-                    }
+                    product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())
+                    if product_name is not None:
+                        try:
+                            prd = SQLProduct.objects.get(name__iexact=product_name,
+                                                         domain=get_domain(form))
+                            yield {
+                                'date': form.form['date_rapportage'],
+                                'value': v,
+                                'group_by': [PRODUCT_MAPPING[k[8:-3]], prd.code]
+                            }
+                        except SQLProduct.DoesNotExist:
+                            pass
 
 
 class RecapPassage(fluff.Calculator):
