@@ -309,7 +309,7 @@ TABS = (
     ProjectInfoTab,
     ReportsTab,
     ProjectDataTab,
-    CommTrackSetupTab,
+    SetupTab,
     ProjectUsersTab,
     ApplicationsTab,
     CloudcareTab,

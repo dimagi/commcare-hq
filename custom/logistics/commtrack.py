@@ -10,9 +10,10 @@ from corehq import Domain
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
+from corehq.apps.domain.models import Domain
 from custom.api.utils import apply_updates
-from corehq.apps.commtrack.models import SupplyPointCase, CommTrackUser, CommtrackConfig, LocationType, \
-    CommtrackActionConfig
+from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.locations.schema import LocationType
 from corehq.apps.products.models import Product
 from custom.logistics.models import MigrationCheckpoint
 from dimagi.utils.dates import force_to_datetime
@@ -172,11 +173,10 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
 
 
 def add_location(user, location_id):
-    commtrack_user = CommTrackUser.wrap(user.to_json())
     if location_id:
         loc = Location.get(location_id)
-        commtrack_user.clear_locations()
-        commtrack_user.add_location(loc, create_sp_if_missing=True)
+        user.clear_locations()
+        user.add_location(loc, create_sp_if_missing=True)
 
 
 @retry(5)
@@ -373,14 +373,20 @@ def commtrack_settings_sync(project, locations_types):
         return
 
     config = CommtrackConfig.for_domain(project)
-    config.location_types = []
+    domain = Domain.get_by_name(project)
+    domain.location_types = []
     for i, value in enumerate(locations_types):
         if not any(lt.name == value
-                   for lt in config.location_types):
+                   for lt in domain.location_types):
             allowed_parents = [locations_types[i - 1]] if i > 0 else [""]
-            config.location_types.append(
-                LocationType(name=value, allowed_parents=allowed_parents,
-                             administrative=(value.lower() != 'facility')))
+
+            domain.location_types.append(
+                LocationType(
+                    name=value,
+                    allowed_parents=allowed_parents,
+                    administrative=(value.lower() != 'facility')
+                )
+            )
     actions = [action.keyword for action in config.actions]
     if 'delivered' not in actions:
         config.actions.append(

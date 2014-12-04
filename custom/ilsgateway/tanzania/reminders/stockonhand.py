@@ -2,8 +2,8 @@ import datetime
 
 from celery.schedules import crontab
 from celery.task import periodic_task
-
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.models import SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import REMINDER_STOCKONHAND, update_statuses
@@ -15,7 +15,7 @@ import settings
 
 def send_soh_reminder(domain, date):
     sp_ids = set()
-    for user in CommTrackUser.by_domain(domain):
+    for user in CommCareUser.by_domain(domain):
         if user.is_active and user.location and user.location.location_type == 'FACILITY':
             sp = SupplyPointCase.get_by_location(user.location)
             if sp and not StockTransaction.objects.filter(case_id=sp._id, report__date__gte=date,

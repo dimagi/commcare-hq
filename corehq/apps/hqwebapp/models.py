@@ -513,7 +513,7 @@ class ProjectInfoTab(UITab):
         return self.project and self.project.is_snapshot
 
 
-class CommTrackSetupTab(UITab):
+class SetupTab(UITab):
     title = ugettext_noop("Setup")
     view = "corehq.apps.commtrack.views.default"
 
@@ -532,14 +532,22 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
-        dropdown_items = [(_(view.page_title), view) for view in (
-                          ProductListView,
-                          LocationsListView,
-                          LocationSettingsView,
-                          ProgramListView,
-                          SMSSettingsView,
-                          DefaultConsumptionView,
-                          CommTrackSettingsView,)]
+        dropdown_items = []
+
+        if self.project.locations_enabled:
+            dropdown_items += [(_(view.page_title), view) for view in (
+                LocationsListView,
+                LocationSettingsView,
+            )]
+
+        if self.project.commtrack_enabled:
+            dropdown_items += [(_(view.page_title), view) for view in (
+                ProductListView,
+                ProgramListView,
+                SMSSettingsView,
+                DefaultConsumptionView,
+                CommTrackSettingsView,
+            )]
 
         return [
             format_submenu_context(
@@ -550,7 +558,10 @@ class CommTrackSetupTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.project.commtrack_enabled and self.couch_user.is_domain_admin()
+        return self.couch_user.is_domain_admin() and (
+            self.project.commtrack_enabled or
+            self.project.locations_enabled
+        )
 
     @property
     def sidebar_items(self):
@@ -581,90 +592,123 @@ class CommTrackSetupTab(UITab):
             LocationSettingsView,
         )
 
-        return [[_('CommTrack Setup'), [
-            # products
-            {
-                'title': ProductListView.page_title,
-                'url': reverse(ProductListView.urlname, args=[self.domain]),
-                'subpages': [
-                    {
-                        'title': NewProductView.page_title,
-                        'urlname': NewProductView.urlname,
-                    },
-                    {
-                        'title': EditProductView.page_title,
-                        'urlname': EditProductView.urlname,
-                    },
-                    {
-                        'title': ProductFieldsView.page_name(),
-                        'urlname': ProductFieldsView.urlname,
-                    },
-                ]
-            },
-            # locations
-            {
-                'title': LocationsListView.page_title,
-                'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                'subpages': [
-                    {
-                        'title': NewLocationView.page_title,
-                        'urlname': NewLocationView.urlname,
-                    },
-                    {
-                        'title': EditLocationView.page_title,
-                        'urlname': EditLocationView.urlname,
-                    },
-                    {
-                        'title': LocationImportView.page_title,
-                        'urlname': LocationImportView.urlname,
-                    },
-                    {
-                        'title': LocationImportStatusView.page_title,
-                        'urlname': LocationImportStatusView.urlname,
-                    },
-                ]
-            },
-            # locations (advanced)
-            {
-                'title': LocationSettingsView.page_title,
-                'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
-            },
-            # programs
-            {
-                'title': ProgramListView.page_title,
-                'url': reverse(ProgramListView.urlname, args=[self.domain]),
-                'subpages': [
-                    {
-                        'title': NewProgramView.page_title,
-                        'urlname': NewProgramView.urlname,
-                    },
-                    {
-                        'title': EditProgramView.page_title,
-                        'urlname': EditProgramView.urlname,
-                    },
-                ]
-            },
-            # sms
-            {
-                'title': SMSSettingsView.page_title,
-                'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
-            },
-            # consumption
-            {
-                'title': DefaultConsumptionView.page_title,
-                'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
-            },
-            # settings
-            {
-                'title': CommTrackSettingsView.page_title,
-                'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
-            },
-            # external sync
-            {
-                'title': FacilitySyncView.page_title,
-                'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-            },
-        ]]]
+        if self.project.commtrack_enabled:
+            return [[_('CommTrack Setup'), [
+                # products
+                {
+                    'title': ProductListView.page_title,
+                    'url': reverse(ProductListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': NewProductView.page_title,
+                            'urlname': NewProductView.urlname,
+                        },
+                        {
+                            'title': EditProductView.page_title,
+                            'urlname': EditProductView.urlname,
+                        },
+                        {
+                            'title': ProductFieldsView.page_name(),
+                            'urlname': ProductFieldsView.urlname,
+                        },
+                    ]
+                },
+                # locations
+                {
+                    'title': LocationsListView.page_title,
+                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': NewLocationView.page_title,
+                            'urlname': NewLocationView.urlname,
+                        },
+                        {
+                            'title': EditLocationView.page_title,
+                            'urlname': EditLocationView.urlname,
+                        },
+                        {
+                            'title': LocationImportView.page_title,
+                            'urlname': LocationImportView.urlname,
+                        },
+                        {
+                            'title': LocationImportStatusView.page_title,
+                            'urlname': LocationImportStatusView.urlname,
+                        },
+                    ]
+                },
+                # locations (advanced)
+                {
+                    'title': LocationSettingsView.page_title,
+                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+                },
+                # programs
+                {
+                    'title': ProgramListView.page_title,
+                    'url': reverse(ProgramListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': NewProgramView.page_title,
+                            'urlname': NewProgramView.urlname,
+                        },
+                        {
+                            'title': EditProgramView.page_title,
+                            'urlname': EditProgramView.urlname,
+                        },
+                    ]
+                },
+                # sms
+                {
+                    'title': SMSSettingsView.page_title,
+                    'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
+                },
+                # consumption
+                {
+                    'title': DefaultConsumptionView.page_title,
+                    'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
+                },
+                # settings
+                {
+                    'title': CommTrackSettingsView.page_title,
+                    'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
+                },
+                # external sync
+                {
+                    'title': FacilitySyncView.page_title,
+                    'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+                },
+            ]]]
+
+        if self.project.locations_enabled:
+            return [[_('Setup'), [
+                # locations
+                {
+                    'title': LocationsListView.page_title,
+                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': NewLocationView.page_title,
+                            'urlname': NewLocationView.urlname,
+                        },
+                        {
+                            'title': EditLocationView.page_title,
+                            'urlname': EditLocationView.urlname,
+                        },
+                        {
+                            'title': LocationImportView.page_title,
+                            'urlname': LocationImportView.urlname,
+                        },
+                        {
+                            'title': LocationImportStatusView.page_title,
+                            'urlname': LocationImportStatusView.urlname,
+                        },
+                    ]
+                },
+                # locations (advanced)
+                {
+                    'title': LocationSettingsView.page_title,
+                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+                },
+            ]]]
 
 
 class ProjectDataTab(UITab):
