@@ -2216,15 +2216,23 @@ class DownloadCCZ(DownloadMultimediaZip):
 
     def iter_files(self):
         skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+        text_extensions = ('.xml', '.ccpr', '.txt')
         get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
         def _files():
             for name, f in _download_index_files(self.request):
                 if name not in skip_files:
-                    yield (get_name(name), f.encode('utf-8'))
+                    # TODO: make RemoteApp.create_all_files not return media files
+                    extension = os.path.splitext(name)[1]
+                    data = f.encode('utf-8') if extension in text_extensions else f
+                    yield (get_name(name), data)
 
-        media_files, errors = super(DownloadCCZ, self).iter_files()
-        return itertools.chain(_files(), media_files), errors
+        if self.app.is_remote_app():
+            return _files(), []
+        else:
+            media_files, errors = super(DownloadCCZ, self).iter_files()
+            return itertools.chain(_files(), media_files), errors
+
 
 
 @safe_download
