@@ -68,8 +68,8 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
     def drilldown_map(self):
         def make_drilldown(hierarchy):
             return [{
-                "val": current[0] if type(current) == tuple else current,
-                "text": current[1] if type(current) == tuple else current,
+                "val": current[0] if isinstance(current, tuple) else current,
+                "text": current[1] if isinstance(current, tuple) else current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
         return make_drilldown(self.get_hierarchy())
