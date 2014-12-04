@@ -18,6 +18,12 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout=None,
         if not couch_user:
             ret['messages'].append('WARNING: User not found: {}'.format(username_or_id))
             continue
+        elif couch_user.domain != domain:
+            ret['messages'].append("WARNING: User '{}' not from domain '{}'".format(
+                username_or_id,
+                domain
+            ))
+            continue
 
         try:
             project = couch_user.project
