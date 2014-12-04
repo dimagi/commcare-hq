@@ -14,7 +14,7 @@ class RecapPassageReport(MonthYearMixin, MultiReport):
     fields = [FRMonthFilter, FRYearFilter, RecapPassageLocationFilter]
 
     def config_update(self, config):
-        if self.location.location_type.lower() == 'pps':
+        if self.location and self.location.location_type.lower() == 'pps':
             config['location_id'] = self.location._id
 
     @property

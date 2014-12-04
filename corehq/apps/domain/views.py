@@ -1,9 +1,11 @@
+import copy
 import datetime
 from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
@@ -27,7 +29,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -1929,8 +1931,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @property
     @memoized
     def internal_settings_form(self):
+        can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(self.request.POST)
+            return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {}
         internal_attrs = [
             'sf_contract_id',
@@ -1948,21 +1951,23 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'self_started',
             'using_adm',
             'using_call_center',
-            'custom_eula',
-            'can_use_data',
             'project_manager',
             'phone_model',
             'goal_time_period',
             'goal_followup_rate',
-            'commconnect_domain',
             'commtrack_domain',
         ]
+        if can_edit_eula:
+            internal_attrs += [
+                'custom_eula',
+                'can_use_data',
+            ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        return DomainInternalForm(initial=initial)
+        return DomainInternalForm(can_edit_eula, initial=initial)
 
     @property
     def page_context(self):
@@ -1974,7 +1979,29 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
+            old_attrs = copy.copy(self.domain_object.internal)
             self.internal_settings_form.save(self.domain_object)
+            eula_props_changed = (old_attrs.custom_eula != self.domain_object.internal.custom_eula or
+                                  old_attrs.can_use_data != self.domain_object.internal.can_use_data)
+
+            if eula_props_changed and settings.EULA_CHANGE_EMAIL:
+                message = '\n'.join([
+                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '',
+                    'The properties changed were:',
+                    '- Custom eula: {eula_old} --> {eula_new}',
+                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
+                ]).format(
+                    user=self.request.couch_user.username,
+                    domain=self.domain,
+                    eula_old=old_attrs.custom_eula,
+                    eula_new=self.domain_object.internal.custom_eula,
+                    can_use_data_old=old_attrs.can_use_data,
+                    can_use_data_new=self.domain_object.internal.can_use_data,
+                )
+                send_mail('Custom EULA or data use flags changed for {}'.format(self.domain),
+                          message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL])
+
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
         else:

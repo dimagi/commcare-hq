@@ -208,7 +208,7 @@ NEW_CASE_PROCESSING = PredicatablyRandomToggle(
     'new_case_processing',
     'Use new case processing/rebuild logic',
     namespace=NAMESPACE_DOMAIN,
-    randomness=0.05,
+    randomness=0.25,
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
@@ -227,4 +227,16 @@ NO_VELLUM = StaticToggle(
     'Allow disabling Form Builder per form '
     '(for custom forms that Vellum breaks)',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+BATCHED_RESTORE = StaticToggle(
+    'batched_restore',
+    'Batch OTA restore response generation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+CAN_EDIT_EULA = StaticToggle(
+    'can_edit_eula',
+    "Whether this user can set the custom eula and data sharing internal project options. "
+    "This should be a small number of DIMAGI ONLY users",
 )

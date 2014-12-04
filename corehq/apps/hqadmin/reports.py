@@ -458,7 +458,6 @@ DOMAIN_FACETS = [
     "internal.project_manager",
     "internal.phone_model.exact",
     "internal.commtrack_domain",
-    "internal.commconnect_domain",
 
     "is_approved",
     "is_public",
@@ -778,7 +777,6 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     format_bool(dom.get('internal', {}).get('self_started')),
                     dom.get('is_test') or _('No info'),
                     format_bool(dom.get('cp_is_active') or _('No info')),
-                    format_bool(dom.get('internal', {}).get('commconnect_domain')),
                     format_bool(dom.get('internal', {}).get('commtrack_domain')),
                     dom.get('cp_n_out_sms', _("Not yet calculated")),
                     dom.get('cp_n_in_sms', _("Not yet calculated")),

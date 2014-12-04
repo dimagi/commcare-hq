@@ -78,7 +78,7 @@ def get_form_data_source(app, form):
     def _get_indicator_data_type(data_type, options):
         if data_type == "date":
             return {"datatype": "date"}
-        if data_type in ("Select", "MSelect"):
+        if data_type == "MSelect":
             return {
                 "type": "choice_list",
                 "select_style": DATATYPE_MAP[data_type],

@@ -1,13 +1,10 @@
-from django.test import TestCase
-from casexml.apps.case.tests.util import delete_all_sync_logs
+from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
-class PhoneFootprintTest(TestCase):
-    
-    def setUp(self):
-        delete_all_sync_logs()
+
+class PhoneFootprintTest(SimpleTestCase):
 
     def test_empty(self):
         log = SyncLog()
@@ -73,6 +70,8 @@ class PhoneFootprintTest(TestCase):
         log.archive_case("c1")
         self.assertEqual(0, len(log.get_footprint_of_cases_on_phone()))
 
+
+class CachingReponseTest(TestCase):
     def testCachingResponse(self):
         log = SyncLog()
         log.save()
