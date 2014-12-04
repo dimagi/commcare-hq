@@ -776,9 +776,6 @@ def get_module_view_context_and_template(app, module):
             'is_parent': mod.unique_id in parent_module_ids,
         } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
-    def get_sort_elements(details):
-        return [prop.values() for prop in details.sort_elements]
-
     def case_list_form_options(case_type):
         options = OrderedDict()
         forms = [form for form in module.get_forms() if form.is_registration_form(case_type)]
@@ -799,7 +796,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'careplan_goal',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
-                    'sort_elements': json.dumps(get_sort_elements(module.goal_details.short)),
+                    'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
                     'child_case_types': list(module.get_child_case_types()),
@@ -810,7 +807,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'careplan_task',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
-                    'sort_elements': json.dumps(get_sort_elements(module.task_details.short)),
+                    'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
                     'child_case_types': list(module.get_child_case_types()),
@@ -827,7 +824,7 @@ def get_module_view_context_and_template(app, module):
                 'type': 'case',
                 'model': 'case',
                 'properties': sorted(builder.get_properties(case_type)),
-                'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                'sort_elements': module.case_details.short.sort_elements,
                 'short': module.case_details.short,
                 'long': module.case_details.long,
                 'child_case_types': list(module.get_child_case_types()),
@@ -840,7 +837,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'product',
                     'model': 'product',
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-                    'sort_elements': json.dumps(get_sort_elements(module.product_details.short)),
+                    'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
                     'child_case_types': list(module.get_child_case_types()),
                 })
@@ -861,7 +858,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'case',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(case_type)),
-                    'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                    'sort_elements': module.case_details.short.sort_elements,
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
@@ -946,12 +943,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = (
-            feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
-        )
-        module_context["enable_enum_image"] = (
-            feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
-        )
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"

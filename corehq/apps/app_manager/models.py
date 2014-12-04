@@ -1160,15 +1160,6 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
 
-    def values(self):
-        values = {
-            'field': self.field,
-            'type': self.type,
-            'direction': self.direction,
-        }
-
-        return values
-
 
 class SortOnlyDetailColumn(DetailColumn):
     """This is a mock type, not intended to be part of a document"""
