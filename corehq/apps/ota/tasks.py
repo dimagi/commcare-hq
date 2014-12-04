@@ -9,6 +9,16 @@ from soil import DownloadBase
 @task
 def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None,
                   overwrite_cache=False, check_cache_only=False):
+    """
+    Task to generate and cache a restore payload for each user passed in.
+
+    :param domain:              The domain name for the users
+    :param usernames_or_ids:    List of usernames or user IDs
+    :param version:             Restore format version
+    :param cache_timeout_hours: Hours to cache the payload
+    :param overwrite_cache:     If True overwrite any existing cache
+    :param check_cache_only:    Don't generate the payload, just check if it is already cached
+    """
     total = len(usernames_or_ids)
     DownloadBase.set_progress(prime_restore, 0, total)
 

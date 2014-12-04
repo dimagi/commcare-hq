@@ -32,7 +32,7 @@ class PrimeRestoreCacheForm(forms.Form):
     )
     domain = forms.CharField(
         label='Domain',
-        required=False
+        required=True
     )
     version = forms.ChoiceField(
         label='Output version',
@@ -52,14 +52,14 @@ class PrimeRestoreCacheForm(forms.Form):
         required=False
     )
     all_users = forms.BooleanField(
-        label='Prime cache for all users in the domain?',
+        label='Include all users in the domain',
         required=False
     )
     users = forms.CharField(
-        label='Only prime cache for these users',
+        label='User list',
         help_text=('One username or user_id per line '
                    '(username must be full username e.g. test@domain.commcarehq.org)'),
-        widget=forms.Textarea(attrs={'rows': '30', 'cols': '50'}),
+        widget=forms.Textarea(attrs={'rows': '5', 'cols': '50'}),
         required=False
     )
 
@@ -70,13 +70,16 @@ class PrimeRestoreCacheForm(forms.Form):
         self.helper.label_class = 'col-lg-2'
         self.helper.field_class = 'col-lg-4'
         self.helper.layout = crispy.Layout(
-            'check_cache_only',
-            'version',
-            'cache_timeout',
-            'overwrite_cache',
-            'all_users',
+            crispy.Field('check_cache_only', data_ng_model='check_cache_only'),
+            crispy.Div(
+                'version',
+                'cache_timeout',
+                'overwrite_cache',
+                data_ng_hide='check_cache_only'
+            ),
+            crispy.Field('all_users', data_ng_model='all_users'),
             'domain',
-            'users',
+            crispy.Div('users', data_ng_hide='all_users'),
             FormActions(
                 StrictButton(
                     "Submit",
