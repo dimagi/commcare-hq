@@ -6,7 +6,6 @@ env:
 install:
  - "uname -a"
  - "lsb_release -a"
- - "bash -ex .travis/upgrade-couchdb.sh"
  - "curl http://127.0.0.1:5984/"
  - "pip install -e ."
  - "pip install coverage coveralls unittest2 mock"
