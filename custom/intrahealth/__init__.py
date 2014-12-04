@@ -45,8 +45,8 @@ _PRODUCT_NAMES = {
     u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
     u'microlut/ovrette': [u"microlut/ovrette"],
     u'microgynon/lof.': [u"microgynon/lof."],
-    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin"],
-    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin"],
+    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin", u"preservatif_masculin"],
+    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin", u"preservatif_feminin"],
     u'cu': [u"cu"],
     u'collier': [u"collier"]
 }
@@ -103,11 +103,10 @@ def get_rupture_products_code(form):
     result = []
     for k, v in form.form.iteritems():
         if re.match("^rupture.*hv$", k):
-            product_name = PRODUCT_MAPPING[k[8:-3]]
-            k = PRODUCT_NAMES.get(product_name.lower())
-            if k is not None:
+            product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())
+            if product_name is not None:
                 try:
-                    prd = SQLProduct.objects.get(name__iexact=k,
+                    prd = SQLProduct.objects.get(name__iexact=product_name,
                                                  domain=get_domain(form))
                     result.append(prd.code)
                 except SQLProduct.DoesNotExist:
