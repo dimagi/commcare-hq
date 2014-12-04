@@ -85,7 +85,8 @@ class PrimeRestoreCacheForm(forms.Form):
         )
 
     def clean_users(self):
-        self.user_ids = re.findall(r'[\w-]+', self.cleaned_data['users'])
+        user_ids = self.cleaned_data['users'].splitlines()
+        self.user_ids = filter(None, user_ids)
         return self.cleaned_data['users']
 
     def clean(self):
