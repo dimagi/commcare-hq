@@ -6,6 +6,7 @@ from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig,
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
+from corehq.apps.reports.filters.commtrack import SelectReportingType
 from dimagi.utils.couch.loosechange import map_reduce
 from datetime import datetime
 from corehq.apps.locations.models import Location
@@ -352,6 +353,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.commtrack.SelectReportingType',
     ]
     exportable = True
     emailable = True
@@ -361,20 +363,55 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user)
 
+    def is_aggregate_report(self):
+        return self.request.GET.get(SelectReportingType.slug, '') != 'facilities'
+
     @property
     def headers(self):
-        return DataTablesHeader(*(DataTablesColumn(text) for text in [
-            _('Location'),
-            _('# Sites'),
-            _('# Reporting'),
-            _('Reporting Rate'),
-            _('# Non-reporting'),
-            _('Non-reporting Rate'),
-        ]))
+        if self.is_aggregate_report():
+            return DataTablesHeader(*(DataTablesColumn(text) for text in [
+                _('Location'),
+                _('# Sites'),
+                _('# Reporting'),
+                _('Reporting Rate'),
+                _('# Non-reporting'),
+                _('Non-reporting Rate'),
+            ]))
+        else:
+            return DataTablesHeader(*(DataTablesColumn(text) for text in [
+                _('Location'),
+                _('Parent location'),
+                _('Date of last report for selected period'),
+                _('Reporting'),
+            ]))
 
     @property
     @memoized
-    def _data(self):
+    def _facility_data(self):
+        config = {
+            'domain': self.domain,
+            'location_id': self.request.GET.get('location_id'),
+            'startdate': self.datespan.startdate_utc,
+            'enddate': self.datespan.enddate_utc,
+            'request': self.request,
+        }
+        statuses = list(ReportingStatusDataSource(config).get_data())
+
+        results = []
+        for status in statuses:
+            results.append([
+                status['name'],
+                status['loc'].parent.name if status['loc'].parent else '',
+                status['last_reporting_date'].date() if status['last_reporting_date'] else _('Never'),
+                _('Yes') if status['reporting_status'] == 'reporting' else _('No'),
+            ])
+
+        return [], results
+
+
+    @property
+    @memoized
+    def _aggregate_data(self):
         config = {
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
@@ -436,10 +473,17 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def rows(self):
-        return self._data[1]
+        if self.is_aggregate_report():
+            return self._aggregate_data[1]
+        else:
+            return self._facility_data[1]
 
     def master_pie_chart_data(self):
-        tally = self._data[0]
+        if self.is_aggregate_report():
+            tally = self._aggregate_data[0]
+        else:
+            return self._facility_data[0]
+
         labels = {
             'reporting': _('Reporting'),
             'nonreporting': _('Non-reporting'),
@@ -448,6 +492,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def charts(self):
+        return []
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
 

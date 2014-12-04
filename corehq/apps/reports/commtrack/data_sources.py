@@ -374,30 +374,34 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 loc = supply_point.location
                 transactions = StockTransaction.objects.filter(
                     case_id=supply_point._id,
-                ).exclude(
-                    report__date__lte=self.start_date
-                ).exclude(
-                    report__date__gte=self.end_date
                 ).order_by('-report__date')
                 matched = False
                 for trans in transactions:
-                    if XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
+                    if self.start_date > trans.report.date:
+                        break
+
+                    if self.end_date >= trans.report.date and \
+                       XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
                         yield {
+                            'loc': loc,
                             'loc_id': loc._id,
                             'loc_path': loc.path,
                             'name': loc.name,
                             'type': loc.location_type,
                             'reporting_status': 'reporting',
                             'geo': loc._geopoint,
+                            'last_reporting_date': trans.report.date
                         }
                         matched = True
                         break
                 if not matched:
                     yield {
+                        'loc': loc,
                         'loc_id': loc._id,
                         'loc_path': loc.path,
                         'name': loc.name,
                         'type': loc.location_type,
                         'reporting_status': 'nonreporting',
                         'geo': loc._geopoint,
+                        'last_reporting_date': transactions[-1].report.date if transactions else ''
                     }
