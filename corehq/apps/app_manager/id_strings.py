@@ -64,6 +64,15 @@ def detail_title_locale(module, detail_type):
                                                       detail_type=detail_type)
 
 
+@pattern('m%d.%s.tab.%d.title')
+def detail_tab_title_locale(module, detail_type, tab):
+    return u"m{module.id}.{detail_type}.tab.{tab_index}.title".format(
+        module=module,
+        detail_type=detail_type,
+        tab_index=tab.id + 1
+    )
+
+
 @pattern('m%d.%s.%s_%s_%d.header')
 def detail_column_header_locale(module, detail_type, column):
     field = column.field.replace('#', '')

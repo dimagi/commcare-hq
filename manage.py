@@ -56,7 +56,7 @@ if __name__ == "__main__":
         'ptop_preindex',
         'sync_prepare_couchdb_multi',
     )
-    if sys.argv[1] in GEVENT_COMMANDS:
+    if len(sys.argv) > 1 and sys.argv[1] in GEVENT_COMMANDS:
         from restkit.session import set_session; set_session("gevent")
         from gevent.monkey import patch_all; patch_all()
 

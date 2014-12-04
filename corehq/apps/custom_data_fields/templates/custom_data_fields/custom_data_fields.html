@@ -16,6 +16,10 @@
     <script>
         var customDataFieldsModel = new CustomDataFieldsModel();
         customDataFieldsModel.init({{ custom_fields|JSON }});
+        customDataFieldsModel.data_fields.subscribe(function() {
+            $("#save-custom-fields").prop("disabled", false);
+        });
+
         ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
 
         $('form[id="custom-fields-form"]').on("change", null, null, function() {
@@ -28,6 +32,15 @@
             $(":submit").prop("disabled", false);
         })
     </script>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+    <style>
+        ul.choices-list > li {
+            padding-top: 5px;
+        }
+    </style>
 {% endblock %}
 
 {% block main_column %}
@@ -87,14 +100,33 @@
                                     {% trans "Label" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Label" %}"
-                                          data-content="{% blocktrans with entity_string=view.entity_string %}
+                                          data-content="{% blocktrans with entity_string=view.entity_string|lower %}
                                               The field label that users will see when adding or editing
                                               a {{ entity_string }} in CommCareHQ.
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
-                                <th class="span1">{% trans "Required" %}</th>
-                                <th class="span3">{% trans "Choices" %}</th>
+                                <th class="span1">
+                                    {% trans "Required" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Required" %}"
+                                          data-content="{% blocktrans with entity_string=view.entity_string|lower %}
+                                              A value for this field must be provided when creating or
+                                              editing a {{ entity_string }}.  Bulk import will fail
+                                              unless this field is provided.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                <th class="span3">
+                                    {% trans "Choices" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Choices" %}"
+                                          data-content="{% blocktrans %}
+                                              Provides a drop-down list of choices for this field
+                                              instead of free text entry.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
                                 <th class="span1">{% trans "Delete" %}</th>
                             </tr>
                         </thead>
@@ -116,8 +148,9 @@
                                     <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
                                         <i class="icon-plus"></i> {% trans "Add Choice" %}
                                     </a>
-                                    <ul data-bind="foreach: choices" class="unstyled">
-                                        <li>
+                                    <ul data-bind="sortable: choices" class="unstyled choices-list">
+                                        <li data-bind="attr: {'data-order': _sortableOrder}">
+                                            <i class="icon-sort sortable-handle"></i>
                                             <input type="text" data-bind="value: value"/>
                                             <a type="button"
                                                class="btn btn-danger"

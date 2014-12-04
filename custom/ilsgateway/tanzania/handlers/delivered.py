@@ -1,10 +1,9 @@
 from datetime import datetime
-
-from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
+from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, DELIVERY_CONFIRM_CHILDREN
 
 
@@ -12,7 +11,7 @@ class DeliveredHandler(KeywordHandler):
 
     def _send_delivery_alert_to_facilities(self, sp_name, location):
         locs = [c._id for c in location.children]
-        users = filter(lambda u: u.domain_membership["location_id"] in locs, CommTrackUser.by_domain(self.domain))
+        users = filter(lambda u: u.domain_membership["location_id"] in locs, CommCareUser.by_domain(self.domain))
         for user in users:
             if user.get_verified_number():
                 send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN % {"district_name": sp_name})

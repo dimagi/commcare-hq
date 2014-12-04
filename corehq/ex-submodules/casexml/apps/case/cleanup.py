@@ -89,6 +89,7 @@ def rebuild_case(case_id):
     # call "rebuild" on the case, which should populate xform_ids
     # and re-sort actions if necessary
     case.rebuild(strict=False, xforms={f._id: f for f in sorted_forms})
+    case.xform_ids = case.xform_ids + [f._id for f in sorted_forms if f._id not in case.xform_ids]
 
     if not case.xform_ids:
         if not found:

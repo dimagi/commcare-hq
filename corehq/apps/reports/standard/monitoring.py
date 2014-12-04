@@ -5,7 +5,6 @@ import dateutil
 from django.core.urlresolvers import reverse
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
-import numpy
 import operator
 import pytz
 from corehq.apps.es import filters
@@ -19,15 +18,14 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import es_query, ADD_TO_ES_FILTER
+from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_datetime, string_to_datetime
+from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 from django.utils.translation import ugettext as _
@@ -260,26 +258,20 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
         return map(format_row, rows)
 
     def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
-        key = [self.domain, {} if closed is None else closed, self.case_type or {}, user_id]
+        kwargs = {}
+        if closed is not None:
+            kwargs['closed'] = bool(closed)
+        if modified_after:
+            kwargs['modified_on__gte'] = modified_after
+        if modified_before:
+            kwargs['modified_on__lt'] = modified_before
 
-        if modified_after is None:
-            start = ""
-        else:
-            start = json_format_datetime(modified_after)
-
-        if modified_before is None:
-            end = {}
-        else:
-            end = json_format_datetime(modified_before)
-
-        return get_db().view('case/by_date_modified_owner',
-            startkey=key + [start],
-            endkey=key + [end],
-            group=True,
-            group_level=0,
-            wrapper=lambda row: row['value']
-        ).one() or 0
-
+        qs = CaseData.objects.filter(
+            domain=self.domain,
+            user_id=user_id,
+            **kwargs
+        )
+        return qs.count()
 
 class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin):

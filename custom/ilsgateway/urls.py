@@ -12,5 +12,6 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^ils_clear_stock_data/$', 'ils_clear_stock_data', name='ils_clear_stock_data'),
 
     url(r'^run_reports/$', 'run_warehouse_runner', name='run_reports'),
-    url(r'^end_report_run/$', 'end_report_run', name='end_report_run')
+    url(r'^end_report_run/$', 'end_report_run', name='end_report_run'),
+    url(r'^ils_resync_passwords/$', 'ils_resync_passwords', name='ils_resync_passwords')
 )
