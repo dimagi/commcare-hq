@@ -694,6 +694,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             self.actions.append(close_action)
 
         if case_update.has_referrals():
+            logging.error('Case {} in domain {} is still using referrals'.format(
+                case_update.id, getattr(xformdoc, 'domain', None))
+            )
             if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
                 referrals = Referral.from_block(mod_date, case_update.referral_block)
                 # for some reason extend doesn't work.  disconcerting
