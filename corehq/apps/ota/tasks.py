@@ -1,13 +1,13 @@
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V1
+from casexml.apps.phone.restore import RestoreConfig
 from corehq.apps.users.models import CommCareUser
 from soil import DownloadBase
 
 
 @task
 def prime_restore(usernames_or_ids, version=V1, cache_timeout=None, overwrite_cache=False):
-    from corehq.apps.ota.views import get_restore_response
     total = len(usernames_or_ids)
     DownloadBase.set_progress(prime_restore, 0, total)
 
@@ -19,16 +19,23 @@ def prime_restore(usernames_or_ids, version=V1, cache_timeout=None, overwrite_ca
             continue
 
         try:
-            get_restore_response(
-                couch_user.domain,
-                couch_user,
-                since=None,
-                version=version,
+            project = couch_user.project
+            commtrack_settings = project.commtrack_settings
+            stock_settings = commtrack_settings.get_ota_restore_settings() if commtrack_settings else None
+            restore_config = RestoreConfig(
+                couch_user.to_casexml_user(), None, version, None,
+                items=True,
+                stock_settings=stock_settings,
+                domain=project,
                 force_cache=True,
                 cache_timeout=cache_timeout,
-                overwrite_cache=overwrite_cache,
-                items=True
+                overwrite_cache=overwrite_cache
             )
+            restore_config.get_payload()
+
+            ret['messages'].append('Restore generated successfully for user: {}'.format(
+                couch_user.human_friendly_name,
+            ))
         except Exception as e:
             ret['messages'].append('Error processing user: {}'.format(str(e)))
 
