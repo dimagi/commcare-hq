@@ -50,10 +50,8 @@ branches:
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  #- help-text # j$  10/8  removed 11/3 by Daniel
   - masterlist-workflow # j$  10/8
   - bulk-app-translate # Noah 9/18
-#  - share-fixtures # j$ 10/29
   - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
   - custom_location_data  # Ethan & tw 11/17
@@ -71,11 +69,9 @@ submodules:
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
-      - update-jar # J$ 11/10
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
-      - update-jars # J$ 11/10
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
