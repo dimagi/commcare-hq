@@ -111,7 +111,7 @@
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
         {% if commtrack_enabled %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommTrack" %}</a></li>
-        {% else %}
+        {% elif locations_enabled %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
         {% endif %}
         <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>

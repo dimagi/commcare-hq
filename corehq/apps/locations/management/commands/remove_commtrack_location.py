@@ -38,4 +38,4 @@ class Command(BaseCommand):
                     to_save = []
 
         if to_save:
-            Location.get_db().bulk_save(to_save)
+            CouchUser.get_db().bulk_save(to_save)
