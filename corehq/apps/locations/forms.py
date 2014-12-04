@@ -35,6 +35,12 @@ class LocationForm(forms.Form):
         required=False,
         help_text=_("A unique system code for this location. Leave this blank to have it auto generated")
     )
+    external_id = forms.CharField(
+        label='External ID',
+        required=False,
+        help_text=_("A number referencing this location on an external system")
+    )
+    external_id.widget.attrs['readonly'] = True
 
     strict = True # optimization hack: strict or loose validation 
     def __init__(self, location, bound_data=None, *args, **kwargs):
@@ -49,6 +55,9 @@ class LocationForm(forms.Form):
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
+
+        if not self.location.external_id:
+            self.fields['external_id'].widget = forms.HiddenInput()
 
         # custom properties
         self.sub_forms = {}

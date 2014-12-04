@@ -17,14 +17,22 @@ class Command(LabelCommand):
         country_lookup["Wales"] = country_lookup["united kingdom"]
 
         for domain in Domain.get_all():
+            if domain.deployment._doc.get('countries', None):
+                continue
             try:
-                if isinstance(domain.deployment.country, basestring):
-                    if ',' in domain.deployment.country:
-                        countries = domain.deployment.country.split(',')
-                    elif ' and ' in domain.deployment.country:
-                        countries = domain.deployment.country.split(' and ')
+                country = None
+                if domain.deployment._doc.get('country', None):
+                    country = domain.deployment._doc['country']
+                elif domain._doc.get('country', None):
+                    country = domain._doc['country']
+
+                if country:
+                    if ',' in country:
+                        countries = country.split(',')
+                    elif ' and ' in country:
+                        countries = country.split(' and ')
                     else:
-                        countries = [domain.deployment.country]
+                        countries = [country]
 
                     abbr = []
                     for country in countries:
@@ -36,4 +44,4 @@ class Command(LabelCommand):
                     domain.save()
             except Exception as e:
                 print "There was an error migrating the domain named %s." % domain.name
-                print "Error: %s", e
+                print "Error: %s" % e

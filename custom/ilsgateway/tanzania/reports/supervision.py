@@ -3,13 +3,13 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
+from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
-from django.utils import html
 
 
 class SupervisionSummaryData(ILSData):
@@ -121,12 +121,9 @@ class DistrictSupervisionData(ILSData):
                 else:
                     response_rate = "<span class='no_data'>None</span>"
 
-                try:
-                    url = html.escape(FacilityDetailsReport.get_url(
-                        domain=self.config['domain']) +
-                        '?location_id=%s' % loc.location_id)
-                except KeyError:
-                    url = None
+                url = make_url(FacilityDetailsReport, self.config['domain'],
+                           '?location_id=%s&filter_by_program=%s%s',
+                           (loc.location_id, self.config['program'], self.config['prd_part_url']))
 
                 latest = latest_status_or_none(loc.location_id, SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                                int(self.config['month']), int(self.config['year']))
@@ -147,7 +144,7 @@ class SupervisionReport(DetailsReport):
     title = 'Supervision'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
 
     @property
     @memoized

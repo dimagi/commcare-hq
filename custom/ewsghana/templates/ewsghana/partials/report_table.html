@@ -1,0 +1,85 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% if charts %}
+    <div class="row">
+        {% for chart in charts %}
+            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
+            <svg style='height: {{ chart.height }}px'> </svg>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+    <thead>
+        {%  if report_table.headers.complex %}
+            {{ report_table.headers.render_html|safe }}
+        {% else %}
+            <tr>
+                {% for header in report_table.headers %}
+                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                        <i class="icon-white"></i>
+                        {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                        {% if header.help_text %}
+                            <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
+                        {% endif %}
+                    </th>
+                {% endfor %}
+            </tr>
+        {% endif %}
+    </thead>
+    <tbody>
+    {% block tabular-body %}
+    {% if report_table.pagination.is_on %}
+        <tr>
+            <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+                {% trans "Fetching additional data, please wait..." %}
+            </td>
+        </tr>
+    {% endif %}
+    {% for row in report_table.rows %}
+        <tr>
+            {% for col in row %}
+                {% include 'reports/async/partials/tabular_cell.html' %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    {% endblock %}
+    </tbody>
+    {% if report_table.total_row and report_table.rows %}
+        <tfoot>
+        <tr>
+            {% for col in report_table.total_row %}
+                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+            {% endfor %}
+        </tr>
+        </tfoot>
+    {% endif %}
+</table>
+
+<script type="text/javascript">
+   {% if report_table and report_table.datatables %}
+        var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
+
+        var params = {
+                sDom: dataTablesDom,
+                "sPaginationType": "bootstrap",
+                iDisplayLength: 10,
+                iDisplayStart: 0,
+                sScrollX: "100%"
+            };
+
+        var id = '#report_table_{{ report_table.slug }}';
+        var datatable = $(id).dataTable(params);
+
+       {% if report_table.fix_column %}
+            new FixedColumns(datatable, {
+               iLeftColumns: 1,
+               iLeftWidth: 130
+            });
+       {% endif %}
+    {% endif %}
+</script>

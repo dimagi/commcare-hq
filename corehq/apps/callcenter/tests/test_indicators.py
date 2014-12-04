@@ -3,7 +3,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
-from corehq.apps.callcenter.utils import sync_user_cases, FakeSyncOp
+from corehq.apps.callcenter.utils import sync_user_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
@@ -157,9 +157,13 @@ class CallCenterTests(BaseCCTests):
             self.cc_user.get_id,
             include_docs=True
         )
-        sync_op = FakeSyncOp([user_case])
 
-        indicator_set = CallCenterIndicators(self.cc_domain, self.cc_user, case_sync_op=sync_op, custom_cache=locmem_cache)
+        indicator_set = CallCenterIndicators(
+            self.cc_domain,
+            self.cc_user,
+            custom_cache=locmem_cache,
+            override_cases=[user_case]
+        )
         self.assertEqual(indicator_set.user_to_case_map.keys(), [self.cc_user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id]))
