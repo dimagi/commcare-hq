@@ -6,6 +6,7 @@ import traceback
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from corehq import Domain
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser, UserRole
@@ -16,7 +17,7 @@ from corehq.apps.locations.schema import LocationType
 from corehq.apps.products.models import Product
 from custom.logistics.models import MigrationCheckpoint
 from dimagi.utils.dates import force_to_datetime
-from custom.ilsgateway.models import HistoricalLocationGroup
+from custom.ilsgateway.models import HistoricalLocationGroup, ILSGatewayConfig
 from requests.exceptions import ConnectionError
 from datetime import datetime
 from custom.ilsgateway.api import Location as Loc
@@ -160,6 +161,7 @@ def sync_ilsgateway_webuser(domain, ilsgateway_webuser):
                                   **user_dict)
             user.add_domain_membership(domain, is_admin=False, role_id=role_id, location_id=location_id)
             user.save()
+            check_hashes(user, user.get_django_user(), ilsgateway_webuser.password)
         except Exception as e:
             logging.error(e)
     else:
@@ -252,6 +254,38 @@ def sync_ilsgateway_smsuser(domain, ilsgateway_smsuser):
         if apply_updates(user, user_dict) or save:
             user.save()
     return user
+
+
+def check_hashes(webuser, django_user, password):
+    if webuser.password == password and django_user.password == password:
+        return True
+    else:
+        logging.warning("Logistics: Hashes are not matching for user: %s" % webuser.username)
+        return False
+
+
+def resync_password(config, user):
+    email = user.email
+    password = user.password
+    webuser = WebUser.get_by_username(email.lower())
+    if not webuser:
+        return
+
+    django_user = webuser.get_django_user()
+    domains = webuser.get_domains()
+    if not domains:
+        return None
+
+    # Make sure that user is migrated and didn't exist before migration
+    if all([config.for_domain(domain) is not None for domain in domains]):
+        if force_to_datetime(user.date_joined).replace(microsecond=0) != webuser.date_joined:
+            return None
+        if not check_hashes(webuser, django_user, password):
+            logging.info("Logistics: resyncing password...")
+            webuser.password = password
+            django_user.password = password
+            webuser.save()
+            django_user.save()
 
 
 @retry(5)
@@ -389,7 +423,7 @@ def bootstrap_domain(config, endpoint, extensions=None, **kwargs):
         offset = 0
 
     apis = [
-        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date)),
+        ('product', partial(products_sync, domain, endpoint, checkpoint, date=date, **kwargs)),
         ('location_facility', partial(locations_sync, domain, endpoint, checkpoint, date=date,
                                       filters=dict(date_updated__gte=date, type='facility'), **kwargs)),
         ('location_district', partial(locations_sync, domain, endpoint, checkpoint, date=date,

@@ -109,8 +109,10 @@
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
-        {% if commtrack %}
+        {% if commtrack_enabled %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommTrack" %}</a></li>
+        {% elif locations_enabled %}
+        <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
         {% endif %}
         <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
         {% if not is_currently_logged_in_user %}

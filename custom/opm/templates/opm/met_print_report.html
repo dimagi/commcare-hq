@@ -18,9 +18,6 @@
         $(function() {
             document.body.style.zoom="55%"
             setTimeout(function() {
-                for (var i = 3; i > 0; i--) {
-                    $('td:nth-last-child(1),th:nth-last-child(1)', $("#report_table_met_report")).remove();
-                }
                 splitTable($(".table"), 1700);
                 $('.hq-loading').hide();
                 window.print();

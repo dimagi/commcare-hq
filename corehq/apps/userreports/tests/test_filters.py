@@ -78,6 +78,98 @@ class PropertyMatchFilterTest(SimpleTestCase):
         self.assertFalse(self.get_path_filter().filter({'foo': 'bar'}))
 
 
+class EqualityFilterTest(PropertyMatchFilterTest):
+
+    def get_filter(self):
+        return FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'foo',
+            },
+            'operator': 'eq',
+            'property_value': 'bar',
+        })
+
+    def get_path_filter(self):
+        return FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': {
+                'type': 'property_path',
+                'property_path': ['path', 'to', 'foo'],
+            },
+            'operator': 'eq',
+            'property_value': 'bar',
+        })
+
+
+class BooleanExpressionFilterTest(SimpleTestCase):
+
+    def get_filter(self, operator, value):
+        return FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'foo',
+            },
+            'operator': operator,
+            'property_value': value,
+        })
+
+    def test_equal(self):
+        match = 'match'
+        filter = self.get_filter('eq', match)
+        self.assertTrue(filter.filter({'foo': match}))
+        self.assertFalse(filter.filter({'foo': 'non-match'}))
+        self.assertFalse(filter.filter({'foo': None}))
+
+    def test_in(self):
+        values = ['a', 'b', 'c']
+        filter = self.get_filter('in', values)
+        for value in values:
+            self.assertTrue(filter.filter({'foo': value}))
+        for value in ['d', 'e', 'f']:
+            self.assertFalse(filter.filter({'foo': value}))
+
+    def test_in_multiselect(self):
+        filter = self.get_filter('in_multi', 'a')
+        self.assertTrue(filter.filter({'foo': 'a'}))
+        self.assertTrue(filter.filter({'foo': 'a b c'}))
+        self.assertTrue(filter.filter({'foo': 'b c a'}))
+        self.assertFalse(filter.filter({'foo': 'b'}))
+        self.assertFalse(filter.filter({'foo': 'abc'}))
+        self.assertFalse(filter.filter({'foo': 'ab cd'}))
+        self.assertFalse(filter.filter({'foo': 'd e f'}))
+
+    def test_less_than(self):
+        filter = self.get_filter('lt', 3)
+        for match in (-10, 0, 2):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (3, 11, '2'):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
+    def test_less_than_equal(self):
+        filter = self.get_filter('lte', 3)
+        for match in (-10, 0, 2, 3):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (4, 11, '2'):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
+    def test_greater_than(self):
+        filter = self.get_filter('gt', 3)
+        for match in (4, 11, '2'):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (-10, 0, 2, 3):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
+    def test_greater_than_equal(self):
+        filter = self.get_filter('gte', 3)
+        for match in (3, 11, '2'):
+            self.assertTrue(filter.filter({'foo': match}))
+        for non_match in (-10, 0, 2):
+            self.assertFalse(filter.filter({'foo': non_match}))
+
+
 class ConfigurableANDFilterTest(SimpleTestCase):
 
     def setUp(self):

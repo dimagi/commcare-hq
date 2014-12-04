@@ -162,8 +162,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                                 selected_sharing_group_ids,
                                 selected_reporting_group_users,
                                 sharing_group_ids))
-        if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
+        if HQUserType.COMMTRACK in user_types:
             owner_ids.append("commtrack-system")
+        if HQUserType.DEMO_USER in user_types:
+            owner_ids.append("demo_user_group_id")
         return owner_ids
 
 

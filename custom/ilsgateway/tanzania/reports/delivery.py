@@ -1,6 +1,7 @@
 from datetime import datetime
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, SupplyPointStatusTypes
@@ -44,8 +45,10 @@ class LeadTimeHistory(ILSData):
             else:
                 avg_lead_time = "None"
 
-            args = (loc.location_id, self.config['month'], self.config['year'])
-            url = make_url(DeliveryReport, self.config['domain'], '?location_id=%s&month=%s&year=%s', args)
+            args = (loc.location_id, self.config['month'],
+                    self.config['year'], self.config['program'], self.config['prd_part_url'])
+            url = make_url(DeliveryReport, self.config['domain'],
+                           '?location_id=%s&month=%s&year=%s&filter_by_program=%s%s', args)
 
             rows.append([link_format(loc.name, url), avg_lead_time])
         return rows
@@ -92,7 +95,9 @@ class DeliveryStatus(ILSData):
             status_name = latest.name if latest else ""
             status_date = format(latest.status_date, "d M Y") if latest else "None"
 
-            url = make_url(FacilityDetailsReport, self.config['domain'], '?location_id=%s', (child.location_id, ))
+            url = make_url(FacilityDetailsReport, self.config['domain'],
+                           '?location_id=%s&filter_by_program=%s%s',
+                           (child.location_id, self.config['program'], self.config['prd_part_url']))
 
             cycle_lead_time = get_this_lead_time(
                 child.location_id,
@@ -120,7 +125,7 @@ class DeliveryReport(DetailsReport):
     title = 'Delivery Report'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
 
     @property
     @memoized

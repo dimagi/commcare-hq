@@ -302,23 +302,29 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
         NOTE: This is not a tastypie "magic"-name method to
         dehydrate the "module" field; there is no such field.
         """
-        dehydrated = {}
+        try:
+            dehydrated = {}
 
-        dehydrated['case_type'] = module.case_type
+            dehydrated['case_type'] = module.case_type
 
-        dehydrated['case_properties'] = app_manager_util.get_case_properties(app, [module.case_type], defaults=['name'])[module.case_type]
+            dehydrated['case_properties'] = app_manager_util.get_case_properties(
+                app, [module.case_type], defaults=['name']
+            )[module.case_type]
 
-        dehydrated['forms'] = []
-        for form in module.forms:
-            form = Form.get_form(form.unique_id)
-            form_jvalue = {
-                'xmlns': form.xmlns,
-                'name': form.name,
-                'questions': form.get_questions(langs),
+            dehydrated['forms'] = []
+            for form in module.forms:
+                form = Form.get_form(form.unique_id)
+                form_jvalue = {
+                    'xmlns': form.xmlns,
+                    'name': form.name,
+                    'questions': form.get_questions(langs),
+                }
+                dehydrated['forms'].append(form_jvalue)
+            return dehydrated
+        except Exception as e:
+            return {
+                'error': unicode(e)
             }
-            dehydrated['forms'].append(form_jvalue)
-
-        return dehydrated
 
     def dehydrate_modules(self, bundle):
         app = bundle.obj

@@ -427,6 +427,33 @@ class SetupTab(UITab):
             LocationFieldsView,
         )
 
+        locations_config = {
+            'title': LocationsListView.page_title,
+            'url': reverse(LocationsListView.urlname, args=[self.domain]),
+            'subpages': [
+                {
+                    'title': NewLocationView.page_title,
+                    'urlname': NewLocationView.urlname,
+                },
+                {
+                    'title': EditLocationView.page_title,
+                    'urlname': EditLocationView.urlname,
+                },
+                {
+                    'title': LocationImportView.page_title,
+                    'urlname': LocationImportView.urlname,
+                },
+                {
+                    'title': LocationImportStatusView.page_title,
+                    'urlname': LocationImportStatusView.urlname,
+                },
+            ]
+        }
+        advanced_locations_config = {
+            'title': LocationSettingsView.page_title,
+            'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+        }
+
         if self.project.commtrack_enabled:
             return [[_('CommTrack Setup'), [
                 # products
@@ -448,34 +475,8 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # locations
-                {
-                    'title': LocationsListView.page_title,
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': NewLocationView.page_title,
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': EditLocationView.page_title,
-                            'urlname': EditLocationView.urlname,
-                        },
-                        {
-                            'title': LocationImportView.page_title,
-                            'urlname': LocationImportView.urlname,
-                        },
-                        {
-                            'title': LocationImportStatusView.page_title,
-                            'urlname': LocationImportStatusView.urlname,
-                        },
-                    ]
-                },
-                # locations (advanced)
-                {
-                    'title': LocationSettingsView.page_title,
-                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
-                },
+                locations_config,
+                advanced_locations_config,
                 # programs
                 {
                     'title': ProgramListView.page_title,
@@ -515,34 +516,8 @@ class SetupTab(UITab):
 
         if self.project.locations_enabled:
             return [[_('Setup'), [
-                # locations
-                {
-                    'title': LocationsListView.page_title,
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': NewLocationView.page_title,
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': EditLocationView.page_title,
-                            'urlname': EditLocationView.urlname,
-                        },
-                        {
-                            'title': LocationImportView.page_title,
-                            'urlname': LocationImportView.urlname,
-                        },
-                        {
-                            'title': LocationImportStatusView.page_title,
-                            'urlname': LocationImportStatusView.urlname,
-                        },
-                    ]
-                },
-                # locations (advanced)
-                {
-                    'title': LocationSettingsView.page_title,
-                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
-                },
+                locations_config,
+                advanced_locations_config,
             ]]]
 
 

@@ -1160,6 +1160,8 @@ def set_celery_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_rule_queue.conf')
     if env.reminder_case_update_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_case_update_queue.conf')
+    if env.pillow_retry_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_pillow_retry_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_saved_exports_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')
