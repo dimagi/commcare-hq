@@ -110,20 +110,22 @@ requires imports/proptable.html to be included in the main template
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
             document.getElementById('archive-spinner').style.display='inline-block';
-            return ! ga_track_event('Reports', 'Case History', 'Archive this form', {
+            ga_track_event('Reports', 'Case History', 'Archive this form', {
                 'hitCallback': function () {
                     document.getElementById('archive-form').submit();
                 }
             });
+            return false;
         });
         $("#unarchive-form").submit(function() {
             document.getElementById('unarchive-form-btn').disabled=true;
             document.getElementById('unarchive-spinner').style.display='inline-block';
-            return ! ga_track_event('Reports', 'Case History', 'Restore this form', {
+            ga_track_event('Reports', 'Case History', 'Restore this form', {
                 'hitCallback': function () {
                     document.getElementById('unarchive-form').submit();
                 }
             });
+            return false;
         });
     });
 </script>

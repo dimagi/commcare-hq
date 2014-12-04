@@ -228,3 +228,15 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+BATCHED_RESTORE = StaticToggle(
+    'batched_restore',
+    'Batch OTA restore response generation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+CAN_EDIT_EULA = StaticToggle(
+    'can_edit_eula',
+    "Whether this user can set the custom eula and data sharing internal project options. "
+    "This should be a small number of DIMAGI ONLY users",
+)

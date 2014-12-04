@@ -1,3 +1,4 @@
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
@@ -125,7 +126,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
         org_summary = OrganizationSummary.objects.filter(date__range=(self.datespan.startdate,
                                                                       self.datespan.enddate),
                                                          supply_point=self.request.GET.get('location_id'))
-        return dict(
+
+        config = dict(
             domain=self.domain,
             org_summary=org_summary[0] if len(org_summary) > 0 else None,
             startdate=self.datespan.startdate,
@@ -133,8 +135,29 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             month=self.request_params['month'] if 'month' in self.request_params else '',
             year=self.request_params['year'] if 'year' in self.request_params else '',
             location_id=self.request.GET.get('location_id'),
-            soh_month=True if self.request.GET.get('soh_month', '') == 'True' else False
+            soh_month=True if self.request.GET.get('soh_month', '') == 'True' else False,
+            products=[],
+            program='',
+            prd_part_url=''
         )
+
+        if 'filter_by_program' in self.request.GET:
+            program = self.request.GET.get('filter_by_program', '')
+            if program:
+                product = self.request.GET.getlist('filter_by_product')
+                if product[0] != '':
+                    products = product
+                else:
+                    products = SQLProduct.objects.filter(program_id=program).values_list('product_id', flat=True)
+            else:
+                products = SQLProduct.objects.all().values_list('product_id', flat=True)
+            if len(products) > 1:
+                prd_part_url = '&filter_by_product='.join(products)
+            else:
+                prd_part_url = '&filter_by_product=%s' % products[0]
+            config.update(dict(products=products, program=program, prd_part_url=prd_part_url))
+
+        return config
 
     @property
     def report_context(self):

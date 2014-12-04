@@ -131,7 +131,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     using_adm = BooleanProperty()
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
-    can_use_data = BooleanProperty()
+    can_use_data = BooleanProperty(default=True)
     notes = StringProperty()
     organization_name = StringProperty()
     platform = StringListProperty()
@@ -139,9 +139,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     phone_model = StringProperty()
     goal_time_period = IntegerProperty()
     goal_followup_rate = DecimalProperty()
-    # intentionally different from commconnect_enabled and commtrack_enabled so
-    # that FMs can change
-    commconnect_domain = BooleanProperty()
+    # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
 
 

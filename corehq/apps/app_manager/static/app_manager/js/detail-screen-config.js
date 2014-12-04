@@ -74,18 +74,6 @@ var CC_DETAIL_SCREEN = {
 
 };
 
-/**
- * A custom knockout binding that replaces the element's contents with a jquery
- * element.
- * @type {{update: update}}
- */
-ko.bindingHandlers.jqueryElement = {
-    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-        $(element).empty();
-        $(element).append(ko.unwrap(valueAccessor()));
-    }
-};
-
 // saveButton is a required parameter
 var SortRow = function(params){
     var self = this;
@@ -622,26 +610,20 @@ var DetailScreenConfig = (function () {
                     {isTab: true, header: tabs[i].header}
                 );
             }
-            var $addTabDiv = $('.add-tab', this.$location);
-            if ($addTabDiv.length) {
-                ko.applyBindings(
-                    {
-                        addTab: function(){
-                            var col = that.initColumnAsColumn(Column.init({
-                                isTab: true,
-                                model: 'tab'
-                            }, that));
-                            // This copies the add-column event handler, but
-                            // puts it first and doesn't copy the object.
-                            that.columns.splice(0, 0, col);
-                            var $tr = that.addColumn(col, that.$columns, 0);
-                            $tr.detach().insertBefore(that.$columns.find('tr:nth-child(1)'));
-                            $tr.hide().fadeIn('slow');
-                            that.fire('change');
-                        }
-                    },
-                    $addTabDiv.get(0)
-                );
+            if (this.columnKey === 'long') {
+                this.addTab = function() {
+                    var col = that.initColumnAsColumn(Column.init({
+                        isTab: true,
+                        model: 'tab'
+                    }, that));
+                    // This copies the add-column event handler, but
+                    // puts it first and doesn't copy the object.
+                    that.columns.splice(0, 0, col);
+                    var $tr = that.addColumn(col, that.$columns, 0);
+                    $tr.detach().insertBefore(that.$columns.find('tr:nth-child(1)'));
+                    $tr.hide().fadeIn('slow');
+                    that.fire('change');
+                };
             }
 
             // Filters are a type of DetailColumn on the server. Don't display
@@ -850,22 +832,6 @@ var DetailScreenConfig = (function () {
                 if (!this.edit && _.isEmpty(this.columns)) {
                     $('<p/>').text(DetailScreenConfig.message.EMPTY_SCREEN).appendTo($box);
                 } else {
-                    if (this.edit) {
-                        if (window.enableNewSort) {
-
-                            // $location id is in this form: "-detail-screen-config"
-                            // so $detailBody id will be in this form: "-detail-screen-config-body"
-                            var $detailBody = $("#" + this.$location.attr("id") + "-body");
-
-                            $('<div id="saveBtn" class="clearfix">')
-                                .append(this.saveButton.ui)
-                                .prependTo($detailBody);
-                        } else {
-                            $('<div class="clearfix">')
-                                .append(this.saveButton.ui)
-                                .prependTo($box);
-                        }
-                    }
                     this.$columns = $('</tbody>');
 
                     // Add the "Add Property" button
@@ -873,12 +839,12 @@ var DetailScreenConfig = (function () {
                     var buttonDropdownItems = [
                         $('<li class="add-property-item"><a>Property</a></li>')
                     ];
-                    if (this.config.calculationEnabled){
+                    if (window.feature_previews.CALC_XPATHS) {
                         buttonDropdownItems.push(
                             $('<li class="add-calculation-item"><a>Calculation</a></li>')
                         );
                     }
-                    if (this.config.graphEnabled){
+                    if (window.toggles.GRAPH_CREATION) {
                         buttonDropdownItems.push(
                             $('<li class="add-graph-item"><a>Graph</a></li>')
                         );
@@ -999,10 +965,10 @@ var DetailScreenConfig = (function () {
         return Screen;
     }());
     DetailScreenConfig = (function () {
-        var DetailScreenConfig = function ($listHome, $detailHome, spec) {
+        var DetailScreenConfig = function (spec) {
             var that = this;
-            this.$listHome = $listHome;
-            this.$detailHome = $detailHome;
+            this.$listHome = $('<div/>');
+            this.$detailHome = $('<div/>');
             this.properties = spec.properties;
             this.screens = [];
             this.model = spec.model || 'case';
@@ -1019,8 +985,7 @@ var DetailScreenConfig = (function () {
             }
             this.edit = spec.edit;
             this.saveUrl = spec.saveUrl;
-            this.graphEnabled = spec.graphEnabled;
-            this.calculationEnabled = spec.calculationEnabled;
+            this.contextVariables = spec.contextVariables;
 
             /**
              * Add a Screen to this DetailScreenConfig
@@ -1056,33 +1021,28 @@ var DetailScreenConfig = (function () {
             }
 
             if (spec.state.short !== undefined) {
-                var shortScreen = addScreen(spec.state, "short", this.$listHome);
+                this.shortScreen = addScreen(spec.state, "short", this.$listHome);
+                // Set up filter
+                var filter_xpath = spec.state.short.filter;
+                this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, this.shortScreen.saveButton);
+                // Set up SortRows
+                this.sortRows = new SortRows(this.properties, spec.edit, this.shortScreen.saveButton);
+                if (spec.sortRows) {
+                    for (var j = 0; j < spec.sortRows.length; j++) {
+                        this.sortRows.addSortRow(
+                            spec.sortRows[j].field,
+                            spec.sortRows[j].type,
+                            spec.sortRows[j].direction
+                        );
+                    }
+                }
             }
             if (spec.state.long !== undefined) {
-                addScreen(spec.state, "long", this.$detailHome);
+                this.longScreen = addScreen(spec.state, "long", this.$detailHome);
             }
-
-            // Set up filter
-            var filter_xpath = spec.state.short.filter;
-            this.filter = new filterViewModel(filter_xpath ? filter_xpath : null, shortScreen.saveButton);
-            // Set up SortRows
-            this.sortRows = new SortRows(this.properties, spec.edit, shortScreen.saveButton);
         };
-        DetailScreenConfig.init = function ($listHome, $detailHome, spec) {
-            var ds = new DetailScreenConfig($listHome, $detailHome, spec);
-            var type = spec.state.type;
-            var $sortRowsHome = $('#' + type + '-detail-screen-sort');
-            var $filterHome = $('#' + type + '-filter');
-            var $parentSelectHome = $('#' + type + '-detail-screen-parent');
-            ko.applyBindings(ds.sortRows, $sortRowsHome.get(0));
-            ko.applyBindings(ds.filter, $filterHome.get(0));
-            if ($parentSelectHome.get(0) && ds.hasOwnProperty('parentSelect')){
-                ko.applyBindings(ds.parentSelect, $parentSelectHome.get(0));
-                $parentSelectHome.on('change', '*', function () {
-                    ds.screens[0].fire('change');
-                });
-            }
-            return ds;
+        DetailScreenConfig.init = function (spec) {
+            return new DetailScreenConfig(spec);
         };
         return DetailScreenConfig;
     }());
@@ -1147,20 +1107,20 @@ var DetailScreenConfig = (function () {
         {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
     ];
 
-    if (window.FEATURE_mm_case_properties) {
+    if (window.toggles.MM_CASE_PROPERTIES) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
             {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT}
         );
     }
 
-    if (window.FEATURE_enable_enum_image) {
+    if (window.feature_previews.ENUM_IMAGE) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
         );
     }
 
-    if (window.FEATURE_enable_calc_xpaths) {
+    if (window.feature_previews.CALC_XPATHS) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
         );
@@ -1175,3 +1135,15 @@ var DetailScreenConfig = (function () {
 
     return DetailScreenConfig;
 }());
+
+
+ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
+    init: function (element, valueAccessor) {
+        var $root = valueAccessor();
+        setTimeout(function () {
+            $(element).on('change', '*', function () {
+                $root.shortScreen.fire('change');
+            });
+        }, 0);
+    }
+};

@@ -3,8 +3,8 @@ import re
 
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
-from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
 from django import forms
 
 from crispy_forms.helper import FormHelper
@@ -12,7 +12,8 @@ from crispy_forms.layout import Layout, Fieldset, Div, HTML
 
 from dimagi.utils.decorators.memoized import memoized
 
-from .models import CustomDataFieldsDefinition, CustomDataField, CUSTOM_DATA_FIELD_PREFIX
+from .models import (CustomDataFieldsDefinition, CustomDataField,
+                     CUSTOM_DATA_FIELD_PREFIX)
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -23,11 +24,12 @@ class CustomDataFieldsForm(forms.Form):
 
     def verify_no_duplicates(self, data_fields):
         errors = set()
-        slugs = [field['slug'].lower() for field in data_fields if 'slug' in field]
+        slugs = [field['slug'].lower()
+                 for field in data_fields if 'slug' in field]
         for slug in slugs:
             if slugs.count(slug) > 1:
-                errors.add(_("Key '{}' was duplicated, key names must be unique.".format(slug)))
-
+                errors.add(_("Key '{}' was duplicated, key names must be "
+                             "unique.").format(slug))
         return errors
 
     def clean_data_fields(self):
@@ -39,7 +41,8 @@ class CustomDataFieldsForm(forms.Form):
             data_field_form.is_valid()
             data_fields.append(data_field_form.cleaned_data)
             if data_field_form.errors:
-                errors.update([error[0] for error in data_field_form.errors.values()])
+                errors.update([error[0]
+                               for error in data_field_form.errors.values()])
 
         errors.update(self.verify_no_duplicates(data_fields))
 
@@ -70,11 +73,22 @@ class CustomDataFieldForm(forms.Form):
     slug = XmlSlugField(
         required=True,
         error_messages={
-            'required': _('All fields are required'),
-            'invalid': _('Key fields must consist only of letters, numbers, underscores or hyphens.')
+            'required': _("All fields are required"),
+            'invalid': _("Key fields must consist only of letters, numbers, "
+                         "underscores or hyphens.")
         }
     )
     is_required = forms.BooleanField(required=False)
+    choices = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    def __init__(self, raw, *args, **kwargs):
+        # Pull the raw_choices out here, because Django incorrectly
+        # serializes the list and you can't get it
+        self._raw_choices = filter(None, raw.get('choices', []))
+        super(CustomDataFieldForm, self).__init__(raw, *args, **kwargs)
+
+    def clean_choices(self):
+        return self._raw_choices
 
 
 class CustomDataFieldsMixin(object):
@@ -98,7 +112,8 @@ class CustomDataFieldsMixin(object):
         return _("Edit {} Fields").format(cls.entity_string)
 
     def get_definition(self):
-        return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
+        return CustomDataFieldsDefinition.get_or_create(self.domain,
+                                                        self.field_type)
 
     def get_custom_fields(self):
         definition = self.get_definition()
@@ -122,6 +137,7 @@ class CustomDataFieldsMixin(object):
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
+            choices=field.get('choices'),
         )
 
     @property
@@ -137,7 +153,8 @@ class CustomDataFieldsMixin(object):
         if self.request.method == "POST":
             return CustomDataFieldsForm(self.request.POST)
         else:
-            serialized = json.dumps([field.to_json() for field in self.get_custom_fields()])
+            serialized = json.dumps([field.to_json()
+                                     for field in self.get_custom_fields()])
             return CustomDataFieldsForm({'data_fields': serialized})
 
     def post(self, request, *args, **kwargs):
@@ -159,12 +176,22 @@ def add_prefix(field_dict):
     }
 
 
+def _make_field(field):
+    if field.choices:
+        return forms.ChoiceField(
+            label=field.label,
+            required=field.is_required,
+            choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+        )
+    return forms.CharField(label=field.label, required=field.is_required)
+
+
 class CustomDataEditor(object):
     """
     Tool to edit the data for a particular entity, like for an individual user.
     """
     def __init__(self, field_view, domain, existing_custom_data=None,
-            post_dict=None, required_only=False):
+                 post_dict=None, required_only=False):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
@@ -191,9 +218,6 @@ class CustomDataEditor(object):
         return cleaned_data
 
     def init_form(self, post_dict=None):
-        def _make_field(field):
-            return forms.CharField(label=field.label, required=field.is_required)
-
         fields = {
             field.slug: _make_field(field) for field in self.model.fields
             if not self.required_only or field.is_required
@@ -210,7 +234,9 @@ class CustomDataEditor(object):
             ) if self.model.fields else '',
             self.get_uncategorized_form(field_names),
         )
-        CustomDataForm._has_uncategorized = bool(self.get_uncategorized_form(field_names))
+        CustomDataForm._has_uncategorized = bool(
+            self.get_uncategorized_form(field_names)
+        )
 
         if post_dict:
             fields = post_dict
@@ -225,10 +251,11 @@ class CustomDataEditor(object):
     def get_uncategorized_form(self, field_names):
 
         def FakeInput(val):
-            return HTML('<span class="input-xlarge uneditable-input">%s</span>' % val)
+            return HTML('<span class="input-xlarge uneditable-input">{}</span>'
+                        .format(val))
 
         def Label(val):
-            return HTML('<label class="control-label">%s</label>' % val)
+            return HTML('<label class="control-label">{}</label>'.format(val))
 
         def _make_field_div(slug, val):
             return Div(

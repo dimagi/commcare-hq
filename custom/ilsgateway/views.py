@@ -13,11 +13,14 @@ from django.views.decorators.http import require_POST
 from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
+from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import ils_stock_data_task, report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
+from custom.logistics.commtrack import resync_password
 from custom.logistics.models import MigrationCheckpoint
 from casexml.apps.stock.models import StockTransaction
+from custom.logistics.tasks import resync_webusers_passwords_task
 
 
 class GlobalStats(BaseDomainView):
@@ -148,3 +151,12 @@ def end_report_run(request, domain):
     except ReportRun.DoesNotExist, ReportRun.MultipleObjectsReturned:
         pass
     return HttpResponseRedirect(reverse(ILSConfigView.urlname, kwargs={'domain': domain}))
+
+
+@domain_admin_required
+@require_POST
+def ils_resync_passwords(request, domain):
+    config = ILSGatewayConfig.for_domain(domain)
+    endpoint = ILSGatewayEndpoint.from_config(config)
+    resync_webusers_passwords_task.delay(config, endpoint)
+    return HttpResponse('OK')
