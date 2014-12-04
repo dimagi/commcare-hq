@@ -57,9 +57,12 @@ domain_specific = patterns('',
     (r'^importer/', include('corehq.apps.importer.urls')),
     (r'^sqlextract/', include('ctable_view.urls')),
     (r'^fri/', include('custom.fri.urls')),
+    (r'^ilsgateway/', include('custom.ilsgateway.urls')),
+    (r'^ewsghana/', include('custom.ewsghana.urls')),
     (r'^', include('custom.m4change.urls')),
     (r'^', include('custom.uth.urls')),
     (r'^dashboard/', include('corehq.apps.dashboard.urls')),
+    (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
 )
 
 urlpatterns = patterns('',

@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 import time
 from django.test.utils import override_settings
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.case import process_cases
@@ -197,7 +197,7 @@ class OtaRestoreTest(TestCase):
        <request_name>ME</request_name>
        <request_rank>staff_nurse</request_rank>
        <request_reason></request_reason>
-       <request_timestamp>2011-02-19 16:46:28</request_timestamp>
+       <request_timestamp>2011-02-19T16:46:28Z</request_timestamp>
        <ringing></ringing>
        <seizures></seizures>
        <short_name>SIEGEL, ROBERT</short_name>
@@ -275,7 +275,7 @@ class OtaRestoreTest(TestCase):
        <request_name>ME</request_name>
        <request_rank>staff_nurse</request_rank>
        <request_reason></request_reason>
-       <request_timestamp>2011-02-19 16:46:28</request_timestamp>
+       <request_timestamp>2011-02-19T16:46:28Z</request_timestamp>
        <ringing></ringing>
        <seizures></seizures>
        <short_name>SIEGEL, ROBERT</short_name>

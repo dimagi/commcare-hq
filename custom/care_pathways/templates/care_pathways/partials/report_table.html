@@ -61,6 +61,15 @@
 </table>
 
 <script type="text/javascript">
+   $(function () {
+       $(".header-popover").popover({ trigger: "hover",
+           placement: function (context, source) {
+               var position = $(source).offset();
+               return (position.left > $(window).width() * 0.5) ? "left" : "right";
+           }
+       });
+   });
+
    {% if report_table and report_table.datatables %}
         var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
 
@@ -77,9 +86,29 @@
 
        {% if report_table.fix_column %}
             new FixedColumns(datatable, {
-               iLeftColumns: 1,
-               iLeftWidth: 130
+               iLeftColumns: 2,
+               iLeftWidth: 200
             });
        {% endif %}
     {% endif %}
 </script>
+
+<style>
+    #report_table_individual_wrapper tbody tr td {
+        padding: 1px !important;
+    }
+    .popover {
+        top: -70px !important;
+        height: 100px;
+        position: absolute;
+    }
+    .popover-content {
+        vertical-align: middle;
+    }
+    .arrow {
+        top: 85% !important;
+    }
+    .header {
+        white-space: nowrap;
+    }
+</style>

@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption,
-    compute_consumption)
+    compute_daily_consumption)
 from casexml.apps.stock.models import StockReport as DbStockReport, StockTransaction as DbStockTransaction, DocDomainMapping
 from casexml.apps.case.xml import V2
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -21,17 +21,15 @@ from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_cate
 from corehq.apps.domain.models import Domain
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.loosechange import map_reduce
-from couchforms.models import XFormInstance
 from dimagi.utils import parsing as dateparse
-from datetime import datetime
 from copy import copy
 from django.dispatch import receiver
 from corehq.apps.locations.signals import location_created, location_edited
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.commtrack.const import StockActions, RequisitionActions, RequisitionStatus, USER_LOCATION_OWNER_MAP_TYPE, DAYS_IN_MONTH
 from corehq.apps.commtrack.xmlutil import XML
-from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError, InvalidProductException
+from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
 from couchexport.models import register_column_type, ComplexExportColumn
 from dimagi.utils.dates import force_to_datetime
 from django.db import models
@@ -63,198 +61,6 @@ REQUISITION_ACTION_TYPES = [
     # should be built into the regular receipt workflow.
     RequisitionActions.RECEIPTS,
 ]
-
-
-class Program(Document):
-    """
-    A program, e.g. "hiv" or "tb"
-    """
-    domain = StringProperty()
-    name = StringProperty()
-    code = StringProperty()
-    last_modified = DateTimeProperty()
-
-    def save(self, *args, **kwargs):
-        self.last_modified = datetime.now()
-        return super(Program, self).save(*args, **kwargs)
-
-    @classmethod
-    def by_domain(cls, domain, wrap=True):
-        """
-        Gets all programs in a domain.
-        """
-        kwargs = dict(
-            view_name='commtrack/programs',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True
-        )
-        if wrap:
-            return Program.view(**kwargs)
-        else:
-            return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
-
-    @classmethod
-    def get_by_code(cls, domain, code):
-        result = cls.view("commtrack/program_by_code",
-                          key=[domain, code],
-                          include_docs=True,
-                          limit=1).first()
-        return result
-
-class Product(Document):
-    """
-    A product, e.g. "coartem" or "tylenol"
-    """
-    domain = StringProperty()
-    name = StringProperty()
-    unit = StringProperty()
-    code_ = StringProperty()  # todo: why the hell is this code_ and not code
-    description = StringProperty()
-    category = StringProperty()
-    program_id = StringProperty()
-    cost = DecimalProperty()
-    product_data = DictProperty()
-    last_modified = DateTimeProperty()
-
-    def save(self, *args, **kwargs):
-        self.last_modified = datetime.now()
-        return super(Product, self).save(*args, **kwargs)
-
-    @property
-    def code(self):
-        return self.code_
-
-    @code.setter
-    def code(self, val):
-        self.code_ = val.lower() if val else None
-
-    @classmethod
-    def get_by_code(cls, domain, code):
-        if not code:
-            return None
-        result = cls.view("commtrack/product_by_code",
-                          key=[domain, code.lower()],
-                          include_docs=True).first()
-        return result
-
-    @classmethod
-    def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
-        kwargs.update(dict(
-            view_name='commtrack/product_by_program_id',
-            startkey=[domain, prog_id],
-            endkey=[domain, {}],
-            include_docs=True
-        ))
-        if wrap:
-            return Product.view(**kwargs)
-        else:
-            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
-
-    @classmethod
-    def by_domain(cls, domain, wrap=True, **kwargs):
-        """
-        Gets all products in a domain.
-        """
-        kwargs.update(dict(
-            view_name='commtrack/products',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True
-        ))
-        if wrap:
-            return Product.view(**kwargs)
-        else:
-            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
-
-    @classmethod
-    def ids_by_domain(cls, domain):
-        """
-        Gets all product ids in a domain.
-        """
-        view_results = Product.get_db().view('commtrack/products',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=False,
-        )
-        return [row['id'] for row in view_results]
-
-    @classmethod
-    def count_by_domain(cls, domain):
-        """
-        Gets count of products in a domain
-        """
-        # todo: we should add a reduce so we can get this out of couch
-        return len(cls.ids_by_domain(domain))
-
-    @classmethod
-    def _export_attrs(cls):
-        return [
-            ('name', unicode),
-            ('unit', unicode),
-            'description',
-            'category',
-            'program_id',
-            ('cost', lambda a: Decimal(a) if a else None),
-        ]
-
-    def to_dict(self):
-        from corehq.apps.commtrack.util import encode_if_needed
-        product_dict = {}
-
-        product_dict['id'] = self._id
-        product_dict['product_id'] = self.code_
-
-        for attr in self._export_attrs():
-            real_attr = attr[0] if isinstance(attr, tuple) else attr
-            product_dict[real_attr] = encode_if_needed(
-                getattr(self, real_attr)
-            )
-
-        return product_dict
-
-    def custom_property_dict(self):
-        from corehq.apps.commtrack.util import encode_if_needed
-        property_dict = {}
-
-        for prop, val in self.product_data.iteritems():
-            property_dict['data: ' + prop] = encode_if_needed(val)
-
-        return property_dict
-
-    @classmethod
-    def from_excel(cls, row):
-        if not row:
-            return None
-
-        id = row.get('id')
-        if id:
-            p = cls.get(id)
-        else:
-            p = cls()
-
-        p.code = str(row.get('product_id') or '')
-
-        for attr in cls._export_attrs():
-            key = attr[0] if isinstance(attr, tuple) else attr
-            if key in row:
-                val = row[key]
-                if val is None:
-                    val = ''
-                if isinstance(attr, tuple):
-                    val = attr[1](val)
-                setattr(p, key, val)
-            else:
-                break
-
-        if not p.code:
-            raise InvalidProductException(_('Product ID is a required field and cannot be blank!'))
-        if not p.name:
-            raise InvalidProductException(_('Product name is a required field and cannot be blank!'))
-
-        p.product_data = row.get('data', {})
-
-        return p
 
 
 class CommtrackActionConfig(DocumentSchema):
@@ -338,8 +144,11 @@ class CommtrackRequisitionConfig(DocumentSchema):
     def get_next_action(self, previous_action_type):
         sorted_actions = self.get_sorted_actions()
         sorted_types = [a.action for a in sorted_actions]
-        next_index = sorted_types.index(previous_action_type) + 1
-        return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        if previous_action_type in sorted_types:
+            next_index = sorted_types.index(previous_action_type) + 1
+            return sorted_actions[next_index] if next_index < len(sorted_actions) else None
+        else:
+            return None
 
 
 class ConsumptionConfig(DocumentSchema):
@@ -570,7 +379,7 @@ class NewStockReport(object):
         return cls(form, timestamp, tag, transactions)
 
     @transaction.commit_on_success
-    def create_models(self):
+    def create_models(self, domain=None):
         # todo: this function should probably move to somewhere in casexml.apps.stock
         if self.tag not in stockconst.VALID_REPORT_TYPES:
             return
@@ -587,7 +396,9 @@ class NewStockReport(object):
                 section_id=txn.section_id,
                 product_id=txn.product_id,
             )
-            previous_transaction = db_txn.get_previous_transaction()
+            if domain:
+                # set this as a shortcut for post save signal receivers
+                db_txn.domain = domain
             db_txn.type = txn.action
             db_txn.subtype = txn.subaction
             if self.tag == stockconst.REPORT_TYPE_BALANCE:
@@ -595,6 +406,7 @@ class NewStockReport(object):
                 db_txn.quantity = 0
             else:
                 assert self.tag == stockconst.REPORT_TYPE_TRANSFER
+                previous_transaction = db_txn.get_previous_transaction()
                 db_txn.quantity = txn.relative_quantity
                 db_txn.stock_on_hand = (previous_transaction.stock_on_hand if previous_transaction else 0) + db_txn.quantity
             db_txn.save()
@@ -776,25 +588,22 @@ class SupplyPointCase(CommCareCase):
     A wrapper around CommCareCases to get more built in functionality
     specific to supply points.
     """
-
-    # TODO move location_ property from CommCareCase
+    location_id = StringProperty()
 
     class Meta:
         # This is necessary otherwise syncdb will confuse this app with casexml
         app_label = "commtrack"
 
     def open_requisitions(self):
-        return RequisitionCase.open_for_location(self.domain, self.location_[-1])
+        return RequisitionCase.open_for_location(self.domain, self.location_id)
 
     @property
     @memoized
     def location(self):
-        if hasattr(self, 'location_id'):
-            try:
-                return Location.get(self.location_id)
-            except ResourceNotFound:
-                pass
-        return None
+        try:
+            return Location.get(self.location_id)
+        except ResourceNotFound:
+            return None
 
     @classmethod
     def _from_caseblock(cls, domain, caseblock):
@@ -1115,6 +924,7 @@ class CommTrackUser(CommCareUser):
             del data['commtrack_location']
 
             instance = super(CommTrackUser, cls).wrap(data)
+            instance.save()
 
             try:
                 original_location_object = Location.get(original_location)
@@ -1244,6 +1054,17 @@ class CommTrackUser(CommCareUser):
             self.submit_location_block(caseblock)
 
 
+class ActiveManager(models.Manager):
+    """
+    Filter any object that is associated to an archived product.
+    """
+
+    def get_query_set(self):
+        return super(ActiveManager, self).get_query_set() \
+            .exclude(sql_product__is_archived=True) \
+            .exclude(sql_location__is_archived=True)
+
+
 class StockState(models.Model):
     """
     Read only reporting model for keeping computed stock states per case/product
@@ -1254,6 +1075,14 @@ class StockState(models.Model):
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
+    sql_product = models.ForeignKey(SQLProduct)
+    sql_location = models.ForeignKey(SQLLocation, null=True)
+
+    # override default model manager to only include unarchived data
+    objects = ActiveManager()
+
+    # leave a way to get unfiltered data
+    include_archived = models.Manager()
 
     @property
     def months_remaining(self):
@@ -1360,6 +1189,10 @@ class StockExportColumn(ComplexExportColumn):
 
 
 def sync_location_supply_point(loc):
+    """
+    This method syncs the location/supply point connection
+    and is triggered whenever a location is edited or created.
+    """
     # circular import
     from corehq.apps.domain.models import Domain
 
@@ -1376,9 +1209,18 @@ def sync_location_supply_point(loc):
         supply_point = SupplyPointCase.get_by_location(loc)
         if supply_point:
             supply_point.update_from_location(loc)
-            return supply_point
+            updated_supply_point = supply_point
         else:
-            return SupplyPointCase.create_from_location(loc.domain, loc)
+            updated_supply_point = SupplyPointCase.create_from_location(loc.domain, loc)
+
+        # need to sync this sp change to the sql location
+        # but saving the doc will trigger a loop
+        try:
+            sql_loc = SQLLocation.objects.get(location_id=loc._id)
+            sql_loc.supply_point_id = updated_supply_point._id
+            sql_loc.save()
+        except SQLLocation.DoesNotExist:
+            pass
 
 
 @receiver(post_save, sender=DbStockTransaction)
@@ -1388,7 +1230,21 @@ def update_stock_state_signal_catcher(sender, instance, *args, **kwargs):
 
 def update_stock_state_for_transaction(instance):
     try:
-        state = StockState.objects.get(
+        domain_name = instance.domain
+    except AttributeError:
+        domain_name = CommCareCase.get(instance.case_id).domain
+
+    domain = Domain.get_by_name(domain_name)
+
+    sql_product = SQLProduct.objects.get(product_id=instance.product_id)
+
+    try:
+        sql_location = SQLLocation.objects.get(supply_point_id=instance.case_id)
+    except SQLLocation.DoesNotExist:
+        sql_location = None
+
+    try:
+        state = StockState.include_archived.get(
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
@@ -1398,27 +1254,27 @@ def update_stock_state_for_transaction(instance):
             section_id=instance.section_id,
             case_id=instance.case_id,
             product_id=instance.product_id,
+            sql_product=sql_product,
+            sql_location=sql_location,
         )
 
     state.last_modified_date = instance.report.date
     state.stock_on_hand = instance.stock_on_hand
-
-    domain = Domain.get_by_name(
-        CommCareCase.get(instance.case_id).domain
-    )
 
     if domain and domain.commtrack_settings:
         consumption_calc = domain.commtrack_settings.get_consumption_config()
     else:
         consumption_calc = None
 
-    state.daily_consumption = compute_consumption(
+    state.daily_consumption = compute_daily_consumption(
         instance.case_id,
         instance.product_id,
         instance.report.date,
         'stock',
         consumption_calc
     )
+    # so you don't have to look it up again in the signal receivers
+    state.domain = domain
     state.save()
 
 
@@ -1442,11 +1298,17 @@ def stock_state_deleted(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
+    try:
+        domain_name = instance.domain
+        if not domain_name:
+            raise ValueError()
+    except (AttributeError, ValueError):
+        domain_name = CommCareCase.get(case_id).domain
     if not DocDomainMapping.objects.filter(doc_id=case_id).exists():
         mapping = DocDomainMapping(
             doc_id=case_id,
             doc_type='CommCareCase',
-            domain_name=CommCareCase.get(case_id).domain
+            domain_name=domain_name,
         )
         mapping.save()
 
@@ -1469,7 +1331,9 @@ def remove_data(sender, xform, *args, **kwargs):
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
-    process_stock(xform)
+    for case in process_stock(xform):
+        case.save()
+
 
 # import signals
 from . import signals

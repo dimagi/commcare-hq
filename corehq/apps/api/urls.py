@@ -1,3 +1,4 @@
+from corehq.apps.api.domain_metadata import DomainMetadataResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
 
 from corehq.apps.api.domainapi import DomainAPI
@@ -21,6 +22,7 @@ API_LIST = (
         v0_1.XFormInstanceResource,
         FixtureResource,
         ReportResource,
+        DomainMetadataResource,
     )),
     ((0, 2), (
         v0_1.CommCareUserResource,
@@ -29,6 +31,7 @@ API_LIST = (
         v0_1.XFormInstanceResource,
         FixtureResource,
         ReportResource,
+        DomainMetadataResource,
     )),
     ((0, 3), (
         v0_1.CommCareUserResource,
@@ -37,6 +40,7 @@ API_LIST = (
         v0_3.XFormInstanceResource,
         FixtureResource,
         ReportResource,
+        DomainMetadataResource,
     )),
     ((0, 4), (
         v0_1.CommCareUserResource,
@@ -50,6 +54,7 @@ API_LIST = (
         v0_4.HOPECaseResource,
         FixtureResource,
         ReportResource,
+        DomainMetadataResource,
     )),
     ((0, 5), (
         v0_4.ApplicationResource,
@@ -65,6 +70,7 @@ API_LIST = (
         FixtureResource,
         ReportResource,
         v0_5.DeviceReportResource,
+        DomainMetadataResource,
     )),
 )
 
@@ -98,3 +104,17 @@ def api_url_patterns():
 
 urlpatterns = patterns('',
     *list(api_url_patterns))
+
+ADMIN_API_LIST = (
+    v0_5.AdminWebUserResource,
+    DomainMetadataResource,
+)
+
+@inline
+def api_url_patterns():
+    api = CommCareHqApi(api_name='global')
+    for resource in ADMIN_API_LIST:
+        api.register(resource())
+        yield (r'^', include(api.urls))
+
+admin_urlpatterns = patterns('', *list(api_url_patterns))

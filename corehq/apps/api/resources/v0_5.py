@@ -11,7 +11,8 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, SuperuserAuthentication
+from corehq.apps.es import UserES
 
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
@@ -19,13 +20,14 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
-from . import JsonResource, DomainSpecificResourceMixin
+from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 
 
 MOCK_BULK_USER_ES = None
 
-class BulkUserResource(JsonResource, DomainSpecificResourceMixin):
+
+class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
     Supported Params: limit offset q fields
@@ -210,6 +212,23 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle
 
 
+class AdminWebUserResource(v0_1.UserResource):
+    domains = fields.ListField(attribute='domains')
+
+    def obj_get(self, bundle, **kwargs):
+        return WebUser.get(kwargs['pk'])
+
+    def obj_get_list(self, bundle, **kwargs):
+        if 'username' in bundle.request.GET:
+            return [WebUser.get_by_username(bundle.request.GET['username'])]
+        return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
+
+    class Meta(WebUserResource.Meta):
+        authentication = SuperuserAuthentication()
+        detail_allowed_methods = ['get']
+        list_allowed_methods = ['get']
+
+
 class GroupResource(v0_4.GroupResource):
 
     class Meta(v0_4.GroupResource.Meta):
@@ -372,7 +391,7 @@ class NoCountingPaginator(Paginator):
         return None
 
 
-class DeviceReportResource(JsonResource, ModelResource):
+class DeviceReportResource(HqBaseResource, ModelResource):
     class Meta:
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']

@@ -2,10 +2,15 @@ import json
 from django.utils import html
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.locations.models import Location
-from corehq.apps.app_manager.models import ApplicationBase, Application
+from corehq.apps.app_manager.models import (
+    Application,
+    ApplicationBase,
+    get_app,
+)
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators import inline
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
@@ -91,6 +96,7 @@ class CaseAPIHelper(object):
         self.filters = filters
         self.include_children = include_children
 
+
     def iter_cases(self, ids):
         database = CommCareCase.get_db()
         if not self.strip_history:
@@ -98,7 +104,7 @@ class CaseAPIHelper(object):
                 yield CommCareCase.wrap(doc)
         else:
             for doc_ids in chunked(ids, 100):
-                for case in CommCareCase.bulk_get_lite(doc_ids):
+                for case in CommCareCase.bulk_get_lite(doc_ids, wrapper=CommCareCase):
                     yield case
 
     def _case_results(self, case_id_list):
@@ -118,15 +124,14 @@ class CaseAPIHelper(object):
         if not self.ids_only or self.filters or self.footprint:
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
-            base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only) \
+            base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
                             for case in self.iter_cases(case_id_list)]
+
         else:
             base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]
 
         if self.filters and not self.footprint:
             base_results = filter(_filter, base_results)
-
-        link_locations(base_results)
 
         if not self.footprint and not self.include_children:
             return base_results
@@ -176,18 +181,6 @@ class CaseAPIHelper(object):
         ids = [res["id"] for res in view_results]
         return self._case_results(ids)
 
-def link_locations(base_results):
-    """annotate case results with info from linked location doc (if any)"""
-
-    def _has_location(doc):
-        return hasattr(doc, 'location_') and doc.location_
-
-    loc_ids = set(match.couch_doc.location_[-1] for match in base_results if _has_location(match.couch_doc))
-    locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=list(loc_ids), include_docs=True))
-    for match in base_results:
-        if _has_location(match.couch_doc):
-            loc_id = match.couch_doc.location_[-1]
-            match.couch_doc.linked_location = locs[loc_id]._doc
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
@@ -200,12 +193,11 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
                        filters=None, footprint=False, ids_only=False,
                        strip_history=True, include_children=False):
 
-    # for now, a filter value of None means don't filter
+    # a filter value of None means don't filter
     filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
     helper = CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
                            footprint=footprint, strip_history=strip_history,
                            filters=filters, include_children=include_children)
-
     if user_id:
         return helper.get_owned(user_id)
     else:
@@ -354,10 +346,14 @@ def get_app_json(app):
     app_json['post_url'] = app.post_url
     return app_json
 
+
 def look_up_app_json(domain, app_id):
-    app = Application.get(app_id)
+    app = get_app(domain, app_id)
+    if app.is_remote_app():
+        raise RemoteAppError()
     assert(app.domain == domain)
     return get_app_json(app)
+
 
 def get_cloudcare_app(domain, app_name):
     apps = get_cloudcare_apps(domain)

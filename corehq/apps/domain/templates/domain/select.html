@@ -7,7 +7,7 @@
 {% block login-content %}
 <div class="row">
     <div class="page-header">
-        <h1>{% trans "Dashboard" %}</h1>
+        <h1>{% trans "Select a Project" %}</h1>
     </div>
     <div class="span4">
         <h2>{% trans "My Projects" %}</h2>
@@ -39,7 +39,7 @@
     <div class="span4">
         <aside class="well">
             <h3>{% trans "Have a new idea?" %}</h3>
-            <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
+            <a class="btn btn-primary" href="{% url "registration_domain" DOMAIN_TYPE %}">{% trans "Create a Blank Project" %}</a>
             <div>{% trans "or" %}</div>
             <a class="btn btn-primary" href="{% url "appstore" %}">{% trans "Copy from CommCare Exchange" %}</a>
         </aside>

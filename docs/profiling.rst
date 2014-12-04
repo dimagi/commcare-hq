@@ -174,33 +174,50 @@ Line profiling
 In addition to the above methods of profiling it is possible to do line profiling of code which attached profile
 data to individual lines of code as opposed to function names.
 
-Example output:
+The easiest way to do this is to use the `line_profile <https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py#L51>`_
+decorator.
 
-    File: /home/skelly/dev/projects/commcare-hq/corehq/apps/app_manager/views.py
-          Function: view_app at line 781
-          Total time: 2.10091 s
+Example output::
 
-          Line #      Hits         Time  Per Hit   % Time  Line Contents
-          ==============================================================
-             781                                           @login_and_domain_required
-             782                                           @devserver_profile(follow=[view_generic])
-             783                                           def view_app(req, domain, app_id=None):
-             784                                               # redirect old m=&f= urls
-             785         1           58     58.0      0.0      module_id = req.GET.get('m', None)
-             786         1           12     12.0      0.0      form_id = req.GET.get('f', None)
-             787         1            1      1.0      0.0      if module_id or form_id:
-             788                                                   return back_to_main(req, domain, app_id=app_id, module_id=module_id,
-             789                                                                       form_id=form_id)
-             790
-             791         1      2100843 2100843.0    100.0      return view_generic(req, domain, app_id)
+    File: demo.py
+    Function: demo_follow at line 67
+    Total time: 1.00391 s
+    Line #      Hits         Time  Per Hit   % Time  Line Contents
+    ==============================================================
+        67                                           def demo_follow():
+        68         1           34     34.0      0.0      r = random.randint(5, 10)
+        69        11           81      7.4      0.0      for i in xrange(0, r):
+        70        10      1003800 100380.0    100.0          time.sleep(0.1)
+    File: demo.py
+    Function: demo_profiler at line 72
+    Total time: 1.80702 s
+    Line #      Hits         Time  Per Hit   % Time  Line Contents
+    ==============================================================
+        72                                           @line_profile(follow=[demo_follow])
+        73                                           def demo_profiler():
+        74         1           17     17.0      0.0      r = random.randint(5, 10)
+        75         9           66      7.3      0.0      for i in xrange(0, r):
+        76         8       802921 100365.1     44.4          time.sleep(0.1)
+        77
+        78         1      1004013 1004013.0     55.6      demo_follow()
 
-TODO: give more detailed info
+More details here:
 
-See
 * https://github.com/dmclain/django-debug-toolbar-line-profiler
 * https://github.com/dcramer/django-devserver#devservermodulesprofilelineprofilermodule
 
 Additional references
 ^^^^^^^^^^^^^^^^^^^^^
 * http://django-extensions.readthedocs.org/en/latest/runprofileserver.html
+
+Memory profiling
+~~~~~~~~~~~~~~~~
+
+Refer to these resources which provide good information on memory profiling:
+
+* `Diagnosing memory leaks <http://chase-seibert.github.io/blog/2013/08/03/diagnosing-memory-leaks-python.html>`_
+* `Using heapy <http://smira.ru/wp-content/uploads/2011/08/heapy.html>`_
+* `Diving into python memory <https://github.com/CyrilPeponnet/cyrilpeponnet.github.com/blob/master/_posts/2014-09-18-diving-into-python-memory.md>`_
+* `Memory usage graphs with ps <http://brunogirin.blogspot.com.au/2010/09/memory-usage-graphs-with-ps-and-gnuplot.html>`_
+    * `while true; do ps -C python -o etimes=,pid=,%mem=,vsz= >> mem.txt; sleep 1; done`
 

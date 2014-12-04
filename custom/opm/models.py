@@ -77,10 +77,10 @@ class OpmUserFluff(fluff.IndicatorDocument):
     village = user_data('village')
 
 
-def _get_case_id(form):
+def _get_user_id(form):
     case = form.form.get('case', {})
     if hasattr(case, 'get'):
-        return case.get('@case_id')
+        return case.get('@user_id')
 
 
 # This is a more typical fluff doc, storing arbitrary info pulled from forms.
@@ -91,7 +91,7 @@ class OpmFormFluff(fluff.IndicatorDocument):
     domains = ('opm',)
     group_by = (
         'domain',
-        fluff.AttributeGetter('case_id', _get_case_id),
+        fluff.AttributeGetter('user_id', _get_user_id),
     )
     save_direct_to_sql = True
 
@@ -143,6 +143,7 @@ class OpmHealthStatusAllInfoFluff(fluff.IndicatorDocument):
     suffering = case_calcs.ChildrenInfo(prop='child%s_suffer_diarrhea')
     excbreastfed = case_calcs.BreastFed()
     measlesvacc = case_calcs.ChildrenInfo(prop='child%s_child_measlesvacc')
+    account_number = flat_field(lambda case: case.get_case_property('bank_account_number'))
 
 
 class OPMHierarchyFluff(fluff.IndicatorDocument):

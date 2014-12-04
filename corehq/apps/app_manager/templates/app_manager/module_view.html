@@ -6,61 +6,75 @@
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
-    <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
     <script>
-    window.FEATURE_enable_enum_image = {{ enable_enum_image|BOOL }};
-    window.FEATURE_enable_calc_xpaths = {{ enable_calc_xpaths|BOOL }};
-    window.FEATURE_mm_case_properties = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
+    if (window.toggles === undefined) {
+        window.toggles = {};
+    }
+    if (window.feature_previews === undefined) {
+        window.feature_previews = {};
+    }
+    window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
+    window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
+    window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
+    window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
+    <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
-    {% include "app_manager/partials/nav_menu_media_js.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
+    {% if multimedia %}
+        {% include "app_manager/partials/nav_menu_media_js.html" %}
+    {% else %}
+        {% include "app_manager/partials/nav_menu_media_js.old.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
+    {% endif %}
     {% include 'hqwebapp/key_value_mapping.html' %}
+    {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
-        {% if app.enable_multi_sort %}
-            window.enableNewSort = true;
-        {% else %}
-            window.enableNewSort = false;
-        {% endif %}
-
         $(function () {
+            COMMCAREHQ.app_manager.module_view = {
+                /* for sharing variables between essentially separate parts of the ui */
+                requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
+            };
+
             var details = {{ details|JSON }};
+            var lang = {{ lang|JSON }};
+            var langs = {{ app.langs|JSON }};
+            var edit = {{ edit|JSON }};
+            var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
+            var parentModules = {{ parent_modules|JSON }};
+
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var $detail_home = $("#" + detail.type + "-detail-screen-config");
-                var detailScreenConfig = DetailScreenConfig.init($detail_home, {
+                var detailScreenConfig = DetailScreenConfig.init({
                     state: {
                         type: detail.type,
                         short: detail.short,
                         long: detail.long
                     },
+                    sortRows: detail.sort_elements,
                     model: detail.model,
                     properties: detail.properties,
-                    lang: {{ lang|JSON }},
-                    langs: {{ app.langs|JSON }},
-                    edit: {{ edit|JSON }},
-                    saveUrl: "{% url "edit_module_detail_screens" domain app.id module.id %}",
-                    parentModules: {{ parent_modules|JSON }},
-                    parentSelect: detail.parent_select
+                    lang: lang,
+                    langs: langs,
+                    edit: edit,
+                    saveUrl: saveUrl,
+                    parentModules: parentModules,
+                    childCaseTypes: detail.child_case_types,
+                    parentSelect: detail.parent_select,
+                    contextVariables: COMMCAREHQ.app_manager.module_view
                 });
+                var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
+                var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
 
-                if (detail.sort_elements) {
-                    var parsedSortRows = JSON.parse(detail.sort_elements);
-                    for (var j = 0; j < parsedSortRows.length; j++) {
-                        detailScreenConfig.sortRows.addSortRow(
-                                parsedSortRows[j].field,
-                                parsedSortRows[j].type,
-                                parsedSortRows[j].direction
-                        );
-                    }
-                }
+                ko.applyBindings(detailScreenConfig, $list_home.get(0));
+                ko.applyBindings(detailScreenConfig, $detail_home.get(0));
             }
         });
         $(function () {
@@ -71,21 +85,13 @@
                     $(this).val(valueNoSpaces);
                 }
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
-                    $(this).closest('.control-group').addClass('error')
+                    $(this).closest('.control-group').addClass('error');
                     $('#case_type_error').css('display', 'inline');
                 } else {
-                    $(this).closest('.control-group').removeClass('error')
+                    $(this).closest('.control-group').removeClass('error');
                     $('#case_type_error').css('display', 'none');
                 }
             });
-        });
-        $(function () {
-            COMMCAREHQ.app_manager.module_view = {
-                requires_case_details: ko.observable({{ module.requires_case_details|BOOL }})
-            };
-            if ($('#detail-screen-config-warning').length) {
-                ko.applyBindings(COMMCAREHQ.app_manager.module_view, $('#detail-screen-config-warning').get(0));
-            }
         });
         $(function () {
             COMMCAREHQ.app_manager.setupValidation(
@@ -122,6 +128,13 @@
             {{ detail.label }}
         </a>
     </li>
+    {% if detail.long %}
+    <li>
+        <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
+            {{ detail.detail_label }}
+        </a>
+    </li>
+    {% endif %}
     {% endfor %}
 </ul>
 <div class="tab-content">
@@ -159,8 +172,11 @@
                         {% endif %}
                     </div>
                 </div>
-
-                {% include "app_manager/partials/nav_menu_media.html" with item=module %}
+                {% if multimedia %}
+                    {% include "app_manager/partials/nav_menu_media.html" %}
+                {% else %}
+                    {% include "app_manager/partials/nav_menu_media.old.html" with item=module %}
+                {% endif %}
                 {% endblock %}
             </fieldset>
         </form>
@@ -232,123 +248,16 @@
 
     {% for detail in details %}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-        {% if detail.type == 'case' %}
-        <div class="alert alert-warning" id="detail-screen-config-warning"
-             data-bind="visible: !requires_case_details()">
-            {% blocktrans %}
-                This module doesn't currently use a case list.
-                Changes made here will have no effect until you use:
-                <ol>
-                    <li>forms that require a case or</li>
-                    <li>select the <strong>Case List Menu Item</strong> setting.</li>
-                </ol>
-            {% endblocktrans %}
-        </div>
-        {% endif %}
-        <div id="{{ detail.type }}-detail-screen-config-body">
-            <div id="{{ detail.type }}-detail-screen-sort">
-            {% if app.enable_multi_sort %}
-                <legend data-bind="visible: rowCount() > 0">
-                    {% trans "Sort Properties" %}
-                    <span style="font-size: 13px">
-                        <span class="hq-help-template"
-                              data-title="{% trans "Sort Properties" %}"
-                              data-content=
-                                  "{% blocktrans %}
-                                      Properties in this list determine how
-                                      cases are ordered in your case list. This
-                                      is useful if for example you want higher
-                                      priority cases to appear closer to the
-                                      top of the list. The case list will sort
-                                      by the first property, then the second,
-                                      etc.
-                                  {% endblocktrans %}" ></span>
-                    </span>
-                </legend>
-                <div class="ui-sortable">
-                    <table data-bind="visible: rowCount() > 0"
-                           class="table table-condensed">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>{% trans "Property" %}</th>
-                                <th>{% trans "Direction" %}</th>
-                                <th>{% trans "Format" %}</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody data-bind="foreach: sortRows, sortableList: sortRows">
-                            <tr>
-                                <td>
-                                    <i class="grip
-                                            icon-resize-vertical
-                                            icon-blue"
-                                       style="cursor: move"></i>
-                                </td>
-
-                                <td data-bind="html: fieldHtml">
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: direction">
-                                        <option value="ascending"
-                                                data-bind="text: ascendText">
-                                        </option>
-                                        <option value="descending"
-                                                data-bind="text: descendText">
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <select data-bind="value: type">
-                                        <option value="plain">
-                                            {% trans "Plain" %}
-                                        </option>
-                                        <option value="date">
-                                            {% trans "Date" %}
-                                        </option>
-                                        <option value="int">
-                                            {% trans "Integer" %}
-                                        </option>
-                                        <option value="double">
-                                            {% trans "Decimal" %}
-                                        </option>
-                                    </select>
-                                </td>
-
-                                <td>
-                                    <a data-bind="click: $root.removeSortRow">
-                                        <i class="icon-remove icon-blue"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
-            </div>
-            <div id="{{ detail.type }}-detail-screen-config">
-                <legend>
-                    {% trans "Display Properties" %}
-                </legend>
-            </div>
-            {% if detail.parent_select %}
-            <div id="{{ detail.type }}-detail-screen-parent" data-bind="visible: moduleOptions().length">
-                <legend>{% trans "Parent Child Selection" %}</legend>
-                <label class="checkbox">
-                    <input type="checkbox" data-bind="checked: active"/>
-                    {% trans "Select Parent First" %}
-                </label>
-                <div data-bind="visible: active">
-                    {% trans "Use Case List from module" %}
-                    <select data-bind="optstr: moduleOptions, value: moduleId"></select>
-                </div>
-             </div>
-            {% endif %}
-        </div>
+        {% include 'app_manager/partials/case_list.html' %}
+    </div>
+    <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+        {% include 'app_manager/partials/case_detail.html' %}
     </div>
     {% endfor %}
 </div>
 </div>
 {% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endblock modals %}

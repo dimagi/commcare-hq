@@ -11,9 +11,11 @@ try:
     from corehq.apps.app_manager.tests.test_suite import *
     from corehq.apps.app_manager.tests.test_profile import *
     from corehq.apps.app_manager.tests.test_build_errors import *
+    from corehq.apps.app_manager.tests.test_bulk_ui_translation import *
     from corehq.apps.app_manager.tests.test_views import *
     from corehq.apps.app_manager.tests.test_commcare_settings import *
     from corehq.apps.app_manager.tests.test_brief_view import *
+    from corehq.apps.app_manager.tests.test_xpath import *
     from .test_location_xpath import *
     from .test_get_questions import *
     from .test_repeater import *

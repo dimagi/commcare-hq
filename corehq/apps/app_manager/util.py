@@ -109,13 +109,21 @@ class ParentCasePropertyBuilder(object):
         return set(p[0] for p in parent_types)
 
     @memoized
-    def get_properties(self, case_type, already_visited=()):
+    def get_other_case_sharing_apps_in_domain(self):
+        from corehq.apps.app_manager.models import get_apps_in_domain
+        apps = get_apps_in_domain(self.app.domain, include_remote=False)
+        return [a for a in apps if a.case_sharing and a.id != self.app.id]
+
+    @memoized
+    def get_properties(self, case_type, already_visited=(),
+                       include_shared_properties=True):
         if case_type in already_visited:
             return ()
 
         get_properties_recursive = functools.partial(
             self.get_properties,
-            already_visited=already_visited + (case_type,)
+            already_visited=already_visited + (case_type,),
+            include_shared_properties=include_shared_properties
         )
 
         case_properties = set(self.defaults)
@@ -129,6 +137,14 @@ class ParentCasePropertyBuilder(object):
         for parent_type in parent_types:
             for property in get_properties_recursive(parent_type[0]):
                 case_properties.add('%s/%s' % (parent_type[1], property))
+        if self.app.case_sharing and include_shared_properties:
+            from corehq.apps.app_manager.models import get_apps_in_domain
+            for app in self.get_other_case_sharing_apps_in_domain():
+                case_properties.update(
+                    get_case_properties(
+                        app, [case_type], include_shared_properties=False
+                    ).get(case_type, [])
+                )
 
         return case_properties
 
@@ -136,17 +152,23 @@ class ParentCasePropertyBuilder(object):
     def get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
 
-    def get_case_property_map(self, case_types):
+    def get_case_property_map(self, case_types,
+                              include_shared_properties=True):
         case_types = sorted(case_types)
-        return dict(
-            (case_type, sorted(self.get_properties(case_type)))
+        return {
+            case_type: sorted(self.get_properties(
+                case_type, include_shared_properties=include_shared_properties
+            ))
             for case_type in case_types
-        )
+        }
 
 
-def get_case_properties(app, case_types, defaults=()):
+def get_case_properties(app, case_types, defaults=(),
+                        include_shared_properties=True):
     builder = ParentCasePropertyBuilder(app, defaults)
-    return builder.get_case_property_map(case_types)
+    return builder.get_case_property_map(
+        case_types, include_shared_properties=include_shared_properties
+    )
 
 
 def get_all_case_properties(app):

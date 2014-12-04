@@ -7,6 +7,8 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
         CustomProjectReportDispatcher, BasicReportDispatcher)
 
 # from .filters.urls import urlpatterns as filter_urls
+from corehq.apps.example_reports.testreport import TestReport
+from corehq.apps.userreports.reports.view import ConfigurableReport
 from .filters import urls as filter_urls
 
 
@@ -15,6 +17,8 @@ custom_report_urls = patterns('',
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
+    TestReport.url_pattern(),
+    ConfigurableReport.url_pattern(),
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),
     url(r'^saved_reports', 'old_saved_reports'),
@@ -24,11 +28,15 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/close/$', 'close_case_view', name="close_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/undo-close/$', 'undo_close_case_view', name="undo_close_case"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
+        'export_case_transactions', name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
 
     # Download and view form data
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
+    url(r'^form_data/(?P<app_id>[\w\-:]+)/download/media/$',
+        'form_multimedia_export', name='form_multimedia_export'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download-attachment/$',
         'download_attachment', name='download_attachment'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', 'archive_form', name='archive_form'),

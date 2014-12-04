@@ -3,7 +3,7 @@ from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSing
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.users.models import CommCareUser
 from custom.care_pathways.sqldata import GeographySqlData
-from custom.care_pathways.utils import get_domain_configuration
+from custom.care_pathways.utils import get_domain_configuration, ByTypeHierarchyRecord
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -13,10 +13,34 @@ class CareBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
 
     @property
     def filter_context(self):
-        context = super(CareBaseDrilldownOptionFilter, self).filter_context
-        context.update({'single_option_select': self.single_option_select})
-        context.update({'single_option_select_without_default_text': self.single_option_select_without_default_text})
-        return context
+        controls = []
+        for level, label in enumerate(self.rendered_labels):
+            if len(label) == 2:
+                controls.append({
+                    'label': label[0],
+                    'slug': label[1],
+                    'level': level,
+                })
+            else:
+                controls.append({
+                    'label': label[0],
+                    'default_text': label[1],
+                    'slug': label[2],
+                    'level': level,
+                })
+
+        drilldown_map = list(self.drilldown_map)
+        return {
+            'option_map': drilldown_map,
+            'controls': controls,
+            'selected': self.selected,
+            'use_last': self.use_only_last,
+            'notifications': self.final_notifications,
+            'empty_text': self.drilldown_empty_text,
+            'is_empty': not drilldown_map,
+            'single_option_select': self.single_option_select,
+            'single_option_select_without_default_text': self.single_option_select_without_default_text
+        }
 
 
 class GeographyFilter(CareBaseDrilldownOptionFilter):
@@ -40,6 +64,8 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
                         tmp_next = item['next']
                         break
                 if not exist:
+                    if not hierarchy:
+                        hierarchy.append(dict(val='0', text='All', next=[]))
                     hierarchy.append(tmp)
                     hierarchy = tmp['next']
                 else:
@@ -49,12 +75,13 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
         return hierarchy
 
     def get_labels(self):
-        return [(v['name'], 'All', v['prop']) for k,v in sorted(get_domain_configuration(self.request.domain).geography_hierarchy.iteritems())]
+        return [(v['name'], v['prop']) for k, v in sorted(get_domain_configuration(
+            self.request.domain).geography_hierarchy.iteritems())]
 
     @classmethod
     def _get_label_value(cls, request, label):
-        slug = str(label[2])
-        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
+        slug = str(label[1])
+        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[1])))
         return {
             'slug': slug,
             'value': val,
@@ -91,13 +118,30 @@ class CBTNameFilter(BaseSingleOptionFilter):
         return [(user._id, user.username) for user in CommCareUser.by_domain(self.domain)]
 
 
-class ScheduleFilter(BaseSingleOptionFilter):
+class ScheduleFilter(CareBaseDrilldownOptionFilter):
     slug = "farmer_social_category"
     label = "Farmer Social Category"
+    template = "care_pathways/filters/drilldown_options.html"
 
     @property
-    def options(self):
-        return [('sc', 'SC'), ('st', 'ST'), ('obc', 'OBC'), ('other', 'Other')]
+    def drilldown_map(self):
+        return [dict(val='0', text='All', next=[]), dict(val='sc', text='SC', next=[]),
+                dict(val='st', text='ST', next=[]), dict(val='obc', text='OBC', next=[]),
+                dict(val='other', text='Other', next=[])]
+
+    @classmethod
+    def get_labels(cls):
+        return [('', 'farmer_social_category')]
+
+    @classmethod
+    def _get_label_value(cls, request, label):
+        slug = str(label[1])
+        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[1])))
+        return {
+            'slug': slug,
+            'value': val,
+        }
+
 
 class PPTYearFilter(YearFilter):
     label = "PPT Year"
@@ -112,30 +156,37 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
     @property
     def drilldown_map(self):
         hierarchy_config = get_domain_configuration(self.request.domain)['by_type_hierarchy']
+        for value_chain in hierarchy_config:
+            value_chain.next.insert(0, ByTypeHierarchyRecord(val='0', text='All', next=[]))
+            for domain in value_chain.next:
+                domain.next.insert(0, ByTypeHierarchyRecord(val='0', text='All', next=[]))
+
         return hierarchy_config
 
     @classmethod
     def get_labels(cls):
-        return [
-                ('Value Chain', 'Any', 'value_chain'),
-                ('Domain', '', 'domain'),
-                ('Practice', '', 'practice')
-        ]
-
+        return [('Value Chain', 'Any', 'value_chain'), ('Domain', 'domain'), ('Practice', 'practice')]
 
     @classmethod
     def _get_label_value(cls, request, label):
-        slug = str(label[2])
-        val = request.GET.getlist('%s_%s' % (cls.slug, str(label[2])))
+        slug = str(label[2]) if len(label) == 3 else str(label[1])
+        val = request.GET.getlist('%s_%s' % (cls.slug, slug))
         return {
             'slug': slug,
             'value': val,
         }
 
+
+class TypeFilterWithoutPractices(TypeFilter):
+    @classmethod
+    def get_labels(cls):
+        return [('Value Chain', 'Any', 'value_chain'), ('Domain', '', 'domain')]
+
+
 class GroupByFilter(BaseSingleOptionFilter):
     slug = "group_by"
     label = "Group By"
-    default_text = ugettext_noop("Group by...")
+    default_text = ''
 
     @property
     def options(self):
@@ -161,11 +212,12 @@ class DisaggregateByFilter(BaseSingleOptionFilter):
 class TableCardGroupByFilter(BaseSingleOptionFilter):
     slug = "group_by"
     label = "Group By"
-    default_text = ugettext_noop("Group by...")
+    default_text = ''
 
     @property
     def options(self):
-        return [('group_name', 'Group Name'), ('group_leadership', 'Group Leadership'), ('gender', 'Sex of Members')]
+        return [('group_name', 'Group Name'), ('group_leadership', 'Group Leadership'),
+                ('gender', 'Sex of Members')]
 
     @property
     @memoized

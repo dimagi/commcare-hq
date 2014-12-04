@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from itertools import imap
 import hashlib
 import json
 import logging
@@ -11,8 +12,9 @@ from couchdbkit.ext.django.schema import (
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.cache import cache
-from corehq.apps.appstore.models import Review, SnapshotMixin
+from corehq.apps.appstore.models import SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
@@ -129,7 +131,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     using_adm = BooleanProperty()
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
-    can_use_data = BooleanProperty()
+    can_use_data = BooleanProperty(default=True)
     notes = StringProperty()
     organization_name = StringProperty()
     platform = StringListProperty()
@@ -137,9 +139,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     phone_model = StringProperty()
     goal_time_period = IntegerProperty()
     goal_followup_rate = DecimalProperty()
-    # intentionally different from commconnect_enabled and commtrack_enabled so
-    # that FMs can change
-    commconnect_domain = BooleanProperty()
+    # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
 
 
@@ -193,7 +193,6 @@ class Domain(Document, SnapshotMixin):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
-    ota_restore_caching = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
     hr_name = StringProperty() # the human-readable name for this project within an organization
@@ -513,16 +512,18 @@ class Domain(Document, SnapshotMixin):
                 else:
                     notify_exception(None, '%r is not a valid domain name' % name)
                     return None
+
         cache_key = _domain_cache_key(name)
-        MISSING = object()
-        res = cache.get(cache_key, MISSING)
-        if res != MISSING:
-            return res
-        else:
-            domain = cls._get_by_name(name, strict)
-            # 30 mins, so any unforeseen invalidation bugs aren't too bad.
-            cache.set(cache_key, domain, 30*60)
-            return domain
+        if not strict:
+            MISSING = object()
+            res = cache.get(cache_key, MISSING)
+            if res != MISSING:
+                return res
+
+        domain = cls._get_by_name(name, strict)
+        # 30 mins, so any unforeseen invalidation bugs aren't too bad.
+        cache.set(cache_key, domain, 30*60)
+        return domain
 
     @classmethod
     def _get_by_name(cls, name, strict=False):
@@ -596,9 +597,15 @@ class Domain(Document, SnapshotMixin):
 
     @classmethod
     def get_all(cls, include_docs=True):
-        # todo: this should use iter_docs
-        return Domain.view("domain/not_snapshots",
-                            include_docs=include_docs).all()
+        domains = Domain.view("domain/not_snapshots", include_docs=False).all()
+        if not include_docs:
+            return domains
+        else:
+            return imap(cls, iter_docs(cls.get_db(), [d['id'] for d in domains]))
+
+    @classmethod
+    def get_all_names(cls):
+        return [d['key'] for d in Domain.get_all(include_docs=False)]
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
@@ -618,9 +625,11 @@ class Domain(Document, SnapshotMixin):
                             (self.name, str(result[1]))
                 )
 
-    def save_copy(self, new_domain_name=None, user=None, ignore=None):
+    def save_copy(self, new_domain_name=None, user=None, ignore=None,
+                  copy_by_id=None):
         from corehq.apps.app_manager.models import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.fixtures.models import FixtureDataItem
 
         ignore = ignore if ignore is not None else []
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
@@ -652,7 +661,19 @@ class Domain(Document, SnapshotMixin):
                 delattr(new_domain, field)
 
         new_comps = {}  # a mapping of component's id to it's copy
+
+        def copy_data_items(old_type_id, new_type_id):
+            for item in FixtureDataItem.by_data_type(self.name, old_type_id):
+                comp = self.copy_component(item.doc_type, item._id,
+                                           new_domain_name, user=user)
+                comp.data_type_id = new_type_id
+                comp.save()
+
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
+            if (copy_by_id and res['value']['_id'] not in copy_by_id and
+                res['value']['doc_type'] in ('Application', 'RemoteApp',
+                                             'FixtureDataType')):
+                continue
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()
                 if app:
@@ -661,8 +682,11 @@ class Domain(Document, SnapshotMixin):
                     comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
             elif res['value']['doc_type'] not in ignore:
                 comp = self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+                if res['value']['doc_type'] == 'FixtureDataType':
+                    copy_data_items(res['value']['_id'], comp._id)
             else:
                 comp = None
+
             if comp:
                 new_comps[res['value']['_id']] = comp
 
@@ -706,10 +730,13 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.app_manager.models import import_app
         from corehq.apps.users.models import UserRole
         from corehq.apps.reminders.models import CaseReminderHandler
+        from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 
         str_to_cls = {
             'UserRole': UserRole,
             'CaseReminderHandler': CaseReminderHandler,
+            'FixtureDataType': FixtureDataType,
+            'FixtureDataItem': FixtureDataItem,
         }
         db = get_db()
         if doc_type in ('Application', 'RemoteApp'):
@@ -738,17 +765,20 @@ class Domain(Document, SnapshotMixin):
 
             new_doc.domain = new_domain_name
 
+            if doc_type == 'FixtureDataType':
+                new_doc.copy_from = id
+
         if self.is_snapshot and doc_type == 'Application':
             new_doc.prepare_multimedia_for_exchange()
 
         new_doc.save()
         return new_doc
 
-    def save_snapshot(self, ignore=None):
+    def save_snapshot(self, ignore=None, copy_by_id=None):
         if self.is_snapshot:
             return self
         else:
-            copy = self.save_copy(ignore=ignore)
+            copy = self.save_copy(ignore=ignore, copy_by_id=copy_by_id)
             if copy is None:
                 return None
             copy.is_snapshot = True
@@ -900,31 +930,6 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.hqmedia.utils import most_restrictive
         licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check) if m.license]
         return most_restrictive(licenses)
-
-    @classmethod
-    def popular_sort(cls, domains):
-        sorted_list = []
-        MIN_REVIEWS = 1.0
-
-        domains = [(domain, Review.get_average_rating_by_app(domain.copied_from._id), Review.get_num_ratings_by_app(domain.copied_from._id)) for domain in domains]
-        domains = [(domain, avg or 0.0, num or 0) for domain, avg, num in domains]
-
-        total_average_sum = sum(avg for domain, avg, num in domains)
-        total_average_count = len(domains)
-        if not total_average_count:
-            return []
-        total_average = (total_average_sum / total_average_count)
-
-        for domain, average_rating, num_ratings in domains:
-            if num_ratings == 0:
-                sorted_list.append((0.0, domain))
-            else:
-                weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
-                sorted_list.append((weighted_rating, domain))
-
-        sorted_list = [domain for weighted_rating, domain in sorted(sorted_list, key=lambda domain: domain[0], reverse=True)]
-
-        return sorted_list
 
     @classmethod
     def hit_sort(cls, domains):

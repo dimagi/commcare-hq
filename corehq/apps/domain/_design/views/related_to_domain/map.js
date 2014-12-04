@@ -10,7 +10,8 @@ function(doc) {
         'UserRole': true,
         'Application': true,
         'RemoteApp': true,
-        'CaseReminderHandler': true
+        'CaseReminderHandler': true,
+        'FixtureDataType': true
     };
 
     if (doc.domain) {

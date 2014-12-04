@@ -14,6 +14,8 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.stock.utils import get_current_ledger_transactions
+from corehq.apps.products.models import SQLProduct
 
 register = template.Library()
 
@@ -41,12 +43,12 @@ def render_case(case, options):
     Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
     Change to kwargs when we're on a version of Django that does.
     """
-    # todo: what are these doing here?
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_definition
     case = wrapped_case(case)
     timezone = options.get('timezone', pytz.utc)
     _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
     display = options.get('display') or case.get_display_config()
+    show_transaction_export = options.get('show_transaction_export') or False
     get_case_url = options['get_case_url']
 
     data = copy.deepcopy(case.to_full_dict())
@@ -77,7 +79,23 @@ def render_case(case, options):
     actions = case.to_json()['actions']
     actions.reverse()
 
-    tz_abbrev = timezone.localize(datetime.datetime.now()).tzname()
+    the_time_is_now = datetime.datetime.now()
+    tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
+    tz_abbrev = timezone.localize(the_time_is_now).tzname()
+
+    # ledgers
+    def _product_name(product_id):
+        try:
+            return SQLProduct.objects.get(product_id=product_id).name
+        except SQLProduct.DoesNotExist:
+            return (_('Unknown Product ("{}")').format(product_id))
+
+    ledgers = get_current_ledger_transactions(case._id)
+    for section, product_map in ledgers.items():
+        product_tuples = sorted(
+            (_product_name(product_id), product_map[product_id]) for product_id in product_map
+        )
+        ledgers[section] = product_tuples
 
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
@@ -96,7 +114,10 @@ def render_case(case, options):
             "show_view_buttons": True,
             "get_case_url": get_case_url,
             "timezone": timezone
-        }
+        },
+        "ledgers": ledgers,
+        "timezone_offset": tz_offset_ms,
+        "show_transaction_export": show_transaction_export,
     })
 
 

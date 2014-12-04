@@ -16,11 +16,15 @@ function HQReportDataTables(options) {
     self.loadingText = options.loadingText || "Loading <img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />";
     self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
     self.errorText = options.errorText || "<span class='label label-important'>Sorry!</span> There was an error with your query, it has been logged, please try another query.";
-    self.badRequestErrorText = options.errorText || "<span class='label label-important'>Sorry!</span> Your search query is invalid, please adjust the formatting and try again.";
+    self.badRequestErrorText = options.badRequestErrorText || options.errorText || "<span class='label label-important'>Sorry!</span> Your search query is invalid, please adjust the formatting and try again.";
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
+    // a list of functions to call back to after ajax.
+    // see user configurable charts for an example usage
+    self.extraCallbacks = options.extraCallbacks;
     self.datatable = null;
+    self.rendered = false;
 
     this.render_footer_row = (function() {
         var $dataTableElem = $(self.dataTableElem);
@@ -36,10 +40,18 @@ function HQReportDataTables(options) {
                     $row.append('<td>' + row[i] + '</td>');
                 }
             }
-        }
+        };
     })();
 
     this.render = function () {
+        if (self.rendered) {
+            $(self.dataTableElem).each(function () {
+                $(this).dataTable().fnReloadAjax();
+            });
+            return;
+        }
+        
+        self.rendered = true;
 
         $('[data-datatable-highlight-closest]').each(function () {
            $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
@@ -71,36 +83,44 @@ function HQReportDataTables(options) {
                 params.sAjaxSource = self.ajaxSource;
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
-                    for (var p in self.ajaxParams) {
-                        var currentParam = self.ajaxParams[p];
-                        if(_.isObject(currentParam.value)) {
-                            for (var j=0; j < currentParam.value.length; j++) {
-                                aoData.push({
-                                    name: currentParam.name,
-                                    value: currentParam.value[j]
-                                });
+                    var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
+                    for (var p in ajaxParams) {
+                        if (ajaxParams.hasOwnProperty(p)) {
+                            var currentParam = ajaxParams[p];
+                            if(_.isObject(currentParam.value)) {
+                                for (var j=0; j < currentParam.value.length; j++) {
+                                    aoData.push({
+                                        name: currentParam.name,
+                                        value: currentParam.value[j]
+                                    });
+                                }
+                            } else {
+                                aoData.push(currentParam);
                             }
-                        } else {
-                            aoData.push(currentParam);
                         }
                     }
                 };
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
                     var custom_callback = function(data) {
                         var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
+                        var i;
                         if ('total_row' in data) {
                             self.render_footer_row('ajax_total_row', data['total_row']);
                         }
                         if ('statistics_rows' in data) {
-                            for (var i = 0; i < data['statistics_rows'].length; i++){
-                               self.render_footer_row('ajax_stat_row-' + i, data['statistics_rows'][i]);
+                            for (i = 0; i < data.statistics_rows.length; i++){
+                               self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                             }
                         }
                         applyBootstrapMagic();
                         if ('context' in data){
                             load(data['context'], ICON_PATH);
                         }
-
+                        if (self.extraCallbacks) {
+                            for (i = 0; i < self.extraCallbacks.length; i++) {
+                                self.extraCallbacks[i](data);
+                            }
+                        }
                         return result
                     };
 

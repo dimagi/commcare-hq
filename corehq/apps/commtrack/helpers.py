@@ -1,4 +1,5 @@
-from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.products.models import Product
 
 """
 helper code to populate the various commtrack models, for ease of

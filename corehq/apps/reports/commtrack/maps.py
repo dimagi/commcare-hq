@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
@@ -9,9 +9,11 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     name = ugettext_noop("Stock Status (map)")
     slug = "stockstatus_map"
 
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
 
     data_source = {
         'adapter': 'report',
@@ -46,8 +48,11 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
             'category': 'Current Stock Status',
         }
 
-        products = sorted(Product.view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True),
-                          key=lambda p: p.name)
+        products = sorted(
+            Product.by_domain(self.domain),
+            key=lambda p: p.name
+        )
+
         if self.program_id:
             products = filter(lambda c: c.program_id == self.program_id, products)
         for p in products:

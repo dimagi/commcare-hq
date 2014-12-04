@@ -1,0 +1,51 @@
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+<div class="{{ thisreport.css_class }} module">
+    <h4 class="media-heading">{{ report_table.title }}<br/></h4>
+      {% if report_table.subtitle %}
+        <span style="color: slategray">{{ report_table.subtitle }}</span>
+      {% endif %}
+    {% if report_table.rows %}
+        <ul class="stats">
+            <li>
+                <div class="report">{{ report_table.rows.total }}</div>
+                <div class="caption"><a href="{{ report_facilities_url }}">{% trans 'Facilities' %}</a></div>
+            </li>
+            <li>
+                <div class="report">Group {{ report_table.rows.submitting_group }}: {% trans 'Submitting' %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.submitting_complete as submitted and report_table.rows.submitting_total as count %}{{ submitted }} of {{ count }}{% endblocktrans %} {% trans 'submitted' %}</div>
+            </li>
+            <li>
+                <div class="report">Group {{ report_table.rows.processing_group }}: {% trans 'Processing' %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.processing_complete as processed and report_table.rows.processing_total as count %}{{ processed }} of {{ count }} forms sent to MSD{% endblocktrans %}</div>
+            </li>
+            <li>
+                <div class="report">Group {{ report_table.rows.delivery_group }}: {% trans "Deliveries" %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.delivery_complete as delivered and report_table.rows.delivery_total as count %}{{ delivered }} of {{ count }}{% endblocktrans %} {% trans 'delivered' %}</div>
+            </li>
+            <li>
+                <div class="report">Average Lead Time</div>
+                <div class="caption">
+                    {% if report_table.rows.avg_lead_time %}
+                        {% trans "Current Average Lead Time from Report to Delivery: "%} {{ report_table.rows.avg_lead_time }} {% trans " days" %}
+                    {% else %}
+                        <span class='no_data'>No Data</span>
+                    {% endif %}
+                </div>
+            </li>
+        </ul>
+    {% else %}
+        <span>{% trans "No facilities are due to submit data in this month" %}</span>
+    {% endif %}
+</div>
+
+
+{% block js-inline %}
+    {% for chart in thisreport.charts %}
+        {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
+            {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
+        {% endwith %}
+    {% endfor %}
+{% endblock %}

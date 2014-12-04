@@ -7,23 +7,26 @@ import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
-from corehq.apps.app_manager.exceptions import UnknownInstanceError
+from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
 from corehq.apps.app_manager.xpath import ProductInstanceXpath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
-from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, autoset_owner_id_for_subcase
+from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
+    autoset_owner_id_for_subcase
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from .xpath import dot_interpolate, CaseIDXPath, session_var, CaseTypeXpath, ItemListFixtureXpath
+from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath
 
 FIELD_TYPE_ATTACHMENT = 'attachment'
 FIELD_TYPE_INDICATOR = 'indicator'
 FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
+FIELD_TYPE_SCHEDULE = 'schedule'
 
 
 class XPathField(StringField):
@@ -97,6 +100,51 @@ class Text(XmlObject):
 
     locale = NodeField('locale', Locale)
     locale_id = StringField('locale/@id')
+
+
+class ConfigurationItem(Text):
+    ROOT_NAME = "text"
+    id = StringField("@id")
+
+
+class ConfigurationGroup(XmlObject):
+    ROOT_NAME = 'configuration'
+    configs = NodeListField('text', ConfigurationItem)
+
+
+class Series(OrderedXmlObject):
+    ORDER = (
+        "configuration",
+        "x_function",
+        "y_function",
+        "radius_function",
+    )
+    ROOT_NAME = 'series'
+
+    nodeset = StringField('@nodeset')
+    configuration = NodeField('configuration', ConfigurationGroup)
+    x_function = StringField('x/@function')
+    y_function = StringField('y/@function')
+    radius_function = StringField("radius/@function")
+
+
+class Annotation(OrderedXmlObject):
+    ORDER = ("x", "y", "text")
+    ROOT_NAME = 'annotation'
+
+    # TODO: Specify the xpath without specifying "text" for the child (we want the Text class to specify the tag)
+    x = NodeField('x/text', Text)
+    y = NodeField('y/text', Text)
+    text = NodeField('text', Text)
+
+
+class Graph(XmlObject):
+    ROOT_NAME = 'graph'
+
+    type = StringField("@type", choices=["xy", "bubble"])
+    series = NodeListField('series', Series)
+    configuration = NodeField('configuration', ConfigurationGroup)
+    annotations = NodeListField('annotation', Annotation)
 
 
 class AbstractResource(OrderedXmlObject):
@@ -311,6 +359,12 @@ class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
 
+class GraphTemplate(Template):
+    # TODO: Is there a way to specify a default/static value for form?
+    form = StringField('@form', choices=['graph'])
+    graph = NodeField('graph', Graph)
+
+
 class Header(AbstractTemplate):
     ROOT_NAME = 'header'
 
@@ -370,6 +424,7 @@ class Detail(IdNode):
 
     title = NodeField('title/text', Text)
     fields = NodeListField('field', Field)
+    details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
 
     def _init_variables(self):
@@ -392,8 +447,11 @@ class Detail(IdNode):
             for variable in self.variables:
                 result.add(variable.function)
         for field in self.fields:
-            result.add(field.header.text.xpath_function)
-            result.add(field.template.text.xpath_function)
+            try:
+                result.add(field.header.text.xpath_function)
+                result.add(field.template.text.xpath_function)
+            except AttributeError:
+                pass  # Its a Graph detail
         result.discard(None)
         return result
 
@@ -407,6 +465,25 @@ class Fixture(IdNode):
         for child in self.node:
             self.node.remove(child)
         self.node.append(xml)
+
+
+class ScheduleVisit(IdNode):
+    ROOT_NAME = 'visit'
+
+    due = StringField('@due')
+    late_window = StringField('@late_window')
+
+
+class Schedule(XmlObject):
+    ROOT_NAME = 'schedule'
+
+    expires = StringField('@expires')
+    post_schedule_increment = StringField('@post_schedule_increment')
+    visits = NodeListField('visit', ScheduleVisit)
+
+
+class ScheduleFixture(Fixture):
+    schedule = NodeField('schedule', Schedule)
 
 
 class Suite(OrderedXmlObject):
@@ -740,12 +817,64 @@ class SuiteGenerator(SuiteGeneratorBase):
                 resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
 
+    def build_detail(self, module, detail_type, detail, detail_column_infos,
+                     tabs, id, title, start, end):
+        """
+        Recursively builds the Detail object.
+        (Details can contain other details for each of their tabs)
+        """
+        from corehq.apps.app_manager.detail_screen import get_column_generator
+        d = Detail(id=id, title=title)
+        if tabs:
+            tab_spans = detail.get_tab_spans()
+            for tab in tabs:
+                sub_detail = self.build_detail(
+                    module,
+                    detail_type,
+                    detail,
+                    detail_column_infos,
+                    [],
+                    None,
+                    Text(locale_id=self.id_strings.detail_tab_title_locale(
+                        module, detail_type, tab
+                    )),
+                    tab_spans[tab.id][0],
+                    tab_spans[tab.id][1]
+                )
+                if sub_detail:
+                    d.details.append(sub_detail)
+            if len(d.details):
+                return d
+            else:
+                return None
+
+        else:
+            # Base case (has no tabs)
+            variables = list(
+                self.detail_variables(module, detail, detail_column_infos[start:end])
+            )
+            if variables:
+                d.variables.extend(variables)
+            for column_info in detail_column_infos[start:end]:
+                fields = get_column_generator(
+                    self.app, module, detail,
+                    detail_type=detail_type, *column_info
+                ).fields
+                d.fields.extend(fields)
+            try:
+                if not self.app.enable_multi_sort:
+                    d.fields[0].sort = 'default'
+            except IndexError:
+                pass
+            else:
+                # only yield the Detail if it has Fields
+                return d
+
     @property
     @memoized
     def details(self):
 
         r = []
-        from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
             for module in self.modules:
                 for detail_type, detail, enabled in module.get_details():
@@ -756,41 +885,110 @@ class SuiteGenerator(SuiteGeneratorBase):
                         )
 
                         if detail_column_infos:
-                            d = Detail(
-                                id=self.id_strings.detail(module, detail_type),
-                                title=Text(locale_id=self.id_strings.detail_title_locale(module, detail_type))
+
+                            d = self.build_detail(
+                                module,
+                                detail_type,
+                                detail,
+                                detail_column_infos,
+                                list(detail.get_tabs()),
+                                self.id_strings.detail(module, detail_type),
+                                Text(locale_id=self.id_strings.detail_title_locale(
+                                    module, detail_type
+                                )),
+                                0,
+                                len(detail_column_infos)
                             )
-
-                            for column_info in detail_column_infos:
-                                fields = get_column_generator(
-                                    self.app, module, detail,
-                                    detail_type=detail_type, *column_info
-                                ).fields
-                                d.fields.extend(fields)
-
-                            try:
-                                if not self.app.enable_multi_sort:
-                                    d.fields[0].sort = 'default'
-                            except IndexError:
-                                pass
-                            else:
-                                # only yield the Detail if it has Fields
+                            if d:
                                 r.append(d)
-
         return r
 
+    def detail_variables(self, module, detail, detail_column_infos):
+        has_schedule_columns = any(ci.column.field_type == FIELD_TYPE_SCHEDULE for ci in detail_column_infos)
+        if hasattr(module, 'has_schedule') and \
+                module.has_schedule and \
+                module.all_forms_require_a_case and \
+                has_schedule_columns:
+            forms_due = []
+            for form in module.get_forms():
+                if not (form.schedule and form.schedule.anchor):
+                    raise ScheduleError('Form in schedule module is missing schedule: %s' % form.default_name())
+
+                fixture_id = self.id_strings.schedule_fixture(form)
+                anchor = form.schedule.anchor
+
+                # @late_window = '' or today() <= (date(edd) + int(@due) + int(@late_window))
+                within_window = XPath.or_(
+                    XPath('@late_window').eq(XPath.string('')),
+                    XPath('today() <= ({} + {} + {})'.format(
+                        XPath.date(anchor),
+                        XPath.int('@due'),
+                        XPath.int('@late_window'))
+                    )
+                )
+
+                due_first = ScheduleFixtureInstance(fixture_id).visit().\
+                    select_raw(within_window).\
+                    select_raw("1").slash('@due')
+
+                # current_schedule_phase = 1 and anchor != '' and (
+                #   instance(...)/schedule/@expires = ''
+                #   or
+                #   today() < (date(anchor) + instance(...)/schedule/@expires)
+                # )
+                expires = ScheduleFixtureInstance(fixture_id).expires()
+                valid_not_expired = XPath.and_(
+                    XPath(SCHEDULE_PHASE).eq(form.id + 1),
+                    XPath(anchor).neq(XPath.string('')),
+                    XPath.or_(
+                        XPath(expires).eq(XPath.string('')),
+                        "today() < ({} + {})".format(XPath.date(anchor), expires)
+                    ))
+
+                visit_num_valid = XPath('@id > {}'.format(
+                    SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
+                ))
+
+                due_not_first = ScheduleFixtureInstance(fixture_id).visit().\
+                    select_raw(visit_num_valid).\
+                    select_raw(within_window).\
+                    select_raw("1").slash('@due')
+
+                name = 'next_{}'.format(form.schedule_form_id)
+                forms_due.append(name)
+
+                def due_date(due_days):
+                    return '{} + {}'.format(XPath.date(anchor), XPath.int(due_days))
+
+                xpath_phase_set = XPath.if_(valid_not_expired, due_date(due_not_first), 0)
+                if form.id == 0:  # first form must cater for empty phase
+                    yield DetailVariable(
+                        name=name,
+                        function=XPath.if_(
+                            XPath(SCHEDULE_PHASE).eq(XPath.string('')),
+                            due_date(due_first),
+                            xpath_phase_set
+                        )
+                    )
+                else:
+                    yield DetailVariable(name=name, function=xpath_phase_set)
+
+            yield DetailVariable(
+                name='next_due',
+                function='min({})'.format(','.join(forms_due))
+            )
+
+            yield DetailVariable(
+                name='is_late',
+                function='next_due < today()'
+            )
+
     def get_filter_xpath(self, module, delegation=False):
-        from corehq.apps.app_manager.detail_screen import Filter
-        short_detail = module.case_details.short
-        filters = []
-        for column in short_detail.get_columns():
-            if column.format == 'filter':
-                filters.append("(%s)" % Filter(self.app, module, short_detail, column).filter_xpath)
-        if filters:
-            xpath = '[%s]' % (' and '.join(filters))
+        filter = module.case_details.short.filter
+        if filter:
+            xpath = '[%s]' % filter
         else:
             xpath = ''
-
         if delegation:
             xpath += "[index/parent/@case_type = '%s']" % module.case_type
             xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
@@ -824,7 +1022,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     def get_select_chain(self, module, include_self=True):
         select_chain = [module] if include_self else []
         current_module = module
-        while current_module.parent_select.active:
+        while hasattr(current_module, 'parent_select') and current_module.parent_select.active:
             current_module = self.get_module_by_id(
                 current_module.parent_select.module_id
             )
@@ -1331,6 +1529,26 @@ class SuiteGenerator(SuiteGeneratorBase):
             f.set_content(groups)
             yield f
 
+        schedule_modules = (module for module in self.modules if getattr(module, 'has_schedule', False) and
+                            module.all_forms_require_a_case)
+        schedule_forms = (form for module in schedule_modules for form in module.get_forms())
+        for form in schedule_forms:
+            schedule = form.schedule
+            fx = ScheduleFixture(
+                id=self.id_strings.schedule_fixture(form),
+                schedule=Schedule(
+                    expires=schedule.expires,
+                    post_schedule_increment=schedule.post_schedule_increment
+                ))
+            for i, visit in enumerate(schedule.visits):
+                fx.schedule.visits.append(ScheduleVisit(
+                    id=i + 1,
+                    due=visit.due,
+                    late_window=visit.late_window
+                ))
+
+            yield fx
+
 
 class MediaSuiteGenerator(SuiteGeneratorBase):
     descriptor = u"Media Suite File"
@@ -1362,10 +1580,21 @@ class MediaSuiteGenerator(SuiteGeneratorBase):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
+            descriptor = None
+            if self.app.build_version >= '2.9':
+                type_mapping = {"CommCareImage": "Image",
+                                "CommCareAudio": "Audio",
+                                "CommCareVideo": "Video"}
+                descriptor = u"{filetype} File: {name}".format(
+                    filetype=type_mapping.get(m.media_type, "Media"),
+                    name=name
+                )
+
             yield MediaResource(
                 id=self.id_strings.media_resource(m.unique_id, name),
                 path=install_path,
                 version=m.version,
+                descriptor=descriptor,
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),

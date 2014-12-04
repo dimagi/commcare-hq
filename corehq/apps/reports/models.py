@@ -79,11 +79,11 @@ class HQUserType(object):
         arrays of booleans mapping to values in human_readable and whether they should be
         included and defaulted, respectively.
         """
-        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable)) if included[i]]
+        return [HQUserToggle(i, defaults[i]) for i in range(cls.count) if included[i]]
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(len(cls.human_readable))]
+        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(cls.count)]
 
 
 class HQToggle(object):
@@ -423,8 +423,18 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                              get_url_base(), reverse(
                                  'saved_reports', args=[request.domain])),
                      }, None
-        except Exception as e:
-            notify_exception(None, "Error generating report")
+        except Http404:
+            return _("We are sorry, but your saved report '%(config_name)s' "
+                     "can not be generated since you do not have the correct permissions. "
+                     "Please talk to your Project Administrator about getting permissions for this"
+                     "report.") % {'config_name': self.name}, None
+        except Exception:
+            notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
+                'domain': self.domain,
+                'user': self.owner.username,
+                'report': self.report_slug,
+                'report config': self.get_id
+            })
             return _("An error occurred while generating this report."), None
 
 
@@ -628,6 +638,8 @@ class FormExportSchema(HQExportSchema):
     def filter(self):
         user_ids = set(CouchUser.ids_by_domain(self.domain))
         user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
+        user_ids.add('demo_user')
+
         def _top_level_filter(form):
             # careful, closures used
             return form_matches_users(form, user_ids) or is_commconnect_form(form)

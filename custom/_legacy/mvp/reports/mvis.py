@@ -1,5 +1,6 @@
 import datetime
 from couchdbkit import ResourceNotFound
+import dateutil
 from django.utils.safestring import mark_safe
 import logging
 import numpy
@@ -8,6 +9,7 @@ from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCo
 from dimagi.utils.decorators.memoized import memoized
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
+
 
 class HealthCoordinatorReport(MVPIndicatorReport):
     """
@@ -25,6 +27,21 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     @property
     def timezone(self):
         return pytz.utc
+
+    @property
+    def num_prev(self):
+        try:
+            return int(self.request.GET.get('num_prev'))
+        except (ValueError, TypeError):
+            pass
+        return 12
+
+    @property
+    def current_month(self):
+        try:
+            return dateutil.parser.parse(self.request.GET.get('current_month'))
+        except (AttributeError, ValueError):
+            pass
 
     @property
     @memoized
@@ -124,6 +141,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 'category_title': "Child Health",
                 'category_slug': 'child_health',
                 'indicator_slugs': [
+                    "length_reading_proportion",
                     "muac_routine_proportion",
                     "muac_wasting_proportion",
                     "moderate_muac_wasting_proportion",
@@ -223,22 +241,27 @@ class HealthCoordinatorReport(MVPIndicatorReport):
 
     def get_indicator_row(self, retrospective):
         row = [i.get('value', 0) for i in retrospective]
-        nonzero_row = [r for r in row if r]
+        nonzero_row = [r for r in row]
         row.extend(self._get_statistics(nonzero_row))
         return dict(
             numerators=self._format_row(row)
         )
 
     def get_response_for_indicator(self, indicator):
-        try:
-            retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
-            if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
-                table = self.get_indicator_table(retrospective)
-            else:
-                table = self.get_indicator_row(retrospective)
-            return {
-                'table': table,
-            }
-        except AttributeError:
-            pass
-        return None
+        retrospective = indicator.get_monthly_retrospective(
+            user_ids=self.user_ids,
+            is_debug=self.is_debug,
+            num_previous_months=self.num_prev,
+            current_month=self.current_month,
+        )
+        if self.is_debug:
+            for result in retrospective:
+                result['date'] = result['date'].strftime("%B %Y")
+            return retrospective
+        if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
+            table = self.get_indicator_table(retrospective)
+        else:
+            table = self.get_indicator_row(retrospective)
+        return {
+            'table': table,
+        }

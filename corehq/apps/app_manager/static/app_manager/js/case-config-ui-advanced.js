@@ -346,6 +346,7 @@ var AdvancedCase = (function () {
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
                     parent_tag: '',
+                    parent_reference_id: '',
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -392,7 +393,18 @@ var AdvancedCase = (function () {
             if (action.actionType === 'open') {
                 self.open_cases.remove(action);
             } else if (action.actionType === 'load') {
+                var index = self.config.caseConfigViewModel.load_update_cases.indexOf(action),
+                    potential_child;
                 self.load_update_cases.remove(action);
+
+                // remove references to deleted action in other load actions
+                var loadUpdateCases = self.config.caseConfigViewModel.load_update_cases();
+                for (var i = index; i < loadUpdateCases.length; i++) {
+                    potential_child = loadUpdateCases[i];
+                    if (potential_child.parent_tag() === action.case_tag()) {
+                        potential_child.parent_tag('');
+                    }
+                }
             }
         };
 
@@ -582,8 +594,9 @@ var AdvancedCase = (function () {
                 },
                 write: function (value) {
                     if (value) {
-                        var parent = self.config.caseConfigViewModel.load_update_cases()[0];
-                        if (parent) {
+                        var index = self.config.caseConfigViewModel.load_update_cases.indexOf(self);
+                        if (index > 0) {
+                            var parent = self.config.caseConfigViewModel.load_update_cases()[index - 1];
                             self.parent_tag(parent.case_tag());
                         }
                     } else {
@@ -842,10 +855,11 @@ var AdvancedCase = (function () {
                     if (!parent) {
                         return "Subcase parent reference is missing";
                     } else if (parent.actionType === 'open') {
-                        if (!parent.repeat_context()){
+                        if (!parent.repeat_context()) {
                             return null;
                         } else if (!self.repeat_context() ||
-                            !ko.utils.stringStartsWith(self.repeat_context(), parent.repeat_context())) {
+                            // manual string startsWith
+                            self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
                             return "Subcase must be in same repeat context as parent.";
                         }
                     }

@@ -5,7 +5,7 @@ from custom.m4change.constants import M4CHANGE_DOMAINS
 from lxml import etree as ElementTree
 
 
-def generator(user, version, last_sync):
+def generator(user, version, case_sync_op=None, last_sync=None):
     if user.domain in M4CHANGE_DOMAINS:
         domain = Domain.get_by_name(user.domain)
         location_id = get_commtrack_location_id(user, domain)

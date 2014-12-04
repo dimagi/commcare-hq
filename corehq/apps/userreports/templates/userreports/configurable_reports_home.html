@@ -1,0 +1,8 @@
+{% extends "userreports/userreports_base.html" %}
+{% load i18n %}
+{% block main_column %}
+    <h1>{% trans "Configurable Reports" %}</h1>
+    <a href="{% url 'create_configurable_data_source' domain %}" class="btn btn-primary">{% trans 'Add data source' %}</a>
+    <a href="{% url 'create_configurable_report' domain %}" class="btn">{% trans 'Add report' %}</a>
+    <a href="{% url 'import_configurable_report' domain %}" class="btn">{% trans 'Import report' %}</a>
+{% endblock %}

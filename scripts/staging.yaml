@@ -43,35 +43,32 @@
 trunk: master
 name: autostaging
 branches:
-  - archive-products+explicit_case_processing # tw 8/14
-  - explicit_case_processing # danny?
-  - master+schedule # Nick P 9/11
-  - schedule # SK 7/17
+  - refactor-case-list
+  - historical-forms  # Danny 12/1
 #  - add-build-ui
-  - hq-dropdown # sravan 5/7
-  - logos+master # tw
-  - logos # Nick P 5/28
-  - admin-reports # Nick P 8/13
 #  - subscription-no-contact-info # bb 8/4
-  - increase-es-timeout # Nick P 8/11
-  - archive-products+custom_product_data # tw 8/14
-  - archive-products # tw 8/14
-  - archive-programs # tw 9/30 (branched from archive-products)
-  - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
   - subscription-no-contact-info # bb 8/4
-  - fix-timeout # Nick P 8/26
-  - custom_user_data  # tw+Ethan 9/9
-  - custom_product_data  # tw+Ethan 10/1
-  - lwyszomi:better_date_filters_improvment
-  - master+uservoice-pending-invitations # Nick P 9/24
-  - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  #- help-text # j$  10/8  removed 11/3 by Daniel
+  - masterlist-workflow # j$  10/8
   - bulk-app-translate # Noah 9/18
-  - callcenter # SK 9/22
-  - fixture-prop # sravan 9/2e
-  - users_es  # Ethan 9/24 (depends on pillowtop-src - save-to-es)
-  - status-only-celery # ts 9/30
+#  - share-fixtures # j$ 10/29
+  - hq-dropdown+locations-for-everyone # tw 11/18
+  - hq-dropdown # sravan 5/7
+  - custom-data-choices  # Ethan 11/09
+  - vellum-staging # J$ 11/13
+  - custom_location_data+locations-for-everyone  # tw & Ethan 11/18 this has more than just the obvious merge conflict resolution, please merge in when ready.
+  - custom_location_data+system-custom-data+locations-for-everyone  # Ethan 11/24 (yo dawg i herd u like conflict resolution branches...)
+  - custom_location_data+system-custom-data  # Ethan 11/24
+  - custom_location_data  # Ethan & tw 11/17
+  - locations-for-everyone # tw 11/18
+  - custom-case-list-pane # Noah 11/24
+  - system-custom-data  # Ethan 11/24
+  - quickview # Simon 11/25
+  - fix-form-filtering # Nick P 11/26
+  - double-management # SK 12/1
+  - logo-uploader # Nick P 12/2
 submodules:
   submodules/couchlog-src:
     branches:
@@ -82,19 +79,15 @@ submodules:
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
-      # Danny 8/12. If form validation seems wonky on staging, just remove this
-      - clean-up-api
+      - update-jar # J$ 11/10
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
+      - update-jars # J$ 11/10
 #  submodules/dimagi-utils-src:
 #    branches:
 #      - json_response-status
-  submodules/dimagi-utils-src:
+  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
-      # Danny 8/12. If there's weird errors or issues in saving forms
-      # or saving apps, just remove this
-      - faster-lazy-attachments
-  submodules/pillowtop-src:
-   branches:
-      - save-to-es  # Ethan 9/24
+      - debug-yui # Nick P 11/4
+      - logos # Nick P 12/2

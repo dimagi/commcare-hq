@@ -1,12 +1,12 @@
 # coding=utf-8
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
-from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn
-from sqlalchemy.sql.expression import distinct, func, alias
-from corehq.apps.commtrack.models import Product
+from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
+from sqlalchemy.sql.expression import alias
+from corehq.apps.products.models import Product, SQLProduct
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, \
-    TableDataFormat, format_data, calculate_total_row
+    TableDataFormat, calculate_total_row
 from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
@@ -34,10 +34,13 @@ class BaseSqlData(SqlData):
     fix_left_col = False
 
     def percent_fn(self, x, y):
-        return "%(p)s%%" % \
+        return "%(p).2f%%" % \
             {
-                "p": (100 * int(y or 0) / (x or 1))
+                "p": (100 * float(y or 0) / float(x or 1))
             }
+
+    def format_data_and_cast_to_float(self, value):
+        return {"html": round(value, 2), "sort_key": round(value, 2)} if value is not None else value
 
     @property
     def filters(self):
@@ -57,8 +60,9 @@ class BaseSqlData(SqlData):
         formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
-    #this is copy/paste from the https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/sqlreport.py#L383
-    #we added possibility to sum Float values
+    # this is copy/paste from the
+    # https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/sqlreport.py#L383
+    # we added possibility to sum Float values
     def calculate_total_row(self, rows):
         total_row = []
         if len(rows) > 0:
@@ -107,20 +111,17 @@ class ConventureData(BaseSqlData):
         if 'district_id' in self.config:
             registered_column = 'registered_total_for_district'
         columns = [
-            DatabaseColumn("No de PPS (number of PPS registered in that region)", MaxColumn(registered_column, alias='registered')),
+            DatabaseColumn("No de PPS (number of PPS registered in that region)",
+                           MaxColumn(registered_column, alias='registered')),
             DatabaseColumn("No de PPS planifie (number of PPS planned)", MaxColumn('planned_total')),
             DatabaseColumn("No de PPS avec livrasion cet mois (number of PPS visited this month)",
-                CountUniqueColumn('location_id',
-                    alias="visited",
-                )
-            ),
+                           CountUniqueColumn('location_id', alias="visited")
+                           ),
             AggregateColumn("Taux de couverture (coverage ratio)", self.percent_fn,
-                [AliasColumn('registered'), AliasColumn("visited")]),
+                            [AliasColumn('registered'), AliasColumn("visited")]),
             DatabaseColumn("No de PPS avec donnees soumises (number of PPS which submitted data)",
-                 CountUniqueColumn('location_id',
-                    alias="submitted",
-                )
-            ),
+                           CountUniqueColumn('location_id', alias="submitted")
+                           ),
             AggregateColumn("Exhaustivite des donnees", self.percent_fn,
                             [AliasColumn('visited'), AliasColumn('submitted')]),
         ]
@@ -129,6 +130,18 @@ class ConventureData(BaseSqlData):
             self.show_total = True
         return columns
 
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+
+        #Months are displayed in chronological order
+        if 'month' in self.group_by:
+            from custom.intrahealth.reports import get_localized_months
+            return sorted(rows, key=lambda row: get_localized_months().index(row[0]))
+
+        return rows
+
     def calculate_total_row(self, rows):
         total_row = super(ConventureData, self).calculate_total_row(rows)
         if len(total_row) != 0:
@@ -136,7 +149,6 @@ class ConventureData(BaseSqlData):
             total_row[4] = "%.0f%%" % (total_row[3] * 100 / float(total_row[1]))
             total_row[-1] = "%.0f%%" % (total_row[5] * 100 / float(total_row[3]))
         return total_row
-
 
 
 class DispDesProducts(BaseSqlData):
@@ -152,7 +164,7 @@ class DispDesProducts(BaseSqlData):
             group_by.append('region_id')
         elif 'district_id' in self.config:
             group_by.append('district_id')
-        group_by.append('product_name')
+        group_by.append('product_code')
         return group_by
 
     @property
@@ -197,12 +209,12 @@ class DispDesProducts(BaseSqlData):
 
     @property
     def columns(self):
-
         return [
-            DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('Product Name', SimpleColumn('product_code'),
+                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
-            ]
+        ]
 
 
 class TauxDeRuptures(BaseSqlData):
@@ -215,7 +227,7 @@ class TauxDeRuptures(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['product_name']
+        group_by = ['product_code']
         if 'region_id' in self.config:
             group_by.append('district_name')
         else:
@@ -277,17 +289,19 @@ class FicheData(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['product_name', 'PPS_name']
+        return ['product_code', 'PPS_name']
 
     @property
     def columns(self):
         diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("LISTE des PPS"), SimpleColumn('PPS_name')),
-            DatabaseColumn(_("Consommation Reelle"), SumColumn('actual_consumption_total', alias='actual_consumption')),
-            DatabaseColumn(_("Consommation Facturable"), SumColumn('billed_consumption_total', alias='billed_consumption')),
+            DatabaseColumn(_("Consommation Reelle"),
+                           SumColumn('actual_consumption_total', alias='actual_consumption')),
+            DatabaseColumn(_("Consommation Facturable"),
+                           SumColumn('billed_consumption_total', alias='billed_consumption')),
             AggregateColumn(_("Consommation Non Facturable"), diff,
-                [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
+                            [AliasColumn('actual_consumption'), AliasColumn('billed_consumption')]),
         ]
 
 class PPSAvecDonnees(BaseSqlData):
@@ -333,8 +347,8 @@ class DateSource(BaseSqlData):
     @property
     def filters(self):
         filters = super(DateSource, self).filters
-        if 'PPS_name' in self.config:
-            filters.append(EQ("PPS_name", "PPS_name"))
+        if 'location_id' in self.config:
+            filters.append(EQ('location_id', 'location_id'))
         return filters
 
     @property
@@ -367,19 +381,20 @@ class RecapPassageData(BaseSqlData):
     @property
     def filters(self):
         filters = super(RecapPassageData, self).filters
-        if 'PPS_name' in self.config:
-            filters.append(EQ("PPS_name", "PPS_name"))
+        if 'location_id' in self.config:
+            filters.append(EQ("location_id", "location_id"))
         return filters
 
     @property
     def group_by(self):
-        return ['date', 'product_name',]
+        return ['date', 'product_code']
 
     @property
     def columns(self):
         diff = lambda x, y: (x or 0) - (y or 0)
         return [
-            DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Designations"), SimpleColumn('product_code'),
+                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
@@ -387,13 +402,14 @@ class RecapPassageData(BaseSqlData):
             DatabaseColumn(_("Precedent"), SumColumn('product_old_stock_pps')),
             DatabaseColumn(_("Recu hors entrepots mobiles"), SumColumn('product_outside_receipts_amount')),
             AggregateColumn(_("Non Facturable"), diff,
-                [AliasColumn('aconsumption'), AliasColumn("bconsumption")]),
+                            [AliasColumn('aconsumption'), AliasColumn("bconsumption")]),
             DatabaseColumn(_("Facturable"), SumColumn('product_billed_consumption', alias='bconsumption')),
             DatabaseColumn(_("Reelle"), SumColumn('product_actual_consumption', alias='aconsumption')),
             DatabaseColumn("Stock Total", AliasColumn('stock_total')),
             DatabaseColumn("PPS Restant", SumColumn('product_pps_restant')),
             DatabaseColumn("Pertes et Adjustement", SumColumn('product_loss_amt'))
         ]
+
 
 class ConsommationData(BaseSqlData):
     slug = 'consommation'
@@ -409,7 +425,7 @@ class ConsommationData(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['product_name']
+        group_by = ['product_code']
         if 'region_id' in self.config:
             group_by.append('district_name')
         else:
@@ -442,12 +458,12 @@ class TauxConsommationData(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['date']
+        group_by = []
         if 'region_id' in self.config:
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.extend(['product_name', 'consumption', 'stock'])
+        group_by.append('product_code')
         return group_by
 
     @property
@@ -458,10 +474,14 @@ class TauxConsommationData(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Consommation reelle"), SimpleColumn('actual_consumption_total', alias="consumption"), format_fn=format_data))
-        columns.append(DatabaseColumn(_("Stock apres derniere livraison"), SimpleColumn('stock_total', alias="stock"), format_fn=format_data))
+        columns.append(DatabaseColumn(_("Consommation reelle"),
+                                      MeanColumn('actual_consumption_total', alias="consumption"),
+                                      format_fn=self.format_data_and_cast_to_float))
+        columns.append(DatabaseColumn(_("Stock apres derniere livraison"),
+                                      MeanColumn('stock_total', alias="stock"),
+                                      format_fn=self.format_data_and_cast_to_float))
         columns.append(AggregateColumn(_("Taux consommation"), self.percent_fn,
-                                   [AliasColumn('stock'), AliasColumn('consumption')]))
+                                       [AliasColumn('stock'), AliasColumn('consumption')]))
         return columns
 
     def calculate_total_row(self, rows):
@@ -482,6 +502,7 @@ class TauxConsommationData(BaseSqlData):
 
         return total_row
 
+
 class NombreData(BaseSqlData):
     slug = 'nombre'
     title = 'Nombre de mois de stock disponibles et utilisables aux PPS'
@@ -495,28 +516,31 @@ class NombreData(BaseSqlData):
 
     @property
     def group_by(self):
-        group_by = ['date']
+        group_by = []
         if 'region_id' in self.config:
             group_by.extend(['district_name', 'PPS_name'])
         else:
             group_by.append('PPS_name')
-        group_by.extend(['product_name', 'quantity', 'cmm'])
+        group_by.append('product_code')
 
         return group_by
 
     @property
     def columns(self):
-        div = lambda x, y: "%0.3f" % (x / (float(y) or 1.0))
+        div = lambda x, y: "%0.3f" % (float(x) / (float(y) or 1.0))
         columns = []
         if 'region_id' in self.config:
             columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Quantite produits entreposes au PPS"), SimpleColumn('quantity_total', alias="quantity"), format_fn=format_data))
-        columns.append(DatabaseColumn(_("CMM"), SimpleColumn('cmm_total', alias="cmm"), format_fn=format_data))
+        columns.append(DatabaseColumn(_("Quantite produits entreposes au PPS"),
+                                      MeanColumn('quantity_total', alias="quantity"),
+                                      format_fn=self.format_data_and_cast_to_float))
+        columns.append(DatabaseColumn(_("CMM"), MeanColumn('cmm_total', alias="cmm"),
+                                      format_fn=self.format_data_and_cast_to_float))
         columns.append(AggregateColumn(_("Nombre mois stock disponible et utilisable"), div,
-                                   [AliasColumn('quantity'), AliasColumn('cmm')]))
+                                       [AliasColumn('quantity'), AliasColumn('cmm')]))
         return columns
 
     def calculate_total_row(self, rows):
@@ -526,10 +550,10 @@ class NombreData(BaseSqlData):
             for i in range(num_cols):
                 if i != 0 and i % 3 == 0:
                     cp = total_row[-2:]
-                    total_row.append("%0.3f" % (cp[0] / (float(cp[1]) or 1.0)))
+                    total_row.append("%0.3f" % (float(cp[0]) / (float(cp[1]) or 1.0)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long, float))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:
@@ -592,15 +616,15 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
     def _build_query(self, filter_values):
 
         sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
-                                  group_by=self.group_by + ['month'],
-                                  whereclause=' AND '.join([f.build_expression() for f in self.filters]),
-                                  from_obj="\"" + self.table_name + "\""
-        ), name='s')
+                                 group_by=self.group_by + ['month'],
+                                 whereclause=' AND '.join([f.build_expression() for f in self.filters]),
+                                 from_obj="\"" + self.table_name + "\""
+                                 ), name='s')
 
         return select(self.group_by + ['AVG(s.sum_col) AS %s' % self.key],
-                              group_by=self.group_by,
-                              from_obj=sum_query
-                              ).params(filter_values)
+                      group_by=self.group_by,
+                      from_obj=sum_query
+                      ).params(filter_values)
 
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
@@ -611,12 +635,12 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
                                   group_by=self.group_by + ['month'],
                                   whereclause=' AND '.join([f.build_expression() for f in self.filters]),
                                   from_obj="\"" + self.table_name + "\""
-        ), name='cq')
+                                  ), name='cq')
 
         return select(self.group_by + ['SUM(cq.count_unique) AS %s' % self.key],
-                              group_by=self.group_by,
-                              from_obj=count_uniq
-                              ).params(filter_values)
+                      group_by=self.group_by,
+                      from_obj=count_uniq
+                      ).params(filter_values)
 
 
 class IntraHealthCustomColumn(CustomQueryColumn):

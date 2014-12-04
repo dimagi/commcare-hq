@@ -7,3 +7,5 @@ from .test_utils import *
 from .test_xml import *
 from .test_stock_report import *
 from .test_stock_state import *
+from .test_products import *
+from .test_programs import *

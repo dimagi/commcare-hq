@@ -32,7 +32,8 @@ def get_restore_params(request):
 
 
 def get_restore_response(domain, couch_user, since=None, version='1.0',
-                         state=None, items=False):
+                         state=None, items=False, force_cache=False,
+                         cache_timeout=None, overwrite_cache=False):
     # not a view just a view util
     if not couch_user.is_commcare_user():
         return HttpResponse("No linked chw found for %s" % couch_user.username,
@@ -46,8 +47,11 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
     stock_settings = commtrack_settings.get_ota_restore_settings() if commtrack_settings else None
     restore_config = RestoreConfig(
         couch_user.to_casexml_user(), since, version, state,
-        caching_enabled=project.ota_restore_caching,
         items=items,
         stock_settings=stock_settings,
+        domain=project,
+        force_cache=force_cache,
+        cache_timeout=cache_timeout,
+        overwrite_cache=overwrite_cache
     )
     return restore_config.get_response()

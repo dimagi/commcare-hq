@@ -11,13 +11,11 @@ from corehq.apps.api.es import CaseES
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.es.es_query import HQESQuery
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-from corehq.apps.reports.filters.users import SelectMobileWorkerFilter,\
-    ExpandedMobileWorkerFilterWithAllData as EMWF
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilterWithAllData as EMWF
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
@@ -164,8 +162,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                                 selected_sharing_group_ids,
                                 selected_reporting_group_users,
                                 sharing_group_ids))
-        if HQUserType.COMMTRACK in EMWF.selected_user_types(self.request):
+        if HQUserType.COMMTRACK in user_types:
             owner_ids.append("commtrack-system")
+        if HQUserType.DEMO_USER in user_types:
+            owner_ids.append("demo_user_group_id")
         return owner_ids
 
 

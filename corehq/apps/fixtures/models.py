@@ -22,6 +22,8 @@ class FixtureDataType(Document):
     tag = StringProperty()
     fields = SchemaListProperty(FixtureTypeField)
     item_attributes = StringListProperty()
+    description = StringProperty()
+    copy_from = StringProperty()
 
     @classmethod
     def wrap(cls, obj):
@@ -256,10 +258,13 @@ class FixtureDataItem(Document):
             raise FixtureTypeCheckError("fields %s from fixture data %s not in fixture data type" % (', '.join(fields), self.get_id))
 
     def to_xml(self):
+        def _serialize(val):
+            return unicode(val) if isinstance(val, (int, Decimal)) else val
+
         xData = ElementTree.Element(self.data_type.tag)
         for attribute in self.data_type.item_attributes:
             try:
-                xData.attrib[attribute] = self.item_attributes[attribute]
+                xData.attrib[attribute] = _serialize(self.item_attributes[attribute])
             except KeyError as e:
                 # This should never occur, buf if it does, the OTA restore on mobile will fail and
                 # this error would have been raised and email-logged.
@@ -277,7 +282,7 @@ class FixtureDataItem(Document):
                     xField.text = field_with_attr.field_value or ""
                     for attribute in field_with_attr.properties:
                         val = field_with_attr.properties[attribute]
-                        xField.attrib[attribute] = unicode(val) if isinstance(val, Decimal) else val
+                        xField.attrib[attribute] = _serialize(val)
 
         return xData
 

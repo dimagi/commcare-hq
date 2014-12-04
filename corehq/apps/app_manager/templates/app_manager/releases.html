@@ -8,6 +8,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
@@ -34,7 +35,6 @@
         var urls = {
             fetch: '{% url "paginate_releases" domain app.id %}',
             delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
-            emulator: '{% url "emulator" domain '___' %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
             jad: '{% url "corehq.apps.app_manager.views.download_jad" domain '___' %}',
             jar: '{% url "corehq.apps.app_manager.views.download_jar" domain '___' %}',
@@ -46,6 +46,7 @@
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
+            update_build_comment: '{% url "update_build_comment" domain app.id %}',
         };
         var o = {
             urls: urls,
@@ -60,20 +61,11 @@
 </script>
 <script>
     function track_deploy_type(type) {
-        ga('send', 'event', 'App Manager', 'Deploy Type', type);
+        ga_track_event('App Manager', 'Deploy Type', type);
     }
-
-    function track_deploy_type_and_redirect(type, href) {
-        {% if GOOGLE_ANALYTICS_ID %}
-            ga('send', 'event', 'App Manager', 'Deploy Type', type, {
-                'hitCallback': function () {
-                    document.location = href;
-                }
-            });
-        {% else %}
-            return true;
-        {% endif %}
-    }
+    $(function () {
+        gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
+    });
 </script>
 {% endblock %}
 
@@ -114,6 +106,12 @@
     .released {
         color: #ffff00;
         text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
+    }
+    .build .edit-comment-pencil {
+        display: none;
+    }
+    .build:hover .edit-comment-pencil {
+        display: inline;
     }
 </style>
 {% endblock %}
@@ -215,7 +213,7 @@
                             <a class="btn" data-bind="
                                 openModal: 'deploy-build-modal-template',
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
-                                click: function() { ga('send', 'event', 'App Manager', 'Deploy Button', '{{ app.id }}'); }
+                                click: function() { ga_track_event('App Manager', 'Deploy Button', '{{ app.id }}'); }
                             ">
                                 <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
@@ -231,9 +229,30 @@
                     </td>
                     {% endif %}
                     <td>
-                        <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
-                        <span data-bind="text: build_comment"></span>
-                        <h6 data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</h6>
+                        <div data-bind="visible: !editing_comment()">
+                            <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
+                            <span data-bind="text: build_comment"></span>
+                            <b data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</b>
+                            <a class="edit-comment-pencil" href="#"
+                               data-bind="click: function () {editing_comment(true);}">
+                                <span class="icon-pencil"></span>
+                            </a>
+                        </div>
+                        <div data-bind="visible: editing_comment()">
+                            <input type="text" data-bind="value: new_comment"></input>
+                            <a href="#" data-bind="click: submit_new_comment, visible: !pending_comment_update()">
+                                <span class="icon-ok"></span>
+                            </a>
+                            <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
+                                <span class="icon-remove"></span>
+                            </a>
+                            <span data-bind="visible: pending_comment_update()">
+                                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                            </span>
+                        </div>
+                        <div data-bind="visible: comment_update_error()" class="alert alert-error">
+                            {% trans "Error updating comment.  Please try again" %}
+                        </div>
                     </td>
                     <td class="build-is-released">
                         <div data-bind="starred: is_released{% if edit %}, click: $root.toggleRelease{% endif %}"></div>
@@ -301,17 +320,6 @@
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
-                                attr: {href: $root.url('emulator', id)},
-                                click: function() { track_deploy_type_and_redirect('Preview in Emulator', $root.url('emulator', id)); },
-                            ">
-                                {% trans 'Preview in Emulator' %}
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle" data-bind="
                                 click: function() { track_deploy_type('Download to Java Phone'); },
                             ">
                                 {% trans "Download to Java Phone" %}
@@ -373,7 +381,10 @@
                                                             into the application install screen:
                                                         {% endblocktrans %}
                                                         <code class="bitly"><a data-bind="
-                                                            attr: {href: get_short_odk_url()},
+                                                            attr: {
+                                                                href: get_short_odk_url(),
+                                                                title: get_short_odk_url_phonetic()
+                                                            },
                                                             text: get_short_odk_url()
                                                         "></a></code>
                                                     </span>
@@ -493,9 +504,8 @@
                     {% if request.user.is_superuser %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" data-bind="
+                                <a class="accordion-toggle view-source-files-link" data-bind="
                                     attr: {href: $root.url('source', id)},
-                                    click: function() { track_deploy_type_and_redirect('View Source Files', $root.url('source', id)); },
                                 ">
                                     {% trans "View Source Files" %}
                                 </a>

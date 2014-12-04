@@ -8,7 +8,15 @@ from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from pact import enums
 
-from pact.enums import TIME_LABEL_LOOKUP, PACT_SCHEDULES_NAMESPACE, DOT_ART, DOT_NONART, PACT_REGIMEN_CHOICES_FLAT_DICT, REGIMEN_CHOICES, PACT_DOMAIN
+from pact.enums import (
+    DOT_ART,
+    DOT_NONART,
+    PACT_DOMAIN,
+    PACT_REGIMEN_CHOICES_FLAT_DICT,
+    PACT_SCHEDULES_NAMESPACE,
+    REGIMEN_CHOICES,
+    TIME_LABEL_LOOKUP,
+)
 from pact.regimen import regimen_string_from_doc
 
 
@@ -16,9 +24,18 @@ def make_uuid():
     return uuid.uuid4().hex
 
 from datetime import datetime, timedelta
-from couchdbkit.ext.django.schema import StringProperty, DateTimeProperty, BooleanProperty, Document, DateProperty, SchemaListProperty, IntegerProperty
+from couchdbkit.ext.django.schema import (
+    BooleanProperty,
+    DateProperty,
+    DateTimeProperty,
+    Document,
+    IntegerProperty,
+    SchemaListProperty,
+    StringProperty,
+)
 
 dp = parser()
+
 
 class DOTSubmission(XFormInstance):
     @property
@@ -28,9 +45,9 @@ class DOTSubmission(XFormInstance):
             pillbox_check_data = simplejson.loads(pillbox_check_str)
             anchor_date = dp.parse(pillbox_check_data.get('anchor', '0000-01-01'))
         else:
-            pillbox_check_str = {}
             anchor_date = datetime.min
-        encounter_date = self.form['encounter_date']  # datetime already from couch
+        # datetime already from couch
+        encounter_date = self.form['encounter_date']
         return 'yes' if anchor_date.date() == encounter_date else 'no'
 
     @property
@@ -48,8 +65,9 @@ class DOTSubmission(XFormInstance):
         else:
             return "#"
         pass
+
     class Meta:
-        app_label='pact'
+        app_label = 'pact'
 
 
 class PactPatientCase(CommCareCase):
@@ -85,15 +103,14 @@ class PactPatientCase(CommCareCase):
             'hiv_care_clinic', enums.PACT_HIV_CLINIC_CHOICES_DICT
         )
 
-
     def update_providers(self, cc_user, provider_ids):
         from pact.api import submit_case_update_form
-        update_dict = dict(('provider%d' % ix, provider_id) for (ix, provider_id) in enumerate(provider_ids, start=1))
+        update_dict = {'provider%d' % ix: provider_id
+                       for ix, provider_id in enumerate(provider_ids, start=1)}
         submit_case_update_form(self, update_dict, cc_user)
 
-
     def get_provider_ids(self):
-        for x in range(1,10):
+        for x in range(1, 10):
             providerx = getattr(self, 'provider%d' % x, None)
             if providerx is not None and providerx != "":
                 yield providerx
@@ -107,12 +124,9 @@ class PactPatientCase(CommCareCase):
         all_providers = get_all_providers()
         pt_providers = list(self.get_provider_ids())
 
-        providers_dict = dict((x.fields['id'], x.fields) for x in all_providers)
-        #filtered= filter(lambda x: x.fields['id'] in pt_providers, all_providers)
-        #return [x.fields for x in filtered]
+        providers_dict = {x.fields['id']: x.fields for x in all_providers}
 
         return [providers_dict[x] for x in pt_providers if x in providers_dict]
-
 
     def _get_display_string(self, attr, display_dict):
         attr_val = getattr(self, attr, None)
@@ -120,6 +134,7 @@ class PactPatientCase(CommCareCase):
             return display_dict.get(attr_val, attr_val)
         else:
             return ""
+
     def is_dot(self):
         dot_status = getattr(self, 'dot_status', None)
         if dot_status is None:
@@ -132,13 +147,15 @@ class PactPatientCase(CommCareCase):
 
     def art_regimen_label_string(self):
         """
-        representation of the labeled strings of the art regimen" morning,noon,evening
+        representation of the labeled strings
+        of the art regimen: morning, noon, evening
         """
         return regimen_string_from_doc(DOT_ART, self.to_json())
 
     def nonart_regimen_label_string(self):
         """
-        representation of the labeled strings of the nonart regimen: morning,noon,evening, etc
+        representation of the labeled strings
+        of the nonart regimen: morning, noon, evening, etc
         """
         return regimen_string_from_doc(DOT_NONART, self.to_json())
 
@@ -182,16 +199,15 @@ class PactPatientCase(CommCareCase):
     def nonart_labels(self):
         for label in ['dot_n_one', 'dot_n_two', 'dot_n_three', 'dot_n_four']:
             val = getattr(self, label, '')
-            if val != "" and val != None:
+            if val != "" and val is not None:
                 yield val
 
     @property
     def art_labels(self):
         for label in ['dot_a_one', 'dot_a_two', 'dot_a_three', 'dot_a_four']:
             val = getattr(self, label, '')
-            if val != "" and val != None:
+            if val != "" and val is not None:
                 yield val
-
 
     def get_schedules(self, raw_json=False, reversed=False):
         obj = self.to_json()
@@ -214,72 +230,73 @@ class PactPatientCase(CommCareCase):
         self._recompute_schedules(schedules)
 
     def _recompute_schedules(self, schedules):
+        schedules = sorted(schedules, key=lambda x: x.started)
         for ix, curr_sched in enumerate(schedules):
-            #ensure that current ended is <= next ended
+            # ensure that current ended is <= next ended
             next_sched = None
+
             if ix < len(schedules) - 1:
                 next_sched = schedules[ix+1]
             else:
-                #we are at the end
+                # we are at the end
                 if curr_sched.ended is not None:
                     curr_sched.ended = None
                     schedules[ix] = curr_sched
 
             if next_sched is not None:
                 if curr_sched.ended is None:
-                    #not good, there's a next
+                    # not good, there's a next
                     curr_sched.ended = next_sched.started - timedelta(seconds=1)
                     schedules[ix] = curr_sched
                 if curr_sched.ended <= next_sched.started:
-                    #ok, good
+                    # ok, good
                     pass
+
         self['computed_'][PACT_SCHEDULES_NAMESPACE] = [x.to_json() for x in schedules]
 
     def set_schedule(self, new_schedule):
-        """set the schedule as head of the schedule by accepting a cdotweeklychedule, does not save doc"""
-        assert isinstance(new_schedule, CDotWeeklySchedule), "setting schedule instance must be a CDotWeeklySchedule class"
-        #first, set all the others to inactive
+        """
+        Set the schedule as head of the schedule.
+        Does not save the case document.
+        """
+        assert isinstance(new_schedule, CDotWeeklySchedule), \
+            "setting schedule instance must be a CDotWeeklySchedule class"
+        # first, set all the others to inactive
         schedules = self.get_schedules()
-        new_schedule.deprecated=False
-        if new_schedule.started == None or new_schedule.started <= datetime.utcnow():
-            new_schedule.started=datetime.utcnow()
-        #recompute and make sure all schedules are closed time intervals
+        new_schedule.deprecated = False
+        if new_schedule.started is None or new_schedule.started <= datetime.utcnow():
+            new_schedule.started = datetime.utcnow()
+        # recompute and make sure all schedules are closed time intervals
         schedules.append(new_schedule)
         self._recompute_schedules(schedules)
 
-
-
-
     def get_info_url(self):
         from pact.reports.patient import PactPatientInfoReport
-        return PactPatientInfoReport.get_url( *[PACT_DOMAIN]) + "?patient_id=%s" % self._id
+        return PactPatientInfoReport.get_url(*[PACT_DOMAIN]) + "?patient_id=%s" % self._id
 
     def get_dot_url(self):
         from pact.reports.dot import PactDOTReport
         return PactDOTReport.get_url(*[PACT_DOMAIN]) + "?dot_patient=%s" % self._id
 
-
+    @property
+    def current_schedule(self):
+        try:
+            return self.schedules['current_schedule']
+        except (KeyError, IndexError):
+            return None
 
     @property
+    @memoized
     def schedules(self):
-        #patient_doc is the case doc
+        # patient_doc is the case doc
         computed = self['computed_']
         ret = {}
-
-        def get_current(x):
-            if x.ended is None and x.started <= datetime.utcnow():
-                return True
-            if x.ended is not None and x.ended <= datetime.utcnow():
-                return False
-            if x.started > datetime.utcnow():
-                return False
-            return False
 
         if computed.has_key(PACT_SCHEDULES_NAMESPACE):
             schedule_arr = self.get_schedules()
 
             past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)
-            current = filter(get_current, schedule_arr)
+            current = filter(lambda x: x.is_current, schedule_arr)
             future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
             past.reverse()
 
@@ -288,10 +305,9 @@ class PactPatientCase(CommCareCase):
             ret['future_schedules'] = future
         return ret
 
-
     @property
     def addresses(self):
-        for ix in range(1,6):
+        for ix in range(1, 6):
             if hasattr(self, 'address%d' % ix) and hasattr(self, 'address%dtype' % ix):
                 address = getattr(self, "address%d" % ix, None)
                 if address is not None and address != "":
@@ -373,9 +389,6 @@ class PactPatientCase(CommCareCase):
         }
 
 
-
-
-
 class CDotWeeklySchedule(Document):
     """Weekly schedule where each day has a username"""
     schedule_id = StringProperty(default=make_uuid)
@@ -388,7 +401,6 @@ class CDotWeeklySchedule(Document):
     friday = StringProperty()
     saturday = StringProperty()
 
-
     comment = StringProperty()
 
     deprecated = BooleanProperty(default=False)
@@ -396,8 +408,13 @@ class CDotWeeklySchedule(Document):
     started = DateTimeProperty(default=datetime.utcnow, required=True)
     ended = DateTimeProperty()
 
-    created_by = StringProperty() #userid
-    edited_by = StringProperty() #userid
+    created_by = StringProperty()  # user id
+    edited_by = StringProperty()  # user id
+
+    @property
+    def is_current(self):
+        now = datetime.utcnow()
+        return self.started <= now and (self.ended is None or self.ended > now)
 
     def weekly_arr(self):
         return [
@@ -411,19 +428,20 @@ class CDotWeeklySchedule(Document):
             "Deprecated: %s" % self.deprecated,
             "Started: %s" % self.started,
             "Ended: %s" % self.ended,
-                ]
+        ]
 
     class Meta:
-        app_label='pact'
-
+        app_label = 'pact'
 
 
 ADDENDUM_NOTE_STRING = "[AddendumEntry]"
+
+
 class CObservation(Document):
     doc_id = StringProperty()
-    patient = StringProperty() #case id
+    patient = StringProperty()  # case id
 
-    pact_id = StringProperty() #patient pact id
+    pact_id = StringProperty()  # patient pact id
     provider = StringProperty()
 
     encounter_date = DateTimeProperty()
@@ -445,9 +463,13 @@ class CObservation(Document):
 
     day_index = IntegerProperty()
 
-    day_note = StringProperty() #if there's something for that particular day, then it'll be here
-    day_slot = IntegerProperty() #new addition, if there's a slot for the day label, then retain it
-    note = StringProperty() #this is for the overall note for that submission, will exist on the anchor date
+    # if there's something for that particular day, then it'll be here
+    day_note = StringProperty()
+    # new addition, if there's a slot for the day label, then retain it
+    day_slot = IntegerProperty()
+    # this is for the overall note for that submission,
+    # will exist on the anchor date
+    note = StringProperty()
 
     @classmethod
     def wrap(cls, obj):
@@ -505,6 +527,7 @@ class CObservationAddendum(Document):
     created_by = StringProperty()
     created_date = DateTimeProperty()
     notes = StringProperty()  # placeholder if need be
+
     class Meta:
         app_label = 'pact'
 

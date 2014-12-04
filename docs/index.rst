@@ -30,6 +30,7 @@ Welcome to CommCareHQ's documentation!
    translations
    profiling
    elasticsearch
+   test_coverage
 
 Tips for documenting
 --------------------

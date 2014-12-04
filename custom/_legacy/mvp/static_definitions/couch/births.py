@@ -98,6 +98,13 @@ ACTIVE_CHILD_CASES_BY_AGE_INDICATORS = dict(
                 is_dob_in_datespan=True,
                 show_active_only=False,
             ),
+            num_children_3to24months=dict(
+                description="No. of Children 3 to 24 Months of Age during this timespan",
+                title="# Under-5s 3-24 Months",
+                max_age_in_days=730,
+                min_age_in_days=90,
+                indicator_key="",
+            ),
         )
     )
 )

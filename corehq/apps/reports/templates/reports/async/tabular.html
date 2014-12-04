@@ -120,6 +120,10 @@
                     ajaxParams: {{ report_table.pagination.params|JSON }},
                 {% endif %}
 
+                {% if report_table.bad_request_error_text %}
+                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}",
+                {% endif %}
+
                 {% if report_table.left_col.is_fixed %}
                     fixColumns: true,
                     fixColsNumLeft: {{ report_table.left_col.fixed.num }},

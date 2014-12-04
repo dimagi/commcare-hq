@@ -2,8 +2,9 @@ import copy
 import logging
 
 from couchdbkit.resource import ResourceNotFound
+import datetime
 import redis
-from casexml.apps.case.signals import cases_received
+from casexml.apps.case.signals import cases_received, case_post_save
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import (
@@ -17,7 +18,6 @@ from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml.parser import case_update_from_block
-from casexml.apps.phone.models import SyncLog
 from dimagi.utils.logging import notify_exception
 
 
@@ -29,14 +29,24 @@ def process_cases(xform, config=None):
     reconciling the case update history after the case is processed.
     """
 
-    config = config or CaseProcessingConfig()
+    assert getattr(settings, 'UNIT_TESTING', False)
     domain = get_and_check_xform_domain(xform)
 
     with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        return _process_cases(xform, config, case_db)
+        cases = process_cases_with_casedb(xform, case_db, config=config)
+
+    docs = [xform] + cases
+    now = datetime.datetime.utcnow()
+    for case in cases:
+        case.server_modified_on = now
+    XFormInstance.get_db().bulk_save(docs)
+    for case in cases:
+        case_post_save.send(CommCareCase, case=case)
+    return cases
 
 
-def _process_cases(xform, config, case_db):
+def process_cases_with_casedb(xform, case_db, config=None):
+    config = config or CaseProcessingConfig()
     cases = get_or_update_cases(xform, case_db).values()
 
     if config.reconcile:
@@ -58,13 +68,12 @@ def _process_cases(xform, config, case_db):
 
     # handle updating the sync records for apps that use sync mode
 
-    last_sync_token = getattr(xform, 'last_sync_token', None)
-    if last_sync_token:
-        relevant_log = SyncLog.get(last_sync_token)
+    relevant_log = xform.get_sync_token()
+    if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
         from casexml.apps.case.util import update_sync_log_with_checks
-        update_sync_log_with_checks(relevant_log, xform, cases,
+        update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
 
         if config.reconcile:
@@ -84,17 +93,10 @@ def _process_cases(xform, config, case_db):
     for case in cases:
         if not case.check_action_order():
             try:
-                case.reconcile_actions(rebuild=True)
+                case.reconcile_actions(rebuild=True, xforms={xform._id: xform})
             except ReconciliationError:
                 pass
-        case.force_save()
-
-    # set flags for indicator pillows and save
-    xform.initial_processing_complete = True
-    # if there are pillows or other _changes listeners competing to update
-    # this form, override them. this will create a new entry in the feed
-    # that they can re-pick up on
-    xform.save(force_update=True)
+        case_db.mark_changed(case)
 
     return cases
 
@@ -127,6 +129,7 @@ class CaseDbCache(object):
         self.deleted_ok = deleted_ok
         self.lock = lock
         self.locks = []
+        self._changed = set()
 
     def __enter__(self):
         return self
@@ -199,6 +202,16 @@ class CaseDbCache(object):
         for raw_case in  _iter_raw_cases(case_ids):
             case = CommCareCase.wrap(raw_case)
             self.set(case._id, case)
+
+    def mark_changed(self, case):
+        assert self.cache.get(case.case_id) is case
+        self._changed.add(case.case_id)
+
+    def get_changed(self):
+        return [self.cache[case_id] for case_id in self._changed]
+
+    def clear_changed(self):
+        self._changed = set()
 
 
 def get_and_check_xform_domain(xform):
