@@ -56,7 +56,6 @@ branches:
 #  - share-fixtures # j$ 10/29
   - hq-dropdown+locations-for-everyone # tw 11/18
   - hq-dropdown # sravan 5/7
-  - custom-data-choices  # Ethan 11/09
   - vellum-staging # J$ 11/13
   - custom_location_data+locations-for-everyone  # tw & Ethan 11/18 this has more than just the obvious merge conflict resolution, please merge in when ready.
   - custom_location_data+system-custom-data+locations-for-everyone  # Ethan 11/24 (yo dawg i herd u like conflict resolution branches...)
