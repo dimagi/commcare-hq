@@ -1,0 +1,42 @@
+[
+    {
+        "auto_monthly_consumption": null,
+        "is_active": true,
+        "last_modified": "2011-09-01T22:41:35.039236",
+        "product": "ip",
+        "quantity": 0,
+        "supply_point": 68
+    },
+    {
+        "auto_monthly_consumption": null,
+        "is_active": true,
+        "last_modified": "2011-09-01T22:41:35.122043",
+        "product": "id",
+        "quantity": 0,
+        "supply_point": 68
+    },
+    {
+        "auto_monthly_consumption": null,
+        "is_active": true,
+        "last_modified": "2011-09-01T22:41:38.904406",
+        "product": "id",
+        "quantity": 0,
+        "supply_point": 73
+    },
+    {
+        "auto_monthly_consumption": null,
+        "is_active": true,
+        "last_modified": "2011-09-01T22:41:53.443487",
+        "product": "pp",
+        "quantity": 0,
+        "supply_point": 35
+    },
+    {
+        "auto_monthly_consumption": null,
+        "is_active": true,
+        "last_modified": "2011-09-01T22:42:45.944915",
+        "product": "dp",
+        "quantity": 100,
+        "supply_point": 56
+    }
+]

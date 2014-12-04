@@ -3,12 +3,18 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from corehq.apps.commtrack.models import Product, SQLProduct, StockState
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.products.models import Product
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch import sync_docs
+import corehq.apps.commtrack.models as commtrack_models
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        # hack to force sync docs before this runs
+        sync_docs.sync(commtrack_models, verbosity=2)
+
         # sync products first
 
         properties_to_sync = [

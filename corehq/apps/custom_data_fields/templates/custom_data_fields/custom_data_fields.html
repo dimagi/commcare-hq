@@ -16,18 +16,31 @@
     <script>
         var customDataFieldsModel = new CustomDataFieldsModel();
         customDataFieldsModel.init({{ custom_fields|JSON }});
+        customDataFieldsModel.data_fields.subscribe(function() {
+            $("#save-custom-fields").prop("disabled", false);
+        });
+
         ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
 
         $('form[id="custom-fields-form"]').on("change", null, null, function() {
-            $(":submit").prop("disabled", false);
+            $("#save-custom-fields").prop("disabled", false);
         }).on("input", null, null, function() {
-            $(":submit").prop("disabled", false);
+            $("#save-custom-fields").prop("disabled", false);
         })
 
         $('.modal-footer button').on("click", function() {
             $(":submit").prop("disabled", false);
         })
     </script>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+    <style>
+        ul.choices-list > li {
+            padding-top: 5px;
+        }
+    </style>
 {% endblock %}
 
 {% block main_column %}
@@ -66,8 +79,8 @@
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th></th>
-                                <th>
+                                <th class="span1"></th>
+                                <th class="span3">
                                     {% blocktrans with entity_string=view.entity_string %}
                                         {{ entity_string }} Property
                                     {% endblocktrans %}
@@ -83,18 +96,38 @@
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
-                                <th>
+                                <th class="span3">
                                     {% trans "Label" %}
                                     <span class="hq-help-template"
                                           data-title="{% trans "Label" %}"
-                                          data-content="{% blocktrans with entity_string=view.entity_string %}
+                                          data-content="{% blocktrans with entity_string=view.entity_string|lower %}
                                               The field label that users will see when adding or editing
                                               a {{ entity_string }} in CommCareHQ.
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
-                                <th>{% trans "Required" %}</th>
-                                <th>{% trans "Delete" %}</th>
+                                <th class="span1">
+                                    {% trans "Required" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Required" %}"
+                                          data-content="{% blocktrans with entity_string=view.entity_string|lower %}
+                                              A value for this field must be provided when creating or
+                                              editing a {{ entity_string }}.  Bulk import will fail
+                                              unless this field is provided.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                <th class="span3">
+                                    {% trans "Choices" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Choices" %}"
+                                          data-content="{% blocktrans %}
+                                              Provides a drop-down list of choices for this field
+                                              instead of free text entry.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                <th class="span1">{% trans "Delete" %}</th>
                             </tr>
                         </thead>
                         <tbody data-bind="sortable: data_fields">
@@ -112,13 +145,34 @@
                                     <input type="checkbox" data-bind="checked: is_required"/>
                                 </td>
                                 <td>
+                                    <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
+                                        <i class="icon-plus"></i> {% trans "Add Choice" %}
+                                    </a>
+                                    <ul data-bind="sortable: choices" class="unstyled choices-list">
+                                        <li data-bind="attr: {'data-order': _sortableOrder}">
+                                            <i class="icon-sort sortable-handle"></i>
+                                            <input type="text" data-bind="value: value"/>
+                                            <a type="button"
+                                               class="btn btn-danger"
+                                               data-bind="click: $parent.removeChoice">
+                                                &times;
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </td>
+                                <td>
                                     <a type="button"
                                        class="btn btn-danger"
                                        data-toggle="modal"
                                        data-bind="attr: {href: '#delete-confirm-modal' + $index()}">
-                                        <i class="icon-remove"></i> Delete
+                                        <i class="icon-remove"></i> {% trans "Delete" %}
                                     </a>
-                                    <div data-bind="attr: {id: 'delete-confirm-modal' + $index()}" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="delete-confirm-modal-label" aria-hidden="true">
+                                    <div data-bind="attr: {id: 'delete-confirm-modal' + $index()}"
+                                         class="modal hide fade"
+                                         tabindex="-1"
+                                         role="dialog"
+                                         aria-labelledby="delete-confirm-modal-label"
+                                         aria-hidden="true">
                                         <div class="modal-header">
                                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                                             <h3 id="delete-confirm-modal-label">{% trans "Are you sure you want to delete this field?" %}</h3>

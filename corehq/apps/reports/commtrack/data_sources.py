@@ -1,7 +1,8 @@
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState, SQLLocation
+from corehq.apps.commtrack.models import SupplyPointCase, StockState, SQLLocation
+from corehq.apps.products.models import Product
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
@@ -14,6 +15,14 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
+
+
+def format_decimal(d):
+    # https://docs.python.org/2/library/decimal.html#decimal-faq
+    if d is not None:
+        return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
+    else:
+        return None
 
 
 class CommtrackDataSourceMixin(object):
@@ -66,20 +75,38 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         transactions that occur during the day we are filtering
         for
         """
-        date = self.config.get('date')
-        if date:
+        # note: empty string is parsed as today's date
+        date = self.config.get('date', '')
+
+        try:
             date = parser.parse(date).date()
-        else:
+        except ValueError:
             date = datetime.now().date()
+
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
     def get_data(self, slugs=None):
         if self.active_location:
             current_location = self.active_location.sql_location
-            locations = [current_location] + list(current_location.get_descendants())
-        else:
-            locations = SQLLocation.objects.filter(domain=self.domain)
 
+            if current_location.supply_point_id:
+                locations = [current_location]
+            else:
+                locations = []
+
+            locations += list(
+                current_location.get_descendants().filter(
+                    supply_point_id__isnull=False
+                )
+            )
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                supply_point_id__isnull=False
+            )
+
+        # locations at this point will only have location objects
+        # that have supply points associated
         for loc in locations[:self.config.get('max_rows', 100)]:
             transactions = StockTransaction.objects.filter(
                 case_id=loc.supply_point_id,
@@ -99,6 +126,10 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
             ).distinct(
                 'product_id'
             )
+
+            # take a pass over the data to format the stock on hand
+            # values properly
+            stock_results = [(p, format_decimal(soh)) for p, soh in stock_results]
 
             yield (loc.name, stock_results)
 
@@ -187,16 +218,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self, slugs=None):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        stock_states = StockState.include_archived.filter(
+        stock_states = StockState.objects.filter(
             section_id=STOCK_SECTION_TYPE,
             last_modified_date__lte=self.end_date,
             last_modified_date__gte=self.start_date,
         )
-
-        if not self.config.get('archived_products', False):
-            stock_states = stock_states.exclude(
-                sql_product__is_archived=True
-            )
 
         if len(sp_ids) == 1:
             stock_states = stock_states.filter(
@@ -220,13 +246,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             else:
                 return self.raw_product_states(stock_states, slugs)
 
-    def format_decimal(self, d):
-        # https://docs.python.org/2/library/decimal.html#decimal-faq
-        if d is not None:
-            return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
-        else:
-            return None
-
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
@@ -237,7 +256,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'months_remaining': state.months_remaining,
                 'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
-                'current_stock': self.format_decimal(state.stock_on_hand),
+                'current_stock': format_decimal(state.stock_on_hand),
                 'location_lineage': None,
                 'resupply_quantity_needed': state.resupply_quantity_needed
             }
@@ -250,7 +269,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for state in stock_states:
             if state.product_id in product_aggregation:
                 product = product_aggregation[state.product_id]
-                product['current_stock'] = self.format_decimal(
+                product['current_stock'] = format_decimal(
                     product['current_stock'] + state.stock_on_hand
                 )
 
@@ -281,7 +300,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                     'product_name': product.name,
                     'location_lineage': None,
                     'resupply_quantity_needed': None,
-                    'current_stock': self.format_decimal(state.stock_on_hand),
+                    'current_stock': format_decimal(state.stock_on_hand),
                     'count': 1,
                     'consumption': consumption,
                     'category': stock_category(

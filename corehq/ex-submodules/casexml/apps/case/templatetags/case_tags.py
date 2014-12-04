@@ -15,7 +15,7 @@ from django.utils.html import escape
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.utils import get_current_ledger_transactions
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 
 register = template.Library()
 

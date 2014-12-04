@@ -1,3 +1,4 @@
+import logging
 from corehq import Domain
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource
@@ -35,18 +36,21 @@ class DomainMetadataResource(HqBaseResource):
 
     def dehydrate_calculated_properties(self, bundle):
         domain = _get_domain(bundle)
-        es_data = (DomainES()
-                   .in_domains([domain.name])
-                   .run()
-                   .raw_hits[0]['_source'])
-        return {
-            raw_hit: es_data[raw_hit]
-            for raw_hit in es_data if raw_hit[:3] == 'cp_'
-        }
+        try:
+            es_data = (DomainES()
+                       .in_domains([domain.name])
+                       .run()
+                       .raw_hits[0]['_source'])
+            return {
+                raw_hit: es_data[raw_hit]
+                for raw_hit in es_data if raw_hit[:3] == 'cp_'
+            }
+        except IndexError:
+            logging.exception('Problem getting calculated properties for {}'.format(domain.name))
+            return {}
 
     def dehydrate_domain_properties(self, bundle):
-        domain = _get_domain(bundle)
-        return {term: domain[term] for term in domain}
+        return _get_domain(bundle)._doc
 
     def obj_get(self, bundle, **kwargs):
         domain = Domain.get_by_name(kwargs.get('domain'))

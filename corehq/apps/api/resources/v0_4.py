@@ -6,7 +6,8 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
+    _safe_bool
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -291,8 +292,8 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
-
     modules = fields.ListField()
+
     def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
@@ -301,23 +302,29 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
         NOTE: This is not a tastypie "magic"-name method to
         dehydrate the "module" field; there is no such field.
         """
-        dehydrated = {}
+        try:
+            dehydrated = {}
 
-        dehydrated['case_type'] = module.case_type
+            dehydrated['case_type'] = module.case_type
 
-        dehydrated['case_properties'] = app_manager_util.get_case_properties(app, [module.case_type], defaults=['name'])[module.case_type]
+            dehydrated['case_properties'] = app_manager_util.get_case_properties(
+                app, [module.case_type], defaults=['name']
+            )[module.case_type]
 
-        dehydrated['forms'] = []
-        for form in module.forms:
-            form = Form.get_form(form.unique_id)
-            form_jvalue = {
-                'xmlns': form.xmlns,
-                'name': form.name,
-                'questions': form.get_questions(langs),
+            dehydrated['forms'] = []
+            for form in module.forms:
+                form = Form.get_form(form.unique_id)
+                form_jvalue = {
+                    'xmlns': form.xmlns,
+                    'name': form.name,
+                    'questions': form.get_questions(langs),
+                }
+                dehydrated['forms'].append(form_jvalue)
+            return dehydrated
+        except Exception as e:
+            return {
+                'error': unicode(e)
             }
-            dehydrated['forms'].append(form_jvalue)
-
-        return dehydrated
 
     def dehydrate_modules(self, bundle):
         app = bundle.obj
@@ -326,6 +333,15 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
             return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
         elif app.doc_type == RemoteApp._doc_type:
             return []
+
+    def dehydrate(self, bundle):
+        if not _safe_bool(bundle, "extras"):
+            return super(ApplicationResource, self).dehydrate(bundle)
+        else:
+            app_data = {}
+            app_data.update(bundle.obj._doc)
+            app_data.update(bundle.data)
+            return app_data
 
     def obj_get_list(self, bundle, domain, **kwargs):
         return get_apps_in_domain(domain, include_remote=False)

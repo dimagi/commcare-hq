@@ -24,7 +24,12 @@
         {% block uncompressed-stylesheets %}{% endblock %}
 
         {# this should eventually be moved to the end of the page #}
+        {% if formdesigner %}
+        <script src="{% static 'hqstyle/js/jquery/jquery-1.11.1.min.js' %}"></script>
+        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        {% else %}
         <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
+        {% endif %}
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
@@ -180,6 +185,9 @@
                                 <div class="controls">
                                     <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
                                     <p class="help-block">{% trans "Please try to include as much information as possible." %}</p>
+                                    <div class="alert fade in page-level-alert alert-error" id="empty-issue-alert">
+                                        <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter some description about the issue" %}
+                                    </div>
                                 </div>
                             </div>
 
@@ -205,7 +213,7 @@
                                     <input type="text" class="input-xlarge" name="cc" id="bug-report-cc" rows="1">
                                     <p class="help-block">{% trans "Comma-separated email addresses of others you want to notify about this issue" %}
                                     </p>
-                                    <div class="alert fade in page-level-alert alert-error">
+                                    <div class="alert fade in page-level-alert alert-error" id="invalid-cc-alert">
                                         <a class="close" data-dismiss="alert" href="#">×</a>{% trans "Please enter valid comma-separated email-list." %}
                                     </div>
                                 </div>
@@ -559,13 +567,6 @@
                 if ($.browser.msie) {
                     $('#unsupported-browser').show();
                 }
-                var $alertBox = $("#hqwebapp-bugReportForm .alert");
-                $alertBox.hide();
-                $("#hqwebapp-bugReportForm input[name='cc']").focus(
-                    function(){
-                        $alertBox.hide();
-                    }
-                );
             });
         </script>
     </body>

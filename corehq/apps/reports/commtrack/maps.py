@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
@@ -13,7 +13,6 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
     ]
 
     data_source = {
@@ -50,10 +49,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         }
 
         products = sorted(
-            Product.by_domain(
-                self.domain,
-                include_archived=self.request.GET.get('archived_products', False)
-            ),
+            Product.by_domain(self.domain),
             key=lambda p: p.name
         )
 

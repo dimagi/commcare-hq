@@ -599,10 +599,7 @@ class ConditionsMet(OPMCaseRow):
         ('five', _("Condition 5"), True),
         ('cash', _("Payment Amount"), True),
         ('case_id', _('Case ID'), True),
-        ('owner_id', _("Owner Id"), False),
-        ('closed', _('Closed'), False),
         ('closed_date', _("Closed On"), True),
-        ('village', _("Village Name"), False),
     ]
 
     def __init__(self, case, report, child_index=1):

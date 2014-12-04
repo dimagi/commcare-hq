@@ -1,7 +1,7 @@
 from django.dispatch import receiver
 from corehq import Domain
 from corehq.apps.commtrack.const import RequisitionStatus
-from corehq.apps.commtrack.models import Program
+from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.signals import supply_point_modified, requisition_modified, send_notifications
 from custom.openlmis.api import OpenLMISEndpoint
 from custom.openlmis.commtrack import sync_supply_point_to_openlmis, requisition_approved, approve_requisition, requisition_receipt, delivery_update, sync_stock_data_to_openlmis, sync_requisition_from_openlmis

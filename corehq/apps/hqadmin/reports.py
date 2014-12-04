@@ -210,7 +210,7 @@ INDICATOR_DATA = {
     "commconnect_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "commconnect_domains",
-        "chart_title": "Total CommConnect Enabled Domains",
+        "chart_title": "Total Domains That Use Messaging",
         "histogram_type": "domains",
         "xaxis_label": "# domains",
     },
@@ -236,7 +236,7 @@ INDICATOR_DATA = {
     "active_commconnect_domain_count": {
         "ajax_view": "admin_reports_stats_data",
         "chart_name": "active_commconnect_domains",
-        "chart_title": "Active CommConnect Project Spaces (last 30 days)",
+        "chart_title": "Active Project Spaces That Use Messaging (last 30 days)",
         "get_request_params": {
             "add_form_domains": False,
         },
@@ -427,6 +427,8 @@ ES_PREFIX = "es_"
 DOMAIN_FACETS = [
     "cp_is_active",
     "cp_has_app",
+    "cp_sms_ever",
+    "cp_sms_30_d",
     "uses reminders",
     "project_type",
     "area",
@@ -456,7 +458,6 @@ DOMAIN_FACETS = [
     "internal.project_manager",
     "internal.phone_model.exact",
     "internal.commtrack_domain",
-    "internal.commconnect_domain",
 
     "is_approved",
     "is_public",
@@ -503,8 +504,9 @@ FACET_MAPPING = [
         {"facet": "internal.using_adm", "name": "ADM", "expanded": False},
         {"facet": "internal.using_call_center", "name": "Call Center", "expanded": False},
         {"facet": "internal.commtrack_domain", "name": "CommTrack", "expanded": False},
-        {"facet": "internal.commconnect_domain", "name": "CommConnect", "expanded": False},
         {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False},
+        {"facet": "cp_sms_ever", "name": "Used Messaging Ever", "expanded": False},
+        {"facet": "cp_sms_30_d", "name": "Used Messaging Last 30 days", "expanded": False},
     ]),
     ("Plans", False, [
         {"facet": "project_type", "name": "Project Type", "expanded": False},
@@ -686,8 +688,15 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Self-Starter?"), prop_name="internal.self_started"),
             DataTablesColumn(_("Test Project?"), prop_name="is_test"),
             DataTablesColumn(_("Active?"), prop_name="cp_is_active"),
-            DataTablesColumn(_("CommConnect?"), prop_name="internal.commconnect_domain"),
             DataTablesColumn(_("CommTrack?"), prop_name="internal.commtrack_domain"),
+            DataTablesColumn(_("# Outgoing SMS"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_out_sms"),
+            DataTablesColumn(_("# Incoming SMS"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_in_sms"),
+            DataTablesColumn(_("# SMS Ever"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_sms_ever"),
+            DataTablesColumn(_("# SMS in last 30"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_sms_30_d"),
         )
         return headers
 
@@ -708,6 +717,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             10: "cp_n_cases",
             11: "cp_n_forms",
             14: "cp_n_web_users",
+            27: "cp_n_out_sms",
+            28: "cp_n_in_sms",
+            29: "cp_n_sms_ever",
+            30: "cp_n_sms_30_d",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -764,8 +777,11 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     format_bool(dom.get('internal', {}).get('self_started')),
                     dom.get('is_test') or _('No info'),
                     format_bool(dom.get('cp_is_active') or _('No info')),
-                    format_bool(dom.get('internal', {}).get('commconnect_domain')),
                     format_bool(dom.get('internal', {}).get('commtrack_domain')),
+                    dom.get('cp_n_out_sms', _("Not yet calculated")),
+                    dom.get('cp_n_in_sms', _("Not yet calculated")),
+                    dom.get('cp_n_sms_ever', _("Not yet calculated")),
+                    dom.get('cp_n_sms_30_d', _("Not yet calculated")),
                 ]
 
 
@@ -947,10 +963,10 @@ class RealProjectSpacesReport(GlobalAdminReports):
 
 class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
-    name = ugettext_noop('CommConnect Project Spaces')
+    name = ugettext_noop('Project Spaces Using Messaging')
     default_params = {
         'es_is_test': 'false',
-        'es_internal.commconnect_domain': 'true',
+        'es_cp_sms_ever': 'true',
     }
     indicators = [
         'commconnect_domain_count',

@@ -114,16 +114,22 @@ PRBAC_DEMO = StaticToggle(
     'Roles and permissions'
 )
 
-ACCOUNTING_PREVIEW = StaticToggle(
-    'accounting_preview',
-    'Accounting preview',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
     [NAMESPACE_USER]
+)
+
+DETAIL_LIST_TABS = StaticToggle(
+    'detail-list-tabs',
+    'Tabs in the case detail list',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+GRAPH_CREATION = StaticToggle(
+    'graph-creation',
+    'Case list/detail graph creation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 INVOICE_TRIGGER = StaticToggle(
@@ -168,11 +174,6 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-DASHBOARD_PREVIEW = StaticToggle(
-    'dashboard_preview',
-    'HQ Dashboard Preview'
-)
-
 EDIT_SUBMISSIONS = StaticToggle(
     'edit_submissions',
     'Submission Editing on HQ'
@@ -182,6 +183,12 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+MENU_MULTIMEDIA_UPLOAD = StaticToggle(
+    'menu_multimedia_upload',
+    'Menu Multimedia Upload (Module & Form)',
+    [NAMESPACE_USER]
 )
 
 
@@ -201,5 +208,35 @@ NEW_CASE_PROCESSING = PredicatablyRandomToggle(
     'new_case_processing',
     'Use new case processing/rebuild logic',
     namespace=NAMESPACE_DOMAIN,
-    randomness=0.05,
+    randomness=0.25,
+)
+
+SYNC_ALL_LOCATIONS = StaticToggle(
+    'sync_all_locations',
+    'Sync the full location hierarchy when syncing location fixtures',
+    [NAMESPACE_DOMAIN]
+)
+
+MULTIMEDIA_EXPORT = StaticToggle(
+    'multimedia_export',
+    'Export multimedia from forms'
+)
+
+NO_VELLUM = StaticToggle(
+    'no_vellum',
+    'Allow disabling Form Builder per form '
+    '(for custom forms that Vellum breaks)',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+BATCHED_RESTORE = StaticToggle(
+    'batched_restore',
+    'Batch OTA restore response generation',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+CAN_EDIT_EULA = StaticToggle(
+    'can_edit_eula',
+    "Whether this user can set the custom eula and data sharing internal project options. "
+    "This should be a small number of DIMAGI ONLY users",
 )

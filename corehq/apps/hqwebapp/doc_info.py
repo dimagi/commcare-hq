@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 from jsonobject import *
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
+from couchforms import models as couchforms_models
 
 
 class DocInfo(JsonObject):
@@ -73,7 +74,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 args=[domain, doc_id],
             ),
         )
-    elif doc_type in ('XFormInstance',):
+    elif doc_type in (couchforms_models.doc_types().keys()):
         doc_info = DocInfo(
             type_display=_('Form'),
             link=reverse(

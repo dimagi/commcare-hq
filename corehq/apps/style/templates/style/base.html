@@ -34,6 +34,14 @@
                   media="all"
                   href="{% new_static 'style/less/style.less' %}" />
         {% endcompress %}
+
+        {% compress css %}
+            <link type="text/less"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/less/b3-migration.less' %}" />
+        {% endcompress %}
+
         {% compress css %}
         {% block stylesheets %}{% endblock stylesheets %}
         {% endcompress %}
@@ -151,10 +159,10 @@
 
         {% if not js_display_logic %}
             {% compress js %}
-            <script type="text/javascript" src="{% new_static 'style/lib/angularjs/angular.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/angularjs/angular-route.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/angularjs/angular-resource.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/angularjs/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-route.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-resource.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>
             {% endcompress %}
         {% endif %}

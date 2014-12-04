@@ -7,7 +7,7 @@ from casexml.apps.stock.consumption import compute_daily_consumption, Consumptio
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.tests.mock_consumption import ago, now
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.commtrack.models import SQLProduct
+from corehq.apps.products.models import SQLProduct
 
 
 class StockTestBase(TestCase):

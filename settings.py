@@ -225,6 +225,8 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
+    'corehq.apps.products',
+    'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'couchforms',
@@ -320,7 +322,9 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.logistics',
     'custom.ilsgateway',
+    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -430,11 +434,19 @@ BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
-# email settings: these ones are the custom hq ones
+# These are non-standard setting names that are used in localsettings
+# The standard variables are then set to these variables after localsettings
+# Todo: Change to use standard settings variables
+# Todo: Will require changing salt pillar and localsettings template
+# Todo: or more likely in ansible once that's a thing
 EMAIL_LOGIN = "user@domain.com"
 EMAIL_PASSWORD = "changeme"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
+# These are the normal Django settings
+EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
+
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
@@ -447,6 +459,7 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
@@ -468,8 +481,8 @@ HQ_FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
     "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-    "corehq.apps.commtrack.fixtures.product_fixture_generator",
-    "corehq.apps.commtrack.fixtures.program_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
@@ -958,6 +971,8 @@ COUCHDB_APPS = [
     'phone',
     'pillowtop',
     'pillow_retry',
+    'products',
+    'programs',
     'reminders',
     'reports',
     'sofabed',
@@ -991,6 +1006,7 @@ COUCHDB_APPS = [
     'accounting',
     'succeed',
     'ilsgateway',
+    'ewsghana',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
@@ -1023,8 +1039,8 @@ EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
-EMAIL_USE_TLS = True
-SEND_BROKEN_LINK_EMAILS = True
+# EMAIL_USE_TLS and SEND_BROKEN_LINK_EMAILS are set above
+# so they can be overridden in localsettings (e.g. in a dev environment)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -1052,7 +1068,8 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
-    'custom.ilsgateway.handler.handle',
+    'custom.ilsgateway.tanzania.handler.handle',
+    'custom.ewsghana.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1233,6 +1250,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
+    'custom.ewsghana',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1275,11 +1293,14 @@ DOMAIN_MODULE_MAP = {
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
+    'ilsgateway-test-2': 'custom.ilsgateway',
+    'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh'
+    'tdhtesting': 'custom.tdh',
+    'rec': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
