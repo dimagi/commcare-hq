@@ -34,6 +34,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                                             "to choose from. Please create an application!")
     template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
+    app_slug = 'app_id'
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
     unknown_remote_app_id = 'unknown_remote_app'
@@ -64,7 +65,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                   'status'),
                  (_('Application'),
                   _("Select Application...") if self.use_only_last else _("Show all Forms of this Application Type..."),
-                  'app_id'),
+                  self.app_slug),
              ] + labels[1:]
         return labels
 
@@ -508,7 +509,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance.show_unknown:
             return True
         for param in params:
-            if param['slug'] == 'app_id':
+            if param['slug'] == cls.app_slug:
                 return True
         return False
 
@@ -525,8 +526,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 data.extend([{'value': v} for v in self.remote_forms.values()])
             return data
 
-        use_remote_form_data = bool((filter_results[0]['slug'] == 'status' and filter_results[0]['value'] == 'remote') or
-                                (filter_results[0]['slug'] == 'app' and self.remote_forms))
+        use_remote_form_data = bool(
+            (
+                filter_results[0]['slug'] == 'status' and
+                filter_results[0]['value'] == 'remote'
+            ) or (
+                filter_results[0]['slug'] == self.app_slug and self.remote_forms
+            )
+        )
 
         if filter_results[-1]['slug'] == 'xmlns':
             xmlns = filter_results[-1]['value']
@@ -672,7 +679,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     def get_labels(cls):
         return [
             (_('Application'), _("Select an Application") if cls.use_only_last
-                                    else _("Show Forms in all Applications"), 'app'),
+                                    else _("Show Forms in all Applications"), cls.app_slug),
             (_('Module'), _("Select a Module") if cls.use_only_last
                                     else _("Show Forms from all Modules in selected Application"), 'module'),
             (_('Form'), _("Select a Form") if cls.use_only_last

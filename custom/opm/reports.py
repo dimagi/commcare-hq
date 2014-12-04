@@ -827,8 +827,8 @@ class MetReport(CaseReportMixin, BaseReport):
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
-                    if method != 'case_id' and method != 'owner_id'
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
     @property
@@ -854,7 +854,7 @@ class MetReport(CaseReportMixin, BaseReport):
         Strip user_id and owner_id columns
         """
         for row in rows:
-            del row[self.column_index('owner_id')]
+            del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
 
         self.context['report_table'].update(
@@ -1199,7 +1199,7 @@ def _unformat_row(row):
     regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
     formatted_row = []
     for col in row:
-        if regexp.match(col):
+        if isinstance(col, basestring) and regexp.match(col):
             formated_col = "%s" % (regexp.match(col).group(2))
             if regexp.match(col).group(4) != "":
                 formated_col = "%s - %s%%" % (formated_col, regexp.match(col).group(4))

@@ -235,14 +235,14 @@ DOUBLE_MANAGEMENT = StaticToggle(
     [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
 
-CUSTOM_DATA_CHOICES = StaticToggle(
-    'custom_data_choices',
-    "Custom Data Choices - optionally specify choices for custom data fields",
-    [NAMESPACE_DOMAIN],
-)
-
 BATCHED_RESTORE = StaticToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+CAN_EDIT_EULA = StaticToggle(
+    'can_edit_eula',
+    "Whether this user can set the custom eula and data sharing internal project options. "
+    "This should be a small number of DIMAGI ONLY users",
 )
