@@ -65,7 +65,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                   'status'),
                  (_('Application'),
                   _("Select Application...") if self.use_only_last else _("Show all Forms of this Application Type..."),
-                  cls.app_slug),
+                  self.app_slug),
              ] + labels[1:]
         return labels
 
