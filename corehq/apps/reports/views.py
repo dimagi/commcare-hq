@@ -75,8 +75,13 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema, \
+from corehq.apps.reports.models import (
+    ReportConfig,
+    ReportNotification,
+    FakeFormExportSchema,
+    FormExportSchema,
     HQGroupExportConfiguration
+)
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
@@ -1258,7 +1263,7 @@ def form_multimedia_export(request, domain, app_id):
         xmlns = request.GET["xmlns"]
         startdate = request.GET["startdate"]
         enddate = request.GET["enddate"]
-        properties = request.GET.getlist("properties")
+        export_id = request.GET.get("export_id", None)
         zip_name = request.GET.get("name", None)
     except KeyError:
         return HttpResponseBadRequest()
@@ -1278,6 +1283,14 @@ def form_multimedia_export(request, domain, app_id):
                                          start_key=key + [startdate],
                                          end_key=key + [enddate, {}],
                                          reduce=False)}
+
+    properties = set()
+    if export_id:
+        schema = FormExportSchema.get(export_id)
+        for table in schema.tables:
+            # - in question id is replaced by . in excel exports
+            properties |= {c.display.replace('.', '-') for c in table.columns}
+
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         f = XFormInstance.wrap(form)
         if not zip_name:

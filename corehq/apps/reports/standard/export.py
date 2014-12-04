@@ -119,14 +119,12 @@ class ExcelExportReport(FormExportReportBase):
     def properties(self, size_hash):
         properties = dict()
         exports = self.get_saved_exports()
-        prop_url_query = '&properties='
 
         for export in exports:
             for table in export.tables:
-                prop = [c.display for c in table.columns]
                 properties[export.name] = {
                     'xmlns': export.index[1],
-                    'query_url': prop_url_query + prop_url_query.join(prop),
+                    'export_id': export._id,
                     'size': size_hash.get((export.app_id, export.index[1]), None),
                 }
 
