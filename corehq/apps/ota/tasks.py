@@ -39,26 +39,36 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None
                 overwrite_cache=overwrite_cache
             )
 
-            if not check_cache_only:
-                restore_config.get_payload()
-
-            # must set this to False before attempting to check the cache
-            restore_config.overwrite_cache = False
-            cached_payload = restore_config.get_cached_payload()
-            if cached_payload:
-                ret['messages'].append('SUCCESS: Restore cached successfully for user: {}'.format(
+            if check_cache_only:
+                cached_payload = get_cached_payload(restore_config)
+                ret['MESSAGES'].append('Restore cache {} for user: {}'.format(
+                    'EXISTS' if cached_payload else 'does not exist',
                     couch_user.human_friendly_name,
                 ))
             else:
-                ret['messages'].append('ERROR: Restore completed by cache still empty for user: {}'.format(
-                    couch_user.human_friendly_name,
-                ))
+                restore_config.get_payload()
+
+                cached_payload = get_cached_payload(restore_config)
+                if cached_payload:
+                    ret['messages'].append('SUCCESS: Restore cached successfully for user: {}'.format(
+                        couch_user.human_friendly_name,
+                    ))
+                else:
+                    ret['messages'].append('ERROR: Restore completed by cache still empty for user: {}'.format(
+                        couch_user.human_friendly_name,
+                    ))
         except Exception as e:
             ret['messages'].append('ERROR: Error processing user: {}'.format(str(e)))
 
         DownloadBase.set_progress(prime_restore, i + 1, total)
 
     return ret
+
+
+def get_cached_payload(restore_config):
+    # must set this to False before attempting to check the cache
+    restore_config.overwrite_cache = False
+    return restore_config.get_cached_payload()
 
 
 def get_user(username_or_id):
