@@ -97,6 +97,9 @@ class PillowRetryTestCase(TestCase):
         ).all()
 
     def test_include_doc(self):
+        """
+        see FakePillow.process_change
+        """
         id = 'test_doc'
         FakePillow.couch_db._docs[id] = {'id': id, 'property': 'value'}
         change_dict = {'id': id, 'seq': 54321, 'changes': [{'_rev': 'abc123'}]}
@@ -104,9 +107,12 @@ class PillowRetryTestCase(TestCase):
         error.save()
         process_pillow_retry(error.id)
 
-        with self.assertRaises(PillowError.DoesNotExist):
+        try:
+            error = PillowError.objects.get(id=error.id)
+            self.fail(error.error_traceback)
+        except PillowError.DoesNotExist:
             #  if processing is successful the record will be deleted
-            PillowError.objects.get(id=error.id)
+            pass
 
     def test_bulk_reset(self):
         for i in range(0, 5):
