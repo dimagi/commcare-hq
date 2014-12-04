@@ -402,7 +402,13 @@ def export_all_form_metadata_async(req, domain):
     datespan = req.datespan if req.GET.get("startdate") and req.GET.get("enddate") else None
     group_id = req.GET.get("group")
     ufilter =  UserTypeFilter.get_user_filter(req)[0]
-    users = list(util.get_all_users_by_domain(domain=domain, group=group_id, user_filter=ufilter, simplified=True))
+    users = util.get_all_users_by_domain(
+        domain=domain,
+        group=group_id,
+        user_filter=ufilter,
+        simplified=True,
+        include_inactive=True
+    )
     user_ids = filter(None, [u["user_id"] for u in users])
     format = req.GET.get("format", Format.XLS_2007)
     filename = "%s_forms" % domain
@@ -1252,6 +1258,7 @@ def form_multimedia_export(request, domain, app_id):
         xmlns = request.GET["xmlns"]
         startdate = request.GET["startdate"]
         enddate = request.GET["enddate"]
+        properties = request.GET.getlist("properties")
         zip_name = request.GET.get("name", None)
     except KeyError:
         return HttpResponseBadRequest()
@@ -1284,11 +1291,12 @@ def form_multimedia_export(request, domain, app_id):
             except TypeError:
                 question_id = unicode('unknown' + str(unknown_number))
                 unknown_number += 1
-            fname = filename(form, question_id, extension)
-            zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
-            zf.writestr(zi, f.fetch_attachment(key, stream=True).read())
-            # includes overhead for file in zipfile
-            size += f['_attachments'][key]['length'] + 88 + 2 * len(fname)
+            if not properties or question_id in properties:
+                fname = filename(form, question_id, extension)
+                zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
+                zf.writestr(zi, f.fetch_attachment(key, stream=True).read())
+                # includes overhead for file in zipfile
+                size += f['_attachments'][key]['length'] + 88 + 2 * len(fname)
 
     zf.close()
 

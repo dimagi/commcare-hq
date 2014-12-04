@@ -103,6 +103,7 @@ def _location_footprint(locations):
 def _append_children(node, location_db, locations, type_lookup_function):
     by_type = _group_by_type(locations)
     for type, locs in by_type.items():
+        locs = sorted(locs, key=lambda loc: loc.name)
         node.append(_types_to_fixture(location_db, type, locs, type_lookup_function))
 
 

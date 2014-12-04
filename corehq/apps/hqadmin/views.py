@@ -7,7 +7,6 @@ from datetime import timedelta, datetime, date
 from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
-from couchdbkit.exceptions import ResourceNotFound
 import dateutil
 from django.utils.datastructures import SortedDict
 
@@ -37,8 +36,8 @@ from restkit import Resource
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
-from corehq.apps.callcenter.utils import FakeSyncOp
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.apps.ota.tasks import prime_restore
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -55,7 +54,7 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
+from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm, PrimeRestoreCacheForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -69,7 +68,6 @@ from corehq.apps.hqadmin.reporting.reports import (
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.standard.domains import es_domain_query
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.sofabed.models import FormData
@@ -87,6 +85,8 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 
 from .multimech import GlobalConfig
+from soil import DownloadBase
+
 
 @require_superuser
 def default(request):
@@ -829,7 +829,9 @@ def admin_restore(request):
     user = CommCareUser.get_by_username(full_username)
     if not user:
         return HttpResponseNotFound('User %s not found.' % full_username)
-    return get_restore_response(user.domain, user, **get_restore_params(request))
+
+    overwrite_cache = request.GET.get('ignore_cache') == 'true'
+    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, **get_restore_params(request))
 
 @require_superuser
 def management_commands(request, template="hqadmin/management_commands.html"):
@@ -1079,14 +1081,13 @@ def callcenter_test(request):
         }
 
     if user or user_case:
-        sync_op = FakeSyncOp([user_case]) if user_case else None
         custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
         cci = CallCenterIndicators(
             domain,
             user,
-            case_sync_op=sync_op,
             custom_cache=custom_cache,
-            override_date=query_date
+            override_date=query_date,
+            override_cases=[user_case] if user_case else None
         )
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:
@@ -1101,3 +1102,30 @@ def callcenter_test(request):
         "doc_id": doc_id
     }
     return render(request, "hqadmin/callcenter_test.html", context)
+
+
+class PrimeRestoreCache(FormView):
+    template_name = "hqadmin/prime_restore_cache.html"
+    form_class = PrimeRestoreCacheForm
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(PrimeRestoreCache, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        domain = form.cleaned_data['domain']
+        if form.cleaned_data['all_users']:
+            user_ids = CommCareUser.ids_by_domain(domain)
+        else:
+            user_ids = form.user_ids
+
+        download = DownloadBase()
+        res = prime_restore.delay(
+            user_ids,
+            version=form.cleaned_data['version'],
+            cache_timeout=form.cleaned_data['cache_timeout'],
+            overwrite_cache=form.cleaned_data['overwrite_cache']
+        )
+        download.set_task(res)
+
+        return redirect('hq_soil_download', domain, download.download_id)

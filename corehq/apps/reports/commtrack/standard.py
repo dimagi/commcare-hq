@@ -72,11 +72,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
-    @property
-    @memoized
-    def archived_products(self):
-        return self.request.GET.get('archived_products', False)
-
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
@@ -85,7 +80,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
     ]
     exportable = True
     emailable = True
@@ -141,16 +135,12 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        stock_states = StockState.include_archived.filter(
+        stock_states = StockState.objects.filter(
             case_id__in=sp_ids,
             last_modified_date__lte=self.datespan.enddate_utc,
             last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
         )
-        if not self.archived_products:
-            stock_states = stock_states.exclude(
-                sql_product__is_archived=True
-            )
 
         stock_states = stock_states.order_by('product_id')
 
@@ -290,7 +280,6 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
     ]
     exportable = True
     emailable = True
@@ -335,7 +324,6 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
                 'program_id': self.request.GET.get('program'),
                 'startdate': self.datespan.startdate_utc,
                 'enddate': self.datespan.enddate_utc,
-                'archived_products': self.archived_products,
                 'aggregate': True
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())

@@ -5,7 +5,8 @@ from celery.task import periodic_task
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
-from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
+from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
+    DeliveryGroups
 from custom.ilsgateway.tanzania.reminders import REMINDER_DELIVERY_FACILITY, REMINDER_DELIVERY_DISTRICT, update_statuses
 from custom.ilsgateway.utils import send_for_day, get_current_group, get_groups
 import settings
@@ -20,7 +21,7 @@ def send_delivery_reminder(domain, date, loc_type='FACILITY'):
         sms_text = REMINDER_DELIVERY_DISTRICT
     else:
         return
-    current_group = get_current_group()
+    current_group = DeliveryGroups().current_delivering_group(date.month)
     sp_ids = set()
     for user in CommCareUser.by_domain(domain):
         if user.is_active and user.location and user.location.location_type == loc_type:

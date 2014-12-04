@@ -157,7 +157,8 @@ class BaseUserInfoForm(forms.Form):
         help_text=mark_safe_lazy(
             ugettext_lazy(
                 "<i class=\"icon-info-sign\"></i> "
-                "Becomes default language seen in CloudCare and reports (if applicable). "
+                "Becomes default language seen in CloudCare and reports (if applicable), "
+                "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
             )
         )

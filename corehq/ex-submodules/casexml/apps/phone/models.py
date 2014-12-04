@@ -54,6 +54,7 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     """
 
     case_id = StringProperty()
+    type = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
 
     @classmethod
@@ -62,7 +63,6 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
             case_id=case.get_id,
             type=case.type,
             indices=case.indices,
-            hq_user_id=getattr(case, 'hq_user_id', None)
         )
 
     def __repr__(self):
