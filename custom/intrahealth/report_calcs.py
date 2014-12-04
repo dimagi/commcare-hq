@@ -3,9 +3,7 @@ import fluff
 import re
 import logging
 from corehq.apps.locations.models import Location
-from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES, \
-    get_rupture_products, get_rupture_products_code
-
+from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES
 
 def form_date(form):
     return form.received_on
