@@ -4,7 +4,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.up_nrhm import ASHA_FUNCTIONALITY_CHECKLIST_XMLNS
 from custom.up_nrhm.calculators import Numerator, PropertyCalculator
-from custom.up_nrhm.utils import get_case_property
+from custom.up_nrhm.utils import get_case_property, get_case_id
 from custom.utils.utils import flat_field
 import fluff
 
@@ -33,6 +33,7 @@ class ASHAFacilitatorsFluff(fluff.IndicatorDocument):
     )
 
     owner_id = flat_field(partial(get_case_property, property_name='owner_id'))
+    case_id = flat_field(get_case_id)
 
     home_birth_last_month_visited = PropertyCalculator(property_name="home_birth_last_month_visited")
     hv_fx_newborns_visited = PropertyCalculator(property_name="hv_fx_newborns_visited")

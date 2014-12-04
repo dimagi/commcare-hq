@@ -17,7 +17,13 @@ class PropertyCalculator(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, doc):
-        yield {
-            'date': doc.received_on,
-            'value': get_case_property(doc, self.property_name)
-        }
+        property_value = get_case_property(doc, self.property_name)
+        if property_value:
+            try:
+                value = int(property_value)
+                yield {
+                    'date': doc.received_on,
+                    'value': value
+                }
+            except ValueError:
+                pass
