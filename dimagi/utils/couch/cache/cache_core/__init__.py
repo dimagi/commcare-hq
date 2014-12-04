@@ -41,9 +41,17 @@ def get_redis_default_cache():
     except (InvalidCacheBackendError, ValueError):
         return cache.cache
 
+
 def get_redis_client():
+    if not REDIS_CACHE:
+        raise RedisClientError("No redis cache defined in settings")
+
     try:
-        client = REDIS_CACHE.raw_client
+        try:
+            client = REDIS_CACHE.raw_client
+        except AttributeError:
+            # version >= 3.8.0
+            client = REDIS_CACHE.client.get_client()
     except Exception:
         log.error("Could not get redis connection.", exc_info=True)
         raise RedisClientError("Could not get redis connection.")
