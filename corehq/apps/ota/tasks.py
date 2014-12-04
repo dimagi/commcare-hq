@@ -27,7 +27,8 @@ def prime_restore(user_ids, version=V1, cache_timeout=None, overwrite_cache=Fals
                 version=version,
                 force_cache=True,
                 cache_timeout=cache_timeout,
-                overwrite_cache=overwrite_cache
+                overwrite_cache=overwrite_cache,
+                items=True
             )
         except Exception as e:
             ret['messages'].append('Error processing user: {}'.format(str(e)))
