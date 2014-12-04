@@ -1,26 +1,13 @@
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 
-TEST_DOMAIN = 'locations-test'
-TEST_LOCATION_TYPE = 'location'
-
-
-# TODO duplicated
-def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
-    name = name or code
-    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
-    loc.save()
-    return loc
-
 
 class LocationsTest(TestCase):
-    # TODO what is this i don't even
-    # user_definitions = [FIXED_USER]
-
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.loc = make_loc('loc')

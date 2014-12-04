@@ -175,7 +175,7 @@ def get_default_column_data(domain, location_types):
         'values': {}
     }
 
-    if Domain.get_by_name(domain).individual_consumption_defaults:
+    if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
         products = Product.by_domain(domain)
 
         supply_point_map = SupplyPointCase.get_location_map_by_domain(domain)

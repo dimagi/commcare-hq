@@ -13,6 +13,7 @@ from django.template.loader import get_template
 from django.template import Context
 from django_countries.countries import COUNTRIES
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
@@ -357,7 +358,7 @@ class SupplyPointSelectWidget(forms.Widget):
                 }))
 
 class CommtrackUserForm(forms.Form):
-    supply_point = forms.CharField(label='Supply Point:', required=False)
+    supply_point = forms.CharField(label='Location:', required=False)
     program_id = forms.ChoiceField(label="Program", choices=(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -372,10 +373,13 @@ class CommtrackUserForm(forms.Form):
             attrs = {'is_admin': False}
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
-        programs = Program.by_domain(domain, wrap=False)
-        choices = list((prog['_id'], prog['name']) for prog in programs)
-        choices.insert(0, ('', ''))
-        self.fields['program_id'].choices = choices
+        if Domain.get_by_name(domain).commtrack_enabled:
+            programs = Program.by_domain(domain, wrap=False)
+            choices = list((prog['_id'], prog['name']) for prog in programs)
+            choices.insert(0, ('', ''))
+            self.fields['program_id'].choices = choices
+        else:
+            self.fields['program_id'].widget = forms.HiddenInput()
 
     def save(self, user):
         location_id = self.cleaned_data['supply_point']
