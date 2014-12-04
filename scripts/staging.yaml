@@ -54,16 +54,10 @@ branches:
   - masterlist-workflow # j$  10/8
   - bulk-app-translate # Noah 9/18
 #  - share-fixtures # j$ 10/29
-  - hq-dropdown+locations-for-everyone # tw 11/18
   - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
-  - custom_location_data+locations-for-everyone  # tw & Ethan 11/18 this has more than just the obvious merge conflict resolution, please merge in when ready.
-  - custom_location_data+system-custom-data+locations-for-everyone  # Ethan 11/24 (yo dawg i herd u like conflict resolution branches...)
-  - custom_location_data+system-custom-data  # Ethan 11/24
   - custom_location_data  # Ethan & tw 11/17
-  - locations-for-everyone # tw 11/18
   - custom-case-list-pane # Noah 11/24
-  - system-custom-data  # Ethan 11/24
   - quickview # Simon 11/25
   - double-management # SK 12/1
   - logo-uploader # Nick P 12/2
