@@ -298,7 +298,6 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.public',
     'corehq.util',
 
     # custom reports
@@ -664,8 +663,7 @@ AUDIT_VIEWS = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': '',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'PINGDOM_ID': ''
 }
 
 OPEN_EXCHANGE_RATES_ID = ''

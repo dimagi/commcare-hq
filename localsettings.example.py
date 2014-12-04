@@ -130,8 +130,7 @@ BASE_ADDRESS = None
 #Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
-    'PINGDOM_ID': '*****',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'PINGDOM_ID': '*****'
 }
 
 AXES_LOCK_OUT_AT_FAILURE = False
