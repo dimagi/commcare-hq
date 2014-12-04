@@ -20,10 +20,9 @@ from corehq.apps.products.forms import ProductForm
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.commtrack.util import encode_if_needed
 from corehq.apps.programs.models import Program
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-from corehq.apps.custom_data_fields.views import (
-    CustomDataEditor, CustomDataFieldsMixin
-)
+from corehq.apps.custom_data_fields import (CustomDataFieldsDefinition,
+                                            CustomDataEditor,
+                                            CustomDataModelMixin)
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -421,7 +420,7 @@ class EditProductView(NewProductView):
         )
 
 
-class ProductFieldsView(CustomDataFieldsMixin, BaseCommTrackManageView):
+class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     urlname = 'product_fields_view'
     field_type = 'ProductFields'
     entity_string = _("Product")
