@@ -7,7 +7,8 @@ from soil import DownloadBase
 
 
 @task
-def prime_restore(usernames_or_ids, version=V1, cache_timeout=None, overwrite_cache=False):
+def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout=None,
+                  overwrite_cache=False, check_cache_only=False):
     total = len(usernames_or_ids)
     DownloadBase.set_progress(prime_restore, 0, total)
 
@@ -31,8 +32,12 @@ def prime_restore(usernames_or_ids, version=V1, cache_timeout=None, overwrite_ca
                 cache_timeout=cache_timeout,
                 overwrite_cache=overwrite_cache
             )
-            restore_config.get_payload()
 
+            if not check_cache_only:
+                restore_config.get_payload()
+
+            # must set this to False before attempting to check the cache
+            restore_config.overwrite_cache = False
             cached_payload = restore_config.get_cached_payload()
             if cached_payload:
                 ret['messages'].append('SUCCESS: Restore cached successfully for user: {}'.format(

@@ -25,6 +25,11 @@ class BrokenBuildsForm(forms.Form):
 
 
 class PrimeRestoreCacheForm(forms.Form):
+    check_cache_only = forms.BooleanField(
+        label='Check cache only',
+        help_text="Just check the cache, don't actually generate the restore response.",
+        required=False
+    )
     domain = forms.CharField(
         label='Domain',
         required=False
@@ -63,6 +68,7 @@ class PrimeRestoreCacheForm(forms.Form):
         self.helper.label_class = 'col-lg-2'
         self.helper.field_class = 'col-lg-4'
         self.helper.layout = crispy.Layout(
+            'check_cache_only',
             'version',
             'cache_timeout',
             'overwrite_cache',
