@@ -15,7 +15,7 @@ def prime_restore(usernames_or_ids, version=V1, cache_timeout=None, overwrite_ca
     for i, username_or_id in enumerate(usernames_or_ids):
         couch_user = get_user(username_or_id)
         if not couch_user:
-            ret['messages'].append('User not found: {}'.format(username_or_id))
+            ret['messages'].append('WARNING: User not found: {}'.format(username_or_id))
             continue
 
         try:
@@ -33,11 +33,17 @@ def prime_restore(usernames_or_ids, version=V1, cache_timeout=None, overwrite_ca
             )
             restore_config.get_payload()
 
-            ret['messages'].append('Restore generated successfully for user: {}'.format(
-                couch_user.human_friendly_name,
-            ))
+            cached_payload = restore_config.get_cached_payload()
+            if cached_payload:
+                ret['messages'].append('SUCCESS: Restore cached successfully for user: {}'.format(
+                    couch_user.human_friendly_name,
+                ))
+            else:
+                ret['messages'].append('ERROR: Restore completed by cache still empty for user: {}'.format(
+                    couch_user.human_friendly_name,
+                ))
         except Exception as e:
-            ret['messages'].append('Error processing user: {}'.format(str(e)))
+            ret['messages'].append('ERROR: Error processing user: {}'.format(str(e)))
 
         DownloadBase.set_progress(prime_restore, i + 1, total)
 
