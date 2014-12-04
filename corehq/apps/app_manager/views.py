@@ -2223,8 +2223,12 @@ class DownloadCCZ(DownloadMultimediaZip):
                 if name not in skip_files:
                     yield (get_name(name), f.encode('utf-8'))
 
-        media_files, errors = super(DownloadCCZ, self).iter_files()
-        return itertools.chain(_files(), media_files), errors
+        if self.app.is_remote_app():
+            return _files(), []
+        else:
+            media_files, errors = super(DownloadCCZ, self).iter_files()
+            return itertools.chain(_files(), media_files), errors
+
 
 
 @safe_download
