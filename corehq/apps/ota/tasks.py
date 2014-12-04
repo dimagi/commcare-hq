@@ -7,7 +7,7 @@ from soil import DownloadBase
 
 
 @task
-def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout=None,
+def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None,
                   overwrite_cache=False, check_cache_only=False):
     total = len(usernames_or_ids)
     DownloadBase.set_progress(prime_restore, 0, total)
@@ -35,7 +35,7 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout=None,
                 stock_settings=stock_settings,
                 domain=project,
                 force_cache=True,
-                cache_timeout=cache_timeout,
+                cache_timeout=cache_timeout_hours * 60 * 60,
                 overwrite_cache=overwrite_cache
             )
 
