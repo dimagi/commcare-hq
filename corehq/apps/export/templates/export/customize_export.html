@@ -488,7 +488,9 @@
                                 {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
+                            {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                             <th>{% trans "Type" %}</th>
+                            {% endif %}
                             {% if helper.allow_deid %}
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
                             {% endif %}
@@ -511,6 +513,7 @@
 
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                                 <td class="input">
                                     <select data-bind="
                                         value: doc_type,
@@ -523,6 +526,7 @@
                                         <span>{% trans "columns" %}</span>
                                     </span>
                                 </td>
+                                {% endif %}
                                 {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
                                     <select data-bind="

@@ -240,3 +240,9 @@ BATCHED_RESTORE = StaticToggle(
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+SPLIT_MULTISELECT_EXPORT = StaticToggle(
+    'split_multiselect_export',
+    'Split multiselect columns in custom exports',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
