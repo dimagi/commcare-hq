@@ -115,6 +115,20 @@ def select(request, domain_select_template='domain/select.html'):
     return render(request, domain_select_template, additional_context)
 
 
+@require_superuser
+def incomplete_email(request,
+                     incomplete_email_template='domain/incomplete_email.html'):
+    from corehq.apps.domain.tasks import (
+        incomplete_self_started_domains,
+        incomplete_domains_to_email
+    )
+    context = {
+        'self_started': incomplete_self_started_domains,
+        'dimagi_owned': incomplete_domains_to_email,
+    }
+    return render(request, incomplete_email_template, context)
+
+
 class DomainViewMixin(object):
     """
         Paving the way for a world of entirely class-based views.
