@@ -1,10 +1,7 @@
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
 from couchexport.models import Format
-from custom.ilsgateway.filters import ProductByProgramFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
 from dimagi.utils.decorators.memoized import memoized
@@ -221,7 +218,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
         rows = [_unformat_row(row) for row in formatted_rows]
         replace = ''
 
-        #make headers and subheaders consistent
+        # make headers and subheaders consistent
         for k, v in enumerate(table[0]):
             if v != ' ':
                 replace = v
