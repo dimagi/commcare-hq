@@ -346,7 +346,7 @@ var AdvancedCase = (function () {
                     details_module: null,
                     case_tag: tag_prefix + 'load_' + config.caseType + index,
                     parent_tag: '',
-                    parent_reference_id: '',
+                    parent_reference_id: 'parent',
                     preload: [],
                     case_properties: [],
                     close_condition: DEFAULT_CONDITION('never'),
@@ -379,7 +379,7 @@ var AdvancedCase = (function () {
                         }],
                     repeat_context: '',
                     parent_tag: '',
-                    parent_reference_id: '',
+                    parent_reference_id: 'parent',
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
