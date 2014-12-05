@@ -93,6 +93,27 @@ class PillowError(models.Model):
 
     @classmethod
     def get_errors_to_process(cls, utcnow, limit=None, skip=0, fetch_full=False):
+        """
+        Get errors according the following rules:
+
+            date_next_attempt <= utcnow
+            AND
+            (
+                total_attempts <= multi_attempt_cutoff & current_attempt <= max_attempts
+                OR
+                total_attempts > multi_attempt_cutoff & current_attempt 0
+            )
+
+        where:
+        * multi_attempt_cutoff = settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
+        * max_attempts = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
+
+        :param utcnow:      The current date and time in UTC.
+        :param limit:       Paging limit param.
+        :param skip:        Paging skip param.
+        :param fetch_full:  If True return the whole PillowError object otherwise return a
+                            a dict containing 'id' and 'date_next_attempt' keys.
+        """
         max_attempts = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         multi_attempts_cutoff = getattr(settings, 'PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF', max_attempts * 3)
         query = PillowError.objects \
