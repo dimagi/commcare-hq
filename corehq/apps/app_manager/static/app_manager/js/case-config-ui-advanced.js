@@ -435,6 +435,29 @@ var AdvancedCase = (function () {
             }
             return null;
         },
+        validate_subcase: function (self) {
+            if (!self.config.caseConfigViewModel) {
+                return;
+            }
+            if (!self.parent_tag()) {
+                return null;
+            }
+            var parent = self.config.caseConfigViewModel.getActionFromTag(self.parent_tag());
+            if (!parent) {
+                return "Subcase parent reference is missing";
+            } else if (!self.parent_reference_id()) {
+                return "Parent reference ID required for subcases";
+            } else if (parent.actionType === 'open') {
+                if (!parent.repeat_context()) {
+                    return null;
+                } else if (!self.repeat_context() ||
+                    // manual string startsWith
+                    self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
+                    return "Subcase must be in same repeat context as parent.";
+                }
+            }
+                    return null;
+        },
         close_case: function (self) {
             return {
                 read: function () {
@@ -708,6 +731,9 @@ var AdvancedCase = (function () {
                 self.auto_select_modes = ko.computed(function () {
                     return config.getAutoSelectModes(self);
                 });
+                self.validate_subcase = ko.computed(function () {
+                    return ActionBase.validate_subcase(self);
+                });
             };
 
             if (!self.config.caseConfigViewModel) {
@@ -847,23 +873,7 @@ var AdvancedCase = (function () {
                     return self.parent_tag() || self.config.caseConfigViewModel.getCaseTags('subcase', self).length > 0;
                 });
                 self.validate_subcase = ko.computed(function () {
-                    if (!self.parent_tag()) {
-                        return null;
-                    }
-
-                    var parent = self.config.caseConfigViewModel.getActionFromTag(self.parent_tag());
-                    if (!parent) {
-                        return "Subcase parent reference is missing";
-                    } else if (parent.actionType === 'open') {
-                        if (!parent.repeat_context()) {
-                            return null;
-                        } else if (!self.repeat_context() ||
-                            // manual string startsWith
-                            self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
-                            return "Subcase must be in same repeat context as parent.";
-                        }
-                    }
-                    return null;
+                    return ActionBase.validate_subcase(self);
                 });
             };
             // hacky way to prevent trying to access caseConfigViewModel before it is defined
