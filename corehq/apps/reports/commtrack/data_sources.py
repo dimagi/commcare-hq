@@ -15,6 +15,7 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
+from django.db.models import Sum
 
 
 def format_decimal(d):
@@ -280,15 +281,15 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         def _convert_to_daily(consumption):
             return consumption / 30 if consumption is not None else None
 
-        product_aggregation = {}
-        for state in stock_states:
-            if state.product_id in product_aggregation:
-                product = product_aggregation[state.product_id]
-                product['current_stock'] = format_decimal(
-                    product['current_stock'] + state.stock_on_hand
-                )
+        if self._include_advanced_data():
+            product_aggregation = {}
+            for state in stock_states:
+                if state.product_id in product_aggregation:
+                    product = product_aggregation[state.product_id]
+                    product['current_stock'] = format_decimal(
+                        product['current_stock'] + state.stock_on_hand
+                    )
 
-                if self._include_advanced_data():
                     consumption = state.get_monthly_consumption()
                     if product['consumption'] is None:
                         product['consumption'] = consumption
@@ -306,19 +307,18 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         product['current_stock'],
                         _convert_to_daily(product['consumption'])
                     )
-            else:
-                product = Product.get(state.product_id)
-                consumption = state.get_monthly_consumption()
+                else:
+                    product = Product.get(state.product_id)
+                    consumption = state.get_monthly_consumption()
 
-                product_aggregation[state.product_id] = {
-                    'product_id': product._id,
-                    'location_id': None,
-                    'product_name': product.name,
-                    'location_lineage': None,
-                    'current_stock': format_decimal(state.stock_on_hand),
-                }
+                    product_aggregation[state.product_id] = {
+                        'product_id': product._id,
+                        'location_id': None,
+                        'product_name': product.name,
+                        'location_lineage': None,
+                        'current_stock': format_decimal(state.stock_on_hand),
+                    }
 
-                if self._include_advanced_data():
                     product_aggregation[state.product_id].update({
                         'resupply_quantity_needed': None,
                         'count': 1,
@@ -334,7 +334,27 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         )
                     })
 
-        return product_aggregation.values()
+            return product_aggregation.values()
+        else:
+            # If we don't need advanced data, we can
+            # just do some orm magic.
+            #
+            # Note: this leaves out some harder to get quickly
+            # values like location_id, but shouldn't be needed
+            # unless we expand what uses this.
+            aggregated_states = stock_states.values_list(
+                'sql_product__name',
+                'sql_product__product_id',
+            ).annotate(stock_on_hand=Sum('stock_on_hand'))
+            result = []
+            for ag in aggregated_states:
+                result.append({
+                    'product_name': ag[0],
+                    'product_id': ag[1],
+                    'current_stock': format_decimal(ag[2])
+                })
+
+            return result
 
     def raw_product_states(self, stock_states, slugs):
         for state in stock_states:
