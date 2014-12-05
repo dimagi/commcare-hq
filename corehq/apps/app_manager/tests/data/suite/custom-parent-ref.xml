@@ -1,0 +1,16 @@
+<partial>
+  <entry>
+    <form>http://openrosa.org/formdesigner/E42CCD8F-AD30-48ED-98C8-84451C855AE4</form>
+    <command id="m1-f2">
+      <text>
+        <locale id="forms.m1f2"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+      <datum id="case_id_load_clinic0" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short"/>
+      <datum id="case_id_case_requisition" nodeset="instance('casedb')/casedb/case[@case_type='requisition'][@status='open'][index/custom-parent-ref=instance('commcaresession')/session/data/case_id_load_clinic0]" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+    </session>
+  </entry>
+  </partial>
