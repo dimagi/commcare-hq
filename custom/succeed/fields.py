@@ -3,7 +3,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query
+from corehq.elastic import es_query, ES_URLS
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import SUBMISSION_SELECT_FIELDS
 from casexml.apps.case.models import CommCareCase
@@ -37,13 +37,14 @@ class CareSite(ReportSelectField):
                 }
             }
         }
-        es_results = es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
-        care_sites = []
-        for case in es_results['hits'].get('hits', []):
-            prop = CommCareCase.get(case['_id']).get_case_property('care_site_display')
-            if prop is not None and prop not in care_sites:
-                care_sites.append(prop)
-        return [dict(val=care_site, text=ugettext_noop(care_site)) for care_site in care_sites]
+        es_results = es_query(q=q, es_url=ES_URLS['report_cases'])
+        cases = es_results['hits'].get('hits', [])
+        care_sites = filter(None, {
+            case['_source'].get('care_site_display', {}).get('#value')
+            for case in cases
+        })
+        return [{'val': care_site, 'text': ugettext_noop(care_site)}
+                for care_site in care_sites]
 
 
 class ResponsibleParty(ReportSelectField):
