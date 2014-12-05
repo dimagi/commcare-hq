@@ -90,42 +90,46 @@ $(function () {
                     </a>
                 </div>
             </div>
-            <div class="col-sm-6">
-                <header>
-                    <h1>{% trans "Welcome to CommCare." %}</h1>
-                    <p class="lead" ng-controller="CaseTypeCtrl">
-                        {% blocktrans %}
-                            Create mobile apps for
-                        {% endblocktrans %}
-                        <ui-select ng-model="selectedCaseType" theme="bootstrap">
-                            <ui-select-match placeholder="{% trans "Who is your app for?" %}">{% verbatim %}
-                                {{$select.selected.name}}
-                            {% endverbatim %}</ui-select-match>
-                            <ui-select-choices repeat="c in caseTypes | filter: $select.search">
-                                <span ng-bind-html="c.name | highlight: $select.search"></span>
-                            </ui-select-choices>
-                      </ui-select>
-                    </p>
-                </header>
-                <form class="form-signup" role="form">
-                    <label class="sr-only"
-                           for="signUpEmail">{% trans "Email" %}</label>
-                    <div class="row">
-                        <div class="col-xs-8">
-                            <input type="text"
-                                   class="form-control input-xl"
-                                   name="email"
-                                   id="signUpEmail"
-                                   placeholder="{% trans 'enter your email' %}" />
+            <div class="col-sm-6 welcome-container">
+                <div class="welcome-container-inner">
+                    <header>
+                        <h1>{% trans "Welcome to CommCare." %}</h1>
+                        <p class="lead" ng-controller="CaseTypeCtrl">
+                            {% blocktrans %}
+                                Create mobile apps for
+                            {% endblocktrans %}
+                            <span class="dropdown-container-case-type">
+                                <ui-select ng-model="selectedCaseType" theme="bootstrap">
+                                    <ui-select-match placeholder="{% trans "Who is your app for?" %}">{% verbatim %}
+                                        {{$select.selected.name}}
+                                    {% endverbatim %}</ui-select-match>
+                                    <ui-select-choices repeat="c in caseTypes | filter: $select.search">
+                                        <span ng-bind-html="c.name | highlight: $select.search"></span>
+                                    </ui-select-choices>
+                                </ui-select>
+                            </span>
+                        </p>
+                    </header>
+                    <form class="form-signup" role="form">
+                        <label class="sr-only"
+                               for="signUpEmail">{% trans "Email" %}</label>
+                        <div class="row">
+                            <div class="col-xs-8">
+                                <input type="text"
+                                       class="form-control input-xl"
+                                       name="email"
+                                       id="signUpEmail"
+                                       placeholder="{% trans 'enter your email' %}" />
+                            </div>
+                            <div class="col-xs-4">
+                                <button type="submit"
+                                        class="btn btn-success btn-xl">
+                                    {% trans "Sign Up" %}
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-xs-4">
-                            <button type="submit"
-                                    class="btn btn-success btn-xl">
-                                {% trans "Sign Up" %}
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

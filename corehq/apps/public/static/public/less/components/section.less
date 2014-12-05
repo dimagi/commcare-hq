@@ -4,7 +4,20 @@
 }
 
 .section-lead {
-  height: 550px;
+  min-height: 518px;
+  @media (min-width: @screen-sm-min) {
+    min-height: 400px;
+    height: 400px;
+  }
+  @media (min-width: @screen-md-min) {
+    min-height: 550px;
+    height: 550px;
+  }
+  @media (min-width: @screen-lg-min) {
+    min-height: 650px;
+    height: 650px;
+  }
+
   @media (min-width: @screen-sm-min) {
     > .container:first-child,
     > .container:first-child > .row:first-child,
