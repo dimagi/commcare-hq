@@ -66,3 +66,10 @@ def missing(field, exist=True, null=True):
             "null_value": null
         }
     }
+
+
+def exists(field):
+    """
+    Only return docs which have 'field'
+    """
+    return {"exists": {"field": field}}
