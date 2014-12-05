@@ -146,7 +146,8 @@ class IteratorJSONReader(object):
                 }[value.lower() if hasattr(value, 'lower') else value]
             except KeyError:
                 raise JSONReaderError(
-                    'Values for %s must be: "yes" or "no" (or empty = "no")' % field
+                    'Values for field %s must be "yes" or "no", not "%s"' % (
+                        field, value)
                 )
 
         # set for any flat type
