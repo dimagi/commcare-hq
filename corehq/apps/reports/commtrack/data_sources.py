@@ -188,11 +188,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         raw_map = {
             self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
             self.SLUG_PRODUCT_ID: 'product_id',
-            self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
             self.SLUG_CURRENT_STOCK: 'stock_on_hand',
         }
         if self._include_advanced_data():
             raw_map.update({
+                self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
                 self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
                 self.SLUG_MONTHS_REMAINING: 'months_remaining',
                 self.SLUG_CATEGORY: 'stock_category',
@@ -261,14 +261,14 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             result = {
                 'product_id': product._id,
-                'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
-                'location_lineage': None,
                 'current_stock': format_decimal(state.stock_on_hand),
             }
 
             if self._include_advanced_data():
                 result.update({
+                    'location_id': SupplyPointCase.get(state.case_id).location_id,
+                    'location_lineage': None,
                     'category': state.stock_category,
                     'consumption': state.get_monthly_consumption(),
                     'months_remaining': state.months_remaining,
