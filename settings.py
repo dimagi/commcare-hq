@@ -335,6 +335,7 @@ HQ_APPS = (
     'custom.intrahealth',
     'custom.world_vision',
     'custom.tdh',
+    'custom.up_nrhm',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -1192,6 +1193,8 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.up_nrhm.models.UpNRHMLocationHierarchyFluffPillow',
+        'custom.up_nrhm.models.ASHAFacilitatorsFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1288,6 +1291,7 @@ DOMAIN_MODULE_MAP = {
 
     'ipm-senegal': 'custom.intrahealth',
     'testing-ipm-senegal': 'custom.intrahealth',
+    'up-nrhm': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 
