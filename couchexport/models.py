@@ -265,24 +265,24 @@ class ComplexExportColumn(ExportColumn):
 
 
 @register_column_type('multi-select')
-class MultiSelectColumn(ComplexExportColumn):
+class SplitColumn(ComplexExportColumn):
     num_columns = IntegerProperty(default=5)
 
     def get_headers(self):
-        for index in range(self.max_columns):
+        for index in range(self.num_columns):
             yield u"{name} ({index})".format(
                 name=self.display,
                 index=index + 1
             )
 
     def get_data(self, value):
-        values = value.split(' ')
-        return values + [None] * (self.max_columns - len(values))
+        values = value.split(' ', self.num_columns - 1)
+        return values + [None] * (self.num_columns - len(values))
 
     def to_config_format(self, selected=True):
-        format = super(MultiSelectColumn, self).to_config_format(selected)
-        format['num_columns'] = self.num_columns
-        return format
+        config = super(SplitColumn, self).to_config_format(selected)
+        config['num_columns'] = self.num_columns
+        return config
 
 
 class ExportTable(DocumentSchema):
