@@ -1,7 +1,11 @@
+from couchdbkit.ext.django.loading import get_db
 from django.test import TestCase
-from couchexport.models import ExportSchema
+from couchexport.models import ExportSchema, SavedExportSchema
 from datetime import datetime, timedelta
+from couchexport.util import SerializableFunction
 from dimagi.utils.couch.database import get_safe_write_kwargs
+import json
+from couchexport.models import Format
 
 
 class ExportSchemaTest(TestCase):
@@ -36,3 +40,57 @@ class ExportSchemaTest(TestCase):
             schema3 = ExportSchema(index=index, timestamp=dt - timedelta(seconds=1))
             schema3.save(**save_args)
             self.assertEqual(schema2._id, ExportSchema.last(index)._id)
+
+
+class CustomExportSchema(SavedExportSchema):
+    @property
+    def filter(self):
+        return SerializableFunction()
+
+
+class SavedSchemaTest(TestCase):
+    def setUp(self):
+        self.db = get_db('couchexport')
+        self.custom_export = CustomExportSchema.wrap({
+            'type': 'demo',
+            'default_format': Format.JSON,
+            'index': json.dumps(['test_custom']),
+            'tables': [{
+                'index': '#',
+                'display': 'Export',
+                'columns': [
+                    {'index': 'multi', 'display': 'Split', 'doc_type': 'SplitColumn', 'num_columns': 5}
+                ],
+            }]
+        })
+
+    def tearDown(self):
+        for doc in self.db.all_docs():
+            if not doc['id'].startswith('_design'):
+                self.db.delete_doc(doc['id'])
+
+    def post_it(self, split_val):
+        self.db.save_doc({
+                '#export_tag': 'tag',
+                'tag': 'test_custom',
+                'multi': split_val
+            },
+            **get_safe_write_kwargs()
+        )
+
+    def _test_split_column(self, split_val, row):
+        self.post_it(split_val)
+
+        files = self.custom_export.get_export_files()
+        data = json.loads(files.file.payload)
+        self.assertEqual(data['Export']['headers'], [
+            'Split (1)', 'Split (2)', 'Split (3)', 'Split (4)', 'Split (5)'
+        ])
+        self.assertEqual(len(data['Export']['rows']), 1)
+        self.assertEqual(data['Export']['rows'][0], row)
+
+    def test_split_column(self):
+        self._test_split_column('a b c d', ['a', 'b', 'c', 'd', None])
+
+    def test_split_column_remainder(self):
+        self._test_split_column('a b c d e f g', ['a', 'b', 'c', 'd', 'e f g'])
