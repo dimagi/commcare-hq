@@ -291,14 +291,17 @@
                                 return column.selected();
                             }).map(function (column) {
                                 var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special));
-                                return {
+                                col = {
                                     index: column.index,
                                     display: column.display,
                                     transform: column.transform() || null, // it doesn't save '' well
                                     is_sensitive: Boolean(is_sensitive),
-                                    doc_type: column.doc_type,
-                                    num_columns: column.num_columns
+                                    doc_type: column.doc_type
                                 };
+                                if (column.doc_type() === 'SplitColumn'){
+                                    col.num_columns = parseFloat(column.num_columns());
+                                }
+                                return col;
                             })
                         }
                     });
@@ -515,8 +518,9 @@
                                     ">
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
-                                    <span data-bind="if: doc_type() === 'MultiSelectColumn'">
-                                        <input class="input" type="number" data-bind="value: num_columns" />
+                                    <span data-bind="if: doc_type() === 'SplitColumn'">
+                                        <input class="input input-mini" type="number" data-bind="value: num_columns" />
+                                        <span>{% trans "columns" %}</span>
                                     </span>
                                 </td>
                                 {% if helper.allow_deid %}
