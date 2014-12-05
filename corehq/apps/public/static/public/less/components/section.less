@@ -1,0 +1,26 @@
+.section {
+  width: 100%;
+  padding: @grid-gutter-width 0;
+}
+
+.section-lead {
+  height: 550px;
+  @media (min-width: @screen-sm-min) {
+    > .container:first-child,
+    > .container:first-child > .row:first-child,
+    > .container:first-child > .row:first-child > div {
+      height: 100%;
+    }
+  }
+}
+
+.section-default {
+  background-color: #ffffff;
+}
+
+.section-primary {
+  background-color: @cc-brand-mid;
+  h1, p {
+    color: #ffffff;
+  }
+}
