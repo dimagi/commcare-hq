@@ -816,7 +816,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
                 if row['flag'] == 'missing-data':
                     errors.append(_('A row with no username was skipped'))
                 else:
-                    errors.append('{username}: {flag}'.format(**row))
+                    errors.append(u'{username}: {flag}'.format(**row))
             errors.extend(self.response_errors)
             return errors
 
