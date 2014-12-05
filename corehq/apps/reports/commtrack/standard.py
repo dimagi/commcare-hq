@@ -15,6 +15,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from corehq.apps.reports.filters.commtrack import AdvancedColumns
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -287,7 +288,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
         return super(InventoryReport, cls).show_in_navigation(domain, project, user)
 
     def showing_advanced_columns(self):
-        return self.request.GET.get('advanced_columns', '') == 'True'
+        return AdvancedColumns.get_value(self.request, self.domain)
 
     @property
     def headers(self):
