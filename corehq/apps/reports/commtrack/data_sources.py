@@ -316,11 +316,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'location_id': None,
                         'product_name': product.name,
                         'location_lineage': None,
-                        'current_stock': format_decimal(state.stock_on_hand),
-                    }
-
-                    product_aggregation[state.product_id].update({
                         'resupply_quantity_needed': None,
+                        'current_stock': format_decimal(state.stock_on_hand),
                         'count': 1,
                         'consumption': consumption,
                         'category': stock_category(
@@ -332,7 +329,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                             state.stock_on_hand,
                             _convert_to_daily(consumption)
                         )
-                    })
+                    }
 
             return product_aggregation.values()
         else:
