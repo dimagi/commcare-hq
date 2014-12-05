@@ -28,7 +28,7 @@ class CareSite(ReportSelectField):
                .fields(['care_site_display'])
                .run())
         care_sites = {c['care_site_display']['#value'] for c in res.hits}
-        return [{'val': care_site, 'text': ugettext_noop(care_site)}
+        return [{'val': care_site, 'text': care_site}
                 for care_site in care_sites]
 
 
