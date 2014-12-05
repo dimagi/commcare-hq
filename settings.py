@@ -640,6 +640,10 @@ PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
 PILLOW_RETRY_BACKOFF_FACTOR = 2
 
+# After an error's total attempts exceeds this number it will only be re-attempted
+# once after being reset. This is to prevent numerous retries of errors that aren't
+# getting fixed
+PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
