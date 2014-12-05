@@ -81,6 +81,8 @@ class PillowRetryTestCase(TestCase):
         get.save()
 
     def test_get_errors_to_process(self):
+        # Only re-process errors with
+        # current_attempt < setting.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         date = datetime.utcnow()
         for i in range(0, 5):
             error = create_error({'id': i}, attempts=i+1)
@@ -93,8 +95,53 @@ class PillowRetryTestCase(TestCase):
         self.assertEqual(len(errors), 1)
 
         errors = PillowError.get_errors_to_process(
-            date.replace(day=3),
+            date.replace(day=5),
         ).all()
+        self.assertEqual(len(errors), 3)
+
+    def test_get_errors_to_process_max_limit(self):
+        # see settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
+        date = datetime.utcnow()
+
+        def make_error(id, current_attempt, total_attempts):
+            error = create_error({'id': id})
+            error.date_next_attempt = date
+            error.current_attempt = current_attempt
+            error.total_attempts = total_attempts
+            error.save()
+
+        # current_attempts <= limit, total_attempts <= limit
+        make_error(
+            'to-process1',
+            settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS,
+            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
+        )
+
+        # current_attempts = 0, total_attempts > limit
+        make_error(
+            'to-process2',
+            0,
+            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
+        )
+
+        # current_attempts > limit, total_attempts <= limit
+        make_error(
+            'not-processed1',
+            settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS + 1,
+            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
+        )
+
+        # current_attempts <= limit, total_attempts > limit
+        make_error(
+            'not-processed2',
+            settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS,
+            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
+        )
+
+        errors = PillowError.get_errors_to_process(date, fetch_full=True).all()
+        self.assertEqual(len(errors), 2)
+        docs_to_process = {e.doc_id for e in errors}
+        self.assertEqual({'to-process1', 'to-process2'}, docs_to_process)
 
     def test_include_doc(self):
         """

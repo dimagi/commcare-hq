@@ -93,9 +93,14 @@ class PillowError(models.Model):
 
     @classmethod
     def get_errors_to_process(cls, utcnow, limit=None, skip=0, fetch_full=False):
+        max_attempts = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
+        multi_attempts_cutoff = getattr(settings, 'PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF', max_attempts * 3)
         query = PillowError.objects \
             .filter(date_next_attempt__lte=utcnow) \
-            .filter(current_attempt__lte=settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
+            .filter(
+                models.Q(current_attempt=0) |
+                (models.Q(total_attempts__lte=multi_attempts_cutoff) & models.Q(current_attempt__lte=max_attempts))
+            )
 
         if not fetch_full:
             query = query.values('id', 'date_next_attempt')
