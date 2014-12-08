@@ -563,14 +563,14 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def available_languages(self):
-        default_langs = ['en']
-        try:
-            translation_doc = StandaloneTranslationDoc.get_obj(self.domain, "sms")
-            return (translation_doc.langs or default_langs
-                    if translation_doc is not None else default_langs)
-        except ResourceNotFound:
-            pass
-        return default_langs
+        """
+        Returns a the list of language codes available for the domain, or
+        [] if no languages are specified.
+        """
+        translation_doc = StandaloneTranslationDoc.get_obj(self.domain, "sms")
+        if translation_doc and translation_doc.langs:
+            return translation_doc.langs
+        return []
 
     @property
     def is_previewer(self):
@@ -767,6 +767,26 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         if self.ui_type == UI_COMPLEX:
             return _("Edit Scheduled Multi Event Reminder")
         return self.page_title
+
+    @property
+    def available_languages(self):
+        """
+        When editing a reminder, add in any languages that are used by the
+        reminder but that are not in the result from
+        CreateScheduledReminderView's available_languages property.
+
+        This is needed to be backwards-compatible with reminders created
+        with the old ui that would let you specify any language, regardless
+        of whether it was in the domain's list of languages or not.
+        """
+        result = super(EditScheduledReminderView, self).available_languages
+        handler = self.reminder_handler
+        for event in handler.events:
+            if event.message:
+                for (lang, text) in event.message.items():
+                    if lang not in result:
+                        result.append(lang)
+        return result
 
     @property
     @memoized

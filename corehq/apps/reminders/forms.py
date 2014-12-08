@@ -978,6 +978,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                  available_languages=None, *args, **kwargs
     ):
         available_languages = available_languages or ['en']
+        self.available_languages = available_languages
         self.initial_event = {
             'day_num': 0,
             'fire_time_type': FIRE_TIME_DEFAULT,
@@ -1430,6 +1431,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
             raise ValidationError(_("Please specify a case type."))
         return case_property
 
+    def clean_default_lang(self):
+        if len(self.available_languages) == 1:
+            return self.available_languages[0]
+        else:
+            return self.cleaned_data["default_lang"]
+
     def clean_start_property(self):
         start_reminder_on = self.cleaned_data['start_reminder_on']
         if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
@@ -1806,6 +1813,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     for event in current_val:
                         event_json = event.to_json()
 
+                        if not event_json.get("message", None):
+                            event_json["message"] = {}
+                        for langcode in available_languages:
+                            if langcode not in event_json["message"]:
+                                event_json["message"][langcode] = ""
+
                         form_unique_id = event_json.get("form_unique_id")
                         if form_unique_id:
                             try:
@@ -1833,8 +1846,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     initial[field] = current_val
                 if field is 'custom_content_handler' and current_val is not None:
                     initial['use_custom_content_handler'] = True
-                if field is 'default_lang' and current_val not in available_languages:
-                    initial['default_lang'] = 'en'
             except AttributeError:
                 pass
 
