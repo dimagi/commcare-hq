@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
@@ -423,18 +424,21 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                     report__date__gte=self.end_date
                 ).order_by('-report__date')
                 matched = False
-                for trans in transactions:
-                    if XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
-                        yield {
-                            'loc_id': loc._id,
-                            'loc_path': loc.path,
-                            'name': loc.name,
-                            'type': loc.location_type,
-                            'reporting_status': 'reporting',
-                            'geo': loc._geopoint,
-                        }
-                        matched = True
-                        break
+                for form_id in form_ids:
+                    try:
+                        if XFormInstance.get(form_id).xmlns in form_xmlnses:
+                            yield {
+                                'loc_id': loc._id,
+                                'loc_path': loc.path,
+                                'name': loc.name,
+                                'type': loc.location_type,
+                                'reporting_status': 'reporting',
+                                'geo': loc._geopoint,
+                            }
+                            matched = True
+                            break
+                    except ResourceNotFound:
+                        pass
                 if not matched:
                     yield {
                         'loc_id': loc._id,
