@@ -1597,8 +1597,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
             else:
                 translations = event.get('message', {})
                 for lang, msg in translations.items():
+                    if msg:
+                        msg = msg.strip()
                     if not msg:
                         del translations[lang]
+                    else:
+                        translations[lang] = msg
                 if not translations:
                     raise ValidationError(_("Please provide an SMS message."))
 
