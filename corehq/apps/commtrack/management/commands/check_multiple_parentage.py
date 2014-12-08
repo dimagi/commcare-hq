@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
             for d in domains:
                 if d.commtrack_enabled:
-                    for loc_type in d.commtrack_settings.location_types:
+                    for loc_type in d.location_types:
                         if len(loc_type.allowed_parents) > 1:
                             count = len(list(
                                 Location.filter_by_type(

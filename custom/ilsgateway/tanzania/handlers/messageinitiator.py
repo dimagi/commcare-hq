@@ -2,8 +2,8 @@ from datetime import datetime
 
 from corehq.apps.sms.api import send_sms_to_verified_number
 from dimagi.utils.dates import get_business_day_of_month_before
-from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.locations.models import Location
+from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
@@ -28,7 +28,7 @@ class MessageInitiatior(KeywordHandler):
         return locs
 
     def send_message(self, location, message, **kwargs):
-        for user in CommTrackUser.by_domain(self.domain):
+        for user in CommCareUser.by_domain(self.domain):
             dm = user.get_domain_membership(self.domain)
             if dm.location_id == location._id and user.get_verified_number():
                 send_sms_to_verified_number(user.get_verified_number(), message % kwargs)

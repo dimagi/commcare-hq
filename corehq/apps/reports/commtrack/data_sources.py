@@ -15,6 +15,7 @@ from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
+from django.db.models import Sum
 
 
 def format_decimal(d):
@@ -169,6 +170,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_CATEGORY = 'category'
     SLUG_RESUPPLY_QUANTITY_NEEDED = 'resupply_quantity_needed'
 
+    def _include_advanced_data(self):
+        # if this flag is not specified, we default to giving
+        # all the data back
+        return self.config.get('advanced_columns', True)
+
     @property
     @memoized
     def _slug_attrib_map(self):
@@ -182,16 +188,19 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         raw_map = {
             self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
             self.SLUG_PRODUCT_ID: 'product_id',
-            self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
             self.SLUG_CURRENT_STOCK: 'stock_on_hand',
-            self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
-            self.SLUG_MONTHS_REMAINING: 'months_remaining',
-            self.SLUG_CATEGORY: 'stock_category',
-            # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
-            # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
-            self.SLUG_LAST_REPORTED: 'last_modified_date',
-            self.SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
         }
+        if self._include_advanced_data():
+            raw_map.update({
+                self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
+                self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
+                self.SLUG_MONTHS_REMAINING: 'months_remaining',
+                self.SLUG_CATEGORY: 'stock_category',
+                # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
+                # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
+                self.SLUG_LAST_REPORTED: 'last_modified_date',
+                self.SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
+            })
 
         # normalize the slug attrib map so everything is callable
         def _normalize_row(slug, function_or_property):
@@ -249,72 +258,100 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
-            yield {
-                'category': state.stock_category,
+
+            result = {
                 'product_id': product._id,
-                'consumption': state.get_monthly_consumption(),
-                'months_remaining': state.months_remaining,
-                'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
                 'current_stock': format_decimal(state.stock_on_hand),
-                'location_lineage': None,
-                'resupply_quantity_needed': state.resupply_quantity_needed
             }
+
+            if self._include_advanced_data():
+                result.update({
+                    'location_id': SupplyPointCase.get(state.case_id).location_id,
+                    'location_lineage': None,
+                    'category': state.stock_category,
+                    'consumption': state.get_monthly_consumption(),
+                    'months_remaining': state.months_remaining,
+                    'resupply_quantity_needed': state.resupply_quantity_needed
+                })
+
+            yield result
 
     def aggregated_data(self, stock_states):
         def _convert_to_daily(consumption):
             return consumption / 30 if consumption is not None else None
 
-        product_aggregation = {}
-        for state in stock_states:
-            if state.product_id in product_aggregation:
-                product = product_aggregation[state.product_id]
-                product['current_stock'] = format_decimal(
-                    product['current_stock'] + state.stock_on_hand
-                )
-
-                consumption = state.get_monthly_consumption()
-                if product['consumption'] is None:
-                    product['consumption'] = consumption
-                elif consumption is not None:
-                    product['consumption'] += consumption
-
-                product['count'] += 1
-
-                product['category'] = stock_category(
-                    product['current_stock'],
-                    _convert_to_daily(product['consumption']),
-                    Domain.get_by_name(self.domain)
-                )
-                product['months_remaining'] = months_of_stock_remaining(
-                    product['current_stock'],
-                    _convert_to_daily(product['consumption'])
-                )
-            else:
-                product = Product.get(state.product_id)
-                consumption = state.get_monthly_consumption()
-
-                product_aggregation[state.product_id] = {
-                    'product_id': product._id,
-                    'location_id': None,
-                    'product_name': product.name,
-                    'location_lineage': None,
-                    'resupply_quantity_needed': None,
-                    'current_stock': format_decimal(state.stock_on_hand),
-                    'count': 1,
-                    'consumption': consumption,
-                    'category': stock_category(
-                        state.stock_on_hand,
-                        _convert_to_daily(consumption),
-                        Domain.get_by_name(self.domain)
-                    ),
-                    'months_remaining': months_of_stock_remaining(
-                        state.stock_on_hand,
-                        _convert_to_daily(consumption)
+        if self._include_advanced_data():
+            product_aggregation = {}
+            for state in stock_states:
+                if state.product_id in product_aggregation:
+                    product = product_aggregation[state.product_id]
+                    product['current_stock'] = format_decimal(
+                        product['current_stock'] + state.stock_on_hand
                     )
-                }
 
-        return product_aggregation.values()
+                    consumption = state.get_monthly_consumption()
+                    if product['consumption'] is None:
+                        product['consumption'] = consumption
+                    elif consumption is not None:
+                        product['consumption'] += consumption
+
+                    product['count'] += 1
+
+                    product['category'] = stock_category(
+                        product['current_stock'],
+                        _convert_to_daily(product['consumption']),
+                        Domain.get_by_name(self.domain)
+                    )
+                    product['months_remaining'] = months_of_stock_remaining(
+                        product['current_stock'],
+                        _convert_to_daily(product['consumption'])
+                    )
+                else:
+                    product = Product.get(state.product_id)
+                    consumption = state.get_monthly_consumption()
+
+                    product_aggregation[state.product_id] = {
+                        'product_id': product._id,
+                        'location_id': None,
+                        'product_name': product.name,
+                        'location_lineage': None,
+                        'resupply_quantity_needed': None,
+                        'current_stock': format_decimal(state.stock_on_hand),
+                        'count': 1,
+                        'consumption': consumption,
+                        'category': stock_category(
+                            state.stock_on_hand,
+                            _convert_to_daily(consumption),
+                            Domain.get_by_name(self.domain)
+                        ),
+                        'months_remaining': months_of_stock_remaining(
+                            state.stock_on_hand,
+                            _convert_to_daily(consumption)
+                        )
+                    }
+
+            return product_aggregation.values()
+        else:
+            # If we don't need advanced data, we can
+            # just do some orm magic.
+            #
+            # Note: this leaves out some harder to get quickly
+            # values like location_id, but shouldn't be needed
+            # unless we expand what uses this.
+            aggregated_states = stock_states.values_list(
+                'sql_product__name',
+                'sql_product__product_id',
+            ).annotate(stock_on_hand=Sum('stock_on_hand'))
+            result = []
+            for ag in aggregated_states:
+                result.append({
+                    'product_name': ag[0],
+                    'product_id': ag[1],
+                    'current_stock': format_decimal(ag[2])
+                })
+
+            return result
 
     def raw_product_states(self, stock_states, slugs):
         for state in stock_states:

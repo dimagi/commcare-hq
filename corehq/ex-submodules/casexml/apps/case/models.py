@@ -653,20 +653,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
-        def _use_new_case_processing():
-            domain = getattr(xformdoc, 'domain', None)
-            return (
-                not case_update.has_referrals()
-                and (
-                    getattr(settings,'UNIT_TESTING', False)
-                    or domain in ('ekjut', 'miralbwsurvey')
-                    or toggles.NEW_CASE_PROCESSING.enabled(domain)
-                )
-            )
-
-        if _use_new_case_processing():
+        if case_update.has_referrals():
+            return self._legacy_update_from_case_update(case_update, xformdoc)
+        else:
             return self._new_update_from_case_update(case_update, xformdoc)
 
+    def _legacy_update_from_case_update(self, case_update, xformdoc):
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
             if case_update.modified_on_str else datetime.utcnow()
 
@@ -702,6 +694,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             self.actions.append(close_action)
 
         if case_update.has_referrals():
+            logging.error('Case {} in domain {} is still using referrals'.format(
+                case_update.id, getattr(xformdoc, 'domain', None))
+            )
             if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
                 referrals = Referral.from_block(mod_date, case_update.referral_block)
                 # for some reason extend doesn't work.  disconcerting

@@ -70,7 +70,7 @@
             <td class="cell-vertical-centered">
                 {% with property_hash|dict_lookup:export.name as properties %}
                   {% if properties.size %}
-                      <a href="{% url "form_multimedia_export" domain export.app_id %}?xmlns={{export.xmlns}}{{properties.query_url}}&{{ get_filter_params.urlencode|safe }}&name={{export.name}}"
+                      <a href="{% url "form_multimedia_export" domain export.app_id %}?xmlns={{export.xmlns}}&export_id={{properties.export_id}}&{{ get_filter_params.urlencode|safe }}&name={{export.name}}"
                          class="btn btn-primary dl-export" ><i
                          class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{properties.size}})</a>
                   {% else %}

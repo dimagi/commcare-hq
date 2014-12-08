@@ -1,9 +1,7 @@
 from collections import defaultdict
-import copy
 import json
 import csv
 import io
-import uuid
 import re
 
 from couchdbkit import ResourceNotFound
@@ -20,15 +18,14 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import can_add_extra_mobile_workers
-from corehq.apps.custom_data_fields.views import CustomDataEditor
+from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
@@ -43,9 +40,7 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
-from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
-from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.util import get_download_context, expose_download
@@ -133,7 +128,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
         # currently only support one location on the UI
-        linked_loc = CommTrackUser.wrap(self.editable_user.to_json()).location
+        linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         return CommtrackUserForm(domain=self.domain, initial={'supply_point': initial_id})
 
@@ -147,8 +142,10 @@ class EditCommCareUserView(BaseFullEditUserView):
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
             'data_fields_form': self.custom_data.form,
         }
-        if self.request.project.commtrack_enabled:
+        if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
             context.update({
+                'commtrack_enabled': self.request.project.commtrack_enabled,
+                'locations_enabled': self.request.project.locations_enabled,
                 'commtrack': {
                     'update_form': self.update_commtrack_form,
                 },
@@ -815,7 +812,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
                 if row['flag'] == 'missing-data':
                     errors.append(_('A row with no username was skipped'))
                 else:
-                    errors.append('{username}: {flag}'.format(**row))
+                    errors.append(u'{username}: {flag}'.format(**row))
             errors.extend(self.response_errors)
             return errors
 

@@ -1,10 +1,33 @@
 from couchdbkit.ext.django.schema import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from jsonobject import JsonObject
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
+# This list is used to grandfather in existing data, any new fields should use
+# the system prefix defined below
+SYSTEM_FIELDS = ["commtrack-supply-point"]
+SYSTEM_PREFIX = "commcare"
+
+
+def _validate_reserved_words(value):
+    if value in SYSTEM_FIELDS:
+        return _('You may not use "{}" as a field name').format(value)
+    for prefix in [SYSTEM_PREFIX, 'xml']:
+        if value.startswith(prefix):
+            return _('Field names may not begin with "{}"').format(prefix)
+
+
+def is_system_key(value):
+    return bool(_validate_reserved_words(value))
+
+
+def validate_reserved_words(value):
+    error = _validate_reserved_words(value)
+    if error is not None:
+        raise ValidationError(error)
 
 
 class CustomDataField(JsonObject):
@@ -22,6 +45,13 @@ class CustomDataFieldsDefinition(Document):
     base_doc = "CustomDataFieldsDefinition"
     domain = StringProperty()
     fields = SchemaListProperty(CustomDataField)
+
+    def get_fields(self, required_only=False):
+        def _is_match(field):
+            if required_only and not field.is_required:
+                return False
+            return True
+        return filter(_is_match, self.fields)
 
     @classmethod
     def get_or_create(cls, domain, field_type):
@@ -76,7 +106,7 @@ class CustomDataFieldsDefinition(Document):
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
-
+                errors.append(_validate_reserved_words(value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields

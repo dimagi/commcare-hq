@@ -1,0 +1,73 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Untitled Form</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/5A6041E3-E092-4983-867B-7FEEA797A07A" uiVersion="1" version="None" name="Untitled Form">
+					<question1/>
+					<question2/>
+					<question3/>
+                    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+                        <orx:deviceID/>
+                        <orx:timeStart/>
+                        <orx:timeEnd/>
+                        <orx:username/>
+                        <orx:userID/>
+                        <orx:instanceID/>
+                        <cc:appVersion/>
+                    </orx:meta>
+				</data>
+			</instance>
+            <instance id="commcaresession" src="jr://instance/session"/>
+			<bind nodeset="/data/question1" type="xsd:string"/>
+			<bind nodeset="/data/question2" type="xsd:string"/>
+			<bind nodeset="/data/question3" type="xsd:string"/>
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1-label">
+						<value>french</value>
+						<value form="image">jr://file/commcare/image/data/question1.png</value>
+					</text>
+					<text id="question2-label">
+						<value>english</value>
+						<value form="image">jr://file/commcare/image/data/question2.png</value>
+					</text>
+					<text id="question3-label">
+						</text>
+				</translation>
+				<translation lang="fra">
+					<text id="question1-label">
+						<value>french</value>
+						<value form="image">jr://file/commcare/image/data/question1.png</value>
+					</text>
+					<text id="question2-label">
+						<value>english</value>
+						<value form="image">jr://file/commcare/image/data/question2.png</value>
+					</text>
+					<text id="question3-label">
+						</text>
+				</translation>
+			</itext>
+            <setvalue event="xforms-ready" ref="/data/meta/deviceID" value="instance('commcaresession')/session/context/deviceid"/>
+            <setvalue event="xforms-ready" ref="/data/meta/timeStart" value="now()"/>
+            <bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
+            <setvalue event="xforms-revalidate" ref="/data/meta/timeEnd" value="now()"/>
+            <bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
+            <setvalue event="xforms-ready" ref="/data/meta/username" value="instance('commcaresession')/session/context/username"/>
+            <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid"/>
+            <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()"/>
+            <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1-label')"/>
+		</input>
+		<input ref="/data/question2">
+			<label ref="jr:itext('question2-label')"/>
+		</input>
+		<input ref="/data/question3">
+			<label ref="jr:itext('question3-label')"/>
+		</input>
+	</h:body>
+</h:html>

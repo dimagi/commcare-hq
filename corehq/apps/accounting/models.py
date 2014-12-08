@@ -1731,7 +1731,7 @@ class CreditLine(models.Model):
                 product_type__exact=product_type,
                 feature_type__exact=feature_type,
             )
-            if not credit_line.is_active:
+            if not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
                     "inactive." % credit_line.__str__()
