@@ -1,3 +1,4 @@
+import logging
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -441,7 +442,9 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                             matched = True
                             break
                     except ResourceNotFound:
-                        pass
+                        logging.error('Stock report for location {} in {} references non-existent form {}'.format(
+                            loc._id, loc.domain, form_id
+                        ))
                 if not matched:
                     yield {
                         'loc_id': loc._id,
