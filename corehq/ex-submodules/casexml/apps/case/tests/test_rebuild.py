@@ -377,14 +377,14 @@ class TestCheckActionOrder(SimpleTestCase):
         case = CommCareCase(actions=[
             CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
         ])
         self.assertTrue(case.check_action_order())
 
     def test_out_of_order(self):
         case = CommCareCase(actions=[
             CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertFalse(case.check_action_order())
@@ -394,14 +394,14 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
             CommCareCaseAction(server_date=None),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
         ])
         self.assertTrue(case.check_action_order())
 
     def test_out_of_order_with_none(self):
         case = CommCareCase(actions=[
             CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
             CommCareCaseAction(server_date=None),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
