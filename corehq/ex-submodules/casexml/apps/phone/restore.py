@@ -265,7 +265,7 @@ class RestoreConfig(object):
         response.append(xml.get_registration_element(user))
 
         # fixture block
-        for fixture in generator.get_fixtures(user, self.version, case_sync_op=None, last_sync=last_sync):
+        for fixture in generator.get_fixtures(user, self.version, last_sync):
             response.append(fixture)
 
         payload_fn = self._get_case_payload_batched if batch_enabled else self._get_case_payload
