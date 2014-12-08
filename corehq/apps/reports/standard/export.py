@@ -139,9 +139,7 @@ class ExcelExportReport(FormExportReportBase):
         startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
 
-        is_multimedia_previewer = toggles.MULTIMEDIA_EXPORT.enabled(self.request.user.username)
-        if is_multimedia_previewer:
-            size_hash = self._get_domain_attachments_size()
+        size_hash = self._get_domain_attachments_size()
 
         for f in db.view('exports_forms/by_xmlns',
                          startkey=startkey, endkey=startkey + [{}], group=True,
@@ -165,7 +163,7 @@ class ExcelExportReport(FormExportReportBase):
                 key = (form['app']['id'], form['xmlns'])
             else:
                 key = None
-            if is_multimedia_previewer and key in size_hash:
+            if key in size_hash:
                 form['size'] = size_hash[key]
             else:
                 form['size'] = None
@@ -282,10 +280,8 @@ class ExcelExportReport(FormExportReportBase):
             group_exports=[group.form_exports for group in groups
                 if group.form_exports],
             report_slug=self.slug,
-            is_multimedia_previewer=is_multimedia_previewer
+            property_hash=self.properties(size_hash),
         )
-        if is_multimedia_previewer:
-            context.update(property_hash=self.properties(size_hash))
         return context
 
 
