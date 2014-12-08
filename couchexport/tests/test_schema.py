@@ -59,7 +59,7 @@ class SavedSchemaTest(TestCase):
                 'index': '#',
                 'display': 'Export',
                 'columns': [
-                    {'index': 'multi', 'display': 'Split', 'doc_type': 'SplitColumn', 'num_columns': 5}
+                    {'index': 'multi', 'display': 'Split', 'doc_type': 'SplitColumn', 'options': ['a', 'b', 'c', 'd']}
                 ],
             }]
         })
@@ -80,17 +80,22 @@ class SavedSchemaTest(TestCase):
 
     def _test_split_column(self, split_val, row):
         self.post_it(split_val)
-
         files = self.custom_export.get_export_files()
         data = json.loads(files.file.payload)
         self.assertEqual(data['Export']['headers'], [
-            'Split (1)', 'Split (2)', 'Split (3)', 'Split (4)', 'Split (5)'
+            'Split (a)', 'Split (b)', 'Split (c)', 'Split (d)', 'Split (other)'
         ])
         self.assertEqual(len(data['Export']['rows']), 1)
         self.assertEqual(data['Export']['rows'][0], row)
 
     def test_split_column(self):
-        self._test_split_column('a b c d', ['a', 'b', 'c', 'd', None])
+        self._test_split_column('a b c d', [1, 1, 1, 1, ''])
+
+    def test_split_column_order(self):
+        self._test_split_column('c d a', [1, '', 1, 1, ''])
+
+    def test_split_column_empty(self):
+        self._test_split_column('', ['', '', '', '', ''])
 
     def test_split_column_remainder(self):
-        self._test_split_column('a b c d e f g', ['a', 'b', 'c', 'd', 'e f g'])
+        self._test_split_column('c b d e f g', ['', 1, 1, 1, 'e f g'])

@@ -242,7 +242,8 @@ class ExportColumn(DocumentSchema):
             "selected": selected,
             "tag": self.tag,
             "show": self.show,
-            "doc_type": self.doc_type
+            "doc_type": self.doc_type,
+            "options": None
         }
 
 
@@ -266,22 +267,29 @@ class ComplexExportColumn(ExportColumn):
 
 @register_column_type('multi-select')
 class SplitColumn(ComplexExportColumn):
-    num_columns = IntegerProperty(default=5)
+    options = StringListProperty()
 
     def get_headers(self):
-        for index in range(self.num_columns):
-            yield u"{name} ({index})".format(
+        for option in self.options:
+            yield u"{name} ({option})".format(
                 name=self.display,
-                index=index + 1
+                option=option
             )
+        yield u"{} (other)".format(self.display)
 
     def get_data(self, value):
-        values = value.split(' ', self.num_columns - 1)
-        return values + [None] * (self.num_columns - len(values))
+        values = value.split(' ') if value else []
+        row = [''] * len(self.options)
+        for index, option in enumerate(self.options):
+            if option in values:
+                row[index] = 1
+                values.remove(option)
+
+        return row + [' '.join(values)]
 
     def to_config_format(self, selected=True):
         config = super(SplitColumn, self).to_config_format(selected)
-        config['num_columns'] = self.num_columns
+        config['options'] = self.options
         return config
 
 
