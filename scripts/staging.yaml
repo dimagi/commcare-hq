@@ -55,6 +55,7 @@ branches:
   - quickview # Simon 11/25
   - double-management # SK 12/1
   - logo-uploader # Nick P 12/2
+  - add-meta-block-data-source # Nick P 12/8
 submodules:
   submodules/couchlog-src:
     branches:
