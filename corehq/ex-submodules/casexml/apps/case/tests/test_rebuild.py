@@ -2,7 +2,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.exceptions import MissingServerDate
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction, _action_sort_key_function
 from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
@@ -405,3 +406,90 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertFalse(case.check_action_order())
+
+
+class TestActionSortKey(SimpleTestCase):
+
+    def test_missing_server_date(self):
+        case = CommCareCase(actions=[
+            _make_action(server_date=datetime(2001, 1, 1)),
+            _make_action(server_date=None, phone_date=datetime(2001, 1, 1)),
+        ])
+        with self.assertRaises(MissingServerDate):
+            sorted(case.actions, key=_action_sort_key_function(case))
+
+    def test_missing_phone_date(self):
+        case = CommCareCase(actions=[
+            _make_action(server_date=datetime(2001, 1, 1)),
+            _make_action(server_date=datetime(2001, 1, 1), phone_date=None),
+        ])
+        with self.assertRaises(MissingServerDate):
+            sorted(case.actions, key=_action_sort_key_function(case))
+
+    def test_sort_by_server_date(self):
+        expected_actions = (
+            (0, _make_action(server_date=datetime(2001, 1, 1))),
+            (2, _make_action(server_date=datetime(2001, 1, 3))),
+            (1, _make_action(server_date=datetime(2001, 1, 2))),
+        )
+        self._test(expected_actions)
+
+    def test_sort_by_server_date_precise(self):
+        expected_actions = (
+            (1, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 1))),
+            (0, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 0))),
+        )
+        self._test(expected_actions)
+
+    def test_default_to_phone_date_on_same_day(self):
+        expected_actions = (
+            (1, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 0), phone_date=datetime(2001, 1, 1, 0, 0, 1))),
+            (0, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 1), phone_date=datetime(2001, 1, 1, 0, 0, 0))),
+        )
+        self._test(expected_actions)
+
+    def test_create_before_update(self):
+        expected_actions = (
+            (1, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE)),
+            (0, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CREATE)),
+        )
+        self._test(expected_actions)
+
+    def test_update_before_close(self):
+        expected_actions = (
+            (1, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_CLOSE)),
+            (0, _make_action(server_date=datetime(2001, 1, 1), action_type=const.CASE_ACTION_UPDATE)),
+        )
+        self._test(expected_actions)
+
+    def test_different_usernames_default_to_server_date(self):
+        expected_actions = (
+            (0, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 0),
+                             phone_date=datetime(2001, 1, 1, 0, 0, 1),
+                             user_id='user1')),
+            (1, _make_action(server_date=datetime(2001, 1, 1, 0, 0, 1),
+                             phone_date=datetime(2001, 1, 1, 0, 0, 0),
+                             user_id='user2')),
+        )
+        self._test(expected_actions)
+
+    def _test(self, action_tuples):
+        """
+        Takes in an iterable of tuples of the form: (expected_index, action).
+
+        Calls the sort function on the actions in the order of the tuples and
+        then asserts that they end up sorted in the order specified by the expected_index
+        values.
+        """
+        case = CommCareCase(actions=[tup[1] for tup in action_tuples])
+        sorted_actions = sorted(case.actions, key=_action_sort_key_function(case))
+        for index, action in action_tuples:
+            self.assertEqual(action, sorted_actions[index])
+
+EMPTY_DATE = object()
+
+
+def _make_action(server_date, phone_date=EMPTY_DATE, action_type=const.CASE_ACTION_UPDATE, user_id='someuserid'):
+    if phone_date == EMPTY_DATE:
+        phone_date = server_date
+    return CommCareCaseAction(action_type=action_type, server_date=server_date, date=phone_date, user_id=user_id)
