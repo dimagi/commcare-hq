@@ -47,14 +47,21 @@ class JsonApiRequest(object):
     def get(self, path, **kwargs):
         try:
             response = requests.get(self.baseurl + path, headers=self.headers, auth=self.auth, **kwargs)
-        except Exception as err:  # TODO: What exception?! (socket error; authentication error; ...?)
+        except requests.RequestException as err:
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 
     def post(self, path, data, **kwargs):
         try:
             response = requests.post(self.baseurl + path, data, headers=self.headers, auth=self.auth, **kwargs)
-        except Exception as err:  # TODO: What exception?! (socket error; authentication error; ...?)
+        except requests.RequestException as err:
+            raise JsonApiError(str(err))
+        return JsonApiRequest.json_or_error(response)
+
+    def put(self, path, data, **kwargs):
+        try:
+            response = requests.put(self.baseurl + path, data, headers=self.headers, auth=self.auth, **kwargs)
+        except requests.RequestException as err:
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 
@@ -100,11 +107,30 @@ class Dhis2Api(object):
             # We are going to have to fetch at least one tracked entity attribute ID. Fetch them all to avoid multiple
             # API requests.
             self._fetch_tracked_entity_attributes()
+        # Set instance data keys to attribute IDs
         inst = {}
         for key, value in data.iteritems():
             attr_id = self.get_te_attr_id(key)
             inst[attr_id] = value
         result = self._request.post('trackedEntityInstances', inst)
+        return result
+
+    def update_te_inst(self, data):
+        """
+        Update a tracked entity instance with the given data
+
+        :param data: Tracked entity instance data. Must include its ID,
+                     organisation unit and tracked entity type
+        """
+        for attr in ('id', 'orgUnit', 'trackedEntity'):
+            if attr not in data:
+                raise KeyError('Mandatory attribute "%s" missing from tracked entity instance data' % attr)
+        # Convert data keys to tracked entity attribute IDs
+        if any(key not in self._tracked_entity_attributes for key in data):
+            self._fetch_tracked_entity_attributes()
+        # Set instance data keys to attribute IDs
+        inst = {self.get_te_attr_id(k): v for k, v in data.iteritems()}
+        result = self._request.put('trackedEntityInstances/' + inst['id'], inst)
         return result
 
     def get_top_org_unit(self):

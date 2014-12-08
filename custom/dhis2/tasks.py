@@ -1,4 +1,30 @@
+"""
+These are the Celery tasks used by the World Vision Sri Lanka Nutrition project
+
+They assume the following data is available in CommCare, and the following
+DHIS tracked entity attributes.
+
+Participating CommCare users need the following custom user property:
+
+* dhis2_organization_unit_id: The organisation unit ID where the user is
+  working. (In DHIS2 this can be a country, region or facility)
+
+Required CommCare case attributes:
+
+1. dhis2_organization_unit_id: The organisation unit ID of the owner of the
+   case.
+
+2. dhis2_te_inst_id: The ID of the DHIS2 tracked entity instance that
+   corresponds with this case.
+
+DHIS2 trackedentity attributes:
+
+1. cchq_case_id: Used to refer to the corresponding CommCareHQ case. This is a hexadecimal UUID.
+
+
+"""
 from datetime import date
+import uuid
 from xml.etree import ElementTree
 from apps.case.mock import CaseBlock
 from apps.case.models import CommCareCase
@@ -7,11 +33,15 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.es.cases import CaseES
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.users.models import CommCareUser
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
 from django.conf import settings
 
 
+# TODO: Do these belong in settings.py?
 DOMAIN = 'barproject'
+DEFAULT_COMMCARE_USER_ID = 'df2530dfc9f092e429b3d594a20e278x'  # Used when creating new cases
+                                                               # TODO: Use a real user
 
 
 # TODO: Handle timeouts gracefully
@@ -89,7 +119,7 @@ def push_child_entities(children):
                 # generic
                 'Name': child['name'],
                 'Date of Birth': child['dob'],
-                'Favourite Colour': child['favorite_color'],  # <-- TODO: Not really. Determine attributes.
+                # TODO: Determine attributes.
             }
             result = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
             # TODO: What does result look like?
@@ -102,22 +132,25 @@ def push_child_entities(children):
         dhis2_api.enroll_in_id(dhis2_child, risk_id, today)
 
         # Set dhis2_te_inst_id in CCHQ to flag the case as pushed.
-        # TODO: Determine commcare_user
-        commcare_user = None  # For now, just make the voices stop
+        commcare_user = CommCareUser.get(child['owner_id'])
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         caseblock = CaseBlock(
             create=False,
             case_id=child['_id'],
             version=V2,
-            case_type=commcare_user.project.some_attribute.case_type,
+            case_type=commcare_user.project.SOME_ATTRIBUTE.case_type,  # <-- TODO: What attribute?
+            # commcare_user.project.call_center_config.case_type
             close=close,
-            update={'dhis2_te_inst_id': dhis2_child['id']}
+            update={
+                'dhis2_te_inst_id': dhis2_child['id'],
+                # TODO: ...
+            }
         )
         casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, commcare_user.project.name)
 
 
-def pull_child_entities(domain, children):
+def pull_child_entities(domain, commcare_user_id, dhis2_children):
     """
     Create new child cases for nutrition tracking in CommCare.
 
@@ -126,16 +159,41 @@ def pull_child_entities(domain, children):
     case is new and does not exist in CommCare.)
 
     :param domain: The domain/project of the application
-    :param children: A list of dictionaries of Child tracked entities
-                     from the DHIS2 API where cchq_case_id is unset
+    :param commcare_user_id: The user to set as the owner of the child cases
+    :param dhis2_children: A list of dictionaries of Child tracked entities
+                           from the DHIS2 API where cchq_case_id is unset
 
     This fulfills the third requirement of `DHIS2 Integration`_.
 
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    # TODO: ...
-    pass
+    commcare_user = CommCareUser.get(commcare_user_id)
+    close = commcare_user.to_be_deleted() or not commcare_user.is_active
+    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    for dhis2_child in dhis2_children:
+        # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
+        case = get_case_by_dhis2_te_inst_id(dhis2_child['id'])
+        if case:
+            case_id = case['case_id']
+        else:
+            case_id = uuid.uuid4().hex
+            caseblock = CaseBlock(
+                create=True,
+                case_id=case_id,
+                owner_id=commcare_user_id,
+                user_id=commcare_user_id,
+                version=V2,
+                case_type=commcare_user.project.SOME_ATTRIBUTE.case_type,  # <-- TODO: What attribute?
+                update={
+                    'dhis2_te_inst_id': dhis2_child['id'],
+                    # TODO: ...
+                }
+            )
+            casexml = ElementTree.tostring(caseblock.as_xml())
+            submit_case_blocks(casexml, commcare_user.project.name)
+        dhis2_child['cchq_case_id'] = case_id
+        dhis2_api.update_te_inst(dhis2_child)
 
 
 def get_children_only_theirs():
@@ -143,7 +201,7 @@ def get_children_only_theirs():
     Returns a list of child entities that don't have cchq_case_id set
     """
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    return dhis2_api.gen_instances_with_unset('Child', 'cchq_case_id')  # TODO: Or would that be 'CCHQ Case ID'?
+    return dhis2_api.gen_instances_with_unset('Child', 'cchq_case_id')
 
 
 def gen_children_only_ours(domain):
@@ -191,7 +249,7 @@ def sync_child_entities():
     already-registered child cases with DHIS2 child entities.
     """
     children = get_children_only_theirs()
-    pull_child_entities(DOMAIN, children)
+    pull_child_entities(DOMAIN, DEFAULT_COMMCARE_USER_ID, children)
 
     children = gen_children_only_ours(DOMAIN)
     push_child_entities(children)
@@ -200,6 +258,75 @@ def sync_child_entities():
 def send_nutrition_data():
     """
     Send received nutrition data to DHIS2.
+
+    This fulfills the fourth requirement of `DHIS2 Integration`_:
+
+    CommCareHQ will use the DHIS API to send received nutrition data to DHIS2
+    as an event that is associated with the correct entity, program, DHIS2
+    user and organization.
+
+    1. On a periodic basis, CommCareHQ will submit an appropriate event using
+       the DHIS2 events API (Multiple Event with Registration) for any
+       unprocessed Growth Monitoring forms.
+
+    2. The event will only be submitted if the corresponding case has a DHIS2
+       mapping (case properties that indicate the DHIS2 tracked entity
+       instance and programs for the case). If the case is not yet mapped to
+       DHIS2, the Growth Monitoring form will not be processed and could be
+       processed in the future (if the case is later associated with a DHIS
+       entity).
+
+    3. The event will contain the program ID associated with case, the tracked
+       entity ID and the program stage (Nutrition Assessment). It will also
+       contain the recorded height and weight as well as mobile-calculated BMI
+       and Age at time of visit.
+
+
+    .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
+
     """
-    # TODO: ...
-    pass
+    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    nutrition_id = dhis2_api.get_resource_id('program', 'Pediatric Nutrition Assessment')
+    events = {'eventList': []}
+    for form in get_unprocessed_growth_monitoring_forms():
+        event = form_to_event(nutrition_id, form)
+        events['eventList'].append(event)
+    dhis2_api.send_events(nutrition_id, events)
+
+
+def form_to_event(program_id, form):
+    """
+    Builds a dict representing a DHIS2 event
+
+    e.g. ::
+
+        {
+          "program": "eBAyeGv0exc",
+          "orgUnit": "DiszpKrYNg8",
+          "eventDate": "2013-05-17",
+          "status": "COMPLETED",
+          "storedBy": "admin",
+          "coordinate": {
+            "latitude": "59.8",
+            "longitude": "10.9"
+          },
+          "dataValues": [
+            { "dataElement": "qrur9Dvnyt5", "value": "22" },
+            { "dataElement": "oZg33kd9taw", "value": "Male" },
+            { "dataElement": "msodh3rEMJa", "value": "2013-05-18" }
+          ]
+        }
+
+    :param program_id: The program can't be determined from form data.
+    :param form: Form data
+    """
+    event = {
+        'program': program_id,
+        'orgUnit': form.dhis2_org_unit_id,  # hidden value populated by case
+        # TODO: etc.
+    }
+    # The "dataElement"s added are specific to the World Vision Sri Lanka
+    # Nutrition project. To make this more generic, use a dict to map form
+    # properties to dataElement IDs.
+    return event
+
