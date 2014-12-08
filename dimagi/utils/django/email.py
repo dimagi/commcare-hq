@@ -16,10 +16,12 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
 
+    recipient = list(recipient) if type(recipient) is not str else [recipient]
+
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
-                                 [recipient], headers=from_header,
+                                 recipient, headers=from_header,
                                  connection=connection, cc=cc, bcc=bcc)
     for file in (file_attachments or []):
         if file:
