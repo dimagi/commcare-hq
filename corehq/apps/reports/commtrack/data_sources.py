@@ -1,3 +1,5 @@
+import logging
+from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
@@ -8,7 +10,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
 from dateutil import parser
-from casexml.apps.stock.models import StockTransaction
+from casexml.apps.stock.models import StockTransaction, StockReport
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
@@ -403,32 +405,46 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 self.active_location,
             )
 
-            supply_points = (SupplyPointCase.wrap(doc) for doc in iter_docs(SupplyPointCase.get_db(), sp_ids))
             form_xmlnses = [form['xmlns'] for form in self.all_relevant_forms.values()]
+            spoint_loc_map = {
+                doc['_id']: doc['location_id']
+                for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
+            }
+            locations = {
+                doc['_id']: Location.wrap(doc)
+                for doc in iter_docs(Location.get_db(), spoint_loc_map.values())
+            }
 
-            for supply_point in supply_points:
-                # todo: get locations in bulk
-                loc = supply_point.location
-                transactions = StockTransaction.objects.filter(
-                    case_id=supply_point._id,
+            for spoint_id, loc_id in spoint_loc_map.items():
+                loc = locations[loc_id]
+
+                form_ids = StockReport.objects.filter(
+                    stocktransaction__case_id=spoint_id
                 ).exclude(
-                    report__date__lte=self.start_date
+                    date__lte=self.start_date
                 ).exclude(
-                    report__date__gte=self.end_date
-                ).order_by('-report__date')
+                    date__gte=self.end_date
+                ).values_list(
+                    'form_id', flat=True
+                ).order_by('-date').distinct()  # not truly distinct due to ordering
                 matched = False
-                for trans in transactions:
-                    if XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
-                        yield {
-                            'loc_id': loc._id,
-                            'loc_path': loc.path,
-                            'name': loc.name,
-                            'type': loc.location_type,
-                            'reporting_status': 'reporting',
-                            'geo': loc._geopoint,
-                        }
-                        matched = True
-                        break
+                for form_id in form_ids:
+                    try:
+                        if XFormInstance.get(form_id).xmlns in form_xmlnses:
+                            yield {
+                                'loc_id': loc._id,
+                                'loc_path': loc.path,
+                                'name': loc.name,
+                                'type': loc.location_type,
+                                'reporting_status': 'reporting',
+                                'geo': loc._geopoint,
+                            }
+                            matched = True
+                            break
+                    except ResourceNotFound:
+                        logging.error('Stock report for location {} in {} references non-existent form {}'.format(
+                            loc._id, loc.domain, form_id
+                        ))
                 if not matched:
                     yield {
                         'loc_id': loc._id,
