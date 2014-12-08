@@ -1995,8 +1995,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.internal_settings_form.is_valid():
             old_attrs = copy.copy(self.domain_object.internal)
             self.internal_settings_form.save(self.domain_object)
-            eula_props_changed = (old_attrs.custom_eula != self.domain_object.internal.custom_eula or
-                                  old_attrs.can_use_data != self.domain_object.internal.can_use_data)
+            eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
+                                  bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
 
             if eula_props_changed and settings.EULA_CHANGE_EMAIL:
                 message = '\n'.join([
