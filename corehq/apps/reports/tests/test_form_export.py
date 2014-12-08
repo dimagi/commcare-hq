@@ -1,9 +1,13 @@
 from StringIO import StringIO
 import json
+import os
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+from django.test.testcases import SimpleTestCase
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports.models import FormExportSchema, FormQuestionSchema
 from corehq.apps.users.models import CommCareUser
 from couchexport.models import Format
 from django_digest.test import Client
@@ -100,3 +104,27 @@ class FormExportTest(TestCase):
         files = self.custom_export.get_export_files()
         data = json.loads(files.file.payload)
         self.assertEqual(len(data['Export']['rows']), 2)
+
+
+class FormQuestionSchemaTest(SimpleTestCase, TestFileMixin):
+    file_path = ['readable_forms']
+    root = os.path.dirname(__file__)
+
+    def test(self):
+        app = Application.wrap(self.get_json('question_schema_test_app'))
+        xmlns = 'http://openrosa.org/formdesigner/284D3F7C-9C10-48E6-97AC-C37927CBA89A'
+        schema = FormQuestionSchema(xmlns=xmlns)
+
+        schema.update_for_app(app)
+        self.assertEqual(schema.question_schema['form.multi_root'].options, ['item1', 'item2', 'item3'])
+        self.assertEqual(schema.question_schema['form.group1.multi_level1'].options, ['item1', 'item2'])
+        self.assertEqual(schema.question_schema['form.group1.question6.multi_level_2'].options, ['item1', 'item2'])
+        self.assertEqual(schema.question_schema['form.repeat_1.multi_level_1_repeat'].options, ['item1', 'item2'])
+        self.assertEqual(schema.question_schema['form.repeat_1.multi_level_1_repeat'].repeat_context, 'form.repeat_1')
+
+        updated_form_xml = self.get_xml('question_schema_update_form')
+        app.get_form_by_xmlns(xmlns).source = updated_form_xml
+
+        schema.update_for_app(app)
+        self.assertEqual(schema.question_schema['form.new_multi'].options, ['z_first', 'a_last'])
+        self.assertEqual(schema.question_schema['form.group1.multi_level1'].options, ['item1', 'item2', '1_item'])
