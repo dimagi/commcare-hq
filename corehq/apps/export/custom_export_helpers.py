@@ -6,7 +6,7 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
-from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types
+from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
@@ -257,6 +257,7 @@ class FormCustomExportHelper(CustomExportHelper):
                 ret.append(case_name_col.default_column())
             return ret
 
+        question_schema = self.custom_export.question_schema.question_schema
         for col in column_conf:
             question = col["index"]
             if question in remaining_questions:
@@ -269,6 +270,13 @@ class FormCustomExportHelper(CustomExportHelper):
                 col["show"] = True
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
+            if question in question_schema and not question_schema[question].repeat_context:
+                options = set(col["options"]) if col["options"] else set()
+                # don't overwrite any options added by the user
+                new_options = set(question_schema[question].options) - options
+                col["options"] = (col["options"] or []) + list(new_options)
+                if self.creating_new_export:
+                    col["doc_type"] = SplitColumn.__name__
 
         requires_case = self.custom_export.uses_cases()
 
@@ -289,12 +297,21 @@ class FormCustomExportHelper(CustomExportHelper):
             })
 
         column_conf.extend(generate_additional_columns(requires_case))
-        column_conf.extend([
-            ExportColumn(
-                index=q,
+
+        def get_remainder_column(question):
+            multi = question in question_schema and not question_schema[question].repeat_context
+            props = dict(
+                index=question,
                 display='',
                 show=True,
-            ).to_config_format(selected=self.creating_new_export)
+            )
+            if multi:
+                props['options'] = question_schema[question].options
+                return SplitColumn(**props)
+            else:
+                return ExportColumn(**props)
+        column_conf.extend([
+            get_remainder_column(q).to_config_format(selected=self.creating_new_export)
             for q in remaining_questions
         ])
 

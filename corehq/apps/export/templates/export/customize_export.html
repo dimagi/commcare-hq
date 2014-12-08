@@ -234,6 +234,16 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
+                        column.newOption = ko.observable("");
+                        column.addOption = function(e) {
+                            if (this.newOption() != "") {
+                                if (this.options.indexOf(this.newOption()) === -1) {
+                                    this.options.push(this.newOption());
+                                }
+                                this.newOption("");
+                            }
+                            return false;
+                        }.bind(column);
                     });
 
                     for (var i = 0; i < columns.length; i++) {
@@ -299,7 +309,7 @@
                                     doc_type: column.doc_type
                                 };
                                 if (column.doc_type() === 'SplitColumn'){
-                                    col.num_columns = parseFloat(column.num_columns());
+                                    col.options = column.options();
                                 }
                                 return col;
                             })
@@ -514,17 +524,21 @@
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
                                 {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
-                                <td class="input">
+                                <td class="input" data-bind="if: options">
                                     <select data-bind="
                                         value: doc_type,
                                         foreach: $root.column_type_options
                                     ">
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
-                                    <span data-bind="if: doc_type() === 'SplitColumn'">
-                                        <input class="input input-mini" type="number" data-bind="value: num_columns" />
-                                        <span>{% trans "columns" %}</span>
-                                    </span>
+                                    <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                    <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                    <div data-bind="if: doc_type() === 'SplitColumn'">
+                                        {% trans "Options:" %}
+                                        <span data-bind="foreach: options">
+                                            <span class="label" data-bind="text: $data"></span>
+                                        </span>
+                                    </div>
                                 </td>
                                 {% endif %}
                                 {% if helper.allow_deid %}
