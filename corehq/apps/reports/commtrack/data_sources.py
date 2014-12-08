@@ -416,13 +416,16 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
 
             for spoint_id, loc_id in spoint_loc_map.items():
                 loc = locations[loc_id]
-                transactions = StockTransaction.objects.filter(
-                    case_id=spoint_id,
+
+                form_ids = StockReport.objects.filter(
+                    stocktransaction__case_id=spoint_id
                 ).exclude(
-                    report__date__lte=self.start_date
+                    date__lte=self.start_date
                 ).exclude(
-                    report__date__gte=self.end_date
-                ).order_by('-report__date')
+                    date__gte=self.end_date
+                ).values_list(
+                    'form_id', flat=True
+                ).order_by('-date').distinct()  # not truly distinct due to ordering
                 matched = False
                 for form_id in form_ids:
                     try:
