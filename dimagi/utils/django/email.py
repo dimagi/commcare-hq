@@ -16,7 +16,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
 
-    recipient = list(recipient) if type(recipient) is not str else [recipient]
+    recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
 
     from_header = {'From': email_from}  # From-header
     connection = get_connection()
