@@ -26,13 +26,11 @@ def non_test_domains():
 def incomplete_domains():
     return filters.OR(filters.missing("countries"),
                       filters.missing("internal.area"),
-                      filters.missing("internal.initiative"),
                       filters.missing("internal.notes"),
                       filters.missing("internal.organization_name"),
                       filters.missing("internal.platform"),
                       filters.missing("internal.phone_model"),
                       filters.missing("internal.project_manager"),
-                      filters.missing("internal.project_state"),
                       filters.missing("internal.sub_area"),
                       )
 
