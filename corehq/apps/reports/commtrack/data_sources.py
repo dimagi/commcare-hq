@@ -403,14 +403,20 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 self.active_location,
             )
 
-            supply_points = (SupplyPointCase.wrap(doc) for doc in iter_docs(SupplyPointCase.get_db(), sp_ids))
             form_xmlnses = [form['xmlns'] for form in self.all_relevant_forms.values()]
+            spoint_loc_map = {
+                doc['_id']: doc['location_id']
+                for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
+            }
+            locations = {
+                doc['_id']: Location.wrap(doc)
+                for doc in iter_docs(Location.get_db(), spoint_loc_map.values())
+            }
 
-            for supply_point in supply_points:
-                # todo: get locations in bulk
-                loc = supply_point.location
+            for spoint_id, loc_id in spoint_loc_map.items():
+                loc = locations[loc_id]
                 transactions = StockTransaction.objects.filter(
-                    case_id=supply_point._id,
+                    case_id=spoint_id,
                 ).exclude(
                     report__date__lte=self.start_date
                 ).exclude(
