@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 
-from corehq.apps.domain.views import EditInternalDomainInfoView
+from corehq.apps.domain.views import EditBasicProjectInfoView
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
@@ -49,7 +49,7 @@ def incomplete_domains_to_email():
                     "domain_name": domain,
                     "email_to": users,
                     "settings_link": get_url_base() + reverse(
-                        EditInternalDomainInfoView.urlname,
+                        EditBasicProjectInfoView.urlname,
                         args=[domain]
                     )
                 }
@@ -72,7 +72,7 @@ def fm_reminder_email():
             'domain/email/fm_outreach.txt', domain)
         for email in domain['email_to']:
             send_HTML_email(
-                "Please update your domain",
+                "Please update your project settings for " + domain['domain_name'],
                 email,
                 email_content,
                 email_from=settings.MASTER_LIST_EMAIL,
