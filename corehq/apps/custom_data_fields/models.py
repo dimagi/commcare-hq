@@ -12,20 +12,20 @@ SYSTEM_FIELDS = ["commtrack-supply-point"]
 SYSTEM_PREFIX = "commcare"
 
 
-def _validate_reserved_words(value):
-    if value in SYSTEM_FIELDS:
-        return _('You may not use "{}" as a field name').format(value)
+def _validate_reserved_words(slug):
+    if slug in SYSTEM_FIELDS:
+        return _('You may not use "{}" as a field name').format(slug)
     for prefix in [SYSTEM_PREFIX, 'xml']:
-        if value.startswith(prefix):
+        if slug and slug.startswith(prefix):
             return _('Field names may not begin with "{}"').format(prefix)
 
 
-def is_system_key(value):
-    return bool(_validate_reserved_words(value))
+def is_system_key(slug):
+    return bool(_validate_reserved_words(slug))
 
 
-def validate_reserved_words(value):
-    error = _validate_reserved_words(value)
+def validate_reserved_words(slug):
+    error = _validate_reserved_words(slug)
     if error is not None:
         raise ValidationError(error)
 
@@ -106,7 +106,6 @@ class CustomDataFieldsDefinition(Document):
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
-                errors.append(_validate_reserved_words(value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields
