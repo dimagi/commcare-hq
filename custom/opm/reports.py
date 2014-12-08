@@ -843,7 +843,6 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
         self.pagination.count = 1000000
 
-        rows = None
         cache = get_redis_client()
         if cache.exists(self.redis_key):
             rows = pickle.loads(cache.get(self.redis_key))
@@ -856,6 +855,9 @@ class MetReport(CaseReportMixin, BaseReport):
         for row in rows:
             del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
+            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            if link_text:
+                row[0] = link_text.group(1)
 
         self.context['report_table'].update(
             rows=rows
