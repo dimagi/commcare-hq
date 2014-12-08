@@ -9,7 +9,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
 from dateutil import parser
-from casexml.apps.stock.models import StockTransaction
+from casexml.apps.stock.models import StockTransaction, StockReport
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
