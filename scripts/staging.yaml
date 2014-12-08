@@ -49,7 +49,6 @@ branches:
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - bulk-app-translate # Noah 9/18
   - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
   - custom_location_data  # Ethan & tw 11/17
