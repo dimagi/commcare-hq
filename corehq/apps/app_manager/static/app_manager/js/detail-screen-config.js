@@ -505,7 +505,8 @@ var DetailScreenConfig = (function () {
                     // Note: starting_index is added by Screen.serialize
                     return {
                         starting_index: this.starting_index,
-                        header: column.header
+                        header: column.header,
+                        isTab: true
                     };
                 }
                 return column;
@@ -523,6 +524,14 @@ var DetailScreenConfig = (function () {
                         this.$grip = $('<span class="sort-disabled"></span>');
                     }
                 }
+            },
+            copyCallback: function () {
+                var column = this.serialize();
+                // add a marker that this is copied for this purpose
+                return JSON.stringify({
+                    type: 'detail-screen-config:Column',
+                    contents: column
+                });
             }
         };
         return Column;
@@ -731,12 +740,26 @@ var DetailScreenConfig = (function () {
                 }
                 return data;
             },
-            addItem: function (columnConfiguration) {
-                this.columns.push(
-                    this.initColumnAsColumn(
-                        Column.init(columnConfiguration, this)
-                    )
+            addItem: function (columnConfiguration, index) {
+                var column = this.initColumnAsColumn(
+                    Column.init(columnConfiguration, this)
                 );
+                if (index === undefined) {
+                    this.columns.push(column);
+                } else {
+                    this.columns.splice(index, 0, column);
+                }
+            },
+            pasteCallback: function (data, index) {
+                try {
+                     data = JSON.parse(data);
+                } catch (e) {
+                    // just ignore pasting non-json
+                    return;
+                }
+                if (data.type === 'detail-screen-config:Column' && data.contents) {
+                    this.addItem(data.contents, index);
+                }
             },
             addProperty: function () {
                 this.addItem({hasAutocomplete: true});

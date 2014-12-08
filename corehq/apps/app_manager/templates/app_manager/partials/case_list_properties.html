@@ -5,7 +5,7 @@
     <p data-bind="text: DetailScreenConfig.message.EMPTY_SCREEN, visible: !$root.edit && _.isEmpty(columns)"></p>
     <table class="table table-condensed detail-screen-table">
         <thead>
-            <tr tabindex="999">
+            <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th class="detail-screen-icon"></th>
                 <th class="detail-screen-field" data-bind="text: DetailScreenConfig.message.FIELD"></th>
                 <th class="detail-screen-header" data-bind="text: DetailScreenConfig.message.HEADER"></th>
@@ -19,8 +19,8 @@
             beforeRemove: function (elem) { $(elem).fadeOut() }
         }">
             <tr data-bind="css: {info: isTab}, attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
-                           copy: function () { return field.value; },
-                           paste: function (data) { console.log(data); }">
+                           copy: function () { return copyCallback(); },
+                           paste: function (data) { $parent.pasteCallback(data, $index() + 1); }">
                 <td class="detail-screen-icon" data-bind="jqueryElement: $grip, visible: $root.edit"></td>
                 <!--ko if: !isTab -->
                     <td class="detail-screen-field control-group"
