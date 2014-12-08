@@ -879,6 +879,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
         required=False,
     )
 
+    default_lang = forms.ChoiceField(
+        required=False,
+        label=ugettext_noop("Default Language"),
+        choices=(
+            ('en', ugettext_noop("English (en)")),
+        )
+    )
+
     # contains a string-ified JSON object of events
     events = forms.CharField(
         required=False,
@@ -942,13 +950,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
     include_case_side_effects = forms.BooleanField(
         required=False,
         label=ugettext_noop("Include Case Changes for Partial Forms"),
-    )
-    default_lang = forms.ChoiceField(
-        required=False,
-        label=ugettext_noop("Default Language"),
-        choices=(
-            ('en', ugettext_noop("English (en)")),
-        )
     )
     # only show if SMS_SURVEY or IVR_SURVEY is chosen
     max_question_retries = forms.ChoiceField(
@@ -1577,6 +1578,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 "A valid JSON object was not passed in the events input."
             ))
 
+        default_lang = self.cleaned_data["default_lang"]
         for event in events:
             eventForm = CaseReminderEventForm(
                 data=event,
@@ -1603,8 +1605,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         del translations[lang]
                     else:
                         translations[lang] = msg
-                if not translations:
-                    raise ValidationError(_("Please provide an SMS message."))
+                if default_lang not in translations:
+                    raise ValidationError(_("Please provide a message for the "
+                        "default language."))
 
             # clean form_unique_id:
             if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
