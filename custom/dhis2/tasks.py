@@ -1,8 +1,12 @@
 from datetime import date
+from xml.etree import ElementTree
+from apps.case.mock import CaseBlock
 from apps.case.models import CommCareCase
+from apps.case.xml import V2
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.es.cases import CaseES
+from corehq.apps.hqcase.utils import submit_case_blocks
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
 from django.conf import settings
 
@@ -97,11 +101,20 @@ def push_child_entities(children):
         # Enroll in Underlying Risk Assessment
         dhis2_api.enroll_in_id(dhis2_child, risk_id, today)
 
-        # TODO: Set dhis2_te_inst_id in CCHQ to flag the case as pushed.
-        child['dhis2_te_inst_id'] = dhis2_child['id']
-        # TODO: Use case block, e.g.
-        # casexml = ElementTree.tostring(caseblock.as_xml())
-        # submit_case_blocks(casexml, domain.name)
+        # Set dhis2_te_inst_id in CCHQ to flag the case as pushed.
+        # TODO: Determine commcare_user
+        commcare_user = None  # For now, just make the voices stop
+        close = commcare_user.to_be_deleted() or not commcare_user.is_active
+        caseblock = CaseBlock(
+            create=False,
+            case_id=child['_id'],
+            version=V2,
+            case_type=commcare_user.project.some_attribute.case_type,
+            close=close,
+            update={'dhis2_te_inst_id': dhis2_child['id']}
+        )
+        casexml = ElementTree.tostring(caseblock.as_xml())
+        submit_case_blocks(casexml, commcare_user.project.name)
 
 
 def pull_child_entities(domain, children):
