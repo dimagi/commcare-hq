@@ -1,5 +1,5 @@
 from couchdbkit.exceptions import ResourceNotFound
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -370,20 +370,25 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.doc_type, 'CommCareCase-Deleted')
 
 
-class TestCheckActionOrder(TestCase):
-    def test(self):
+class TestCheckActionOrder(SimpleTestCase):
+
+    def test_already_sorted(self):
         case = CommCareCase(actions=[
             CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
             CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
             CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
         ])
         self.assertTrue(case.check_action_order())
+
+    def test_out_of_order(self):
         case = CommCareCase(actions=[
             CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
             CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
             CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
         ])
         self.assertFalse(case.check_action_order())
+
+    def test_sorted_with_none(self):
         case = CommCareCase(actions=[
             CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
             CommCareCaseAction(server_date=None),
@@ -391,6 +396,8 @@ class TestCheckActionOrder(TestCase):
             CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
         ])
         self.assertTrue(case.check_action_order())
+
+    def test_out_of_order_with_none(self):
         case = CommCareCase(actions=[
             CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
             CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
