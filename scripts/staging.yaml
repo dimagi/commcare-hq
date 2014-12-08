@@ -45,8 +45,6 @@ name: autostaging
 branches:
   - copy-paste-case-list-property  # Danny 12/8
   - refactor-case-list
-#  - add-build-ui
-#  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -70,9 +68,6 @@ submodules:
   submodules/touchforms-src:
     branches:
       - static-tags # Nick P 5/20
-#  submodules/dimagi-utils-src:
-#    branches:
-#      - json_response-status
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
       - debug-yui # Nick P 11/4
