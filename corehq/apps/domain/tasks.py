@@ -70,15 +70,14 @@ def fm_reminder_email():
             'domain/email/fm_outreach.html', domain)
         email_content_plaintext = render_to_string(
             'domain/email/fm_outreach.txt', domain)
-        for email in domain['email_to']:
-            send_HTML_email(
-                "Please update your project settings for " + domain['domain_name'],
-                email,
-                email_content,
-                email_from=settings.MASTER_LIST_EMAIL,
-                text_content=email_content_plaintext,
-                cc=[settings.MASTER_LIST_EMAIL],
-            )
+        send_HTML_email(
+            "Please update your project settings for " + domain['domain_name'],
+            domain['email_to'],
+            email_content,
+            email_from=settings.MASTER_LIST_EMAIL,
+            text_content=email_content_plaintext,
+            cc=[settings.MASTER_LIST_EMAIL],
+        )
 
 
 def incomplete_self_started_domains():
