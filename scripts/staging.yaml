@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - copy-paste-case-list-property  # Danny 12/8
   - refactor-case-list
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
