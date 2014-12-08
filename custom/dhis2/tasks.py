@@ -1,6 +1,7 @@
+from datetime import date
+from apps.case.models import CommCareCase
 from celery.schedules import crontab
 from celery.task import periodic_task
-from corehq.apps.es import UserES
 from corehq.apps.es.cases import CaseES
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
 from django.conf import settings
@@ -53,11 +54,10 @@ def push_child_entities(children):
     Register child entities in DHIS2 and enroll them in the Pediatric
     Nutrition Assessment and Underlying Risk Assessment programs.
 
-    :param children: elasticsearch result.hits of cases that have a
-                     hidden value field named dhis2_organization_unit_id
-                     and an empty hidden value field named dhis2_te_inst_id.
+    :param children: A generator of cases that have properties named
+                     dhis2_organization_unit_id and dhis2_te_inst_id.
 
-    .. Note:: When child entities, dhis2_te_inst_id is set to the ID of the
+    .. Note:: Once pushed, dhis2_te_inst_id is set to the ID of the
               tracked entity instance.
 
     This fulfills the second requirement of `DHIS2 Integration`_.
@@ -66,9 +66,11 @@ def push_child_entities(children):
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    nutrition_id = dhis2_api.get_resource_id('program', 'Pediatric Nutrition Assessment')
+    risk_id = dhis2_api.get_resource_id('program', 'Underlying Risk Assessment')
+    today = date.today().strftime('%Y-%m-%d')  # More explicit than str(date.today())
     for child in children:
-        # TODO: ou_id = child['dhis2_organization_unit_id']  # app will copy this from user
-        ou_id = 'tEF6qa7ojrF'
+        ou_id = child['dhis2_organization_unit_id']  # App sets this case property from user custom data
 
         try:
             # Search for cchq_case_id in case previous attempt to register failed.
@@ -78,18 +80,28 @@ def push_child_entities(children):
             dhis2_child = {
                 'cchq_case_id': child['_id'],
                 # TODO: And the rest of the attributes
-                'Name': 'Jemima',
-                'Date of Birth': '2014-12-01',
-                'Favourite Colour': 'blue',
+                # These are hard-coded for the World Vision project, but
+                # should be configurable if we make the DHIS2 API client more
+                # generic
+                'Name': child['name'],
+                'Date of Birth': child['dob'],
+                'Favourite Colour': child['favorite_color'],  # <-- TODO: Not really. Determine attributes.
             }
             result = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
             # TODO: What does result look like?
+            dhis2_child = result
 
         # Enroll in Pediatric Nutrition Assessment
+        dhis2_api.enroll_in_id(dhis2_child, nutrition_id, today)
 
         # Enroll in Underlying Risk Assessment
+        dhis2_api.enroll_in_id(dhis2_child, risk_id, today)
 
-        # Set dhis2_te_inst_id in CCHQ to flag the case as pushed.
+        # TODO: Set dhis2_te_inst_id in CCHQ to flag the case as pushed.
+        child['dhis2_te_inst_id'] = dhis2_child['id']
+        # TODO: Use case block, e.g.
+        # casexml = ElementTree.tostring(caseblock.as_xml())
+        # submit_case_blocks(casexml, domain.name)
 
 
 def pull_child_entities(domain, children):
@@ -109,6 +121,7 @@ def pull_child_entities(domain, children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
+    # TODO: ...
     pass
 
 
@@ -120,7 +133,7 @@ def get_children_only_theirs():
     return dhis2_api.gen_instances_with_unset('Child', 'cchq_case_id')  # TODO: Or would that be 'CCHQ Case ID'?
 
 
-def get_children_only_ours(domain):
+def gen_children_only_ours(domain):
     """
     Returns a list of new child cases which don't have dhis2_organization_unit_id set
     """
@@ -152,7 +165,10 @@ def get_children_only_ours(domain):
 
     query = CaseES().domain(DOMAIN).filter({'missing': {'field': 'dhis2_organization_unit_id'}})
     result = query.run()
-    return result.hits if result.total else []
+    # return result.hits if result.total else []
+    if result.total:
+        for doc in result.hits:
+            yield CommCareCase.wrap(doc)
 
 
 @periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04
@@ -164,7 +180,7 @@ def sync_child_entities():
     children = get_children_only_theirs()
     pull_child_entities(DOMAIN, children)
 
-    children = get_children_only_ours(DOMAIN)
+    children = gen_children_only_ours(DOMAIN)
     push_child_entities(children)
 
 
@@ -172,4 +188,5 @@ def send_nutrition_data():
     """
     Send received nutrition data to DHIS2.
     """
+    # TODO: ...
     pass

@@ -1,4 +1,5 @@
 # from django.db import models
+from datetime import date
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 import requests
 
@@ -204,6 +205,40 @@ class Dhis2Api(object):
             if page < json['metaData']['pager']['pageCount']:
                 page += 1
                 continue
+
+    def enroll_in(self, te_inst_id, program, when=None):
+        """
+        Enroll the given tracked entity instance in the given program
+
+        :param te_inst_id: The ID of a tracked entity instance
+        :param program: The *name* of a program
+        :param when: The date ("YYYY-MM-DD") of enrollment. Defaults to today.
+        :return: The API response
+        """
+        program_id = self.get_resource_id('program', program)
+        return self.enroll_in_id(te_inst_id, program_id, when)
+
+    def enroll_in_id(self, te_inst_id, program_id, when=None):
+        """
+        Enroll the given tracked entity instance in the given program
+
+        :param te_inst_id: The ID of a tracked entity instance
+        :param program_id: The ID of a program
+        :param when: The date ("YYYY-MM-DD") of enrollment. Defaults to today.
+        :return: The API response
+        """
+        # cf. https://www.dhis2.org/doc/snapshot/en/user/html/ch31s34.html
+        if when is None:
+            when = date.today().strftime('%Y-%m-%d')
+        __, json = self._request.post(
+            'enrollments',
+            {
+                "trackedEntityInstance": te_inst_id,
+                "program": program_id,
+                "dateOfEnrollment": when,
+                "dateOfIncident": when
+            })
+        return json
 
     @staticmethod
     def entities_to_dicts(json):
