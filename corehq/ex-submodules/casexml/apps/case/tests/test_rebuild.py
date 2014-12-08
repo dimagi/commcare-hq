@@ -374,34 +374,34 @@ class TestCheckActionOrder(SimpleTestCase):
 
     def test_already_sorted(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
-            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
-            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertTrue(case.check_action_order())
 
     def test_out_of_order(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
-            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
-            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertFalse(case.check_action_order())
 
     def test_sorted_with_none(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
             CommCareCaseAction(server_date=None),
-            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
-            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertTrue(case.check_action_order())
 
     def test_out_of_order_with_none(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 01, 01, 00, 00, 00)),
-            CommCareCaseAction(server_date=datetime(2001, 01, 03, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
             CommCareCaseAction(server_date=None),
-            CommCareCaseAction(server_date=datetime(2001, 01, 02, 00, 00, 00)),
+            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertFalse(case.check_action_order())
