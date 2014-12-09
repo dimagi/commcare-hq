@@ -271,12 +271,14 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
             if question in question_schema and not question_schema[question].repeat_context:
-                options = set(col["options"]) if col["options"] else set()
-                # don't overwrite any options added by the user
-                new_options = set(question_schema[question].options) - options
-                col["options"] = (col["options"] or []) + list(new_options)
                 if self.creating_new_export:
+                    col["options"] = question_schema[question].options
+                    col["allOptions"] = question_schema[question].options
                     col["doc_type"] = SplitColumn.__name__
+                else:
+                    current_options = set(col["options"]) if col["options"] else set()
+                    col["allOptions"] = list(set(question_schema[question].options) | current_options)
+                    col["hasNewOptions"] = bool(set(question_schema[question].options) - current_options)
 
         requires_case = self.custom_export.uses_cases()
 

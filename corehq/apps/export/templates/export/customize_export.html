@@ -239,6 +239,7 @@
                             if (this.newOption() != "") {
                                 if (this.options.indexOf(this.newOption()) === -1) {
                                     this.options.push(this.newOption());
+                                    this.allOptions.push(this.newOption());
                                 }
                                 this.newOption("");
                             }
@@ -525,20 +526,21 @@
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
                                 {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
                                 <td class="input" data-bind="if: options">
+                                    <span data-bind="if: hasNewOptions" class="pull-right">
+                                        <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
+                                    </span>
                                     <select data-bind="
                                         value: doc_type,
                                         foreach: $root.column_type_options
                                     ">
                                         <option data-bind="value: value, text: label"></option>
                                     </select>
+                                    <div data-bind="if: doc_type() === 'SplitColumn'">
+                                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                                        </select>
+                                    </div>
                                     <input class="input input-small" type="text" data-bind="value: newOption"/>
                                     <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
-                                    <div data-bind="if: doc_type() === 'SplitColumn'">
-                                        {% trans "Options:" %}
-                                        <span data-bind="foreach: options">
-                                            <span class="label" data-bind="text: $data"></span>
-                                        </span>
-                                    </div>
                                 </td>
                                 {% endif %}
                                 {% if helper.allow_deid %}
