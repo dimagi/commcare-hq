@@ -1254,7 +1254,6 @@ def find_question_id(form, value):
     return None
 
 
-@toggles.MULTIMEDIA_EXPORT.required_decorator()
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
