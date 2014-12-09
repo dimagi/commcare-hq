@@ -611,6 +611,15 @@ class QuestionMeta(DocumentSchema):
 
 
 class FormQuestionSchema(Document):
+    """
+    Contains information about the questions for a specific form
+    specifically the options that are available (or have ever been available) for
+    any multi-select questions.
+
+    Calling `update_schema` will load the app and any saved versions of the app
+    that have not already been processed and update the question schema with
+    any new options.
+    """
     domain = StringProperty()
     app_id = StringProperty()
     last_processed_version = IntegerProperty(default=0)
