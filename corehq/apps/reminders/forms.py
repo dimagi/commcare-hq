@@ -1687,10 +1687,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return max_day_num + 1
 
     def clean_schedule_length(self):
-        if self.cleaned_data['repeat_type'] == REPEAT_TYPE_NO:
-            return 1
-        value = self.cleaned_data['schedule_length']
         event_interpretation = self.cleaned_data["event_interpretation"]
+        if self.cleaned_data['repeat_type'] == REPEAT_TYPE_NO:
+            if event_interpretation == EVENT_AS_SCHEDULE:
+                return self.get_min_schedule_length()
+            else:
+                return 1
+        value = self.cleaned_data['schedule_length']
         if event_interpretation == EVENT_AS_OFFSET and value < 0:
             raise ValidationError("Please enter a non-negative number.")
         elif event_interpretation == EVENT_AS_SCHEDULE:
