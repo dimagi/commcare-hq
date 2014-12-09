@@ -65,9 +65,11 @@
                 headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
                 success: function(data, textStatus, jqXHR) {
                     updateCharts(data);
+                    $('#report-error').addClass('hide');
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log("wah waaaah");
+                    $('#report-error').removeClass('hide');
                 }
             });
             event.preventDefault();
@@ -99,6 +101,10 @@
 {% endblock %}
 
 {% block main_column %}
+<div id="report-error" class="alert alert-error hide">
+    There was an error rendering your report.
+</div>
+
 <div class="report-controls">
     <form id="report-filters" class="form-horizontal" method="GET" action="">
         <fieldset>
