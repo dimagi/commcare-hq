@@ -78,6 +78,7 @@ from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.reports import util as report_utils
 from dimagi.utils.timezones import utils as tz_utils
+from langcodes import get_name as get_language_name
 
 ONE_MINUTE_OFFSET = time(0, 1)
 
@@ -1594,9 +1595,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # we can utilize the ValidationErrors for this field.
 
             # clean message:
-            if method == METHOD_IVR_SURVEY or method == METHOD_SMS_SURVEY:
-                event['message'] = {}
-            else:
+            if method in [METHOD_SMS, METHOD_SMS_CALLBACK]:
                 translations = event.get('message', {})
                 for lang, msg in translations.items():
                     if msg:
@@ -1606,8 +1605,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     else:
                         translations[lang] = msg
                 if default_lang not in translations:
-                    raise ValidationError(_("Please provide a message for the "
-                        "default language."))
+                    default_lang_name = (get_language_name(default_lang) or
+                        default_lang)
+                    raise ValidationError(_("Please provide messages for the "
+                        "default language (%(language)s) or change the default "
+                        "language at the bottom of the page.") %
+                        {"language": default_lang_name})
+            else:
+                event['message'] = {}
 
             # clean form_unique_id:
             if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
