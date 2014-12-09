@@ -16,6 +16,7 @@ from django.utils.html import escape
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.products.models import SQLProduct
+from couchdbkit import ResourceNotFound
 
 register = template.Library()
 
@@ -291,12 +292,18 @@ def render_case_hierarchy(case, options):
         # has parent case(s)
         # todo: handle duplicates in ancestor path (bubbling up of parent-child
         # relationships)
-        parent_cases = [idx.referenced_case for idx in case.indices]
+        parent_cases = []
+        for idx in case.indices:
+            try:
+                parent_cases.append(idx.referenced_case)
+            except ResourceNotFound:
+                parent_cases.append(None)
         for parent_case in parent_cases:
-            parent_case.edit_data = {
-                'view_url': get_case_url(parent_case.case_id)
-            }
-        last_parent_id = parent_cases[-1].case_id
+            if parent_case:
+                parent_case.edit_data = {
+                    'view_url': get_case_url(parent_case.case_id)
+                }
+        last_parent_id = case.indices[-1].referenced_id
 
         for c in case_list:
             if not getattr(c, 'treetable_parent_node_id', None):
@@ -305,6 +312,8 @@ def render_case_hierarchy(case, options):
         case_list = parent_cases + case_list
 
     for c in case_list:
+        if not c:
+            continue
         c.columns = []
         case_dict = c.to_full_dict()
         for column in columns:
