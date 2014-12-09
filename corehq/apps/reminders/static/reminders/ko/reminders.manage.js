@@ -114,11 +114,15 @@ var ManageRemindersViewModel = function (
     });
 
     self.global_timeouts = ko.observable();
-    self.isGlobalTimeoutsVisible = ko.computed(function () {
+
+    self.areTimeoutsVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS_CALLBACK ||
                 self.method() === self.choices.METHOD_IVR_SURVEY ||
-                self.method() === self.choices.METHOD_SMS_SURVEY) &&
-                self.ui_type === self.choices.UI_SIMPLE_FIXED;
+                self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
+    self.isGlobalTimeoutsVisible = ko.computed(function () {
+        return self.areTimeoutsVisible() && self.ui_type === self.choices.UI_SIMPLE_FIXED;
     });
 
     self.submit_partial_forms = ko.observable(initial.submit_partial_forms);
