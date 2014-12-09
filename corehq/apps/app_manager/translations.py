@@ -25,6 +25,9 @@ def process_bulk_app_translation_upload(app, f):
     a function like django.contrib.messages.error, and the second is a string.
     """
 
+    def none_or_unicode(val):
+        return unicode(val) if val is not None else val
+
     msgs = []
 
     headers = expected_bulk_app_sheet_headers(app)
@@ -44,7 +47,7 @@ def process_bulk_app_translation_upload(app, f):
         rows = [row for row in sheet]
         # Convert every key and value to a string
         for i in xrange(len(rows)):
-            rows[i] = {unicode(k): unicode(v) for k, v in rows[i].iteritems()}
+            rows[i] = {unicode(k): none_or_unicode(v) for k, v in rows[i].iteritems()}
 
         # CHECK FOR REPEAT SHEET
         if sheet.worksheet.title in processed_sheets:
@@ -235,12 +238,6 @@ def process_modules_and_forms_sheet(rows, app):
                 ))
                 continue
 
-        # A cell that was deleted by the user gets the string "None" put in
-        # that cell. Let's standardize it by putting the empty string there.
-        for key, value in row.iteritems():
-            if value == "None":
-                row[key] = ""
-
         for lang in app.langs:
             translation = row['default_%s' % lang]
             if translation:
@@ -349,14 +346,11 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
                 col_key = get_col_key(trans_type, lang)
                 new_translation = row[col_key]
-                if new_translation == "None":
-                    new_translation = ""
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
                     for l in app.langs:
                         fallback = row[get_col_key(trans_type, l)]
-                        fallback = "" if fallback == "None" else fallback
                         if fallback:
                             new_translation = fallback
                             break
