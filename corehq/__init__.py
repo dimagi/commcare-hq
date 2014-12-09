@@ -161,7 +161,7 @@ def _get_configurable_reports(project):
                 'get_url': get_url,
             })
 
-        yield (_('Configurable Reports'), [_make_report_class(config) for config in configs])
+        yield (_('Project Reports'), [_make_report_class(config) for config in configs])
 
 
 
