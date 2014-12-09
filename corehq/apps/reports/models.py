@@ -624,7 +624,7 @@ class FormQuestionSchema(Document):
     app_id = StringProperty()
     last_processed_version = IntegerProperty(default=0)
     xmlns = StringProperty()
-    processed_apps = StringListProperty()
+    processed_apps = SetProperty(unicode)
     question_schema = SchemaDictProperty(QuestionMeta)
 
     def update_schema(self):
@@ -670,7 +670,7 @@ class FormQuestionSchema(Document):
 
                 self.question_schema[question_path] = meta
 
-        self.processed_apps.append(app.get_id)
+        self.processed_apps.add(app.get_id)
         self.last_processed_version = app.version
 
 

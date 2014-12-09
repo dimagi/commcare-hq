@@ -132,6 +132,8 @@ class FormQuestionSchemaTest(SimpleTestCase, TestFileMixin):
         app.version = 2
 
         schema.update_for_app(app)
+        self.assertEqual(1, len(schema.processed_apps))
+        self.assertIn(app.get_id, schema.processed_apps)
         self.assertEqual(app.version, schema.last_processed_version)
         self.assertEqual(schema.question_schema['form.new_multi'].options, ['z_first', 'a_last'])
         self.assertEqual(schema.question_schema['form.group1.multi_level1'].options, ['item1', 'item2', '1_item'])
