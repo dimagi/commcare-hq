@@ -1312,7 +1312,8 @@ DOMAIN_MODULE_MAP = {
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
     'tdhtesting': 'custom.tdh',
-    'rec': 'custom.tdh'
+    'rec': 'custom.tdh',
+    'up-nrhm': 'custom.up_nrhm'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
