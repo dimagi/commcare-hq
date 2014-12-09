@@ -91,6 +91,7 @@ class MultibarChartSpec(ChartSpec):
     aggregation_column = StringProperty()
     x_axis_column = StringProperty(required=True)
     y_axis_columns = ListProperty(unicode)
+    is_stacked = BooleanProperty(default=False)
 
 
 class MultibarAggregateChartSpec(ChartSpec):
