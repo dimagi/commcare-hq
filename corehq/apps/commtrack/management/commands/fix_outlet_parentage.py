@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
         for d in domains:
             if d.commtrack_enabled:
-                outlet = self.find_outlet_type(d.commtrack_settings.location_types)
+                outlet = self.find_outlet_type(d.location_types)
                 if outlet:
                     if self.is_still_default_outlet_config(outlet):
                         if self.any_bad_outlets(d):

@@ -47,7 +47,16 @@ if __name__ == "__main__":
     # but compressor doesn't like it
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
-    if sys.argv[1] != 'compress':
+    GEVENT_COMMANDS = (
+        'bihar_run_calcs',
+        'mvp_force_update',
+        'run_gunicorn',
+        'preindex_everything',
+        'prime_views',
+        'ptop_preindex',
+        'sync_prepare_couchdb_multi',
+    )
+    if len(sys.argv) > 1 and sys.argv[1] in GEVENT_COMMANDS:
         from restkit.session import set_session; set_session("gevent")
         from gevent.monkey import patch_all; patch_all()
 

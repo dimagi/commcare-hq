@@ -1,12 +1,13 @@
 import json
+import warnings
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
-    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec
+    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec, BooleanExpressionFilterSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
-from corehq.apps.userreports.logic import EQUAL
+from corehq.apps.userreports.operators import EQUAL, get_operator
 from fluff.filters import ANDFilter, ORFilter, CustomFilter, NOTFilter
 
 
@@ -33,10 +34,24 @@ def _build_not_filter(spec, context):
 
 
 def _build_property_match_filter(spec, context):
+    warnings.warn(
+        "property_match are deprecated. Use boolean_expression instead.",
+        DeprecationWarning,
+    )
     wrapped = PropertyMatchFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
-        getter=wrapped.getter,
+        expression=wrapped.getter,
         operator=EQUAL,
+        reference_value=wrapped.property_value,
+    )
+
+
+def _build_boolean_expression_filter(spec, context):
+    from corehq.apps.userreports.expressions.factory import ExpressionFactory
+    wrapped = BooleanExpressionFilterSpec.wrap(spec)
+    return SinglePropertyValueFilter(
+        expression=ExpressionFactory.from_spec(wrapped.expression),
+        operator=get_operator(wrapped.operator),
         reference_value=wrapped.property_value,
     )
 
@@ -49,6 +64,7 @@ def _build_named_filter(spec, context):
 class FilterFactory(object):
     constructor_map = {
         'property_match': _build_property_match_filter,
+        'boolean_expression': _build_boolean_expression_filter,
         'and': _build_compound_filter,
         'or': _build_compound_filter,
         'not': _build_not_filter,
@@ -124,7 +140,7 @@ def _build_choice_list_indicator(spec, context):
             display_name=_construct_display(choice),
             column_id=_construct_column(choice),
             filter=SinglePropertyValueFilter(
-                getter=wrapped_spec.getter,
+                expression=wrapped_spec.getter,
                 operator=wrapped_spec.get_operator(),
                 reference_value=choice,
             )

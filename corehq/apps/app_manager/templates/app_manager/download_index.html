@@ -3,46 +3,57 @@
     {% include "imports/bootstrap.google-prettify.html" %}
 {% endblock %}
 {% block content %}
-    <table>
+<div class="container-fluid">
+    <h1>Build #{{ app.version }}: {{ app.name }}</h1>
+    <p>See <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">original app</a> for the lastest work in progress.</p>
+    <h2>Downloads</h2>
+    <table class="table table-condensed">
         <tr>
-            <td>CommCare.jad</td>
-            <td>{% url "download_jad" app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url "download_jad" app.domain app.id as url %}<a href="{{ url }}">CommCare.jad</a></td>
         </tr>
         <tr>
-            <td>CommCare.jar</td>
-            <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">CommCare.jar</a></td>
         </tr>
         <tr>
-            <td>profile.xml</td>
-            <td>{% url "download_profile" app.domain app.id as url %}<a href="{{ url }}">{{ url }}</a></td>
+            <td>{% url "download_ccz" app.domain app.id as url %}<a href="{{ url }}">CommCare.ccz</a></td>
         </tr>
     </table>
-    <p>Resource Files:</p>
-    <ul>
-        {% for path,source in files %}
-            <li>
-                (<a href="{{ path }}">link</a>) <a class="toggle-next" href="{{ path }}">{{ path }}</a>
-                <pre class="prettyprint linenums">{{ source|force_escape }}</pre>
-            </li>
+    <h2>Resource Files</h2>
+    <table class="table table-condensed">
+        {% for path, source in files %}
+            <tr>
+                <td class="span3">
+                    <a class="toggle-next" href="#">{{ path }}</a>
+                </td>
+                <td class="span9">
+                    <a href="{{ path }}" target="_blank"><i class="icon icon-external-link"></i></a>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <pre class="prettyprint linenums">{{ source|force_escape }}</pre>
+                </td>
+            </tr>
         {% empty %}
-            <li><h6>No Files</h6></li>
+            <tr><th>No Files</th></tr>
         {% endfor %}
-        {% if app.copy_of and not files %}
+    </table>
+    {% if app.copy_of and not files %}
 
-            <div class="alert alert-info">
-                This build was made before I knew how to save the files for a specific build.
-                To see this view for the current not-yet-built version of this app,
-                <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
-            </div>
-        {% endif %}
-    </ul>
+        <div class="alert alert-info">
+            This build was made before I knew how to save the files for a specific build.
+            To see this view for the current not-yet-built version of this app,
+            <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
+        </div>
+    {% endif %}
     <script>
         $(function(){
             $('.toggle-next').click(function(e){
                 e.preventDefault();
-                $(this).next().slideToggle();
+                $(this).parents('tr').next('tr').toggle();
             }).trigger('click');
             prettyPrint();
         });
     </script>
+</div>
 {% endblock %}

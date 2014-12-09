@@ -67,7 +67,7 @@ class CaseDataTests(TestCase):
             if action.index == 1:
                 self.assertEqual('update', action.action_type)
                 self.assertEqual('update', action.action_type)
-            self.assertEqual(date.today(), action.date.date())
+            self.assertEqual(self.date_modified.date(), action.date.date())
             self.assertEqual(date.today(), action.server_date.date())
             self.assertEqual('user', action.user_id)
             if action.index == 2:

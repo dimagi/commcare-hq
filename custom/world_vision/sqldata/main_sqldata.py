@@ -46,7 +46,7 @@ class AnteNatalCareServiceOverview(BaseSqlData):
                                              filters=self.filters + [EQ('iron_folic', 'yes')])),
             DatabaseColumn("Completed 100 IFA tablets",
                            CountUniqueColumn('doc_id', alias="100_tablets",
-                                             filters=self.filters + [AND([EQ('completed_100_ifa', 'yes'),
+                                             filters=self.filters[:-1] + [AND([EQ('completed_100_ifa', 'yes'),
                                                                           NOTEQ('delivery_date', 'empty')])])),
             DatabaseColumn("ANC3 Total Eligible",
                            CountUniqueColumn('doc_id', alias="anc_3_eligible",
@@ -60,7 +60,7 @@ class AnteNatalCareServiceOverview(BaseSqlData):
                                                                                   alias="ifa_tablets_eligible")),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
                            CountUniqueColumn('doc_id', alias="100_tablets_eligible",
-                                             filters=self.filters + [NOTEQ('delivery_date', 'empty')]))
+                                             filters=self.filters[:-1] + [NOTEQ('delivery_date', 'empty')]))
         ]
 
 
@@ -122,6 +122,7 @@ class ImmunizationOverview(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    chart_only = True
 
     @property
     def headers(self):

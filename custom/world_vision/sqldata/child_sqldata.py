@@ -1,13 +1,13 @@
 import calendar
 from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR
+from sqlagg.filters import LT, LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWithCasting
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
-from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails
+from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, DeliveryMothersIds
 
 
 class ChildRegistrationDetails(MotherRegistrationDetails):
@@ -89,6 +89,7 @@ class ClosedChildCasesBreakdown(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    chart_only = True
 
     @property
     def group_by(self):
@@ -133,6 +134,7 @@ class ChildrenDeaths(BaseSqlData):
     custom_total_calculate = True
     accordion_start = True
     accordion_end = False
+    table_only = True
 
     def calculate_total_row(self, rows):
         total_row = []
@@ -157,7 +159,7 @@ class ChildrenDeaths(BaseSqlData):
                 percent = 'n/a'
             else:
                 percent = self.percent_fn(total, self.data[column.slug])
-            result.append([{'sort_key': column.header, 'html': column.header, 'html': column.header},
+            result.append([{'sort_key': column.header, 'html': column.header},
                            {'sort_key': self.data[column.slug], 'html': self.data[column.slug]},
                            {'sort_key': 'percentage', 'html': percent}])
         return result
@@ -175,8 +177,13 @@ class ChildrenDeaths(BaseSqlData):
 
     @property
     def columns(self):
+        self.config['mother_ids'] = tuple(DeliveryMothersIds(config=self.config).data.keys()) + ('',)
         return [
-            DatabaseColumn("Total births", CountUniqueColumn('doc_id', alias="total_births")),
+            DatabaseColumn("Total births",
+                           CountUniqueColumn('doc_id',
+                                             filters=[AND([IN('mother_id', 'mother_ids'),
+                                                           OR([EQ('gender', 'female'), EQ('gender', 'male')])])],
+                                             alias='total_births')),
             DatabaseColumn("Newborn deaths (< 1 month)",
                            CountUniqueColumn('doc_id', filters=self.filters + [AND(
                                [EQ('reason_for_child_closure', 'death'),
@@ -260,38 +267,18 @@ class ChildrenDeathsByMonth(BaseSqlData):
 
     @property
     def rows(self):
-        rows = sorted(super(ChildrenDeathsByMonth, self).rows, key=lambda r: (r[1], r[0]))
-        if 'startdate' in self.config:
-            start_year = int(self.config['startdate'][:4])
-            start_month = int(self.config['startdate'][5:7])
-            end_year = int(self.config['enddate'][:4])
-            end_month = int(self.config['enddate'][5:7])
-            for year in range(start_year, end_year + 1):
-                if year == end_year:
-                    rows.extend([[unicode(i), unicode(year), {'sort_key': 0, 'html': 0}]
-                                 for i in range(start_month, end_month + 1)
-                                 if [unicode(i), unicode(year)] not in [[row[0], row[1]] for row in rows]])
-                else:
-                    rows.extend([[unicode(i), unicode(year), {'sort_key': 0, 'html': 0}]
-                                 for i in range(start_month, 13)
-                                 if [unicode(i), unicode(year)] not in [[row[0], row[1]] for row in rows]])
-                    start_month = 1
-        else:
-            year = self.config['enddate'][:4]
-            rows.extend([[unicode(i), year, {'sort_key': 0, 'html': 0}] for i in range(1, 13)
-                         if [unicode(i), year] not in [[row[0], row[1]] for row in rows]])
-
-        rows = sorted(rows, key=lambda r: (r[1], int(r[0])))
-
+        rows = [[int(i), 0] for i in range(1, 13)]
         sum_of_deaths = 0
-        for row in rows:
-            sum_of_deaths += row[2]['sort_key']
-            row[0] = calendar.month_name[int(row[0])] + ' ' + row[1]
-            del row[1]
+        for row in super(ChildrenDeathsByMonth, self).rows:
+            rows[int(row[0])][-1] += row[-1]['html']
+            sum_of_deaths += row[-1]['html']
 
         for row in rows:
-            row.append({'sort_key': self.percent_fn(sum_of_deaths, row[1]['sort_key']),
-                        'html': self.percent_fn(sum_of_deaths, row[1]['sort_key'])})
+            row[0] = calendar.month_name[row[0]]
+            row.append({'sort_key': self.percent_fn(sum_of_deaths, row[1]),
+                        'html': self.percent_fn(sum_of_deaths, row[1])})
+            row[1] = {'sort_key': row[1], 'html': row[1]}
+
         return rows
 
     @property
@@ -345,6 +332,7 @@ class NutritionBirthWeightDetails(BaseSqlData):
     chart_y_label = ''
     accordion_start = False
     accordion_end = False
+    chart_only = True
 
     @property
     def headers(self):
@@ -368,13 +356,16 @@ class NutritionBirthWeightDetails(BaseSqlData):
 
     @property
     def columns(self):
+        self.config['mother_ids'] = tuple(DeliveryMothersIds(config=self.config).data.keys()) + ('',)
         columns = [
             DatabaseColumn("Total children with with birthweight known",
                            CountUniqueColumn('doc_id', alias="total_birthweight_known",
-                                             filters=self.filters + [NOTEQ('weight_birth', 'empty')])
-            ),
+                                             filters=self.filters + [NOTEQ('weight_birth', 'empty')])),
             DatabaseColumn("Total births",
-                           CountUniqueColumn('doc_id', alias="total_births", filters=self.filters))]
+                           CountUniqueColumn('doc_id',
+                                             filters=[AND([IN('mother_id', 'mother_ids'),
+                                                           OR([EQ('gender', 'female'), EQ('gender', 'male')])])],
+                                             alias='total_births'))]
 
         columns.extend([
             DatabaseColumn("Birthweight < 2.5 kg",
@@ -424,56 +415,35 @@ class NutritionFeedingDetails(BaseSqlData):
     def columns(self):
         return [
             DatabaseColumn("Early initiation of breastfeeding",
-                CountUniqueColumn('doc_id',
-                    alias="colostrum_feeding",
-                    filters=self.filters + [EQ('breastfeed_1_hour', 'yes')]
-                )
-            ),
+                           CountUniqueColumn('doc_id', alias="colostrum_feeding",
+                                             filters=self.filters + [EQ('breastfeed_1_hour', 'yes')])),
             DatabaseColumn("Early initiation of breastfeeding Total Eligible",
-                CountUniqueColumn('doc_id',
-                    alias="colostrum_feeding_total_eligible",
-                    filters=self.filters + [NOTEQ('breastfeed_1_hour', 'empty')]
-                )
-            ),
-
+                           CountUniqueColumn('doc_id', alias="colostrum_feeding_total_eligible",
+                                             filters=self.filters + [NOTEQ('breastfeed_1_hour', 'empty')])),
             DatabaseColumn("Exclusive Breastfeeding (EBF)",
-                CountUniqueColumn('doc_id',
-                    alias="exclusive_breastfeeding",
-                    filters=self.filters + [AND([EQ('exclusive_breastfeeding', "yes"), LTE('dob', "today_minus_183")])]
-                )
-            ),
+                           CountUniqueColumn('doc_id', alias="exclusive_breastfeeding",
+                                             filters=self.filters + [AND([EQ('exclusive_breastfeeding', "yes"),
+                                                                          GTE('dob', "today_minus_183")])])),
             DatabaseColumn("Exclusive Breastfeeding (EBF) Total Eligible",
-                CountUniqueColumn('doc_id',
-                    alias="exclusive_breastfeeding_total_eligible",
-                    filters=self.filters + [GTE('dob', 'today_minus_183')]
-                )
-            ),
-
+                           CountUniqueColumn('doc_id', alias="exclusive_breastfeeding_total_eligible",
+                                             filters=self.filters + [GTE('dob', 'today_minus_183')])),
             DatabaseColumn("Supplementary feeding",
-                CountUniqueColumn('doc_id',
-                    alias="supplementary_feeding",
-                    filters=self.filters + [AND([EQ('supplementary_feeding_baby', 'yes'), GTE('dob', 'today_minus_182')])]
-                )
-            ),
+                           CountUniqueColumn('doc_id', alias="supplementary_feeding",
+                                             filters=self.filters + [AND([EQ('supplementary_feeding_baby', 'yes'),
+                                                                          GTE('dob', 'today_minus_182')])])),
             DatabaseColumn("Supplementary feeding Total Eligible",
-                CountUniqueColumn('doc_id',
-                    alias="supplementary_feeding_total_eligible",
-                    filters=self.filters + [GTE('dob', 'today_minus_182')]
-                )
-            ),
+                           CountUniqueColumn('doc_id', alias="supplementary_feeding_total_eligible",
+                                             filters=self.filters + [GTE('dob', 'today_minus_182')])),
 
             DatabaseColumn("Complementary feeding",
-                CountUniqueColumn('doc_id',
-                    alias="complementary_feeding",
-                    filters=self.filters + [AND([EQ('comp_breastfeeding', 'yes'), LTE('dob', 'today_minus_183'), GTE('dob', 'today_minus_730')])]
-                )
-            ),
+                           CountUniqueColumn('doc_id', alias="complementary_feeding",
+                                             filters=self.filters + [AND([EQ('comp_breastfeeding', 'yes'),
+                                                                          LTE('dob', 'today_minus_183'),
+                                                                          GTE('dob', 'today_minus_730')])])),
             DatabaseColumn("Complementary feeding Total Eligible",
-                CountUniqueColumn('doc_id',
-                    alias="complementary_feeding_total_eligible",
-                    filters=self.filters + [AND([LTE('dob', 'today_minus_183'), GTE('dob', 'today_minus_730')])]
-                )
-            )
+                           CountUniqueColumn('doc_id', alias="complementary_feeding_total_eligible",
+                                             filters=self.filters + [AND([LTE('dob', 'today_minus_183'),
+                                                                          GTE('dob', 'today_minus_730')])]))
         ]
 
 
@@ -486,44 +456,48 @@ class ChildHealthIndicators(BaseSqlData):
     def rows(self):
         from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         result = [[{'sort_key': self.columns[0].header, 'html': self.columns[0].header,
-                    'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[0].slug)},
+                    'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'],
+                                                self.columns[0].slug)},
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]}],
                   [{'sort_key': self.columns[1].header, 'html': self.columns[1].header,
-                    'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[1].slug)},
-                  {'sort_key': self.data[self.columns[1].slug], 'html': self.data[self.columns[1].slug]}]]
-        for i in range(2,4):
+                    'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'],
+                                                self.columns[1].slug)},
+                  {'sort_key': self.data[self.columns[1].slug], 'html': self.data[self.columns[1].slug]}],
+                  [{'sort_key': self.columns[2].header, 'html': self.columns[2].header,
+                    'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'],
+                                                self.columns[2].slug)},
+                  {'sort_key': self.data[self.columns[2].slug], 'html': self.data[self.columns[2].slug]}]]
+        for i in range(3, 5):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
-                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'], self.columns[i].slug)},
+                            'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['child_health_indicators'],
+                                                        self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
-                           {'sort_key': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[i].slug]),
-                            'html': self.percent_fn(self.data[self.columns[1].slug], self.data[self.columns[i].slug])}])
+                           {'sort_key': self.percent_fn(self.data[self.columns[1].slug],
+                                                        self.data[self.columns[i].slug]),
+                            'html': self.percent_fn(self.data[self.columns[1].slug],
+                                                    self.data[self.columns[i].slug])}])
         return result
 
     @property
     def columns(self):
         return [
-            DatabaseColumn("Total child ill", CountUniqueColumn('doc_id', alias="total_child_ill",
-                                                                filters=self.filters + [OR(
-                                                                    [EQ('pneumonia_since_last_visit', 'yes'),
-                                                                     EQ('pneumonia_since_last_visit', 'yes')])])),
+            DatabaseColumn("Total child ill",
+                           CountUniqueColumn(
+                               'doc_id', alias="total_child_ill",
+                               filters=self.filters + [OR([EQ('pneumonia_since_last_visit', 'yes'),
+                                                           EQ('has_diarrhea_since_last_visit', 'yes')])])),
             DatabaseColumn("ARI (Pneumonia) cases",
                            CountUniqueColumn('doc_id', alias="ari_cases",
-                                             filters=self.filters + [EQ('pneumonia_since_last_visit', 'yes')])
-            ),
+                                             filters=self.filters + [EQ('pneumonia_since_last_visit', 'yes')])),
             DatabaseColumn("Diarrhea cases",
                            CountUniqueColumn('doc_id', alias="diarrhea_cases",
-                                             filters=self.filters + [EQ('has_diarrhea_since_last_visit', 'yes')])
-            ),
+                                             filters=self.filters + [EQ('has_diarrhea_since_last_visit', 'yes')])),
             DatabaseColumn("ORS given during diarrhea",
                            CountUniqueColumn('doc_id', alias="ors",
-                                             filters=self.filters + [AND([EQ('dairrhea_treated_with_ors', 'yes'),
-                                                                          EQ('has_diarrhea_since_last_visit',
-                                                                             'yes')])])),
+                                             filters=self.filters + [EQ('dairrhea_treated_with_ors', 'yes')])),
             DatabaseColumn("Zinc given during diarrhea",
                            CountUniqueColumn('doc_id', alias="zinc",
-                                             filters=self.filters + [AND(
-                                                 [EQ('dairrhea_treated_with_zinc', 'yes'),
-                                                  EQ('has_diarrhea_since_last_visit', 'yes')])]))
+                                             filters=self.filters + [EQ('dairrhea_treated_with_zinc', 'yes')]))
         ]
 
 

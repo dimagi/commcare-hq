@@ -1,0 +1,38 @@
+.form-signup {
+  background-color: @cc-brand-hi;
+
+  padding: @grid-gutter-width/2;
+  @media (max-width: @screen-xs-max) {
+    padding-right: 0;
+  }
+
+  margin-left: -@grid-gutter-width/2;
+  @media (max-width: @screen-xs-max) {
+    margin-left: 0;
+  }
+
+  .border-top-radius(@border-radius-extra-large);
+  .border-bottom-radius(@border-radius-extra-large);
+  .btn-xl {
+    margin-left: -@grid-gutter-width/2;
+    width: 100%;
+
+    @media (min-width: @screen-sm-min) {
+      width: 110px;
+    }
+    @media (min-width: @screen-md-min) {
+      width: 147px;
+    }
+    @media (min-width: @screen-lg-min) {
+      width: 180px;
+    }
+  }
+}
+
+.input-xl,
+.form-group-xl .form-control {
+  .input-size(@input-height-extra-large; @padding-extra-large-vertical; @padding-extra-large-horizontal; @font-size-extra-large; @line-height-extra-large; @input-border-radius-extra-large);
+  @media (max-width: @screen-sm-max) {
+    .input-size(@input-height-large; @padding-large-vertical; @padding-large-horizontal; @font-size-large; @line-height-large; @input-border-radius-large);
+  }
+}

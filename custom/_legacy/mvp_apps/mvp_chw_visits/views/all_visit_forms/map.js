@@ -158,7 +158,7 @@ function(doc) {
             indicator_entries['household'] = case_id;
             if (indicators.num_bednets_observed && indicators.num_bednets_observed.value) {
                 indicator_entries['household bednet'] = case_id;
-                if (indicators.num_bednets_observerd.value > 0) {
+                if (indicators.num_bednets_observed.value > 0) {
                     indicator_entries['household atleastonebednet'] = case_id;
                 }
             }

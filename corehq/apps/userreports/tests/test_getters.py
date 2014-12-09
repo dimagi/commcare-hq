@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.apps.userreports.getters import DictGetter, NestedDictGetter, TransformedGetter
+from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter, TransformedGetter
 
 
 class Foo(object):

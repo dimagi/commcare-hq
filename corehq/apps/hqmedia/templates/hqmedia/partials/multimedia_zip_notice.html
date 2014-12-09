@@ -8,7 +8,7 @@
         {% if multimedia.form_errors or multimedia.missing_refs %}
             <a class="btn btn-warning" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}</a>
         {% else %}
-            <a class="btn btn-primary" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
+            <a id="download_zip" class="btn btn-primary" style="color: #ffffff;" href="{% url "download_multimedia_zip" domain app.get_id  %}"><i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}</a>
         {% endif %}
     </p>
 {% else %}

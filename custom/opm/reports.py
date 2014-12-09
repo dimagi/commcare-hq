@@ -9,6 +9,7 @@ that until we actually have another use case for it.
 from collections import defaultdict, OrderedDict
 import datetime
 import logging
+import pickle
 import simplejson
 import re
 from dateutil import parser
@@ -17,7 +18,7 @@ from django.http import HttpResponse, HttpRequest, QueryDict
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.filters import RawFilter, IN
+from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
 
 from dimagi.utils.couch.database import iter_docs
@@ -25,7 +26,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn
+from sqlagg.columns import SimpleColumn, SumColumn, CountUniqueColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
@@ -40,7 +41,7 @@ from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
-
+from dimagi.utils.couch import get_redis_client
 from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet
 from .health_status import HealthStatus
@@ -227,6 +228,7 @@ class OpmHealthStatusSqlData(SqlData):
             user_id=self.user_id,
             startdate=str(self.datespan.startdate_utc.date()),
             enddate=str(self.datespan.enddate_utc.date()),
+            lmp_total=1
         )
         return filter
 
@@ -284,16 +286,21 @@ class OpmHealthStatusSqlData(SqlData):
 
         return [
             DatabaseColumn('# of Beneficiaries Registered',
-                SumColumn('beneficiaries_registered_total',
+                CountUniqueColumn('account_number',
                     alias="beneficiaries",
                     filters=self.wrapped_sum_column_filters_extended),
                 format_fn=normal_format),
-            AggColumn(
+            AggregateColumn(
                 '# of Pregnant Women Registered',
-                alias='beneficiaries',
-                sum_slug='lmp_total',
+                format_percent,
+                [
+                    AliasColumn('beneficiaries'),
+                    CountUniqueColumn(
+                        'account_number',
+                        filters=self.wrapped_sum_column_filters_extended + [EQFilter('lmp_total', 'lmp_total')]),
+                ],
                 slug='lmp',
-                extended=True,
+                format_fn=ret_val,
             ),
             AggregateColumn('# of Mothers of Children Aged 3 Years and Below Registered',
                 format_percent,
@@ -650,6 +657,12 @@ class CaseReportMixin(object):
     extra_row_objects = []
     is_rendered_as_email = False
 
+    @memoized
+    def column_index(self, key):
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == key:
+                return i
+
     @property
     def case_status(self):
         return OpenCloseFilter.case_status(self.request_params)
@@ -751,12 +764,6 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
-    @memoized
-    def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
-            if k == key:
-                return i
-
     @property
     def rows(self):
         raw_rows = super(BeneficiaryPaymentReport, self).rows
@@ -790,10 +797,26 @@ class MetReport(CaseReportMixin, BaseReport):
     name = ugettext_noop("Conditions Met Report")
     report_template_path = "opm/met_report.html"
     slug = "met_report"
-    fix_left_col = True
     model = ConditionsMet
     exportable = False
     default_rows = 5
+    ajax_pagination = True
+    cache_key = 'opm-report'
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s" % (self.blocks, self.gp, self.awcs)
+        redis_key += "&year=%s&month=%s&is_open=%s" % (
+            self.request_params.get('year'),
+            self.request_params.get('month'),
+            self.request_params.get('is_open'),
+        )
+        return redis_key
+
+    @property
+    def total_records(self):
+        return len(super(MetReport, self).rows)
 
     @property
     def headers(self):
@@ -804,8 +827,8 @@ class MetReport(CaseReportMixin, BaseReport):
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
-                    if method != 'case_id' and method != 'owner_id'
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
     @property
@@ -817,23 +840,57 @@ class MetReport(CaseReportMixin, BaseReport):
         self.is_rendered_as_email = True
         self.use_datatables = False
         self.override_template = "opm/met_print_report.html"
+        self.update_report_context()
+        self.pagination.count = 1000000
 
-        return HttpResponse(self._async_context()['report'])
+        cache = get_redis_client()
+        if cache.exists(self.redis_key):
+            rows = pickle.loads(cache.get(self.redis_key))
+        else:
+            rows = self.rows
 
-    @property
-    def fixed_cols_spec(self):
-        return dict(num=9, width=900)
+        """
+        Strip user_id and owner_id columns
+        """
+        for row in rows:
+            del row[self.column_index('closed_date')]
+            del row[self.column_index('case_id')]
+            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            if link_text:
+                row[0] = link_text.group(1)
+
+        self.context['report_table'].update(
+            rows=rows
+        )
+        rendered_report = render_to_string(self.template_report, self.context,
+                                           context_instance=RequestContext(self.request))
+        return HttpResponse(rendered_report)
+
+    def _store_rows_in_redis(self, rows):
+        r = get_redis_client()
+        r.set(self.redis_key, pickle.dumps(rows))
+        r.expire(self.slug, 60 * 60)
 
     @property
     def rows(self):
+        sort_cols = int(self.request.GET.get('iSortingCols', 0))
+        col_id = None
+        sort_dir = None
+        if sort_cols > 0:
+            for x in range(sort_cols):
+                col_key = 'iSortCol_%d' % x
+                sort_dir = self.request.GET['sSortDir_%d' % x]
+                col_id = int(self.request.GET[col_key])
+        rows = super(MetReport, self).rows
+        if sort_dir == 'asc':
+            rows.sort(key=lambda x: x[col_id])
+        elif sort_dir == 'desc':
+            rows.sort(key=lambda x: x[col_id], reverse=True)
+        self._store_rows_in_redis(rows)
+
         if not self.is_rendered_as_email:
-            return super(MetReport, self).rows
+            return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
         else:
-            rows = super(MetReport, self).rows
-            for idx, row in enumerate(rows):
-                row = row[0:16]
-                row.extend(row[18:20])
-                rows[idx] = row
             return rows
 
 class UsersIdsData(SqlData):
@@ -976,6 +1033,7 @@ def get_report(ReportClass, month=None, year=None, block=None, lang=None):
         def request(self):
             request = HttpRequest()
             request.GET = QueryDict(None)
+            request.REQUEST = QueryDict(None)
             return request
 
         @property
@@ -1106,6 +1164,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             raise Exception("It doesn't look like this machine is configured for "
                             "excel export. To export to excel you have to run the "
                             "command:  easy_install xlutils")
+        self.pagination.count = 1000000
         headers = self.headers
         formatted_rows = self.rows
 
@@ -1142,7 +1201,7 @@ def _unformat_row(row):
     regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
     formatted_row = []
     for col in row:
-        if regexp.match(col):
+        if isinstance(col, basestring) and regexp.match(col):
             formated_col = "%s" % (regexp.match(col).group(2))
             if regexp.match(col).group(4) != "":
                 formated_col = "%s - %s%%" % (formated_col, regexp.match(col).group(4))

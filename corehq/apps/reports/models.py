@@ -79,11 +79,11 @@ class HQUserType(object):
         arrays of booleans mapping to values in human_readable and whether they should be
         included and defaulted, respectively.
         """
-        return [HQUserToggle(i, defaults[i]) for i in range(len(cls.human_readable)) if included[i]]
+        return [HQUserToggle(i, defaults[i]) for i in range(cls.count) if included[i]]
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(len(cls.human_readable))]
+        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(cls.count)]
 
 
 class HQToggle(object):
@@ -638,6 +638,8 @@ class FormExportSchema(HQExportSchema):
     def filter(self):
         user_ids = set(CouchUser.ids_by_domain(self.domain))
         user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
+        user_ids.add('demo_user')
+
         def _top_level_filter(form):
             # careful, closures used
             return form_matches_users(form, user_ids) or is_commconnect_form(form)

@@ -93,14 +93,8 @@ def REPORTS(project):
         ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
-
-    messaging = (lambda project, user: (
-        ugettext_lazy("Logs") if project.commtrack_enabled else ugettext_lazy("Messaging")), messaging_reports)
-
-    if project.commconnect_enabled:
-        reports.insert(0, messaging)
-    else:
-        reports.append(messaging)
+    messaging = (ugettext_lazy("Messaging"), messaging_reports)
+    reports.append(messaging)
 
     reports.extend(_get_dynamic_reports(project))
     reports.extend(_get_configurable_reports(project))
@@ -315,7 +309,7 @@ TABS = (
     ProjectInfoTab,
     ReportsTab,
     ProjectDataTab,
-    CommTrackSetupTab,
+    SetupTab,
     ProjectUsersTab,
     ApplicationsTab,
     CloudcareTab,

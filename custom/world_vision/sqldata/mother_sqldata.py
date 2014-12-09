@@ -95,6 +95,7 @@ class ClosedMotherCasesBreakdown(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    chart_only = True
 
     @property
     def group_by(self):
@@ -135,7 +136,7 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
-
+    chart_only = True
 
     def percent_fn(self, y):
         x = self.data['trimester_1'] + self.data['trimester_2'] + self.data['trimester_3']
@@ -189,6 +190,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    chart_only = True
 
     @property
     def rows(self):
@@ -235,7 +237,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                                                             filters=self.filters + [EQ('iron_folic', 'yes')])),
             DatabaseColumn("Completed 100 IFA tablets",
                            CountUniqueColumn('doc_id', alias="100_tablets",
-                                             filters=self.filters + [AND([EQ('completed_100_ifa', 'yes'),
+                                             filters=self.filters[:-1] + [AND([EQ('completed_100_ifa', 'yes'),
                                                                           NOTEQ('delivery_date', 'empty')])])),
             DatabaseColumn("Clinically anemic mothers",
                            CountUniqueColumn('doc_id', alias="clinically_anemic",
@@ -280,7 +282,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                            CountUniqueColumn('doc_id', alias="ifa_tablets_eligible")),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
                            CountUniqueColumn('doc_id', alias="100_tablets_eligible",
-                                             filters=self.filters + [NOTEQ('delivery_date', 'empty')])),
+                                             filters=self.filters[:-1] + [NOTEQ('delivery_date', 'empty')])),
             DatabaseColumn("Clinically anemic mothers Total Eligible",
                            CountUniqueColumn('doc_id', alias="clinically_anemic_eligible")),
             DatabaseColumn("Number of mother referrals due to danger signs Total Eligible",
@@ -323,6 +325,7 @@ class DeliveryLiveBirthDetails(BaseSqlData):
     total_row_name = "Total live births"
     accordion_start = False
     accordion_end = False
+    chart_only = True
 
     @property
     def headers(self):
@@ -377,7 +380,7 @@ class DeliveryStillBirthDetails(BaseSqlData):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[DataTablesColumn('Entity'), DataTablesColumn('Number')])
+        return DataTablesHeader(*[DataTablesColumn(''), DataTablesColumn('Number')])
 
     @property
     def columns(self):
@@ -411,6 +414,7 @@ class PostnatalCareOverview(BaseSqlData):
     chart_x_label = ''
     chart_y_label = ''
     accordion_end = False
+    chart_only = True
 
     @property
     def filters(self):
@@ -489,6 +493,7 @@ class CauseOfMaternalDeaths(BaseSqlData):
     show_charts = True
     chart_x_label = ''
     chart_y_label = ''
+    table_only = True
 
     @property
     def group_by(self):
@@ -649,7 +654,7 @@ class NumberOfPNCVisits(BaseSqlData):
 
     @property
     def filters(self):
-        filters = super(NumberOfPNCVisits, self).filters
+        filters = super(NumberOfPNCVisits, self).filters[1:]
         filters.append(AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today_minus_42')]))
         return filters
 

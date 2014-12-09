@@ -1,6 +1,5 @@
 from collections import defaultdict
 from xml.etree import ElementTree
-from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.locations.models import Location
 from corehq import toggles
@@ -41,7 +40,7 @@ def should_sync_locations(last_sync, location_db):
     return False
 
 
-def location_fixture_generator(user, version, case_sync_op=None, last_sync=None):
+def location_fixture_generator(user, version, last_sync=None):
     """
     By default this will generate a fixture for the users
     location and it's "footprint", meaning the path
@@ -56,11 +55,10 @@ def location_fixture_generator(user, version, case_sync_op=None, last_sync=None)
         or not project.commtrack_settings.sync_location_fixtures):
             return []
 
-    rewrapped_user = CommTrackUser.wrap(user.to_json())
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         location_db = _location_footprint(Location.by_domain(user.domain))
     else:
-        location_db = _location_footprint(rewrapped_user.locations)
+        location_db = _location_footprint(user.locations)
 
     if not should_sync_locations(last_sync, location_db):
         return []
@@ -69,7 +67,7 @@ def location_fixture_generator(user, version, case_sync_op=None, last_sync=None)
                                {'id': 'commtrack:locations',
                                 'user_id': user.user_id})
 
-    loc_types = project.commtrack_settings.location_types
+    loc_types = project.location_types
     type_to_slug_mapping = dict((ltype.name, ltype.code) for ltype in loc_types)
 
     def location_type_lookup(location_type):
@@ -105,6 +103,7 @@ def _location_footprint(locations):
 def _append_children(node, location_db, locations, type_lookup_function):
     by_type = _group_by_type(locations)
     for type, locs in by_type.items():
+        locs = sorted(locs, key=lambda loc: loc.name)
         node.append(_types_to_fixture(location_db, type, locs, type_lookup_function))
 
 

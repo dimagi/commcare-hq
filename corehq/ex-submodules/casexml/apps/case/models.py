@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from StringIO import StringIO
 import base64
+from functools import cmp_to_key
 import re
 from datetime import datetime
 import logging
@@ -15,7 +16,6 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
-from corehq import toggles
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
@@ -653,20 +653,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
-        def _use_new_case_processing():
-            domain = getattr(xformdoc, 'domain', None)
-            return (
-                not case_update.has_referrals()
-                and (
-                    getattr(settings,'UNIT_TESTING', False)
-                    or domain in ('ekjut', 'miralbwsurvey')
-                    or toggles.NEW_CASE_PROCESSING.enabled(domain)
-                )
-            )
-
-        if _use_new_case_processing():
+        if case_update.has_referrals():
+            return self._legacy_update_from_case_update(case_update, xformdoc)
+        else:
             return self._new_update_from_case_update(case_update, xformdoc)
 
+    def _legacy_update_from_case_update(self, case_update, xformdoc):
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
             if case_update.modified_on_str else datetime.utcnow()
 
@@ -702,6 +694,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             self.actions.append(close_action)
 
         if case_update.has_referrals():
+            logging.error('Case {} in domain {} is still using referrals'.format(
+                case_update.id, getattr(xformdoc, 'domain', None))
+            )
             if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
                 referrals = Referral.from_block(mod_date, case_update.referral_block)
                 # for some reason extend doesn't work.  disconcerting
@@ -998,7 +993,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
         json = self.to_json()
-        return sorted([(key, json[key]) for key in self.dynamic_properties()
+        wrapped_case = self
+        if type(self) != CommCareCase:
+            wrapped_case = CommCareCase.wrap(self._doc)
+
+        return sorted([(key, json[key]) for key in wrapped_case.dynamic_properties()
                        if re.search(r'^[a-zA-Z]', key)])
 
     def save(self, **params):
@@ -1193,23 +1192,33 @@ class CommCareCaseGroup(Document):
 
 
 def _action_sort_key_function(case):
-    form_ids = list(case.xform_ids)
+    def _action_cmp(first_action, second_action):
+        # if the forms aren't submitted by the same user, just default to server dates
+        if first_action.user_id != second_action.user_id:
+            return cmp(first_action.server_date, second_action.server_date)
+        else:
+            form_ids = list(case.xform_ids)
 
-    def _sortkey(action):
-        if not action.server_date or not action.date:
-            raise MissingServerDate()
+            def _sortkey(action):
+                if not action.server_date or not action.date:
+                    raise MissingServerDate()
 
-        form_cmp = lambda form_id: (form_ids.index(form_id) if form_id in form_ids else sys.maxint, form_id)
-        return (
-            # this is sneaky - it's designed to use just the date for the
-            # server time in case the phone submits two forms quickly out of order
-            action.server_date.date(),
-            action.date,
-            form_cmp(action.xform_id),
-            _type_sort(action.action_type),
-        )
+                form_cmp = lambda form_id: (form_ids.index(form_id)
+                                            if form_id in form_ids else sys.maxint, form_id)
+                # if the user is the same you should compare with the special logic below
+                # if the user is not the same you should compare just using received_on
+                return (
+                    # this is sneaky - it's designed to use just the date for the
+                    # server time in case the phone submits two forms quickly out of order
+                    action.server_date.date(),
+                    action.date,
+                    form_cmp(action.xform_id),
+                    _type_sort(action.action_type),
+                )
 
-    return _sortkey
+            return cmp(_sortkey(first_action), _sortkey(second_action))
+
+    return cmp_to_key(_action_cmp)
 
 
 def _type_sort(action_type):

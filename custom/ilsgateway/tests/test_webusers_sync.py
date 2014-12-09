@@ -5,8 +5,8 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.users.models import WebUser, UserRole
 from custom.ilsgateway.api import ILSUser
-from custom.ilsgateway.commtrack import sync_ilsgateway_webuser, webusers_sync
-from custom.ilsgateway.models import LogisticsMigrationCheckpoint
+from custom.logistics.commtrack import sync_ilsgateway_webuser, webusers_sync
+from custom.logistics.models import MigrationCheckpoint
 
 TEST_DOMAIN = 'ilsgateway-commtrack-webusers-test'
 
@@ -42,7 +42,7 @@ class WebUsersSyncTest(TestCase):
 
     def test_webusers_migration(self):
         from custom.ilsgateway.tests import MockEndpoint
-        checkpoint = LogisticsMigrationCheckpoint(
+        checkpoint = MigrationCheckpoint(
             domain=TEST_DOMAIN,
             start_date=datetime.now(),
             date=datetime.now(),

@@ -2,7 +2,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.fixtures import _simple_fixture_generator
 
 
-def program_fixture_generator(user, version, case_sync_op=None, last_sync=None):
+def program_fixture_generator(user, version, last_sync=None):
     fields = [
         'name',
         'code'

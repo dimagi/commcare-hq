@@ -2,10 +2,11 @@ from functools import partial
 
 from celery.schedules import crontab
 from celery.task import periodic_task
-
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
-from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
+from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
+    DeliveryGroups
 from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, update_statuses, \
     REMINDER_R_AND_R_DISTRICT
 from custom.ilsgateway.utils import get_current_group, send_for_day, get_groups
@@ -21,9 +22,9 @@ def send_ror_reminder(domain, date, loc_type='FACILITY'):
         sms_text = REMINDER_R_AND_R_DISTRICT
     else:
         return
-    current_group = get_current_group()
+    current_group = DeliveryGroups().current_submitting_group(date.month)
     sp_ids = set()
-    for user in CommTrackUser.by_domain(domain):
+    for user in CommCareUser.by_domain(domain):
         if user.is_active and user.location and user.location.location_type == loc_type:
             sp = SupplyPointCase.get_by_location(user.location)
             if current_group in get_groups(sp.location.metadata.get('groups', None)) \

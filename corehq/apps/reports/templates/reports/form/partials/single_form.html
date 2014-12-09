@@ -106,44 +106,28 @@ requires imports/proptable.html to be included in the main template
         ) + "?preview=true&instance={{ instance.get_id }}";
         $("#edit-form").attr("href", cloudCareUrl);
         {% endif %}
+
+        $("#archive-form").submit(function() {
+            document.getElementById('archive-form-btn').disabled=true;
+            document.getElementById('archive-spinner').style.display='inline-block';
+            ga_track_event('Reports', 'Case History', 'Archive this form', {
+                'hitCallback': function () {
+                    document.getElementById('archive-form').submit();
+                }
+            });
+            return false;
+        });
+        $("#unarchive-form").submit(function() {
+            document.getElementById('unarchive-form-btn').disabled=true;
+            document.getElementById('unarchive-spinner').style.display='inline-block';
+            ga_track_event('Reports', 'Case History', 'Restore this form', {
+                'hitCallback': function () {
+                    document.getElementById('unarchive-form').submit();
+                }
+            });
+            return false;
+        });
     });
-</script>
-<script type="text/javascript">
-    function submit_archive() {
-        document.getElementById('archive-form').submit();
-    }
-
-    function submit_restore() {
-        document.getElementById('unarchive-form').submit();
-    }
-
-    function archive_form() {
-        document.getElementById('archive-form-btn').disabled=true;
-        document.getElementById('archive-spinner').style.display='inline-block';
-        {% if GOOGLE_ANALYTICS_ID %}
-            ga('send', 'event', 'Reports', 'Case History', 'Archive this form', {
-                'hitCallback': function () {
-                    submit_archive();
-                }
-            });
-        {% else %}
-            submit_archive();
-        {% endif %}
-    }
-
-    function restore_form() {
-        document.getElementById('unarchive-form-btn').disabled=true;
-        document.getElementById('unarchive-spinner').style.display='inline-block';
-        {% if GOOGLE_ANALYTICS_ID %}
-            ga('send', 'event', 'Reports', 'Case History', 'Restore this form', {
-                'hitCallback': function () {
-                    submit_restore();
-                }
-            });
-        {% else %}
-            submit_restore();
-        {% endif %}
-    }
 </script>
 <style>
     .form-data-group-table {
@@ -263,8 +247,7 @@ requires imports/proptable.html to be included in the main template
                     <span class="help_popover" data-help-key="{% trans "Archiving Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
-                    <button type="submit" class="btn btn-danger" id="archive-form-btn"
-                            onclick="archive_form();">
+                    <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Archive this form" %}
                         <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
                     </button>
@@ -275,8 +258,7 @@ requires imports/proptable.html to be included in the main template
                     <span class="help_popover" data-help-key="{% trans "Restoring Forms" %}">
                         <i class="icon icon-question-sign"></i>
                     </span>
-                    <button type="submit" class="btn btn-primary" id="unarchive-form-btn"
-                            onclick="restore_form();">
+                    <button type="submit" class="btn btn-primary" id="unarchive-form-btn">
                         {% trans "Restore this form" %}
                         <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
                    </button>
