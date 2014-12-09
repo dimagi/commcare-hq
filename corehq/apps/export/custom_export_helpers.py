@@ -258,6 +258,18 @@ class FormCustomExportHelper(CustomExportHelper):
             return ret
 
         question_schema = self.custom_export.question_schema.question_schema
+
+        def update_multi_select_column(question, col):
+            if question in question_schema and not question_schema[question].repeat_context:
+                if self.creating_new_export:
+                    col["options"] = question_schema[question].options
+                    col["allOptions"] = question_schema[question].options
+                    col["doc_type"] = SplitColumn.__name__
+                else:
+                    current_options = set(col["options"]) if col["options"] else set()
+                    col["allOptions"] = list(set(question_schema[question].options) | current_options)
+                    col["hasNewOptions"] = bool(set(question_schema[question].options) - current_options)
+
         for col in column_conf:
             question = col["index"]
             if question in remaining_questions:
@@ -270,15 +282,8 @@ class FormCustomExportHelper(CustomExportHelper):
                 col["show"] = True
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
-            if question in question_schema and not question_schema[question].repeat_context:
-                if self.creating_new_export:
-                    col["options"] = question_schema[question].options
-                    col["allOptions"] = question_schema[question].options
-                    col["doc_type"] = SplitColumn.__name__
-                else:
-                    current_options = set(col["options"]) if col["options"] else set()
-                    col["allOptions"] = list(set(question_schema[question].options) | current_options)
-                    col["hasNewOptions"] = bool(set(question_schema[question].options) - current_options)
+
+            update_multi_select_column(question, col)
 
         requires_case = self.custom_export.uses_cases()
 
@@ -301,19 +306,18 @@ class FormCustomExportHelper(CustomExportHelper):
         column_conf.extend(generate_additional_columns(requires_case))
 
         def get_remainder_column(question):
-            multi = question in question_schema and not question_schema[question].repeat_context
-            props = dict(
+            col = ExportColumn(
                 index=question,
                 display='',
                 show=True,
-            )
-            if multi:
-                props['options'] = question_schema[question].options
-                return SplitColumn(**props)
-            else:
-                return ExportColumn(**props)
+            ).to_config_format(selected=self.creating_new_export)
+
+            update_multi_select_column(question, col)
+
+            return col
+
         column_conf.extend([
-            get_remainder_column(q).to_config_format(selected=self.creating_new_export)
+            get_remainder_column(q)
             for q in remaining_questions
         ])
 
