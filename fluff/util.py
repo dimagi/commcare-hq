@@ -56,9 +56,11 @@ def get_indicator_model(name, indicator_doc):
 
 
 def get_column_type(data_type):
-    from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_STRING
+    from fluff import TYPE_DATE, TYPE_DATETIME, TYPE_INTEGER, TYPE_STRING
     if data_type == TYPE_DATE:
         return sqlalchemy.Date
+    if data_type == TYPE_DATETIME:
+        return sqlalchemy.DateTime
     if data_type == TYPE_INTEGER:
         return sqlalchemy.Integer
     if data_type == TYPE_STRING:
