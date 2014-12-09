@@ -57,9 +57,9 @@ from django.conf import settings
 from models import XFormInstance
 
 
-# TODO: Do these belong in settings.py?
+# TODO: Move to init
 DOMAIN = 'barproject'
-DEFAULT_COMMCARE_USER_ID = 'df2530dfc9f092e429b3d594a20e278x'  # Used when creating new cases  # TODO: Use a real user
+DEFAULT_COMMCARE_USER_ID = 'df2530dfc9f092e429b3d594a20e278x'  # Used when creating new cases  # TODO: Find from domain
 DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element names
     # We could map to IDs, which would save an API request, but would reduce readability.
     'height': 'Height',
@@ -67,6 +67,7 @@ DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element na
     'age': 'Age at time of visit',
     'bmi': 'Body-mass index',
 }
+
 
 # TODO: Handle timeouts gracefully
 
@@ -128,7 +129,7 @@ def push_child_entities(children):
     risk_id = dhis2_api.get_resource_id('program', 'Underlying Risk Assessment')
     today = date.today().strftime('%Y-%m-%d')  # More explicit than str(date.today())
     for child in children:
-        ou_id = child['dhis2_organization_unit_id']  # App sets this case property from user custom data
+        ou_id = child['dhis2_organisation_unit_id']  # App sets this case property from user custom data
 
         try:
             # Search for cchq_case_id in case previous attempt to register failed.
@@ -157,24 +158,19 @@ def push_child_entities(children):
 
         # Set external_id in CCHQ to flag the case as pushed.
         commcare_user = CommCareUser.get(child['owner_id'])
-        close = commcare_user.to_be_deleted() or not commcare_user.is_active
         caseblock = CaseBlock(
             create=False,
             case_id=child['_id'],
             version=V2,
-            case_type=commcare_user.project.SOME_ATTRIBUTE.case_type,  # <-- TODO: What attribute?
-            # commcare_user.project.call_center_config.case_type
-            close=close,
             update={
                 'external_id': dhis2_child['id'],
-                # TODO: ...
             }
         )
         casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, commcare_user.project.name)
 
 
-def pull_child_entities(domain, commcare_user_id, dhis2_children):
+def pull_child_entities(domain, dhis2_children):
     """
     Create new child cases for nutrition tracking in CommCare.
 
@@ -183,7 +179,6 @@ def pull_child_entities(domain, commcare_user_id, dhis2_children):
     case is new and does not exist in CommCare.)
 
     :param domain: The domain/project of the application
-    :param commcare_user_id: The user to set as the owner of the child cases
     :param dhis2_children: A list of dictionaries of Child tracked entities
                            from the DHIS2 API where cchq_case_id is unset
 
@@ -192,12 +187,11 @@ def pull_child_entities(domain, commcare_user_id, dhis2_children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    commcare_user = CommCareUser.get(commcare_user_id)
-    close = commcare_user.to_be_deleted() or not commcare_user.is_active
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     for dhis2_child in dhis2_children:
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
         case = get_case_by_external_id(domain, dhis2_child['id'])
+        commcare_user_id = get_user_by_org_unit(domain, dhis2_child['orgUnit'])
         if case:
             case_id = case['case_id']
         else:
@@ -208,16 +202,24 @@ def pull_child_entities(domain, commcare_user_id, dhis2_children):
                 owner_id=commcare_user_id,
                 user_id=commcare_user_id,
                 version=V2,
-                case_type=commcare_user.project.SOME_ATTRIBUTE.case_type,  # <-- TODO: What attribute?
+                case_type='child_gmp',  # TODO: Move to a constant / setting
                 update={
                     'external_id': dhis2_child['id'],
                     # TODO: ...
+                    # 'weight'
+                    # 'height'
+                    # etc.
                 }
             )
             casexml = ElementTree.tostring(caseblock.as_xml())
-            submit_case_blocks(casexml, commcare_user.project.name)
+            submit_case_blocks(casexml, domain)
         dhis2_child['cchq_case_id'] = case_id
         dhis2_api.update_te_inst(dhis2_child)
+
+
+def get_user_by_org_unit(domain, org_unit):
+    # TODO: ...
+    pass
 
 
 def get_case_by_external_id(domain, id_):
@@ -237,33 +239,15 @@ def get_children_only_theirs():
 
 def gen_children_only_ours(domain):
     """
-    Returns a list of new child cases which don't have dhis2_organization_unit_id set
+    Returns a list of new child cases of the correct type where external_id is not set
     """
-    # Fetch cases where dhis2_organisation_unit_id is set and external_id is empty
-
     # query = CaseES().domain(domain).filter({
-    #     # dhis2_organisation_unit_id is not empty
-    #     'not': {
-    #         'or': [
-    #             {'dhis2_organisation_unit_id': None},
-    #             {'dhis2_organisation_unit_id': ''}
-    #         ]
-    #     }
-    # }).filter({
     #     # external_id is empty
     #     'or': [
     #         {'external_id': None},
     #         {'external_id': ''}
     #     ]
-    # })
-
-    # query = CaseES().domain(domain).filter({
-    #     # dhis2_organisation_unit_id is not empty
-    #     'not': {'dhis2_organisation_unit_id': ''}
-    # }).filter({
-    #     # external_id is empty
-    #     'external_id': ''
-    # })
+    # }).type('Child')
 
     query = CaseES().domain(domain).filter({'missing': {'field': 'dhis2_organization_unit_id'}})
     result = query.run()
@@ -279,7 +263,7 @@ def sync_child_entities():
     already-registered child cases with DHIS2 child entities.
     """
     children = get_children_only_theirs()
-    pull_child_entities(DOMAIN, DEFAULT_COMMCARE_USER_ID, children)
+    pull_child_entities(DOMAIN, children)
 
     children = gen_children_only_ours(DOMAIN)
     push_child_entities(children)
