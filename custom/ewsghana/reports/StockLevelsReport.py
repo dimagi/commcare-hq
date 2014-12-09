@@ -219,16 +219,16 @@ class FacilityReportData(EWSData):
             yield {
                 'commodity': values['commodity'],
                 'current_stock': int(values['current_stock']),
-                'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != '0.00'
+                'monthly_consumption': values['monthly_consumption'] if values['monthly_consumption'] != 0.00
                 else 'not enough data',
                 'months_until_stockout': get_months_until_stockout_icon(values['months_until_stockout']
                                                                         if values['months_until_stockout']
                                                                         else 0.0),
                 'stockout_duration': values['stockout_duration'],
                 'date_of_last_report': values['date_of_last_report'],
-                'reorder_level': values['reorder_level'] if values['reorder_level'] != '0.00'
+                'reorder_level': values['reorder_level'] if values['reorder_level'] != 0.00
                 else 'unknown',
-                'maximum_level': values['maximum_level'] if values['maximum_level'] != '0.00'
+                'maximum_level': values['maximum_level'] if values['maximum_level'] != 0.00
                 else 'unknown'}
 
     @property
@@ -359,11 +359,12 @@ class FacilityInChargeUsers(EWSData):
 
     @property
     def rows(self):
+        rows = []
         for user in CouchUser.by_domain(self.config['domain']):
             if user.user_data.get('role') == 'In Charge' and hasattr(user, 'domain_membership') \
                     and user.domain_membership['location_id'] == self.config['location_id']:
-                    return [[user.name]]
-        return [['No data']]
+                    rows.append([user.name])
+        return rows if rows else [['No data']]
 
 
 class StockLevelsReport(MultiReport):
@@ -389,7 +390,7 @@ class StockLevelsReport(MultiReport):
     @memoized
     def data_providers(self):
         config = self.report_config
-        if Location.get(config['location_id']).location_type == 'facility':
+        if not self.needs_filters and Location.get(config['location_id']).location_type == 'facility':
             return [FacilityReportData(config),
                     StockLevelsLegend(config),
                     FacilitySMSUsers(config),
