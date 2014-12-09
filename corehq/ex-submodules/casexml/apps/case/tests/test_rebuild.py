@@ -93,9 +93,10 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p3, 'p3-2') # new
 
     def testActionComparison(self):
-        case_id = post_util(create=True, property='a1 wins')
-        post_util(case_id=case_id, property='a2 wins')
-        post_util(case_id=case_id, property='a3 wins')
+        user_id = 'test-action-comparison-user'
+        case_id = post_util(create=True, property='a1 wins', user_id=user_id)
+        post_util(case_id=case_id, property='a2 wins', user_id=user_id)
+        post_util(case_id=case_id, property='a3 wins', user_id=user_id)
 
         # check initial state
         case = CommCareCase.get(case_id)
