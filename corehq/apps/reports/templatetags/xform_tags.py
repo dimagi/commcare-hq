@@ -1,4 +1,5 @@
 from functools import partial
+from django.conf import settings
 
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
@@ -159,6 +160,7 @@ def render_form(form, domain, options):
         "context_case_id": case_id,
         "instance": form,
         "form_meta": options.get('form_meta', {}),
+        "maps_api_key": settings.GMAPS_API_KEY,
         "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
         'question_list_not_found': question_list_not_found,
