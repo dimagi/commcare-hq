@@ -268,6 +268,24 @@ class ComplexExportColumn(ExportColumn):
 
 @register_column_type('multi-select')
 class SplitColumn(ComplexExportColumn):
+    """
+    This class is used to split a value into multiple columns based
+    on a set of pre-defined options. It splits the data value assuming it
+    is space separated.
+
+    The outputs will have one column for each 'option' and one additional
+    column for any values from the data don't appear in the options.
+
+    Each column will have a value of '1' if the data value contains the
+    option for that column.
+
+    e.g.
+    options = ['a', 'b']
+    column_headers = ['col a', 'col b', 'col extra']
+
+    data_val = 'a c d'
+    output = [1, '', 'c d']
+    """
     options = StringListProperty()
 
     def get_headers(self):
