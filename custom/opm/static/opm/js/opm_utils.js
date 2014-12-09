@@ -21,7 +21,7 @@ function splitTable(table, maxHeight) {
         }
     });
     splitIndices.push(undefined);
-    breakTable(table, header, rows, splitIndices)
+    breakTable(table, header, rows, splitIndices);
 }
 
 
@@ -36,12 +36,12 @@ function splitTableByNumber(table, firstPage, otherPages) {
     var rows = table.children("tbody").children();
 
     rows.each(function(i, row) {
-        if(i == firstPage || (i > firstPage && (i - firstPage) % otherPages == 0)) {
+        if(i === firstPage || (i > firstPage && (i - firstPage) % otherPages === 0)) {
             splitIndices.push(i);
         }
     });
     splitIndices.push(undefined);
-    breakTable(table, header, rows, splitIndices)
+    breakTable(table, header, rows, splitIndices);
 }
 
 function breakTable(table, header, rows, splitIndices) {
