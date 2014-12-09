@@ -636,7 +636,6 @@ class FormQuestionSchema(Document):
         for app_doc in iter_docs(Application.get_db(), to_process):
             app = Application.wrap(app_doc)
             self.update_for_app(app)
-            self.processed_apps.append(app.get_id)
 
         if to_process:
             self.save()
@@ -661,6 +660,9 @@ class FormQuestionSchema(Document):
                         meta.options.append(opt['value'])
 
                 self.question_schema[question_path] = meta
+
+        self.processed_apps.append(app.get_id)
+        self.last_processed_version = app.version
 
 
 class FormExportSchema(HQExportSchema):
