@@ -671,6 +671,9 @@ class FormExportSchema(HQExportSchema):
 
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
+        self.update_question_schema()
+
+    def update_question_schema(self):
         schema = self.question_schema
         schema.update_schema()
 
