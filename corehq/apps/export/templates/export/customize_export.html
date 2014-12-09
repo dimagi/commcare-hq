@@ -301,15 +301,15 @@
                             columns: _(table.column_configuration()).filter(function (column) {
                                 return column.selected();
                             }).map(function (column) {
-                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special));
-                                col = {
-                                    index: column.index,
-                                    display: column.display,
-                                    transform: column.transform() || null, // it doesn't save '' well
-                                    is_sensitive: Boolean(is_sensitive),
-                                    doc_type: column.doc_type
+                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special)),
+                                    col = {
+                                        index: column.index,
+                                        display: column.display,
+                                        transform: column.transform() || null, // it doesn't save '' well
+                                        is_sensitive: Boolean(is_sensitive)
                                 };
                                 if (column.doc_type() === 'SplitColumn'){
+                                    col.doc_type = column.doc_type;
                                     col.options = column.options();
                                 }
                                 return col;
@@ -525,7 +525,7 @@
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
                                 {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
-                                <td class="input" data-bind="if: options">
+                                <td class="input" data-bind="if: allOptions">
                                     <span data-bind="if: hasNewOptions" class="pull-right">
                                         <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
                                     </span>
@@ -538,9 +538,10 @@
                                     <div data-bind="if: doc_type() === 'SplitColumn'">
                                         <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
                                         </select>
+                                        <br/>
+                                        <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
                                     </div>
-                                    <input class="input input-small" type="text" data-bind="value: newOption"/>
-                                    <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
                                 </td>
                                 {% endif %}
                                 {% if helper.allow_deid %}
