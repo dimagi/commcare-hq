@@ -1121,10 +1121,12 @@ class PrimeRestoreCache(FormView):
 
         download = DownloadBase()
         res = prime_restore.delay(
+            domain,
             user_ids,
             version=form.cleaned_data['version'],
-            cache_timeout=form.cleaned_data['cache_timeout'],
-            overwrite_cache=form.cleaned_data['overwrite_cache']
+            cache_timeout_hours=form.cleaned_data['cache_timeout'],
+            overwrite_cache=form.cleaned_data['overwrite_cache'],
+            check_cache_only=form.cleaned_data['check_cache_only']
         )
         download.set_task(res)
 

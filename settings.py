@@ -298,6 +298,7 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
+    'corehq.apps.public',
     'corehq.util',
 
     # custom reports
@@ -335,6 +336,7 @@ HQ_APPS = (
     'custom.intrahealth',
     'custom.world_vision',
     'custom.tdh',
+    'custom.up_nrhm',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -382,6 +384,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'fluff_filter',
     'freddy',
     'pillowtop',
+    'pillow_retry',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -459,6 +462,8 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+MASTER_LIST_EMAIL = 'master-list@dimagi.com'
+EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
@@ -637,6 +642,10 @@ PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
 PILLOW_RETRY_BACKOFF_FACTOR = 2
 
+# After an error's total attempts exceeds this number it will only be re-attempted
+# once after being reset. This is to prevent numerous retries of errors that aren't
+# getting fixed
+PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -662,7 +671,8 @@ AUDIT_VIEWS = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': ''
+    'PINGDOM_ID': '',
+    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -1190,6 +1200,8 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.up_nrhm.models.UpNRHMLocationHierarchyFluffPillow',
+        'custom.up_nrhm.models.ASHAFacilitatorsFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1286,6 +1298,7 @@ DOMAIN_MODULE_MAP = {
 
     'ipm-senegal': 'custom.intrahealth',
     'testing-ipm-senegal': 'custom.intrahealth',
+    'up-nrhm': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 

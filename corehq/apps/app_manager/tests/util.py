@@ -17,8 +17,11 @@ class TestFileMixin(object):
     def base(self):
         return os.path.join(self.root, *self.file_path)
 
+    def get_path(self, name, ext):
+        return os.path.join(self.base, '%s.%s' % (name, ext))
+
     def get_file(self, name, ext):
-        with open(os.path.join(self.base, '%s.%s' % (name, ext))) as f:
+        with open(self.get_path(name, ext)) as f:
             return f.read()
 
     def get_json(self, name):

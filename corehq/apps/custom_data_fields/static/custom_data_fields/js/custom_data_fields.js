@@ -17,7 +17,6 @@ function CustomDataField () {
 
     self.removeChoice = function (choice) {
         self.choices.remove(choice);
-        $("#save-custom-fields").prop("disabled", false);
     };
 
     self.init = function (field) {
@@ -77,6 +76,9 @@ function CustomDataFieldsModel () {
             custom_field = new CustomDataField();
             custom_field.init(field);
             self.data_fields.push(custom_field);
+            custom_field.choices.subscribe(function() {
+                $("#save-custom-fields").prop("disabled", false);
+            });
         });
     };
 

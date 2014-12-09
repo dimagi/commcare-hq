@@ -106,6 +106,30 @@ class ExcelExportReport(FormExportReportBase):
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
 
+    def _get_domain_attachments_size(self):
+        # hash of app_id, xmlns to size of attachments
+        startkey = [self.domain]
+
+        db = Application.get_db()
+        view = db.view('attachments/attachments', startkey=startkey,
+                       endkey=startkey + [{}], group_level=3, reduce=True,
+                       group=True)
+        return {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
+
+    def properties(self, size_hash):
+        properties = dict()
+        exports = self.get_saved_exports()
+
+        for export in exports:
+            for table in export.tables:
+                properties[export.name] = {
+                    'xmlns': export.index[1],
+                    'export_id': export._id,
+                    'size': size_hash.get((export.app_id, export.index[1]), None),
+                }
+
+        return properties
+
     @property
     def report_context(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
@@ -117,11 +141,7 @@ class ExcelExportReport(FormExportReportBase):
 
         is_multimedia_previewer = toggles.MULTIMEDIA_EXPORT.enabled(self.request.user.username)
         if is_multimedia_previewer:
-            # hash of xmlns to size of attachments
-            view = db.view('attachments/attachments', startkey=startkey,
-                           endkey=startkey + [{}], group_level=3, reduce=True,
-                           group=True)
-            size_hash = {(a['key'][1], a['key'][2]): a['value'] for a in view}
+            size_hash = self._get_domain_attachments_size()
 
         for f in db.view('exports_forms/by_xmlns',
                          startkey=startkey, endkey=startkey + [{}], group=True,
@@ -146,7 +166,7 @@ class ExcelExportReport(FormExportReportBase):
             else:
                 key = None
             if is_multimedia_previewer and key in size_hash:
-                form['size'] = sizeof_fmt(size_hash[key])
+                form['size'] = size_hash[key]
             else:
                 form['size'] = None
             forms.append(form)
@@ -264,6 +284,8 @@ class ExcelExportReport(FormExportReportBase):
             report_slug=self.slug,
             is_multimedia_previewer=is_multimedia_previewer
         )
+        if is_multimedia_previewer:
+            context.update(property_hash=self.properties(size_hash))
         return context
 
 

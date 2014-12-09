@@ -29,7 +29,8 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.excel import WorksheetNotFound
+from dimagi.utils.excel import WorksheetNotFound, JSONReaderError, \
+    HeaderValueError
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
@@ -279,8 +280,8 @@ class UploadItemLists(TemplateView):
         # catch basic validation in the synchronous UI
         try:
             validate_file_format(file_ref.get_filename())
-        except FixtureUploadError as e:
-            messages.error(request, unicode(e))
+        except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
+            messages.error(request, _(u'Upload unsuccessful: %s') % e)
             return HttpResponseRedirect(fixtures_home(self.domain))
 
         # hand off to async

@@ -203,14 +203,6 @@ STOCK_TRANSACTION_EXPORT = StaticToggle(
     'Show "export transactions" link on case details page',
 )
 
-
-NEW_CASE_PROCESSING = PredicatablyRandomToggle(
-    'new_case_processing',
-    'Use new case processing/rebuild logic',
-    namespace=NAMESPACE_DOMAIN,
-    randomness=0.25,
-)
-
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
     'Sync the full location hierarchy when syncing location fixtures',
@@ -229,12 +221,6 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-CUSTOM_DATA_CHOICES = StaticToggle(
-    'custom_data_choices',
-    "Custom Data Choices - optionally specify choices for custom data fields",
-    [NAMESPACE_DOMAIN],
-)
-
 BATCHED_RESTORE = StaticToggle(
     'batched_restore',
     'Batch OTA restore response generation',
@@ -245,4 +231,10 @@ SPLIT_MULTISELECT_EXPORT = StaticToggle(
     'split_multiselect_export',
     'Split multiselect columns in custom exports',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+CAN_EDIT_EULA = StaticToggle(
+    'can_edit_eula',
+    "Whether this user can set the custom eula and data sharing internal project options. "
+    "This should be a small number of DIMAGI ONLY users",
 )

@@ -121,12 +121,14 @@
         };
 
         self.updateIcon = function (data) {
-            $scope.icon = data.response.icon;
-            $scope.url = data.response.url;
-            $scope.isExternal = !!data.response.isExternal;
-            $scope.helpText = data.response.helpText;
-            if ($scope.isExternal) {
-                $($scope.externalLink).attr('target', '_blank');
+            if (data.success) {
+                $scope.icon = data.response.icon;
+                $scope.url = data.response.url;
+                $scope.isExternal = !!data.response.isExternal;
+                $scope.helpText = data.response.helpText;
+                if ($scope.isExternal) {
+                    $($scope.externalLink).attr('target', '_blank');
+                }
             }
         };
 
