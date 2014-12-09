@@ -59,7 +59,7 @@ class BooleanIndicatorSpec(IndicatorSpecBase):
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('raw')
     datatype = StringProperty(required=True,
-                              choices=['date', 'string', 'integer'])
+                              choices=['date', 'datetime', 'string', 'integer'])
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
 
