@@ -69,6 +69,7 @@ class JsonApiRequest(object):
 class Dhis2Api(object):
 
     def __init__(self, host, username, password):
+        self._username = username  # Used when creating DHIS2 events from CCHQ form data
         self._request = JsonApiRequest(host, username, password)
         self._tracked_entity_attributes = {  # Cached known tracked entity attribute names and IDs
             # Prepopulate with attributes that are not tracked entity attributes. This allows us to treat all
@@ -264,6 +265,81 @@ class Dhis2Api(object):
                 "dateOfEnrollment": when,
                 "dateOfIncident": when
             })
+        return json
+
+    def form_to_event(self, program_id, form, data_element_names):
+        """
+        Builds a dict representing a DHIS2 event
+
+        :param program_id: The program can't be determined from form data.
+        :param form: Form data
+        :param data_element_names: A dictionary mapping CCHQ form field names
+                                   to DHIS2 tracked entity attribute names
+
+        An example of an event: ::
+
+            {
+              "program": "eBAyeGv0exc",
+              "orgUnit": "DiszpKrYNg8",
+              "eventDate": "2013-05-17",
+              "status": "COMPLETED",
+              "storedBy": "admin",
+              "coordinate": {
+                "latitude": "59.8",
+                "longitude": "10.9"
+              },
+              "dataValues": [
+                { "dataElement": "qrur9Dvnyt5", "value": "22" },
+                { "dataElement": "oZg33kd9taw", "value": "Male" },
+                { "dataElement": "msodh3rEMJa", "value": "2013-05-18" }
+              ]
+            }
+
+        See the DHIS2 `Events documentation`_ for more information.
+
+
+        .. _Events documentation: https://www.dhis2.org/doc/snapshot/en/user/html/ch28s09.html
+
+        """
+        #
+        # 3. The event will contain the program ID associated with case, the tracked
+        #    entity ID and the program stage (Nutrition Assessment). It will also
+        #    contain the recorded height and weight as well as mobile-calculated BMI
+        #    and Age at time of visit.
+        #
+        if not any(a not in self._tracked_entity_attributes for a in data_element_names.values()):
+            self._fetch_tracked_entity_attributes()
+        event = {
+            'program': program_id,
+            'orgUnit': form.dhis2_org_unit_id,  # hidden value populated by case  # TODO: Syntax?
+            'eventDate': form.submit_date,  # TODO: submit_date?
+            'status': 'COMPLETED',
+            'storedBy': self._username,
+            # 'coordinate': {
+            #     'latitude': form.location.latitude,  # TODO: Really?
+            #     'longitude': form.location.logitude
+            # },
+            'dataValues': [
+                {
+                    'dataElement': self._tracked_entity_attributes[te_attr_name],
+                    'value': getattr(form, field_name),
+                } for field_name, te_attr_name in data_element_names.iteritems()
+            ]
+        }
+        return event
+
+    def send_events(self, events):
+        """
+        Send events to the DHIS2 API.
+
+        :param events: A dictionary of an event or an eventList.
+
+        See DHIS2 `Events documentation`_ for details.
+
+
+        .. _Events documentation: https://www.dhis2.org/doc/snapshot/en/user/html/ch28s09.html
+        """
+        __, json = self._request.post('events', events)
         return json
 
     @staticmethod

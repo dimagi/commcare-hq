@@ -1,8 +1,7 @@
 """
 These are the Celery tasks used by the World Vision Sri Lanka Nutrition project
 
-They assume the following data is available in CommCare, and the following
-DHIS tracked entity attributes.
+They assume the following data is available in CommCare and DHIS2.
 
 Participating CommCare users need the following custom user property:
 
@@ -13,13 +12,25 @@ Required CommCare case attributes:
 
 1. dhis2_organization_unit_id: The organisation unit ID of the owner of the
    case.
-
 2. dhis2_te_inst_id: The ID of the DHIS2 tracked entity instance that
    corresponds with this case.
 
-DHIS2 trackedentity attributes:
+CommCare child growth monitoring forms must include:
+
+* height
+* weight
+* mobile-calculated BMI
+* age at time of visit
+* hidden value "dhis2_processed" to indicate that the form has been sent to DHIS2 as an event
+
+DHIS2 tracked entity attributes:
 
 1. cchq_case_id: Used to refer to the corresponding CommCareHQ case. This is a hexadecimal UUID.
+
+DHIS2 needs the following two projects:
+
+1. "Pediatric Nutrition Assessment"
+2. "Underlying Risk Assessment"
 
 
 """
@@ -32,17 +43,24 @@ from apps.case.xml import V2
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.es.cases import CaseES
+from corehq.apps.es.forms import FormES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
 from django.conf import settings
+from models import XFormInstance
 
 
 # TODO: Do these belong in settings.py?
 DOMAIN = 'barproject'
-DEFAULT_COMMCARE_USER_ID = 'df2530dfc9f092e429b3d594a20e278x'  # Used when creating new cases
-                                                               # TODO: Use a real user
-
+DEFAULT_COMMCARE_USER_ID = 'df2530dfc9f092e429b3d594a20e278x'  # Used when creating new cases  # TODO: Use a real user
+DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element names
+    # We could map to IDs, which would save an API request, but would reduce readability.
+    'height': 'Height',
+    'weight': 'Weight',
+    'age': 'Age at time of visit',
+    'bmi': 'Body-mass index',
+}
 
 # TODO: Handle timeouts gracefully
 
@@ -236,7 +254,6 @@ def gen_children_only_ours(domain):
 
     query = CaseES().domain(DOMAIN).filter({'missing': {'field': 'dhis2_organization_unit_id'}})
     result = query.run()
-    # return result.hits if result.total else []
     if result.total:
         for doc in result.hits:
             yield CommCareCase.wrap(doc)
@@ -259,74 +276,56 @@ def send_nutrition_data():
     """
     Send received nutrition data to DHIS2.
 
-    This fulfills the fourth requirement of `DHIS2 Integration`_:
-
-    CommCareHQ will use the DHIS API to send received nutrition data to DHIS2
-    as an event that is associated with the correct entity, program, DHIS2
-    user and organization.
-
-    1. On a periodic basis, CommCareHQ will submit an appropriate event using
-       the DHIS2 events API (Multiple Event with Registration) for any
-       unprocessed Growth Monitoring forms.
-
-    2. The event will only be submitted if the corresponding case has a DHIS2
-       mapping (case properties that indicate the DHIS2 tracked entity
-       instance and programs for the case). If the case is not yet mapped to
-       DHIS2, the Growth Monitoring form will not be processed and could be
-       processed in the future (if the case is later associated with a DHIS
-       entity).
-
-    3. The event will contain the program ID associated with case, the tracked
-       entity ID and the program stage (Nutrition Assessment). It will also
-       contain the recorded height and weight as well as mobile-calculated BMI
-       and Age at time of visit.
+    This fulfills the fourth requirement of `DHIS2 Integration`_
 
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
 
     """
+    #
+    # CommCareHQ will use the DHIS API to send received nutrition data to DHIS2
+    # as an event that is associated with the correct entity, program, DHIS2
+    # user and organization.
+    #
+    # 1. On a periodic basis, CommCareHQ will submit an appropriate event using
+    #    the DHIS2 events API (Multiple Event with Registration) for any
+    #    unprocessed Growth Monitoring forms.
+    #
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     nutrition_id = dhis2_api.get_resource_id('program', 'Pediatric Nutrition Assessment')
+    forms = []
     events = {'eventList': []}
     for form in get_unprocessed_growth_monitoring_forms():
-        event = form_to_event(nutrition_id, form)
+        forms.append(form)
+        event = dhis2_api.form_to_event(nutrition_id, form, DATA_ELEMENT_NAMES)
         events['eventList'].append(event)
-    dhis2_api.send_events(nutrition_id, events)
+    dhis2_api.send_events(events)
+    mark_as_processed(forms)
 
 
-def form_to_event(program_id, form):
-    """
-    Builds a dict representing a DHIS2 event
+def get_unprocessed_growth_monitoring_forms():
+    #
+    # 2. The event will only be submitted if the corresponding case has a DHIS2
+    #    mapping (case properties that indicate the DHIS2 tracked entity
+    #    instance and programs for the case). If the case is not yet mapped to
+    #    DHIS2, the Growth Monitoring form will not be processed and could be
+    #    processed in the future (if the case is later associated with a DHIS
+    #    entity).
+    #
+    query = FormES().filter(
+        # TODO: case must have dhis2_te_inst_id populated; this indicates that it's
+        # been enrolled in both programs by push_child_entities()
 
-    e.g. ::
+        # TODO: and it must not have been processed before
 
-        {
-          "program": "eBAyeGv0exc",
-          "orgUnit": "DiszpKrYNg8",
-          "eventDate": "2013-05-17",
-          "status": "COMPLETED",
-          "storedBy": "admin",
-          "coordinate": {
-            "latitude": "59.8",
-            "longitude": "10.9"
-          },
-          "dataValues": [
-            { "dataElement": "qrur9Dvnyt5", "value": "22" },
-            { "dataElement": "oZg33kd9taw", "value": "Male" },
-            { "dataElement": "msodh3rEMJa", "value": "2013-05-18" }
-          ]
-        }
+    )
+    result = query.run()
+    if result.total:
+        for doc in result.hits:
+            yield XFormInstance.wrap(doc)
 
-    :param program_id: The program can't be determined from form data.
-    :param form: Form data
-    """
-    event = {
-        'program': program_id,
-        'orgUnit': form.dhis2_org_unit_id,  # hidden value populated by case
-        # TODO: etc.
-    }
-    # The "dataElement"s added are specific to the World Vision Sri Lanka
-    # Nutrition project. To make this more generic, use a dict to map form
-    # properties to dataElement IDs.
-    return event
 
+def mark_as_processed(forms):
+    for form in forms:
+        form.dhis2_processed = True
+        form.save()
