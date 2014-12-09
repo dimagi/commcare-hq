@@ -243,7 +243,8 @@ class ExportColumn(DocumentSchema):
             "tag": self.tag,
             "show": self.show,
             "doc_type": self.doc_type,
-            "options": None
+            "options": [],
+            "allOptions": None,
         }
 
 
