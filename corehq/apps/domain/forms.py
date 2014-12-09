@@ -386,13 +386,18 @@ class DomainGlobalSettingsForm(forms.Form):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
             global_tz = self.cleaned_data['default_timezone']
-            domain.default_timezone = global_tz
-            users = WebUser.by_domain(domain.name)
-            for user in users:
-                dm = user.get_domain_membership(domain.name)
-                if not dm.override_global_tz:
-                    dm.timezone = global_tz
-                    user.save()
+            if domain.default_timezone != global_tz:
+                domain.default_timezone = global_tz
+                users = WebUser.by_domain(domain.name)
+                users_to_save = []
+                for user in users:
+                    dm = user.get_domain_membership(domain.name)
+                    if not dm.override_global_tz and dm.timezone != global_tz:
+                        dm.timezone = global_tz
+                        users_to_save.append(user)
+                if users_to_save:
+                    WebUser.bulk_save(users_to_save)
+
             secure_submissions = self.cleaned_data.get(
                 'secure_submissions', False)
             apps_to_save = []
