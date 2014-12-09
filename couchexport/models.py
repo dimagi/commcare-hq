@@ -271,12 +271,16 @@ class SplitColumn(ComplexExportColumn):
     options = StringListProperty()
 
     def get_headers(self):
+        header = self.display if '{option}' in self.display else u"{name} ({option})"
         for option in self.options:
-            yield u"{name} ({option})".format(
+            yield header.format(
                 name=self.display,
                 option=option
             )
-        yield u"{} (other)".format(self.display)
+        yield header.format(
+            name=self.display,
+            option='extra'
+        )
 
     def get_data(self, value):
         values = value.split(' ') if value else []

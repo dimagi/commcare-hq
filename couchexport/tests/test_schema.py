@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.loading import get_db
 from django.test import TestCase
-from couchexport.models import ExportSchema, SavedExportSchema
+from couchexport.models import ExportSchema, SavedExportSchema, SplitColumn
 from datetime import datetime, timedelta
 from couchexport.util import SerializableFunction
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -83,7 +83,7 @@ class SavedSchemaTest(TestCase):
         files = self.custom_export.get_export_files()
         data = json.loads(files.file.payload)
         self.assertEqual(data['Export']['headers'], [
-            'Split (a)', 'Split (b)', 'Split (c)', 'Split (d)', 'Split (other)'
+            'Split (a)', 'Split (b)', 'Split (c)', 'Split (d)', 'Split (extra)'
         ])
         self.assertEqual(len(data['Export']['rows']), 1)
         self.assertEqual(data['Export']['rows'][0], row)
@@ -99,3 +99,10 @@ class SavedSchemaTest(TestCase):
 
     def test_split_column_remainder(self):
         self._test_split_column('c b d e f g', ['', 1, 1, 1, 'e f g'])
+
+    def test_split_column_header_format(self):
+        col = SplitColumn(display='test_{option}', options=['a', 'b', 'c'])
+        self.assertEqual(
+            list(col.get_headers()),
+            ['test_a', 'test_b', 'test_c', 'test_extra']
+        )
