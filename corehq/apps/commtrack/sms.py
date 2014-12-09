@@ -23,7 +23,7 @@ from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError,
 )
-
+from custom.ewsghana.util import domain_has_ews_enabled
 import uuid
 
 logger = logging.getLogger('commtrack.sms')
@@ -38,7 +38,13 @@ def handle(verified_contact, text, msg=None):
         return False
 
     try:
-        data = StockReportParser(domain, verified_contact).parse(text.lower())
+        if domain_has_ews_enabled(domain.name):
+            # handle special stock parser for custom domain logic
+            from custom.ewsghana.sms import EWSStockReportParser
+            data = EWSStockReportParser(domain, verified_contact).parse(text.lower())
+        else:
+            # default report parser
+            data = StockReportParser(domain, verified_contact).parse(text.lower())
         if not data:
             return False
     except NotAUserClassError:
@@ -165,7 +171,7 @@ class StockReportParser(object):
     def single_action_transactions(self, action, args, make_tx):
         # special case to handle immediate stock-out reports
         if action.action == const.StockActions.STOCKOUT:
-            if all(looks_like_prod_code(arg) for arg in args):
+            if all(self.looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
                     yield make_tx(
                         product=self.product_from_code(prod_code),
@@ -179,7 +185,7 @@ class StockReportParser(object):
 
         products = []
         for arg in args:
-            if looks_like_prod_code(arg):
+            if self.looks_like_prod_code(arg):
                 products.append(self.product_from_code(arg))
             else:
                 if not products:
@@ -270,13 +276,12 @@ class StockReportParser(object):
             raise SMSError('invalid product code "%s"' % prod_code)
         return p
 
-
-def looks_like_prod_code(code):
-    try:
-        int(code)
-        return False
-    except:
-        return True
+    def looks_like_prod_code(self, code):
+        try:
+            int(code)
+            return False
+        except ValueError:
+            return True
 
 
 def verify_transaction_cases(transactions):
