@@ -40,7 +40,7 @@ class IndicatorSqlAdapter(object):
     def delete(self, doc):
         table = self.get_table()
         with self.engine.begin() as connection:
-            delete = self.table.delete(table.c.doc_id == doc['_id'])
+            delete = table.delete(table.c.doc_id == doc['_id'])
             connection.execute(delete)
 
 
