@@ -64,11 +64,17 @@
                 data: postData,
                 headers: {'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest'},
                 success: function(data, textStatus, jqXHR) {
-                    updateCharts(data);
-                    $('#report-error').addClass('hide');
+                    if(data.error) {
+                        $('#error-message').html(data.error);
+                        $('#report-error').removeClass('hide');
+                    } else {
+                        updateCharts(data);
+                        $('#report-error').addClass('hide');
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log("wah waaaah");
+                    $('#error-message').html(errorThrown);
                     $('#report-error').removeClass('hide');
                 }
             });
@@ -105,6 +111,7 @@
     {% blocktrans %}
     There was an error rendering your report.
     {% endblocktrans %}
+    <div id="error-message"></div>
 </div>
 
 <div class="report-controls">

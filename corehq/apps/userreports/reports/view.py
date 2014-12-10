@@ -92,7 +92,12 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     def get_ajax(self, request, domain=None, **kwargs):
         data = self.data_source
         data.set_filter_values(self.filter_values)
-        total_records = data.get_total_records()
+        try:
+            total_records = data.get_total_records()
+        except Exception as e:
+            return self.render_json_response({
+                'error': e.message,
+            })
 
         # todo: this is ghetto pagination - still doing a lot of work in the database
         datatables_params = DatatablesParams.from_request_dict(request.GET)
