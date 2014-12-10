@@ -7,6 +7,7 @@ import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
+from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
 from dimagi.utils.decorators.memoized import memoized
@@ -31,28 +32,35 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
                           initial=initial_case_list)
 
     def related(case_db, case):
-        return [case_db.get(index.referenced_id) for index in (case.indices if search_up else case.reverse_indices)]
+        return [case_db.get(index['referenced_id']) for index in (
+            case['indices'] if search_up else reverse_indices(case, wrap=False))]
 
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
     queue = list(case for case in initial_case_list)
-    directly_referenced_indices = itertools.chain(*[[index.referenced_id for index in (case.indices if search_up else case.reverse_indices)]
-                                                    for case in initial_case_list])
+    directly_referenced_indices = itertools.chain(
+        *[[index['referenced_id'] for index in (
+            case['indices'] if search_up else reverse_indices(case, wrap=False))]
+          for case in initial_case_list]
+    )
     case_db.populate(directly_referenced_indices)
     while queue:
         case = queue.pop()
-        if case and case.case_id not in relevant_cases:
-            relevant_cases[case.case_id] = case
-            if case.doc_type == 'CommCareCase-Deleted':
-                relevant_deleted_case_ids.append(case.case_id)
+        if case and case['_id'] not in relevant_cases:
+            relevant_cases[case['_id']] = case
+            if case['doc_type'] == 'CommCareCase-Deleted':
+                relevant_deleted_case_ids.append(case['_id'])
             queue.extend(related(case_db, case))
 
     if relevant_deleted_case_ids:
         logging.info('deleted cases included in footprint (restore): %s' % (
             ', '.join(relevant_deleted_case_ids)
         ))
+
     return relevant_cases
+    # print 'relevant', len(relevant_cases)
+    # return [CommCareCase.wrap(c) for c in relevant_cases]
 
 
 def get_footprint(initial_case_list, domain, strip_history=False):
