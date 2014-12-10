@@ -36,3 +36,26 @@
     }
   }
 }
+
+.dimagi-commcare-together {
+  background: no-repeat center center url('@{pub-images}/commcare-dimagi/dimagi_commcare-md.png');
+  margin: 0 auto;
+  width: 300px;
+  height: 95px;
+
+  @media (min-width: @screen-sm-min) {
+    width: 227px;
+    height: 72px;
+    background-image: url('@{pub-images}/commcare-dimagi/dimagi_commcare-sm.png');
+  }
+  @media (min-width: @screen-md-min) {
+    width: 300px;
+    height: 95px;
+    background-image: url('@{pub-images}/commcare-dimagi/dimagi_commcare-md.png');
+  }
+  @media (min-width: @screen-lg-min) {
+    width: 367px;
+    height: 116px;
+    background-image: url('@{pub-images}/commcare-dimagi/dimagi_commcare-lg.png');
+  }
+}
