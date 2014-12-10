@@ -570,23 +570,25 @@
             This is the javascript analog of messages in Django
 
             Use the function `alert_user` to make a message appear on the page.
-            this accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
+            This accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
             styling, and can be "success", "error", "info", or "warning"
 
                 alert_user("Awesome job!", "success");
             {% endcomment %}
-            function MessageAlert (message, tags) {
-                var self = this;
-                self.message = message;
-                self.alert_class = "alert fade in alert-block alert-full page-level-alert";
+            function message_alert (message, tags) {
+                var alert_obj = {
+                    "message": message,
+                    "alert_class": "alert fade in alert-block alert-full page-level-alert"
+                }
                 if (tags) {
-                    self.alert_class += " " + tags;
+                    alert_obj.alert_class += " " + tags;
                 };
+                return alert_obj;
             }
             var message_alerts = ko.observableArray();
 
             function alert_user (message, emphasis) {
-                message_alerts.push(MessageAlert(message, "alert-" + emphasis));
+                message_alerts.push(message_alert(message, "alert-" + emphasis));
             }
 
             ko.applyBindings(
@@ -597,9 +599,7 @@
             // Add in the Django messages
             {% if messages %}
                 {% for message in messages %}
-                    console.log("{% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}");
-                    console.log("{{ message.tags }}");
-                    message_alerts.push(MessageAlert(
+                    message_alerts.push(message_alert(
                         "{% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}",
                         "{{ message.tags }}"
                     ));
