@@ -422,11 +422,14 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             return case
 
     @classmethod
-    def get_lite(cls, id):
+    def get_lite(cls, id, wrap=True):
         results = cls.get_db().view("case/get_lite", key=id, include_docs=False).one()
         if results is None:
             raise ResourceNotFound('no case with id %s exists' % id)
-        return cls.wrap(results['value'])
+        if wrap:
+            return cls.wrap(results['value'])
+        else:
+            return results['value']
 
     @classmethod
     def get_wrap_class(cls, data):

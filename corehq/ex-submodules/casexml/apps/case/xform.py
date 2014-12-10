@@ -127,15 +127,19 @@ class CaseDbCache(object):
     to the database. Also provides some type checking safety.
     """
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, initial=None):
+                 lock=False, wrap=True, initial=None):
         if initial:
             self.cache = {case['_id']: case for case in initial}
         else:
             self.cache = {}
+
         self.domain = domain
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
         self.lock = lock
+        self.wrap = wrap
+        if self.lock and not self.wrap:
+            raise Exception('Currently locking only supports explicitly wrapping cases!')
         self.locks = []
         self._changed = set()
 
@@ -151,12 +155,12 @@ class CaseDbCache(object):
                     pass
 
     def validate_doc(self, doc):
-        if self.domain and doc.domain != self.domain:
+        if self.domain and doc['domain'] != self.domain:
             raise IllegalCaseId("Bad case id")
-        elif doc.doc_type == 'CommCareCase-Deleted':
+        elif doc['doc_type'] == 'CommCareCase-Deleted':
             if not self.deleted_ok:
-                raise IllegalCaseId("Case [%s] is deleted " % doc.get_id)
-        elif doc.doc_type != 'CommCareCase':
+                raise IllegalCaseId("Case [%s] is deleted " % doc['_id'])
+        elif doc['doc_type'] != 'CommCareCase':
             raise IllegalCaseId(
                 "Bad case doc type! "
                 "This usually means you are using a bad value for case_id."
@@ -170,7 +174,7 @@ class CaseDbCache(object):
 
         try:
             if self.strip_history:
-                case_doc = CommCareCase.get_lite(case_id)
+                case_doc = CommCareCase.get_lite(case_id, wrap=self.wrap)
             elif self.lock:
                 try:
                     case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
@@ -179,7 +183,10 @@ class CaseDbCache(object):
                 else:
                     self.locks.append(lock)
             else:
-                case_doc = CommCareCase.get(case_id)
+                if self.wrap:
+                    case_doc = CommCareCase.get(case_id)
+                else:
+                    case_doc = CommCareCase.get_db().get(case_id)
         except ResourceNotFound:
             return None
 
@@ -212,13 +219,15 @@ class CaseDbCache(object):
                 for raw_case in iter_docs(CommCareCase.get_db(), case_ids):
                     yield raw_case
 
-        for raw_case in  _iter_raw_cases(case_ids):
-            case = CommCareCase.wrap(raw_case)
-            self.set(case._id, case)
+        for raw_case in _iter_raw_cases(case_ids):
+            if self.wrap:
+                self.set(raw_case['_id'], CommCareCase.wrap(raw_case))
+            else:
+                self.set(raw_case['_id'], raw_case)
 
     def mark_changed(self, case):
         assert self.cache.get(case.case_id) is case
-        self._changed.add(case.case_id)
+        self._changed.add(case['_id'])
 
     def get_changed(self):
         return [self.cache[case_id] for case_id in self._changed]
