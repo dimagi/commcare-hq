@@ -162,6 +162,12 @@ class Dhis2Api(object):
             raise Dhis2ApiQueryError('Query returned multiple results')
         return json[resource][0]['id']
 
+    def get_program_id(self, name):
+        """
+        Returns the ID of the given program
+        """
+        return self.get_resource_id('programs', name)
+
     def get_te_id(self, name):
         """
         Returns the ID of the given tracked entity type
@@ -204,7 +210,8 @@ class Dhis2Api(object):
                     yield inst
             if page < json['metaData']['pager']['pageCount']:
                 page += 1
-                continue
+            else:
+                break
 
     def gen_instances_with_equals(self, te_name, attr_name, attr_value):
         """
@@ -231,7 +238,8 @@ class Dhis2Api(object):
                 yield inst
             if page < json['metaData']['pager']['pageCount']:
                 page += 1
-                continue
+            else:
+                break
 
     def enroll_in(self, te_inst_id, program, when=None):
         """
@@ -242,7 +250,7 @@ class Dhis2Api(object):
         :param when: The date ("YYYY-MM-DD") of enrollment. Defaults to today.
         :return: The API response
         """
-        program_id = self.get_resource_id('program', program)
+        program_id = self.get_resource_id('programs', program)
         return self.enroll_in_id(te_inst_id, program_id, when)
 
     def enroll_in_id(self, te_inst_id, program_id, when=None):

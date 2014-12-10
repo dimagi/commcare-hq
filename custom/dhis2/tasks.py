@@ -1,65 +1,25 @@
 """
-These are the Celery tasks used by the World Vision Sri Lanka Nutrition project
-
-They assume the following data is available in CommCare and DHIS2.
-
-Participating CommCare users need the following custom user property:
-
-* dhis2_organization_unit_id: The organisation unit ID where the user is
-  working. (In DHIS2 this can be a country, region or facility)
-
-Required CommCare case attributes:
-
-1. dhis2_organization_unit_id: The organisation unit ID of the owner of the
-   case.
-
-Instead of creating an attribute for the DHIS2 tracked entity instance ID, use
-external_id. This is indexed, and will allow us to fetch cases by their DHIS2
-ID efficiently.
-
-CommCare child growth monitoring forms must include:
-
-* height
-* weight
-* mobile-calculated BMI
-* age at time of visit
-* hidden value "dhis2_te_inst_id" whose value is taken from the case's
-  external_id
-* hidden value "dhis2_processed" to indicate that the form has been sent to
-  DHIS2 as an event
-
-DHIS2 tracked entity attributes:
-
-1. cchq_case_id: Used to refer to the corresponding CommCareHQ case. This is a
-   hexadecimal UUID.
-
-DHIS2 needs the following two projects:
-
-1. "Pediatric Nutrition Assessment"
-2. "Underlying Risk Assessment"
-
-
+Celery tasks used by the World Vision Sri Lanka Nutrition project
 """
 from datetime import date
+import random
 import uuid
 from xml.etree import ElementTree
-from apps.case.mock import CaseBlock
-from apps.case.models import CommCareCase
-from apps.case.xml import V2
+from django.conf import settings
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2
 from celery.schedules import crontab
 from celery.task import periodic_task
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.forms import FormES
+from corehq.apps.es import CaseES, FormES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
+from couchforms.models import XFormInstance
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
-from django.conf import settings
-from models import XFormInstance
 
 
 # TODO: Move to init
 DOMAIN = 'barproject'
-DEFAULT_COMMCARE_USER_ID = 'df2530dfc9f092e429b3d594a20e278x'  # Used when creating new cases  # TODO: Find from domain
 DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element names
     # We could map to IDs, which would save an API request, but would reduce readability.
     'height': 'Height',
@@ -69,10 +29,11 @@ DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element na
 }
 
 
-# TODO: Handle timeouts gracefully
+class Dhis2ConfigurationError(Exception):
+    pass
 
 
-@periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
+# @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
 def sync_org_units():
     """
     Synchronize DHIS2 Organization Units with local data.
@@ -89,8 +50,8 @@ def sync_org_units():
     request = JsonApiRequest(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     try:
         __, json = request.get('organisationUnits', params={'paging': 'false', 'links': 'false'})
-    except JsonApiError as err:
-        # TODO: Task failed. Try again later IF RECOVERABLE
+    except JsonApiError:
+        # TODO: Retry recoverable errors, like timeouts.
         # http://celery.readthedocs.org/en/latest/userguide/tasks.html#retrying
         # raise self.retry(exc=err)
         raise
@@ -125,8 +86,14 @@ def push_child_entities(children):
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    nutrition_id = dhis2_api.get_resource_id('program', 'Pediatric Nutrition Assessment')
-    risk_id = dhis2_api.get_resource_id('program', 'Underlying Risk Assessment')
+    nutrition_id = dhis2_api.get_program_id('Pediatric Nutrition Assessment')
+    # if not nutrition_id:
+    #     # DHIS2 has not been configured for this project
+    #     raise Dhis2ConfigurationError('DHIS2 program "Pediatric Nutrition Assessment" not found')
+    risk_id = dhis2_api.get_program_id('Underlying Risk Assessment')
+    # if not risk_id:
+    #     # DHIS2 has not been configured for this project
+    #     raise Dhis2ConfigurationError('DHIS2 program "Underlying Risk Assessment" not found')
     today = date.today().strftime('%Y-%m-%d')  # More explicit than str(date.today())
     for child in children:
         ou_id = child['dhis2_organisation_unit_id']  # App sets this case property from user custom data
@@ -134,27 +101,28 @@ def push_child_entities(children):
         try:
             # Search for cchq_case_id in case previous attempt to register failed.
             dhis2_child = next(dhis2_api.gen_instances_with_equals('Child', 'cchq_case_id', child['_id']))
+            dhis2_child_id = dhis2_child['Identity']
         except StopIteration:
             # Register child entity in DHIS2, and set cchq_case_id.
             dhis2_child = {
                 'cchq_case_id': child['_id'],
-                # TODO: And the rest of the attributes
-                # These are hard-coded for the World Vision project, but
-                # should be configurable if we make the DHIS2 API client more
-                # generic
+
                 'Name': child['name'],
-                'Date of Birth': child['dob'],
-                # TODO: Determine attributes.
+                'Height': child['height'],
+                'Weight': child['weight'],
+                'Age at time of visit': child['age'],
+                'Body-mass index': child['bmi'],
+                # TODO: And the rest of the attributes
             }
             result = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
             # TODO: What does result look like?
-            dhis2_child = result
+            dhis2_child_id = result['Identity']
 
         # Enroll in Pediatric Nutrition Assessment
-        dhis2_api.enroll_in_id(dhis2_child, nutrition_id, today)
+        dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, today)
 
         # Enroll in Underlying Risk Assessment
-        dhis2_api.enroll_in_id(dhis2_child, risk_id, today)
+        dhis2_api.enroll_in_id(dhis2_child_id, risk_id, today)
 
         # Set external_id in CCHQ to flag the case as pushed.
         commcare_user = CommCareUser.get(child['owner_id'])
@@ -163,7 +131,7 @@ def push_child_entities(children):
             case_id=child['_id'],
             version=V2,
             update={
-                'external_id': dhis2_child['id'],
+                'external_id': dhis2_child_id,
             }
         )
         casexml = ElementTree.tostring(caseblock.as_xml())
@@ -190,25 +158,30 @@ def pull_child_entities(domain, dhis2_children):
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     for dhis2_child in dhis2_children:
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
-        case = get_case_by_external_id(domain, dhis2_child['id'])
-        commcare_user_id = get_user_by_org_unit(domain, dhis2_child['orgUnit'])
+        case = get_case_by_external_id(domain, dhis2_child['Instance'])  # `Instance` is DHIS2's friendly name for `id`
         if case:
             case_id = case['case_id']
         else:
+            user = get_user_by_org_unit(domain, dhis2_child['Org unit'])
+            if not user:
+                # No user is assigned to this organisation unit (i.e. region or facility). Now what?
+                # TODO: Now what? Ascend to parent org unit?
+                continue
             case_id = uuid.uuid4().hex
             caseblock = CaseBlock(
                 create=True,
                 case_id=case_id,
-                owner_id=commcare_user_id,
-                user_id=commcare_user_id,
+                owner_id=user.userID,
+                user_id=user.userID,
                 version=V2,
                 case_type='child_gmp',  # TODO: Move to a constant / setting
                 update={
-                    'external_id': dhis2_child['id'],
-                    # TODO: ...
-                    # 'weight'
-                    # 'height'
-                    # etc.
+                    'external_id': dhis2_child['Instance'],
+                    'name': dhis2_child['Name'],
+                    'height': dhis2_child['Height'],
+                    'weight': dhis2_child['Weight'],
+                    'age': dhis2_child['Age at time of visit'],
+                    'bmi': dhis2_child['Body-mass index'],
                 }
             )
             casexml = ElementTree.tostring(caseblock.as_xml())
@@ -218,8 +191,18 @@ def pull_child_entities(domain, dhis2_children):
 
 
 def get_user_by_org_unit(domain, org_unit):
-    # TODO: ...
-    pass
+    """
+    Look up user ID by a DHIS2 organisation unit ID
+    """
+    result = (UserES()
+              .domain(domain)
+              .term('user_data.dhis2_org_unit_id', org_unit)
+              .run())
+    if result.total:
+        # Don't just assign all cases to the first user
+        i = random.randrange(result.total)
+        return CommCareUser.wrap(result.hits[i])
+    return None
 
 
 def get_case_by_external_id(domain, id_):
@@ -239,24 +222,20 @@ def get_children_only_theirs():
 
 def gen_children_only_ours(domain):
     """
-    Returns a list of new child cases of the correct type where external_id is not set
+    Returns a list of child_gmp cases where external_id is not set
     """
-    # query = CaseES().domain(domain).filter({
-    #     # external_id is empty
-    #     'or': [
-    #         {'external_id': None},
-    #         {'external_id': ''}
-    #     ]
-    # }).type('Child')
-
-    query = CaseES().domain(domain).filter({'missing': {'field': 'dhis2_organization_unit_id'}})
-    result = query.run()
+    result = (CaseES()
+              .domain(domain)
+              .case_type('child_gmp')
+              .empty('external_id')
+              # .missing('external_id')
+              .run())
     if result.total:
         for doc in result.hits:
             yield CommCareCase.wrap(doc)
 
 
-@periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04
+# @periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04
 def sync_child_entities():
     """
     Create new child cases for nutrition tracking in CommCare or associate
@@ -280,7 +259,7 @@ def send_nutrition_data():
 
     """
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    nutrition_id = dhis2_api.get_resource_id('program', 'Pediatric Nutrition Assessment')
+    nutrition_id = dhis2_api.get_program_id('Pediatric Nutrition Assessment')
     forms = []
     events = {'eventList': []}
     for form in get_unprocessed_growth_monitoring_forms():
