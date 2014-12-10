@@ -18,13 +18,12 @@ DATABASES = {
 }
 
 ####### Couch Config ######
-COUCH_HTTPS = False # recommended production value is True if enabling https
-COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'couchexport'
+# required by dimagi.utils.couch.database.get_safe_write_kwargs
+COUCH_SERVER_ROOT = '127.0.0.1:5984'
 
+# NOTE: COUCH_DATABASE points to test database as a hack to make dimagi.utils.couch.database.get_db work
 COUCH_DATABASE = 'http://127.0.0.1:5984/couchexport_test'
+
 
 COUCHDB_DATABASES = [ (app, 'http://127.0.0.1:5984/couchexport') for app in ['couch', 'couchexport'] ]
 

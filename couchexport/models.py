@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import datetime
 import hashlib
 from itertools import islice
@@ -6,7 +7,7 @@ import tempfile
 from urllib2 import URLError
 from couchdbkit.ext.django.schema import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
-    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
+    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
 import json
 import couchexport
 from couchexport.exceptions import CustomExportValidationError
@@ -22,12 +23,24 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from dimagi.utils.logging import notify_exception
 
+
+ColumnType = namedtuple('ColumnType', 'cls label')
 column_types = {}
+display_column_types = {}
 
 
-def register_column_type(cls):
-    column_types[cls.__name__] = cls
-    return cls
+class register_column_type(object):
+    def __init__(self, label=None):
+        self.label = label
+
+    def __call__(self, cls):
+        column_types[cls.__name__] = cls
+        if self.label:
+            display_column_types[cls.__name__] = ColumnType(
+                cls=cls,
+                label=self.label
+            )
+        return cls
 
 
 class Format(object):
@@ -186,6 +199,7 @@ class ExportSchema(Document, UnicodeMixIn):
         return iter_docs(self.get_new_ids(database))
 
 
+@register_column_type('plain')
 class ExportColumn(DocumentSchema):
     """
     A column configuration, for export
@@ -228,6 +242,9 @@ class ExportColumn(DocumentSchema):
             "selected": selected,
             "tag": self.tag,
             "show": self.show,
+            "doc_type": self.doc_type,
+            "options": [],
+            "allOptions": None,
         }
 
 
@@ -247,6 +264,56 @@ class ComplexExportColumn(ExportColumn):
         Return a list of data values that correspond to the headers
         """
         raise NotImplementedError()
+
+
+@register_column_type('multi-select')
+class SplitColumn(ComplexExportColumn):
+    """
+    This class is used to split a value into multiple columns based
+    on a set of pre-defined options. It splits the data value assuming it
+    is space separated.
+
+    The outputs will have one column for each 'option' and one additional
+    column for any values from the data don't appear in the options.
+
+    Each column will have a value of 1 if the data value contains the
+    option for that column otherwise the column will be blank.
+
+    e.g.
+    options = ['a', 'b']
+    column_headers = ['col a', 'col b', 'col extra']
+
+    data_val = 'a c d'
+    output = [1, '', 'c d']
+    """
+    options = StringListProperty()
+
+    def get_headers(self):
+        header = self.display if '{option}' in self.display else u"{name} | {option}"
+        for option in self.options:
+            yield header.format(
+                name=self.display,
+                option=option
+            )
+        yield header.format(
+            name=self.display,
+            option='extra'
+        )
+
+    def get_data(self, value):
+        values = value.split(' ') if value else []
+        row = [None] * len(self.options)
+        for index, option in enumerate(self.options):
+            if option in values:
+                row[index] = 1
+                values.remove(option)
+
+        return row + [' '.join(values)]
+
+    def to_config_format(self, selected=True):
+        config = super(SplitColumn, self).to_config_format(selected)
+        config['options'] = self.options
+        return config
 
 
 class ExportTable(DocumentSchema):
@@ -276,7 +343,7 @@ class ExportTable(DocumentSchema):
     def get_column_configuration(self, all_cols):
         selected_cols = set()
         for c in self.columns:
-            if c.doc_type == 'ExportColumn':
+            if c.doc_type in display_column_types:
                 selected_cols.add(c.index)
                 yield c.to_config_format()
 
