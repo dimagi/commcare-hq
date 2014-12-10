@@ -383,20 +383,6 @@ class DateSpan(object):
         self.enddate = to_tz.localize(self.enddate.replace(tzinfo=None))
         self.timezone = to_tz
 
-    def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
-        """
-        Generate a DateSpan with string formats. 
-        """
-        if display_format is None:
-            display_format = format
-        
-        def date_or_nothing(param):
-            return datetime.datetime.strptime(dict[param], parse_format)\
-                        if param in dict and dict[param] else None
-        startdate = date_or_nothing(startdate_str)
-        enddate = date_or_nothing(enddate_str)
-        return DateSpan(startdate, enddate, format)
-
 
 def is_business_day(day):
     """
