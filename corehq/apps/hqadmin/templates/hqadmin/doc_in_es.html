@@ -36,6 +36,12 @@
                         </div>
                     </div>
                 {% endfor %}
+                {% if not found_indices %}
+                    <div class="span6">
+                        <h3>Couch Doc:</h3>
+                        <pre>{{ couch_doc }}</pre>
+                    </div>
+                {% endif %}
             {% endif %}
         </div>
     </body>

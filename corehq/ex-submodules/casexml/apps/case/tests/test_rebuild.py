@@ -67,9 +67,10 @@ class CaseRebuildTest(TestCase):
         self.assertTrue(copy != orig)
 
     def testBasicRebuild(self):
-        case_id = post_util(create=True)
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1')
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2')
+        user_id = 'test-basic-rebuild-user'
+        case_id = post_util(create=True, user_id=user_id)
+        post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id)
+        post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -93,9 +94,10 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p3, 'p3-2') # new
 
     def testActionComparison(self):
-        case_id = post_util(create=True, property='a1 wins')
-        post_util(case_id=case_id, property='a2 wins')
-        post_util(case_id=case_id, property='a3 wins')
+        user_id = 'test-action-comparison-user'
+        case_id = post_util(create=True, property='a1 wins', user_id=user_id)
+        post_util(case_id=case_id, property='a2 wins', user_id=user_id)
+        post_util(case_id=case_id, property='a3 wins', user_id=user_id)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -142,8 +144,6 @@ class CaseRebuildTest(TestCase):
         case.actions = [a1, create, a2, a3]
         case.rebuild()
         _confirm_action_order(case, [a1, a2, a3])
-
-
 
     def testRebuildEmpty(self):
         self.assertEqual(None, rebuild_case('notarealid'))
