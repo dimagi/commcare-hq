@@ -1,4 +1,5 @@
 import functools
+import hashlib
 import json
 import itertools
 from couchdbkit.exceptions import DocTypeError
@@ -305,3 +306,19 @@ def commtrack_ledger_sections(mode):
         sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
 
     return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
+
+
+def get_questions_from_xform(xform_xml, langs, include_triggers=False,
+                             include_groups=False):
+    cache_key = 'get_questions_from_xform' + ','.join(
+        [hashlib.md5(xform_xml.encode('utf-8')).hexdigest(), json.dumps(langs),
+         str(int(include_triggers)), str(int(include_groups))])
+    value = cache.get(cache_key)
+    if value is None:
+        value = XForm(xform_xml).get_questions(
+            langs=langs,
+            include_triggers=include_triggers,
+            include_groups=include_groups,
+        )
+        cache.set(cache_key, value, timeout=60*60*24)
+    return value
