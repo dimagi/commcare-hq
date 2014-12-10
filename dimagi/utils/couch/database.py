@@ -21,14 +21,17 @@ class DesignDoc(object):
                 views.append(view_name)
         return views
 
-def get_db():
+def get_db(postfix=None):
     """
     Get the couch database.
     """
     # this is a bit of a hack, since it assumes all the models talk to the same
     # db.  that said a lot of our code relies on that assumption.
     # this import is here because of annoying dependencies
-    return Database(settings.COUCH_DATABASE)
+    db_url = settings.COUCH_DATABASE
+    if postfix:
+        db_url = '%s__%s' % (db_url, postfix)
+    return Database(db_url)
 
 
 def get_design_docs(database):
