@@ -55,8 +55,7 @@ branches:
   - quickview # Simon 11/25
   - double-management # SK 12/1
   - logo-uploader # Nick P 12/2
-  - add-meta-block-data-source # Nick P 12/8
-  - add-datetime-datatype # Nick P 12/8
+  - userreports-delete # Nick P 12/10
 submodules:
   submodules/couchlog-src:
     branches:
@@ -64,9 +63,6 @@ submodules:
   submodules/django-soil-src:
     branches:
       - static-tags # Nick P 5/20
-  submodules/fluff-src:
-    branches:
-      - add-datetime # Nick P 12/8
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
