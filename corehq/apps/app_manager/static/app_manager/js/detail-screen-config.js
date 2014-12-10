@@ -845,9 +845,14 @@ var DetailScreenConfig = (function () {
                         );
                     }
                     if (window.toggles.GRAPH_CREATION) {
-                        buttonDropdownItems.push(
-                            $('<li class="add-graph-item"><a>Graph</a></li>')
-                        );
+                        var listItem;
+                        if (COMMCAREHQ.app_manager.checkCommcareVersion("2.17")){
+                            // If the current version is greater than 2.17, enable the graph button
+                            listItem = $('<li class="add-graph-item"><a>Graph</a></li>');
+                        } else {
+                            listItem = $('<li class="disabled"><a>Graph <small>(upgrade to 2.17 or greater)</small></a></li>');
+                        }
+                        buttonDropdownItems.push(listItem);
                     }
                     $addButton = $(
                         '<div class="btn-group">' +
