@@ -6,9 +6,10 @@ Replace this with more appropriate tests for your application.
 """
 from unittest import skip
 from custom.dhis2.models import Dhis2Api
-from custom.dhis2.tasks import get_children_only_ours, push_child_entities
+from custom.dhis2.tasks import push_child_entities, gen_children_only_ours, sync_child_entities, DOMAIN
 
 from django.test import TestCase
+from mock import patch
 
 
 class Dhis2OrgUnitTest(TestCase):
@@ -80,7 +81,7 @@ class MockOutThisTest(TestCase):
         instances = dhis2_api.gen_instances_with_unset('Child', 'Favourite Colour')
         i = 0
         for inst in instances:
-            # ipdb> pp inst
+            # >>> inst
             # {u'Created': u'2014-11-27 19:56:31.658',
             #  u'Instance': u'hgptfZK1XAC',
             #  u'Last updated': u'2014-11-27 19:56:31.831',
@@ -91,10 +92,29 @@ class MockOutThisTest(TestCase):
         self.assertNotEqual(i, 0)
 
     def test_list_our_instances(self):
-        result = get_children_only_ours(self.domain)
-        self.assertNotEqual(len(result), 0)
+        gen = gen_children_only_ours(self.domain)
+        try:
+            next(gen)
+        except StopIteration:
+            self.fail('Expected at least one instance of case type "child_gmp"')
 
-    def test_push_child_entities(self):
+    def step_into_test_sync_child_entities(self):
         # import ipdb; ipdb.set_trace()
-        children = get_children_only_ours(self.domain)
-        push_child_entities(children)
+        sync_child_entities()
+
+    def test_sync_child_entities(self):
+        with patch('custom.dhis2.tasks.get_children_only_theirs') as only_theirs_mock, \
+                patch('custom.dhis2.tasks.pull_child_entities') as pull_mock, \
+                patch('custom.dhis2.tasks.gen_children_only_ours') as only_ours_mock, \
+                patch('custom.dhis2.tasks.push_child_entities') as push_mock:
+            foo = object()
+            bar = object()
+            only_theirs_mock.return_value = foo
+            only_ours_mock.return_value = bar
+
+            sync_child_entities()
+
+            only_theirs_mock.assert_called()
+            pull_mock.assert_called_with(DOMAIN, foo)
+            only_ours_mock.assert_called_with(DOMAIN)
+            push_mock.assert_called_with(bar)
