@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404
@@ -90,11 +91,11 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
 
     def get_ajax(self, request, domain=None, **kwargs):
-        data = self.data_source
-        data.set_filter_values(self.filter_values)
         try:
+            data = self.data_source
+            data.set_filter_values(self.filter_values)
             total_records = data.get_total_records()
-        except Exception as e:
+        except UserReportsError as e:
             return self.render_json_response({
                 'error': e.message,
             })

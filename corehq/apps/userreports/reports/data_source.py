@@ -1,4 +1,10 @@
+from sqlagg import (
+    ColumnNotFoundException,
+    TableNotFoundException,
+)
+from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
+from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
@@ -54,7 +60,14 @@ class ConfigurableReportDataSource(SqlData):
 
     @memoized
     def get_data(self, slugs=None):
-        ret = super(ConfigurableReportDataSource, self).get_data(slugs)
+        try:
+            ret = super(ConfigurableReportDataSource, self).get_data(slugs)
+        except (
+            ColumnNotFoundException,
+            TableNotFoundException,
+            ProgrammingError,
+        ) as e:
+            raise UserReportsError(e.message)
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
         return sorted(ret, key=lambda x: x[self.column_configs[0].field])
