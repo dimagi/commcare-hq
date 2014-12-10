@@ -48,8 +48,10 @@ class QuickCache(object):
     def __init__(self, fn, vary_on, cache):
         self.fn = fn
         self.cache = cache
-        self.prefix = '{}.{}'.format(fn.__name__,
-                                     self._hash(inspect.getsource(fn), 8))
+        self.prefix = '{}.{}'.format(
+            fn.__name__[:40] + (fn.__name__[40:] and '..'),
+            self._hash(inspect.getsource(fn), 8)
+        )
 
         arg_names = inspect.getargspec(self.fn).args
         vary_on = [part.split('.') for part in vary_on]
@@ -86,10 +88,10 @@ class QuickCache(object):
         if isinstance(value, unicode):
             return 'u' + self._hash(value.encode('utf-8'))
         elif isinstance(value, str):
-            if len(value) <= 32:
+            if len(value) <= 32 and value.isalnum():
                 return 's' + value
             else:
-                # for long text
+                # for long or non-alphanumeric text
                 return 't' + self._hash(value)
         elif isinstance(value, bool):
             return 'b' + str(int(value))
@@ -112,8 +114,11 @@ class QuickCache(object):
             for attr in attrs:
                 value = getattr(value, attr)
             values.append(value)
-        return 'quickcache.{}/{}'.format(self.prefix, ','.join(
-            self._serialize_for_key(value) for value in values))
+        args_string = ','.join(self._serialize_for_key(value)
+                               for value in values)
+        if len(args_string) > 150:
+            args_string = 'H' + self._hash(args_string)
+        return 'quickcache.{}/{}'.format(self.prefix, args_string)
 
 
 def quickcache(vary_on='', timeout=None, memoize_timeout=None, cache=None):

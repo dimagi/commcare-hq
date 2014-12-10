@@ -132,3 +132,40 @@ class QuickcacheTest(SimpleTestCase):
             @quickcache(['cucumber'], cache=_cache)
             def square(number):
                 return number * number
+
+    def test_weird_data(self):
+        @quickcache(['bytes'])
+        def encode(bytes):
+            return hash(bytes)
+
+        symbols = '!@#$%^&*():{}"?><.~`'
+        bytes = '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09'
+        self.assertEqual(encode(symbols), hash(symbols))
+        self.assertEqual(encode(bytes), hash(bytes))
+
+    def test_lots_of_args(self):
+        @quickcache('abcdef')
+        def lots_of_args(a, b, c, d, e, f):
+            pass
+
+        # doesn't fail
+        lots_of_args('\xff', '\xff', '\xff', '\xff', '\xff', '\xff')
+        key = lots_of_args.get_cache_key(
+            '\xff', '\xff', '\xff', '\xff', '\xff', '\xff')
+        self.assertLess(len(key), 250)
+        # assert it's actually been hashed
+        self.assertEqual(
+            len(key), len('quickcache.lots_of_args.xxxxxxxx/H') + 32, key)
+
+    def test_really_long_function_name(self):
+        @quickcache()
+        def aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa():
+            """60 a's in a row"""
+            pass
+
+        # doesn't fail
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()
+        key = (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+               .get_cache_key())
+        self.assertEqual(
+            len(key), len('quickcache.' + 'a' * 40 + '...xxxxxxxx/'), key)
