@@ -233,3 +233,10 @@ CAN_EDIT_EULA = StaticToggle(
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
 )
+
+STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
+    'stock_and_sms_handler',
+    "Enable the stock report handler to accept both stock and receipt values "
+    "in the format 'soh abc 100.20'",
+    [NAMESPACE_DOMAIN]
+)
