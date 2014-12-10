@@ -351,9 +351,12 @@ class RestoreConfig(object):
         )).hexdigest()
 
     def get_cached_payload(self):
+        if self.overwrite_cache:
+            return
+
         if self.sync_log:
             return self.sync_log.get_cached_payload(self.version)
-        elif not self.overwrite_cache:
+        else:
             return self.cache.get(self._initial_cache_key())
 
     def set_cached_payload_if_necessary(self, resp, duration):
