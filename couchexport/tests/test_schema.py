@@ -101,3 +101,10 @@ class SavedSchemaTest(TestCase):
             list(col.get_headers()),
             ['test_a', 'test_b', 'test_c', 'test_extra']
         )
+
+    def test_split_column_not_string(self):
+        col = SplitColumn(display='test_{option}', options=['a', 'b'])
+        self.assertEqual(
+            col.get_data(1),
+            [None, None, 1]
+        )

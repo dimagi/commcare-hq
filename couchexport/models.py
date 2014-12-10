@@ -301,8 +301,11 @@ class SplitColumn(ComplexExportColumn):
         )
 
     def get_data(self, value):
-        values = value.split(' ') if value else []
         row = [None] * len(self.options)
+        if not isinstance(value, basestring):
+            return row + [value]
+
+        values = value.split(' ') if value else []
         for index, option in enumerate(self.options):
             if option in values:
                 row[index] = 1
