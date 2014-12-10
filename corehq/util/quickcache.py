@@ -98,7 +98,7 @@ class QuickCache(object):
         elif isinstance(value, (list, tuple)):
             return 'L' + self._hash(
                 ','.join(map(self._serialize_for_key, value)))
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, set):
             return 'S' + self._hash(
                 ','.join(sorted(map(self._serialize_for_key, value))))
         else:
