@@ -184,8 +184,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
 
 def domains_matching_plan(software_plan_edition, start, end):
     matching_subscriptions = Subscription.objects.filter(
-        ((Q(date_start__gte=start) & Q(date_start__lte=end))
-            | (Q(date_end__gte=start) & Q(date_end__lte=end))),
+        Q(date_start__lte=end) & Q(date_end__gte=start),
         plan_version__plan__edition=software_plan_edition,
     )
 
