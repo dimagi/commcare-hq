@@ -233,3 +233,8 @@ CAN_EDIT_EULA = StaticToggle(
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
 )
+
+VELLUM_HELP_TEXT = StaticToggle(
+    'add_help_text',
+    "Adds a help text in the form builder"
+)
