@@ -88,6 +88,12 @@ def all_toggles():
             if isinstance(toggle, StaticToggle):
                 yield toggle
 
+def toggles_dict(item):
+    """
+    Loads all toggles into a dictonary for use in JS
+    """
+    return {t.slug: True for t in all_toggles() if t.enabled(item)}
+
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
