@@ -174,6 +174,7 @@ class SyncHistoryReport(DeploymentsReport):
             endkey=[user_id],
             descending=True,
             reduce=False,
+            limit=10
         )]
 
         def _sync_log_to_row(sync_log):
