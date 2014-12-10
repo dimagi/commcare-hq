@@ -42,16 +42,10 @@ class ExportSchemaTest(TestCase):
             self.assertEqual(schema2._id, ExportSchema.last(index)._id)
 
 
-class CustomExportSchema(SavedExportSchema):
-    @property
-    def filter(self):
-        return SerializableFunction()
-
-
 class SavedSchemaTest(TestCase):
     def setUp(self):
         self.db = get_db('couchexport')
-        self.custom_export = CustomExportSchema.wrap({
+        self.custom_export = SavedExportSchema.wrap({
             'type': 'demo',
             'default_format': Format.JSON,
             'index': json.dumps(['test_custom']),
@@ -63,6 +57,7 @@ class SavedSchemaTest(TestCase):
                 ],
             }]
         })
+        self.custom_export.filter_function = SerializableFunction()
 
     def tearDown(self):
         for doc in self.db.all_docs():
