@@ -1,5 +1,6 @@
 from StringIO import StringIO
 import json
+import os
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
