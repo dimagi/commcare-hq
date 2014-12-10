@@ -424,6 +424,16 @@ class CaseCustomExportHelper(CustomExportHelper):
         def is_special_type(p):
             return any([p in self.meta_properties, p in self.server_properties, p in self.row_properties])
 
+        def update_multi_select_column(col):
+            if self.creating_new_export:
+                col["options"] = []
+                col["allOptions"] = []
+            else:
+                current_options = col["options"] or []
+                col["allOptions"] = current_options
+
+            col["hasNewOptions"] = False
+
         for col in column_conf:
             prop = col["index"]
             display = col.get('display') or prop
@@ -439,12 +449,14 @@ class CaseCustomExportHelper(CustomExportHelper):
                 if self.creating_new_export:
                     col["selected"] = True
 
+            update_multi_select_column(col)
+
         column_conf.extend([
-            ExportColumn(
+            update_multi_select_column(ExportColumn(
                 index=prop,
                 display='',
                 show=True,
-            ).to_config_format(selected=self.creating_new_export)
+            ).to_config_format(selected=self.creating_new_export))
             for prop in filter(lambda prop: not prop.startswith("parent/"), remaining_properties)
         ])
 

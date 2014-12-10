@@ -132,7 +132,7 @@
                                     'opened_on': 'opened_date',
                                     'closed_by': 'closed_by_user_id',
                                     'closed_on': 'closed_date'
-                                }
+                                };
                                 renamed_field = self.utils.rename(field, rename_map);
                                 if (meta.hasOwnProperty(field)) {
                                     return {tags: ['info'].concat(tags), field: renamed_field};
