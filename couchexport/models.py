@@ -301,14 +301,18 @@ class SplitColumn(ComplexExportColumn):
         )
 
     def get_data(self, value):
-        values = value.split(' ') if value else []
         row = [None] * len(self.options)
+        if not isinstance(value, basestring):
+            return row + [value]
+
+        values = value.split(' ') if value else []
         for index, option in enumerate(self.options):
             if option in values:
                 row[index] = 1
                 values.remove(option)
 
-        return row + [' '.join(values)]
+        remainder = ' '.join(values) if values else None
+        return row + [remainder]
 
     def to_config_format(self, selected=True):
         config = super(SplitColumn, self).to_config_format(selected)
