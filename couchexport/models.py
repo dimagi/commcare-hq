@@ -276,8 +276,8 @@ class SplitColumn(ComplexExportColumn):
     The outputs will have one column for each 'option' and one additional
     column for any values from the data don't appear in the options.
 
-    Each column will have a value of '1' if the data value contains the
-    option for that column.
+    Each column will have a value of 1 if the data value contains the
+    option for that column otherwise the column will be blank.
 
     e.g.
     options = ['a', 'b']
@@ -302,7 +302,7 @@ class SplitColumn(ComplexExportColumn):
 
     def get_data(self, value):
         values = value.split(' ') if value else []
-        row = [''] * len(self.options)
+        row = [None] * len(self.options)
         for index, option in enumerate(self.options):
             if option in values:
                 row[index] = 1
