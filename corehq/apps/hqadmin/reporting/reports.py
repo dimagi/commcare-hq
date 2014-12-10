@@ -195,14 +195,24 @@ def domains_matching_plan(software_plan_edition, start, end):
     }
 
 
+def plans_on_date(software_plan_edition, date):
+    matching_subscriptions = Subscription.objects.filter(
+        Q(date_start__lte=date) & Q(date_end__gte=date),
+        plan_version__plan__edition=software_plan_edition,
+    )
+
+    return {
+        subscription.subscriber.domain
+        for subscription in matching_subscriptions
+    }
+
+
 def get_subscription_stats_data(domains, datespan, interval,
         software_plan_edition=None):
-    # intentionally passing timestamp in twice to get subscription info on that
-    # particular day. not in a range
     return [
         get_data_point(
-            len(set(domains) & domains_matching_plan(
-                software_plan_edition, timestamp, timestamp)),
+            len(set(domains) & plans_on_date(
+                software_plan_edition, timestamp)),
             timestamp
         )
         for timestamp in daterange(
