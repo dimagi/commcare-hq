@@ -1,3 +1,4 @@
+from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import StringProperty
 from django.test import TestCase
 from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
@@ -90,3 +91,39 @@ class LazyAttachmentDocTest(TestCase):
     def test_null_lazy_list_attachments(self):
         doc = SampleDoc.wrap({})
         self.assertEqual(doc.lazy_list_attachments(), set())
+
+    def test_cache_invalidation(self):
+        text1 = ('row row row your boat\n'
+                 'gently down the stream\n'
+                 'merrily, merrily, merrily merrily\n'
+                 'life is but a dream.')
+
+        text2 = ('Row row row your boat,\n'
+                 'gently down the stream.\n'
+                 'Merrily, merrily, merrily, merrily,\n'
+                 'life is but a dream.')
+        attachment_name = 'row-your-boat.txt'
+        doc1 = SampleDoc(name='My Doc')
+        doc1.lazy_put_attachment(text1, attachment_name)
+        doc1.save()
+
+        self.assertEqual(doc1.lazy_fetch_attachment(attachment_name), text1)
+
+        doc2 = SampleDoc.get(doc1.get_id)
+
+        self.assertEqual(doc2.lazy_fetch_attachment(attachment_name), text1)
+        doc2.lazy_put_attachment(text2, attachment_name)
+        self.assertEqual(doc2.lazy_fetch_attachment(attachment_name), text2)
+        doc2.save()
+        self.assertEqual(doc2.lazy_fetch_attachment(attachment_name), text2)
+
+        # doc1 will still point to the old version, but that's ok:
+        # it'll also document update conflict--- it's just stale local data
+        self.assertEqual(doc1.lazy_fetch_attachment(attachment_name), text1)
+        with self.assertRaises(ResourceConflict):
+            doc1.save()
+
+        # if you make a new doc, it'll get the new value
+        # because the cache invalidated
+        doc3 = SampleDoc.get(doc1.get_id)
+        self.assertEqual(doc3.lazy_fetch_attachment(attachment_name), text2)
