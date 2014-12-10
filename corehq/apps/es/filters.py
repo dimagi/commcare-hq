@@ -73,3 +73,8 @@ def exists(field):
     Only return docs which have 'field'
     """
     return {"exists": {"field": field}}
+
+
+def empty(field):
+    return OR({'missing': {'field': field, "existence": True, "null_value": True}},
+              term(field, ''))
