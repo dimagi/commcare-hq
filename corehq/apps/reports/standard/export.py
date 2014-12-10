@@ -247,6 +247,8 @@ class ExcelExportReport(FormExportReportBase):
                         form['duplicate'] = True
                     else:
                         form['no_suggestions'] = True
+                    key = (None, form['xmlns'])
+                    form['size'] = size_hash.get(key, None)
 
         def _sortkey(form):
             app_id = form['app']['id']
