@@ -6,6 +6,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
+from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -154,11 +155,26 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return None
 
     def validate(self, required=True):
+        def _check_for_duplicate_slugs(filters):
+            slugs = [FilterSpec.wrap(f).slug for f in filters]
+            # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
+            duplicated_slugs = set(
+                [slug for slug in slugs if slugs.count(slug) > 1]
+            )
+            if len(duplicated_slugs) > 0:
+                raise BadSpecError(
+                    _('Filters cannot contain duplicate slugs: %s')
+                    % ', '.join(sorted(duplicated_slugs))
+                )
+
         super(ReportConfiguration, self).validate(required)
+
         # these calls implicitly do validation
         ReportFactory.from_spec(self)
         self.ui_filters
         self.charts
+
+        _check_for_duplicate_slugs(self.filters)
 
     @classmethod
     def by_domain(cls, domain):
