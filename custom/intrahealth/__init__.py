@@ -1,8 +1,9 @@
 import logging
 import re
+from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_datetime
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.commtrack.models import CommTrackUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import Location
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
@@ -38,6 +39,20 @@ CUSTOM_REPORTS = (
     )),
 )
 
+_PRODUCT_NAMES = {
+    u'diu': [u"diu"],
+    u'jadelle': [u"jadelle"],
+    u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
+    u'microlut/ovrette': [u"microlut/ovrette"],
+    u'microgynon/lof.': [u"microgynon/lof."],
+    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin", u"preservatif_masculin"],
+    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin", u"preservatif_feminin"],
+    u'cu': [u"cu"],
+    u'collier': [u"collier"]
+}
+
+PRODUCT_NAMES = {v: k for k, values in _PRODUCT_NAMES.iteritems() for v in values}
+
 PRODUCT_MAPPING = {
     "collier": "Collier",
     "cu": "CU",
@@ -50,6 +65,7 @@ PRODUCT_MAPPING = {
     "preservatif_masculin": "Preservatif Masculin"
 }
 
+
 def get_products(form, property):
     products = []
     if 'products' in form.form:
@@ -58,12 +74,45 @@ def get_products(form, property):
                 products.append(product[property])
     return products
 
+
+def get_products_code(form, property):
+    products = []
+    if 'products' in form.form:
+        for product in form.form['products']:
+            if property in product:
+                k = PRODUCT_NAMES.get(product[property].lower())
+                if k is not None:
+                    try:
+                        code = SQLProduct.objects.get(name__iexact=k,
+                                                      domain=get_domain(form)).code
+                        products.append(code)
+                    except SQLProduct.DoesNotExist:
+                        pass
+    return products
+
+
 def get_rupture_products(form):
     result = []
     for k, v in form.form.iteritems():
         if re.match("^rupture.*hv$", k):
             result.append(PRODUCT_MAPPING[k[8:-3]])
     return result
+
+
+def get_rupture_products_code(form):
+    result = []
+    for k, v in form.form.iteritems():
+        if re.match("^rupture.*hv$", k):
+            product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())
+            if product_name is not None:
+                try:
+                    prd = SQLProduct.objects.get(name__iexact=product_name,
+                                                 domain=get_domain(form))
+                    result.append(prd.code)
+                except SQLProduct.DoesNotExist:
+                    pass
+    return result
+
 
 def _get_location(form):
     loc = None
@@ -77,7 +126,7 @@ def _get_location(form):
         user_id = form['auth_context']['user_id']
         if not user_id:
             return None
-        user = CommTrackUser.get(user_id)
+        user = CommCareUser.get(user_id)
         try:
             loc = user.location
         except ResourceNotFound:
@@ -85,11 +134,14 @@ def _get_location(form):
 
     return loc
 
+
 def get_domain(form):
     return form.domain
 
+
 def get_prod_info(prod, property):
     return prod[property]
+
 
 def get_location_id(form):
     loc = _get_location(form)
@@ -97,9 +149,11 @@ def get_location_id(form):
         return None
     return loc._id
 
+
 def get_location_id_by_type(form, type):
     loc = get_location_by_type(form, type)
     return loc._id if loc else None
+
 
 def get_location_by_type(form, type):
     loc = _get_location(form)
@@ -110,6 +164,7 @@ def get_location_by_type(form, type):
         loc = Location.get(loc_id)
         if unicode(loc.location_type).lower().replace(" ", "") == type:
             return loc
+
 
 def get_real_date(form):
     date = ""

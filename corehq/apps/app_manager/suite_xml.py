@@ -1335,7 +1335,10 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
-                    parent_filter = self.get_parent_filter(parent_action.parent_reference_id, parent_action.case_session_var)
+                    parent_filter = self.get_parent_filter(
+                        action.parent_reference_id,
+                        parent_action.case_session_var
+                    )
                 else:
                     parent_filter = ''
 

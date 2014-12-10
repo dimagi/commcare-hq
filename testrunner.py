@@ -47,6 +47,11 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             setattr(settings, setting, value)
             print "set %s settting to %s" % (setting, value)
 
+        settings.EXTRA_COUCHDB_DATABASES = {
+            db_name: self.get_test_db_name(url)
+            for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
+        }
+
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def get_all_test_labels(self):

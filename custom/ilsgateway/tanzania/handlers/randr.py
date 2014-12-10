@@ -1,6 +1,5 @@
 from datetime import datetime
-
-from corehq.apps.commtrack.models import CommTrackUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
@@ -18,7 +17,7 @@ class RandrHandler(KeywordHandler):
         self._handle(help=True)
 
     def _send_submission_alert_to_msd(self, params):
-        users = filter(lambda u: u.user_data.get('role', None) == 'MSD', CommTrackUser.by_domain(self.domain))
+        users = filter(lambda u: u.user_data.get('role', None) == 'MSD', CommCareUser.by_domain(self.domain))
         for user in users:
             if user.get_verified_number():
                 send_sms_to_verified_number(user.get_verified_number(), SUBMITTED_NOTIFICATION_MSD % params)

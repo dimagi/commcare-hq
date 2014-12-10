@@ -25,9 +25,14 @@ class BrokenBuildsForm(forms.Form):
 
 
 class PrimeRestoreCacheForm(forms.Form):
+    check_cache_only = forms.BooleanField(
+        label='Check cache only',
+        help_text="Just check the cache, don't actually generate the restore response.",
+        required=False
+    )
     domain = forms.CharField(
         label='Domain',
-        required=False
+        required=True
     )
     version = forms.ChoiceField(
         label='Output version',
@@ -42,17 +47,19 @@ class PrimeRestoreCacheForm(forms.Form):
     )
     overwrite_cache = forms.BooleanField(
         label='Overwrite existing cache',
-        help_text='This will ignore any existing cache and re-calculate the restore response for each user',
+        help_text=('This will ignore any existing cache and '
+                   're-calculate the restore response for each user'),
         required=False
     )
     all_users = forms.BooleanField(
-        label='Prime cache for all users in the domain?',
+        label='Include all users in the domain',
         required=False
     )
     users = forms.CharField(
-        label='Only prime cache for these users',
-        help_text='One user_id per line',
-        widget=forms.Textarea(attrs={'rows': '30', 'cols': '50'}),
+        label='User list',
+        help_text=('One username or user_id per line '
+                   '(username must be full username e.g. test@domain.commcarehq.org)'),
+        widget=forms.Textarea(attrs={'rows': '5', 'cols': '50'}),
         required=False
     )
 
@@ -62,13 +69,19 @@ class PrimeRestoreCacheForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-2'
         self.helper.field_class = 'col-lg-4'
+        self.helper.form_method = 'post'
+        self.helper.form_action = '.'
         self.helper.layout = crispy.Layout(
-            'version',
-            'cache_timeout',
-            'overwrite_cache',
-            'all_users',
+            crispy.Field('check_cache_only', data_ng_model='check_cache_only'),
+            crispy.Div(
+                'version',
+                'cache_timeout',
+                'overwrite_cache',
+                data_ng_hide='check_cache_only'
+            ),
+            crispy.Field('all_users', data_ng_model='all_users'),
             'domain',
-            'users',
+            crispy.Div('users', data_ng_hide='all_users'),
             FormActions(
                 StrictButton(
                     "Submit",
@@ -79,7 +92,8 @@ class PrimeRestoreCacheForm(forms.Form):
         )
 
     def clean_users(self):
-        self.user_ids = re.findall(r'[\w-]+', self.cleaned_data['users'])
+        user_ids = self.cleaned_data['users'].splitlines()
+        self.user_ids = filter(None, user_ids)
         return self.cleaned_data['users']
 
     def clean(self):

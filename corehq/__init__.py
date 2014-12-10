@@ -29,7 +29,11 @@ def REPORTS(project):
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
     from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
-    reports = [
+    reports = []
+
+    reports.extend(_get_configurable_reports(project))
+
+    reports.extend([
         (ugettext_lazy("Monitor Workers"), (
             monitoring.WorkerActivityReport,
             monitoring.DailyFormStatsReport,
@@ -52,7 +56,7 @@ def REPORTS(project):
         (ugettext_lazy("Demos for Previewers"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
-    ]
+    ])
 
     if project.commtrack_enabled:
         reports.insert(0, (ugettext_lazy("Commtrack"), (
@@ -97,7 +101,6 @@ def REPORTS(project):
     reports.append(messaging)
 
     reports.extend(_get_dynamic_reports(project))
-    reports.extend(_get_configurable_reports(project))
 
     return reports
 
@@ -158,7 +161,7 @@ def _get_configurable_reports(project):
                 'get_url': get_url,
             })
 
-        yield (_('Configurable Reports'), [_make_report_class(config) for config in configs])
+        yield (_('Project Reports'), [_make_report_class(config) for config in configs])
 
 
 
@@ -309,7 +312,7 @@ TABS = (
     ProjectInfoTab,
     ReportsTab,
     ProjectDataTab,
-    CommTrackSetupTab,
+    SetupTab,
     ProjectUsersTab,
     ApplicationsTab,
     CloudcareTab,

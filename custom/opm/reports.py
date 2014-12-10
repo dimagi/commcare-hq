@@ -657,6 +657,12 @@ class CaseReportMixin(object):
     extra_row_objects = []
     is_rendered_as_email = False
 
+    @memoized
+    def column_index(self, key):
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == key:
+                return i
+
     @property
     def case_status(self):
         return OpenCloseFilter.case_status(self.request_params)
@@ -758,12 +764,6 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
 
-    @memoized
-    def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
-            if k == key:
-                return i
-
     @property
     def rows(self):
         raw_rows = super(BeneficiaryPaymentReport, self).rows
@@ -827,8 +827,8 @@ class MetReport(CaseReportMixin, BaseReport):
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
-                    if method != 'case_id' and method != 'owner_id'
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
     @property
@@ -843,9 +843,8 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
         self.pagination.count = 1000000
 
-        rows = None
         cache = get_redis_client()
-        if cache.exists(self.slug):
+        if cache.exists(self.redis_key):
             rows = pickle.loads(cache.get(self.redis_key))
         else:
             rows = self.rows
@@ -853,10 +852,13 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         Strip user_id and owner_id columns
         """
-        for idx, row in enumerate(rows):
-            row = row[0:16]
-            row.extend(row[18:20])
-            rows[idx] = row
+        for row in rows:
+            del row[self.column_index('closed_date')]
+            del row[self.column_index('case_id')]
+            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            if link_text:
+                row[0] = link_text.group(1)
+
         self.context['report_table'].update(
             rows=rows
         )
@@ -1199,7 +1201,7 @@ def _unformat_row(row):
     regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
     formatted_row = []
     for col in row:
-        if regexp.match(col):
+        if isinstance(col, basestring) and regexp.match(col):
             formated_col = "%s" % (regexp.match(col).group(2))
             if regexp.match(col).group(4) != "":
                 formated_col = "%s - %s%%" % (formated_col, regexp.match(col).group(4))
