@@ -1269,7 +1269,7 @@ def form_multimedia_export(request, domain):
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
-        return "%s-%s-%s-%s.%s" % (form['form']['@name'],
+        return "%s-%s-%s-%s%s" % (form['form'].get('@name', 'unknown'),
                                    unidecode(question_id),
                                    form['form']['meta']['username'],
                                    form['_id'], extension)
