@@ -32,6 +32,7 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.util.quickcache import quickcache
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -59,8 +60,7 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
-from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, \
-    get_questions_from_xform
+from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -705,8 +705,14 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    def get_questions(self, langs, **kwargs):
-        return get_questions_from_xform(self.source, langs, **kwargs)
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups'])
+    def get_questions(self, langs, include_triggers=False,
+                      include_groups=False):
+        return XForm(self.source).get_questions(
+            langs=langs,
+            include_triggers=include_triggers,
+            include_groups=include_groups,
+        )
 
     @memoized
     def get_case_property_name_formatter(self):
