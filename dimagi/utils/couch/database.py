@@ -30,7 +30,7 @@ def get_db(postfix=None):
     # this import is here because of annoying dependencies
     db_url = settings.COUCH_DATABASE
     if postfix:
-        db_url = '%s__%s' % (db_url, postfix)
+        db_url = settings.EXTRA_COUCHDB_DATABASES[postfix]
     return Database(db_url)
 
 
