@@ -86,10 +86,25 @@ class LazyAttachmentDoc(Document):
             content = self._LAZY_ATTACHMENTS_CACHE[name]
         else:
             content = self.__get_cached_attachment(name)
+
             if not content:
-                content = self.fetch_attachment(name)
-                self.__set_cached_attachment(name, content)
-            self._LAZY_ATTACHMENTS_CACHE[name] = content
+                try:
+                    content = self.fetch_attachment(name)
+                except Exception as e:
+                    # django cache will pickle this exception for you
+                    # but e.response isn't picklable
+                    if hasattr(e, 'response'):
+                        del e.response
+                    content = e
+                    raise
+                finally:
+                    self.__set_cached_attachment(name, content)
+                    self._LAZY_ATTACHMENTS_CACHE[name] = content
+            else:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+
+        if isinstance(content, Exception):
+            raise content
 
         return content
 
