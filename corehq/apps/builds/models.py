@@ -5,6 +5,7 @@ from couchdbkit.exceptions import ResourceNotFound, BadValueError
 from couchdbkit.ext.django.schema import *
 from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
+from corehq.util.quickcache import quickcache
 
 
 class SemanticVersionProperty(StringProperty):
@@ -205,6 +206,11 @@ class CommCareBuildConfig(Document):
         return config
 
     @classmethod
+    def clear_local_cache(cls):
+        cls.fetch.clear(cls)
+
+    @classmethod
+    @quickcache(timeout=30)
     def fetch(cls):
         try:
             return cls.get(cls._ID)
