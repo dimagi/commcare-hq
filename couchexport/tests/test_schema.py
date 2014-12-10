@@ -84,13 +84,13 @@ class SavedSchemaTest(TestCase):
         self.assertEqual(data['Export']['rows'][0], row)
 
     def test_split_column(self):
-        self._test_split_column('a b c d', [1, 1, 1, 1, ''])
+        self._test_split_column('a b c d', [1, 1, 1, 1, None])
 
     def test_split_column_order(self):
-        self._test_split_column('c d a', [1, None, 1, 1, ''])
+        self._test_split_column('c d a', [1, None, 1, 1, None])
 
     def test_split_column_empty(self):
-        self._test_split_column('', [None, None, None, None, ''])
+        self._test_split_column('', [None, None, None, None, None])
 
     def test_split_column_remainder(self):
         self._test_split_column('c b d e f g', [None, 1, 1, 1, 'e f g'])

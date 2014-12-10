@@ -311,7 +311,8 @@ class SplitColumn(ComplexExportColumn):
                 row[index] = 1
                 values.remove(option)
 
-        return row + [' '.join(values)]
+        remainder = ' '.join(values) if values else None
+        return row + [remainder]
 
     def to_config_format(self, selected=True):
         config = super(SplitColumn, self).to_config_format(selected)
