@@ -23,6 +23,7 @@ from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
+from corehq.apps.locations.schema import LocationType
 
 
 lang_lookup = defaultdict(str)
@@ -131,7 +132,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     using_adm = BooleanProperty()
     using_call_center = BooleanProperty()
     custom_eula = BooleanProperty()
-    can_use_data = BooleanProperty()
+    can_use_data = BooleanProperty(default=True)
     notes = StringProperty()
     organization_name = StringProperty()
     platform = StringListProperty()
@@ -139,9 +140,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     phone_model = StringProperty()
     goal_time_period = IntegerProperty()
     goal_followup_rate = DecimalProperty()
-    # intentionally different from commconnect_enabled and commtrack_enabled so
-    # that FMs can change
-    commconnect_domain = BooleanProperty()
+    # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
 
 
@@ -208,6 +207,8 @@ class Domain(Document, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
+    locations_enabled = BooleanProperty(default=False)
+    location_types = SchemaListProperty(LocationType)
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)

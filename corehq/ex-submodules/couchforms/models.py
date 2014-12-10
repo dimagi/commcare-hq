@@ -266,7 +266,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
                 return None
 
     def get_xml_element(self):
-        return self._xml_string_to_element(self.get_xml())
+        xml_string = self.get_xml()
+        if not xml_string:
+            return None
+        return self._xml_string_to_element(xml_string)
 
     def _xml_string_to_element(self, xml_string):
 

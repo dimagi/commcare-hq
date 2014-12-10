@@ -24,7 +24,7 @@ def merge_rows(classification_sql_data, enroll_sql_data, treatment_sql_data):
         if classification_case_id in enroll_map:
             row = enroll_map[classification_case_id] + row
         else:
-            row = ['' for i in range(len(enroll_sql_data.headers))] + row
+            row = [classification_case_id] + ['' for i in range(len(enroll_sql_data.headers) - 1)] + row
 
         if classification_case_id in treatment_map:
             row.extend(treatment_map[classification_case_id])
@@ -52,7 +52,14 @@ class BaseSqlData(SqlData):
 
     @property
     def columns(self):
-        return [DatabaseColumn(k, SimpleColumn(k)) for k in self.group_by]
+        columns = []
+        for k in self.group_by:
+            if k in ['zscore_hfa', 'zscore_wfa', 'zscore_wfh', 'mean_hfa', 'mean_wfa', 'mean_wfh']:
+                columns.append(DatabaseColumn(k, SimpleColumn(k),
+                                              format_fn=lambda x: "%.2f" % float(x if x else 0)))
+            else:
+                columns.append(DatabaseColumn(k, SimpleColumn(k)))
+        return columns
 
     @property
     def headers(self):
