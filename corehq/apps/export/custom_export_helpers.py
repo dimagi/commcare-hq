@@ -368,6 +368,8 @@ class CustomColumn(object):
             'tag': self.tag,
             'special': self.slug,
             'show': self.show,
+            'doc_type': None,
+            'allOptions': None
         }
 
 
