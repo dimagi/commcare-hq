@@ -44,6 +44,13 @@ class ConfigurableIndicatorPillow(PythonPillow):
         for table in self.tables:
             if table.config.filter.filter(doc):
                 table.save(doc)
+            if doc['doc_type'] in [
+                'CommCareCase-Deleted',
+                'XFormInstance-Deleted',
+                'XFormArchived',
+                'XFormDeprecated',
+            ]:
+                table.delete(doc)
 
     def set_checkpoint(self, change):
         # override this to rebootstrap the tables
