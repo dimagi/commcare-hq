@@ -99,3 +99,43 @@ Specification
 DHIS API documentation
 ----------------------
 
+
+Conventions and Assumptions
+---------------------------
+
+We assume the following data is available in CommCare and DHIS2.
+
+Participating CommCare users need the following custom user property:
+
+* dhis2_organization_unit_id: The organisation unit ID where the user is
+  working. (In DHIS2 this can be a country, region or facility)
+
+Required CommCare case attributes:
+
+* dhis2_organization_unit_id: The organisation unit ID of the owner of the
+  case.
+
+Instead of creating an attribute for the DHIS2 tracked entity instance ID, use
+`external_id`. This is indexed, and allows us to fetch cases by their DHIS2
+ID efficiently.
+
+CommCare child growth monitoring forms must include:
+
+* height
+* weight
+* mobile-calculated BMI
+* age at time of visit
+* hidden value "dhis2_te_inst_id" whose value is taken from the case's
+  external_id
+* hidden value "dhis2_processed" to indicate that the form has been sent to
+  DHIS2 as an event
+
+DHIS2 tracked entity attributes:
+
+* cchq_case_id: Used to refer to the corresponding CommCareHQ case. This is a
+  hexadecimal UUID.
+
+DHIS2 needs the following two projects:
+
+1. "Pediatric Nutrition Assessment"
+2. "Underlying Risk Assessment"
