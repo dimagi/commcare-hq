@@ -31,9 +31,6 @@ class FormQuestionSchema(Document):
     question_schema = SchemaDictProperty(QuestionMeta)
 
     def update_schema(self):
-        if self.app_id not in self.processed_apps:
-            self.update_for_app(Application.get(self.app_id))
-
         key = [self.domain, self.app_id]
         all_apps = Application.get_db().view(
             'app_manager/saved_app',
@@ -45,6 +42,9 @@ class FormQuestionSchema(Document):
         ).all()
 
         to_process = [app['id'] for app in all_apps if app['id'] not in self.processed_apps]
+        if self.app_id not in self.processed_apps:
+            to_process.append(self.app_id)
+
         for app_doc in iter_docs(Application.get_db(), to_process):
             app = Application.wrap(app_doc)
             self.update_for_app(app)
