@@ -151,11 +151,12 @@ class SyncHistoryReport(DeploymentsReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
+            DataTablesColumn(_("Sync Log")),
             DataTablesColumn(_("Sync Date"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("# of Cases"), sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Sync Duration"), sort_type=DTSortType.NUMERIC),
         )
-        headers.custom_sort = [[0, 'desc']]
+        headers.custom_sort = [[1, 'desc']]
         return headers
 
     @property
@@ -193,8 +194,14 @@ class SyncHistoryReport(DeploymentsReport):
                         -1,
                     )
 
+            def _fmt_id(sync_log_id):
+                return '<a href="/search/?q={id}" target="_blank">{id:.5}...</a>'.format(
+                    id=sync_log_id
+                )
+
             num_cases = len(sync_log.cases_on_phone)
             return [
+                _fmt_id(sync_log.get_id),
                 _fmt_date(sync_log.date),
                 format_datatables_data(num_cases, num_cases),
                 _fmt_duration(sync_log.duration),
