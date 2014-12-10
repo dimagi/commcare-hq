@@ -3,11 +3,8 @@ import json
 import os
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.test.testcases import SimpleTestCase
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.reports.models import FormExportSchema, FormQuestionSchema
+from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.users.models import CommCareUser
 from couchexport.models import Format
 from django_digest.test import Client
