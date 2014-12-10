@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 import pytz
 from corehq import Domain
 from corehq.apps import reports
-from corehq.apps.app_manager.models import get_app, Form, RemoteApp, Application
+from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
@@ -23,7 +23,7 @@ from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import get_db, iter_docs
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email

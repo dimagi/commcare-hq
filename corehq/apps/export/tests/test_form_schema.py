@@ -8,7 +8,7 @@ from corehq.apps.reports.models import FormQuestionSchema
 
 
 class FormQuestionSchemaTest(SimpleTestCase, TestFileMixin):
-    file_path = ['readable_forms']
+    file_path = ['data']
     root = os.path.dirname(__file__)
 
     def test(self):
