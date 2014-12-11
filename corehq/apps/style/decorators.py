@@ -1,7 +1,7 @@
 from corehq import toggles
 
 
-def preview_boostrap3():
+def check_preview_bootstrap3():
     def decorate(fn):
         """
         Decorator to Toggle on the use of bootstrap 3.
