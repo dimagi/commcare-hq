@@ -89,11 +89,12 @@ def all_toggles():
                 yield toggle
 
 
-def toggles_dict(item):
+def toggles_dict(username=None, domain=None):
     """
     Loads all toggles into a dictonary for use in JS
     """
-    return {t.slug: True for t in all_toggles() if t.enabled(item)}
+    return {t.slug: True for t in all_toggles() if (t.enabled(username) or
+                                                    t.enabled(domain))}
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
