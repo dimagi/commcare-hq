@@ -108,9 +108,13 @@ class MyAccountSettingsView(BaseMyAccountView):
         language_choices = langcodes.get_all_langs_for_select()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         if self.request.method == 'POST':
-            form = UpdateMyAccountInfoForm(self.request.POST)
+            form = UpdateMyAccountInfoForm(
+                self.request.POST, username=self.request.couch_user.username
+            )
         else:
-            form = UpdateMyAccountInfoForm()
+            form = UpdateMyAccountInfoForm(
+                username=self.request.couch_user.username
+            )
         form.initialize_form(existing_user=self.request.couch_user)
         form.load_language(language_choices)
         return form

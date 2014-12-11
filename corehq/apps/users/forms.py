@@ -21,8 +21,13 @@ from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.programs.models import Program
+
+# Bootstrap 3 Crispy Forms
 from bootstrap3_crispy import layout as cb3_layout
 from bootstrap3_crispy import helper as cb3_helper
+from bootstrap3_crispy import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
+
 import re
 import settings
 
@@ -181,8 +186,14 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     )
 
     def __init__(self, *args, **kwargs):
+        self.username = kwargs.pop('username') if 'username' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
 
+        username_controls = []
+        if self.username:
+            username_controls.append(hqcrispy.StaticField(
+                _('Username'), self.username)
+            )
         self.new_helper = cb3_helper.FormHelper()
         self.new_helper.form_method = 'POST'
         self.new_helper.form_class = 'form-horizontal'
