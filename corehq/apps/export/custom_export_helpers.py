@@ -435,6 +435,8 @@ class CaseCustomExportHelper(CustomExportHelper):
 
             col["hasNewOptions"] = False
 
+            return col
+
         for col in column_conf:
             prop = col["index"]
             display = col.get('display') or prop
