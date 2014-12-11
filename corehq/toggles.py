@@ -228,6 +228,12 @@ BATCHED_RESTORE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+SPLIT_MULTISELECT_EXPORT = StaticToggle(
+    'split_multiselect_export',
+    'Split multiselect columns in custom exports',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
@@ -237,4 +243,11 @@ CAN_EDIT_EULA = StaticToggle(
 VELLUM_HELP_TEXT = StaticToggle(
     'add_help_text',
     "Adds a help text in the form builder"
+)
+
+STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
+    'stock_and_sms_handler',
+    "Enable the stock report handler to accept both stock and receipt values "
+    "in the format 'soh abc 100.20'",
+    [NAMESPACE_DOMAIN]
 )

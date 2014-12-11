@@ -15,12 +15,13 @@ def register_preindex_plugin(plugin):
 
 class PreindexPlugin(object):
 
-    def __init__(self, app_label, dir):
+    def __init__(self, app_label, dir, app_db_map=None):
         self.app_label = app_label
         self.dir = dir
+        self.app_db_map = app_db_map
 
     @classmethod
-    def register(cls, app_label, file):
+    def register(cls, app_label, file, app_db_map=None):
         """
         use
             <PreindexPlugin subclass>.register(<app_label>, __file__)
@@ -28,7 +29,7 @@ class PreindexPlugin(object):
 
         """
         dir = os.path.abspath(os.path.dirname(file))
-        register_preindex_plugin(cls(app_label, dir))
+        register_preindex_plugin(cls(app_label, dir, app_db_map))
 
     def sync_design_docs(self, temp=None):
         raise NotImplementedError()
@@ -44,11 +45,19 @@ class PreindexPlugin(object):
 
 
 class CouchAppsPreindexPlugin(PreindexPlugin):
-    def __init__(self, app_label, dir):
-        super(CouchAppsPreindexPlugin, self).__init__(app_label, dir)
+    """
+    :param app_label:   The app label for the top level application.
+    :param dir:         The directory of the top level application.
+    :param app_db_map:  A dictionary mapping child apps to couch databases.
+                        e.g. {'my_app': 'meta'} will result in 'my_app' being synced
+                        to the '{main_db}__meta' database.
+    """
+    def __init__(self, app_label, dir, app_db_map=None):
+        super(CouchAppsPreindexPlugin, self).__init__(app_label, dir, app_db_map)
 
-    @property
-    def db(self):
+    def db(self, app_label):
+        if self.app_db_map and app_label in self.app_db_map:
+            return get_db(self.app_db_map[app_label])
         return get_db()
 
     def get_couchapps(self):
@@ -58,7 +67,7 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
     def sync_design_docs(self, temp=None):
         for app_label in self.get_couchapps():
             sync_docs.sync_design_docs(
-                db=self.db,
+                db=self.db(app_label),
                 design_dir=os.path.join(self.dir, app_label),
                 design_name=app_label,
                 temp=temp,
@@ -67,7 +76,7 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
     def copy_designs(self, temp=None, delete=True):
         for app_label in self.get_couchapps():
             sync_docs.copy_designs(
-                db=self.db,
+                db=self.db(app_label),
                 design_name=app_label,
                 temp=temp,
                 delete=delete,

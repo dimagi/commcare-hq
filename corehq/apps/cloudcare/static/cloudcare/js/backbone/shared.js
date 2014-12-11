@@ -24,7 +24,7 @@ var Selectable = Backbone.View.extend({
         }
         if (this.selected) {
             if (window.mainView.router.view.dirty) {
-                var dialog = confirm("You have not submitted this form. Click 'Cancel' to continue working on this form. If you click 'OK' you can resume work on this form later.");
+                var dialog = confirm(translatedStrings.dirty);
                 if (dialog == true) {
                     this.deselect();
                     this.trigger("deselected");

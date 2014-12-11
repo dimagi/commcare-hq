@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
@@ -11,6 +12,7 @@ from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
@@ -608,6 +610,37 @@ class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
+    question_schema_id = StringProperty()
+
+    def update_schema(self):
+        super(FormExportSchema, self).update_schema()
+        self.update_question_schema()
+
+    def update_question_schema(self):
+        schema = self.question_schema
+        schema.update_schema()
+
+    @property
+    def question_schema(self):
+        schema = None
+        if self.question_schema_id:
+            try:
+                schema = FormQuestionSchema.get(self.question_schema_id)
+            except ResourceNotFound:
+                pass
+
+        if not schema:
+            schema = FormQuestionSchema.view(
+                'form_question_schema/by_xmlns',
+                key=[self.domain, self.app_id, self.xmlns],
+                include_docs=True
+            ).one()
+            if not schema:
+                schema = FormQuestionSchema(domain=self.domain, app_id=self.app_id, xmlns=self.xmlns)
+                schema.save()
+
+            self.question_schema_id = schema.get_id
+        return schema
 
     @property
     @memoized
@@ -710,6 +743,7 @@ class FormDeidExportSchema(FormExportSchema):
     @classmethod
     def get_case(cls, doc, case_id):
         pass
+
 
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
