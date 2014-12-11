@@ -72,7 +72,7 @@ submodules:
     branches:
       - debug-yui # Nick P 11/4
       - logos # Nick P 12/2
-  submodules/dimagi-utils:
+  submodules/dimagi-utils-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
