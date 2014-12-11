@@ -78,7 +78,9 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def sections(self):
         return [
+            'forms/best_practices',
             'forms/anatomy',
+            'forms/controls',
         ]
 
 
