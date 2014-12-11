@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import logging
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
@@ -610,7 +609,6 @@ class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
-    question_schema_id = StringProperty()
 
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
@@ -622,25 +620,7 @@ class FormExportSchema(HQExportSchema):
 
     @property
     def question_schema(self):
-        schema = None
-        if self.question_schema_id:
-            try:
-                schema = FormQuestionSchema.get(self.question_schema_id)
-            except ResourceNotFound:
-                pass
-
-        if not schema:
-            schema = FormQuestionSchema.view(
-                'form_question_schema/by_xmlns',
-                key=[self.domain, self.app_id, self.xmlns],
-                include_docs=True
-            ).one()
-            if not schema:
-                schema = FormQuestionSchema(domain=self.domain, app_id=self.app_id, xmlns=self.xmlns)
-                schema.save()
-
-            self.question_schema_id = schema.get_id
-        return schema
+        return FormQuestionSchema.get_or_create(self.domain, self.app_id, self.xmlns)
 
     @property
     @memoized

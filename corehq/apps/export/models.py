@@ -1,3 +1,5 @@
+import hashlib
+from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import (
     Document, DocumentSchema, ListProperty, StringProperty,
     IntegerProperty, SetProperty, SchemaDictProperty
@@ -23,12 +25,54 @@ class FormQuestionSchema(Document):
     that have not already been processed and update the question schema with
     any new options.
     """
-    domain = StringProperty()
-    app_id = StringProperty()
+    domain = StringProperty(required=True)
+    app_id = StringProperty(required=True)
+    xmlns = StringProperty(required=True)
+
     last_processed_version = IntegerProperty(default=0)
-    xmlns = StringProperty()
     processed_apps = SetProperty(unicode)
     question_schema = SchemaDictProperty(QuestionMeta)
+
+    @classmethod
+    def _get_id(cls, domain, app_id, xmlns):
+        key = [domain, app_id, xmlns]
+        return hashlib.sha1(':'.join(key)).hexdigest()
+
+    @classmethod
+    def get_by_key(cls, domain, app_id, xmlns):
+        _id = cls._get_id(domain, app_id, xmlns)
+        return cls.get(_id)
+
+    @classmethod
+    def get_or_create(cls, domain, app_id, xmlns):
+        try:
+            schema = cls.get_by_key(domain, app_id, xmlns)
+        except ResourceNotFound:
+            old_schemas = FormQuestionSchema.view(
+                'form_question_schema/by_xmlns',
+                key=[domain, app_id, xmlns],
+                include_docs=True
+            ).all()
+
+            if old_schemas:
+                doc = old_schemas[0].to_json()
+                del doc['_id']
+                del doc['_rev']
+                schema = FormQuestionSchema.wrap(doc)
+                schema.save()
+
+                for old in old_schemas:
+                    old.delete()
+            else:
+                schema = FormQuestionSchema(domain=domain, app_id=app_id, xmlns=xmlns)
+                schema.save()
+
+        return schema
+
+    def validate(self, required=True):
+        super(FormQuestionSchema, self).validate(required=required)
+        if not self.get_id:
+            self._id = self._get_id(self.domain, self.app_id, self.xmlns)
 
     def update_schema(self):
         key = [self.domain, self.app_id]
