@@ -266,7 +266,7 @@ class FormCustomExportHelper(CustomExportHelper):
                     col["allOptions"] = question_schema[question].options
                     col["doc_type"] = SplitColumn.__name__
                 else:
-                    current_options = set(col["options"]) if col["options"] else set()
+                    current_options = set(col.get("options", []))
                     col["allOptions"] = list(set(question_schema[question].options) | current_options)
                     col["hasNewOptions"] = bool(set(question_schema[question].options) - current_options)
 
@@ -369,7 +369,8 @@ class CustomColumn(object):
             'special': self.slug,
             'show': self.show,
             'doc_type': None,
-            'allOptions': None
+            'allOptions': None,
+            'options': []
         }
 
 
@@ -429,7 +430,7 @@ class CaseCustomExportHelper(CustomExportHelper):
                 col["options"] = []
                 col["allOptions"] = []
             else:
-                current_options = col["options"] or []
+                current_options = col.get("options", [])
                 col["allOptions"] = current_options
 
             col["hasNewOptions"] = False
