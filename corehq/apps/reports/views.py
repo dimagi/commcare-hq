@@ -1257,22 +1257,25 @@ def find_question_id(form, value):
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
-def form_multimedia_export(request, domain, app_id):
+def form_multimedia_export(request, domain):
     try:
         xmlns = request.GET["xmlns"]
         startdate = request.GET["startdate"]
         enddate = request.GET["enddate"]
+        app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
         zip_name = request.GET.get("name", None)
     except KeyError:
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
-        return "%s-%s-%s-%s.%s" % (form['form']['@name'],
+        return "%s-%s-%s-%s%s" % (form['form'].get('@name', 'unknown'),
                                    unidecode(question_id),
                                    form['form']['meta']['username'],
                                    form['_id'], extension)
 
+    if not app_id:
+        zip_name = 'Unrelated Form'
     key = [domain, app_id, xmlns]
     stream_file = cStringIO.StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
