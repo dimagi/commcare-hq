@@ -21,7 +21,7 @@ class ANDFilter(Filter):
     """
     def __init__(self, filters):
         self.filters = filters
-        assert len(self.filters) > 1
+        assert len(self.filters) > 0
 
     def filter(self, item):
         return all(filter.filter(item) for filter in self.filters)
@@ -33,7 +33,7 @@ class ORFilter(Filter):
     """
     def __init__(self, filters):
         self.filters = filters
-        assert len(self.filters) > 1
+        assert len(self.filters) > 0
 
     def filter(self, item):
         return any(filter.filter(item) for filter in self.filters)
