@@ -4,6 +4,7 @@
 #
 # Translators:
 # Claire_Cravero <ccravero@dimagi.com>, 2014
+# Claire_Cravero <ccravero@dimagi.com>, 2014
 # modonnell <modonnell@dimagi.com>, 2014
 # modonnell <modonnell@dimagi.com>, 2014
 # Tyler Wymer <twymer@dimagi.com>, 2014
@@ -11,9 +12,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-10 14:53+0000\n"
-"PO-Revision-Date: 2014-12-10 11:58+0000\n"
-"Last-Translator: Claire_Cravero <ccravero@dimagi.com>\n"
+"POT-Creation-Date: 2014-12-11 20:28+0000\n"
+"PO-Revision-Date: 2014-12-11 19:53+0000\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/commcare-hq/"
 "language/fr/)\n"
 "Language: fr\n"
@@ -162,7 +163,7 @@ msgid ""
 msgstr ""
 
 #: corehq/feature_previews.py:116 corehq/apps/hqwebapp/models.py:844
-#: corehq/apps/reports/models.py:50
+#: corehq/apps/reports/models.py:51
 #: corehq/apps/users/templates/users/edit_commcare_user.html:113
 msgid "CommTrack"
 msgstr "CommTrack"
@@ -1367,7 +1368,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/billing_statements.html:233
 #: corehq/apps/domain/templates/domain/current_subscription.html:328
 #: corehq/apps/domain/templates/domain/orgs_settings.html:75
-#: corehq/apps/export/templates/export/customize_export.html:564
+#: corehq/apps/export/templates/export/customize_export.html:604
 #: corehq/apps/groups/templates/groups/group_members.html:204
 #: corehq/apps/groups/templates/groups/group_members.html:248
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:55
@@ -1396,7 +1397,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/list_forwarding_rules.html:45
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:100
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py:68
-#: corehq/apps/users/templates/users/edit_commcare_user.html:231
+#: corehq/apps/users/templates/users/edit_commcare_user.html:230
 #: corehq/apps/users/templates/users/web_users.html:177
 #: corehq/apps/users/templates/users/mobile/users_list.html:270
 #: corehq/apps/users/templates/users/partial/basic_info_modals.html:24
@@ -1586,7 +1587,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:46
 #: corehq/apps/accounting/templates/accounting/invoice.html:84
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:138
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:140
 #: corehq/apps/importer/templates/importer/partials/excel_field_row.html:31
 #: corehq/apps/reminders/templates/reminders/partial/add_one_time_reminder.html:119
 #: corehq/apps/reports/filters/dates.py:51
@@ -1837,7 +1838,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/report_filter_actions.html:9
 #: corehq/apps/reports/templates/reports/base_template.html:57
 #: corehq/apps/reports/templates/reports/standard/base_template.html:102
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:123
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:130
 msgid "Generating Report..."
 msgstr "Émission de rapport..."
 
@@ -1850,8 +1851,8 @@ msgstr "Émission de rapport..."
 #: corehq/apps/reports/templates/reports/base_template.html:59
 #: corehq/apps/reports/templates/reports/standard/base_template.html:103
 #: corehq/apps/reports/templates/reports/standard/base_template.html:104
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:124
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:125
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:131
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:132
 msgid "Apply"
 msgstr "Appliquer"
 
@@ -1961,7 +1962,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/reports_home.html:55
 #: corehq/apps/reports/templates/reports/reports_home.html:121
 #: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:9
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:51
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:53
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:59
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:78
 #: corehq/apps/sms/templates/sms/list_backends.html:94
@@ -2153,13 +2154,13 @@ msgstr "Copier"
 
 #: corehq/apps/app_manager/models.py:1409
 #: corehq/apps/app_manager/models.py:1738
-#: corehq/apps/app_manager/views.py:1156
+#: corehq/apps/app_manager/views.py:1158
 msgid "Untitled Module"
 msgstr "Module sans titre"
 
 #: corehq/apps/app_manager/models.py:1422
 #: corehq/apps/app_manager/models.py:1764
-#: corehq/apps/app_manager/views.py:1214
+#: corehq/apps/app_manager/views.py:1216
 msgid "Untitled Form"
 msgstr ""
 
@@ -2267,7 +2268,7 @@ msgid ""
 "upgrade your subscription before using this feature."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:3572
+#: corehq/apps/app_manager/models.py:3573
 msgid ""
 "Problem loading suite file from profile file. Is your profile file correct?"
 msgstr ""
@@ -2275,14 +2276,12 @@ msgstr ""
 "fichier de profil. Est-ce que votre fichier de profil est correct?"
 
 #: corehq/apps/app_manager/translations.py:41
-#, fuzzy
 msgid "App Translation Failed! "
-msgstr "Les traductions des IU ont été mises à jour !"
+msgstr ""
 
 #: corehq/apps/app_manager/translations.py:144
-#, fuzzy
 msgid "App Translations Updated!"
-msgstr "Les traductions des IU ont été mises à jour !"
+msgstr ""
 
 #: corehq/apps/app_manager/views.py:327
 msgid "You must submit a name for the application you are importing."
@@ -2305,14 +2304,12 @@ msgid "U​I translations"
 msgstr ""
 
 #: corehq/apps/app_manager/views.py:580
-#, fuzzy
 msgid "app translation"
-msgstr "Traductions CommCare"
+msgstr ""
 
 #: corehq/apps/app_manager/views.py:581
-#, fuzzy
 msgid "app translations"
-msgstr "Traductions CommCare"
+msgstr ""
 
 #: corehq/apps/app_manager/views.py:805
 msgid "Goal List"
@@ -2355,26 +2352,26 @@ msgid ""
 "redirected you to the form's front page instead."
 msgstr ""
 
-#: corehq/apps/app_manager/views.py:1153
+#: corehq/apps/app_manager/views.py:1155
 msgid "Untitled Application"
 msgstr ""
 
-#: corehq/apps/app_manager/views.py:1201
+#: corehq/apps/app_manager/views.py:1203
 #, python-brace-format
 msgid "Please set the case type for the target module '{name}'."
 msgstr "Veuillez entrer un type de dossier pour le module cible '{name}'."
 
-#: corehq/apps/app_manager/views.py:1207
+#: corehq/apps/app_manager/views.py:1209
 msgid "Caution: Care Plan modules are a labs feature"
 msgstr ""
 "Avertissement : Les modules du plan de soins sont une fonctionnalité des "
 "labos"
 
-#: corehq/apps/app_manager/views.py:1219
+#: corehq/apps/app_manager/views.py:1221
 msgid "Caution: Advanced modules are a labs feature"
 msgstr ""
 
-#: corehq/apps/app_manager/views.py:1324
+#: corehq/apps/app_manager/views.py:1326
 msgid ""
 "We could not copy this form, because it is blank.In order to copy this form, "
 "please add some questions first."
@@ -2382,17 +2379,17 @@ msgstr ""
 "Nous n'avons pas pu copier ce formulaire parce qu'il est vide. Pour copier "
 "ce formulaire, veuillez d'abord ajouter des questions."
 
-#: corehq/apps/app_manager/views.py:1328
+#: corehq/apps/app_manager/views.py:1330
 msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr ""
 
-#: corehq/apps/app_manager/views.py:2066
+#: corehq/apps/app_manager/views.py:2068
 msgid "The form can not be moved into the desired module."
 msgstr ""
 
-#: corehq/apps/app_manager/views.py:2071
+#: corehq/apps/app_manager/views.py:2073
 msgid ""
 "Oops. Looks like you got out of sync with us. The sidebar has been updated, "
 "so please try again."
@@ -2400,7 +2397,7 @@ msgstr ""
 "Oups ! Il semble que vous ne soyez plus synchronisé avec nous. L'encadré a "
 "été mis à jour. Veuillez donc essayer à nouveau."
 
-#: corehq/apps/app_manager/views.py:2207
+#: corehq/apps/app_manager/views.py:2209
 msgid ""
 "We were unable to get your files because your Application has errors. Please "
 "click <strong>Make New Version</strong> under <strong>Deploy</strong> for "
@@ -2411,27 +2408,27 @@ msgstr ""
 "Version</strong> sous<strong>Deploy</strong> pour obtenir des commentaires "
 "quant à la résolution de ces erreurs."
 
-#: corehq/apps/app_manager/views.py:2740
+#: corehq/apps/app_manager/views.py:2742
 msgid "We found problem with following translations:"
 msgstr ""
 
-#: corehq/apps/app_manager/views.py:2751
+#: corehq/apps/app_manager/views.py:2753
 msgid "Something went wrong! Update failed. We're looking into it"
 msgstr ""
 "Une erreur est survenue ! La mise à jour a échoué. Nous tentons de "
 "déterminer de quoi il s'agit."
 
-#: corehq/apps/app_manager/views.py:2754
+#: corehq/apps/app_manager/views.py:2756
 msgid "UI Translations Updated!"
 msgstr "Les traductions des IU ont été mises à jour !"
 
-#: corehq/apps/app_manager/views.py:2917
+#: corehq/apps/app_manager/views.py:2919
 msgid "Please upgrade you app to > 2.0 in order to add a Careplan module"
 msgstr ""
 "Veuillez mettre à niveau votre application à la version supérieure à 2.0 "
 "afin de pouvoir ajouter le module du plan de soins"
 
-#: corehq/apps/app_manager/views.py:2928
+#: corehq/apps/app_manager/views.py:2930
 msgid "This application already has a Careplan module"
 msgstr "Cette application comporte déjà un module de plan de soins."
 
@@ -2462,9 +2459,8 @@ msgid "Applications"
 msgstr "Applications"
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:293
-#, fuzzy
 msgid "Try again"
-msgstr "Essayer de nouveau"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:306
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:329
@@ -2643,9 +2639,8 @@ msgid "CommCare Translations"
 msgstr "Traductions CommCare"
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html:10
-#, fuzzy
 msgid "Bulk Application Translations"
-msgstr "Application vide"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html:22
 msgid "Import/Export UI Translations"
@@ -2997,14 +2992,14 @@ msgstr "Télécharger <strong>les deux</strong> fichiers suivants :"
 #: corehq/apps/reports/templates/reports/partials/bulk_export_notice.html:4
 #: corehq/apps/reports/templates/reports/partials/hqexport_group_table.html:21
 #: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:11
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:65
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:67
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:32
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:46
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:60
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:83
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:185
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:296
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:354
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:360
 msgid "Download"
 msgstr "Télécharger"
 
@@ -3124,7 +3119,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/releases.html:496
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:49
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:12
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:13
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:186
 msgid "Download Multimedia"
 msgstr "Télécharger multimédia"
@@ -3327,9 +3322,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_advanced.html:71
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_advanced.html:97
-#, fuzzy
 msgid "Parent reference id: "
-msgstr "Écraser l'identifiant de référence : "
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_advanced.html:85
 msgid "Make this case a subcase"
@@ -3408,8 +3402,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_careplan.html:22
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_shared.html:78
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_shared.html:123
-#: corehq/apps/export/templates/export/customize_export.html:482
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:299
+#: corehq/apps/export/templates/export/customize_export.html:499
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:301
 msgid "Question"
 msgstr "Question"
 
@@ -3478,7 +3472,6 @@ msgid "Display Properties"
 msgstr "Propriétés d'affichage"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:6
-#, fuzzy
 msgid ""
 "\n"
 "        This module doesn't currently use a case list.\n"
@@ -3490,26 +3483,16 @@ msgid ""
 "        </ol>\n"
 "    "
 msgstr ""
-"\n"
-"                Ce module n'utilise pas de liste de dossiers actuellement.\n"
-"                Les modifications effectuées ici n'auront aucun effet tant "
-"que vous n'utiliserez pas :\n"
-"                <ol>\n"
-"                    <li>des formulaires qui nécessitent un dossier</li>\n"
-"                    <li>sélectionnerez le réglage d'<strong>élément de menu "
-"de la liste de dossiers</strong>.</li>\n"
-"                </ol>\n"
-"            "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:24
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:26
 msgid "Filtering and Sorting"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:38
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:40
 msgid "Filter"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:40
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:42
 msgid ""
 "\n"
 "                This XPath expression specifies which cases\n"
@@ -3524,15 +3507,15 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:77
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:79
 msgid "Sort Property"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:80
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:82
 msgid "Sort Properties"
 msgstr "Propriétés de triage"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:82
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:84
 msgid ""
 "\n"
 "                                          Properties in this list determine "
@@ -3551,42 +3534,42 @@ msgid ""
 "                                      "
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:94
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:96
 #: corehq/apps/reports/standard/ivr.py:37
 #: corehq/apps/reports/standard/sms.py:225
 #: corehq/apps/smsbillables/filters.py:74 custom/fri/reports/reports.py:163
 msgid "Direction"
 msgstr "Direction"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:95
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:97
 msgid "Format"
 msgstr "Format"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:135
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:137
 #: corehq/apps/importer/templates/importer/partials/excel_field_row.html:30
 msgid "Plain"
 msgstr "Brut"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:141
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:143
 #: corehq/apps/importer/templates/importer/partials/excel_field_row.html:32
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:264
 msgid "Integer"
 msgstr "Entier"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:144
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:146
 #: corehq/apps/importer/templates/importer/partials/excel_field_row.html:33
 msgid "Decimal"
 msgstr "Décimal"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:171
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:173
 msgid "Parent Child Selection"
 msgstr "Sélection parent et enfant"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:174
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:176
 msgid "Select Parent First"
 msgstr "Sélectionner le parent d'abord"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:177
+#: corehq/apps/app_manager/templates/app_manager/partials/case_list.html:179
 msgid "Use Case List from module"
 msgstr "Utiliser une liste de dossiers à partir d'un module"
 
@@ -3707,7 +3690,7 @@ msgstr "Téléverser"
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:277
 #: corehq/apps/reports/standard/monitoring.py:727
 #: corehq/apps/reports/templates/reports/reports_home.html:127
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:331
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:333
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html:111
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:115
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:122
@@ -3846,8 +3829,8 @@ msgid "Download Multimedia Zip"
 msgstr "Télécharger le fichier zip multimédia"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_ajax.html:12
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:74
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:307
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:83
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:313
 msgid "No Multimedia"
 msgstr "Aucun document multimédia"
 
@@ -3949,7 +3932,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html:15
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html:51
 #: corehq/apps/reminders/templates/reminders/partial/reminders_in_error.html:60
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:16
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:18
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:191
 msgid "Select"
 msgstr "Sélectionner"
@@ -4363,9 +4346,8 @@ msgid "Save failed. Details: "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:50
-#, fuzzy
 msgid "Unknown error: "
-msgstr "Formulaire inconnu"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:51
 msgid ""
@@ -4378,9 +4360,8 @@ msgid "All changes saved!"
 msgstr "Tous les changements enregistrés"
 
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:53
-#, fuzzy
 msgid "open in new window"
-msgstr "Écouter dans une nouvelle fenêtre"
+msgstr "Ouvrir dans un autre onglet"
 
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:54
 msgid ""
@@ -4388,9 +4369,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:55
-#, fuzzy
 msgid "Form was deleted."
-msgstr "L'exportation personnalisée a été supprimée."
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:56
 msgid ""
@@ -4652,6 +4632,7 @@ msgstr ""
 
 #: corehq/apps/commtrack/models.py:709
 #: corehq/apps/domain/templates/domain/admin/media_manager.html:24
+#: corehq/apps/export/templates/export/customize_export.html:503
 #: corehq/apps/hqadmin/reports.py:821
 #: corehq/apps/hqmedia/templates/hqmedia/partials/reference_table.html:17
 #: corehq/apps/reports/standard/sms.py:227
@@ -4701,7 +4682,7 @@ msgstr "Reçu le"
 msgid "received_by"
 msgstr ""
 
-#: corehq/apps/commtrack/sms.py:130
+#: corehq/apps/commtrack/sms.py:138
 msgid ""
 "You have not been registered with a default location yet.  Please register a "
 "default location for this user."
@@ -4763,9 +4744,8 @@ msgid "Update Default Consumption Info"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_entity.py:30
-#, fuzzy
 msgid "Select one"
-msgstr "Sélectionner aucun"
+msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_entity.py:83
 msgid "Additional Information"
@@ -4866,7 +4846,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:113
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "\n"
 "                                              A value for this field must be "
@@ -4877,14 +4857,6 @@ msgid ""
 "provided.\n"
 "                                          "
 msgstr ""
-"\n"
-"                                Oups !\n"
-"                                Ce réglage ne devrait pas être là.\n"
-"                                Pouvez-vous le modifier et le remettre au "
-"réglage par défaut\n"
-"                                pour l'éliminer ?\n"
-"                                Nous vous prions de nous excuser.\n"
-"                            "
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:121
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:123
@@ -4892,7 +4864,6 @@ msgid "Choices"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:124
-#, fuzzy
 msgid ""
 "\n"
 "                                              Provides a drop-down list of "
@@ -4900,9 +4871,6 @@ msgid ""
 "                                              instead of free text entry.\n"
 "                                          "
 msgstr ""
-"\n"
-"                                            Êtes-vous certain de vouloir "
-"vous retirer du projet %(dn)s ?"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:130
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:168
@@ -4921,8 +4889,8 @@ msgstr ""
 #: corehq/apps/reminders/templates/reminders/partial/list_reminders.html:112
 #: corehq/apps/reports/templates/reports/reports_home.html:59
 #: corehq/apps/reports/templates/reports/reports_home.html:137
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:22
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:90
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:24
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:100
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:61
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:86
 #: corehq/apps/sms/templates/sms/gateway_list.html:32
@@ -4941,9 +4909,8 @@ msgid "Delete"
 msgstr "Supprimer"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:149
-#, fuzzy
 msgid "Add Choice"
-msgstr "Ajouter dossier"
+msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:178
 msgid "Are you sure you want to delete this field?"
@@ -5835,18 +5802,16 @@ msgid "Goal followup rate (percentage in decimal format. e.g. 70% is .7)"
 msgstr ""
 
 #: corehq/apps/domain/forms.py:617
-#, fuzzy
 msgid "CommTrack domain?"
-msgstr "CommTrack"
+msgstr ""
 
 #: corehq/apps/domain/forms.py:624
 msgid "Custom Eula?"
 msgstr "Eula personnalisé ?"
 
 #: corehq/apps/domain/forms.py:630
-#, fuzzy
 msgid "Can use project data?"
-msgstr "Examiner les données"
+msgstr ""
 
 #: corehq/apps/domain/forms.py:725
 msgid "Other Billing Admins"
@@ -6476,9 +6441,8 @@ msgid "Name to display as the author"
 msgstr "Nom à afficher en tant qu'auteur"
 
 #: corehq/apps/domain/templates/domain/create_snapshot.html:112
-#, fuzzy
 msgid "Lookup Table"
-msgstr "Les Tables de Recherche"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/create_snapshot.html:119
 msgid "Save and Publish Later"
@@ -6653,9 +6617,8 @@ msgid "Incomplete Email Test"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/incomplete_email.html:10
-#, fuzzy
 msgid "Self Started Projects"
-msgstr "Vous avez démarré seul ?"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/incomplete_email.html:17
 msgid "Dimagi Owned Projects"
@@ -7333,23 +7296,23 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/partials/login_full.html:11
-#: corehq/apps/public/templates/public/home.html:127
+#: corehq/apps/public/templates/public/_sections/home/lead.html:72
 msgid "Sign Up"
 msgstr ""
 
-#: corehq/apps/export/custom_export_helpers.py:69
+#: corehq/apps/export/custom_export_helpers.py:31
 msgid "Sensitive ID"
 msgstr "Identifiant sensible"
 
-#: corehq/apps/export/custom_export_helpers.py:70
+#: corehq/apps/export/custom_export_helpers.py:32
 msgid "Sensitive Date"
 msgstr "Date sensible"
 
-#: corehq/apps/export/custom_export_helpers.py:190
+#: corehq/apps/export/custom_export_helpers.py:199
 msgid "Export Submissions to Excel"
 msgstr "Exporter les soumissions vers Excel"
 
-#: corehq/apps/export/custom_export_helpers.py:361
+#: corehq/apps/export/custom_export_helpers.py:414
 msgid "Export Cases, Referrals, and Users"
 msgstr "Exporter les dossiers, les transferts et les utilisateurs"
 
@@ -7357,7 +7320,7 @@ msgstr "Exporter les dossiers, les transferts et les utilisateurs"
 msgid "Custom export created!"
 msgstr "Exportation personnalisée créée !"
 
-#: corehq/apps/export/views.py:132
+#: corehq/apps/export/views.py:135
 #, python-format
 msgid ""
 "<strong>No data found for that form (%s).</strong> Submit some data before "
@@ -7366,27 +7329,27 @@ msgstr ""
 "<strong>Aucune donnée n'a été trouvée pour ce formulaire (%s).</strong> "
 "Soumettez des données avant de créer une exportation !"
 
-#: corehq/apps/export/views.py:140
+#: corehq/apps/export/views.py:143
 msgid "Create Custom Form Export"
 msgstr "Créer une exportation de formulaire personnalisée"
 
-#: corehq/apps/export/views.py:146
+#: corehq/apps/export/views.py:149
 msgid "Create Custom Case Export"
 msgstr "Créer une exportation de dossier personnalisée"
 
-#: corehq/apps/export/views.py:173
+#: corehq/apps/export/views.py:176
 msgid "Custom export saved!"
 msgstr "Exportation personnalisée sauvegardée !"
 
-#: corehq/apps/export/views.py:178
+#: corehq/apps/export/views.py:181
 msgid "Edit Form Custom Export"
 msgstr "Modifier l'exportation de formulaire personnalisée"
 
-#: corehq/apps/export/views.py:184
+#: corehq/apps/export/views.py:187
 msgid "Edit Case Custom Export"
 msgstr "Modifier l'exportation de dossier personnalisée"
 
-#: corehq/apps/export/views.py:200
+#: corehq/apps/export/views.py:203
 msgid "Custom export was deleted."
 msgstr "L'exportation personnalisée a été supprimée."
 
@@ -7407,64 +7370,64 @@ msgstr "Historique de dossier > Dossiers parents"
 msgid "Parent Cases"
 msgstr "Dossiers parents"
 
-#: corehq/apps/export/templates/export/customize_export.html:405
+#: corehq/apps/export/templates/export/customize_export.html:422
 msgid "Export Settings"
 msgstr "Exporter les paramètres"
 
-#: corehq/apps/export/templates/export/customize_export.html:407
+#: corehq/apps/export/templates/export/customize_export.html:424
 msgid "Export Name"
 msgstr "Exporter le nom"
 
-#: corehq/apps/export/templates/export/customize_export.html:413
+#: corehq/apps/export/templates/export/customize_export.html:430
 msgid "Default file type"
 msgstr "Type de fichier par défaut"
 
-#: corehq/apps/export/templates/export/customize_export.html:416
+#: corehq/apps/export/templates/export/customize_export.html:433
 msgid "CSV (Zip file)"
 msgstr "CSV (fichier Zip)"
 
-#: corehq/apps/export/templates/export/customize_export.html:417
+#: corehq/apps/export/templates/export/customize_export.html:434
 msgid "Excel 2007"
 msgstr "Excel 2007"
 
-#: corehq/apps/export/templates/export/customize_export.html:418
+#: corehq/apps/export/templates/export/customize_export.html:435
 msgid "Excel (older versions)"
 msgstr "Excel (versions plus anciennes)"
 
-#: corehq/apps/export/templates/export/customize_export.html:419
+#: corehq/apps/export/templates/export/customize_export.html:436
 msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
-#: corehq/apps/export/templates/export/customize_export.html:428
+#: corehq/apps/export/templates/export/customize_export.html:445
 msgid "Export stock data columns"
 msgstr ""
 
-#: corehq/apps/export/templates/export/customize_export.html:433
+#: corehq/apps/export/templates/export/customize_export.html:450
 msgid "Automatically convert dates for Excel"
 msgstr "Convertir automatiquement les dates pour Excel ?"
 
-#: corehq/apps/export/templates/export/customize_export.html:437
+#: corehq/apps/export/templates/export/customize_export.html:454
 msgid "Show Deleted Questions and Advanced Properties"
 msgstr "Afficher les questions supprimées et les propriétés avancées"
 
-#: corehq/apps/export/templates/export/customize_export.html:441
+#: corehq/apps/export/templates/export/customize_export.html:458
 msgid "Create a Daily Saved Export"
 msgstr ""
 
-#: corehq/apps/export/templates/export/customize_export.html:446
+#: corehq/apps/export/templates/export/customize_export.html:463
 msgid "Include duplicates and other unprocessed forms"
 msgstr "Inclut des doublons et autres formulaires non traités"
 
-#: corehq/apps/export/templates/export/customize_export.html:463
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:33
+#: corehq/apps/export/templates/export/customize_export.html:480
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:35
 msgid "Sheet Name"
 msgstr "Nom de feuille"
 
-#: corehq/apps/export/templates/export/customize_export.html:470
+#: corehq/apps/export/templates/export/customize_export.html:487
 msgid "Choose the fields you want to export."
 msgstr "Choisir les champs que vous souhaitez exporter."
 
-#: corehq/apps/export/templates/export/customize_export.html:471
+#: corehq/apps/export/templates/export/customize_export.html:488
 msgid ""
 "You can drag and drop fields to reorder them.  You can also rename fields, "
 "which will update the headers in the export file."
@@ -7473,46 +7436,59 @@ msgstr ""
 "pouvez aussi renommer les champs, ce qui mettra à jours les en-têtes dans le "
 "fichier d'exportation."
 
-#: corehq/apps/export/templates/export/customize_export.html:478
+#: corehq/apps/export/templates/export/customize_export.html:495
 msgid "Include this Field?"
 msgstr "Inclure ce champ ?"
 
-#: corehq/apps/export/templates/export/customize_export.html:479
+#: corehq/apps/export/templates/export/customize_export.html:496
 #: corehq/apps/hqpillow_retry/templates/hqpillow_retry/pillow_errors.html:28
 msgid "Select All"
 msgstr "Tout sélectionner"
 
-#: corehq/apps/export/templates/export/customize_export.html:480
+#: corehq/apps/export/templates/export/customize_export.html:497
 msgid "Select None"
 msgstr "Sélectionner aucun"
 
-#: corehq/apps/export/templates/export/customize_export.html:484
+#: corehq/apps/export/templates/export/customize_export.html:501
 msgid "Display"
 msgstr "Afficher"
 
-#: corehq/apps/export/templates/export/customize_export.html:486
+#: corehq/apps/export/templates/export/customize_export.html:506
 msgid "Sensitivity"
 msgstr "Niveau de confidentialité"
 
-#: corehq/apps/export/templates/export/customize_export.html:527
+#: corehq/apps/export/templates/export/customize_export.html:530
+#, fuzzy
+msgid "New options available"
+msgstr "Non disponible"
+
+#: corehq/apps/export/templates/export/customize_export.html:543
+#: corehq/apps/orgs/templates/orgs/orgs_team_members.html:77
+#: corehq/apps/orgs/templates/orgs/orgs_team_members.html:128
+#: corehq/apps/sms/templates/sms/settings.html:182
+#: corehq/apps/sms/templates/sms/settings.html:288
+msgid "Add"
+msgstr "Ajouter"
+
+#: corehq/apps/export/templates/export/customize_export.html:567
 msgid "Privacy Settings"
 msgstr "Paramètres de confidentialité"
 
-#: corehq/apps/export/templates/export/customize_export.html:533
+#: corehq/apps/export/templates/export/customize_export.html:573
 msgid "Publish in"
 msgstr "Publier sur"
 
-#: corehq/apps/export/templates/export/customize_export.html:535
+#: corehq/apps/export/templates/export/customize_export.html:575
 msgid "Check only if this export has been fully and safely de-identified."
 msgstr ""
 "Vérifiez uniquement si cette exportation a été anonymisée complètement et en "
 "toute sécurité."
 
-#: corehq/apps/export/templates/export/customize_export.html:541
+#: corehq/apps/export/templates/export/customize_export.html:581
 msgid "Allow me to mark sensitive data"
 msgstr "Me permettre d'identifier les données sensibles"
 
-#: corehq/apps/export/templates/export/customize_export.html:552
+#: corehq/apps/export/templates/export/customize_export.html:592
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html:64
 #: corehq/apps/reports/templates/reports/base_template.html:82
 #: corehq/apps/sms/forms.py:568
@@ -7521,22 +7497,22 @@ msgstr "Me permettre d'identifier les données sensibles"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: corehq/apps/export/templates/export/customize_export.html:553
+#: corehq/apps/export/templates/export/customize_export.html:593
 #: corehq/apps/locations/templates/locations/manage/location.html:106
 #: corehq/apps/sms/templates/sms/list_backends.html:129
 msgid "Create"
 msgstr "Créer"
 
-#: corehq/apps/export/templates/export/customize_export.html:557
+#: corehq/apps/export/templates/export/customize_export.html:597
 #: corehq/apps/reports/templates/reports/reports_home.html:15
 msgid "Saving"
 msgstr "Enregistrement"
 
-#: corehq/apps/export/templates/export/customize_export.html:560
+#: corehq/apps/export/templates/export/customize_export.html:600
 msgid "Try Again"
 msgstr "Essayer de nouveau"
 
-#: corehq/apps/export/templates/export/customize_export.html:568
+#: corehq/apps/export/templates/export/customize_export.html:608
 msgid "Delete this Export"
 msgstr "Supprimer cette exportation"
 
@@ -7810,9 +7786,9 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/fixtures/views.py:284
-#, fuzzy, python-format
+#, python-format
 msgid "Upload unsuccessful: %s"
-msgstr "Votre téléversement n'a pas fonctionné. %s"
+msgstr ""
 
 #: corehq/apps/fixtures/views.py:309
 msgid "Lookup Table Upload Status"
@@ -7903,14 +7879,14 @@ msgid "Include in Download"
 msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:77
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:17
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:19
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:36
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:192
 msgid "all"
 msgstr "tous"
 
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:78
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:18
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:20
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:193
 msgid "none"
 msgstr "aucun"
@@ -8552,11 +8528,11 @@ msgstr "Utilisateur d'appareil"
 msgid "Remove Duplicate Domains"
 msgstr "Supprimer les domaines dupliqués"
 
-#: corehq/apps/hqadmin/reporting/reports.py:677
+#: corehq/apps/hqadmin/reporting/reports.py:686
 msgid "Domains Matching Filter"
 msgstr "Filtre de correspondance de domaines"
 
-#: corehq/apps/hqadmin/reporting/reports.py:682
+#: corehq/apps/hqadmin/reporting/reports.py:691
 #, python-format
 msgid "All Domains (NOT applying filters. > %s projects)"
 msgstr "Tous les domaines (SANS application de filtres. > %s projects)"
@@ -8625,20 +8601,20 @@ msgstr "Appliquer à tous les graphiques"
 
 #: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:9
 #: corehq/apps/reports/templates/reports/standard/base_template.html:124
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:141
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:148
 #: custom/tdh/templates/tdh/tdh_template.html:7
 msgid "Export to Excel"
 msgstr "Exporter vers Excel"
 
 #: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:15
 #: corehq/apps/reports/templates/reports/standard/base_template.html:130
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:146
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:153
 msgid "Email report"
 msgstr "Envoyer le rapport par courrier électronique"
 
 #: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:21
 #: corehq/apps/reports/templates/reports/standard/base_template.html:136
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:151
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:158
 msgid "Print"
 msgstr "Imprimer"
 
@@ -10065,7 +10041,7 @@ msgid "Please enter some description about the issue"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:196
-#: corehq/apps/public/templates/public/home.html:115
+#: corehq/apps/public/templates/public/_sections/home/lead.html:60
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:49
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py:17
 #: custom/_legacy/pact/templates/pact/chw/pact_chw_profile_info.html:16
@@ -10960,9 +10936,8 @@ msgid "Tracks Stock"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/settings.html:59
-#, fuzzy
 msgid "Create Cases"
-msgstr "Dossiers reliés"
+msgstr ""
 
 #: corehq/apps/locations/templates/locations/settings.html:91
 msgid "New Location Type"
@@ -11163,13 +11138,6 @@ msgstr "Inviter un membre"
 #: corehq/apps/orgs/templates/orgs/orgs_team_members.html:63
 msgid "No members have been added to this team"
 msgstr "Aucun membre n'a été ajouté à cette équipe"
-
-#: corehq/apps/orgs/templates/orgs/orgs_team_members.html:77
-#: corehq/apps/orgs/templates/orgs/orgs_team_members.html:128
-#: corehq/apps/sms/templates/sms/settings.html:182
-#: corehq/apps/sms/templates/sms/settings.html:288
-msgid "Add"
-msgstr "Ajouter"
 
 #: corehq/apps/orgs/templates/orgs/orgs_team_members.html:115
 msgid "No projects have been added to this team"
@@ -11544,33 +11512,42 @@ msgid "Deleting Program..."
 msgstr ""
 
 #: corehq/apps/public/templates/public/base.html:56
-#, fuzzy
 msgid "Toggle Navigation"
-msgstr "Navigation principale"
+msgstr ""
 
 #: corehq/apps/public/templates/public/base.html:76
 msgid "About"
 msgstr ""
 
 #: corehq/apps/public/templates/public/base.html:84
-#, fuzzy
 msgid "Pricing"
-msgstr "Droit d'Inscription*"
+msgstr ""
 
 #: corehq/apps/public/templates/public/base.html:92
-#, fuzzy
 msgid "Service Packages"
-msgstr "Services"
+msgstr ""
+
+#: corehq/apps/public/templates/public/base.html:106
+#, fuzzy, python-format
+msgid ""
+"\n"
+"                        Copyright &copy; %(year)s Dimagi, Inc.\n"
+"                        Read the <a href=\"#\">End User License Agreement</"
+"a>.\n"
+"                    "
+msgstr ""
+"\n"
+"                       Le jour auquel envoyer chaque événement dans le "
+"rappel.\n"
+"                       Jour 1 indique le jour où le rappel a été déclenché."
 
 #: corehq/apps/public/templates/public/home.html:35
-#, fuzzy
 msgid "mothers"
-msgstr "Mère"
+msgstr ""
 
 #: corehq/apps/public/templates/public/home.html:36
-#, fuzzy
 msgid "vaccines"
-msgstr "Vaccin JE"
+msgstr ""
 
 #: corehq/apps/public/templates/public/home.html:37
 msgid "farms"
@@ -11581,55 +11558,598 @@ msgid "books"
 msgstr ""
 
 #: corehq/apps/public/templates/public/home.html:40
-#, fuzzy
 msgid "everyone"
-msgstr "Accouchement"
-
-#: corehq/apps/public/templates/public/home.html:67
-#: corehq/apps/public/templates/public/home.html:68
-msgid "build"
 msgstr ""
 
-#: corehq/apps/public/templates/public/home.html:74
-#: corehq/apps/public/templates/public/home.html:75
-#, fuzzy
-msgid "use"
-msgstr "Prévu"
-
-#: corehq/apps/public/templates/public/home.html:81
-#: corehq/apps/public/templates/public/home.html:82
-#, fuzzy
-msgid "track"
-msgstr "Commtrack"
-
-#: corehq/apps/public/templates/public/home.html:88
-#: corehq/apps/public/templates/public/home.html:89
-msgid "analyze"
-msgstr ""
-
-#: corehq/apps/public/templates/public/home.html:96
-#, fuzzy
-msgid "Welcome to CommCare."
-msgstr "Bon retour sur "
-
-#: corehq/apps/public/templates/public/home.html:98
+#: corehq/apps/public/templates/public/home.html:65
 #, fuzzy
 msgid ""
 "\n"
-"                                Create mobile apps for\n"
+"                        Used in over 40 countries, CommCare is the most "
+"widely\n"
+"                        adopted, technically advanced, and evidence-based "
+"mobile\n"
+"                        platform for low-resource settings.\n"
+"                        "
+msgstr ""
+"\n"
+"                        <strong>%(created_count)s</strong> les colonnes ne\n"
+"                        correspondaient à aucun dossier existant et de "
+"nouveaux dossiers\n"
+"                        ont été créés. Si les case_id ont été utilisés, ceux-"
+"ci ont été ignorés."
+
+#: corehq/apps/public/templates/public/_sections/home/about_dimagi.html:8
+#, fuzzy
+msgid ""
+"\n"
+"                        Open. Reliable. Free.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/about_dimagi.html:13
+#, fuzzy
+msgid ""
+"\n"
+"                        CommCare is developed by Dimagi, a social "
+"enterprise.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/about_dimagi.html:22
+#, fuzzy
+msgid ""
+"\n"
+"                        We are dedicated to keeping our source open and "
+"core\n"
+"                        features free of charge.\n"
+"                    "
+msgstr ""
+"\n"
+"                        les lignes <strong>%(match_count)s</strong> ont été "
+"liées par correspondance et\n"
+"                        mises à jour."
+
+#: corehq/apps/public/templates/public/_sections/home/about_dimagi.html:31
+msgid "Find us on GitHub"
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/about_dimagi.html:37
+#, fuzzy
+msgid ""
+"\n"
+"                        Our software is used by more than 170 active "
+"projects\n"
+"                        in over 40 countries.\n"
+"                    "
+msgstr ""
+"\n"
+"                       les lignes <strong>%(errors)s</strong> comportent des "
+"erreurs de\n"
+"                        dossiers inconnus.\n"
+"                    "
+
+#: corehq/apps/public/templates/public/_sections/home/about_dimagi.html:45
+#, fuzzy
+msgid "Learn more about us"
+msgstr "En savoir davantage sur CommCare HQ"
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:7
+#, fuzzy
+msgid ""
+"\n"
+"                        Analyze and make data-driven decisions.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:12
+#, fuzzy
+msgid ""
+"\n"
+"                        Gain transparency into your program with real-time\n"
+"                        analytics.\n"
+"                    "
+msgstr ""
+"\n"
+"                        les lignes <strong>%(match_count)s</strong> ont été "
+"liées par correspondance et\n"
+"                        mises à jour."
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:23
+#, fuzzy
+msgid ""
+"\n"
+"                        Export data to third party apps.\n"
+"                    "
+msgstr ""
+"\n"
+"                        Modifier les paramètres pour le groupe "
+"\"%(group_name)s\""
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:28
+msgid ""
+"\n"
+"                        Download data into widely-readable Excel and CSV\n"
+"                        formats. Use APIs to link with external data "
+"management\n"
+"                        systems, including DHIS2, Tableau, SQL, and many "
+"more.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:38
+#, fuzzy
+msgid ""
+"\n"
+"                        Access numerous online reports.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:43
+#, fuzzy
+msgid ""
+"\n"
+"                        Review collected data in online or scheduled email\n"
+"                        reports, including worker monitoring for easy\n"
+"                        supervision and cross-project reports for larger\n"
+"                        deployments.\n"
+"                    "
+msgstr ""
+"\n"
+"                        Les champs de date ayant causé une erreur lors de la "
+"conversion\n"
+"                        ont été spécifiés. Cela est probablement causé par "
+"une valeur du fichier\n"
+"                        Excel ayant un type erroné ou n'ayant pas été "
+"formatée\n"
+"                       correctement. Les numéros de ligne suivante ont "
+"rencontré ce problème et\n"
+"                        ont été ignorées :"
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:54
+#, fuzzy
+msgid ""
+"\n"
+"                        Data is privacy protected and secure.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/analyze.html:59
+#, fuzzy
+msgid ""
+"\n"
+"                        All data is privacy protected, secured, and stored "
+"on\n"
+"                        our HIPAA compliant servers. Remove sensitive\n"
+"                        information in configurable De-Identified Exports.\n"
+"                    "
+msgstr ""
+"\n"
+"                        <strong>%(created_count)s</strong> les colonnes ne\n"
+"                        correspondaient à aucun dossier existant et de "
+"nouveaux dossiers\n"
+"                        ont été créés. Si les case_id ont été utilisés, ceux-"
+"ci ont été ignorés."
+
+#: corehq/apps/public/templates/public/_sections/home/build.html:7
+#, fuzzy
+msgid ""
+"\n"
+"                        Build mobile applications<br class=\"visible-sm\" /> "
+"on your own.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/build.html:12
+msgid ""
+"\n"
+"                        With CommCare’s easy to use App Builder, you don’t "
+"need an IT background to build a mobile app.\n"
+"                    "
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/build.html:25
+#, fuzzy
+msgid ""
+"\n"
+"                                Choose from several features.\n"
 "                            "
 msgstr ""
 "\n"
 "                                Ceci n'est pas une valeur permise pour ce "
 "champ"
 
-#: corehq/apps/public/templates/public/home.html:103
+#: corehq/apps/public/templates/public/_sections/home/build.html:30
+#, fuzzy
+msgid ""
+"\n"
+"                                Use multimedia, decision support, case "
+"management,\n"
+"                                and logic to build the best mobile "
+"application for\n"
+"                                your program.\n"
+"                            "
+msgstr ""
+"\n"
+"                                Oups !\n"
+"                                Ce réglage ne devrait pas être là.\n"
+"                                Pouvez-vous le modifier et le remettre au "
+"réglage par défaut\n"
+"                                pour l'éliminer ?\n"
+"                                Nous vous prions de nous excuser.\n"
+"                            "
+
+#: corehq/apps/public/templates/public/_sections/home/build.html:41
+#, fuzzy
+msgid ""
+"\n"
+"                                Don’t want to start from scratch?<br /> No "
+"problem!\n"
+"                            "
+msgstr ""
+"\n"
+"                                Ceci n'est pas une valeur permise pour ce "
+"champ"
+
+#: corehq/apps/public/templates/public/_sections/home/build.html:46
+#, fuzzy
+msgid ""
+"\n"
+"                                Choose from over 50 pre-built applications "
+"to\n"
+"                                customize from CommCare Exchange, Dimagi’s\n"
+"                                free app store.\n"
+"                            "
+msgstr ""
+"\n"
+"Présente la liste de travailleurs mobiles inactifs.\n"
+"\n"
+"                            Les travailleurs mobiles qui ont plus ou moins "
+"d'un groupe ne peuvent pas utiliser les formulaires dans les applications\n"
+"                            dont le partage de dossiers est activé. Pour "
+"leur permettre d'utiliser des applications lorsque le partage de dossiers "
+"est activé, \n"
+"                            veuillez leur assigner un (mais pas plus d'un "
+"seul) groupe."
+
+#: corehq/apps/public/templates/public/_sections/home/build.html:63
+#, fuzzy
+msgid ""
+"\n"
+"                                Use on multiple devices.\n"
+"                            "
+msgstr ""
+"\n"
+"                                Ceci n'est pas une valeur permise pour ce "
+"champ"
+
+#: corehq/apps/public/templates/public/_sections/home/build.html:68
+#, fuzzy
+msgid ""
+"\n"
+"                                Download your CommCare app to an Android "
+"phone or\n"
+"                                tablet, a simple Java feature phone, or use "
+"it\n"
+"                                directly on the web or via SMS.\n"
+"                            "
+msgstr ""
+"\n"
+"                        les lignes <strong>%(too_many_matches)s</strong> "
+"correspondent à plus d'un seul\n"
+"                        dossier à la fois, ce qui signifie que des dossiers\n"
+"                        dans votre système portent le même identifiant "
+"externe."
+
+#: corehq/apps/public/templates/public/_sections/home/lead.html:12
+#: corehq/apps/public/templates/public/_sections/home/lead.html:13
+msgid "build"
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/lead.html:19
+#: corehq/apps/public/templates/public/_sections/home/lead.html:20
+msgid "use"
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/lead.html:26
+#: corehq/apps/public/templates/public/_sections/home/lead.html:27
+msgid "track"
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/lead.html:33
+#: corehq/apps/public/templates/public/_sections/home/lead.html:34
+msgid "analyze"
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/lead.html:41
+msgid "Welcome to CommCare."
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/lead.html:43
+msgid ""
+"\n"
+"                                Create mobile apps for\n"
+"                            "
+msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/lead.html:48
 msgid "Who is your app for?"
 msgstr ""
 
-#: corehq/apps/public/templates/public/home.html:122
+#: corehq/apps/public/templates/public/_sections/home/lead.html:67
 msgid "enter your email"
 msgstr ""
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:7
+#, fuzzy
+msgid ""
+"\n"
+"                        Track data over time.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:12
+#, fuzzy
+msgid ""
+"\n"
+"                        Go beyond basic data collection. Harness CommCare’s\n"
+"                        powerful Case Management.\n"
+"                    "
+msgstr ""
+"\n"
+"                        les lignes <strong>%(match_count)s</strong> ont été "
+"liées par correspondance et\n"
+"                        mises à jour."
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:22
+#, fuzzy
+msgid ""
+"\n"
+"                        Gather related details in a Case.\n"
+"                    "
+msgstr ""
+"\n"
+"                        Modifier les paramètres pour le groupe "
+"\"%(group_name)s\""
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:27
+#, fuzzy
+msgid ""
+"\n"
+"                        A Case may refer to a person, object, or place.\n"
+"                        As data changes with time, the Case is updated to\n"
+"                        reflect its most recent details.\n"
+"                    "
+msgstr ""
+"\n"
+"                        les lignes <strong>%(too_many_matches)s</strong> "
+"correspondent à plus d'un seul\n"
+"                        dossier à la fois, ce qui signifie que des dossiers\n"
+"                        dans votre système portent le même identifiant "
+"externe."
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:39
+#, fuzzy
+msgid ""
+"\n"
+"                        Leverage recent and historical data.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:44
+#, fuzzy
+msgid ""
+"\n"
+"                        Gain insight on worker engagement from Case "
+"activity\n"
+"                        reports. View case histories at a glance to spot\n"
+"                        errors and inconsistencies.\n"
+"                    "
+msgstr ""
+"\n"
+"Si même après avoir lu ceci vous décidez que vous désirez réellement\n"
+"                    supprimer cet utilisateur et toutes ses données, "
+"inscrivez \"Je \n"
+"                    comprends\" dans le champ ci-dessous.\n"
+"                    "
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:61
+#, fuzzy
+msgid ""
+"\n"
+"                        Apply Case details across applications and "
+"workflows.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:66
+#, fuzzy
+msgid ""
+"\n"
+"                        Create more engaging, dynamic interactions and save\n"
+"                        time by referencing previously obtained "
+"information.\n"
+"                    "
+msgstr ""
+"\n"
+"                        Les numéros de lignes suivantes portaient des "
+"identifiants externes vides et \n"
+"                        n'ont pas pu être créées :"
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:77
+#, fuzzy
+msgid ""
+"\n"
+"                        Share and assign Cases between users and groups.\n"
+"                    "
+msgstr ""
+"\n"
+"                        Modifier les paramètres pour le groupe "
+"\"%(group_name)s\""
+
+#: corehq/apps/public/templates/public/_sections/home/track.html:82
+#, fuzzy
+msgid ""
+"\n"
+"                        Manage user access to specific Cases, and assign "
+"cases\n"
+"                        to users and groups through online tools as your\n"
+"                        workforce changes\n"
+"                    "
+msgstr ""
+"\n"
+"                       Spécifiez l'heure à laquelle chaque message "
+"spécifique sera envoyé.\n"
+"                       Si l'option 'Retarder après début' est choisie, c'est "
+"le nombre de\n"
+"                       minutes après lequel le rappel sera envoyé."
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:7
+#, fuzzy
+msgid ""
+"\n"
+"                    Use mobile apps. Anytime, anywhere.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:12
+#, fuzzy
+msgid ""
+"\n"
+"                        Improve your program’s performance and increase\n"
+"                        flexibility by adopting customized mobile "
+"applications.\n"
+"                    "
+msgstr ""
+"\n"
+"                       les lignes <strong>%(errors)s</strong> comportent des "
+"erreurs de\n"
+"                        dossiers inconnus.\n"
+"                    "
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:22
+#, fuzzy
+msgid ""
+"\n"
+"                        Share engaging multimedia.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:27
+#, fuzzy
+msgid ""
+"\n"
+"                        Include images, audio, and video to communicate "
+"complex\n"
+"                        ideas and boost accessibility.\n"
+"                    "
+msgstr ""
+"\n"
+"                       les lignes <strong>%(errors)s</strong> comportent des "
+"erreurs de\n"
+"                        dossiers inconnus.\n"
+"                    "
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:37
+#, fuzzy
+msgid ""
+"\n"
+"                        Always available.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:42
+#, fuzzy
+msgid ""
+"\n"
+"                        CommCare works on and offline. When a network "
+"connection\n"
+"                        is available, all data is uploaded &amp; made "
+"available\n"
+"                        in online reports.\n"
+"                    "
+msgstr ""
+"\n"
+"Si même après avoir lu ceci vous décidez que vous désirez réellement\n"
+"                    supprimer cet utilisateur et toutes ses données, "
+"inscrivez \"Je \n"
+"                    comprends\" dans le champ ci-dessous.\n"
+"                    "
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:51
+#, fuzzy
+msgid ""
+"\n"
+"                        Beyond text and numbers.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:56
+#, fuzzy
+msgid ""
+"\n"
+"                        Capture GPS data, take photos, record signatures,\n"
+"                        interface with third-party apps, and more.\n"
+"                    "
+msgstr ""
+"\n"
+"                       Le jour auquel envoyer chaque événement dans le "
+"rappel.\n"
+"                       Jour 1 indique le jour où le rappel a été déclenché."
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:66
+#, fuzzy
+msgid ""
+"\n"
+"                        A powerful Job Aid.\n"
+"                    "
+msgstr ""
+"\n"
+"                            Instantané de %(snap_name)s"
+
+#: corehq/apps/public/templates/public/_sections/home/use.html:71
+#, fuzzy
+msgid ""
+"\n"
+"                        Validate responses and reduce errors. Use display "
+"logic\n"
+"                        to hide or show questions, adding clarity to "
+"complex\n"
+"                        workflows.\n"
+"                    "
+msgstr ""
+"\n"
+"Si même après avoir lu ceci vous décidez que vous désirez réellement\n"
+"                    supprimer cet utilisateur et toutes ses données, "
+"inscrivez \"Je \n"
+"                    comprends\" dans le champ ci-dessous.\n"
+"                    "
 
 #: corehq/apps/receiverwrapper/filters.py:22
 msgid "Normal Form"
@@ -11685,7 +12205,7 @@ msgid "No User"
 msgstr "Aucun utilisateur"
 
 #: corehq/apps/receiverwrapper/reports.py:105
-#: submodules/touchforms-src/touchforms/formplayer/views.py:229
+#: submodules/touchforms-src/touchforms/formplayer/views.py:228
 msgid "Unknown Form"
 msgstr "Formulaire inconnu"
 
@@ -12758,7 +13278,7 @@ msgstr ""
 
 #: corehq/apps/reminders/forms.py:2787
 #: corehq/apps/reports/standard/inspect.py:242
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:302
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:304
 msgid "Response"
 msgstr "Réponse"
 
@@ -13117,27 +13637,27 @@ msgstr "(inconnu)"
 msgid "Raw Data"
 msgstr "Données brutes"
 
-#: corehq/apps/reports/models.py:47
+#: corehq/apps/reports/models.py:48
 msgid "demo_user"
 msgstr "demo_user"
 
-#: corehq/apps/reports/models.py:48
+#: corehq/apps/reports/models.py:49
 msgid "admin"
 msgstr "admin"
 
-#: corehq/apps/reports/models.py:49
+#: corehq/apps/reports/models.py:50
 msgid "Unknown Users"
 msgstr "Utilisateurs inconnus"
 
-#: corehq/apps/reports/models.py:343
+#: corehq/apps/reports/models.py:344
 msgid "Deleted Report"
 msgstr "Rapport supprimé"
 
-#: corehq/apps/reports/models.py:347
+#: corehq/apps/reports/models.py:348
 msgid "Unsupported Report"
 msgstr "Rapport non pris en charge"
 
-#: corehq/apps/reports/models.py:385
+#: corehq/apps/reports/models.py:386
 msgid ""
 "The report used to create this scheduled report is no longer available on "
 "CommCare HQ.  Please delete this scheduled report and create a new one using "
@@ -13147,7 +13667,7 @@ msgstr ""
 "CommCare HQ.  Veuillez supprimer ce rapport planifié et en créer un nouveau "
 "à l'aide d'un rapport disponible."
 
-#: corehq/apps/reports/models.py:414
+#: corehq/apps/reports/models.py:415
 #, python-format
 msgid ""
 "We are sorry, but your saved report '%(config_name)s' is no longer "
@@ -13157,7 +13677,7 @@ msgid ""
 "%(saved_reports_url)s to remove this Emailed Report."
 msgstr ""
 
-#: corehq/apps/reports/models.py:427
+#: corehq/apps/reports/models.py:428
 #, python-format
 msgid ""
 "We are sorry, but your saved report '%(config_name)s' can not be generated "
@@ -13165,15 +13685,15 @@ msgid ""
 "Administrator about getting permissions for thisreport."
 msgstr ""
 
-#: corehq/apps/reports/models.py:438
+#: corehq/apps/reports/models.py:439
 msgid "An error occurred while generating this report."
 msgstr "Une erreur est survenue lors de l'émission de ce rapport."
 
-#: corehq/apps/reports/models.py:546
+#: corehq/apps/reports/models.py:547
 msgid "Every day"
 msgstr "À tous les jours"
 
-#: corehq/apps/reports/models.py:547
+#: corehq/apps/reports/models.py:548
 #, python-format
 msgid "Day %s of every month"
 msgstr "Jour %s de chaque mois"
@@ -13669,9 +14189,8 @@ msgid "No Data Available"
 msgstr "Aucune donnée disponible"
 
 #: corehq/apps/reports/filters/commtrack.py:6
-#, fuzzy
 msgid "Show advanced columns"
-msgstr "Afficher les options avancées"
+msgstr ""
 
 #: corehq/apps/reports/filters/dates.py:15
 #: corehq/apps/reports/templates/reports/reports_home.html:41
@@ -14037,9 +14556,8 @@ msgid "User Sync History"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py:154
-#, fuzzy
 msgid "Sync Log"
-msgstr "Sync. maintenant"
+msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py:155
 msgid "Sync Date"
@@ -14080,12 +14598,12 @@ msgstr "Le nombre de dossiers modifiés au cours des 120 derniers jours"
 msgid "Export Forms"
 msgstr "Exporter les formulaires"
 
-#: corehq/apps/reports/standard/export.py:289
+#: corehq/apps/reports/standard/export.py:291
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:100
 msgid "Export Cases"
 msgstr "Exporter les dossiers"
 
-#: corehq/apps/reports/standard/export.py:344
+#: corehq/apps/reports/standard/export.py:346
 msgid "De-Identified Export"
 msgstr "Exportation anonymisée"
 
@@ -14672,7 +15190,7 @@ msgid "Loading Report"
 msgstr "Chargement du rapport"
 
 #: corehq/apps/reports/templates/reports/async/filters.html:4
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:113
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:120
 msgid "Report Filters"
 msgstr "Filtres de rapport"
 
@@ -14831,7 +15349,7 @@ msgid "Tired of seeing this message? We can help you out"
 msgstr "Ce message vous fatigue ? Nous pouvons vous aider"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:34
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:247
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:249
 msgid "Archiving Forms"
 msgstr "Archivage des formulaires en cours"
 
@@ -14844,7 +15362,7 @@ msgstr ""
 "supprimés de tout historique de dossier correspondant. "
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:35
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:258
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:260
 msgid "Restoring Forms"
 msgstr "Restauration des formulaires"
 
@@ -14854,14 +15372,14 @@ msgstr ""
 "La restauration de ce formulaire fera en sorte qu'il sera à nouveau inclus "
 "dans les rapports."
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:156
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:158
 msgid ""
 "\n"
 "    This form is archived and will not be included in reports. \n"
 "    "
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:160
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:162
 msgid ""
 "\n"
 "    To unarchive this form, click the \"Restore this form\" button.\n"
@@ -14869,7 +15387,7 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:171
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:173
 #, python-format
 msgid ""
 "\n"
@@ -14880,7 +15398,7 @@ msgstr ""
 "            Soumis par %(auth_user)s au nom de %(user)s\n"
 "        "
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:176
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:178
 #, python-format
 msgid ""
 "\n"
@@ -14890,7 +15408,7 @@ msgstr ""
 "\n"
 "            Soumis par %(auth_user)s        "
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:183
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:185
 #, python-format
 msgid ""
 "\n"
@@ -14900,90 +15418,90 @@ msgstr ""
 "\n"
 "        Soumis en tant que %(user)s        "
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:191
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:193
 msgid "Form Properties"
 msgstr "Propriétés de formulaire"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:197
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:199
 msgid "Case Changes"
 msgstr "Modifications de dossier"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:205
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:207
 msgid "Form Metadata"
 msgstr "Métadonnées de formulaire"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:213
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:215
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:33
 msgid "Attachments"
 msgstr "Pièces jointes"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:219
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:221
 msgid "Raw XML"
 msgstr "XML brut"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:225
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:227
 msgid "Edit Submission"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:238
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:240
 msgid "View standalone form"
 msgstr "Visualiser le formulaire autonome"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:251
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:253
 msgid "Archive this form"
 msgstr "Archiver ce formulaire"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:262
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:264
 msgid "Restore this form"
 msgstr "Restaurer ce formulaire"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:276
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:278
 msgid "All data is listed as Unrecognized Data."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:281
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:283
 msgid "Labels"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:282
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:284
 msgid "Question IDs"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:286
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:288
 msgid "Show questions in form that were not shown to the user"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:289
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:291
 msgid "Questions not shown to the user"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:290
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:292
 msgid ""
 "These questions were not shown to the user because their display conditions "
 "were not met."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:300
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:302
 msgid "Question ID"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:321
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:323
 msgid "Unknown/Deleted Case"
 msgstr "Dossier inconnu / supprimé"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:328
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:330
 msgid "(this case)"
 msgstr "(ce dossier)"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:374
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:376
 msgid "Open XML in New Window"
 msgstr "Ouvrir XML dans une nouvelle fenêtre"
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:377
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:379
 msgid "Double-click code below to select all:"
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/partials/single_form.html:392
+#: corehq/apps/reports/templates/reports/form/partials/single_form.html:394
 msgid "Edit submission"
 msgstr ""
 
@@ -15096,35 +15614,37 @@ msgstr "Date de départ"
 msgid "YYYY-MM-DD"
 msgstr "AAAA-MM-JJ"
 
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:14
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:16
 msgid "Add to Custom Bulk Export"
 msgstr "Ajouter à l'Exportation en bloc personnalisée"
 
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:31
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:33
 msgid "de-identified"
 msgstr "Désidentifier"
 
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:39
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:41
 msgid "duplicate"
 msgstr "dupliquer"
 
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:45
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:47
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:73
 msgid "HTML Preview"
 msgstr "Aperçu HTML"
 
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:72
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:305
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:76
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:80
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:306
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:310
 msgid "Download "
 msgstr "Télécharger"
 
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:82
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:319
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:92
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:325
 msgid "Bulk Export"
 msgstr "Exportation en bloc"
 
-#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:85
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:322
+#: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:95
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:328
 msgid "Not Available"
 msgstr "Non disponible"
 
@@ -15176,7 +15696,7 @@ msgid "Create Custom Export"
 msgstr "Créer une exportation personnalisée"
 
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:133
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:332
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:338
 msgid "Daily Saved Exports"
 msgstr ""
 
@@ -15314,15 +15834,15 @@ msgstr "Aucune suggestion"
 msgid "No Forms"
 msgstr "Aucun formulaire"
 
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:342
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:348
 msgid "Export all Forms' Metadata"
 msgstr "Exporter toutes les métadonnées des formulaires"
 
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:345
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:351
 msgid "Export basic data for all forms in this domain."
 msgstr "Exporter les données de base pour tous les formulaires dans ce domaine"
 
-#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:349
+#: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:355
 msgid "all form metadata"
 msgstr "toutes les métadonnées de formulaire"
 
@@ -15332,11 +15852,11 @@ msgid ""
 "during case processing."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/reportdata/form_deid_export.html:12
+#: corehq/apps/reports/templates/reports/reportdata/form_deid_export.html:9
 msgid "De-Identified Exports"
 msgstr "Exportations anonymisées"
 
-#: corehq/apps/reports/templates/reports/reportdata/form_deid_export.html:18
+#: corehq/apps/reports/templates/reports/reportdata/form_deid_export.html:15
 #, python-format
 msgid ""
 "\n"
@@ -15364,17 +15884,17 @@ msgstr ""
 "électronique. Veuillez essayer à nouveau."
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html:116
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:134
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:141
 msgid "Show Filter Options"
 msgstr "Options de filtre d'affichage"
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html:117
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:135
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:142
 msgid "Hide Filter Options"
 msgstr "Masquer les options de filtre"
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html:118
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:136
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:143
 msgid "Filter Options"
 msgstr "Options de filtre"
 
@@ -15438,22 +15958,20 @@ msgstr ""
 "Veuillez choisir les filtres ci-dessus et cliquer sur <strong>Appliquer</"
 "strong> pour voir les données de rapport."
 
-#: corehq/apps/reports/templatetags/xform_tags.py:44
+#: corehq/apps/reports/templatetags/xform_tags.py:45
 msgid "missing form"
 msgstr "formulaire manquant"
 
-#: corehq/apps/reports/templatetags/xform_tags.py:45
+#: corehq/apps/reports/templatetags/xform_tags.py:46
 msgid "empty form id found"
 msgstr "identifiant de formulaire vide trouvé"
 
-#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:105
-#, fuzzy
+#: corehq/apps/reports_core/templates/reports_core/base_template_new.html:111
 msgid ""
 "\n"
 "    There was an error rendering your report.\n"
 "    "
 msgstr ""
-"Une erreur est survenue lors de la suppression de votre nom dans le projet."
 
 #: corehq/apps/settings/views.py:52
 msgid "My Account"
@@ -16843,9 +17361,14 @@ msgstr ""
 msgid "Spec must include a valid \"{0}\" field."
 msgstr ""
 
-#: corehq/apps/userreports/models.py:134
+#: corehq/apps/userreports/models.py:135
 msgid "The data source referenced by this report could not be found."
 msgstr ""
+
+#: corehq/apps/userreports/models.py:166
+#, fuzzy, python-format
+msgid "Filters cannot contain duplicate slugs: %s"
+msgstr "Le nom d'utilisateur ne peut contenir des espaces ou des symboles"
 
 #: corehq/apps/userreports/views.py:42
 msgid "Report \"{}\" saved!"
@@ -17106,15 +17629,11 @@ msgid "E-Mail"
 msgstr ""
 
 #: corehq/apps/users/forms.py:160
-#, fuzzy
 msgid ""
 "<i class=\"icon-info-sign\"></i> Becomes default language seen in CloudCare "
 "and reports (if applicable), but does not affect mobile applications. "
 "Supported languages for reports are en, fr (partial), and hin (partial)."
 msgstr ""
-"<i class=\"icon-info-sign\"></i> Devient la langue par défaut dans CloudCare "
-"et les rapports (s'il y a lieu). Les langues prises en charge pour les "
-"rapports sont en, fr (partiel), et hin (partiel)."
 
 #: corehq/apps/users/forms.py:179
 msgid "Opt out of emails about CommCare updates."
@@ -17241,7 +17760,7 @@ msgstr "Réinitialiser le mot de passe"
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html:163
 #: corehq/apps/users/templates/users/edit_commcare_user.html:168
-#: corehq/apps/users/templates/users/edit_commcare_user.html:243
+#: corehq/apps/users/templates/users/edit_commcare_user.html:242
 msgid "Delete Mobile Worker"
 msgstr "Supprimer un travailleur mobile"
 
@@ -17310,12 +17829,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html:221
+#, fuzzy, python-format
 msgid ""
 "\n"
 "                    If even after reading this you decide that you really "
 "want\n"
-"                    to delete this user and all of their data, type \"I\n"
-"                    understand\" into the box below.\n"
+"                    to delete this user and all of their data, type <strong>"
+"%(username)s</strong> into the box below.\n"
 "                    "
 msgstr ""
 "\n"
@@ -17724,14 +18244,12 @@ msgstr ""
 "                    Ce téléphone n'a pas encore répondu. Envoyer à nouveau ?"
 
 #: corehq/apps/users/templates/users/partial/edit_commtrack_user_settings.html:12
-#, fuzzy
 msgid "Location Settings"
-msgstr "Paramètres de consommation"
+msgstr ""
 
 #: corehq/apps/users/templates/users/partial/edit_commtrack_user_settings.html:22
-#, fuzzy
 msgid "Update Location Settings"
-msgstr "Mettre à jour mes paramètres"
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py:206
 #, python-format
@@ -19577,9 +20095,8 @@ msgid "CBT Name"
 msgstr ""
 
 #: custom/ewsghana/filters.py:9 custom/ilsgateway/filters.py:9
-#, fuzzy
 msgid "Filter By"
-msgstr "Filtrer les journaux par"
+msgstr ""
 
 #: custom/ewsghana/views.py:23
 msgid "EWS Ghana"
@@ -19623,48 +20140,40 @@ msgid "You have not submitted any product reports yet."
 msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:28
-#, fuzzy
 msgid "Stockout"
-msgstr "rupture d'inventaire"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:29
 msgid "Low Stock"
 msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:31
-#, fuzzy
 msgid "Overstock"
-msgstr "Surplus d'inventaire"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:35
-#, fuzzy
 msgid "AMC"
-msgstr "ANM"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:131
-#, fuzzy
 msgid "Stock status"
-msgstr "État d'inventaire"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:151
-#, fuzzy
 msgid "Commodity"
-msgstr "Commentaire"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:152
-#, fuzzy
 msgid "Months Until Stockout"
-msgstr "MOS restant"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:153
-#, fuzzy
 msgid "Stockout Duration"
-msgstr "Actions d'inventaire"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:154
-#, fuzzy
 msgid "Current Stock"
-msgstr "Données actuelles"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:156
 msgid "Reorder Level"
@@ -19675,9 +20184,8 @@ msgid "Maximum Level"
 msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:158
-#, fuzzy
 msgid "Date of Last Report"
-msgstr "Rapport le plus récemment"
+msgstr ""
 
 #: custom/ewsghana/reports/StockLevelsReport.py:357
 msgid "In charge"
@@ -19708,9 +20216,8 @@ msgstr ""
 
 #: custom/ewsghana/templates/ewsghana/ewsconfig.html:113
 #: custom/ilsgateway/templates/ilsgateway/ilsconfig.html:175
-#, fuzzy
 msgid "Resync started"
-msgstr "Synchronisation démarrée"
+msgstr ""
 
 #: custom/fri/forms.py:15
 msgid "Please choose a file."
@@ -20219,9 +20726,8 @@ msgid "No Data"
 msgstr ""
 
 #: custom/ilsgateway/templates/ilsgateway/base_template.html:9
-#, fuzzy
 msgid "Export to:"
-msgstr "Exporter des données"
+msgstr ""
 
 #: custom/ilsgateway/templates/ilsgateway/ilsconfig.html:115
 msgid "Run reports generation"
@@ -22738,14 +23244,11 @@ msgid ""
 "report an issue."
 msgstr ""
 
-#: submodules/touchforms-src/touchforms/formplayer/views.py:215
+#: submodules/touchforms-src/touchforms/formplayer/views.py:214
 msgid ""
 "An error occurred while trying to connect to the CloudCare service. If you "
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
-
-#~ msgid "Data Usage?"
-#~ msgstr "Utilisation de données ?"
 
 #~ msgid "Manage SMS Backend Rates"
 #~ msgstr "Diagnóstico de Casos"
