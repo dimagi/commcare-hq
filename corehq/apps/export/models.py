@@ -53,25 +53,30 @@ class FormQuestionSchema(Document):
             self.save()
 
     def update_for_app(self, app):
-        def to_json_path(xml_path):
-            if not xml_path:
-                return
+        form = app.get_form_by_xmlns(self.xmlns)
+        if form:
+            xform = form.wrapped_xform()
+            prefix = '/{}/'.format(xform.data_node.tag_name)
 
-            if xml_path.startswith('/data/'):
-                xml_path = xml_path[len('/data/'):]
-            return 'form.{}'.format(xml_path.replace('/', '.'))
+            def to_json_path(xml_path):
+                if not xml_path:
+                    return
 
-        for question in app.get_questions(self.xmlns):
-            if question['tag'] == 'select':
-                question_path = to_json_path(question['value'])
-                meta = self.question_schema.get(question_path, QuestionMeta(
-                    repeat_context=to_json_path(question['repeat'])
-                ))
-                for opt in question['options']:
-                    if opt['value'] not in meta.options:
-                        meta.options.append(opt['value'])
+                if xml_path.startswith(prefix):
+                    xml_path = xml_path[len(prefix):]
+                return 'form.{}'.format(xml_path.replace('/', '.'))
 
-                self.question_schema[question_path] = meta
+            for question in xform.get_questions(app.langs):
+                if question['tag'] == 'select':
+                    question_path = to_json_path(question['value'])
+                    meta = self.question_schema.get(question_path, QuestionMeta(
+                        repeat_context=to_json_path(question['repeat'])
+                    ))
+                    for opt in question['options']:
+                        if opt['value'] not in meta.options:
+                            meta.options.append(opt['value'])
+
+                    self.question_schema[question_path] = meta
 
         self.processed_apps.add(app.get_id)
         self.last_processed_version = app.version
