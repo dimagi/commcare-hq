@@ -17,6 +17,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
@@ -1704,6 +1705,12 @@ class RemindersListView(BaseMessagingSectionView):
                 'success': True,
             }
         except Exception as e:
+            msg = ("Couldn't process action '%s' for reminder definition"
+                % action)
+            notify_exception(None, message=msg, details={
+                'domain': self.domain,
+                'handler_id': self.reminder_id,
+            })
             return {
                 'success': False,
             }
