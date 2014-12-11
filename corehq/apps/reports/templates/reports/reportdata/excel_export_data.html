@@ -301,11 +301,11 @@
                 <td class="cell-vertical-centered">
                     {% if form.size %}
                         {% if form.app.id %}
-                        <a href="{% url "form_multimedia_export" domain %}?app_id={{form.app.id}}&xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
+                        <a href="{% url "form_multimedia_export" domain %}?app_id={{form.app.id}}&amp;xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
                             class="btn btn-primary dl-export" ><i
                             class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
                         {% else %}
-                        <a href="{% url "form_multimedia_export" domain %}?xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
+                        <a href="{% url "form_multimedia_export" domain %}?xmlns={{form.xmlns}}&amp;{{ get_filter_params.urlencode|safe }}"
                             class="btn btn-primary dl-export" ><i
                             class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
                         {% endif %}
