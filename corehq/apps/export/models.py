@@ -53,7 +53,7 @@ class FormQuestionSchema(Document):
             self.save()
 
     def update_for_app(self, app):
-        form = app.get_form_by_xmlns(self.xmlns)
+        form = app.get_form_by_xmlns(self.xmlns, log_missing=False)
         if form:
             xform = form.wrapped_xform()
             prefix = '/{}/'.format(xform.data_node.tag_name)
