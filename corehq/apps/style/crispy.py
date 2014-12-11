@@ -30,3 +30,24 @@ class FormActions(OriginalFormActions):
             'offsets': offsets,
             'field_class': context.get('field_class', '')
         }))
+
+
+class Field(OldField):
+    """Overrides the logic behind choosing the offset class for the field to
+    actually be responsive (col-lg-offset-*, col-md-offset-*, etc). Also includes
+    support for static controls.
+    """
+    template = 'style/crispy/field.html'
+
+    def __init__(self, *args, **kwargs):
+        self.is_static = False
+        if 'is_static' in kwargs:
+            self.is_static = kwargs.pop('is_static')
+        super(Field, self).__init__(*args, **kwargs)
+
+    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+        offsets = _get_offsets(context)
+        context.update({
+            'offsets': offsets,
+        })
+        return super(Field, self).render(form, form_style, context, template_pack)
