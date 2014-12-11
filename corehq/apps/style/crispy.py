@@ -9,6 +9,12 @@ TEMPLATE_PACK = 'bootstrap3'
 class FormActions(OriginalFormActions):
     template = 'style/crispy/form_actions.html'
 
+    def __init__(self, *fields, **kwargs):
+        self.offsets = ''
+        if 'offsets' in kwargs:
+            self.offsets = kwargs.pop('offsets')
+        super(FormActions, self).__init__(*fields, **kwargs)
+
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
         html = u''
         for field in self.fields:
@@ -17,6 +23,6 @@ class FormActions(OriginalFormActions):
         return render_to_string(self.template, Context({
             'formactions': self,
             'fields_output': html,
-            'label_size': context.get('label_size', 0),
+            'offsets': self.offsets,
             'field_class': context.get('field_class', '')
         }))
