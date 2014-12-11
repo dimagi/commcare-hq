@@ -1813,6 +1813,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                          start_date_offset or 0)
         reminder_handler.ui_type = self.ui_type
         reminder_handler.domain = self.domain
+        reminder_handler.start_condition_type = CASE_CRITERIA
 
         reminder_handler.save()
 
