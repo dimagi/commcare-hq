@@ -56,18 +56,6 @@ branches:
   - logo-uploader # Nick P 12/2
   - userreports-delete # Nick P 12/10
 submodules:
-  submodules/couchlog-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/django-soil-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/formtranslate-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/touchforms-src:
-    branches:
-      - static-tags # Nick P 5/20
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
       - debug-yui # Nick P 11/4
