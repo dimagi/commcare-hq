@@ -99,11 +99,286 @@ Specification
 DHIS API documentation
 ----------------------
 
+In DHIS2, tracked entity instances are analogous to cases. Tracked
+entities are user-defined data types of tracked entity instances. Their
+attributes are also user-defined, and are named tracked entity
+attributes.
+
+In the World Vision Sri Lanka Nutrition project the tracked entity we
+are interested in is called "Child", and corresponds to the "child_gmp"
+CommCareHQ case type.
+
+DHIS2 tracked entity instances are enrolled in programs, for which
+reports are generated. A report datum is called an "event".
+
+All data is structured with a tree to allow for a multi-tenant API where
+user-defined data is strictly separated. The nodes of this tree are
+named "organisation units" (which DHIS2 has borrowed from X.500's and
+LDAP's organizational units). In the DHIS2 context, an organisation unit
+is usually a country, region or facility.
+
+API queries need to specify the organisation unit as a parameter named
+"ou". By default, instances are returned for only that organisation
+unit, using tracked entities defined at that node and above. To fetch
+instances at that node and below, pass the parameter
+"ouMode=DESCENDANTS".
+
+apps.dhis2.org offers a well populated sample API. By using GET request
+parameters in your browser, you don't need any plugins or addons for
+testing. The username is "admin" and password "district".
+
+You can get a list of organisation units from
+https://apps.dhis2.org/demo/api/organisationUnits.json?links=false A
+snippet looks like this:
+
+.. code-block:: javascript
+
+    {
+        "pager": {
+            "page": 1,
+            "pageCount": 27,
+            "total": 1332,
+            "nextPage": "https://apps.dhis2.org/demo/api/organisationUnits?page=2"
+        },
+        "organisationUnits": [
+            {
+                "id": "Rp268JB6Ne4",
+                "created": "2012-02-17T14:54:39.987+0000",
+                "name": "Adonkia CHP",
+                "lastUpdated": "2014-11-25T08:37:54.322+0000",
+                "code": "OU_651071"
+            },
+            {
+                "id": "cDw53Ej8rju",
+                "created": "2012-02-17T14:54:39.987+0000",
+                "name": "Afro Arab Clinic",
+                "lastUpdated": "2014-11-25T08:37:53.882+0000",
+                "code": "OU_278371"
+            },
+            // ...
+            {
+                "id": "t52CJEyLhch",
+                "created": "2012-02-17T14:54:39.987+0000",
+                "name": "Baoma MCHP",
+                "lastUpdated": "2014-11-25T08:37:54.074+0000",
+                "code": "OU_233393"
+            }
+        ]
+    }
+
+Here is a snippet of a list of tracked entities from
+https://apps.dhis2.org/demo/api/trackedEntities?format=json&ou=jmIPBj66vD6
+
+.. code-block:: javascript
+
+    {
+        "pager": {
+            "page": 1,
+            "pageCount": 1,
+            "total": 7
+        },
+        "trackedEntities": [
+            {
+                "id": "bVkFYAvoUCP",
+                "created": "2014-03-12T13:17:00.183+0000",
+                "name": "ARV commodity",
+                "lastUpdated": "2014-03-26T12:48:03.209+0000",
+                "href": "https://apps.dhis2.org/demo/api/trackedEntities/bVkFYAvoUCP"
+            },
+            {
+                "id": "UinS6TQnkUi",
+                "created": "2014-04-14T11:54:19.781+0000",
+                "name": "Borehole / well",
+                "lastUpdated": "2014-04-14T11:54:19.781+0000",
+                "href": "https://apps.dhis2.org/demo/api/trackedEntities/UinS6TQnkUi"
+            },
+            // ...
+            {
+                "id": "cyl5vuJ5ETQ",
+                "name": "Person",
+                "href": "https://apps.dhis2.org/demo/api/trackedEntities/cyl5vuJ5ETQ"
+            }
+        ]
+    }
+
+And tracked entity attributes from
+https://apps.dhis2.org/demo/api/trackedEntityAttributes?format=json&ou=jmIPBj66vD6
+
+.. code-block:: javascript
+
+    {
+        "pager": {
+            "page": 1,
+            "pageCount": 1,
+            "total": 27
+        },
+        "trackedEntityAttributes": [
+            {
+                "id": "AMpUYgxuCaE",
+                "created": "2014-01-09T18:12:46.547+0000",
+                "name": "Address",
+                "lastUpdated": "2014-07-18T15:13:34.752+0000",
+                "href": "https://apps.dhis2.org/demo/api/trackedEntityAttributes/AMpUYgxuCaE"
+            },
+            {
+                "id": "spFvx9FndA4",
+                "created": "2014-01-09T18:12:46.582+0000",
+                "name": "Age",
+                "lastUpdated": "2014-07-18T15:13:34.749+0000",
+                "href": "https://apps.dhis2.org/demo/api/trackedEntityAttributes/spFvx9FndA4"
+            },
+            // ...
+            {
+                "id": "n9nUvfpTsxQ",
+                "created": "2014-03-26T12:33:10.320+0000",
+                "name": "Zip code",
+                "lastUpdated": "2014-07-18T15:13:34.712+0000",
+                "code": "Zip code",
+                "href": "https://apps.dhis2.org/demo/api/trackedEntityAttributes/n9nUvfpTsxQ"
+            }
+        ]
+    }
+
+
+A list of tracked entity instances works slightly differently. Instead
+of a list of dictionaries, the data is structured like a spreadsheet,
+with a list of column headers, followed by a list of rows. Here is a
+list of tracked entity instances from
+`https://apps.dhis2.org/demo/api/trackedEntityInstances
+    ?format=json
+    &ou=jmIPBj66vD6
+    &ouMode=DESCENDANT
+    &attribute=kyIzQsj96BD
+    &attribute=NDXw0cluzSw
+<https://apps.dhis2.org/demo/api/trackedEntityInstances?format=json&ou=jmIPBj66vD6&ouMode=DESCENDANTS&attribute=kyIzQsj96BD&attribute=NDXw0cluzSw>`_
+
+.. code-block:: javascript
+
+    {
+        "headers": [
+            {
+                "name": "instance",
+                "column": "Instance",
+                "type": "java.lang.String",
+                "hidden": false,
+                "meta": false
+            },
+            {
+                "name": "created",
+                "column": "Created",
+                "type": "java.lang.String",
+                "hidden": false,
+                "meta": false
+            },
+            {
+                "name": "lastupdated",
+                "column": "Last updated",
+                "type": "java.lang.String",
+                "hidden": false,
+                "meta": false
+            },
+            {
+                "name": "ou",
+                "column": "Org unit",
+                "type": "java.lang.String",
+                "hidden": false,
+                "meta": false
+            },
+            {
+                "name": "te",
+                "column": "Tracked entity",
+                "type": "java.lang.String",
+                "hidden": false,
+                "meta": false
+            },
+            {
+                "name": "kyIzQsj96BD",
+                "column": "Company",
+                "type": "java.lang.String",
+                "hidden": false,
+                "meta": false
+            },
+            {
+                "name": "NDXw0cluzSw",
+                "column": "Email",
+                "type": "java.lang.String",
+                "hidden": false,
+                "meta": false
+            }
+        ],
+        "metaData": {
+            "pager": {
+                "page": 1,
+                "total": 4067,
+                "pageSize": 50,
+                "pageCount": 82
+            },
+            "names": {
+                "cyl5vuJ5ETQ": "Person"
+            }
+        },
+        "height": 50,
+        "width": 7,
+        "rows": [
+            [
+                "yyrQRtUEO62",
+                "2014-03-26 15:40:12.905",
+                "2014-03-28 12:27:49.148",
+                "Gtnbmf4LkOz",
+                "cyl5vuJ5ETQ",
+                "Desmonds Formal Wear",
+                "LidyaIdris@gustr.com"
+            ],
+            [
+                "LiPJwPjkfpo",
+                "2014-03-26 15:40:12.93",
+                "2014-03-28 12:27:49.175",
+                "fGp4OcovQpa",
+                "cyl5vuJ5ETQ",
+                "Pantry Food Stores",
+                "GenetGebre@superrito.com"
+            ],
+            // ...
+            [
+                "FIa4Zu8eNcv",
+                "2014-03-26 15:40:27.732",
+                "2014-03-28 12:27:58.52",
+                "Zr7pgiajIo9",
+                "cyl5vuJ5ETQ",
+                "Montana's Cookhouse",
+                "TekleAlem@einrot.com"
+            ]
+        ]
+    }
+
+A few useful things to note here:
+* The ID column of the tracked entity instances is not named "ID" or
+  "id"; it's named "Identity"
+* Column names of user-defined tracked entity attributes, in this case
+  "Company" and "Email" are ID numbers.
+
+The CommCareHQ DHIS2 API client compiles this data into a list of
+dictionaries, and uses the "column" attribute (i.e. human-readable name)
+for dictionary keys. An alternative approach might be to key the
+dictionary with name-column tuples, e.g. `('NDXw0cluzSw', 'Email')`, but
+that seems less readable, and more complex than necessary.
+
+You can find more information in the `Web API chapter`_ of the
+`DHIS2 Developer Manual`_.
+
+
+.. _Web API chapter: https://www.dhis2.org/doc/snapshot/en/developer/html/ch01.html
+.. _DHIS2 Developer Manual: https://www.dhis2.org/doc/snapshot/en/developer/html/dhis2_developer_manual.html
+
 
 Conventions and Assumptions
 ---------------------------
 
 We assume the following data is available in CommCare and DHIS2.
+
+
+Setting up the CommCareHQ app
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Participating CommCare users need the following custom user property:
 
@@ -115,11 +390,12 @@ Required CommCare case attributes:
 * dhis2_organization_unit_id: The organisation unit ID of the owner of the
   case.
 
-Instead of creating an attribute for the DHIS2 tracked entity instance ID, use
-`external_id`. This is indexed, and allows us to fetch cases by their DHIS2
-ID efficiently.
+Instead of creating an attribute for the DHIS2 tracked entity instance
+ID, the DHIS2 API client uses `external_id`. This is indexed, and allows
+us to fetch cases by their DHIS2 ID efficiently.
 
-CommCare child growth monitoring forms must include:
+The Growth Monitoring forms that are used to populate child_gmp cases
+must include:
 
 * height
 * weight
@@ -127,15 +403,28 @@ CommCare child growth monitoring forms must include:
 * age at time of visit
 * hidden value "dhis2_te_inst_id" whose value is taken from the case's
   external_id
-* hidden value "dhis2_processed" to indicate that the form has been sent to
-  DHIS2 as an event
+* hidden value "dhis2_processed" to indicate that the form has been sent
+  to DHIS2 as an event
 
-DHIS2 tracked entity attributes:
 
-* cchq_case_id: Used to refer to the corresponding CommCareHQ case. This is a
-  hexadecimal UUID.
+Setting up DHIS2
+^^^^^^^^^^^^^^^^
 
-DHIS2 needs the following two projects:
+DHIS2 tracked entities:
+
+* Child
+
+Tracked entity attributes of Child:
+
+* height
+* weight
+* BMI
+* age at time of visit
+* cchq_case_id: Used to refer to the corresponding CommCareHQ case. This
+  will be populated with a hexadecimal UUID.
+
+DHIS2 needs the following two projects for CommCareHQ child_gmp cases /
+DHIS2 Child tracked entity instances to be enrolled in:
 
 1. "Pediatric Nutrition Assessment"
 2. "Underlying Risk Assessment"

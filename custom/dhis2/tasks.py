@@ -228,7 +228,6 @@ def gen_children_only_ours(domain):
               .domain(domain)
               .case_type('child_gmp')
               .empty('external_id')
-              # .missing('external_id')
               .run())
     if result.total:
         for doc in result.hits:
