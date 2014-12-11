@@ -89,6 +89,14 @@ def all_toggles():
                 yield toggle
 
 
+def toggles_dict(username=None, domain=None):
+    """
+    Loads all toggles into a dictonary for use in JS
+    """
+    return {t.slug: True for t in all_toggles() if (t.enabled(username) or
+                                                    t.enabled(domain))}
+
+
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'Custom case parent reference'
@@ -233,6 +241,11 @@ CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
+)
+
+VELLUM_HELP_TEXT = StaticToggle(
+    'add_help_text',
+    "Adds a help text in the form builder"
 )
 
 STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
