@@ -642,8 +642,10 @@ def _get_terms_list(terms):
 
 def get_nested_terms_filter(prop, terms):
     filters = []
+
     def make_filter(term):
         return es_filters.term(prop, term)
+
     for term in _get_terms_list(terms):
         if len(term) == 1:
             filters.append(make_filter(term[0]))
@@ -702,7 +704,25 @@ class CaseReportMixin(object):
             query = query.filter(get_block_filter(self.block))
 
         result = query.run()
-        return map(CommCareCase, iter_docs(CommCareCase.get_db(), result.ids))
+
+        def _final_filter(case_doc):
+            """
+            Because the ES filters are tokenized, we do a final in-memory filter ensuring exact matches.
+            This prevents issues with "Tetua Pasi Tola" cases showing up in "Tetua"
+
+            We can't do this in ES because we don't want to bother modifying the report_cases mapping.
+            See: http://www.elasticsearch.org/guide/en/elasticsearch/guide/current/_finding_exact_values.html
+            """
+            if self.awcs and case_doc.get('awc_name') not in self.awcs:
+                return False
+            elif self.block and case_doc.get('block_name') != self.block:
+                return False
+            return True
+
+        return [
+            CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), result.ids)
+            if _final_filter(doc)
+        ]
 
     @property
     def fields(self):
