@@ -35,7 +35,10 @@ class FormQuestionSchema(Document):
 
     @classmethod
     def _get_id(cls, domain, app_id, xmlns):
-        key = [domain, app_id, xmlns]
+        def _none_to_empty_string(str):
+            return str if str is not None else ''
+
+        key = map(_none_to_empty_string, [domain, app_id, xmlns])
         return hashlib.sha1(':'.join(key)).hexdigest()
 
     @classmethod
@@ -70,6 +73,10 @@ class FormQuestionSchema(Document):
         return schema
 
     def validate(self, required=True):
+        # this isn't always set, so set to empty strings if not found
+        if self.app_id is None:
+            self.app_id = ''
+
         super(FormQuestionSchema, self).validate(required=required)
         if not self.get_id:
             self._id = self._get_id(self.domain, self.app_id, self.xmlns)
