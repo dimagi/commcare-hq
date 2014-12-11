@@ -90,6 +90,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     page_title = ugettext_lazy("My Information")
 
     @method_decorator(check_preview_bootstrap3())
+    @method_decorator(use_select2())
     def dispatch(self, request, *args, **kwargs):
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 

@@ -13,3 +13,15 @@ def check_preview_bootstrap3():
             return fn(request, *args, **kwargs)
         return wrapped
     return decorate
+
+
+def use_select2():
+    def decorate(fn):
+        """
+        Decorator to Toggle on the use of bootstrap 3.
+        """
+        def wrapped(request, *args, **kwargs):
+            request.use_select2 = True
+            return fn(request, *args, **kwargs)
+        return wrapped
+    return decorate
