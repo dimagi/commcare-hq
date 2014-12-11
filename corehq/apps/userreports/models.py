@@ -30,7 +30,8 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
         return u'{} - {}'.format(self.domain, self.display_name)
 
     @property
-    def filter(self):
+    def filter(self, doc_types=None):
+        referenced_doc_types = doc_types or [self.referenced_doc_type]
         extras = (
             [self.configured_filter]
             if self.configured_filter else []
@@ -42,9 +43,15 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
                 'property_value': self.domain,
             },
             {
-                'type': 'property_match',
-                'property_name': 'doc_type',
-                'property_value': self.referenced_doc_type,
+                'type': 'or',
+                'filters': [
+                    {
+                        'type': 'property_match',
+                        'property_name': 'doc_type',
+                        'property_value': referenced_doc_type,
+                    }
+                    for referenced_doc_type in referenced_doc_types
+                ],
             },
         ]
         return FilterFactory.from_spec(
