@@ -68,7 +68,7 @@
                  self.signOff = ko.observable('');
                  self.formDeleteUserSent = ko.observable(false);
                  self.disabled = function () {
-                     var understand = self.signOff().toLowerCase() === 'i understand';
+                     var understand = self.signOff().toLowerCase() === '{{ couch_user.username }}';
                      return self.formDeleteUserSent() || !understand;
                  };
                  self.submit = function () {
@@ -218,10 +218,9 @@
                     {% endblocktrans %}
                 </p>
                 <p>
-                    {% blocktrans %}
+                    {% blocktrans with couch_user.username as username %}
                     If even after reading this you decide that you really want
-                    to delete this user and all of their data, type "I
-                    understand" into the box below.
+                    to delete this user and all of their data, type <strong>{{ username }}</strong> into the box below.
                     {% endblocktrans %}
                 </p>
 
