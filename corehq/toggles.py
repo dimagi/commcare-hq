@@ -88,6 +88,7 @@ def all_toggles():
             if isinstance(toggle, StaticToggle):
                 yield toggle
 
+
 def toggles_dict(item):
     """
     Loads all toggles into a dictonary for use in JS
