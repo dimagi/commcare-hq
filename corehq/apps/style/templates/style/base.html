@@ -42,9 +42,7 @@
                   href="{% new_static 'style/less/b3-migration.less' %}" />
         {% endcompress %}
 
-        {% compress css %}
         {% block stylesheets %}{% endblock stylesheets %}
-        {% endcompress %}
 
         {# Core Libraries #}
         {% compress js %}
