@@ -192,7 +192,7 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_repeats = True
 
     default_questions = [FORM_CASE_ID_PATH, "form.meta.timeEnd", "_id", "id", "form.meta.username"]
-    questions_to_show = default_questions + ["form.meta.timeStart", "received_on"]
+    questions_to_show = default_questions + ["form.meta.timeStart", "received_on", "form.meta.location.#text"]
 
     @property
     def export_title(self):
@@ -302,6 +302,24 @@ class FormCustomExportHelper(CustomExportHelper):
                 'tag': None,
                 'display': ''
             })
+
+        # This adds [info] location.#text to the standard list of columns to export, even if no forms have been
+        # submitted with location data yet.
+        if self.custom_export.app.auto_gps_capture:
+            loc_present = False
+            for col in column_conf:
+                if col['index'] == 'form.meta.location.#text':
+                    loc_present = True
+            if not loc_present:
+                column_conf.append({
+                    'index': 'form.meta.location.#text',
+                    'show': True,
+                    'is_sensitive': False,
+                    'selected': False,
+                    'transform': None,
+                    'tag': None,
+                    'display': ''
+                })
 
         column_conf.extend(generate_additional_columns(requires_case))
 
