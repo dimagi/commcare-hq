@@ -51,3 +51,18 @@ class Field(OldField):
             'offsets': offsets,
         })
         return super(Field, self).render(form, form_style, context, template_pack)
+
+
+class StaticField(LayoutObject):
+    template = 'style/crispy/static_field.html'
+
+    def __init__(self, field_label, field_value):
+        self.field_label = field_label
+        self.field_value = field_value
+
+    def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+        context.update({
+            'field_label': self.field_label,
+            'field_value': self.field_value,
+        })
+        return render_to_string(self.template, context)
