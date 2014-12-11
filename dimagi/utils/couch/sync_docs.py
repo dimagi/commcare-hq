@@ -3,7 +3,7 @@ from couchdbkit import push, RequestFailed
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.loading import couchdbkit_handler
 import sys
-import settings
+from django.conf import settings
 
 
 def sync_design_docs(db, design_dir, design_name, temp=None):
