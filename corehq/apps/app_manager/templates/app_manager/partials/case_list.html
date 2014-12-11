@@ -18,7 +18,9 @@
     {% trans "Display Properties" %}
 </legend>
 
-<div data-bind="jqueryElement: $listHome"></div>
+<div data-bind="with: shortScreen">
+    {% include 'app_manager/partials/case_list_properties.html' %}
+</div>
 
 <legend>
     {% trans "Filtering and Sorting" %}
