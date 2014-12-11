@@ -1473,14 +1473,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return None
 
     def clean_start_property_offset(self):
-        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_PROPERTY:
-            if self.cleaned_data['start_property_offset_type'] == START_PROPERTY_OFFSET_IMMEDIATE:
-                return 0
+        if (self.cleaned_data['start_property_offset_type'] ==
+            START_PROPERTY_OFFSET_IMMEDIATE):
+            return 0
+        elif (self.cleaned_data['start_property_offset_type'] ==
+            START_PROPERTY_OFFSET_DELAY):
             start_property_offset = self.cleaned_data['start_property_offset']
             if start_property_offset < 0:
-                raise ValidationError(_("Please enter a positive number."))
+                raise ValidationError(_("Please enter a non-negative number."))
             return start_property_offset
-        return None
+        else:
+            return None
 
     def clean_start_day_of_week(self):
         if self.cleaned_data['start_property_offset_type'] == START_REMINDER_ON_DAY_OF_WEEK:
@@ -1494,7 +1497,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return DAY_ANY
 
     def clean_start_date(self):
-        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_DATE:
+        if (self.cleaned_data['start_property_offset_type'] ==
+            START_REMINDER_ON_CASE_DATE):
             start_date = self.cleaned_data['start_date'].strip()
             if not start_date:
                 raise ValidationError(_(
@@ -1505,7 +1509,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return None
 
     def clean_start_date_offset(self):
-        if self.cleaned_data['start_reminder_on'] == START_REMINDER_ON_CASE_DATE:
+        if (self.cleaned_data['start_property_offset_type'] ==
+            START_REMINDER_ON_CASE_DATE):
             start_date_offset = self.cleaned_data['start_date_offset']
             if start_date_offset < 0:
                 raise ValidationError("Please enter a positive number.")
@@ -1865,27 +1870,30 @@ class BaseScheduleCaseReminderForm(forms.Form):
             except AttributeError:
                 pass
 
-        if reminder_handler.start_date is None:
-            if (initial['start_property'] == START_PROPERTY_ALL_CASES_VALUE
-                and initial['start_match_type'] == MATCH_ANY_VALUE
-            ):
-                start_reminder_on = START_REMINDER_ALL_CASES
-                del initial['start_property']
-                del initial['start_match_type']
-            else:
-                start_reminder_on = START_REMINDER_ON_CASE_PROPERTY
-                initial['start_property_offset_type'] = (START_PROPERTY_OFFSET_IMMEDIATE
-                                                         if reminder_handler.start_offset == 0
-                                                         else START_PROPERTY_OFFSET_DELAY)
+        if (initial['start_property'] == START_PROPERTY_ALL_CASES_VALUE
+            and initial['start_match_type'] == MATCH_ANY_VALUE):
+            initial['start_reminder_on'] = START_REMINDER_ALL_CASES
+            del initial['start_property']
+            del initial['start_match_type']
         else:
-            start_reminder_on = START_REMINDER_ON_CASE_DATE
-            initial['start_date_offset_type'] = (START_DATE_OFFSET_BEFORE if reminder_handler.start_offset <= 0
-                                                 else START_DATE_OFFSET_AFTER)
+            initial['start_reminder_on'] = START_REMINDER_ON_CASE_PROPERTY
+
+        if reminder_handler.start_date is None:
+            initial['start_property_offset_type'] = (
+                START_PROPERTY_OFFSET_IMMEDIATE
+                if reminder_handler.start_offset == 0
+                else START_PROPERTY_OFFSET_DELAY)
+            initial['start_property_offset'] = reminder_handler.start_offset
+        else:
+            initial['start_property_offset_type'] = START_REMINDER_ON_CASE_DATE
+            initial['start_date_offset_type'] = (
+                START_DATE_OFFSET_BEFORE
+                if reminder_handler.start_offset < 0
+                else START_DATE_OFFSET_AFTER)
+            initial['start_date_offset'] = abs(reminder_handler.start_offset)
 
         if reminder_handler.start_day_of_week != DAY_ANY:
             initial['start_property_offset_type'] = START_REMINDER_ON_DAY_OF_WEEK
-
-        start_offset = abs(reminder_handler.start_offset or 0)
 
         if (len(reminder_handler.events) == 1 and
             reminder_handler.event_interpretation == EVENT_AS_OFFSET and
@@ -1901,12 +1909,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 reminder_handler.events[0].fire_time_type,
                 EVENT_TIMING_IMMEDIATE if sends_immediately else None,
             )
-
-        initial.update({
-            'start_reminder_on': start_reminder_on,
-            'start_property_offset': start_offset,
-            'start_date_offset': start_offset,
-        })
 
         return initial
 
