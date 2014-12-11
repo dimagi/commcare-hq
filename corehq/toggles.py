@@ -176,7 +176,8 @@ VISIT_SCHEDULER = StaticToggle(
 
 EDIT_SUBMISSIONS = StaticToggle(
     'edit_submissions',
-    'Submission Editing on HQ'
+    'Submission Editing on HQ',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
