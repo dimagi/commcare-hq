@@ -62,9 +62,9 @@ class TestGetOrCreateSchema(SimpleTestCase):
             schema = FormQuestionSchema(app_id=self.app_id, xmlns=self.xmlns)
             schema.save()
 
-        with self.assertRaises(BadValueError):
-            schema = FormQuestionSchema(domain=self.domain, xmlns=self.xmlns)
-            schema.save()
+        # with self.assertRaises(BadValueError):
+        #     schema = FormQuestionSchema(domain=self.domain, xmlns=self.xmlns)
+        #     schema.save()
 
         with self.assertRaises(BadValueError):
             schema = FormQuestionSchema(domain=self.domain, app_id=self.app_id)
