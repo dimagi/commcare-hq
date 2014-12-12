@@ -358,6 +358,20 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
         location_id: ID of location to get data for. Omit for all locations.
     """
 
+    @property
+    def converted_start_datetime(self):
+        start_date = self.start_date
+        if isinstance(start_date, unicode):
+            start_date = parser.parse(start_date)
+        return start_date
+
+    @property
+    def converted_end_datetime(self):
+        end_date = self.end_date
+        if isinstance(end_date, unicode):
+            end_date = parser.parse(end_date)
+        return end_date
+
     def get_data(self):
         # todo: this will probably have to paginate eventually
         if self.all_relevant_forms:
@@ -377,10 +391,10 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 ).order_by('-report__date')
                 matched = False
                 for trans in transactions:
-                    if self.start_date > trans.report.date:
+                    if self.converted_start_datetime > trans.report.date:
                         break
 
-                    if self.end_date >= trans.report.date and \
+                    if self.converted_end_datetime >= trans.report.date and \
                        XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
                         yield {
                             'loc': loc,
