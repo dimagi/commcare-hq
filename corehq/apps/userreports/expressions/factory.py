@@ -18,7 +18,7 @@ _property_path_expression = functools.partial(_simple_expression_generator, Prop
 
 def _conditional_expression(spec):
     # no way around this since the two factories inherently depend on each other
-    from corehq.apps.userreports.factory import FilterFactory
+    from corehq.apps.userreports.filters.factory import FilterFactory
     wrapped = ConditionalExpressionSpec.wrap(spec)
     return ConditionalExpression(
         FilterFactory.from_spec(wrapped.test),

@@ -3,7 +3,7 @@ from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.factory import FilterFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
