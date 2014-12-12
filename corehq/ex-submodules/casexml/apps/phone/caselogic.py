@@ -25,10 +25,13 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
     if not initial_case_list:
         return {}
 
+    wrap = isinstance(initial_case_list[0], dict)
+
     # todo: should assert that domain exists here but this breaks tests
     case_db = CaseDbCache(domain=domain,
                           strip_history=strip_history,
                           deleted_ok=True,
+                          wrap=wrap,
                           initial=initial_case_list)
 
     def related(case_db, case):

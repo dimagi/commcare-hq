@@ -62,7 +62,7 @@ class CaseAPIResult(object):
     @property
     def id(self):
         if self._id is None:
-            self._id = self._couch_doc._id
+            self._id = self._couch_doc['_id']
         return self._id
 
     @property
@@ -91,6 +91,7 @@ class CaseAPIHelper(object):
         self.status = status
         self.case_type = case_type
         self.ids_only = ids_only
+        self.wrap = not ids_only  # if we're just querying IDs we don't need to wrap the docs
         self.footprint = footprint
         self.strip_history = strip_history
         self.filters = filters
@@ -98,13 +99,19 @@ class CaseAPIHelper(object):
 
 
     def iter_cases(self, ids):
+        class NoopWrapper(object):
+            @classmethod
+            def wrap(cls, doc):
+                return doc
+
+        wrapper = CommCareCase if self.wrap else NoopWrapper
         database = CommCareCase.get_db()
         if not self.strip_history:
             for doc in iter_docs(database, ids):
-                yield CommCareCase.wrap(doc)
+                yield wrapper.wrap(doc)
         else:
             for doc_ids in chunked(ids, 100):
-                for case in CommCareCase.bulk_get_lite(doc_ids, wrapper=CommCareCase):
+                for case in CommCareCase.bulk_get_lite(doc_ids, wrapper=wrapper):
                     yield case
 
     def _case_results(self, case_id_list):
