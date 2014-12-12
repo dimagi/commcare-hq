@@ -197,7 +197,7 @@ class CaseDbCache(object):
         Use this if you know you are going to need to access these later for performance gains.
         Does NOT overwrite what is already in the cache if there is already something there.
         """
-        case_ids = set(self.cache.keys()) - set(case_ids)
+        case_ids = set(case_ids) - set(self.cache.keys())
         def _iter_raw_cases(case_ids):
             if self.strip_history:
                 for ids in chunked(case_ids, 100):
