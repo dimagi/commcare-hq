@@ -1,8 +1,8 @@
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.factory import FilterFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
+from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
 from corehq.apps.userreports.indicators.specs import (RawIndicatorSpec, ChoiceListIndicatorSpec,
     BooleanIndicatorSpec, IndicatorSpecBase, ExpressionIndicatorSpec)
