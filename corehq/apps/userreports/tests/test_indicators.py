@@ -1,7 +1,7 @@
 from copy import copy
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.factory import IndicatorFactory
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
 
 
 class SingleIndicatorTestBase(SimpleTestCase):
