@@ -1,6 +1,7 @@
 from jsonobject import JsonObject
 from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
+from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.schema import LocationType
@@ -146,15 +147,18 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 class ILSGatewayAPI(APISynchronization):
 
     def prepare_commtrack_config(self):
-        config = CommtrackConfig.for_domain(self.domain)
-        config.location_types = []
+        domain = Domain.get_by_name(self.domain)
+        domain.location_types = []
         for i, value in enumerate(LOCATION_TYPES):
             if not any(lt.name == value
-                       for lt in config.location_types):
+                       for lt in domain.location_types):
                 allowed_parents = [LOCATION_TYPES[i - 1]] if i > 0 else [""]
-                config.location_types.append(
+                domain.location_types.append(
                     LocationType(name=value, allowed_parents=allowed_parents,
                                  administrative=(value.lower() != 'facility')))
+        domain.save()
+        config = CommtrackConfig.for_domain(self.domain)
+        config.location_types = []
         actions = [action.keyword for action in config.actions]
         if 'delivered' not in actions:
             config.actions.append(

@@ -1,12 +1,12 @@
-from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase
+from corehq import Domain
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ewsghana import LOCATION_TYPES
-from custom.ewsghana.extensions import ews_smsuser_extension, ews_webuser_extension
-from custom.ilsgateway.api import Product
-from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, DictProperty
+from custom.ewsghana.extensions import ews_smsuser_extension, ews_webuser_extension, ews_product_extension
+from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from custom.ilsgateway.api import ProductStock, StockTransaction
 from jsonobject import JsonObject
 from custom.logistics.api import LogisticsEndpoint, APISynchronization
@@ -70,7 +70,7 @@ class Location(JsonObject):
 
 
 class Program(JsonObject):
-    code = IntegerProperty()
+    code = StringProperty()
     name = StringProperty()
 
 
@@ -80,7 +80,7 @@ class Product(JsonObject):
     sms_code = StringProperty()
     description = StringProperty()
     is_active = BooleanProperty()
-    program = DictProperty()
+    program = ObjectProperty(item_type=Program)
 
 
 class GhanaEndpoint(LogisticsEndpoint):
@@ -93,31 +93,32 @@ class GhanaEndpoint(LogisticsEndpoint):
         'stock_transaction': StockTransaction
     }
 
+
 class EWSApi(APISynchronization):
 
     def prepare_commtrack_config(self):
-        config = CommtrackConfig.for_domain(self.domain)
-        config.location_types = []
+        domain = Domain.get_by_name(self.domain)
+        domain.location_types = []
         for i, value in enumerate(LOCATION_TYPES):
             if not any(lt.name == value
-                       for lt in config.location_types):
+                       for lt in domain.location_types):
                 allowed_parents = [LOCATION_TYPES[i - 1]] if i > 0 else [""]
-                config.location_types.append(
+                domain.location_types.append(
                     LocationType(name=value, allowed_parents=allowed_parents,
                                  administrative=(value.lower() != 'facility')))
 
-        config.location_types.append(LocationType(
+        domain.location_types.append(LocationType(
             name='regional warehouse',
             allowed_parents=['region'],
-            administrative=True
+            administrative=False
         ))
 
-        config.location_types.append(LocationType(
+        domain.location_types.append(LocationType(
             name='national warehouse',
             allowed_parents=['country'],
-            administrative=True
+            administrative=False
         ))
-        config.save()
+        domain.save()
         try:
             SQLLocation.objects.get(domain=self.domain, site_code='default_location')
         except SQLLocation.DoesNotExist:
@@ -129,6 +130,11 @@ class EWSApi(APISynchronization):
             )
             location.save()
             SupplyPointCase.create_from_location(domain=self.domain, location=location)
+
+    def products_sync(self, ilsgateway_product):
+        product = super(EWSApi, self).products_sync(ilsgateway_product)
+        ews_product_extension(product, ilsgateway_product)
+        return product
 
     def locations_sync(self, ilsgateway_location):
         try:
@@ -181,15 +187,14 @@ class EWSApi(APISynchronization):
             supply_points = filter(lambda x: x.last_reported, ilsgateway_location.supply_points)
             if len(supply_points) > 1:
                 for supply_point in supply_points:
-                    config = CommtrackConfig.for_domain(self.domain)
-
-                    if not filter(lambda l: l.name == supply_point.type, config.location_types):
-                        config.location_types.append(LocationType(
+                    domain = Domain.get_by_name(self.domain)
+                    if not filter(lambda l: l.name == supply_point.type, domain.location_types):
+                        domain.location_types.append(LocationType(
                             name=supply_point.type,
                             allowed_parents=[location.location_type],
                             administrative=False
                         ))
-                        config.save()
+                        domain.save()
                     new_location = Loc(parent=location)
                     new_location.domain = self.domain
                     new_location.location_type = supply_point.type
@@ -253,4 +258,3 @@ class EWSApi(APISynchronization):
             sms_user.save()
             add_location(sms_user, location.location_id)
         return sms_user
-
