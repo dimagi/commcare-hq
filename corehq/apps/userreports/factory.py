@@ -3,7 +3,7 @@ import warnings
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.specs import (PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec,
+from corehq.apps.userreports.filters.specs import (PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec,
     BooleanExpressionFilterSpec)
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
