@@ -1,6 +1,6 @@
-import json
 from celery.task import task
 import sys
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from dimagi.utils.couch.cache import cache_core
 from pillow_retry.models import PillowError
@@ -40,7 +40,10 @@ def process_pillow_retry(error_doc_id):
             raise ValueError("Could not find pillowtop class '%s'" % pillow_class)
         change = error_doc.change_dict
         if pillow.include_docs:
-            change['doc'] = pillow.couch_db.open_doc(change['id'])
+            try:
+                change['doc'] = pillow.couch_db.open_doc(change['id'])
+            except ResourceNotFound:
+                change['deleted'] = True
 
         try:
             pillow.process_change(change, is_retry_attempt=True)
@@ -52,8 +55,3 @@ def process_pillow_retry(error_doc_id):
             error_doc.delete()
         finally:
             lock.release()
-
-
-
-
-
