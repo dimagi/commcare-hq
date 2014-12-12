@@ -104,17 +104,12 @@
                         <a href="https://www.google.com/chrome">Chrome</a> or <a href="http://www.mozilla.org/">Firefox</a>.
                     </p>
                 </div>
-                {% block messages %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                            <a class="close" data-dismiss="alert" href="#">&times;</a>
-                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
-                {% endblock %}
+                <div id="message-alerts" data-bind="foreach: alerts">
+                    <div data-bind="attr: {'class': alert_class}">
+                        <a class="close" data-dismiss="alert" href="#">&times;</a>
+                        <span data-bind="text: message"></span>
+                    </div>
+                </div>
                 <h1 class="page-header">
                     {% block page-title %}
                     {% endblock %}
@@ -568,6 +563,49 @@
                     $('#unsupported-browser').show();
                 }
             });
+        </script>
+
+        <script>
+            {% comment %}
+            This is the javascript analog of messages in Django
+
+            Use the function `alert_user` to make a message appear on the page.
+            This accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
+            styling, and can be "success", "error", "info", or "warning"
+
+                alert_user("Awesome job!", "success");
+            {% endcomment %}
+            function message_alert (message, tags) {
+                var alert_obj = {
+                    "message": message,
+                    "alert_class": "alert fade in alert-block alert-full page-level-alert"
+                }
+                if (tags) {
+                    alert_obj.alert_class += " " + tags;
+                };
+                return alert_obj;
+            }
+            var message_alerts = ko.observableArray();
+
+            function alert_user (message, emphasis) {
+                message_alerts.push(message_alert(message, "alert-" + emphasis));
+            }
+
+            ko.applyBindings(
+                {alerts: message_alerts},
+                $("#message-alerts").get(0)
+            );
+
+            // Add in the Django messages
+            {% if messages %}
+                {% for message in messages %}
+                    message_alerts.push(message_alert(
+                        "{% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}",
+                        "{{ message.tags }}"
+                    ));
+                {% endfor %}
+            {% endif %}
+
         </script>
     </body>
 </html>
