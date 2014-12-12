@@ -35,23 +35,6 @@ class ILSUser(JsonObject):
     location = DecimalProperty()
     supply_point = IntegerProperty()
 
-    @classmethod
-    def from_json(cls, json_rep):
-        return cls(
-            username=json_rep['username'],
-            first_name=json_rep['first_name'],
-            last_name=json_rep['last_name'],
-            email=json_rep['email'],
-            password=json_rep['password'],
-            is_staff=json_rep['is_staff'],
-            is_active=json_rep['is_active'],
-            is_superuser=json_rep['is_superuser'],
-            last_login=json_rep['last_login'],
-            date_joined=json_rep['date_joined'],
-            location=json_rep['location'],
-            supply_point=json_rep['supply_point']
-        )
-
 
 class SMSUser(JsonObject):
     id = IntegerProperty()
@@ -62,19 +45,6 @@ class SMSUser(JsonObject):
     email = StringProperty()
     phone_numbers = ListProperty()
     backend = StringProperty()
-
-    @classmethod
-    def from_json(cls, json_rep):
-        return cls(
-            id=json_rep['id'],
-            name=json_rep['name'],
-            role=json_rep['role'],
-            is_active=json_rep['is_active'],
-            supply_point=json_rep['supply_point'],
-            email=json_rep['email'],
-            phone_numbers=json_rep['phone_numbers'],
-            backend=json_rep['backend']
-        )
 
 
 class Location(JsonObject):
@@ -179,6 +149,7 @@ class ILSGatewayAPI(APISynchronization):
         else:
             dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         web_user.save()
+        return web_user
 
     def locations_sync(self, ilsgateway_location, fetch_groups=False):
         try:
