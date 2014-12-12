@@ -266,8 +266,8 @@ def get_active_domain_stats_data(domains, datespan, interval,
     return format_return_data(histo_data, 0, datespan)
 
 
-def get_active_sms_users_data(domains, datespan, interval, datefield='date',
-        additional_params_es={}):
+def get_active_users_data(domains, datespan, interval, datefield='date',
+        additional_params_es={}, include_forms=False):
     """
     Returns list of timestamps and how many users of SMS were active in the
     30 days before each timestamp
@@ -280,7 +280,16 @@ def get_active_sms_users_data(domains, datespan, interval, datefield='date',
                 domains, USER_COUNT_UPPER_BOUND)
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
-        users = sms_query.run().facet('users', "terms")
+        users = {u['term'] for u in sms_query.run().facet('users', "terms")}
+
+        if include_forms:
+            users |= {u['term'] for u in FormES()
+                      .user_facet(size=USER_COUNT_UPPER_BOUND)
+                      .submitted(gte=f, lte=t)
+                      .size(0)
+                      .run()
+                      .facets.user.result}
+
         c = len(users)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
@@ -930,7 +939,7 @@ HISTO_TYPE_TO_FUNC = {
     "active_countries": get_active_countries_stats_data,
     "active_dimagi_gateways": get_active_dimagi_owned_gateway_projects,
     "active_domains": get_active_domain_stats_data,
-    "active_mobile_users": get_active_sms_users_data,
+    "active_mobile_users": get_active_users_data,
     "cases": get_case_stats,
     "commtrack_forms": commtrack_form_submissions,
     "countries": get_countries_stats_data,
