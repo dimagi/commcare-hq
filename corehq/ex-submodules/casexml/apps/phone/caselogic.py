@@ -25,6 +25,7 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
     if not initial_case_list:
         return {}
 
+    # infer whether to wrap or not based on whether the initial list is wrapped or not
     wrap = isinstance(initial_case_list[0], dict)
 
     # todo: should assert that domain exists here but this breaks tests
