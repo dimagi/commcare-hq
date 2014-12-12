@@ -130,8 +130,8 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.view('userreports/data_sources_by_domain',
-                                             reduce=False, include_docs=False)]
+        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_domain',
+                                                      reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
 
