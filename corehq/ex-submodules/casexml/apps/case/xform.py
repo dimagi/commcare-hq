@@ -257,14 +257,16 @@ def get_or_update_cases(xform, case_db):
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
+                # see CaseDbCache.validate_doc
                 referenced_case = case_db.get(index.referenced_id)
 
                 if not referenced_case:
-                    raise IllegalCaseId(
-                        ("Submitted index against an unknown case id: %s. "
-                         "This is not allowed. Most likely your case "
-                         "database is corrupt and you should restore your "
-                         "phone directly from the server.") % index.referenced_id)
+                    # just log, don't raise an error or modify the index
+                    logging.error(
+                        "Case '%s' references non-existent case '%s'",
+                        case.get_id,
+                        index.referenced_id,
+                    )
 
     [_validate_indices(case) for case in case_db.cache.values()]
 

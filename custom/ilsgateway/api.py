@@ -1,8 +1,9 @@
 from jsonobject import JsonObject
-from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty, \
+from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, LocationType, CommtrackActionConfig
+from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.schema import LocationType
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway import LOCATION_TYPES, ADMINS

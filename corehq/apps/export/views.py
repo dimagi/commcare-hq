@@ -127,6 +127,9 @@ class BaseCreateCustomExportView(BaseExportView):
             )
             if self.export_helper.export_type in ['form', 'case']:
                 self.export_helper.custom_export.app_id = app_id
+            if self.export_helper.export_type == 'form':
+                self.export_helper.custom_export.update_question_schema()
+
             return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 
         messages.warning(request, _("<strong>No data found for that form "

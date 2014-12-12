@@ -1144,15 +1144,6 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
 
-    def values(self):
-        values = {
-            'field': self.field,
-            'type': self.type,
-            'direction': self.direction,
-        }
-
-        return values
-
 
 class SortOnlyDetailColumn(DetailColumn):
     """This is a mock type, not intended to be part of a document"""
@@ -3393,17 +3384,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_form_by_xmlns(self, xmlns):
+    def get_form_by_xmlns(self, xmlns, log_missing=True):
         if xmlns == "http://code.javarosa.org/devicereport":
             return None
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
-            logging.error('App %s in domain %s has %s forms with xmlns %s' % (
-                self.get_id,
-                self.domain,
-                len(forms),
-                xmlns,
-            ))
+            if log_missing or len(forms) > 1:
+                logging.error('App %s in domain %s has %s forms with xmlns %s' % (
+                    self.get_id,
+                    self.domain,
+                    len(forms),
+                    xmlns,
+                ))
             return None
         else:
             form, = forms

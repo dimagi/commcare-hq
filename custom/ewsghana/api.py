@@ -1,11 +1,13 @@
-from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty
-from corehq.apps.commtrack.models import CommtrackConfig, LocationType, SupplyPointCase
+from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.schema import LocationType
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ewsghana import LOCATION_TYPES
 from custom.ewsghana.extensions import ews_smsuser_extension, ews_webuser_extension
-from custom.ilsgateway.api import Product, ProductStock, StockTransaction
+from custom.ilsgateway.api import Product
+from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, DictProperty
+from custom.ilsgateway.api import ProductStock, StockTransaction
 from jsonobject import JsonObject
 from custom.logistics.api import LogisticsEndpoint, APISynchronization
 from corehq.apps.locations.models import Location as Loc
@@ -67,6 +69,20 @@ class Location(JsonObject):
     supply_points = ListProperty(item_type=SupplyPoint)
 
 
+class Program(JsonObject):
+    code = IntegerProperty()
+    name = StringProperty()
+
+
+class Product(JsonObject):
+    name = StringProperty()
+    units = StringProperty()
+    sms_code = StringProperty()
+    description = StringProperty()
+    is_active = BooleanProperty()
+    program = DictProperty()
+
+
 class GhanaEndpoint(LogisticsEndpoint):
     models_map = {
         'product': Product,
@@ -76,7 +92,6 @@ class GhanaEndpoint(LogisticsEndpoint):
         'product_stock': ProductStock,
         'stock_transaction': StockTransaction
     }
-
 
 class EWSApi(APISynchronization):
 
@@ -238,3 +253,4 @@ class EWSApi(APISynchronization):
             sms_user.save()
             add_location(sms_user, location.location_id)
         return sms_user
+

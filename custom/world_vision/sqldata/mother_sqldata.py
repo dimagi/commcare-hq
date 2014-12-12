@@ -138,7 +138,6 @@ class PregnantMotherBreakdownByTrimester(BaseSqlData):
     chart_y_label = ''
     chart_only = True
 
-
     def percent_fn(self, y):
         x = self.data['trimester_1'] + self.data['trimester_2'] + self.data['trimester_3']
         return "%(p).0f%%" % \
@@ -238,7 +237,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                                                             filters=self.filters + [EQ('iron_folic', 'yes')])),
             DatabaseColumn("Completed 100 IFA tablets",
                            CountUniqueColumn('doc_id', alias="100_tablets",
-                                             filters=self.filters + [AND([EQ('completed_100_ifa', 'yes'),
+                                             filters=self.filters[:-1] + [AND([EQ('completed_100_ifa', 'yes'),
                                                                           NOTEQ('delivery_date', 'empty')])])),
             DatabaseColumn("Clinically anemic mothers",
                            CountUniqueColumn('doc_id', alias="clinically_anemic",
@@ -283,7 +282,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                            CountUniqueColumn('doc_id', alias="ifa_tablets_eligible")),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
                            CountUniqueColumn('doc_id', alias="100_tablets_eligible",
-                                             filters=self.filters + [NOTEQ('delivery_date', 'empty')])),
+                                             filters=self.filters[:-1] + [NOTEQ('delivery_date', 'empty')])),
             DatabaseColumn("Clinically anemic mothers Total Eligible",
                            CountUniqueColumn('doc_id', alias="clinically_anemic_eligible")),
             DatabaseColumn("Number of mother referrals due to danger signs Total Eligible",
@@ -655,7 +654,7 @@ class NumberOfPNCVisits(BaseSqlData):
 
     @property
     def filters(self):
-        filters = super(NumberOfPNCVisits, self).filters
+        filters = super(NumberOfPNCVisits, self).filters[1:]
         filters.append(AND([NOTEQ('delivery_date', 'empty'), LTE('delivery_date', 'today_minus_42')]))
         return filters
 

@@ -15,6 +15,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from corehq.apps.reports.filters.commtrack import AdvancedColumns
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -72,11 +73,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     def aggregate_by(self):
         return self.request.GET.get('agg_type')
 
-    @property
-    @memoized
-    def archived_products(self):
-        return self.request.GET.get('archived_products', False)
-
 
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
@@ -85,7 +81,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
     ]
     exportable = True
     emailable = True
@@ -137,16 +132,12 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
-        stock_states = StockState.include_archived.filter(
+        stock_states = StockState.objects.filter(
             case_id__in=sp_ids,
             last_modified_date__lte=self.datespan.enddate_utc,
             last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
         )
-        if not self.archived_products:
-            stock_states = stock_states.exclude(
-                sql_product__is_archived=True
-            )
 
         stock_states = stock_states.order_by('product_id')
 
@@ -286,7 +277,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.dont_use.fields.SelectProgramField',
         'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.commtrack.ArchivedProducts',
+        'corehq.apps.reports.filters.commtrack.AdvancedColumns',
     ]
     exportable = True
     emailable = True
@@ -296,24 +287,31 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return super(InventoryReport, cls).show_in_navigation(domain, project, user)
 
+    def showing_advanced_columns(self):
+        return AdvancedColumns.get_value(self.request, self.domain)
+
     @property
     def headers(self):
         columns = [
             DataTablesColumn(_('Product')),
             DataTablesColumn(_('Stock on Hand'),
                 help_text=_('Total stock on hand for all locations matching the filters.')),
-            DataTablesColumn(_('Monthly Consumption'),
-                help_text=_('Total average monthly consumption for all locations matching the filters.')),
-            DataTablesColumn(_('Months of Stock'),
-                help_text=_('Number of months of stock remaining for all locations matching the filters. \
-                            Computed by calculating stock on hand divided by monthly consumption.')),
-            DataTablesColumn(_('Stock Status'),
-                help_text=_('Stock status prediction made using calculated consumption \
-                            or project specific default values. "No Data" means that \
-                            there is not enough data to compute consumption and default \
-                            values have not been uploaded yet.')),
-            # DataTablesColumn(_('Resupply Quantity Suggested')),
         ]
+
+        if self.showing_advanced_columns():
+            columns += [
+                DataTablesColumn(_('Monthly Consumption'),
+                    help_text=_('Total average monthly consumption for all locations matching the filters.')),
+                DataTablesColumn(_('Months of Stock'),
+                    help_text=_('Number of months of stock remaining for all locations matching the filters. \
+                                Computed by calculating stock on hand divided by monthly consumption.')),
+                DataTablesColumn(_('Stock Status'),
+                    help_text=_('Stock status prediction made using calculated consumption \
+                                or project specific default values. "No Data" means that \
+                                there is not enough data to compute consumption and default \
+                                values have not been uploaded yet.')),
+                # DataTablesColumn(_('Resupply Quantity Suggested')),
+            ]
 
         return DataTablesHeader(*columns)
 
@@ -327,8 +325,8 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
                 'program_id': self.request.GET.get('program'),
                 'startdate': self.datespan.startdate_utc,
                 'enddate': self.datespan.enddate_utc,
-                'archived_products': self.archived_products,
-                'aggregate': True
+                'aggregate': True,
+                'advanced_columns': self.showing_advanced_columns(),
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
         return self.prod_data
@@ -347,14 +345,18 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
         }
 
         for row in self.product_data:
-            yield [
+            result = [
                 fmt(row[StockStatusDataSource.SLUG_PRODUCT_NAME]),
                 fmt(row[StockStatusDataSource.SLUG_CURRENT_STOCK]),
-                fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
-                fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
-                fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
-                # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
             ]
+            if self.showing_advanced_columns():
+                result += [
+                    fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
+                    fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
+                    fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
+                    # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
+                ]
+            yield result
 
 
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):

@@ -1,14 +1,19 @@
 from celery.task import task
 from casexml.apps.stock.models import StockReport, StockTransaction
+from custom.ewsghana.api import EWSApi
+
 from corehq.apps.commtrack.models import StockState, Product
-from custom.ewsghana.api import GhanaEndpoint, EWSApi
-from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension
+
+from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
+    ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, \
     bootstrap_domain
 
 
 EXTENSIONS = {
+    'product': ews_product_extension,
     'location_facility': ews_location_extension,
     'location_district': ews_location_extension,
     'location_region': ews_location_extension,

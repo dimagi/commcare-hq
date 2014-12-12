@@ -180,7 +180,7 @@ def api_query_supply_point(request, domain):
 
     else:
         LIMIT = 100
-        loc_types = [loc_type.name for loc_type in Domain.get_by_name(domain).commtrack_settings.location_types if not loc_type.administrative]
+        loc_types = [loc_type.name for loc_type in Domain.get_by_name(domain).location_types if not loc_type.administrative]
 
         def get_locs(type):
             # TODO use ES instead?

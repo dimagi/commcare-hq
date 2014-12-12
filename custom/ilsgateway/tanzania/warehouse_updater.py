@@ -196,7 +196,7 @@ def populate_no_primary_alerts(location, date):
     # TODO Too slow. Figure out better solution.
     """
     if not filter(lambda user: user.is_active and user.location and user.location._id == org._id,
-                  CommTrackUser.by_domain(org.domain)):
+                  CommCareUser.by_domain(org.domain)):
         create_multilevel_alert(org, date, NO_PRIMARY_CONTACT, {'org': org})
     """
 

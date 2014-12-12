@@ -13,12 +13,13 @@ from django.template.loader import get_template
 from django.template import Context
 from django_countries.countries import COUNTRIES
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.programs.models import Program
 from bootstrap3_crispy import layout as cb3_layout
 from bootstrap3_crispy import helper as cb3_helper
@@ -157,7 +158,8 @@ class BaseUserInfoForm(forms.Form):
         help_text=mark_safe_lazy(
             ugettext_lazy(
                 "<i class=\"icon-info-sign\"></i> "
-                "Becomes default language seen in CloudCare and reports (if applicable). "
+                "Becomes default language seen in CloudCare and reports (if applicable), "
+                "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
             )
         )
@@ -356,7 +358,7 @@ class SupplyPointSelectWidget(forms.Widget):
                 }))
 
 class CommtrackUserForm(forms.Form):
-    supply_point = forms.CharField(label='Supply Point:', required=False)
+    supply_point = forms.CharField(label='Location:', required=False)
     program_id = forms.ChoiceField(label="Program", choices=(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -371,19 +373,21 @@ class CommtrackUserForm(forms.Form):
             attrs = {'is_admin': False}
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
-        programs = Program.by_domain(domain, wrap=False)
-        choices = list((prog['_id'], prog['name']) for prog in programs)
-        choices.insert(0, ('', ''))
-        self.fields['program_id'].choices = choices
+        if Domain.get_by_name(domain).commtrack_enabled:
+            programs = Program.by_domain(domain, wrap=False)
+            choices = list((prog['_id'], prog['name']) for prog in programs)
+            choices.insert(0, ('', ''))
+            self.fields['program_id'].choices = choices
+        else:
+            self.fields['program_id'].widget = forms.HiddenInput()
 
     def save(self, user):
-        commtrack_user = CommTrackUser.wrap(user.to_json())
         location_id = self.cleaned_data['supply_point']
         if location_id:
             loc = Location.get(location_id)
 
-            commtrack_user.clear_locations()
-            commtrack_user.add_location(loc, create_sp_if_missing=True)
+            user.clear_locations()
+            user.add_location(loc, create_sp_if_missing=True)
 
             # add the supply point case id to user data fields
             # so that the phone can auto select

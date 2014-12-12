@@ -642,8 +642,10 @@ def _get_terms_list(terms):
 
 def get_nested_terms_filter(prop, terms):
     filters = []
+
     def make_filter(term):
         return es_filters.term(prop, term)
+
     for term in _get_terms_list(terms):
         if len(term) == 1:
             filters.append(make_filter(term[0]))
@@ -656,6 +658,12 @@ class CaseReportMixin(object):
     default_case_type = "Pregnancy"
     extra_row_objects = []
     is_rendered_as_email = False
+
+    @memoized
+    def column_index(self, key):
+        for i, (k, _, _) in enumerate(self.model.method_map):
+            if k == key:
+                return i
 
     @property
     def case_status(self):
@@ -696,7 +704,25 @@ class CaseReportMixin(object):
             query = query.filter(get_block_filter(self.block))
 
         result = query.run()
-        return map(CommCareCase, iter_docs(CommCareCase.get_db(), result.ids))
+
+        def _final_filter(case_doc):
+            """
+            Because the ES filters are tokenized, we do a final in-memory filter ensuring exact matches.
+            This prevents issues with "Tetua Pasi Tola" cases showing up in "Tetua"
+
+            We can't do this in ES because we don't want to bother modifying the report_cases mapping.
+            See: http://www.elasticsearch.org/guide/en/elasticsearch/guide/current/_finding_exact_values.html
+            """
+            if self.awcs and case_doc.get('awc_name') not in self.awcs:
+                return False
+            elif self.block and case_doc.get('block_name') != self.block:
+                return False
+            return True
+
+        return [
+            CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), result.ids)
+            if _final_filter(doc)
+        ]
 
     @property
     def fields(self):
@@ -757,12 +783,6 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     slug = 'beneficiary_payment_report'
     report_template_path = "opm/beneficiary_report.html"
     model = Beneficiary
-
-    @memoized
-    def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
-            if k == key:
-                return i
 
     @property
     def rows(self):
@@ -827,8 +847,8 @@ class MetReport(CaseReportMixin, BaseReport):
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible in self.model.method_map
-                    if method != 'case_id' and method != 'owner_id'
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
     @property
@@ -843,9 +863,8 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
         self.pagination.count = 1000000
 
-        rows = None
         cache = get_redis_client()
-        if cache.exists(self.slug):
+        if cache.exists(self.redis_key):
             rows = pickle.loads(cache.get(self.redis_key))
         else:
             rows = self.rows
@@ -853,10 +872,13 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         Strip user_id and owner_id columns
         """
-        for idx, row in enumerate(rows):
-            row = row[0:16]
-            row.extend(row[18:20])
-            rows[idx] = row
+        for row in rows:
+            del row[self.column_index('closed_date')]
+            del row[self.column_index('case_id')]
+            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            if link_text:
+                row[0] = link_text.group(1)
+
         self.context['report_table'].update(
             rows=rows
         )
@@ -1199,7 +1221,7 @@ def _unformat_row(row):
     regexp = re.compile('(.*?)>([0-9]+)(<.*?)>([0-9]*).*')
     formatted_row = []
     for col in row:
-        if regexp.match(col):
+        if isinstance(col, basestring) and regexp.match(col):
             formated_col = "%s" % (regexp.match(col).group(2))
             if regexp.match(col).group(4) != "":
                 formated_col = "%s - %s%%" % (formated_col, regexp.match(col).group(4))

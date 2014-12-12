@@ -75,8 +75,13 @@ from corehq.apps.export.custom_export_helpers import CustomExportHelper
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.export import export_cases_and_referrals
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportNotification, FakeFormExportSchema, \
+from corehq.apps.reports.models import (
+    ReportConfig,
+    ReportNotification,
+    FakeFormExportSchema,
+    FormExportSchema,
     HQGroupExportConfiguration
+)
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.tasks import create_metadata_export
 from corehq.apps.reports import util
@@ -1249,25 +1254,28 @@ def find_question_id(form, value):
     return None
 
 
-@toggles.MULTIMEDIA_EXPORT.required_decorator()
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
-def form_multimedia_export(request, domain, app_id):
+def form_multimedia_export(request, domain):
     try:
         xmlns = request.GET["xmlns"]
         startdate = request.GET["startdate"]
         enddate = request.GET["enddate"]
+        app_id = request.GET.get("app_id", None)
+        export_id = request.GET.get("export_id", None)
         zip_name = request.GET.get("name", None)
     except KeyError:
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
-        return "%s-%s-%s-%s.%s" % (form['form']['@name'],
+        return "%s-%s-%s-%s%s" % (form['form'].get('@name', 'unknown'),
                                    unidecode(question_id),
                                    form['form']['meta']['username'],
                                    form['_id'], extension)
 
+    if not app_id:
+        zip_name = 'Unrelated Form'
     key = [domain, app_id, xmlns]
     stream_file = cStringIO.StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
@@ -1277,6 +1285,14 @@ def form_multimedia_export(request, domain, app_id):
                                          start_key=key + [startdate],
                                          end_key=key + [enddate, {}],
                                          reduce=False)}
+
+    properties = set()
+    if export_id:
+        schema = FormExportSchema.get(export_id)
+        for table in schema.tables:
+            # - in question id is replaced by . in excel exports
+            properties |= {c.display.replace('.', '-') for c in table.columns}
+
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         f = XFormInstance.wrap(form)
         if not zip_name:
@@ -1290,11 +1306,12 @@ def form_multimedia_export(request, domain, app_id):
             except TypeError:
                 question_id = unicode('unknown' + str(unknown_number))
                 unknown_number += 1
-            fname = filename(form, question_id, extension)
-            zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
-            zf.writestr(zi, f.fetch_attachment(key, stream=True).read())
-            # includes overhead for file in zipfile
-            size += f['_attachments'][key]['length'] + 88 + 2 * len(fname)
+            if not properties or question_id in properties:
+                fname = filename(form, question_id, extension)
+                zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
+                zf.writestr(zi, f.fetch_attachment(key, stream=True).read())
+                # includes overhead for file in zipfile
+                size += f['_attachments'][key]['length'] + 88 + 2 * len(fname)
 
     zf.close()
 

@@ -1,11 +1,13 @@
 from datetime import datetime
 import itertools
-from celery.task import task
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway import TEST
 from custom.ilsgateway.tasks import get_locations
 from custom.logistics.commtrack import save_stock_data_checkpoint
 from custom.logistics.models import StockDataCheckpoint
+from celery.task.base import task
+import logging
+from custom.logistics.commtrack import resync_password
 
 
 @task
@@ -69,3 +71,14 @@ def stock_data_task(domain, endpoint, apis, api_object, test_facilities=None):
     save_stock_data_checkpoint(checkpoint, 'product_stock', 100, 0, start_date, None, False)
     checkpoint.start_date = None
     checkpoint.save()
+
+
+@task
+def resync_webusers_passwords_task(config, endpoint):
+    logging.info("Logistics: Webusers passwords resyncing started")
+    _, webusers = endpoint.get_webusers(limit=2000)
+
+    for webuser in webusers:
+        resync_password(config, webuser)
+
+    logging.info("Logistics: Webusers passwords resyncing finished")

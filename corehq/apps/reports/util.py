@@ -102,7 +102,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         # get all the users only in this group and don't bother filtering.
         if not isinstance(group, Group):
             group = Group.get(group)
-        users = group.get_users(only_commcare=True)
+        users = group.get_users(is_active=(not include_inactive), only_commcare=True)
     elif user_ids is not None:
         try:
             users = [CommCareUser.get_by_user_id(id) for id in user_ids]

@@ -13,7 +13,7 @@ Editing the model
     entity type, but aside from that is completely generic - there are no
     special functions here for *Custom User Data*, for example.
 
-``CustomDataFieldsMixin``
+``CustomDataModelMixin``
     Each entity type must provide a subclass of this mixin to provide the
     interface for editing the ``CustomDataFieldsDefinition``.  This
     subclass handles permissions and integration with the rest of that
@@ -27,7 +27,7 @@ Editing the model
     config class at some point.
 
 ``CustomDataFieldsForm``
-    This is initialized by ``CustomDataFieldsMixin`` and shouldn't need to
+    This is initialized by ``CustomDataModelMixin`` and shouldn't need to
     be accessed directly.  It handles it's own rendering.
 
 
@@ -60,7 +60,7 @@ This module does not alter the way data is stored on the individual
 entities, so export should **Just Work**.
 
 For upload, this module provides a validator accessible via the subclass of
-``CustomDataFieldsMixin`` described above.  For example::
+``CustomDataModelMixin`` described above.  For example::
 
     custom_data_validator = UserFieldsView.get_validator(domain)
 
@@ -80,7 +80,7 @@ Setting up a new entity type
 
 To add a schema to custom data for an entiy, you need to do the following:
 
-# Provide a subclass of ``CustomDataFieldsMixin`` specific to that entity
+# Provide a subclass of ``CustomDataModelMixin`` specific to that entity
 type.
 # Initialize and use the ``CustomDataEditor`` in the create and edit views
 for that entity (and their templates).

@@ -140,6 +140,15 @@
                 </div>
             </div>
         {% endif %}
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="resync_passwords">
+                        {% trans "Webusers passwords resync" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -180,6 +189,12 @@
         $("#run_reports").click(function() {
             var url = '{% url 'run_reports' domain %}';
             var successMessage = "{% trans "Sync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#resync_passwords").click(function() {
+            var url = '{% url 'ils_resync_passwords' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
     </script>

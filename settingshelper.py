@@ -50,3 +50,19 @@ def make_couchdb_tuples(config, couch_database_url):
 
     """
     return [_make_couchdb_tuple(row, couch_database_url) for row in config]
+
+
+def get_extra_couchdbs(config, couch_database_url):
+    """
+    Create a mapping from database prefix to database url
+
+    :param config:              list of database strings or tuples
+    :param couch_database_url:  main database url
+    """
+    extra_dbs = {}
+    for row in config:
+        if isinstance(row, tuple):
+            _, postfix = row
+            extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
+
+    return extra_dbs

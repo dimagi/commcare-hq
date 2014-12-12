@@ -96,6 +96,8 @@ requires imports/proptable.html to be included in the main template
         showSkipped(false);
 
         {% if form_meta %}
+        GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
+
         // unfortunately since cloudcare doesn't have reversible urls, this has to be done in javascript
         // todo: this probably needs better error handling
         var cloudCareUrl = getCloudCareUrl(

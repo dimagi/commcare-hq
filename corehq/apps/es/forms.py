@@ -22,6 +22,9 @@ class FormES(HQESQuery):
     def user_facet(self, size=None):
         return self.terms_facet('form.meta.userID', 'user', size=size)
 
+    def domain_facet(self):
+        return self.terms_facet('domain', 'domain', 1000000)
+
 
 def xmlns(xmlns):
     return filters.term('xmlns.exact', xmlns)
