@@ -406,8 +406,9 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
                 _('Yes') if status['reporting_status'] == 'reporting' else _('No'),
             ])
 
-        return [], results
+        master_tally = self.status_tally([site['reporting_status'] for site in statuses])
 
+        return master_tally, results
 
     @property
     @memoized
@@ -437,16 +438,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
                                        data=case_iter())
 
-        def status_tally(statuses):
-            total = len(statuses)
-
-            return map_reduce(lambda s: [(s,)],
-                              lambda v: {'count': len(v), 'pct': len(v) / float(total)},
-                              data=statuses)
-        status_counts = dict((loc_id, status_tally(statuses))
+        status_counts = dict((loc_id, self.status_tally(statuses))
                              for loc_id, statuses in status_by_agg_site.iteritems())
 
-        master_tally = status_tally([site['reporting_status'] for site in statuses])
+        master_tally = self.status_tally([site['reporting_status'] for site in statuses])
 
         locs = sorted(Location.view('_all_docs', keys=status_counts.keys(), include_docs=True),
                       key=lambda loc: loc.name)
@@ -471,6 +466,13 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         return master_tally, _rows()
 
+    def status_tally(self, statuses):
+        total = len(statuses)
+
+        return map_reduce(lambda s: [(s,)],
+                          lambda v: {'count': len(v), 'pct': len(v) / float(total)},
+                          data=statuses)
+
     @property
     def rows(self):
         if self.is_aggregate_report():
@@ -482,7 +484,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
         if self.is_aggregate_report():
             tally = self._aggregate_data[0]
         else:
-            return self._facility_data[0]
+            tally = self._facility_data[0]
 
         labels = {
             'reporting': _('Reporting'),
@@ -492,7 +494,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def charts(self):
-        return []
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
             return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
 
