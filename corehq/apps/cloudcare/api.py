@@ -1,13 +1,10 @@
 import json
-from django.utils import html
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
-from corehq.apps.locations.models import Location
 from corehq.apps.app_manager.models import (
-    Application,
     ApplicationBase,
     get_app,
 )
@@ -22,6 +19,7 @@ from dimagi.utils.chunked import chunked
 from django.utils.translation import ugettext as _
 from touchforms.formplayer.models import EntrySession
 from django.core.urlresolvers import reverse
+
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -42,6 +40,7 @@ def status_to_closed_flags(status):
     return {CASE_STATUS_ALL: [True, False],
             CASE_STATUS_CLOSED: [True],
             CASE_STATUS_OPEN: [False]}[status]
+
 
 class CaseAPIResult(object):
     """
@@ -78,6 +77,7 @@ class CaseAPIResult(object):
 
     def to_json(self):
         return self.id if self.id_only else self.case_json
+
 
 class CaseAPIHelper(object):
     """

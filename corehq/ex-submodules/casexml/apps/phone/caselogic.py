@@ -27,7 +27,8 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
     # todo: should assert that domain exists here but this breaks tests
     case_db = CaseDbCache(domain=domain,
                           strip_history=strip_history,
-                          deleted_ok=True)
+                          deleted_ok=True,
+                          initial=initial_case_list)
 
     def related(case_db, case):
         return [case_db.get(index.referenced_id) for index in (case.indices if search_up else case.reverse_indices)]
