@@ -485,8 +485,8 @@ class OPMCaseRow(object):
                 return True
 
             for form in self.filtered_forms(CHILDREN_FORMS, 4,
-                                            explicit_end=datetime.datetime.combine(add_months_to_date(
-                                                    self.edd, -1), datetime.time())):
+                                            explicit_end=datetime.datetime.combine(
+                                                add_months_to_date(self.edd, -1), datetime.time())):
                 xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
                 if form.xpath(xpath) == '0':
                     return False
@@ -653,7 +653,7 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(CHILDREN_FORMS):
                     if form.form.get('birth_spacing_prompt') == '1':
                         return False
-                return self.child_age/12
+                return self.child_age / 12
 
     @property
     def birth_spacing_years_last_month(self):
@@ -662,7 +662,7 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(CHILDREN_FORMS):
                     if form.form.get('birth_spacing_prompt') == '1':
                         return False
-                return (self.child_age - 1)/12
+                return (self.child_age - 1) / 12
 
     def case_property(self, name, default=None):
         prop = getattr(self.case, name, default)
