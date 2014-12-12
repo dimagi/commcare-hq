@@ -15,7 +15,7 @@ setup(
     install_requires=[
         'jsonobject-couchdbkit>=0.6.5.2',
         'pillowtop>=0.1.4',
-        'dimagi-utils>=1.0.2',
+        'dimagi-utils>=1.2.1',
         'pytz',
         'SQLAlchemy==0.8.2',
         'alembic==0.6.0'
