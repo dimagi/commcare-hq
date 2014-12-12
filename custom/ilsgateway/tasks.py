@@ -12,15 +12,12 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
-from custom.ilsgateway.api import Location, ILSGatewayEndpoint
-from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, commtrack_settings_sync, \
-    sync_ilsgateway_location, save_stock_data_checkpoint
+from custom.ilsgateway.api import Location, ILSGatewayEndpoint, ILSGatewayAPI
+from custom.logistics.api import APISynchronization
+from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data, default_start_date
 from dimagi.utils.dates import force_to_datetime, first_of_next_month
-
-
-LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -28,15 +25,13 @@ def migration_task():
     configs = ILSGatewayConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            commtrack_settings_sync(config.domain, LOCATION_TYPES)
-            ils_bootstrap_domain(config, ILSGatewayEndpoint.from_config(config))
+            ils_bootstrap_domain(ILSGatewayAPI(config.domain, ILSGatewayEndpoint.from_config(config)))
 
 
 @task
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
-    commtrack_settings_sync(domain, LOCATION_TYPES)
-    return ils_bootstrap_domain(ils_config, ILSGatewayEndpoint.from_config(ils_config))
+    return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
 
 # District Moshi-Rural
 ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
@@ -62,13 +57,13 @@ ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
                   1117, 920, 769, 1005, 1009, 925, 1115, 907]
 
 
-def get_locations(domain, endpoint, facilities):
+def get_locations(api_object, facilities):
     for facility in facilities:
-        location = endpoint.get_location(facility, params=dict(with_historical_groups=1))
-        sync_ilsgateway_location(domain, endpoint, Location(location))
+        location = api_object.endpoint.get_location(facility, params=dict(with_historical_groups=1))
+        api_object.locations_sync(Location(location))
 
 
-def sync_product_stock(domain, endpoint, facility, checkpoint, start_date, date, limit=100, offset=0):
+def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
     has_next = True
     next_url = ""
     while has_next:
@@ -89,24 +84,25 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, start_date, date,
                                         reduce=False,
                                         include_docs=True,
                                         limit=1).first()
-            product = Product.get_by_code(domain, product_stock.product)
-            try:
-                stock_state = StockState.objects.get(section_id='stock',
-                                                     case_id=case._id,
-                                                     product_id=product._id)
-            except StockState.DoesNotExist:
-                stock_state = StockState(section_id='stock',
-                                         case_id=case._id,
-                                         product_id=product._id,
-                                         stock_on_hand=product_stock.quantity or 0,
-                                         last_modified_date=product_stock.last_modified,
-                                         sql_product=SQLProduct.objects.get(product_id=product._id))
+            if case:
+                product = Product.get_by_code(domain, product_stock.product)
+                try:
+                    stock_state = StockState.objects.get(section_id='stock',
+                                                         case_id=case._id,
+                                                         product_id=product._id)
+                except StockState.DoesNotExist:
+                    stock_state = StockState(section_id='stock',
+                                             case_id=case._id,
+                                             product_id=product._id,
+                                             stock_on_hand=product_stock.quantity or 0,
+                                             last_modified_date=product_stock.last_modified,
+                                             sql_product=SQLProduct.objects.get(product_id=product._id))
 
-            if product_stock.auto_monthly_consumption:
-                stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
-            else:
-                stock_state.daily_consumption = None
-            stock_state.save()
+                if product_stock.auto_monthly_consumption:
+                    stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
+                else:
+                    stock_state.daily_consumption = None
+                stock_state.save()
 
         if not meta.get('next', False):
             has_next = False
@@ -114,7 +110,7 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, start_date, date,
             next_url = meta['next'].split('?')[1]
 
 
-def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, start_date, date, limit=100, offset=0):
+def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, date, limit=100, offset=0):
     has_next = True
     next_url = ""
 
@@ -138,28 +134,29 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, start_
                                             reduce=False,
                                             include_docs=True,
                                             limit=1).first()
-                product = Product.get_by_code(domain, stocktransaction.product)
-                report = StockReport(
-                    form_id=xform._id,
-                    date=force_to_datetime(stocktransaction.date),
-                    type='balance',
-                    domain=domain
-                )
-                report.save()
-                try:
-                    sql_product = SQLProduct.objects.get(product_id=product._id)
-                except SQLProduct.DoesNotExist:
-                    continue
+                if case:
+                    product = Product.get_by_code(domain, stocktransaction.product)
+                    report = StockReport(
+                        form_id=xform._id,
+                        date=force_to_datetime(stocktransaction.date),
+                        type='balance',
+                        domain=domain
+                    )
+                    report.save()
+                    try:
+                        sql_product = SQLProduct.objects.get(product_id=product._id)
+                    except SQLProduct.DoesNotExist:
+                        continue
 
-                transactions_to_add.append(StockTransaction(
-                    case_id=case._id,
-                    product_id=product._id,
-                    sql_product=sql_product,
-                    section_id='stock',
-                    type='stockonhand',
-                    stock_on_hand=Decimal(stocktransaction.ending_balance),
-                    report=report
-                ))
+                    transactions_to_add.append(StockTransaction(
+                        case_id=case._id,
+                        product_id=product._id,
+                        sql_product=sql_product,
+                        section_id='stock',
+                        type='stockonhand',
+                        stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        report=report
+                    ))
         # Doesn't send signal
         StockTransaction.objects.bulk_create(transactions_to_add)
         if not meta.get('next', False):

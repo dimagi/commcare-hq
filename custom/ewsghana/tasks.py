@@ -1,11 +1,11 @@
 from celery.task import task
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, Product
-from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, \
-    bootstrap_domain, commtrack_settings_sync
+    bootstrap_domain
 
 
 EXTENSIONS = {
@@ -17,7 +17,6 @@ EXTENSIONS = {
 }
 
 
-LOCATION_TYPES = ["country", "region", "district", "facility"]
 # District Ashanti
 EWS_FACILITIES = [109, 110, 624, 626, 922, 908, 961, 948, 956, 967]
 
@@ -27,15 +26,13 @@ def migration_task():
     configs = EWSGhanaConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            commtrack_settings_sync(config.domain, LOCATION_TYPES)
             ils_bootstrap_domain(config, GhanaEndpoint.from_config(config), EXTENSIONS)
 
 
 @task
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
-    commtrack_settings_sync(domain, LOCATION_TYPES)
-    return bootstrap_domain(ews_config, GhanaEndpoint.from_config(ews_config), EXTENSIONS, fetch_groups=False)
+    return bootstrap_domain(EWSApi(domain, GhanaEndpoint.from_config(ews_config)))
 
 
 @task

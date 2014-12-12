@@ -21,3 +21,11 @@ CUSTOM_REPORTS = (
 
 # For QA purposes it should be set to true.
 TEST = True
+
+LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
+
+ADMINS = [
+    "mmwencha@jsi.com",
+    "amchau@tz.pfscm.org",
+    "fkilla@jsi.co.tz"
+]

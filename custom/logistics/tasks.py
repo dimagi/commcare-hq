@@ -4,12 +4,12 @@ from celery.task import task
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway import TEST
 from custom.ilsgateway.tasks import get_locations
-from custom.logistics.commtrack import commtrack_settings_sync, sync_ilsgateway_product, save_stock_data_checkpoint
+from custom.logistics.commtrack import save_stock_data_checkpoint
 from custom.logistics.models import StockDataCheckpoint
 
 
 @task
-def stock_data_task(domain, endpoint, apis, location_types, test_facilities=None):
+def stock_data_task(domain, endpoint, apis, api_object, test_facilities=None):
     start_date = datetime.today()
     try:
         checkpoint = StockDataCheckpoint.objects.get(domain=domain)
@@ -36,10 +36,10 @@ def stock_data_task(domain, endpoint, apis, location_types, test_facilities=None
     if TEST:
         facilities = test_facilities
         if StockDataCheckpoint.objects.filter(domain=domain).count() == 0:
-            commtrack_settings_sync(domain, location_types)
-            get_locations(domain, endpoint, facilities)
-            for product in endpoint.get_products():
-                sync_ilsgateway_product(domain, product)
+            api_object.prepare_commtrack_config()
+            get_locations(api_object, facilities)
+            for product in endpoint.get_products()[1]:
+                api_object.products_sync(product)
     else:
         facilities = SQLLocation.objects.filter(
             domain=domain,
@@ -56,7 +56,6 @@ def stock_data_task(domain, endpoint, apis, location_types, test_facilities=None
             domain=domain,
             checkpoint=checkpoint,
             date=date,
-            start_date=start_date,
             limit=limit,
             offset=offset,
             endpoint=endpoint,

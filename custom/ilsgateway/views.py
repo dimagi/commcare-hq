@@ -13,11 +13,12 @@ from django.views.decorators.http import require_POST
 from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
+from custom.ilsgateway import LOCATION_TYPES
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task, get_product_stock, get_stock_transaction, get_supply_point_statuses, \
-    get_delivery_group_reports, ILS_FACILITIES, LOCATION_TYPES
+    get_delivery_group_reports, ILS_FACILITIES
 from custom.logistics.models import MigrationCheckpoint, StockDataCheckpoint
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import stock_data_task
