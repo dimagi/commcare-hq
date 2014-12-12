@@ -2,12 +2,14 @@ import json
 import warnings
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
-    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec, BooleanExpressionFilterSpec, \
-    ExpressionIndicatorSpec
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.specs import (PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec,
+    BooleanExpressionFilterSpec)
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
+from corehq.apps.userreports.indicators.specs import (RawIndicatorSpec, ChoiceListIndicatorSpec,
+    BooleanIndicatorSpec, IndicatorSpecBase, ExpressionIndicatorSpec)
 from corehq.apps.userreports.operators import EQUAL, get_operator
 from fluff.filters import ANDFilter, ORFilter, CustomFilter, NOTFilter
 
@@ -48,7 +50,6 @@ def _build_property_match_filter(spec, context):
 
 
 def _build_boolean_expression_filter(spec, context):
-    from corehq.apps.userreports.expressions.factory import ExpressionFactory
     wrapped = BooleanExpressionFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
         expression=ExpressionFactory.from_spec(wrapped.expression),

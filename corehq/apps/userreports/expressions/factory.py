@@ -6,7 +6,6 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.conditional import ConditionalExpression
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec
-from corehq.apps.userreports.factory import FilterFactory
 
 
 def _simple_expression_generator(wrapper_class, spec):
@@ -18,6 +17,8 @@ _property_path_expression = functools.partial(_simple_expression_generator, Prop
 
 
 def _conditional_expression(spec):
+    # no way around this since the two factories inherently depend on each other
+    from corehq.apps.userreports.factory import FilterFactory
     wrapped = ConditionalExpressionSpec.wrap(spec)
     return ConditionalExpression(
         FilterFactory.from_spec(wrapped.test),
