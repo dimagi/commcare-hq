@@ -154,12 +154,22 @@ class PillowRetryTestCase(TestCase):
         error.save()
         process_pillow_retry(error.id)
 
-        try:
-            error = PillowError.objects.get(id=error.id)
-            self.fail(error.error_traceback)
-        except PillowError.DoesNotExist:
-            #  if processing is successful the record will be deleted
-            pass
+        #  if processing is successful the record will be deleted
+        with self.assertRaises(PillowError.DoesNotExist):
+            PillowError.objects.get(id=error.id)
+
+    def test_deleted_doc(self):
+        """
+        see FakePillow.process_change
+        """
+        id = 'test_doc'
+        change_dict = {'id': id, 'seq': 54321, 'changes': [{'_rev': 'abc123'}]}
+        error = create_error(change_dict)
+        error.save()
+        # this used to error out
+        process_pillow_retry(error.id)
+        with self.assertRaises(PillowError.DoesNotExist):
+            PillowError.objects.get(id=error.id)
 
     def test_bulk_reset(self):
         for i in range(0, 5):
@@ -180,7 +190,7 @@ class FakePillow(BasicPillow):
 
     def process_change(self, change, is_retry_attempt=False):
         #  see test_include_doc
-        if 'doc' not in change:
+        if not change.get('deleted') and 'doc' not in change:
             raise Exception('missing doc in change')
 
 
