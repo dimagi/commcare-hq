@@ -403,5 +403,5 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         'type': loc.location_type,
                         'reporting_status': 'nonreporting',
                         'geo': loc._geopoint,
-                        'last_reporting_date': transactions[-1].report.date if transactions else ''
+                        'last_reporting_date': transactions[0].report.date if transactions else ''
                     }
