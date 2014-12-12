@@ -83,15 +83,8 @@ class FilterFactory(object):
 
     @classmethod
     def validate_spec(self, spec):
-        _validate_required_fields(spec, ('type',))
-        if spec['type'] not in self.constructor_map:
-            raise BadSpecError(_('Illegal filter type: "{0}", must be one of the following choice: ({1})'.format(
-                spec['type'],
+        if spec.get('type') not in self.constructor_map:
+            raise BadSpecError(_('Illegal or missing filter type: "{0}", must be one of the following choice: ({1})'.format(
+                spec.get('type'),
                 ', '.join(self.constructor_map.keys())
             )))
-
-
-def _validate_required_fields(spec, fields):
-    for key in fields:
-        if not spec.get(key):
-            raise BadSpecError(_('Spec must include a valid "{0}" field.'.format(key)))
