@@ -13,6 +13,18 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 
 
+DELETED_DOC_TYPES = {
+    'CommCareCase': [
+        'CommCareCase-Deleted',
+    ],
+    'XFormInstance': [
+        'XFormInstance-Deleted',
+        'XFormArchived',
+        'XFormDeprecated',
+    ],
+}
+
+
 class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCouchDocumentMixin, Document):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -31,6 +43,13 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
 
     @property
     def filter(self):
+        return self._get_filter([self.referenced_doc_type])
+
+    @property
+    def deleted_filter(self):
+        return self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
+
+    def _get_filter(self, doc_types):
         extras = (
             [self.configured_filter]
             if self.configured_filter else []
@@ -42,9 +61,15 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
                 'property_value': self.domain,
             },
             {
-                'type': 'property_match',
-                'property_name': 'doc_type',
-                'property_value': self.referenced_doc_type,
+                'type': 'or',
+                'filters': [
+                    {
+                        'type': 'property_match',
+                        'property_name': 'doc_type',
+                        'property_value': doc_type,
+                    }
+                    for doc_type in doc_types
+                ],
             },
         ]
         return FilterFactory.from_spec(
