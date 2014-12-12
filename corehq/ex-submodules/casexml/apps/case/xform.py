@@ -139,7 +139,7 @@ class CaseDbCache(object):
         self.lock = lock
         self.wrap = wrap
         if self.lock and not self.wrap:
-            raise Exception('Currently locking only supports explicitly wrapping cases!')
+            raise ValueError('Currently locking only supports explicitly wrapping cases!')
         self.locks = []
         self._changed = set()
 
