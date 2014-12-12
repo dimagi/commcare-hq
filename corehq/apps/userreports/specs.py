@@ -15,7 +15,13 @@ def TypeProperty(value):
     return StringProperty(required=True, choices=[value])
 
 
-# todo: all spec definitions will go here. moving them over piece meal when touched.
+def DataTypeProperty():
+    """
+    Shortcut for valid data types.
+    """
+    return StringProperty(required=True, choices=['date', 'datetime', 'string', 'integer'])
+
+
 class IndicatorSpecBase(JsonObject):
     """
     Base class for indicator specs. All specs (for now) are assumed to have a column_id and
@@ -58,8 +64,7 @@ class BooleanIndicatorSpec(IndicatorSpecBase):
 
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('raw')
-    datatype = StringProperty(required=True,
-                              choices=['date', 'datetime', 'string', 'integer'])
+    datatype = DataTypeProperty()
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
 
@@ -68,6 +73,21 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         transform = _transform_from_datatype(self.datatype)
         getter = _getter_from_property_reference(self)
         return TransformedGetter(getter, transform)
+
+
+class ExpressionIndicatorSpec(IndicatorSpecBase):
+    type = TypeProperty('expression')
+    datatype = DataTypeProperty()
+    is_nullable = BooleanProperty(default=True)
+    is_primary_key = BooleanProperty(default=False)
+    expression = DictProperty(required=True)
+
+    @property
+    def parsed_expression(self):
+        from corehq.apps.userreports.expressions.factory import ExpressionFactory
+        transform = _transform_from_datatype(self.datatype)
+        expression = ExpressionFactory.from_spec(self.expression)
+        return TransformedGetter(expression, transform)
 
 
 class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
