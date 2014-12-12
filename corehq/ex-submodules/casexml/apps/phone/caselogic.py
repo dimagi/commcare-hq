@@ -62,8 +62,6 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
         ))
 
     return relevant_cases
-    # print 'relevant', len(relevant_cases)
-    # return [CommCareCase.wrap(c) for c in relevant_cases]
 
 
 def get_footprint(initial_case_list, domain, strip_history=False):
