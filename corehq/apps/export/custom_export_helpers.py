@@ -319,7 +319,10 @@ class FormCustomExportHelper(CustomExportHelper):
                     'selected': False,
                     'transform': None,
                     'tag': None,
-                    'display': ''
+                    'display': '',
+                    'doc_type': None,
+                    'allOptions': None,
+                    'options': []
                 })
 
         column_conf.extend(generate_additional_columns(requires_case))
