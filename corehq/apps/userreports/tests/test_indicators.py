@@ -257,6 +257,78 @@ class RawIndicatorTest(SingleIndicatorTestBase):
         })
 
 
+class ExpressionIndicatorTest(SingleIndicatorTestBase):
+
+    @property
+    def simple_indicator(self):
+        return IndicatorFactory.from_spec({
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "foo",
+            },
+            "column_id": "foo",
+            "datatype": "integer",
+            "display_name": "expression foos",
+        })
+
+    @property
+    def complex_indicator(self):
+        # this expression is the equivalent to:
+        #   doc.true_value if doc.test == 'match' else doc.false_value
+        return IndicatorFactory.from_spec({
+            "type": "expression",
+            "expression": {
+                'type': 'conditional',
+                'test': {
+                    'type': 'boolean_expression',
+                    'expression': {
+                        'type': 'property_name',
+                        'property_name': 'test',
+                    },
+                    'operator': 'eq',
+                    'property_value': 'match',
+                },
+                'expression_if_true': {
+                    'type': 'property_name',
+                    'property_name': 'true_value',
+                },
+                'expression_if_false': {
+                    'type': 'property_name',
+                    'property_name': 'false_value',
+                },
+            },
+            "column_id": "foo",
+            "datatype": "integer",
+            "display_name": "expression foos",
+        })
+
+    def testExpression(self):
+        self._check_result(self.simple_indicator, dict(foo="bar"), "bar")
+
+    def testMissingValue(self):
+        self._check_result(self.simple_indicator, dict(notfoo="bar"), None)
+
+    def testComplicatedExpression(self):
+        # largely duplicated from ConditionalExpressionTest
+        indicator = self.complex_indicator
+        self._check_result(indicator, {
+            'test': 'match',
+            'true_value': 'correct',
+            'false_value': 'incorrect',
+        }, 'correct')
+        self._check_result(indicator, {
+            'test': 'non-match',
+            'true_value': 'correct',
+            'false_value': 'incorrect',
+        }, 'incorrect')
+        self._check_result(indicator, {
+            'true_value': 'correct',
+            'false_value': 'incorrect',
+        }, 'incorrect')
+        self._check_result(indicator, {}, None)
+
+
 class ChoiceListIndicatorTest(SimpleTestCase):
     def setUp(self):
         self.spec = {

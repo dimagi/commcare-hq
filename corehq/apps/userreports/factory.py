@@ -3,7 +3,8 @@ import warnings
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.specs import RawIndicatorSpec, ChoiceListIndicatorSpec, BooleanIndicatorSpec, \
-    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec, BooleanExpressionFilterSpec
+    IndicatorSpecBase, PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec, BooleanExpressionFilterSpec, \
+    ExpressionIndicatorSpec
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import SinglePropertyValueFilter
 from corehq.apps.userreports.indicators import BooleanIndicator, CompoundIndicator, RawIndicator, Column
@@ -116,6 +117,21 @@ def _build_raw_indicator(spec, context):
     )
 
 
+def _build_expression_indicator(spec, context):
+    wrapped = ExpressionIndicatorSpec.wrap(spec)
+    column = Column(
+        id=wrapped.column_id,
+        datatype=wrapped.datatype,
+        is_nullable=wrapped.is_nullable,
+        is_primary_key=wrapped.is_primary_key,
+    )
+    return RawIndicator(
+        wrapped.display_name,
+        column,
+        getter=wrapped.parsed_expression,
+    )
+
+
 def _build_boolean_indicator(spec, context):
     wrapped = BooleanIndicatorSpec.wrap(spec)
     return BooleanIndicator(
@@ -151,10 +167,11 @@ def _build_choice_list_indicator(spec, context):
 
 class IndicatorFactory(object):
     constructor_map = {
-        'count': _build_count_indicator,
         'boolean': _build_boolean_indicator,
-        'raw': _build_raw_indicator,
         'choice_list': _build_choice_list_indicator,
+        'count': _build_count_indicator,
+        'expression': _build_expression_indicator,
+        'raw': _build_raw_indicator,
     }
 
     @classmethod
