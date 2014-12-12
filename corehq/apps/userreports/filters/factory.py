@@ -84,7 +84,9 @@ class FilterFactory(object):
     @classmethod
     def validate_spec(self, spec):
         if spec.get('type') not in self.constructor_map:
-            raise BadSpecError(_('Illegal or missing filter type: "{0}", must be one of the following choice: ({1})'.format(
-                spec.get('type'),
-                ', '.join(self.constructor_map.keys())
-            )))
+            raise BadSpecError(
+                _('Illegal or missing filter type: "{0}", must be one of the following choice: ({1})'.format(
+                    spec.get('type'),
+                    ', '.join(self.constructor_map.keys())
+                ))
+            )

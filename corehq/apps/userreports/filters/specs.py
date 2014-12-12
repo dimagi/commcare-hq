@@ -35,4 +35,3 @@ class NotFilterSpec(BaseFilterSpec):
 class NamedFilterSpec(BaseFilterSpec):
     type = TypeProperty('named')
     name = StringProperty(required=True)
-
