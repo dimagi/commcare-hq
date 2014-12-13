@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.app_manager.models import Application
 from corehq.apps.dashboard.models import (
     TileConfiguration,
@@ -15,8 +15,7 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege, has_privilege
+from django_prbac.utils import has_privilege
 
 
 @login_and_domain_required
