@@ -28,6 +28,7 @@ Common Output:
         }
 """
 import datetime
+import time
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q, Count, Sum
 from django.utils.translation import ugettext as _
@@ -45,6 +46,7 @@ from corehq.apps.hqadmin.reporting.exceptions import (
     HistoTypeNotFoundException,
     IntervalNotFoundException,
 )
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import (
     ADD_TO_ES_FILTER,
@@ -925,6 +927,52 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
     }
 
 
+def get_unique_locations_data(domains, datespan, interval,
+        datefield='created_at'):
+    locations = (SQLLocation.objects
+                            .filter(domain__in=domains,
+                                    created_at__lte=datespan.enddate)
+                            .extra({"day":
+                                    "date_trunc('%s', created_at)" % interval})
+                            .values("day", "domain"))
+
+    domains_with_locations = {l["domain"] for l in locations}
+
+    all_domains = len(domains_with_locations) > 5
+    start = int(time.mktime(datespan.startdate.timetuple())) * 1000
+
+    if all_domains:
+        histo_data = {"All Domains": dict()}
+        init_ret = {"All Domains": 0}
+    else:
+        histo_data = {d: dict() for d in domains_with_locations}
+        init_ret = {d: 0 for d in domains_with_locations}
+
+    for l in locations:
+        tstamp = int(time.mktime(l['day'].timetuple())) * 1000
+        domain = "All Domains" if all_domains else l['domain']
+
+        if tstamp < start:
+            init_ret[domain] += 1
+        else:
+            if tstamp not in histo_data[domain]:
+                histo_data[domain][tstamp] = 1
+            else:
+                histo_data[domain][tstamp] += 1
+
+    ret = {d: list() for d in domains_with_locations}
+    for k, v in histo_data.iteritems():
+        for l, w in v.iteritems():
+            ret[k].append({'count': w, 'time': l})
+
+    return {
+        'histo_data': ret,
+        'initial_values': init_ret,
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
 HISTO_TYPE_TO_FUNC = {
     "active_cases": get_active_cases_stats,
     "active_countries": get_active_countries_stats_data,
@@ -944,6 +992,7 @@ HISTO_TYPE_TO_FUNC = {
     "stock_transactions": get_stock_transaction_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
     "total_products": get_products_stats_data,
+    "unique_locations": get_unique_locations_data,
     "users": get_user_stats,
     "users_all": get_users_all_stats,
 }
