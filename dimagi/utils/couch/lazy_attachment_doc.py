@@ -1,4 +1,5 @@
 from mimetypes import guess_type
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document
 from couchdbkit.resource import encode_attachments
 from django.core.cache import cache
@@ -90,7 +91,7 @@ class LazyAttachmentDoc(Document):
             if not content:
                 try:
                     content = self.fetch_attachment(name)
-                except Exception as e:
+                except ResourceNotFound as e:
                     # django cache will pickle this exception for you
                     # but e.response isn't picklable
                     if hasattr(e, 'response'):
@@ -103,7 +104,7 @@ class LazyAttachmentDoc(Document):
             else:
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
 
-        if isinstance(content, Exception):
+        if isinstance(content, ResourceNotFound):
             raise content
 
         return content
