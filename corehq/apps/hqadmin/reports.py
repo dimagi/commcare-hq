@@ -427,6 +427,13 @@ INDICATOR_DATA = {
         "histogram_type": "unique_locations",
         "xaxis_label": "# unique locations",
     },
+    "location_types": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "location_types",
+        "chart_title": "Types of Locations",
+        "histogram_type": "location_types",
+        "xaxis_label": "# location types",
+    },
 }
 
 ES_PREFIX = "es_"
@@ -1015,4 +1022,5 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'total_products',
         'stock_transactions',
         'unique_locations',
+        'location_types',
     ]
