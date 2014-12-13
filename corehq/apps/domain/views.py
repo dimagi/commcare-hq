@@ -38,10 +38,9 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import toggles, privileges, feature_previews
+from corehq import privileges, feature_previews
 from django_prbac.decorators import requires_privilege_raise404
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType,
@@ -51,7 +50,7 @@ from corehq.apps.accounting.models import (
     PaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
-from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
+from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -87,10 +86,9 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from django.core.cache import cache
-from toggle.models import Toggle, generate_toggle_id
-from toggle.shortcuts import get_toggle_cache_key, update_toggle_cache, namespaced_item
+from django.utils.translation import ugettext as _, ugettext_noop
+from toggle.models import Toggle
+from toggle.shortcuts import update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -318,13 +316,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def can_use_custom_logo(self):
-        try:
-            ensure_request_has_privilege(
-                self.request, privileges.CUSTOM_BRANDING
-            )
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.CUSTOM_BRANDING)
 
     @property
     @memoized
@@ -1126,12 +1118,7 @@ class SelectPlanView(DomainAccountingSettings):
     def is_non_ops_superuser(self):
         if not self.request.couch_user.is_superuser:
             return False
-        try:
-            ensure_request_has_privilege(
-                self.request, privileges.ACCOUNTING_ADMIN)
-            return False
-        except PermissionDenied:
-            return True
+        return not has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
 
     @property
     def parent_pages(self):
