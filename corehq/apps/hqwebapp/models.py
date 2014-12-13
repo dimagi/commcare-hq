@@ -21,8 +21,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.models import Role, UserRole
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import ensure_request_has_privilege, has_privilege
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -662,13 +661,12 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
-        try:
-            ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
-        except PermissionDenied:
-            return False
-        return (self.domain
-                and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
-                and not self.project.commconnect_enabled)
+        return (
+            has_privilege(self._request, privileges.CLOUDCARE)
+            and self.domain
+            and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
+            and not self.project.commconnect_enabled
+        )
 
 
 class MessagingTab(UITab):
