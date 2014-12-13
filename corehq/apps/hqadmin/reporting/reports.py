@@ -927,30 +927,26 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
     }
 
 
-def get_unique_locations_data(domains, datespan, interval,
-        datefield='created_at'):
-    locations = (SQLLocation.objects
-                            .filter(domain__in=domains,
-                                    created_at__lte=datespan.enddate)
-                            .extra({"day":
-                                    "date_trunc('%s', created_at)" % interval})
-                            .values("day", "domain"))
+def _sql_to_json_data(domains, sql_data, datespan):
+    """
+    Helper function to transform sql queries into what the admin reports
+    framework likes. Handles initial values and historical data
 
-    domains_with_locations = {l["domain"] for l in locations}
-
-    all_domains = len(domains_with_locations) > 5
+    sql_data needs {'timestamp': t, 'domain': d}
+    """
+    all_domains = len(domains) > 5  # separate lines for few domains
     start = int(time.mktime(datespan.startdate.timetuple())) * 1000
 
     if all_domains:
         histo_data = {"All Domains": dict()}
         init_ret = {"All Domains": 0}
     else:
-        histo_data = {d: dict() for d in domains_with_locations}
-        init_ret = {d: 0 for d in domains_with_locations}
+        histo_data = {d: dict() for d in domains}
+        init_ret = {d: 0 for d in domains}
 
-    for l in locations:
-        tstamp = int(time.mktime(l['day'].timetuple())) * 1000
-        domain = "All Domains" if all_domains else l['domain']
+    for data in sql_data:
+        tstamp = int(time.mktime(data['timestamp'].timetuple())) * 1000
+        domain = "All Domains" if all_domains else data['domain']
 
         if tstamp < start:
             init_ret[domain] += 1
@@ -960,10 +956,27 @@ def get_unique_locations_data(domains, datespan, interval,
             else:
                 histo_data[domain][tstamp] += 1
 
-    ret = {d: list() for d in domains_with_locations}
+    ret = {d: list() for d in domains}
     for k, v in histo_data.iteritems():
         for l, w in v.iteritems():
             ret[k].append({'count': w, 'time': l})
+
+    return init_ret, ret
+
+
+def get_unique_locations_data(domains, datespan, interval,
+        datefield='created_at'):
+    locations = (SQLLocation.objects
+                            .filter(domain__in=domains,
+                                    created_at__lte=datespan.enddate)
+                            .extra({"timestamp":
+                                    "date_trunc('%s', %s)" %
+                                    (interval, datefield)})
+                            .values("timestamp", "domain"))
+
+    domains = {l["domain"] for l in locations}
+
+    init_ret, ret = _sql_to_json_data(domains, locations, datespan)
 
     return {
         'histo_data': ret,
@@ -971,46 +984,23 @@ def get_unique_locations_data(domains, datespan, interval,
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
+
 
 def get_location_type_data(domains, datespan, interval,
         datefield='created_at'):
     locations = (SQLLocation.objects
                             .filter(domain__in=domains,
                                     created_at__lte=datespan.enddate)
-                            .extra({"day":
-                                    "date_trunc('%s', created_at)" % interval})
-                            .values("day", "domain", "location_type")
+                            .extra({"timestamp":
+                                    "date_trunc('%s', %s)" %
+                                    (interval, datefield)})
+                            .values("timestamp", "domain", "location_type")
                             .order_by("location_type", "created_at")
                             .distinct("location_type"))
 
-    domains_with_locations = {l["domain"] for l in locations}
+    domains = {l["domain"] for l in locations}
 
-    all_domains = len(domains_with_locations) > 5
-    start = int(time.mktime(datespan.startdate.timetuple())) * 1000
-
-    if all_domains:
-        histo_data = {"All Domains": dict()}
-        init_ret = {"All Domains": 0}
-    else:
-        histo_data = {d: dict() for d in domains_with_locations}
-        init_ret = {d: 0 for d in domains_with_locations}
-
-    for l in locations:
-        tstamp = int(time.mktime(l['day'].timetuple())) * 1000
-        domain = "All Domains" if all_domains else l['domain']
-
-        if tstamp < start:
-            init_ret[domain] += 1
-        else:
-            if tstamp not in histo_data[domain]:
-                histo_data[domain][tstamp] = 1
-            else:
-                histo_data[domain][tstamp] += 1
-
-    ret = {d: list() for d in domains_with_locations}
-    for k, v in histo_data.iteritems():
-        for l, w in v.iteritems():
-            ret[k].append({'count': w, 'time': l})
+    init_ret, ret = _sql_to_json_data(domains, locations, datespan)
 
     return {
         'histo_data': ret,
@@ -1018,6 +1008,7 @@ def get_location_type_data(domains, datespan, interval,
         'startdate': datespan.startdate_key_utc,
         'enddate': datespan.enddate_key_utc,
     }
+
 
 HISTO_TYPE_TO_FUNC = {
     "active_cases": get_active_cases_stats,
