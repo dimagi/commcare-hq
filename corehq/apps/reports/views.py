@@ -1269,10 +1269,11 @@ def form_multimedia_export(request, domain):
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
-        return "%s-%s-%s-%s%s" % (form['form'].get('@name', 'unknown'),
-                                   unidecode(question_id),
-                                   form['form']['meta']['username'],
-                                   form['_id'], extension)
+        return "%s-%s-%s-%s%s" % (form['form'].get('@name', 'unknown form'),
+                                  unidecode(question_id),
+                                  form['form']['meta'].get('username',
+                                                           'unknown user'),
+                                  form['_id'], extension)
 
     if not app_id:
         zip_name = 'Unrelated Form'
@@ -1296,7 +1297,7 @@ def form_multimedia_export(request, domain):
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         f = XFormInstance.wrap(form)
         if not zip_name:
-            zip_name = unidecode(form['form']['@name'])
+            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
         for key in form['_attachments'].keys():
             if form['_attachments'][key]['content_type'] == 'text/xml':
                 continue
