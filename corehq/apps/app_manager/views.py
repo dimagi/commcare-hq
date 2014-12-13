@@ -138,7 +138,7 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
     require_can_edit_apps, require_deploy_apps
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import ensure_request_has_privilege, has_privilege
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
 FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
@@ -518,12 +518,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
 def get_app_view_context(request, app):
 
-    is_cloudcare_allowed = False
-    try:
-        ensure_request_has_privilege(request, privileges.CLOUDCARE)
-        is_cloudcare_allowed = True
-    except PermissionDenied:
-        pass
+    is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
 
     settings_layout = copy.deepcopy(
         commcare_settings.LAYOUT[app.get_doc_type()])
