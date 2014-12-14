@@ -1275,13 +1275,36 @@ def form_multimedia_export(request, domain):
                                   meta.get('username', 'unknown_user'),
                                   form['_id'], extension)
 
-    if not app_id:
-        zip_name = 'Unrelated Form'
+    def extract_attachment_info(form, properties=None):
+        unknown_number = 0
+        ret = {
+            'form': form,
+            'attachments': list(),
+        }
+        for k, v in form['_attachments'].iteritems():
+            if v['content_type'] == 'text/xml':
+                continue
+            try:
+                question_id = unicode('-'.join(find_question_id(form['form'], k)))
+            except TypeError:
+                question_id = unicode('unknown' + str(unknown_number))
+                unknown_number += 1
+
+            if not properties or question_id in properties:
+                extension = unicode(os.path.splitext(k)[1])
+                fname = filename(form, question_id, extension)
+                zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
+                ret['attachments'].append({
+                    'filename': fname,
+                    'info': zi,
+                    # includes overhead for file in zipfile
+                    'size': v['length'] + 88 + 2 * len(fname),
+                    'name': k,
+                })
+
+        return ret
+
     key = [domain, app_id, xmlns]
-    stream_file = cStringIO.StringIO()
-    zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
-    size = 22  # overhead for a zipfile
-    unknown_number = 0
     form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
                                          start_key=key + [startdate],
                                          end_key=key + [enddate, {}],
@@ -1294,25 +1317,22 @@ def form_multimedia_export(request, domain):
             # - in question id is replaced by . in excel exports
             properties |= {c.display.replace('.', '-') for c in table.columns}
 
+    if not app_id:
+        zip_name = 'Unrelated Form'
+    forms = list()
     for form in iter_docs(XFormInstance.get_db(), form_ids):
-        f = XFormInstance.wrap(form)
         if not zip_name:
             zip_name = unidecode(form['form'].get('@name', 'unknown form'))
-        for key in form['_attachments'].keys():
-            if form['_attachments'][key]['content_type'] == 'text/xml':
-                continue
-            extension = unicode(os.path.splitext(key)[1])
-            try:
-                question_id = unicode('-'.join(find_question_id(form['form'], key)))
-            except TypeError:
-                question_id = unicode('unknown' + str(unknown_number))
-                unknown_number += 1
-            if not properties or question_id in properties:
-                fname = filename(form, question_id, extension)
-                zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
-                zf.writestr(zi, f.fetch_attachment(key, stream=True).read())
-                # includes overhead for file in zipfile
-                size += f['_attachments'][key]['length'] + 88 + 2 * len(fname)
+        forms.append(extract_attachment_info(form, properties))
+
+    stream_file = cStringIO.StringIO()
+    size = 22  # overhead for a zipfile
+    zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
+    for form in forms:
+        f = XFormInstance.wrap(form['form'])
+        for a in form['attachments']:
+            zf.writestr(a['info'], f.fetch_attachment(a['name'], stream=True).read())
+            size += a['size']
 
     zf.close()
 
