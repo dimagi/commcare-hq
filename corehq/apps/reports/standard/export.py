@@ -6,9 +6,8 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
-from corehq import privileges, toggles
+from django_prbac.utils import has_privilege
+from corehq import privileges
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
@@ -48,11 +47,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def can_view_deid(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored

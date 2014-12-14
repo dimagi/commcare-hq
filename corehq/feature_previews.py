@@ -4,10 +4,8 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from . import privileges
 from .toggles import StaticToggle, NAMESPACE_DOMAIN
 
 
@@ -38,11 +36,7 @@ class FeaturePreview(StaticToggle):
         if not self.privilege:
             return True
 
-        try:
-            ensure_request_has_privilege(request, self.privilege)
-            return True
-        except PermissionDenied:
-            return False
+        return prbac_has_privilege(request, self.privilege)
 
 
 SUBMIT_HISTORY_FILTERS = FeaturePreview(
