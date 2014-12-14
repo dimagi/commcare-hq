@@ -1270,25 +1270,29 @@ def form_multimedia_export(request, domain):
         return HttpResponseBadRequest()
 
 
-    def filename(form, question_id, extension, case_names=None):
-        meta = form['form'].get('meta', dict())
-        fname = "%s-%s-%s-%s.%s"
-        if case_names:
-            fname = '-'.join(case_names) + '-' + fname
-        return fname % (form['form'].get('@name', 'unknown form'),
+    def filename(form, question_id, extension):
+        fname = "%s-%s-%s-%s%s"
+        if form['cases']:
+            fname = '-'.join(form['cases']) + '-' + fname
+        return fname % (form['name'],
                         unidecode(question_id),
-                        meta.get('username', 'unknown_user'),
-                        form['_id'], extension)
+                        form['user'],
+                        form['id'], extension)
 
     def extract_attachment_info(form, properties=None):
         unknown_number = 0
-        ret = {
-            'form': form,
-            'attachments': list(),
-        }
+        meta = form['form'].get('meta', dict())
         # get case ids
         case_blocks = extract_case_blocks(form)
         cases = {c['@case_id'] for c in case_blocks}
+        ret = {
+            'form': form,
+            'attachments': list(),
+            'name': form['form'].get('@name', 'unknown form'),
+            'user': meta.get('username', 'unknown_user'),
+            'cases': cases,
+            'id': form['_id']
+        }
         for k, v in form['_attachments'].iteritems():
             if v['content_type'] == 'text/xml':
                 continue
@@ -1300,14 +1304,12 @@ def form_multimedia_export(request, domain):
 
             if not properties or question_id in properties:
                 extension = unicode(os.path.splitext(k)[1])
-                fname = filename(form, question_id, extension, case_names=cases)
-                zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
                 ret['attachments'].append({
-                    'filename': fname,
-                    'info': zi,
-                    # includes overhead for file in zipfile
-                    'size': v['length'] + 88 + 2 * len(fname),
+                    'size': v['length'],
                     'name': k,
+                    'question_id': question_id,
+                    'extension': extension,
+                    'timestamp': parse(form['received_on']).timetuple(),
                 })
 
         return ret
@@ -1339,8 +1341,10 @@ def form_multimedia_export(request, domain):
     for form in forms:
         f = XFormInstance.wrap(form['form'])
         for a in form['attachments']:
-            zf.writestr(a['info'], f.fetch_attachment(a['name'], stream=True).read())
-            size += a['size']
+            fname = filename(form, a['question_id'], a['extension'])
+            zi = zipfile.ZipInfo(fname, a['timestamp'])
+            zf.writestr(zi, f.fetch_attachment(a['name'], stream=True).read())
+            size += a['size'] + 88 + 2 * len(fname)
 
     zf.close()
 
