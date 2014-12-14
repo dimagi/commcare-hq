@@ -98,6 +98,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 
+from casexml.apps.case.xform import extract_case_blocks
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -1268,12 +1269,16 @@ def form_multimedia_export(request, domain):
     except KeyError:
         return HttpResponseBadRequest()
 
-    def filename(form, question_id, extension):
+
+    def filename(form, question_id, extension, case_names=None):
         meta = form['form'].get('meta', dict())
-        return "%s-%s-%s-%s%s" % (form['form'].get('@name', 'unknown form'),
-                                  unidecode(question_id),
-                                  meta.get('username', 'unknown_user'),
-                                  form['_id'], extension)
+        fname = "%s-%s-%s-%s.%s"
+        if case_names:
+            fname = '-'.join(case_names) + '-' + fname
+        return fname % (form['form'].get('@name', 'unknown form'),
+                        unidecode(question_id),
+                        meta.get('username', 'unknown_user'),
+                        form['_id'], extension)
 
     def extract_attachment_info(form, properties=None):
         unknown_number = 0
@@ -1281,6 +1286,9 @@ def form_multimedia_export(request, domain):
             'form': form,
             'attachments': list(),
         }
+        # get case ids
+        case_blocks = extract_case_blocks(form)
+        cases = {c['@case_id'] for c in case_blocks}
         for k, v in form['_attachments'].iteritems():
             if v['content_type'] == 'text/xml':
                 continue
@@ -1292,7 +1300,7 @@ def form_multimedia_export(request, domain):
 
             if not properties or question_id in properties:
                 extension = unicode(os.path.splitext(k)[1])
-                fname = filename(form, question_id, extension)
+                fname = filename(form, question_id, extension, case_names=cases)
                 zi = zipfile.ZipInfo(fname, parse(form['received_on']).timetuple())
                 ret['attachments'].append({
                     'filename': fname,
