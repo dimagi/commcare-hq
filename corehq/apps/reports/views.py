@@ -1279,12 +1279,15 @@ def form_multimedia_export(request, domain):
                         form['user'],
                         form['id'], extension)
 
-    def extract_attachment_info(form, properties=None):
+    case_ids = set()
+    def extract_attachment_info(form, properties=None, case_ids=case_ids):
         unknown_number = 0
         meta = form['form'].get('meta', dict())
         # get case ids
         case_blocks = extract_case_blocks(form)
         cases = {c['@case_id'] for c in case_blocks}
+        case_ids |= cases
+
         ret = {
             'form': form,
             'attachments': list(),
@@ -1335,11 +1338,18 @@ def form_multimedia_export(request, domain):
             zip_name = unidecode(form['form'].get('@name', 'unknown form'))
         forms.append(extract_attachment_info(form, properties))
 
+    # get case names
+    case_id_to_name = {c: c for c in case_ids}
+    for case in iter_docs(CommCareCase.get_db(), case_ids):
+        if case['name']:
+            case_id_to_name[case['_id']] = case['name']
+
     stream_file = cStringIO.StringIO()
     size = 22  # overhead for a zipfile
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
     for form in forms:
         f = XFormInstance.wrap(form['form'])
+        form['cases'] = {case_id_to_name[case_id] for case_id in form['cases']}
         for a in form['attachments']:
             fname = filename(form, a['question_id'], a['extension'])
             zi = zipfile.ZipInfo(fname, a['timestamp'])
