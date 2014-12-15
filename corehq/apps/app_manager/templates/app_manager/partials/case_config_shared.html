@@ -55,11 +55,10 @@
             casePropertyTypeahead: suggestedProperties,
             event: {
                 change: function(){
-                    var rewrappedEl = $($element);
-                    var caretPosition = rewrappedEl.caret();
-                    //debugger;
-                    $element.value = $element.value.replace(/ /g,'_');
-                    rewrappedEl.caret(caretPosition);
+                    var el = $($element)
+                    var caretPosition = el.caret();
+                    el.val(el.val().replace(/ /g,'_'));
+                    el.caret(caretPosition);
                     return true;
                 }
             }
