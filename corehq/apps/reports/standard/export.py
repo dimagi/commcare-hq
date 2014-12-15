@@ -6,6 +6,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
 
@@ -49,6 +50,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
     def can_view_deid(self):
         return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+    @memoized
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored
         # (serialized json) this is a little bit hacky, but works.
