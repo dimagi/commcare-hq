@@ -15,25 +15,26 @@ from dimagi.utils.decorators.memoized import memoized
 logger = logging.getLogger(__name__)
 
 
-def get_related_cases(initial_case_list, domain, strip_history=False, search_up=True):
+def get_related_cases(initial_cases, domain, strip_history=False, search_up=True):
     """
     Gets the flat list of related cases based on a starting list.
     Walks all the referenced indexes recursively.
     If search_up is True, all cases and their parent cases are returned.
     If search_up is False, all cases and their child cases are returned.
     """
-    if not initial_case_list:
+    if not initial_cases:
         return {}
 
     # infer whether to wrap or not based on whether the initial list is wrapped or not
-    wrap = isinstance(initial_case_list[0], dict)
+    # initial_cases may be a list or a set
+    wrap = isinstance(next(iter(initial_cases)), dict)
 
     # todo: should assert that domain exists here but this breaks tests
     case_db = CaseDbCache(domain=domain,
                           strip_history=strip_history,
                           deleted_ok=True,
                           wrap=wrap,
-                          initial=initial_case_list)
+                          initial=initial_cases)
 
     def related(case_db, case):
         return [case_db.get(index['referenced_id']) for index in (
@@ -42,11 +43,11 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
-    queue = list(case for case in initial_case_list)
+    queue = list(case for case in initial_cases)
     directly_referenced_indices = itertools.chain(
         *[[index['referenced_id'] for index in (
             case['indices'] if search_up else reverse_indices(case, wrap=False))]
-          for case in initial_case_list]
+          for case in initial_cases]
     )
     case_db.populate(directly_referenced_indices)
     while queue:
