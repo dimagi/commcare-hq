@@ -305,7 +305,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
                     for index in case_state.indices]
 
         relevant_cases = set()
-        queue = list(case_state for case_state in self.cases_on_phone)
+        queue = list(self.cases_on_phone)
         while queue:
             case_state = queue.pop()
             # I don't actually understand why something is coming back None
