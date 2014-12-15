@@ -1,9 +1,8 @@
 from collections import defaultdict
-import copy
 import json
 import csv
 import io
-import uuid
+import re
 
 from couchdbkit import ResourceNotFound
 
@@ -19,14 +18,14 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import can_add_extra_mobile_workers
+from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
 from couchexport.models import Format
@@ -41,12 +40,11 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
-from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
-from corehq.apps.commtrack.models import CommTrackUser
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from soil.util import get_download_context, expose_download
+from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -67,9 +65,21 @@ class EditCommCareUserView(BaseFullEditUserView):
 
     @property
     @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            existing_custom_data=self.editable_user.user_data,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    @property
+    @memoized
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+            if not user:
+                raise Http404()
             if user.is_deleted():
                 self.template_name = "users/deleted_account.html"
             return user
@@ -88,49 +98,6 @@ class EditCommCareUserView(BaseFullEditUserView):
     @memoized
     def reset_password_form(self):
         return SetPasswordForm(user="")
-
-    @property
-    def commtrack_user_roles(self):
-        # Copied this over from the original view. mwhite, is this the best place for this?
-        data_roles = dict((u['slug'], u) for u in [
-            {
-                'slug': 'commtrack_requester',
-                'name': _("CommTrack Requester"),
-                'description': _("Responsible for creating requisitions."),
-            },
-            {
-                'slug': 'commtrack_approver',
-                'name': _("CommTrack Approver"),
-                'description': _(
-                    "Responsible for approving requisitions, including "
-                    "updating or modifying quantities as needed. Will receive "
-                    "a notification when new requisitions are created."),
-            },
-            {
-                'slug': 'commtrack_supplier',
-                'name': _("CommTrack Supplier"),
-                'description': _(
-                    "Responsible for packing orders.  Will receive a "
-                    "notification when the approver indicates that "
-                    "requisitions are approved, so that he or she can start "
-                    "packing it."),
-            },
-            {
-                'slug': 'commtrack_receiver',
-                'name': _("CommTrack Receiver"),
-                'description': _(
-                    "Responsible for receiving orders.  Will receive a "
-                    "notification when the supplier indicates that requisitions "
-                    "are packed and are ready for pickup, so that he or she can "
-                    "come pick it up or better anticipate the delivery."),
-            }
-        ])
-
-        for k, v in self.custom_user_data.items():
-            if k in data_roles:
-                data_roles[k]['selected'] = (self.custom_user_data[k] == 'true')
-                del self.custom_user_data[k]
-        return data_roles
 
     @property
     @memoized
@@ -157,16 +124,11 @@ class EditCommCareUserView(BaseFullEditUserView):
 
     @property
     @memoized
-    def custom_user_data(self):
-        return copy.copy(dict(self.editable_user.user_data))
-
-    @property
-    @memoized
     def update_commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, domain=self.domain)
         # currently only support one location on the UI
-        linked_loc = CommTrackUser.wrap(self.editable_user.to_json()).location
+        linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         return CommtrackUserForm(domain=self.domain, initial={'supply_point': initial_id})
 
@@ -176,14 +138,15 @@ class EditCommCareUserView(BaseFullEditUserView):
             'are_groups': bool(len(self.all_groups)),
             'groups_url': reverse('all_groups', args=[self.domain]),
             'group_form': self.group_form,
-            'custom_user_data': self.custom_user_data,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
+            'data_fields_form': self.custom_data.form,
         }
-        if self.request.project.commtrack_enabled:
+        if self.request.project.commtrack_enabled or self.request.project.locations_enabled:
             context.update({
+                'commtrack_enabled': self.request.project.commtrack_enabled,
+                'locations_enabled': self.request.project.locations_enabled,
                 'commtrack': {
-                    'roles': self.commtrack_user_roles,
                     'update_form': self.update_commtrack_form,
                 },
             })
@@ -230,6 +193,14 @@ class EditCommCareUserView(BaseFullEditUserView):
                 self.update_commtrack_form.save(self.editable_user)
                 messages.success(request, _("CommTrack information updated!"))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
+
+    def custom_user_is_valid(self):
+        if self.custom_data.is_valid():
+            self.editable_user.user_data = self.custom_data.get_data_to_save()
+            self.editable_user.save()
+            return True
+        else:
+            return False
 
 
 class ListCommCareUsersView(BaseUserSettingsView):
@@ -331,7 +302,7 @@ class ListCommCareUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'users_list': {
+            'data_list': {
                 'page': self.users_list_page,
                 'limit': self.users_list_limit,
                 'total': self.users_list_total,
@@ -348,6 +319,22 @@ class ListCommCareUsersView(BaseUserSettingsView):
             'can_edit_user_archive': self.can_edit_user_archive,
             'is_billing_admin': self.is_billing_admin,
         }
+
+
+def smart_query_string(query):
+    """
+    If query does not use the ES query string syntax,
+    default to doing an infix search for each term.
+    returns (is_simple, query)
+    """
+    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
+                     '~', '*', '?', ':', '\\', '/']
+    for char in special_chars:
+        if char in query:
+            return False, query
+    r = re.compile(r'\w+')
+    tokens = r.findall(query)
+    return True, "*{}*".format("* *".join(tokens))
 
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):
@@ -386,8 +373,14 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return users
 
     def query_es(self):
+        is_simple, query = smart_query_string(self.query)
+        default_fields = ["username.exact", "last_name", "first_name"]
         q = {
-            "query": { "query_string": { "query": self.query }},
+            "query": {"query_string": {
+                "query": query,
+                "default_operator": "AND",
+                "fields": default_fields if is_simple else None
+            }},
             "filter": {"and": ADD_TO_ES_FILTER["users"][:]},
             "sort": {'username.exact': 'asc'},
         }
@@ -457,8 +450,8 @@ class AsyncListCommCareUsersView(ListCommCareUsersView):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.users_list_page,
-            'users_list_total': self.users_list_total,
-            'users_list': self.users_list,
+            'data_list_total': self.users_list_total,
+            'data_list': self.users_list,
         }))
 
 
@@ -627,6 +620,16 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
 
     @property
     @memoized
+    def custom_data(self):
+        return CustomDataEditor(
+            field_view=UserFieldsView,
+            domain=self.domain,
+            required_only=True,
+            post_dict=self.request.POST if self.request.method == "POST" else None,
+        )
+
+    @property
+    @memoized
     def new_commcare_user_form(self):
         if self.request.method == "POST":
             form = CommCareAccountForm(self.request.POST)
@@ -639,6 +642,7 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return {
             'form': self.new_commcare_user_form,
             'only_numeric': self.password_format == 'n',
+            'data_fields_form': self.custom_data.form,
         }
 
     def dispatch(self, request, *args, **kwargs):
@@ -647,7 +651,7 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return super(CreateCommCareUserView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if self.new_commcare_user_form.is_valid():
+        if self.new_commcare_user_form.is_valid() and self.custom_data.is_valid():
             username = self.new_commcare_user_form.cleaned_data['username']
             password = self.new_commcare_user_form.cleaned_data['password']
             phone_number = self.new_commcare_user_form.cleaned_data['phone_number']
@@ -657,7 +661,8 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
                 username,
                 password,
                 phone_number=phone_number,
-                device_id="Generated from HQ"
+                device_id="Generated from HQ",
+                user_data=self.custom_data.get_data_to_save(),
             )
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
                                                 args=[self.domain, couch_user.userID]))
@@ -807,7 +812,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
                 if row['flag'] == 'missing-data':
                     errors.append(_('A row with no username was skipped'))
                 else:
-                    errors.append('{username}: {flag}'.format(**row))
+                    errors.append(u'{username}: {flag}'.format(**row))
             errors.extend(self.response_errors)
             return errors
 

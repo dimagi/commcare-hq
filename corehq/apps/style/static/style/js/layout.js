@@ -46,7 +46,6 @@ hqLayout.actions = {
         var $sidebar = $(hqLayout.selector.sidebar),
             $content = $(hqLayout.selector.content);
         if ($sidebar && $content) {
-            console.log('---');
             var availableHeight = hqLayout.utils.getAvailableContentHeight(),
                 contentHeight = $content.innerHeight();
             if (contentHeight > availableHeight) {
@@ -61,8 +60,7 @@ hqLayout.actions = {
     },
     recheckFooterStatus: function () {
         if (hqLayout.utils.isScrolledToFooter()) {
-            console.log('is scrolled to footer');
-            hqLayout.actions.showFooter()
+            hqLayout.actions.showFooter();
         } else if (hqLayout.utils.isScrollable() && !(hqLayout.utils.isScrolledToFooter())) {
             hqLayout.actions.hideFooter();
         } else {

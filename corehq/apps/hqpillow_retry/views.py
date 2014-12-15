@@ -1,6 +1,5 @@
 from datetime import datetime
 import re
-from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
 from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
@@ -15,11 +14,12 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop as _
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.hqpillow_retry.filters import PillowFilter, ErrorTypeFilter, DatePropFilter, AttemptsFilter
+from corehq.apps.hqpillow_retry.filters import DatePropFilter, AttemptsFilter, PillowErrorFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 from pillow_retry.models import PillowError
 from django.conf import settings
@@ -44,8 +44,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     fields = (
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.hqpillow_retry.filters.DatePropFilter',
-        'corehq.apps.hqpillow_retry.filters.PillowFilter',
-        'corehq.apps.hqpillow_retry.filters.ErrorTypeFilter',
+        'corehq.apps.hqpillow_retry.filters.PillowErrorFilter',
         'corehq.apps.hqpillow_retry.filters.AttemptsFilter',
     )
 
@@ -66,12 +65,22 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         )
 
     @property
+    @memoized
+    def pillow_error_filter(self):
+        return PillowErrorFilter(self.request, None)
+
+    @property
+    @memoized
+    def pillow_error_vals(self):
+        return {item['slug']: item['value'] for item in self.pillow_error_filter.GET_values}
+
+    @property
     def pillow(self):
-        return PillowFilter.get_value(self.request, None)
+        return self.pillow_error_vals.get('pillow')
 
     @property
     def error(self):
-        return ErrorTypeFilter.get_value(self.request, None)
+        return self.pillow_error_vals.get('error')
 
     @property
     def sort_descending(self):
@@ -102,11 +111,9 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
 
     @property
     def shared_pagination_GET_params(self):
-        return [
+        return self.pillow_error_filter.shared_pagination_GET_params + [
             dict(name='startdate', value=self.datespan.startdate_display),
             dict(name='enddate', value=self.datespan.enddate_display),
-            dict(name=PillowFilter.slug, value=self.pillow),
-            dict(name=ErrorTypeFilter.slug, value=self.error),
             dict(name=DatePropFilter.slug, value=self.date_field_filter),
             dict(name=AttemptsFilter.slug, value=str(self.filter_attempts)),
         ]

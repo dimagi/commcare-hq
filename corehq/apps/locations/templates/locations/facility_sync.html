@@ -101,25 +101,26 @@
 
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
-
-    {% if settings.source_config.enabled %}
-    <header>
+    {% block enabled_section %}
+        {% if settings.source_config.enabled %}
+        <header>
+            <div class="row-fluid">
+                <div class="span8">
+                    <h2>{% trans "Sync with" %} {{ current_page.page_name }}</h2>
+                </div>
+            </div>
+        </header>
         <div class="row-fluid">
-            <div class="span8">
-                <h2>{% trans "Sync with" %} {{ current_page.page_name }}</h2>
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="sync_lmis">
+                        {% trans "Sync Now" %}
+                    </button>
+                </div>
             </div>
         </div>
-    </header>
-    <div class="row-fluid">
-        <div class="span12">
-            <div class="btn-toolbar">
-                <button class="btn" id="sync_lmis">
-                    {% trans "Sync Now" %}
-                </button>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+        {% endif %}
+    {% endblock %}
     {% endif %}
 
 {% endblock %}

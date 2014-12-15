@@ -1,21 +1,19 @@
-from xml.etree import ElementTree
 from django.test import TestCase
-from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.util import get_default_requisition_config
-from corehq.apps.commtrack.models import CommTrackUser, SupplyPointCase, CommtrackConfig, ConsumptionConfig
+from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.backend import test
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.commtrack.models import Product
+from corehq.apps.products.models import Product
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload
@@ -86,7 +84,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
                    home_loc=None, user_data=None,
                    ):
     user_data = user_data or {}
-    user = CommTrackUser.create(
+    user = CommCareUser.create(
         domain,
         username,
         password,
@@ -103,7 +101,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         user.save()
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
-    return CommTrackUser.wrap(user.to_json())
+    return CommCareUser.wrap(user.to_json())
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
     name = name or code

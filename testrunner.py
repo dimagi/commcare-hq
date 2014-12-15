@@ -30,6 +30,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         settings.INSTALLED_APPS = (tuple(settings.INSTALLED_APPS) +
                                    tuple(settings.TEST_APPS))
         settings.CELERY_ALWAYS_EAGER = True
+        settings.PILLOWTOPS = {}
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
@@ -45,6 +46,11 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         for (setting, value) in new_db_settings.items():
             setattr(settings, setting, value)
             print "set %s settting to %s" % (setting, value)
+
+        settings.EXTRA_COUCHDB_DATABASES = {
+            db_name: self.get_test_db_name(url)
+            for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
+        }
 
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 

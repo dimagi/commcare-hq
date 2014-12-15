@@ -6,7 +6,8 @@ import itertools
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
-from corehq.apps.commtrack.models import Product, SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.products.models import Product
 from decimal import Decimal, InvalidOperation
 from django.utils.translation import ugettext as _
 

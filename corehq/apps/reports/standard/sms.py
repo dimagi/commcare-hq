@@ -5,10 +5,10 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
+from corehq.apps.sms.filters import MessageTypeFilter
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.sms.models import INCOMING, OUTGOING, SMSLog
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -18,6 +18,16 @@ import pytz
 from corehq.apps.users.views import EditWebUserView
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.sms.models import (
+    WORKFLOW_REMINDER,
+    WORKFLOW_KEYWORD,
+    WORKFLOW_BROADCAST,
+    WORKFLOW_CALLBACK,
+    WORKFLOW_DEFAULT,
+    INCOMING,
+    OUTGOING,
+    SMSLog,
+)
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_noop('SMS Usage')
@@ -175,8 +185,36 @@ the domain to the list in settings.MESSAGE_LOG_OPTIONS["abbreviated_phone_number
 class MessageLogReport(BaseCommConnectLogReport):
     name = ugettext_noop('Message Log')
     slug = 'message_log'
-    fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
+    fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.sms.filters.MessageTypeFilter',
+    ]
     exportable = True
+
+    def get_message_type_filter(self):
+        filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
+        if filtered_types:
+            filtered_types = set([mt.lower() for mt in filtered_types])
+            return lambda message_types: len(filtered_types.intersection(message_types)) > 0
+        return lambda message_types: True
+
+    @staticmethod
+    def _get_message_types(message):
+        relevant_workflows = [
+            WORKFLOW_REMINDER,
+            WORKFLOW_KEYWORD,
+            WORKFLOW_BROADCAST,
+            WORKFLOW_CALLBACK,
+            WORKFLOW_DEFAULT,
+        ]
+        types = []
+        if message.workflow in relevant_workflows:
+            types.append(message.workflow.lower())
+        if message.xforms_session_couch_id is not None:
+            types.append(MessageTypeFilter.OPTION_SURVEY.lower())
+        if not types:
+            types.append(MessageTypeFilter.OPTION_OTHER.lower())
+        return types
 
     @property
     def headers(self):
@@ -186,6 +224,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
+            DataTablesColumn(_("Type")),
         )
         header.custom_sort = [[0, 'desc']]
         return header
@@ -208,9 +247,14 @@ class MessageLogReport(BaseCommConnectLogReport):
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
 
         contact_cache = {}
+        message_type_filter = self.get_message_type_filter()
 
         for message in data:
             if message.direction == OUTGOING and not message.processed:
+                continue
+
+            message_types = self._get_message_types(message)
+            if not message_type_filter(message_types):
                 continue
 
             doc_info = self.get_recipient_info(message, contact_cache)
@@ -226,6 +270,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 self._fmt(phone_number),
                 self._fmt(direction_map.get(message.direction,"-")),
                 self._fmt(message.text),
+                self._fmt(", ".join(message_types)),
             ])
 
         return result

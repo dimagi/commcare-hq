@@ -1,8 +1,9 @@
 from corehq.apps.api.es import CaseES
-from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource
+from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, SimplifiedInventoryDataSource
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import Product, CommtrackConfig, CommtrackActionConfig, StockState
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.couch.loosechange import map_reduce
@@ -14,6 +15,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
+from corehq.apps.reports.filters.commtrack import AdvancedColumns
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -75,9 +77,11 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
 class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Stock Status by Product')
     slug = 'current_stock_status'
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter']
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
     exportable = True
     emailable = True
 
@@ -133,7 +137,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             last_modified_date__lte=self.datespan.enddate_utc,
             last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
-        ).order_by('product_id')
+        )
+
+        stock_states = stock_states.order_by('product_id')
 
         if self.program_id:
             stock_states = stock_states.filter(
@@ -204,12 +210,75 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             chart.data = self.get_data_for_graph()
             return [chart]
 
+
+class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
+    name = ugettext_noop('Inventory by Location')
+    slug = SimplifiedInventoryDataSource.slug
+    special_notice = ugettext_noop('A maximum of 100 locations will be shown. Filter by location if you need to see more.')
+    exportable = True
+    emailable = True
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.SingleDateFilter',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super(SimplifiedInventoryReport, self).__init__(*args, **kwargs)
+        products = SQLProduct.objects.filter(domain=self.domain)
+
+        if self.program_id:
+            products = products.filter(program_id=self.program_id)
+
+        # product names used for columns are sorted by product_id
+        # since that is the easiest way to sort the data later
+        self.product_names = [p.name for p in sorted(
+            products,
+            key=lambda p: p.product_id
+        )]
+
+        self.product_dict = {
+            p: None for p in products.values_list('product_id', flat=True)
+        }
+
+    @property
+    def headers(self):
+        columns = [
+            DataTablesColumn(_('Location')),
+        ]
+
+        columns += [DataTablesColumn(p) for p in self.product_names]
+
+        return DataTablesHeader(*columns)
+
+    @property
+    def rows(self):
+        config = {
+            'domain': self.domain,
+            'location_id': self.request.GET.get('location_id'),
+            'program_id': self.program_id,
+            'date': self.request.GET.get('date', None),
+            'max_rows': 100
+        }
+
+        data = SimplifiedInventoryDataSource(config).get_data()
+
+        for loc_name, loc_data in data:
+            row_dict = dict(self.product_dict, **dict(loc_data))
+            yield [loc_name] + [
+                v if v is not None else _('No data')
+                for k, v in sorted(row_dict.items(), key=lambda(k, v): k)]
+
+
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Inventory')
+    name = ugettext_noop('Aggregate Inventory')
     slug = StockStatusDataSource.slug
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.dont_use.fields.SelectProgramField',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.commtrack.AdvancedColumns',
+    ]
     exportable = True
     emailable = True
 
@@ -218,24 +287,31 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return super(InventoryReport, cls).show_in_navigation(domain, project, user)
 
+    def showing_advanced_columns(self):
+        return AdvancedColumns.get_value(self.request, self.domain)
+
     @property
     def headers(self):
         columns = [
             DataTablesColumn(_('Product')),
             DataTablesColumn(_('Stock on Hand'),
                 help_text=_('Total stock on hand for all locations matching the filters.')),
-            DataTablesColumn(_('Monthly Consumption'),
-                help_text=_('Total average monthly consumption for all locations matching the filters.')),
-            DataTablesColumn(_('Months of Stock'),
-                help_text=_('Number of months of stock remaining for all locations matching the filters. \
-                            Computed by calculating stock on hand divided by monthly consumption.')),
-            DataTablesColumn(_('Stock Status'),
-                help_text=_('Stock status prediction made using calculated consumption \
-                            or project specific default values. "No Data" means that \
-                            there is not enough data to compute consumption and default \
-                            values have not been uploaded yet.')),
-            # DataTablesColumn(_('Resupply Quantity Suggested')),
         ]
+
+        if self.showing_advanced_columns():
+            columns += [
+                DataTablesColumn(_('Monthly Consumption'),
+                    help_text=_('Total average monthly consumption for all locations matching the filters.')),
+                DataTablesColumn(_('Months of Stock'),
+                    help_text=_('Number of months of stock remaining for all locations matching the filters. \
+                                Computed by calculating stock on hand divided by monthly consumption.')),
+                DataTablesColumn(_('Stock Status'),
+                    help_text=_('Stock status prediction made using calculated consumption \
+                                or project specific default values. "No Data" means that \
+                                there is not enough data to compute consumption and default \
+                                values have not been uploaded yet.')),
+                # DataTablesColumn(_('Resupply Quantity Suggested')),
+            ]
 
         return DataTablesHeader(*columns)
 
@@ -249,7 +325,8 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
                 'program_id': self.request.GET.get('program'),
                 'startdate': self.datespan.startdate_utc,
                 'enddate': self.datespan.enddate_utc,
-                'aggregate': True
+                'aggregate': True,
+                'advanced_columns': self.showing_advanced_columns(),
             }
             self.prod_data = self.prod_data + list(StockStatusDataSource(config).get_data())
         return self.prod_data
@@ -268,22 +345,28 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
         }
 
         for row in self.product_data:
-            yield [
+            result = [
                 fmt(row[StockStatusDataSource.SLUG_PRODUCT_NAME]),
                 fmt(row[StockStatusDataSource.SLUG_CURRENT_STOCK]),
-                fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
-                fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
-                fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
-                # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
             ]
+            if self.showing_advanced_columns():
+                result += [
+                    fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
+                    fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
+                    fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
+                    # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
+                ]
+            yield result
 
 
 class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Reporting Rate')
     slug = 'reporting_rate'
-    fields = ['corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-              'corehq.apps.reports.filters.dates.DatespanFilter',]
+    fields = [
+        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+    ]
     exportable = True
     emailable = True
 

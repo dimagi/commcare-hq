@@ -66,8 +66,8 @@
                             case type defined.
                         {% endif %}
                         {% if error.type == "invalid filter xpath" %}
-                            {% if error.column.filter_xpath %}
-                                Case List has invalid filter xpath <code>{{ error.column.filter_xpath }}</code> in module
+                            {% if error.filter %}
+                                Case List has invalid filter xpath <code>{{ error.filter }}</code> in module
                             {% else %}
                                 Case List has blank filter in module
                             {% endif %}
@@ -80,6 +80,15 @@
                                 Case List has blank sort field in module
                             {% endif %}
                             <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                        {% endif %}
+                        {% if error.type == "no parent select id" %}
+                            Module
+                            <a href="{% url "view_module" domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                            uses parent case selection but doesn't have a parent
+                            module specified.
+                        {% endif %}
+                        {% if error.type ==  "parent cycle" %}
+                            The app's parent child case selection graph contains a cycle.
                         {% endif %}
                         {% if error.type == "invalid location xpath" %}
                             Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
@@ -119,7 +128,7 @@
                         {% endif %}
                         {% if error.type == "path error" %}
                             {% if error.path %}
-                                The case configuration in form {% include "app_manager/partials/form_error_message.html" %}
+                                The case management in form {% include "app_manager/partials/form_error_message.html" %}
                                 contains the invalid path "{{ error.path }}".
                             {% else %}
                                 {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}

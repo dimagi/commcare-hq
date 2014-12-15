@@ -14,12 +14,25 @@ import magic
 from corehq.apps.app_manager.xform import XFormValidationError
 from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
-from hutch.models import AuxMedia
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
+
+
+class AuxMedia(DocumentSchema):
+    """
+    Additional metadata companion for couch models
+    that you want to supply add arbitrary attachments to
+    """
+    uploaded_date = DateTimeProperty()
+    uploaded_by = StringProperty()
+    uploaded_filename = StringProperty()  # the uploaded filename info
+    checksum = StringProperty()
+    attachment_id = StringProperty()  # the actual attachment id in _attachments
+    media_meta = DictProperty()
+    notes = StringProperty()
 
 
 class HQMediaLicense(DocumentSchema):
@@ -421,7 +434,7 @@ class ApplicationMediaReference(object):
                  media_class=None, is_menu_media=False, app_lang=None):
 
         if not isinstance(path, basestring):
-            raise ValueError("path should be a string")
+            path = ''
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):
@@ -545,6 +558,33 @@ class HQMediaMixin(Document):
                     self.media_form_errors = True
         return media
 
+    def get_menu_media(self, module, module_index, form=None, form_index=None,
+                       as_json=False):
+        media_kwargs = self.get_media_ref_kwargs(
+            module, module_index, form=form, form_index=form_index,
+            is_menu_media=True)
+        menu_media = {}
+        item = form or module
+        if item.media_image or as_json:
+            image_ref = ApplicationMediaReference(
+                item.media_image,
+                media_class=CommCareImage,
+                **media_kwargs
+            )
+            if as_json:
+                image_ref = image_ref.as_dict()
+            menu_media['image'] = image_ref
+        if item.media_audio or as_json:
+            audio_ref = ApplicationMediaReference(
+                item.media_audio,
+                media_class=CommCareAudio,
+                **media_kwargs
+            )
+            if as_json:
+                audio_ref = audio_ref.as_dict()
+            menu_media['audio'] = audio_ref
+        return menu_media
+
     @property
     @memoized
     def all_media_paths(self):
@@ -553,6 +593,18 @@ class HQMediaMixin(Document):
     @memoized
     def get_all_paths_of_type(self, media_class_name):
         return set([m.path for m in self.all_media if m.media_class.__name__ == media_class_name])
+
+    def get_media_ref_kwargs(self, module, module_index, form=None,
+                             form_index=None, is_menu_media=False):
+        return {
+            'app_lang': self.default_language,
+            'module_name': module.name,
+            'module_id': module_index,
+            'form_name': form.name if form else None,
+            'form_id': form.unique_id if form else None,
+            'form_order': form_index,
+            'is_menu_media': is_menu_media,
+        }
 
     def remove_unused_mappings(self):
         """

@@ -1,5 +1,5 @@
 import copy
-from django.utils.unittest.case import TestCase
+from django.test import TestCase
 from django.conf import settings
 import simplejson
 from corehq.apps.api.es import report_term_filter

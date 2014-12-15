@@ -1,5 +1,6 @@
 import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
+from django.utils.datastructures import MultiValueDictKeyError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.importer import base
 from corehq.apps.importer import util as importer_util
@@ -110,7 +111,14 @@ def excel_config(request, domain):
 def excel_fields(request, domain):
     named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
-    search_column = request.POST['search_column']
+    try:
+        search_column = request.POST['search_column']
+    except MultiValueDictKeyError:
+        # this is only true if your configuration is messed up in an irreparable way
+        messages.error(request, _('It looks like you may have accessed this page from a stale page. '
+                                  'Please start over.'))
+        return _spreadsheet_expired(request, domain)
+
     search_field = request.POST['search_field']
     create_new_cases = request.POST.get('create_new_cases') == 'on'
     key_value_columns = request.POST.get('key_value_columns') == 'on'

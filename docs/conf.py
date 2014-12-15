@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import sys, os
+from mock import MagicMock
 
 sys.path.insert(0, os.path.abspath('..'))
 from ..manage import _set_source_root, _set_source_root_parent
@@ -20,6 +21,18 @@ _set_source_root_parent('submodules')
 _set_source_root(os.path.join('corehq', 'ex-submodules'))
 _set_source_root(os.path.join('custom', '_legacy'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+
+# -- Custom configuration -----------------------------------------------------
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return Mock()
+
+# mock out stubborn modules that are hard to pip install
+# https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
+MOCK_MODULES = ["PIL.Image", "PIL"]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration -----------------------------------------------------
 

@@ -1,18 +1,31 @@
+import logging
+from couchdbkit.exceptions import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import Product, SupplyPointCase, StockState
+from corehq.apps.commtrack.models import SupplyPointCase, StockState, SQLLocation
+from corehq.apps.products.models import Product
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
-from casexml.apps.stock.models import StockTransaction
+from dateutil import parser
+from casexml.apps.stock.models import StockTransaction, StockReport
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
+from django.db.models import Sum
+
+
+def format_decimal(d):
+    # https://docs.python.org/2/library/decimal.html#decimal-faq
+    if d is not None:
+        return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
+    else:
+        return None
 
 
 class CommtrackDataSourceMixin(object):
@@ -55,6 +68,74 @@ class CommtrackDataSourceMixin(object):
             return request
 
 
+class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
+    slug = 'location_inventory'
+
+    def datetime(self):
+        """
+        Returns a datetime object at the end of the selected
+        (or current) date. This is needed to properly filter
+        transactions that occur during the day we are filtering
+        for
+        """
+        # note: empty string is parsed as today's date
+        date = self.config.get('date', '')
+
+        try:
+            date = parser.parse(date).date()
+        except ValueError:
+            date = datetime.now().date()
+
+        return datetime(date.year, date.month, date.day, 23, 59, 59)
+
+    def get_data(self, slugs=None):
+        if self.active_location:
+            current_location = self.active_location.sql_location
+
+            if current_location.supply_point_id:
+                locations = [current_location]
+            else:
+                locations = []
+
+            locations += list(
+                current_location.get_descendants().filter(
+                    supply_point_id__isnull=False
+                )
+            )
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                supply_point_id__isnull=False
+            )
+
+        # locations at this point will only have location objects
+        # that have supply points associated
+        for loc in locations[:self.config.get('max_rows', 100)]:
+            transactions = StockTransaction.objects.filter(
+                case_id=loc.supply_point_id,
+            )
+
+            if self.program_id:
+                transactions = transactions.filter(
+                    sql_product__program_id=self.program_id
+                )
+
+            stock_results = transactions.exclude(
+                report__date__gt=self.datetime
+            ).order_by(
+                'product_id', '-report__date'
+            ).values_list(
+                'product_id', 'stock_on_hand'
+            ).distinct(
+                'product_id'
+            )
+
+            # take a pass over the data to format the stock on hand
+            # values properly
+            stock_results = [(p, format_decimal(soh)) for p, soh in stock_results]
+
+            yield (loc.name, stock_results)
+
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     """
@@ -91,6 +172,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     SLUG_CATEGORY = 'category'
     SLUG_RESUPPLY_QUANTITY_NEEDED = 'resupply_quantity_needed'
 
+    def _include_advanced_data(self):
+        # if this flag is not specified, we default to giving
+        # all the data back
+        return self.config.get('advanced_columns', True)
+
     @property
     @memoized
     def _slug_attrib_map(self):
@@ -99,22 +185,24 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             return Product.get(product_id).name
         @memoized
         def supply_point_location(case_id):
-            return SupplyPointCase.get(case_id).location_[-1]
+            return SupplyPointCase.get(case_id).location_id
 
         raw_map = {
             self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
             self.SLUG_PRODUCT_ID: 'product_id',
-            self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
-            # SLUG_LOCATION_LINEAGE: lambda p: list(reversed(p.location_[:-1])),
             self.SLUG_CURRENT_STOCK: 'stock_on_hand',
-            self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
-            self.SLUG_MONTHS_REMAINING: 'months_remaining',
-            self.SLUG_CATEGORY: 'stock_category',
-            # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
-            # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
-            self.SLUG_LAST_REPORTED: 'last_modified_date',
-            self.SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
         }
+        if self._include_advanced_data():
+            raw_map.update({
+                self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
+                self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
+                self.SLUG_MONTHS_REMAINING: 'months_remaining',
+                self.SLUG_CATEGORY: 'stock_category',
+                # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
+                # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
+                self.SLUG_LAST_REPORTED: 'last_modified_date',
+                self.SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
+            })
 
         # normalize the slug attrib map so everything is callable
         def _normalize_row(slug, function_or_property):
@@ -141,12 +229,15 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self, slugs=None):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
+        stock_states = StockState.objects.filter(
+            section_id=STOCK_SECTION_TYPE,
+            last_modified_date__lte=self.end_date,
+            last_modified_date__gte=self.start_date,
+        )
+
         if len(sp_ids) == 1:
-            stock_states = StockState.objects.filter(
+            stock_states = stock_states.filter(
                 case_id=sp_ids[0],
-                section_id=STOCK_SECTION_TYPE,
-                last_modified_date__lte=self.end_date,
-                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:
@@ -154,11 +245,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             return self.leaf_node_data(stock_states)
         else:
-            stock_states = StockState.objects.filter(
+            stock_states = stock_states.filter(
                 case_id__in=sp_ids,
-                section_id=STOCK_SECTION_TYPE,
-                last_modified_date__lte=self.end_date,
-                last_modified_date__gte=self.start_date,
             )
 
             if self.program_id:
@@ -169,79 +257,103 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             else:
                 return self.raw_product_states(stock_states, slugs)
 
-    def format_decimal(self, d):
-        # https://docs.python.org/2/library/decimal.html#decimal-faq
-        if d is not None:
-            return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
-        else:
-            return None
-
     def leaf_node_data(self, stock_states):
         for state in stock_states:
             product = Product.get(state.product_id)
-            yield {
-                'category': state.stock_category,
+
+            result = {
                 'product_id': product._id,
-                'consumption': state.get_monthly_consumption(),
-                'months_remaining': state.months_remaining,
-                'location_id': SupplyPointCase.get(state.case_id).location_id,
                 'product_name': product.name,
-                'current_stock': self.format_decimal(state.stock_on_hand),
-                'location_lineage': None,
-                'resupply_quantity_needed': state.resupply_quantity_needed
+                'current_stock': format_decimal(state.stock_on_hand),
             }
 
-    def aggregated_data(self, stock_states):
-        product_aggregation = {}
-        for state in stock_states:
-            if state.product_id in product_aggregation:
-                product = product_aggregation[state.product_id]
-                product['current_stock'] = self.format_decimal(
-                    product['current_stock'] + state.stock_on_hand
-                )
-
-                consumption = state.get_monthly_consumption()
-                if product['consumption'] is None:
-                    product['consumption'] = consumption
-                elif consumption is not None:
-                    product['consumption'] += consumption
-
-                product['count'] += 1
-
-                product['category'] = stock_category(
-                    product['current_stock'],
-                    product['consumption'],
-                    Domain.get_by_name(self.domain)
-                )
-                product['months_remaining'] = months_of_stock_remaining(
-                    product['current_stock'],
-                    product['consumption']
-                )
-            else:
-                product = Product.get(state.product_id)
-                consumption = state.get_monthly_consumption()
-
-                product_aggregation[state.product_id] = {
-                    'product_id': product._id,
-                    'location_id': None,
-                    'product_name': product.name,
+            if self._include_advanced_data():
+                result.update({
+                    'location_id': SupplyPointCase.get(state.case_id).location_id,
                     'location_lineage': None,
-                    'resupply_quantity_needed': None,
-                    'current_stock': self.format_decimal(state.stock_on_hand),
-                    'count': 1,
-                    'consumption': consumption,
-                    'category': stock_category(
-                        state.stock_on_hand,
-                        consumption,
-                        Domain.get_by_name(self.domain)
-                    ),
-                    'months_remaining': months_of_stock_remaining(
-                        state.stock_on_hand,
-                        consumption
-                    )
-                }
+                    'category': state.stock_category,
+                    'consumption': state.get_monthly_consumption(),
+                    'months_remaining': state.months_remaining,
+                    'resupply_quantity_needed': state.resupply_quantity_needed
+                })
 
-        return product_aggregation.values()
+            yield result
+
+    def aggregated_data(self, stock_states):
+        def _convert_to_daily(consumption):
+            return consumption / 30 if consumption is not None else None
+
+        if self._include_advanced_data():
+            product_aggregation = {}
+            for state in stock_states:
+                if state.product_id in product_aggregation:
+                    product = product_aggregation[state.product_id]
+                    product['current_stock'] = format_decimal(
+                        product['current_stock'] + state.stock_on_hand
+                    )
+
+                    consumption = state.get_monthly_consumption()
+                    if product['consumption'] is None:
+                        product['consumption'] = consumption
+                    elif consumption is not None:
+                        product['consumption'] += consumption
+
+                    product['count'] += 1
+
+                    product['category'] = stock_category(
+                        product['current_stock'],
+                        _convert_to_daily(product['consumption']),
+                        Domain.get_by_name(self.domain)
+                    )
+                    product['months_remaining'] = months_of_stock_remaining(
+                        product['current_stock'],
+                        _convert_to_daily(product['consumption'])
+                    )
+                else:
+                    product = Product.get(state.product_id)
+                    consumption = state.get_monthly_consumption()
+
+                    product_aggregation[state.product_id] = {
+                        'product_id': product._id,
+                        'location_id': None,
+                        'product_name': product.name,
+                        'location_lineage': None,
+                        'resupply_quantity_needed': None,
+                        'current_stock': format_decimal(state.stock_on_hand),
+                        'count': 1,
+                        'consumption': consumption,
+                        'category': stock_category(
+                            state.stock_on_hand,
+                            _convert_to_daily(consumption),
+                            Domain.get_by_name(self.domain)
+                        ),
+                        'months_remaining': months_of_stock_remaining(
+                            state.stock_on_hand,
+                            _convert_to_daily(consumption)
+                        )
+                    }
+
+            return product_aggregation.values()
+        else:
+            # If we don't need advanced data, we can
+            # just do some orm magic.
+            #
+            # Note: this leaves out some harder to get quickly
+            # values like location_id, but shouldn't be needed
+            # unless we expand what uses this.
+            aggregated_states = stock_states.values_list(
+                'sql_product__name',
+                'sql_product__product_id',
+            ).annotate(stock_on_hand=Sum('stock_on_hand'))
+            result = []
+            for ag in aggregated_states:
+                result.append({
+                    'product_name': ag[0],
+                    'product_id': ag[1],
+                    'current_stock': format_decimal(ag[2])
+                })
+
+            return result
 
     def raw_product_states(self, stock_states, slugs):
         for state in stock_states:
@@ -293,32 +405,46 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 self.active_location,
             )
 
-            supply_points = (SupplyPointCase.wrap(doc) for doc in iter_docs(SupplyPointCase.get_db(), sp_ids))
             form_xmlnses = [form['xmlns'] for form in self.all_relevant_forms.values()]
+            spoint_loc_map = {
+                doc['_id']: doc['location_id']
+                for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
+            }
+            locations = {
+                doc['_id']: Location.wrap(doc)
+                for doc in iter_docs(Location.get_db(), spoint_loc_map.values())
+            }
 
-            for supply_point in supply_points:
-                # todo: get locations in bulk
-                loc = supply_point.location
-                transactions = StockTransaction.objects.filter(
-                    case_id=supply_point._id,
+            for spoint_id, loc_id in spoint_loc_map.items():
+                loc = locations[loc_id]
+
+                form_ids = StockReport.objects.filter(
+                    stocktransaction__case_id=spoint_id
                 ).exclude(
-                    report__date__lte=self.start_date
+                    date__lte=self.start_date
                 ).exclude(
-                    report__date__gte=self.end_date
-                ).order_by('-report__date')
+                    date__gte=self.end_date
+                ).values_list(
+                    'form_id', flat=True
+                ).order_by('-date').distinct()  # not truly distinct due to ordering
                 matched = False
-                for trans in transactions:
-                    if XFormInstance.get(trans.report.form_id).xmlns in form_xmlnses:
-                        yield {
-                            'loc_id': loc._id,
-                            'loc_path': loc.path,
-                            'name': loc.name,
-                            'type': loc.location_type,
-                            'reporting_status': 'reporting',
-                            'geo': loc._geopoint,
-                        }
-                        matched = True
-                        break
+                for form_id in form_ids:
+                    try:
+                        if XFormInstance.get(form_id).xmlns in form_xmlnses:
+                            yield {
+                                'loc_id': loc._id,
+                                'loc_path': loc.path,
+                                'name': loc.name,
+                                'type': loc.location_type,
+                                'reporting_status': 'reporting',
+                                'geo': loc._geopoint,
+                            }
+                            matched = True
+                            break
+                    except ResourceNotFound:
+                        logging.error('Stock report for location {} in {} references non-existent form {}'.format(
+                            loc._id, loc.domain, form_id
+                        ))
                 if not matched:
                     yield {
                         'loc_id': loc._id,

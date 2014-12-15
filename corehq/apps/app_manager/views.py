@@ -31,8 +31,21 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.commtrack.models import Program
-from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.apps.app_manager.translations import (
+    expected_bulk_app_sheet_headers,
+    get_translation,
+    process_bulk_app_translation_upload
+)
+from corehq.apps.programs.models import Program
+from corehq.apps.hqmedia.controller import (
+    MultimediaImageUploadController,
+    MultimediaAudioUploadController,
+)
+from corehq.apps.hqmedia.views import (
+    DownloadMultimediaZip,
+    ProcessImageFileUploadView,
+    ProcessAudioFileUploadView,
+)
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.reports.formdetails.readable import (
@@ -47,6 +60,7 @@ from unidecode import unidecode
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, RegexURLResolver, Resolver404
 from django.shortcuts import render
+from corehq.apps.translations import system_text_sources
 from corehq.apps.translations.models import Translation
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
@@ -54,6 +68,7 @@ from django.utils.http import urlencode
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from couchdbkit.resource import ResourceNotFound
+from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.const import (
     APP_V1,
     APP_V2,
@@ -66,7 +81,6 @@ from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_proper
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.translations import system_text as st_trans
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
@@ -78,7 +92,7 @@ from corehq.apps.app_manager.xform import (
     CaseError,
     XForm,
     XFormError,
-    XFormValidationError,
+    XFormValidationError
 )
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
@@ -96,6 +110,7 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AdvancedModule,
+    AppEditingError,
     Application,
     ApplicationBase,
     CareplanForm,
@@ -106,13 +121,17 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Form,
     FormActions,
+    FormNotFoundException,
+    FormSchedule,
+    IncompatibleFormTypeException,
     Module,
+    ModuleNotFoundException,
     ParentSelect,
     SavedAppBuild,
     get_app,
     load_case_reserved_words,
     str_to_cls,
-)
+    DetailTab)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -120,6 +139,9 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
+# Numbers in paths is prohibited, hence the use of importlib
+import importlib
+FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
 
 logger = logging.getLogger(__name__)
 
@@ -279,6 +301,18 @@ def copy_app(req, domain):
         return copy_app_check_domain(req, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
     else:
         return view_generic(req, domain, app_id=app_id, copy_app_form=form)
+
+
+@require_can_edit_apps
+def migrate_app_filters(req, domain, app_id):
+    message = "Migration succeeded!"
+    try:
+        app = get_app(domain, app_id)
+        FilterMigration.migrate_app(app)
+        app.save()
+    except:
+        message = "Migration failed :("
+    return HttpResponse(message, content_type='text/plain')
 
 
 @require_can_edit_apps
@@ -529,37 +563,33 @@ def get_app_view_context(request, app):
     build_spec_setting['options_map'] = options_map
     build_spec_setting['default_app_version'] = app.application_version
 
-    if app.get_doc_type() == 'Application':
-        try:
-            # todo remove get_media_references
-            multimedia = app.get_media_references()
-        except ProcessTimedOut:
-            notify_exception(request)
-            messages.warning(request, (
-                "We were unable to check if your forms had errors. "
-                "Refresh the page and we will try again."
-            ))
-            multimedia = {
-                'references': {},
-                'form_errors': True,
-                'missing_refs': False,
-            }
-        context.update({
-            'multimedia': multimedia,
-        })
-
     context.update({
-        'bulk_upload': {
-            'action': reverse('upload_translations',
+        'bulk_ui_translation_upload': {
+            'action': reverse('upload_bulk_ui_translations',
                               args=(app.domain, app.get_id)),
-            'download_url': reverse('download_translations',
+            'download_url': reverse('download_bulk_ui_translations',
                                     args=(app.domain, app.get_id)),
             'adjective': _(u"U\u200BI translation"),
             'plural_noun': _(u"U\u200BI translations"),
         },
+        'bulk_app_translation_upload': {
+            'action': reverse('upload_bulk_app_translations',
+                              args=(app.domain, app.get_id)),
+            'download_url': reverse('download_bulk_app_translations',
+                                    args=(app.domain, app.get_id)),
+            'adjective': _("app translation"),
+            'plural_noun': _("app translations"),
+        },
     })
     context.update({
-        'bulk_upload_form': get_bulk_upload_form(context),
+        'bulk_ui_translation_form': get_bulk_upload_form(
+            context,
+            context_key="bulk_ui_translation_upload"
+        ),
+        'bulk_app_translation_form': get_bulk_upload_form(
+            context,
+            context_key="bulk_app_translation_upload"
+        )
     })
     return context
 
@@ -599,16 +629,25 @@ def _clear_app_cache(request, domain):
         cache.delete(key)
 
 
+def _get_edit(request, domain):
+    if getattr(request, 'couch_user', None):
+        return (
+            (request.GET.get('edit', 'true') == 'true') and
+            (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+        )
+    else:
+        return False
+
+
 def get_apps_base_context(request, domain, app):
 
     lang, langs = get_langs(request, app)
 
+    edit = _get_edit(request, domain)
+
     if getattr(request, 'couch_user', None):
-        edit = ((request.GET.get('edit', 'true') == 'true') and
-                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser))
         timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
-        edit = False
         timezone = None
 
     context = {
@@ -752,13 +791,10 @@ def get_module_view_context_and_template(app, module):
         parent_module_ids = [mod.unique_id for mod in modules
                              if mod.case_type in parent_types]
         return [{
-                    'unique_id': mod.unique_id,
-                    'name': mod.name,
-                    'is_parent': mod.unique_id in parent_module_ids,
-                } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
-
-    def get_sort_elements(details):
-        return [prop.values() for prop in details.sort_elements]
+            'unique_id': mod.unique_id,
+            'name': mod.name,
+            'is_parent': mod.unique_id in parent_module_ids,
+        } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
     ensure_unique_ids()
     if isinstance(module, CareplanModule):
@@ -767,21 +803,25 @@ def get_module_view_context_and_template(app, module):
             'details': [
                 {
                     'label': _('Goal List'),
+                    'detail_label': _('Goal Detail'),
                     'type': 'careplan_goal',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
-                    'sort_elements': json.dumps(get_sort_elements(module.goal_details.short)),
+                    'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
+                    'child_case_types': list(module.get_child_case_types()),
                 },
                 {
                     'label': _('Task List'),
+                    'detail_label': _('Task Detail'),
                     'type': 'careplan_task',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
-                    'sort_elements': json.dumps(get_sort_elements(module.task_details.short)),
+                    'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
+                    'child_case_types': list(module.get_child_case_types()),
                 },
             ],
         }
@@ -790,27 +830,31 @@ def get_module_view_context_and_template(app, module):
         def get_details():
             details = [{
                 'label': _('Case List'),
+                'detail_label': _('Case Detail'),
                 'type': 'case',
                 'model': 'case',
                 'properties': sorted(builder.get_properties(case_type)),
-                'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                'sort_elements': module.case_details.short.sort_elements,
                 'short': module.case_details.short,
                 'long': module.case_details.long,
+                'child_case_types': list(module.get_child_case_types()),
             }]
 
             if app.commtrack_enabled:
                 details.append({
                     'label': _('Product List'),
+                    'detail_label': _('Product Detail'),
                     'type': 'product',
                     'model': 'product',
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-                    'sort_elements': json.dumps(get_sort_elements(module.product_details.short)),
+                    'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
+                    'child_case_types': list(module.get_child_case_types()),
                 })
 
             return details
 
-        return "app_manager/module_view.html", {
+        return "app_manager/module_view_advanced.html", {
             'details': get_details(),
         }
     else:
@@ -820,13 +864,15 @@ def get_module_view_context_and_template(app, module):
             'details': [
                 {
                     'label': _('Case List'),
+                    'detail_label': _('Case Detail'),
                     'type': 'case',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(case_type)),
-                    'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                    'sort_elements': module.case_details.short.sort_elements,
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
+                    'child_case_types': list(module.get_child_case_types()),
                 },
             ],
         }
@@ -905,17 +951,41 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = (
-            feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
-        )
-        module_context["enable_enum_image"] = (
-            feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
-        )
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
         if app:
             context.update(get_app_view_context(req, app))
+
+    # update multimedia context for forms and modules.
+    menu_host = form or module
+    if menu_host and toggles.MENU_MULTIMEDIA_UPLOAD.enabled(req.user.username):
+
+        default_file_name = 'module%s' % module_id
+        if form_id:
+            default_file_name = '%s_form%s' % (default_file_name, form_id)
+
+        context.update({
+            'multimedia': {
+                'menu_refs': app.get_menu_media(
+                    module, module_id, form=form, form_index=form_id, as_json=True
+                ),
+                "references": app.get_references(),
+                "object_map": app.get_object_map(),
+                'upload_managers': {
+                    'icon': MultimediaImageUploadController(
+                        "hqimage",
+                        reverse(ProcessImageFileUploadView.name,
+                                args=[app.domain, app.get_id])
+                    ),
+                    'audio': MultimediaAudioUploadController(
+                        "hqaudio", reverse(ProcessAudioFileUploadView.name,
+                                args=[app.domain, app.get_id])
+                    ),
+                },
+                'default_file_name': default_file_name,
+            }
+        })
 
     error = req.GET.get('error', '')
 
@@ -970,6 +1040,35 @@ def view_app(req, domain, app_id=None):
     return view_generic(req, domain, app_id)
 
 
+@require_deploy_apps
+def multimedia_ajax(request, domain, app_id, template='app_manager/partials/multimedia_ajax.html'):
+    app = get_app(domain, app_id)
+    if app.get_doc_type() == 'Application':
+        try:
+            # todo remove get_media_references
+            multimedia = app.get_media_references()
+        except ProcessTimedOut:
+            notify_exception(request)
+            messages.warning(request, (
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            ))
+            multimedia = {
+                'references': {},
+                'form_errors': True,
+                'missing_refs': False,
+            }
+        context = {
+            'multimedia': multimedia,
+            'domain': domain,
+            'app': app,
+            'edit': _get_edit(request, domain)
+        }
+        return render(request, template, context)
+    else:
+        raise Http404()
+
+
 @require_can_edit_apps
 def form_source(req, domain, app_id, module_id, form_id):
     return form_designer(req, domain, app_id, module_id, form_id)
@@ -997,6 +1096,15 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         except IndexError:
             return bail(req, domain, app_id, not_found="form")
 
+    if form.no_vellum:
+        messages.warning(req, _(
+            "You tried to edit this form in the Form Builder. "
+            "However, your administrator has locked this form against editing "
+            "in the form builder, so we have redirected you to "
+            "the form's front page instead."
+        ))
+        return back_to_main(req, domain, app_id=app_id,
+                            unique_form_id=form.unique_id)
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
@@ -1006,7 +1114,9 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
-        'sessionid': req.COOKIES.get('sessionid')
+        'sessionid': req.COOKIES.get('sessionid'),
+        'features': toggles.toggles_dict(username=req.user.username,
+                                         domain=domain)
     })
     return render(req, 'app_manager/form_designer.html', context)
 
@@ -1033,6 +1143,25 @@ def new_app(req, domain):
     app_id = app.id
 
     return back_to_main(req, domain, app_id=app_id)
+
+@require_can_edit_apps
+def default_new_app(req, domain):
+    """New Blank Application according to defaults. So that we can link here
+    instead of creating a form and posting to the above link, which was getting
+    annoying for the Dashboard.
+    """
+    lang = 'en'
+    app = Application.new_app(
+        domain, _("Untitled Application"), lang=lang,
+        application_version=APP_V2
+    )
+    app.add_module(Module.new_module(_("Untitled Module"), lang))
+    app.new_form(0, "Untitled Form", lang)
+    if req.project.secure_submissions:
+        app.secure_submissions = True
+    _clear_app_cache(req, domain)
+    app.save()
+    return back_to_main(req, domain, app_id=app.id)
 
 
 @no_conflict_require_POST
@@ -1231,7 +1360,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "all": None,
         "case_type": None, "put_in_root": None, "display_separately": None,
         "name": None, "case_label": None, "referral_label": None,
-        'media_image': None, 'media_audio': None,
+        'media_image': None, 'media_audio': None, 'has_schedule': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
         "parent_module": None,
@@ -1298,6 +1427,13 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             module[SLUG].show = json.loads(req.POST['{SLUG}-show'.format(SLUG=SLUG)])
             module[SLUG].label[lang] = req.POST['{SLUG}-label'.format(SLUG=SLUG)]
 
+    if isinstance(module, AdvancedModule):
+        module.has_schedule = should_edit('has_schedule')
+        if should_edit('has_schedule'):
+            for form in module.get_forms():
+                if not form.schedule:
+                    form.schedule = FormSchedule()
+
     _handle_media_edits(req, module, should_edit, resp)
 
     app.save(resp)
@@ -1308,17 +1444,18 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
 @require_can_edit_apps
 def edit_module_detail_screens(req, domain, app_id, module_id):
     """
-    Called to over write entire detail screens at a time
-
+    Overwrite module case details. Only overwrites components that have been
+    provided in the request. Components are short, long, filter, parent_select,
+    and sort_elements.
     """
     params = json_request(req.POST)
     detail_type = params.get('type')
-    screens = params.get('screens')
-    parent_select = params.get('parent_select')
-    sort_elements = screens['sort_elements']
-
-    if not screens:
-        return HttpResponseBadRequest("Requires JSON encoded param 'screens'")
+    short = params.get('short', None)
+    long = params.get('long', None)
+    tabs = params.get('tabs', None)
+    filter = params.get('filter', ())
+    parent_select = params.get('parent_select', None)
+    sort_elements = params.get('sort_elements', None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1335,19 +1472,28 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         except AttributeError:
             return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
-    detail.short.columns = map(DetailColumn.wrap, screens['short'])
-    detail.long.columns = map(DetailColumn.wrap, screens['long'])
-
-    detail.short.sort_elements = []
-    for sort_element in sort_elements:
-        item = SortElement()
-        item.field = sort_element['field']
-        item.type = sort_element['type']
-        item.direction = sort_element['direction']
-        detail.short.sort_elements.append(item)
-
-    if parent_select:
+    if short is not None:
+        detail.short.columns = map(DetailColumn.wrap, short)
+    if long is not None:
+        detail.long.columns = map(DetailColumn.wrap, long)
+    if tabs is not None and long is not None:
+        # Tabs only apply to the case detail page
+        detail.long.tabs = map(DetailTab.wrap, tabs)
+    if filter != ():
+        # Note that we use the empty tuple as the sentinel because a filter
+        # value of None represents clearing the filter.
+        detail.short.filter = filter
+    if sort_elements is not None:
+        detail.short.sort_elements = []
+        for sort_element in sort_elements:
+            item = SortElement()
+            item.field = sort_element['field']
+            item.type = sort_element['type']
+            item.direction = sort_element['direction']
+            detail.short.sort_elements.append(item)
+    if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+
     resp = {}
     app.save(resp)
     return json_response(resp)
@@ -1457,6 +1603,10 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
+        xform = form.wrapped_xform()
+        if xform.exists():
+            xform.set_name(name)
+            save_xform(app, form, xform.render())
         resp['update'] = {'.variable-form_name': form.name[lang]}
     if should_edit("xform"):
         try:
@@ -1501,6 +1651,8 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.post_form_workflow = req.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
         form.auto_gps_capture = req.POST['auto_gps_capture'] == 'true'
+    if should_edit('no_vellum'):
+        form.no_vellum = req.POST['no_vellum'] == 'true'
 
     _handle_media_edits(req, form, should_edit, resp)
 
@@ -1509,6 +1661,18 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(req, domain, app_id=app_id, unique_form_id=unique_form_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_visit_schedule(request, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    form = app.get_module(module_id).get_form(form_id)
+    json_loads = json.loads(request.POST.get('schedule'))
+    form.schedule = FormSchedule.wrap(json_loads)
+    response_json = {}
+    app.save(response_json)
+    return json_response(response_json)
 
 
 @no_conflict_require_POST
@@ -1736,7 +1900,8 @@ def get_app_translations(request, domain):
     translations = Translation.get_translations(lang, key, one)
     if isinstance(translations, dict):
         translations = {k: v for k, v in translations.items()
-                        if not id_strings.is_custom_app_string(k)}
+                        if not id_strings.is_custom_app_string(k)
+                        and '=' not in k}
     return json_response(translations)
 
 
@@ -2038,7 +2203,7 @@ def _download_index_files(request):
                  if path.startswith('files/')]
     else:
         try:
-            files = sorted(request.app.create_all_files().items())
+            files = request.app.create_all_files().items()
         except Exception:
             messages.error(request, _(
                 "We were unable to get your files "
@@ -2047,7 +2212,7 @@ def _download_index_files(request):
                 "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
             ), extra_tags='html')
-    return files
+    return sorted(files)
 
 
 @safe_download
@@ -2073,15 +2238,23 @@ class DownloadCCZ(DownloadMultimediaZip):
 
     def iter_files(self):
         skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+        text_extensions = ('.xml', '.ccpr', '.txt')
         get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
         def _files():
             for name, f in _download_index_files(self.request):
                 if name not in skip_files:
-                    yield (get_name(name), f.encode('utf-8'))
+                    # TODO: make RemoteApp.create_all_files not return media files
+                    extension = os.path.splitext(name)[1]
+                    data = f.encode('utf-8') if extension in text_extensions else f
+                    yield (get_name(name), data)
 
-        media_files, errors = super(DownloadCCZ, self).iter_files()
-        return itertools.chain(_files(), media_files), errors
+        if self.app.is_remote_app():
+            return _files(), []
+        else:
+            media_files, errors = super(DownloadCCZ, self).iter_files()
+            return itertools.chain(_files(), media_files), errors
+
 
 
 @safe_download
@@ -2350,42 +2523,6 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
-def emulator_page(req, domain, app_id, template):
-    copied_app = app = get_app(domain, app_id)
-    if app.copy_of:
-        app = get_app(domain, app.copy_of)
-
-    # Coupled URL -- Sorry!
-    build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
-        **copied_app.get_preview_build()._doc
-    )
-    return render(req, template, {
-        'domain': domain,
-        'app': app,
-        'build_path': build_path,
-        'url_base': get_url_base()
-    })
-
-
-@require_can_edit_apps
-def emulator(req, domain, app_id, template="app_manager/emulator.html"):
-    return emulator_page(req, domain, app_id, template)
-
-
-def emulator_handler(req, domain, app_id):
-    exchange = req.GET.get("exchange", '')
-    if exchange:
-        return emulator_page(req, domain, app_id, template="app_manager/exchange_emulator.html")
-    else:
-        return emulator(req, domain, app_id)
-
-def emulator_commcare_jar(req, domain, app_id):
-    response = HttpResponse(
-        get_app(domain, app_id).fetch_emulator_commcare_jar()
-    )
-    response['Content-Type'] = "application/java-archive"
-    return response
-
 
 @require_can_edit_apps
 def formdefs(request, domain, app_id):
@@ -2500,10 +2637,20 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/exchange_summary.html", context)
 
 
-@require_can_edit_apps
-def download_translations(request, domain, app_id):
-    app = get_app(domain, app_id)
-    properties = tuple(["property"] + app.langs + ["default"])
+def get_default_translations_for_download(app):
+    return app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
+
+
+def get_index_for_defaults(langs):
+    try:
+        return langs.index("en")
+    except ValueError:
+        return 0
+
+
+def build_ui_translation_download_file(app):
+
+    properties = tuple(["property"] + app.langs + ["platform"])
     temp = StringIO()
     headers = (("translations", properties),)
 
@@ -2519,9 +2666,8 @@ def download_translations(request, domain, app_id):
             row_dict[prop].append(trans)
 
     rows = row_dict.values()
-    all_prop_trans = dict(st_trans.DEFAULT + st_trans.CC_DEFAULT + st_trans.CCODK_DEFAULT + st_trans.ODKCOLLECT_DEFAULT)
-    all_prop_trans = dict((k.lower(), v) for k, v in all_prop_trans.iteritems())
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in [k.lower() for k in row_dict]])
+    all_prop_trans = get_default_translations_for_download(app)
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)
@@ -2529,37 +2675,69 @@ def download_translations(request, domain, app_id):
         return row
 
     def add_default(row):
-        row[-1] = all_prop_trans.get(row[0].lower(), "")
+        row_index = get_index_for_defaults(app.langs) + 1
+        if not row[row_index]:
+            # If no custom translation exists, replace it.
+            row[row_index] = all_prop_trans.get(row[0], "")
         return row
 
-    rows = [add_default(fillrow(row)) for row in rows]
+    def add_sources(row):
+        platform_map = {
+            "CommCareAndroid": "Android",
+            "CommCareJava": "Java",
+            "ODK": "Android",
+            "JavaRosa": "Java",
+        }
+        source = system_text_sources.SOURCES.get(row[0], "")
+        row[-1] = platform_map.get(source, "")
+        return row
+
+    rows = [add_sources(add_default(fillrow(row))) for row in rows]
 
     data = (("translations", tuple(rows)),)
     export_raw(headers, data, temp)
+    return temp
+
+
+@require_can_edit_apps
+def download_bulk_ui_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    temp = build_ui_translation_download_file(app)
     return export_response(temp, Format.XLS_2007, "translations")
+
+
+def process_ui_translation_upload(app, trans_file):
+
+    workbook = WorkbookJSONReader(trans_file)
+    translations = workbook.get_worksheet(title='translations')
+
+    default_trans = get_default_translations_for_download(app)
+    lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
+    trans_dict = defaultdict(dict)
+    error_properties = []
+    for row in translations:
+        for lang in app.langs:
+            if row.get(lang):
+                all_parameters = re.findall("\$.*?}", row[lang])
+                for param in all_parameters:
+                    if not re.match("\$\{[0-9]+}", param):
+                        error_properties.append(row["property"] + ' - ' + row[lang])
+                if not (lang_with_defaults == lang
+                        and row[lang] == default_trans.get(row["property"], "")):
+                    trans_dict[lang].update({row["property"]: row[lang]})
+    return trans_dict, error_properties
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
-def upload_translations(request, domain, app_id):
+def upload_bulk_ui_translations(request, domain, app_id):
     success = False
     try:
-        workbook = WorkbookJSONReader(request.file)
-        translations = workbook.get_worksheet(title='translations')
-
         app = get_app(domain, app_id)
-        trans_dict = defaultdict(dict)
-        error_properties = []
-        for row in translations:
-            for lang in app.langs:
-                if row.get(lang):
-                    all_parameters = re.findall("\$.*?}", row[lang])
-                    for param in all_parameters:
-                        if not re.match("\$\{[0-9]+}", param):
-                            error_properties.append(row["property"] + ' - ' + row[lang])
-                    trans_dict[lang].update({row["property"]: row[lang]})
-
+        trans_dict, error_properties = process_ui_translation_upload(
+            app, request.file
+        )
         if error_properties:
             message = _("We found problem with following translations:")
             message += "<br>"
@@ -2578,6 +2756,162 @@ def upload_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     return HttpResponseRedirect(reverse('app_languages', args=[domain, app_id]))
+
+
+@require_can_edit_apps
+def download_bulk_app_translations(request, domain, app_id):
+
+    def cleaned_row(row):
+        '''
+        :param row: A tuple representing a row in the spreadsheet
+        Returns a cleaned version of row with all instances of None
+        changed to ""
+        '''
+        return tuple(item if item is not None else "" for item in row)
+
+    app = get_app(domain, app_id)
+    headers = expected_bulk_app_sheet_headers(app)
+
+    # keys are the names of sheets, values are lists of tuples representing rows
+    rows = {"Modules_and_forms": []}
+
+    for mod_index, module in enumerate(app.get_modules()):
+        # This is duplicated logic from expected_bulk_app_sheet_headers,
+        # which I don't love.
+        module_string = "module" + str(mod_index + 1)
+
+        # Add module to the first sheet
+        row_data = cleaned_row(
+            ("Module", module_string) +
+            tuple(module.name.get(lang, "") for lang in app.langs) +
+            tuple(module.case_label.get(lang, "") for lang in app.langs) +
+            (module.media_audio, module.media_image, module.unique_id)
+        )
+        rows["Modules_and_forms"].append(row_data)
+
+        # Populate module sheet
+        rows[module_string] = []
+
+        for list_or_detail, case_properties in [
+            ("list", module.case_details.short.get_columns()),
+            ("detail", module.case_details.long.get_columns())
+        ]:
+            for detail in case_properties:
+
+                field_name = detail.field
+                if detail.format == "enum":
+                    field_name += " (ID Mapping Text)"
+
+                # Add a row for this case detail
+                rows[module_string].append(
+                    (field_name, list_or_detail) +
+                    tuple(detail.header.get(lang, "") for lang in app.langs)
+                )
+
+                # Add a row for any mapping pairs
+                if detail.format == "enum":
+                    for mapping in detail.enum:
+                        rows[module_string].append(
+                            (
+                                mapping.key + " (ID Mapping Value)",
+                                list_or_detail
+                            ) + tuple(
+                                mapping.value.get(lang, "")
+                                for lang in app.langs
+                            )
+                        )
+
+        for form_index, form in enumerate(module.get_forms()):
+            form_string = module_string + "_form" + str(form_index + 1)
+            xform = form.wrapped_xform()
+
+            # Add row for this form to the first sheet
+            # This next line is same logic as above :(
+            first_sheet_row = cleaned_row(
+                ("Form", form_string) +
+                tuple(form.name.get(lang, "") for lang in app.langs) +
+                tuple("" for lang in app.langs) +
+                (form.media_audio, form.media_image, form.unique_id)
+            )
+            rows["Modules_and_forms"].append(first_sheet_row)
+
+            questions_by_lang = {lang: form.get_questions(
+                [lang], include_triggers=True, include_groups=True)
+                for lang in app.langs
+            }
+            rows[form_string] = []
+
+            for i, question in enumerate(
+                    form.get_questions(
+                        app.langs,
+                        include_triggers=True,
+                        include_groups=True)):
+
+                # Skip hidden values
+                if question['type'] != 'DataBindOnly':
+
+                    # Add row for this question
+                    id = "/".join(question['value'].split("/")[2:])
+                    labels = tuple(
+                        questions_by_lang[l][i]['label'] for l in app.langs
+                    )
+                    media_paths = []
+                    for media in ['audio', 'image', 'video']:
+                        for lang in app.langs:
+                            media_paths.append(get_translation(
+                                id, lang, xform, media=media))
+                    row = (id,) + labels + tuple(media_paths)
+                    rows[form_string].append(row)
+
+                    # Add rows for this question's options
+                    if question['type'] in ("MSelect", "Select"):
+                        for j, select in enumerate(question['options']):
+                            select_id = row[0] + "-" + select['value']
+                            labels = tuple(
+                                questions_by_lang[l][i]['options'][j]['label']
+                                for l in app.langs
+                            )
+                            # TODO: Get rid of this repeated media logic
+                            media_paths = []
+                            for media in ['audio', 'image', 'video']:
+                                for lang in app.langs:
+                                    media_paths.append(get_translation(
+                                        id, lang, xform, media=media))
+                            select_row = (select_id,) + labels + tuple(media_paths)
+                            rows[form_string].append(select_row)
+
+    temp = StringIO()
+    data = [(k, v) for k, v in rows.iteritems()]
+    export_raw(headers, data, temp)
+    return export_response(temp, Format.XLS_2007, "bulk_app_translations")
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+@get_file("bulk_upload_file")
+def upload_bulk_app_translations(request, domain, app_id):
+    app = get_app(domain, app_id)
+    msgs = process_bulk_app_translation_upload(app, request.file)
+    app.save()
+    for msg in msgs:
+        # Add the messages to the request object.
+        # msg[0] should be a function like django.contrib.messages.error .
+        # mes[1] should be a string.
+        msg[0](request, msg[1])
+    return HttpResponseRedirect(
+        reverse('app_languages', args=[domain, app_id])
+    )
+
+@require_deploy_apps
+def update_build_comment(request, domain, app_id):
+    build_id = request.POST.get('build_id')
+    try:
+        build = SavedAppBuild.get(build_id)
+    except ResourceNotFound:
+        raise Http404()
+    build.build_comment = request.POST.get('comment')
+    build.save()
+    return json_response({'status': 'success'})
 
 
 common_module_validations = [

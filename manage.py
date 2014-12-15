@@ -42,8 +42,21 @@ if __name__ == "__main__":
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
-    # proxy for whether we're running gunicorn with -k gevent
-    if "gevent" in sys.argv:
+    # important to apply gevent monkey patches before running any other code
+    # applying this later can lead to inconsistencies and threading issues
+    # but compressor doesn't like it
+    # ('module' object has no attribute 'poll' which has to do with
+    # gevent-patching subprocess)
+    GEVENT_COMMANDS = (
+        'bihar_run_calcs',
+        'mvp_force_update',
+        'run_gunicorn',
+        'preindex_everything',
+        'prime_views',
+        'ptop_preindex',
+        'sync_prepare_couchdb_multi',
+    )
+    if len(sys.argv) > 1 and sys.argv[1] in GEVENT_COMMANDS:
         from restkit.session import set_session; set_session("gevent")
         from gevent.monkey import patch_all; patch_all()
 

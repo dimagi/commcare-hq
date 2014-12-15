@@ -34,7 +34,7 @@ CLASS_PATH = "mvp.models"
 class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
     _class_path = CLASS_PATH
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         if datespan:
             enddate = datespan.enddate_utc
         else:
@@ -95,7 +95,7 @@ class MVPActiveCasesIndicatorDefinition(NoGroupCouchIndicatorDefBase):
         cases = self._get_cases_by_status(status, user_id, datespan)
         return [r['id'] for r in cases]
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         open_cases = []
         closed_on_closed_cases = []
         opened_on_closed_cases = []
@@ -165,7 +165,7 @@ class MVPChildCasesByAgeIndicatorDefinition(MVPActiveCasesIndicatorDefinition):
                     logging.error("date of birth could not be parsed")
         return valid_case_ids
 
-    def get_value(self, user_ids, datespan=None):
+    def get_value(self, user_ids, datespan=None, is_debug=False):
         if self.show_active_only:
             return super(MVPChildCasesByAgeIndicatorDefinition, self).get_value(user_ids, datespan=datespan)
         else:

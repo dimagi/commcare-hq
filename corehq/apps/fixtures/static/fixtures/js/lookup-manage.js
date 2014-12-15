@@ -141,7 +141,7 @@ $(function () {
             var indicesToRemoveAt = [];
             self.tag(self.original_tag);
             self.is_global(self.original_visibility);
-            if (!o._id()) { 
+            if (!self._id()) {
                 app.data_types.remove(self);
                 return;
             }
@@ -244,19 +244,51 @@ $(function () {
                     url: FixtureUrl,
                     dataType: 'json',
                     success: function (response) {
-                        $("#downloading").hide();
-                        $("#download-complete").show();
-                        $("#file-download-url").attr("href", FixtureFileDownloadUrl + "download_id=" + response.download_id);
+                        self.setupDownload(response);
                     },
                     error: function (response) {
-                        var error_message = "Sorry, something went wrong with the download. If you see this repeatedly please report an issue."
-                        $("#fixture-download").modal("hide");
-                        $("#FailText").text(error_message);
-                        $("#editFailure").show();
+                        self.downloadError();
                     }
                 });
             }
-            
+        };
+
+        self.setupDownload = function (response) {
+            function poll() {
+                $.ajax({
+                    url: response.download_url,
+                    dataType: 'text',
+                    success: function (resp) {
+                        var progress = $("#download-progress");
+                        if (resp.replace(/[ \t\n]/g,'')) {
+                            $("#downloading").hide();
+                            progress.show().html(resp);
+                            if (progress.find(".alert").length) {
+                                clearInterval(interval);
+                            };
+                        }
+                    },
+                    error: function () {
+                        self.downloadError();
+                        clearInterval(interval);
+                    }
+                });
+            }
+            var interval = setInterval(poll, 2000);
+            $("#fixture-download").one("hidden", function() {
+                // stop polling if dialog is closed
+                clearInterval(interval);
+            });
+            $("#download-progress").hide();
+            $("#downloading").show();
+            poll();
+        };
+
+        self.downloadError = function () {
+            var error_message = "Sorry, something went wrong with the download. If you see this repeatedly please report an issue."
+            $("#fixture-download").modal("hide");
+            $("#FailText").text(error_message);
+            $("#editFailure").show();
         };
 
         self.addDataType = function () {
@@ -301,10 +333,10 @@ $(function () {
     ko.applyBindings(app, $('#fixture-upload')[0]);
     $("#fixture-download").on("hidden", function(){
                     $("#downloading").show();
+                    $("#download-progress").hide();
                     $("#download-complete").hide();
     });
     $('.alert .close').live("click", function(e) {
         $(this).parent().hide();
-
     });
 });

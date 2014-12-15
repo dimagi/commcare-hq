@@ -126,7 +126,11 @@ function makeSaveButton(messageStrings, cssClass) {
                         alert(SaveButton.message.ERROR_SAVING);
                         error.apply(this, arguments);
                     };
-                    $.ajax(options);
+                    var jqXHR = $.ajax(options);
+                    if (!jqXHR) {
+                        // request was aborted
+                        that.setState('save');
+                    }
                 }
             };
             eventize(button);

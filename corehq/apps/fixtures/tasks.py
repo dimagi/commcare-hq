@@ -13,3 +13,11 @@ def fixture_upload_async(domain, download_id, replace):
     return {
         'messages': result,
     }
+
+
+@task
+def fixture_download_async(prepare_download, *args, **kw):
+    task = fixture_download_async
+    DownloadBase.set_progress(task, 0, 100)
+    prepare_download(task=task, *args, **kw)
+    DownloadBase.set_progress(task, 100, 100)

@@ -89,6 +89,16 @@ class ProjectIndicatorsCaseSqlData(SqlData):
                            SumColumn("women_delivering_at_facility_cct_total")),
             DatabaseColumn(_("Number of women who attended PNC within 6 weeks of delivery"),
                            SumColumn("women_delivering_within_6_weeks_attending_pnc_total")),
+            DatabaseColumn(_("Number of free sim cards given"),
+                           SumColumn("number_of_free_sims_given_total")),
+            DatabaseColumn(_("Number of MTN MNO"),
+                           SumColumn("mno_mtn_total")),
+            DatabaseColumn(_("Number of Etisalat MNO"),
+                           SumColumn("mno_etisalat_total")),
+            DatabaseColumn(_("Number of GLO MNO"),
+                           SumColumn("mno_glo_total")),
+            DatabaseColumn(_("Number of Airtel MNO"),
+                           SumColumn("mno_airtel_total")),
         ]
 
     @property

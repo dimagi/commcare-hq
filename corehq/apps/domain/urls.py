@@ -20,7 +20,7 @@ from corehq.apps.domain.views import (
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
     AddFormRepeaterView, AddOpsUserAsDomainAdminView,
-)
+    FeatureFlagsView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -65,6 +65,7 @@ urlpatterns =\
     patterns('corehq.apps.domain.views',
         url(r'^domain/select/$', 'select', name='domain_select'),
         url(r'^domain/autocomplete/(?P<field>\w+)/$', 'autocomplete_fields', name='domain_autocomplete_fields'),
+        url(r'^domain/incomplete_email/$', 'incomplete_email'),
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
@@ -128,5 +129,6 @@ domain_settings = patterns(
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', 'calculated_properties', name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
+    url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
 )

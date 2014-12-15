@@ -13,7 +13,7 @@ function(doc) {
 
                 var fever_medication = indicators.fever_medication.value,
                     diarrhea_medication = indicators.diarrhea_medication.value,
-                    rdt_result = indicators.rdt_result.value,
+                    rdt_result = (typeof indicators.rdt_result.value === 'string') ? indicators.rdt_result.value.toLowerCase() : indicators.rdt_result.value,
                     referral_type = indicators.referral_type.value;
 
                 var rdt_test_received = (rdt_result === 'positive' || rdt_result === 'negative'),
@@ -31,7 +31,7 @@ function(doc) {
 
                 var danger_signs = [],
                     emergency_signs = [],
-                    valid_referrals = ['emergency', 'basic', 'convenient', 'take_to_clinic'];
+                    valid_referrals = ['emergency', 'basic', 'take_to_clinic'];
 
                 try {
                     danger_signs = get_danger_signs(indicators.immediate_danger_sign.value);
@@ -57,9 +57,11 @@ function(doc) {
                     diarrhea_only = true;
                 }
 
-                if ((referral_type && valid_referrals.indexOf(referral_type) >= 0) &&
-                    danger_signs.length > 0 || emergency_signs.length > 0) {
+                if (danger_signs.length > 0 || emergency_signs.length > 0) {
                     indicator_keys.push("under5_danger_signs");
+                    if (referral_type && valid_referrals.indexOf(referral_type)) {
+                        indicator_keys.push("under5_danger_signs_referred");
+                    }
                 }
 
                 var category = "",
@@ -80,7 +82,7 @@ function(doc) {
                         indicator_keys.push(category+"rdt_not_available");
                     }
 
-                } else if (complicated_fever && meta.timeEnd && age > 180*MS_IN_DAY) {
+                } else if (complicated_fever && meta.timeEnd) {
                     category = "under5_complicated_fever ";
 
                     if (doc.form.patient_available.referral_given === 'yes' ||

@@ -119,7 +119,7 @@ def origin(branch):
     return "origin/{}".format(branch)
 
 
-def sync_local_copies(config):
+def sync_local_copies(config, push=True):
     base_config = config
     unpushed_branches = []
 
@@ -153,7 +153,7 @@ def sync_local_copies(config):
                 elif unpulled:
                     print "  Fastforwarding your branch to origin"
                     git.merge('--ff-only', origin(branch))
-    if unpushed_branches:
+    if unpushed_branches and push:
         print "The following branches have commits that need to be pushed:"
         for path, branch in unpushed_branches:
             print "  [{cwd}] {branch}".format(cwd=path, branch=branch)
@@ -195,7 +195,7 @@ def rebuild_staging(config, print_details=True, push=True):
                 try:
                     git.merge(branch, '--no-edit')
                 except sh.ErrorReturnCode_1:
-                    merge_conflicts.append((path, branch, config.name))
+                    merge_conflicts.append((path, branch, config))
                     try:
                         git.merge("--abort")
                     except sh.ErrorReturnCode_128:
@@ -226,15 +226,16 @@ def rebuild_staging(config, print_details=True, push=True):
             )
     if merge_conflicts:
         print "You must fix the following merge conflicts before rebuilding:"
-        for cwd, branch, name in merge_conflicts:
-            print "  [{cwd}] {branch} => {name}".format(
+        for cwd, branch, config in merge_conflicts:
+            print "\n[{cwd}] {branch} => {name}".format(
                 cwd=format_cwd(cwd),
                 branch=branch,
-                name=name,
+                name=config.name,
             )
             git = get_git(cwd)
             if print_details:
-                print_merge_details(branch, name, git)
+                print_merge_details(branch, config.name, git,
+                                    known_branches=config.branches)
 
     if merge_conflicts or not_found:
         exit(1)
@@ -305,7 +306,7 @@ def main():
         if 'fetch' in args:
             fetch_remote(config)
         if 'sync' in args:
-            sync_local_copies(config)
+            sync_local_copies(config, push=do_push)
         if 'rebuild' in args:
             rebuild_staging(config, push=do_push)
 

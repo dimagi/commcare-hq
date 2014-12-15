@@ -17,13 +17,17 @@
         </tr>
     </thead>
     <tbody data-bind="sortable: languages">
-        <tr class="row control-group" data-bind="css: {error: show_error, light: !deploy()}">
-            <td data-bind="css: {'sortable-handle': $root.editing && $root.languages().length > 1}">
-                <i class="icon-resize-vertical" data-bind="visible: $root.editing && $root.languages().length > 1"></i>
+        <tr class="row control-group"
+            data-bind="
+                css: {error: show_error, light: !deploy()},
+                attr: {'data-order': _sortableOrder}
+                ">
+            <td data-bind="css: {'sortable-handle': $root.canSortLanguages}">
+                <i class="icon-resize-vertical" data-bind="visible: $root.canSortLanguages"></i>
             </td>
             <td>
-                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: $root.languages()[0] !== $data"></span>
-                <span class="label label-info" data-bind="visible: $root.languages()[0] === $data">1. default</span>
+                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: !isDefaultLang()"></span>
+                <span class="label label-info" data-bind="visible: isDefaultLang()">1. default</span>
             </td>
             <td>
                 {% if always_deploy %}

@@ -1,9 +1,12 @@
+from corehq.apps.domain.decorators import login_or_digest_ex
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import json_error
+from couchforms.models import XFormInstance
 from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig
 from django.http import HttpResponse
+from lxml import etree
 
 
 @json_error
@@ -32,7 +35,8 @@ def get_restore_params(request):
 
 
 def get_restore_response(domain, couch_user, since=None, version='1.0',
-                         state=None, items=False):
+                         state=None, items=False, force_cache=False,
+                         cache_timeout=None, overwrite_cache=False):
     # not a view just a view util
     if not couch_user.is_commcare_user():
         return HttpResponse("No linked chw found for %s" % couch_user.username,
@@ -46,8 +50,47 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
     stock_settings = commtrack_settings.get_ota_restore_settings() if commtrack_settings else None
     restore_config = RestoreConfig(
         couch_user.to_casexml_user(), since, version, state,
-        caching_enabled=project.ota_restore_caching,
         items=items,
         stock_settings=stock_settings,
+        domain=project,
+        force_cache=force_cache,
+        cache_timeout=cache_timeout,
+        overwrite_cache=overwrite_cache
     )
     return restore_config.get_response()
+
+
+@login_or_digest_ex(allow_cc_users=True)
+def historical_forms(request, domain):
+    assert request.couch_user.is_member_of(domain)
+    user_id = request.couch_user.get_id
+    db = XFormInstance.get_db()
+    form_ids = {
+        f['id'] for f in db.view(
+            'reports_forms/all_forms',
+            startkey=["submission user", domain, user_id],
+            endkey=["submission user", domain, user_id, {}],
+            reduce=False,
+        )
+    }
+
+    def data():
+        yield (
+            '<OpenRosaResponse xmlns="http://openrosa.org/http/response" '
+            'items="{}">\n    <message nature="success"/>\n'
+            .format(len(form_ids))
+        )
+
+        for form_id in form_ids:
+            # this is a hack to call this method
+            # Should only hit couch once per form, to get the attachment
+            xml = XFormInstance(_id=form_id).get_xml_element()
+            if xml:
+                yield '    {}'.format(etree.tostring(xml))
+            else:
+                yield '    <XFormNotFound/>'
+            yield '\n'
+        yield '</OpenRosaResponse>\n'
+
+    # to make this not stream, just call list on data()
+    return HttpResponse(data(), content_type='application/xml')

@@ -73,6 +73,27 @@
                 allowEdit: {{ can_edit_roles|BOOL }}
             });
             $('#user-roles-table').show();
+
+            $('#modal-dialog').on('show', function () {
+                var id = $(this).data('id');
+
+                $('#confirm-delete').click(function () {
+                    $(this).addClass('disabled');
+                    var post_url = '{% url "delete_invitation" domain %}';
+                    $.post(post_url, {invite: id},
+                        function(data) {
+                            $("a[data-id]=" + id).parents("tr").remove();
+                            $('#modal-dialog').data('id', id).modal('hide');
+                             $(this).removeClass('disabled');
+                        }
+                    );
+                });
+            });
+
+            $('.delete-invitation').on('click', function(e) {
+                var id = $(this).data('id');
+                $('#modal-dialog').data('id', id).modal('show');
+            });
         });
     </script>
 {% endblock %}
@@ -119,11 +140,23 @@
                 </td>
                 <td>
                     {{ invitation.invited_on }}
+                    {% if  invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil != "0 minutes"%}
+                    <span class="label label-info">
+                        {{ invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil }} remaining
+                    </span>
+                    {% else %}
+                    <span class="label label-important">
+                         {% trans "Expired" %}
+                    </span>
+                    {% endif %}
                 </td>
                 <td>
                     <div>
                         <a class="resend-invite btn" data-invite={{ invitation.get_id }}>
                             {% trans "Resend Invitation" %}
+                        </a>
+                        <a href="#" class="btn btn-danger delete-invitation" data-id={{ invitation.get_id }}>
+                            {% trans "Delete Invitation" %}
                         </a>
                     </div>
                 </td>
@@ -131,6 +164,20 @@
         {% endfor %}
         </tbody>
     </table>
+
+    <div id="modal-dialog" class="modal hide fade">
+        <div class="modal-header">
+            <a href="#" class="close" data-dismiss="modal">×</a>
+            <h3>{% trans "Delete invitation" %}</h3>
+        </div>
+        <div class="modal-body">
+            <h4> {% trans "Are you sure you want to delete this invitation?" %}</h4>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+            <a class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</a>
+        </div>
+    </div>
     {% endif %}
 
     <h2>Roles</h2>

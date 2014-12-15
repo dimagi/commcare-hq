@@ -1,12 +1,13 @@
-from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
-from corehq.apps.commtrack.models import CommTrackUser
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.locations.models import Location, SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
 from mock import patch
+from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
+from corehq.apps.commtrack.models import SupplyPointCase
 
 
 class LocationsTest(CommTrackTest):
@@ -71,7 +72,7 @@ class LocationsTest(CommTrackTest):
         loc = make_loc('secondloc')
         make_supply_point(self.domain.name, loc)
 
-        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+        with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.remove_location(loc)
             self.assertEqual(submit_blocks.call_count, 0)
 
@@ -110,7 +111,7 @@ class LocationsTest(CommTrackTest):
         loc1 = make_loc('secondloc')
         make_supply_point(self.domain.name, loc1)
 
-        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+        with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.set_locations([loc1])
             self.assertEqual(submit_blocks.call_count, 1)
 
@@ -128,27 +129,77 @@ class LocationsTest(CommTrackTest):
         user.add_location(loc1)
         user.add_location(loc2)
 
-        with patch('corehq.apps.commtrack.models.CommTrackUser.submit_location_block') as submit_blocks:
+        with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.set_locations([loc1, loc2])
             self.assertEqual(submit_blocks.call_count, 0)
 
-    def test_location_migration(self):
-        user = CommCareUser.create(
-            self.domain.name,
-            'commcareuser',
-            'password',
-            phone_numbers=['123123'],
-            user_data={},
-            first_name='test',
-            last_name='user'
+    def test_sync(self):
+        test_state = make_loc(
+            'teststate',
+            type='state',
+            parent=self.user.locations[0]
+        )
+        test_village = make_loc(
+            'testvillage',
+            type='village',
+            parent=test_state
         )
 
+        try:
+            sql_village = SQLLocation.objects.get(
+                name='testvillage',
+                domain=self.domain.name,
+            )
+
+            self.assertEqual(sql_village.name, test_village.name)
+            self.assertEqual(sql_village.domain, test_village.domain)
+        except SQLLocation.DoesNotExist:
+            self.fail("Synced SQL object does not exist")
+
+    def test_archive(self):
+        test_state = make_loc(
+            'teststate',
+            type='state',
+            parent=self.user.locations[0]
+        )
+        test_state.save()
+
+        original_count = len(list(Location.by_domain(self.domain.name)))
+
+        loc = self.user.locations[0]
+        loc.archive()
+
+        # it should also archive children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count - 2
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            0
+        )
+
+        loc.unarchive()
+
+        # and unarchive children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            1
+        )
+
+    def test_archive_flips_sp_cases(self):
         loc = make_loc('someloc')
-        make_supply_point(self.domain.name, loc)
+        sp = make_supply_point(self.domain.name, loc)
 
-        user.commtrack_location = loc._id
-        ct_user = CommTrackUser.wrap(user.to_json())
+        self.assertFalse(sp.closed)
+        loc.archive()
+        sp = SupplyPointCase.get(sp._id)
+        self.assertTrue(sp.closed)
 
-        self.assertEqual(1, len(ct_user.locations))
-        self.assertEqual('someloc', ct_user.locations[0].name)
-        self.assertFalse(hasattr(ct_user, 'commtrack_location'))
+        loc.unarchive()
+        sp = SupplyPointCase.get(sp._id)
+        self.assertFalse(sp.closed)

@@ -16,11 +16,19 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import get_safe_write_kwargs
+from corehq.feature_previews import LOCATIONS, COMMTRACK
+from corehq.toggles import NAMESPACE_DOMAIN
+from toggle.shortcuts import update_toggle_cache, namespaced_item
+from toggle.models import Toggle
 
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
 
 
 class MailChimpNotConfiguredError(Exception):
+    pass
+
+
+class MailChimpListNotSetError(MailChimpNotConfiguredError):
     pass
 
 
@@ -31,6 +39,9 @@ def get_mailchimp_api():
 
 
 def subscribe_user_to_mailchimp_list(user, list_id, email=None):
+    if not list_id:
+        raise MailChimpListNotSetError()
+
     api = get_mailchimp_api()
     api.lists.subscribe(
         list_id,
@@ -61,6 +72,9 @@ def safe_subscribe_user_to_mailchimp_list(user, list_id, email=None):
 
 
 def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
+    if not list_id:
+        raise MailChimpListNotSetError()
+
     get_mailchimp_api().lists.unsubscribe(
         list_id,
         {'email': email or user.email},
@@ -172,9 +186,26 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         is_active=False,
         date_created=datetime.utcnow(),
         commtrack_enabled=commtrack_enabled,
+        locations_enabled=commtrack_enabled,
         creating_user=current_user.username,
         secure_submissions=True,
     )
+
+    if commtrack_enabled:
+        toggle_user_key = namespaced_item(new_domain.name, NAMESPACE_DOMAIN)
+
+        # enable commtrack toggle
+        toggle = Toggle.get(COMMTRACK.slug)
+        toggle.enabled_users.append(toggle_user_key)
+        toggle.save()
+        update_toggle_cache(COMMTRACK.slug, toggle_user_key, True)
+
+        # enable location toggle
+        toggle = Toggle.get(LOCATIONS.slug)
+        toggle.enabled_users.append(toggle_user_key)
+        toggle.save()
+        update_toggle_cache(LOCATIONS.slug, toggle_user_key, True)
+
 
     if form.cleaned_data.get('domain_timezone'):
         new_domain.default_timezone = form.cleaned_data['domain_timezone']
@@ -193,25 +224,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         new_domain.name = new_domain._id
         new_domain.save() # we need to get the name from the _id
 
-    # Create a 30 Day Trial subscription to the Advanced Plan
-    advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-        new_domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
-    )
-    expiration_date = date.today() + timedelta(days=30)
-    trial_account = BillingAccount.objects.get_or_create(
-        name="Trial Account for %s" % new_domain.name,
-        currency=Currency.get_default(),
-        created_by_domain=new_domain.name,
-        account_type=BillingAccountType.TRIAL,
-    )[0]
-    trial_subscription = Subscription.new_domain_subscription(
-        trial_account, new_domain.name, advanced_plan_version,
-        date_end=expiration_date,
-        adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
-        is_trial=True,
-    )
-    trial_subscription.is_active = True
-    trial_subscription.save()
+    create_30_day_trial(new_domain)
 
     dom_req.domain = new_domain.name
 
@@ -392,3 +405,33 @@ You can view the %s here: %s""" % (
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
+
+def create_30_day_trial(domain_obj):
+    from corehq.apps.accounting.models import (
+        DefaultProductPlan,
+        SoftwarePlanEdition,
+        BillingAccount,
+        Currency,
+        BillingAccountType,
+        Subscription,
+        SubscriptionAdjustmentMethod,
+    )
+    # Create a 30 Day Trial subscription to the Advanced Plan
+    advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
+        domain_obj, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
+    )
+    expiration_date = date.today() + timedelta(days=30)
+    trial_account = BillingAccount.objects.get_or_create(
+        name="Trial Account for %s" % domain_obj.name,
+        currency=Currency.get_default(),
+        created_by_domain=domain_obj.name,
+        account_type=BillingAccountType.TRIAL,
+    )[0]
+    trial_subscription = Subscription.new_domain_subscription(
+        trial_account, domain_obj.name, advanced_plan_version,
+        date_end=expiration_date,
+        adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
+        is_trial=True,
+    )
+    trial_subscription.is_active = True
+    trial_subscription.save()

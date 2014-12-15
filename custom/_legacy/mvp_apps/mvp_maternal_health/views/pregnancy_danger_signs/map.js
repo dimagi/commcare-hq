@@ -23,7 +23,7 @@ function(doc) {
         if (immediate_signs.length > 0 || emergency_signs.length > 0) {
             indicator_keys.push("danger_sign");
             if (indicators.referral_type && indicators.referral_type.value &&
-                indicators.referral_type.value !== 'none') {
+                indicators.referral_type.value !== 'none' && indicators.referral_type.value !== 'convenient') {
                 indicator_keys.push("danger_sign referred");
             }
         }

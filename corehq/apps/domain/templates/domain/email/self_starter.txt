@@ -1,0 +1,9 @@
+Here is a list of self started projects which have incomplete info and over 200
+form submissions:
+
+{% for domain in domains %}
+    {{ domain }}
+{% endfor %}
+
+Thanks
+CommCareHQ

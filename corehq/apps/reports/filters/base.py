@@ -282,11 +282,14 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             'next': next,
             }
 
+    @property
+    def shared_pagination_GET_params(self):
+        return [dict(name='%s_%s' % (self.slug, val['slug']), value=val['value']) for val in self.GET_values]
 
     @classmethod
     def _get_label_value(cls, request, label):
         slug = str(label[2])
-        val = request.GET.get('%s_%s' % (cls.slug, str(label[2])))
+        val = request.GET.get('%s_%s' % (cls.slug, slug))
         return {
             'slug': slug,
             'value': val,

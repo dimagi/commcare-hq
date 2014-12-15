@@ -11,7 +11,7 @@ from lxml import etree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
@@ -27,15 +27,17 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
     with open(file_path, "rb") as f:
         xml_data = f.read()
-    doc_id, uid, case_id, ref_id = replace_ids_and_post(xml_data, case_id_override=case_id_override,
-                                                         referral_id_override=referral_id_override)
-    doc = XFormInstance.get(doc_id)
+    doc, uid, case_id, ref_id = replace_ids_and_post(
+        xml_data,
+        case_id_override=case_id_override,
+        referral_id_override=referral_id_override,
+    )
     if domain:
         doc.domain = domain
     process_cases(doc)
     case = CommCareCase.get(case_id)
-    test_class.assertTrue(starttime <= case.server_modified_on)
-    test_class.assertTrue(datetime.utcnow() >= case.server_modified_on)
+    test_class.assertLessEqual(starttime, case.server_modified_on)
+    test_class.assertGreaterEqual(datetime.utcnow(), case.server_modified_on)
     test_class.assertEqual(case_id, case.case_id)
     return case
 
@@ -51,7 +53,7 @@ def replace_ids_and_post(xml_data, case_id_override=None, referral_id_override=N
     xml_data = xml_data.replace("REPLACE_CASEID", case_id)
     xml_data = xml_data.replace("REPLACE_REFID", ref_id)
     doc = post_xform_to_couch(xml_data)
-    return (doc.get_id, uid, case_id, ref_id)
+    return (doc, uid, case_id, ref_id)
 
 def check_xml_line_by_line(test_case, expected, actual):
     """Does what it's called, hopefully parameters are self-explanatory"""
@@ -94,12 +96,15 @@ def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
 
 def check_user_has_case(testcase, user, case_block, should_have=True,
                         line_by_line=True, restore_id="", version=V1,
-                        caching_enabled=False):
+                        purge_restore_cache=False):
+
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
     case_block.set('xmlns', XMLNS)
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
 
-    payload_string = RestoreConfig(user, restore_id, version=version, caching_enabled=caching_enabled).get_payload()
+    if restore_id and purge_restore_cache:
+        SyncLog.get(restore_id).invalidate_cached_payloads()
+    payload_string = RestoreConfig(user, restore_id, version=version).get_payload()
     payload = ElementTree.fromstring(payload_string)
     
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))

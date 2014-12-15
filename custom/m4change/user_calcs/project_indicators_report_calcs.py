@@ -35,3 +35,21 @@ class PncAttendanceWithin6WeeksCalculator(fluff.Calculator):
             if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS \
                     and (date_received_on - form.form["date_delivery"]).days < 42:
                 yield [date_received_on, 1]
+
+
+class NumberOfFreeSimsGivenCalculator(fluff.Calculator):
+    @fluff.date_emitter
+    def total(self, form):
+        if form.xmlns in BOOKING_FORMS and form.form.get("free_sim", "") == 'yes':
+                yield [form.received_on.date(), 1]
+
+
+class MnoCalculator(fluff.Calculator):
+    def __init__(self, value):
+        super(MnoCalculator, self).__init__()
+        self.mno_type_value = value
+
+    @fluff.date_emitter
+    def total(self, form):
+        if form.xmlns in BOOKING_FORMS and self.mno_type_value == form.form.get("mno", ""):
+            yield [form.received_on.date(), 1]

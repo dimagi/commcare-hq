@@ -204,11 +204,11 @@ class InvalidDateException(Exception):
     pass
 
 
-def parse_excel_date(date_val):
+def parse_excel_date(date_val, datemode):
     """ Convert field value from excel to a date value """
     if date_val:
         try:
-            parsed_date = str(date(*xldate_as_tuple(date_val, 0)[:3]))
+            parsed_date = str(date(*xldate_as_tuple(date_val, datemode)[:3]))
         except Exception:
             raise InvalidDateException
     else:
@@ -301,18 +301,16 @@ def lookup_case(search_field, search_id, domain, case_type):
     else:
         return (None, LookupErrors.NotFound)
 
-def populate_updated_fields(config, columns, row):
+def populate_updated_fields(config, columns, row, datemode):
     """
     Returns a dict map of fields that were marked to be updated
     due to the import. This can be then used to pass to the CaseBlock
     to trigger updates.
     """
-
     field_map = convert_custom_fields_to_struct(config)
     key_column_index = get_key_column_index(config, columns)
     value_column_index = get_value_column_index(config, columns)
     fields_to_update = {}
-
     for key in field_map:
         try:
             if key_column_index and key == row[key_column_index]:
@@ -330,7 +328,7 @@ def populate_updated_fields(config, columns, row):
 
         if update_value is not None:
             if field_map[key]['type_field'] == 'date':
-                update_value = parse_excel_date(update_value)
+                update_value = parse_excel_date(update_value, datemode)
             elif field_map[key]['type_field'] == 'integer':
                 try:
                     update_value = str(int(update_value))
@@ -339,7 +337,7 @@ def populate_updated_fields(config, columns, row):
             else:
                 update_value = convert_field_value(update_value)
 
-        fields_to_update[update_field_name] = update_value
+        fields_to_update[update_field_name.strip()] = update_value
 
     return fields_to_update
 

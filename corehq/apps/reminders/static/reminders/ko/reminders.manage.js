@@ -3,7 +3,6 @@ var ManageRemindersViewModel = function (
     choices,
     ui_type,
     available_languages,
-    select2_fields,
     initial_event_template
 ) {
     'use strict';
@@ -11,7 +10,6 @@ var ManageRemindersViewModel = function (
 
     self.choices = choices || {};
     self.ui_type = ui_type;
-    self.select2_fields = select2_fields;
     self.initial_event_template = initial_event_template;
 
     self.case_type = ko.observable(initial.case_type);
@@ -28,9 +26,6 @@ var ManageRemindersViewModel = function (
     self.isStartReminderCaseProperty = ko.computed(function () {
         return self.start_reminder_on() === self.choices.START_REMINDER_ON_CASE_PROPERTY;
     });
-    self.isStartReminderCaseDate = ko.computed(function () {
-        return self.start_reminder_on() === self.choices.START_REMINDER_ON_CASE_DATE;
-    });
 
     self.start_match_type = ko.observable(initial.start_match_type);
     self.isStartMatchValueVisible = ko.computed(function () {
@@ -38,8 +33,31 @@ var ManageRemindersViewModel = function (
     });
 
     self.start_property_offset_type = ko.observable(initial.start_property_offset_type);
+    self.start_property_offset_type.subscribe(function(val) {
+        $("#id_event_timing").children("option").each(function(i) {
+            var j = $.parseJSON($(this).val());
+            if(val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
+               val === self.choices.START_PROPERTY_OFFSET_DELAY) {
+                $(this).show();
+            } else {
+                if(j.event_interpretation === "OFFSET") {
+                    $(this).hide();
+                } else {
+                    $(this).show()
+                }
+            }
+        });
+    });
     self.isStartPropertyOffsetVisible = ko.computed(function () {
-        return self.start_property_offset_type() !== self.choices.START_PROPERTY_OFFSET_IMMEDIATE;
+        return self.start_property_offset_type() === self.choices.START_PROPERTY_OFFSET_DELAY;
+    });
+
+    self.isStartDayOfWeekVisible = ko.computed(function () {
+        return self.start_property_offset_type() === self.choices.START_REMINDER_ON_DAY_OF_WEEK;
+    });
+
+    self.isStartReminderCaseDate = ko.computed(function () {
+        return self.start_property_offset_type() === self.choices.START_REMINDER_ON_CASE_DATE;
     });
 
     self.recipient = ko.observable(initial.recipient);
@@ -110,6 +128,28 @@ var ManageRemindersViewModel = function (
 
     self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
 
+    self.available_case_types = ko.observableArray();
+    self.available_case_properties = {};
+    self.available_subcase_properties = {};
+
+    self.getAvailableCaseProperties = ko.computed(function() {
+        var case_type = self.case_type();
+        if(self.available_case_properties.hasOwnProperty(case_type)) {
+            return self.available_case_properties[case_type];
+        } else {
+            return [];
+        }
+    });
+
+    self.getAvailableSubcaseProperties = ko.computed(function() {
+        var case_type = self.case_type();
+        if(self.available_subcase_properties.hasOwnProperty(case_type)) {
+            return self.available_subcase_properties[case_type];
+        } else {
+            return [];
+        }
+    });
+
     self.init = function () {
         var events = $.parseJSON(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
@@ -128,67 +168,46 @@ var ManageRemindersViewModel = function (
             );
         }));
         self.refreshEventsListUI();
+        self.initAvailableCaseTypes();
+        self.initAvailableCaseProperties();
+        self.initAvailableSubcaseProperties();
+    };
 
-        _.each(self.select2_fields, function (field) {
-            self.initCasePropertyChoices(field);
+    self.initAvailableCaseTypes = function() {
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            data: {
+                action: "search_case_type",
+            }
+        }).done(function(data, textStatus, jqXHR) {
+            for(var i = 0; i < data.length; i++) {
+                self.available_case_types.push(data[i]);
+            }
         });
     };
 
-    self.initCasePropertyChoices = function (field) {
-        var fieldInput = $('[name="' + field.name + '"]');
-        fieldInput.select2({
-            minimumInputLength: 0,
-            allowClear: true,
-            ajax: {
-                quietMillis: 150,
-                url: '',
-                dataType: 'json',
-                type: 'post',
-                data: function (term) {
-                    return {
-                        action: field.action,
-                        caseType: self.case_type(),
-                        term: term
-                    };
-                },
-                results: function (data) {
-                    return {
-                        results: data
-                    };
-                }
-            },
-            createSearchChoice: function (term, data) {
-                if (!self.case_type() && field.name !== 'case_type'){
-                    return false;
-                }
-                var matching_choices = _(data).map(function (item) {
-                    return item.id;
-                });
-                if (matching_choices.indexOf(term) === -1 && term) {
-                    var cleaned_term = term.split(' ').join('_');
-                    return {id: cleaned_term, text: cleaned_term, isNew: true}
-                }
-            },
-            formatResult: function (res) {
-                if (res.isError) {
-                    return '<span class="label label-important">Error</span> ' + res.errorText;
-                }
-                if (res.isNew) {
-                    return '<span class="label label-success">New</span> ' + res.text;
-                }
-                return res.text;
-            },
-            formatNoMatches: function (term) {
-                if (!self.case_type() && field.name !== 'case_type') {
-                    return "Please specify a Case Type";
-                }
-            },
-            initSelection : function (element, callback) {
-                if (element.val()) {
-                    var data = {id: element.val(), text: element.val()};
-                    callback(data);
-                }
+    self.initAvailableCaseProperties = function() {
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            data: {
+                action: "search_case_property",
             }
+        }).done(function(data, textStatus, jqXHR) {
+            self.available_case_properties = data;
+        });
+    };
+
+    self.initAvailableSubcaseProperties = function() {
+        $.ajax({
+            type: "POST",
+            dataType: "json",
+            data: {
+                action: "search_subcase_property",
+            }
+        }).done(function(data, textStatus, jqXHR) {
+            self.available_subcase_properties = data;
         });
     };
 

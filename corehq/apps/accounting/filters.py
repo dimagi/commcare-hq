@@ -78,6 +78,17 @@ class ActiveStatusFilter(BaseSingleOptionFilter):
     ]
 
 
+class DimagiContactFilter(BaseSingleOptionFilter):
+    slug = 'dimagi_contact'
+    label = _('Dimagi Contact')
+    default_text = _("Any")
+
+    @property
+    def options(self):
+        return clean_options([(account.dimagi_contact, account.dimagi_contact)
+                             for account in BillingAccount.objects.all()])
+
+
 INVOICE = "SEND_INVOICE"
 DO_NOT_INVOICE = "DO_NOT_INVOICE"
 

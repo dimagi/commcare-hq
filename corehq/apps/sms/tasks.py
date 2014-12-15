@@ -7,7 +7,8 @@ from time import sleep
 from redis_cache.cache import RedisCache
 from corehq.apps.sms.mixin import SMSLoadBalancingMixin
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
-from corehq.apps.sms.api import send_message_via_backend, process_incoming
+from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
+    log_sms_exception)
 from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
@@ -116,9 +117,6 @@ def handle_outgoing(msg):
     requeued and processed again immediately, and if it returns False, it will
     not be queued again.
     """
-    def onerror():
-        logging.exception("Exception while processing SMS %s" % msg._id)
-
     backend = msg.outbound_backend
     sms_interval = backend.get_sms_interval()
     use_rate_limit = sms_interval is not None
@@ -152,7 +150,7 @@ def handle_outgoing(msg):
         if use_load_balancing:
             lbi.finish(save_stats=True)
         result = send_message_via_backend(msg, backend=backend, 
-            orig_phone_number=orig_phone_number, onerror=onerror)
+            orig_phone_number=orig_phone_number)
         if use_rate_limit:
             wait_and_release_lock(lock, sms_interval)
         if result:
@@ -173,7 +171,7 @@ def handle_incoming(msg):
         process_incoming(msg)
         handle_successful_processing_attempt(msg)
     except:
-        logging.exception("Exception while processing SMS %s" % msg._id)
+        log_sms_exception(msg)
         handle_unsuccessful_processing_attempt(msg)
 
 @task(queue="sms_queue")

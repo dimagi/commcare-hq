@@ -1,10 +1,11 @@
 from functools import partial
+from django.conf import settings
 
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
 import pytz
-from django.utils.html import escape
+from django.utils.html import escape, escapejs
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -83,7 +84,6 @@ def render_form(form, domain, options):
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
     user = options.get('user', None)
-
     case_id_attr = "@%s" % const.CASE_TAG_ID
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
@@ -123,7 +123,7 @@ def render_form(form, domain, options):
         })
 
     # Form Metadata tab
-    meta = form.top_level_tags().get('meta', {})
+    meta = form.top_level_tags().get('meta', None) or {}
     definition = get_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
     if 'auth_context' in form:
@@ -152,9 +152,15 @@ def render_form(form, domain, options):
     else:
         user_info = get_doc_info_by_id(domain, meta_userID)
 
+    edit_session_data = {'user_id': meta_userID}
+    if len(case_blocks) == 1 and case_blocks[0].get(case_id_attr):
+        edit_session_data["case_id"] = case_blocks[0].get(case_id_attr)
+
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
+        "form_meta": options.get('form_meta', {}),
+        "maps_api_key": settings.GMAPS_API_KEY,
         "is_archived": form.doc_type == "XFormArchived",
         "domain": domain,
         'question_list_not_found': question_list_not_found,
@@ -170,4 +176,6 @@ def render_form(form, domain, options):
         "user_info": user_info,
         "side_pane": side_pane,
         "user": user,
+        "edit_session_data": edit_session_data,
+        "request": options.get('request', None),  # needed for toggles
     })
