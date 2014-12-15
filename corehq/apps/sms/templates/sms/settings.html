@@ -116,8 +116,7 @@
             "count_messages_as_read_by_anyone" : {{ form.count_messages_as_read_by_anyone.value|JSON }},
             "send_to_duplicated_case_numbers" : {{ form.send_to_duplicated_case_numbers.value|JSON }},
         });
-        // FIXME
-        ko.applyBindings(svm);
+        ko.applyBindings(svm, $("#sms-settings").get(0));
     });
 </script>
 {% endblock %}
@@ -134,7 +133,7 @@
 {% endblock %}
 
 {% block main_column %}
-    <form action="" method="post">
+    <form id="sms-settings" action="" method="post">
         <h4>{% trans "General Settings" %}</h4>
         <table>
             <tbody>
