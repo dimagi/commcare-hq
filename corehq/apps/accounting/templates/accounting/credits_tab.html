@@ -20,6 +20,11 @@
                     <td>
                         {% if credit.subscription %}
                         Subscription to {{ credit.subscription.subscriber.domain }}
+                        {% if credit.subscription.date_end %}
+                        ({{ credit.subscription.date_start }} - {{ credit.subscription.date_end }})
+                        {% else %}
+                        (start date: {{ credit.subscription.date_start }})
+                        {% endif %}
                         {% else %}
                         {% trans "Any" %}
                         {% endif %}
