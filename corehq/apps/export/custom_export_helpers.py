@@ -235,7 +235,7 @@ class FormCustomExportHelper(CustomExportHelper):
         def generate_additional_columns(requires_case):
             ret = []
             case_name_col = CustomColumn(slug='case_name', index=FORM_CASE_ID_PATH, display='info.case_name',
-                                         transform=CASENAME_TRANSFORM, show=True, selected=True)
+                                         transform=CASENAME_TRANSFORM, show=True, selected=False)
             if not requires_case:
                 case_name_col.show, case_name_col.selected, case_name_col.tag = False, False, 'deleted'
             matches = filter(case_name_col.match, column_conf)
@@ -256,7 +256,8 @@ class FormCustomExportHelper(CustomExportHelper):
             elif filter(lambda col: col["index"] == case_name_col.index, column_conf):
                 ret.append(case_name_col.default_column())
             return ret
-
+        requires_case = self.custom_export.uses_cases()
+        column_conf.extend(generate_additional_columns(requires_case))
         question_schema = self.custom_export.question_schema.question_schema
 
         def update_multi_select_column(question, col):
@@ -285,7 +286,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
             update_multi_select_column(question, col)
 
-        requires_case = self.custom_export.uses_cases()
+
 
         case_cols = filter(lambda col: col["index"] == FORM_CASE_ID_PATH, column_conf)
         if not requires_case:
@@ -321,7 +322,7 @@ class FormCustomExportHelper(CustomExportHelper):
                     'display': ''
                 })
 
-        column_conf.extend(generate_additional_columns(requires_case))
+
 
         def get_remainder_column(question):
             col = ExportColumn(
