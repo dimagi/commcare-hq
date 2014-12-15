@@ -113,6 +113,12 @@ class LocationForm(forms.Form):
             self.custom_data.is_valid(),
         ])
 
+    @property
+    def errors(self):
+        errors = super(LocationForm, self).errors
+        errors.update(self.custom_data.errors)
+        return errors
+
     def clean_parent_id(self):
         parent_id = self.cleaned_data['parent_id']
         if not parent_id:

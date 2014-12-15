@@ -1,18 +1,17 @@
-import itertools
 from decimal import Decimal, InvalidOperation
 
 from django.utils.translation import ugettext as _
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
-from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed
+from corehq.apps.custom_data_fields.edit_entity import add_prefix
 
 from .exceptions import LocationImportError
 from .models import Location
 from .forms import LocationForm
-from .util import defined_location_types, parent_child, get_location_data_model
-from .views import LocationFieldsView
+from .util import defined_location_types, parent_child
 
 
 class LocationCache(object):
@@ -143,7 +142,7 @@ class LocationImporter(object):
 
         try:
             parent_id = self._process_parent_site_code(
-                parent_site_code, self.domain, location_type, parent_child_map
+                parent_site_code, location_type, parent_child_map
             )
         except LocationImportError as e:
             return {
@@ -192,7 +191,7 @@ class LocationImporter(object):
             consumption,
         )
 
-    def _process_parent_site_code(parent_site_code, location_type, parent_child_map):
+    def _process_parent_site_code(self, parent_site_code, location_type, parent_child_map):
         if not parent_site_code:
             return None
 
@@ -208,7 +207,14 @@ class LocationImporter(object):
             else:
                 return parent_obj._id
         else:
-            raise LocationImportError(_('Parent with site code {0} does not exist in this project').format(parent_site_code))
+            raise LocationImportError(
+                _('Parent with site code {0} does not exist in this project')
+                .format(parent_site_code)
+            )
+
+    @memoized
+    def get_product(self, code):
+        return Product.get_by_code(self.domain, code)
 
     def no_changes_needed(self, existing, form_data, consumption):
         if not existing:
@@ -217,16 +223,8 @@ class LocationImporter(object):
             if getattr(existing, key, None) != val:
                 return False
 
-        custom_data_model = get_location_data_model(self.domain)
-        custom_data = get_prefixed(form_data)
-        if not existing.metadata == custom_data:
-            return False
-        validate_custom_fields = custom_data_model.get_validator(LocationFieldsView)
-        if not valdidate_custom_fields(custom_data):
-            return False
-
         for product_code, val in consumption:
-            product = Product.get_by_code(self.domain, product_code)
+            product = self.get_product(product_code)
             if get_default_consumption(
                 self.domain,
                 product._id,
@@ -238,24 +236,24 @@ class LocationImporter(object):
         return True
 
     def submit_form(self, parent, form_data, existing, location_type, consumption):
-        # don't save if there is nothing to save
-        if self.no_changes_needed(existing, form_data, consumption):
-            return {
-                'id': existing._id,
-                'message': 'no changes for %s %s' % (location_type, existing.name)
-            }
-
         location = existing or Location(domain=self.domain, parent=parent)
         form = LocationForm(location, form_data)
         form.strict = False  # optimization hack to turn off strict validation
         if form.is_valid():
+            # don't save if there is nothing to save
+            if self.no_changes_needed(existing, form_data, consumption):
+                return {
+                    'id': existing._id,
+                    'message': 'no changes for %s %s' % (location_type, existing.name)
+                }
+
             loc = form.save()
 
             sp = SupplyPointCase.get_by_location(loc) if consumption else None
 
             if consumption and sp:
                 for product_code, value in consumption:
-                    product = Product.get_by_code(self.domain, product_code)
+                    product = self.get_product(product_code)
 
                     if not product:
                         # skip any consumption column that doesn't match

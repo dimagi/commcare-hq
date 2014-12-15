@@ -2,6 +2,7 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.excel import flatten_json, json_to_headers
 from couchdbkit import ResourceNotFound
@@ -107,6 +108,7 @@ def lookup_by_property(domain, prop_name, val, scope, root=None):
     return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
 
 
+@quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView
     from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
