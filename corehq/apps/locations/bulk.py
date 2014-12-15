@@ -1,14 +1,18 @@
-from corehq.apps.locations.exceptions import LocationImportError
-from corehq.apps.locations.models import Location
-from corehq.apps.locations.forms import LocationForm
-from corehq.apps.locations.util import defined_location_types, parent_child
 import itertools
+from decimal import Decimal, InvalidOperation
+
+from django.utils.translation import ugettext as _
+
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
-from decimal import Decimal, InvalidOperation
-from django.utils.translation import ugettext as _
-from corehq.apps.custom_data_fields.edit_entity import add_prefix
+from corehq.apps.custom_data_fields.edit_entity import add_prefix, get_prefixed
+
+from .exceptions import LocationImportError
+from .models import Location
+from .forms import LocationForm
+from .util import defined_location_types, parent_child, get_location_data_model
+from .views import LocationFieldsView
 
 
 class LocationCache(object):
@@ -118,13 +122,185 @@ class LocationImporter(object):
                     if 'site_code' in loc:
                         self.seen_site_codes.add(loc['site_code'])
 
-                    self.results.append(import_location(
-                        self.domain,
+                    self.results.append(self.import_location(
                         location_type,
                         loc,
                         self.parent_child_map
                     )['message'])
                 self.excel_importer.add_progress()
+
+    def import_location(self, location_type, location_data, parent_child_map=None):
+        data = dict(location_data)
+
+        provided_code = data.pop('site_code', None)
+
+        parent_site_code = data.pop('parent_site_code', None)
+
+        if not parent_child_map:
+            parent_child_map = parent_child(self.domain)
+
+        form_data = {}
+
+        try:
+            parent_id = self._process_parent_site_code(
+                parent_site_code, self.domain, location_type, parent_child_map
+            )
+        except LocationImportError as e:
+            return {
+                'id': None,
+                'message': _('Unable to import location {0}: {1}').format(
+                    data.pop('name'), e
+                )
+            }
+
+        existing = None
+        parent = parent_id
+        if provided_code:
+            existing = Location.by_site_code(self.domain, provided_code)
+            if existing:
+                if existing.location_type != location_type:
+                    return {
+                        'id': None,
+                        'message': _("Existing location type error, type of {0} is not {1}").format(
+                            existing.name, location_type
+                        )
+                    }
+
+                parent = parent_id or existing.parent_id
+
+        form_data['site_code'] = provided_code
+
+        form_data['parent_id'] = parent
+        form_data['name'] = data.pop('name')
+        form_data['location_type'] = location_type
+
+        lat, lon = data.pop('latitude', None), data.pop('longitude', None)
+        if lat and lon:
+            form_data['coordinates'] = '%s, %s' % (lat, lon)
+
+        consumption = data.get('consumption', {}).items()
+
+        metadata = data.get('data', {})
+        metadata.update(data.get('uncategorized_data', {}))
+        form_data.update(add_prefix(metadata))
+
+        return self.submit_form(
+            parent,
+            form_data,
+            existing,
+            location_type,
+            consumption,
+        )
+
+    def _process_parent_site_code(parent_site_code, location_type, parent_child_map):
+        if not parent_site_code:
+            return None
+
+        parent_obj = Location.by_site_code(self.domain, parent_site_code.lower())
+        if parent_obj:
+            if invalid_location_type(location_type, parent_obj, parent_child_map):
+                raise LocationImportError(
+                    _('Invalid parent type of {0} for child type {1}').format(
+                        parent_obj.location_type,
+                        location_type
+                    )
+                )
+            else:
+                return parent_obj._id
+        else:
+            raise LocationImportError(_('Parent with site code {0} does not exist in this project').format(parent_site_code))
+
+    def no_changes_needed(self, existing, form_data, consumption):
+        if not existing:
+            return False
+        for key, val in form_data.iteritems():
+            if getattr(existing, key, None) != val:
+                return False
+
+        custom_data_model = get_location_data_model(self.domain)
+        custom_data = get_prefixed(form_data)
+        if not existing.metadata == custom_data:
+            return False
+        validate_custom_fields = custom_data_model.get_validator(LocationFieldsView)
+        if not valdidate_custom_fields(custom_data):
+            return False
+
+        for product_code, val in consumption:
+            product = Product.get_by_code(self.domain, product_code)
+            if get_default_consumption(
+                self.domain,
+                product._id,
+                existing.location_type,
+                existing._id
+            ) != val:
+                return False
+
+        return True
+
+    def submit_form(self, parent, form_data, existing, location_type, consumption):
+        # don't save if there is nothing to save
+        if self.no_changes_needed(existing, form_data, consumption):
+            return {
+                'id': existing._id,
+                'message': 'no changes for %s %s' % (location_type, existing.name)
+            }
+
+        location = existing or Location(domain=self.domain, parent=parent)
+        form = LocationForm(location, form_data)
+        form.strict = False  # optimization hack to turn off strict validation
+        if form.is_valid():
+            loc = form.save()
+
+            sp = SupplyPointCase.get_by_location(loc) if consumption else None
+
+            if consumption and sp:
+                for product_code, value in consumption:
+                    product = Product.get_by_code(self.domain, product_code)
+
+                    if not product:
+                        # skip any consumption column that doesn't match
+                        # to a real product. currently there is no easy
+                        # way to alert here, though.
+                        continue
+
+                    try:
+                        amount = Decimal(value)
+
+                        # only set it if there is a non-negative/non-null value
+                        if amount and amount >= 0:
+                            set_default_consumption_for_supply_point(
+                                self.domain,
+                                product._id,
+                                sp._id,
+                                amount
+                            )
+                    except (TypeError, InvalidOperation):
+                        # should inform user, but failing hard due to non numbers
+                        # being used on consumption is strange since the
+                        # locations would be in a very inconsistent state
+                        continue
+
+            if existing:
+                message = 'updated %s %s' % (location_type, loc.name)
+            else:
+                message = 'created %s %s' % (location_type, loc.name)
+
+            return {
+                'id': loc._id,
+                'message': message
+            }
+        else:
+            message = 'Form errors when submitting: '
+            for k, v in form.errors.iteritems():
+                if k != '__all__':
+                    message += u'{0} {1}; {2}: {3}. '.format(
+                        location_type, form_data.get('name', 'unknown'), k, v[0]
+                    )
+
+            return {
+                'id': None,
+                'message': message
+            }
 
 
 def import_locations(domain, excel_importer):
@@ -134,177 +310,8 @@ def import_locations(domain, excel_importer):
     return results
 
 
-def import_location(domain, location_type, location_data, parent_child_map=None):
-    data = dict(location_data)
-
-    provided_code = data.pop('site_code', None)
-
-    parent_site_code = data.pop('parent_site_code', None)
-
-    if not parent_child_map:
-        parent_child_map = parent_child(domain)
-
-    form_data = {}
-
-    try:
-        parent_id = _process_parent_site_code(
-            parent_site_code, domain, location_type, parent_child_map
-        )
-    except LocationImportError as e:
-        return {
-            'id': None,
-            'message': _('Unable to import location {0}: {1}').format(
-                data.pop('name'), e
-            )
-        }
-
-    existing = None
-    parent = parent_id
-    if provided_code:
-        existing = Location.by_site_code(domain, provided_code)
-        if existing:
-            if existing.location_type != location_type:
-                return {
-                    'id': None,
-                    'message': _("Existing location type error, type of {0} is not {1}").format(
-                        existing.name, location_type
-                    )
-                }
-
-            parent = parent_id or existing.parent_id
-
-    form_data['site_code'] = provided_code
-
-    form_data['parent_id'] = parent
-    form_data['name'] = data.pop('name')
-    form_data['location_type'] = location_type
-
-    lat, lon = data.pop('latitude', None), data.pop('longitude', None)
-    if lat and lon:
-        form_data['coordinates'] = '%s, %s' % (lat, lon)
-
-    consumption = data.get('consumption', {}).items()
-
-    metadata = data.get('data', {})
-    metadata.update(data.get('uncategorized_data', {}))
-    form_data.update(add_prefix(metadata))
-
-    return submit_form(
-        domain,
-        parent,
-        form_data,
-        existing,
-        location_type,
-        consumption,
-    )
-
-
 def invalid_location_type(location_type, parent_obj, parent_relationships):
     return (
         parent_obj.location_type not in parent_relationships or
         location_type not in parent_relationships[parent_obj.location_type]
     )
-
-
-def _process_parent_site_code(parent_site_code, domain, location_type, parent_child_map):
-    if not parent_site_code:
-        return None
-
-    parent_obj = Location.by_site_code(domain, parent_site_code.lower())
-    if parent_obj:
-        if invalid_location_type(location_type, parent_obj, parent_child_map):
-            raise LocationImportError(
-                _('Invalid parent type of {0} for child type {1}').format(
-                    parent_obj.location_type,
-                    location_type
-                )
-            )
-        else:
-            return parent_obj._id
-    else:
-        raise LocationImportError(_('Parent with site code {0} does not exist in this project').format(parent_site_code))
-
-
-def no_changes_needed(domain, existing, form_data, consumption, sp=None):
-    if not existing:
-        return False
-    for key, val in form_data.iteritems():
-        if getattr(existing, key, None) != val:
-            return False
-    for product_code, val in consumption:
-        product = Product.get_by_code(domain, product_code)
-        if get_default_consumption(
-            domain,
-            product._id,
-            existing.location_type,
-            existing._id
-        ) != val:
-            return False
-
-    return True
-
-
-def submit_form(domain, parent, form_data, existing, location_type, consumption):
-    # don't save if there is nothing to save
-    if no_changes_needed(domain, existing, form_data, consumption):
-        return {
-            'id': existing._id,
-            'message': 'no changes for %s %s' % (location_type, existing.name)
-        }
-
-    location = existing or Location(domain=domain, parent=parent)
-    form = LocationForm(location, form_data)
-    form.strict = False  # optimization hack to turn off strict validation
-    if form.is_valid():
-        loc = form.save()
-
-        sp = SupplyPointCase.get_by_location(loc) if consumption else None
-
-        if consumption and sp:
-            for product_code, value in consumption:
-                product = Product.get_by_code(domain, product_code)
-
-                if not product:
-                    # skip any consumption column that doesn't match
-                    # to a real product. currently there is no easy
-                    # way to alert here, though.
-                    continue
-
-                try:
-                    amount = Decimal(value)
-
-                    # only set it if there is a non-negative/non-null value
-                    if amount and amount >= 0:
-                        set_default_consumption_for_supply_point(
-                            domain,
-                            product._id,
-                            sp._id,
-                            amount
-                        )
-                except (TypeError, InvalidOperation):
-                    # should inform user, but failing hard due to non numbers
-                    # being used on consumption is strange since the
-                    # locations would be in a very inconsistent state
-                    continue
-
-        if existing:
-            message = 'updated %s %s' % (location_type, loc.name)
-        else:
-            message = 'created %s %s' % (location_type, loc.name)
-
-        return {
-            'id': loc._id,
-            'message': message
-        }
-    else:
-        message = 'Form errors when submitting: '
-        for k, v in form.errors.iteritems():
-            if k != '__all__':
-                message += u'{0} {1}; {2}: {3}. '.format(
-                    location_type, form_data.get('name', 'unknown'), k, v[0]
-                )
-
-        return {
-            'id': None,
-            'message': message
-        }
