@@ -6,6 +6,7 @@ $(function() {
     });
 
     model.load(settings);
+    // FIXME
     ko.applyBindings(model);
 });
 

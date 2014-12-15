@@ -14,6 +14,7 @@
     <script type="text/javascript">
         var reference_controller = new MultimediaReferenceController({{ references|JSON }}, {{ object_map|JSON }}, {{ totals|JSON }});
         reference_controller.render();
+        // FIXME
         ko.applyBindings(reference_controller);
 
 {# Commented out until search is fixed #}

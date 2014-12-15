@@ -399,6 +399,7 @@
                     }, 60000);
                 }
                 chat_window_view_model = new ChatWindowViewModel();
+                // FIXME
                 ko.applyBindings(chat_window_view_model);
                 $(window).resize(resize_messages);
                 $(window).focus(chat_window_view_model.enter_focus);
