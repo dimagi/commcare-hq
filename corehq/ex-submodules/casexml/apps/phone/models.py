@@ -177,8 +177,8 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         filtered_list = self._case_state_map()[case_id]
         if filtered_list:
-            self._assert(len(filtered_list) == 1, \
-                         "Should be exactly 0 or 1 cases on phone but were %s for %s" % \
+            self._assert(len(filtered_list) == 1,
+                         "Should be exactly 0 or 1 cases on phone but were %s for %s" %
                          (len(filtered_list), case_id))
             return CaseState.wrap(filtered_list[0])
         return None
@@ -197,8 +197,8 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         # see comment in get_case_state for reasoning
         filtered_list = self._dependent_case_state_map()[case_id]
         if filtered_list:
-            self._assert(len(filtered_list) == 1, \
-                         "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" % \
+            self._assert(len(filtered_list) == 1,
+                         "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" %
                          (len(filtered_list), case_id))
             return CaseState.wrap(filtered_list[0])
         return None
@@ -301,7 +301,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         owned or not owned but relevant.
         """
         def children(case_state):
-            return [self._get_case_state_from_anywhere(index.referenced_id) \
+            return [self._get_case_state_from_anywhere(index.referenced_id)
                     for index in case_state.indices]
 
         relevant_cases = set()
@@ -345,7 +345,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         self.dependent_cases_on_phone = list(set(self.dependent_cases_on_phone))
 
         if num_cases_on_phone_before != len(self.cases_on_phone) \
-               or num_dependent_cases_before != len(self.dependent_cases_on_phone):
+                or num_dependent_cases_before != len(self.dependent_cases_on_phone):
             self._case_state_map.reset_cache(self)
             self._dependent_case_state_map.reset_cache(self)
             return True
