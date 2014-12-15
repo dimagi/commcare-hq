@@ -448,8 +448,8 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
             group=True,
         )
         # we'll build a structure that looks like this for efficiency:
-        # { case_id: [{'token': '[token value', 'date': '[date value]'}, ...]}
-        all_case_updates_by_sync_token = defaultdict(lambda: [])
+        # { case_id: [{'token': 'token value', 'date': 'date value'}, ...]}
+        all_case_updates_by_sync_token = defaultdict(list)
         for row in modification_dates:
             # incoming format is a list of objects that look like this:
             # {
