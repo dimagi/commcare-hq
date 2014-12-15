@@ -7,6 +7,10 @@
     {% compress css %}
     <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
     {% endcompress %}
+    {% if less_debug %}
+        <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
+        {% if less_watch %}<script>less.watch();</script>{% endif %}
+    {% endif %}
     <title>Edit Builds Menu</title>
 </head>
 
@@ -176,8 +180,7 @@
         }
 
         var buildsMenu = new Menu();
-        // FIXME
-        ko.applyBindings(buildsMenu);
+        ko.applyBindings(buildsMenu, $("#menu-form").get(0));
 
         function postGo(url, params) {
             var $form = $("<form>")
