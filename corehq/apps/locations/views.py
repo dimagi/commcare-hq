@@ -17,7 +17,7 @@ from corehq.apps.facilities.models import FacilityRegistry
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.contrib import messages
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, MultipleResultsFound
 import urllib
 import json
 
@@ -166,6 +166,19 @@ class NewLocationView(BaseLocationView):
             'consumption': self.consumption,
             'metadata': self.metadata
         }
+
+    def get(self, request, *args, **kwargs):
+        try:
+            context = self.get_context_data(**kwargs)
+            return self.render_to_response(context)
+        except MultipleResultsFound:
+            messages.error(request, _(
+                "There was a problem with the setup for your project. " +
+                "Please contact support at commcarehq-support@dimagi.com."
+            ))
+        return HttpResponseRedirect(
+            reverse(LocationsListView.urlname, args=[self.domain])
+        )
 
     def post(self, request, *args, **kwargs):
         if self.location_form.is_valid():
