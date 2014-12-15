@@ -48,4 +48,3 @@ class ProductSyncTest(TestCase):
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)
         self.assertEqual(6, len(list(Prod.by_domain(TEST_DOMAIN))))
-

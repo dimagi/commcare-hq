@@ -8,7 +8,7 @@ from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, \
+from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
 
 
@@ -31,7 +31,7 @@ def migration_task():
     configs = EWSGhanaConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            ils_bootstrap_domain(config, GhanaEndpoint.from_config(config), EXTENSIONS)
+            ews_bootstrap_domain(EWSApi(config.domain, GhanaEndpoint.from_config(config)))
 
 
 @task

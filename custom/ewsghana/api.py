@@ -131,16 +131,16 @@ class EWSApi(APISynchronization):
             location.save()
             SupplyPointCase.create_from_location(domain=self.domain, location=location)
 
-    def products_sync(self, ilsgateway_product):
-        product = super(EWSApi, self).products_sync(ilsgateway_product)
-        ews_product_extension(product, ilsgateway_product)
+    def products_sync(self, ews_product):
+        product = super(EWSApi, self).products_sync(ews_product)
+        ews_product_extension(product, ews_product)
         return product
 
-    def locations_sync(self, ilsgateway_location):
+    def locations_sync(self, ews_location):
         try:
             sql_loc = SQLLocation.objects.get(
                 domain=self.domain,
-                external_id=int(ilsgateway_location.id)
+                external_id=int(ews_location.id)
             )
             location = Loc.get(sql_loc.location_id)
         except SQLLocation.DoesNotExist:
@@ -149,42 +149,42 @@ class EWSApi(APISynchronization):
             return
 
         if not location:
-            if ilsgateway_location.parent_id:
+            if ews_location.parent_id:
                 try:
                     loc_parent = SQLLocation.objects.get(
-                        external_id=ilsgateway_location.parent_id,
+                        external_id=ews_location.parent_id,
                         domain=self.domain
                     )
                     loc_parent_id = loc_parent.location_id
                 except SQLLocation.DoesNotExist:
-                    parent = self.endpoint.get_location(ilsgateway_location.parent_id)
+                    parent = self.endpoint.get_location(ews_location.parent_id)
                     loc_parent = self.locations_sync(Location(parent))
                     loc_parent_id = loc_parent._id
 
                 location = Loc(parent=loc_parent_id)
-                if ilsgateway_location.type == 'facility':
+                if ews_location.type == 'facility':
                     if loc_parent.location_type == 'region':
-                        ilsgateway_location.type = 'regional warehouse'
+                        ews_location.type = 'regional warehouse'
                     elif loc_parent.location_type == 'country':
-                        ilsgateway_location.type = 'national warehouse'
+                        ews_location.type = 'national warehouse'
             else:
                 location = Loc()
                 location.lineage = []
             location.domain = self.domain
-            location.name = ilsgateway_location.name
+            location.name = ews_location.name
             location.metadata = {}
-            if ilsgateway_location.groups:
-                location.metadata['groups'] = ilsgateway_location.groups
-            if ilsgateway_location.latitude:
-                location.latitude = float(ilsgateway_location.latitude)
-            if ilsgateway_location.longitude:
-                location.longitude = float(ilsgateway_location.longitude)
-            location.location_type = ilsgateway_location.type
-            location.site_code = ilsgateway_location.code
-            location.external_id = str(ilsgateway_location.id)
+            if ews_location.groups:
+                location.metadata['groups'] = ews_location.groups
+            if ews_location.latitude:
+                location.latitude = float(ews_location.latitude)
+            if ews_location.longitude:
+                location.longitude = float(ews_location.longitude)
+            location.location_type = ews_location.type
+            location.site_code = ews_location.code
+            location.external_id = str(ews_location.id)
             location.save()
 
-            supply_points = filter(lambda x: x.last_reported, ilsgateway_location.supply_points)
+            supply_points = filter(lambda x: x.last_reported, ews_location.supply_points)
             if len(supply_points) > 1:
                 for supply_point in supply_points:
                     domain = Domain.get_by_name(self.domain)
@@ -217,36 +217,49 @@ class EWSApi(APISynchronization):
                     sp.save()
         else:
             location_dict = {
-                'name': ilsgateway_location.name,
-                'latitude': float(ilsgateway_location.latitude) if ilsgateway_location.latitude else None,
-                'longitude': float(ilsgateway_location.longitude) if ilsgateway_location.longitude else None,
-                'location_type': ilsgateway_location.type,
-                'site_code': ilsgateway_location.code.lower(),
-                'external_id': str(ilsgateway_location.id),
-                'metadata': {}
+                'name': ews_location.name,
+                'latitude': float(ews_location.latitude) if ews_location.latitude else None,
+                'longitude': float(ews_location.longitude) if ews_location.longitude else None,
+                'site_code': ews_location.code.lower(),
+                'external_id': str(ews_location.id),
             }
-            if ilsgateway_location.groups:
-                location_dict['metadata']['groups'] = ilsgateway_location.groups
+            if ews_location.groups:
+                location_dict['metadata']['groups'] = ews_location.groups
+
             if apply_updates(location, location_dict):
                 location.save()
+
+        for supply_point in ews_location.supply_points:
+                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                          key=[self.domain, str(supply_point.id)],
+                                          reduce=False,
+                                          include_docs=True,
+                                          limit=1).first()
+                if sp:
+                    if location._id == sp.location_id:
+                        location_from_sp = location
+                    else:
+                        location_from_sp = sp.location
+                    location_from_sp.metadata['supply_point_type'] = supply_point.type
+                    location_from_sp.save()
         return location
 
-    def web_users_sync(self, ilsgateway_webuser):
-        web_user = super(EWSApi, self).web_users_sync(ilsgateway_webuser)
+    def web_users_sync(self, ews_webuser):
+        web_user = super(EWSApi, self).web_users_sync(ews_webuser)
         if not web_user:
             return None
-        ews_webuser_extension(web_user, ilsgateway_webuser)
+        ews_webuser_extension(web_user, ews_webuser)
         dm = web_user.get_domain_membership(self.domain)
-        if ilsgateway_webuser.is_superuser:
+        if ews_webuser.is_superuser:
             dm.is_admin = True
         else:
             dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         web_user.save()
         return web_user
 
-    def sms_users_sync(self, ilsgateway_smsuser):
-        sms_user = super(EWSApi, self).sms_users_sync(ilsgateway_smsuser)
-        ews_smsuser_extension(sms_user, ilsgateway_smsuser)
+    def sms_users_sync(self, ews_smsuser):
+        sms_user = super(EWSApi, self).sms_users_sync(ews_smsuser)
+        ews_smsuser_extension(sms_user, ews_smsuser)
         dm = sms_user.get_domain_membership(self.domain)
         if not dm.location_id:
             try:

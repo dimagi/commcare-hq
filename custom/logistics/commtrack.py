@@ -67,6 +67,8 @@ def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id
         except SQLLocation.DoesNotExist:
             return
         checkpoint.location = location
+    if commit:
+        checkpoint.save()
 
 
 def add_location(user, location_id):

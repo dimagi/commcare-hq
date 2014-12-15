@@ -1,9 +1,6 @@
-from decimal import Decimal
 import logging
-from couchforms.models import XFormInstance
-from restkit import ResourceNotFound
-from corehq.apps.consumption.const import DAYS_IN_MONTH
-from corehq.apps.products.models import Product, SQLProduct
+
+from corehq.apps.products.models import Product
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -14,9 +11,6 @@ from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
 from custom.logistics.commtrack import add_location
-
-from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState
 
 
 class MigrationException(Exception):
@@ -93,16 +87,16 @@ class LogisticsEndpoint(EndpointMixin):
                       for stock_transaction in stock_transactions]
 
 
-class AbstractAPISynchronization(object):
+class APISynchronization(object):
 
     def __init__(self, domain, endpoint):
         self.domain = domain
         self.endpoint = endpoint
 
-
-class APISynchronization(AbstractAPISynchronization):
-
     def prepare_commtrack_config(self):
+        raise NotImplemented("Not implemented yet")
+
+    def locations_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")
 
     def products_sync(self, ilsgateway_product):
@@ -121,9 +115,6 @@ class APISynchronization(AbstractAPISynchronization):
             if apply_updates(product, product_dict):
                 product.save()
         return product
-
-    def locations_sync(self, ilsgateway_location):
-        raise NotImplemented("Not implemented yet")
 
     def web_users_sync(self, ilsgateway_webuser):
         username = ilsgateway_webuser.email.lower()
@@ -238,68 +229,3 @@ class APISynchronization(AbstractAPISynchronization):
             if apply_updates(user, user_dict) or save:
                 user.save()
         return user
-
-
-class StockDataAPI(AbstractAPISynchronization):
-
-    def _get_fake_xform(self):
-        try:
-            xform = XFormInstance.get(docid='ilsgateway-xform')
-        except ResourceNotFound:
-            xform = XFormInstance(_id='ilsgateway-xform')
-            xform.save()
-        return xform
-
-    def product_stocks_sync(self, product_stock):
-        case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                    key=[self.domain, str(product_stock.supply_point)],
-                                    reduce=False,
-                                    include_docs=True,
-                                    limit=1).first()
-        product = Product.get_by_code(self.domain, product_stock.product)
-        try:
-            stock_state = StockState.objects.get(section_id='stock',
-                                                 case_id=case._id,
-                                                 product_id=product._id)
-        except StockState.DoesNotExist:
-            stock_state = StockState(section_id='stock',
-                                     case_id=case._id,
-                                     product_id=product._id,
-                                     stock_on_hand=product_stock.quantity or 0,
-                                     last_modified_date=product_stock.last_modified,
-                                     sql_product=SQLProduct.objects.get(product_id=product._id))
-
-        if product_stock.auto_monthly_consumption:
-            stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
-        else:
-            stock_state.daily_consumption = None
-        stock_state.save()
-
-    def stock_transactions_sync(self, stocktransaction):
-        case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                    key=[self.domain, str(stocktransaction.supply_point)],
-                                    reduce=False,
-                                    include_docs=True,
-                                    limit=1).first()
-        product = Product.get_by_code(self.domain, stocktransaction.product)
-        report = StockReport(
-            form_id=self._get_fake_xform()._id,
-            date=force_to_datetime(stocktransaction.date),
-            type='balance',
-            domain=self.domain
-        )
-        report.save()
-        try:
-            sql_product = SQLProduct.objects.get(product_id=product._id)
-        except SQLProduct.DoesNotExist:
-            return None
-
-        return StockTransaction(
-            case_id=case._id,
-            product_id=product._id,
-            sql_product=sql_product,
-            section_id='stock',
-            type='stockonhand',
-            stock_on_hand=Decimal(stocktransaction.ending_balance),
-            report=report
-        )

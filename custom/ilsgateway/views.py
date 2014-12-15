@@ -13,14 +13,13 @@ from django.views.decorators.http import require_POST
 from corehq import IS_DEVELOPER
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
-from custom.ilsgateway import LOCATION_TYPES
 
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
     get_delivery_group_reports, ILS_FACILITIES
 from custom.logistics.models import StockDataCheckpoint
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import stock_data_task
-from custom.ilsgateway.api import ILSGatewayEndpoint
+from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
@@ -144,7 +143,8 @@ def ils_sync_stock_data(request, domain):
         ('supply_point_status', get_supply_point_statuses),
         ('delivery_group', get_delivery_group_reports)
     )
-    stock_data_task.delay(domain, endpoint, apis, LOCATION_TYPES, ILS_FACILITIES)
+    api_object = ILSGatewayAPI(domain, endpoint)
+    stock_data_task.delay(domain, endpoint, apis, api_object, ILS_FACILITIES)
     return HttpResponse('OK')
 
 
