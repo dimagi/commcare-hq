@@ -16,9 +16,9 @@
     <script type="text/javascript">
 
         $(function() {
-            document.body.style.zoom="55%"
+            document.body.style.zoom="55%";
             setTimeout(function() {
-                splitTable($(".table"), 1700);
+                splitTableByNumber($(".table"), 3, 5);
                 $('.hq-loading').hide();
                 window.print();
             }, 3000);

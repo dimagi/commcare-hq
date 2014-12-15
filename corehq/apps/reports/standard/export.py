@@ -6,9 +6,9 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
-from corehq import privileges, toggles
+from dimagi.utils.decorators.memoized import memoized
+from django_prbac.utils import has_privilege
+from corehq import privileges
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
@@ -48,12 +48,9 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def can_view_deid(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+    @memoized
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored
         # (serialized json) this is a little bit hacky, but works.
@@ -143,9 +140,7 @@ class ExcelExportReport(FormExportReportBase):
         startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
 
-        is_multimedia_previewer = toggles.MULTIMEDIA_EXPORT.enabled(self.request.user.username)
-        if is_multimedia_previewer:
-            size_hash = self._get_domain_attachments_size()
+        size_hash = self._get_domain_attachments_size()
 
         for f in db.view('exports_forms/by_xmlns',
                          startkey=startkey, endkey=startkey + [{}], group=True,
@@ -169,7 +164,7 @@ class ExcelExportReport(FormExportReportBase):
                 key = (form['app']['id'], form['xmlns'])
             else:
                 key = None
-            if is_multimedia_previewer and key in size_hash:
+            if key in size_hash:
                 form['size'] = size_hash[key]
             else:
                 form['size'] = None
@@ -253,6 +248,8 @@ class ExcelExportReport(FormExportReportBase):
                         form['duplicate'] = True
                     else:
                         form['no_suggestions'] = True
+                    key = (None, form['xmlns'])
+                    form['size'] = size_hash.get(key, None)
 
         def _sortkey(form):
             app_id = form['app']['id']
@@ -286,10 +283,8 @@ class ExcelExportReport(FormExportReportBase):
             group_exports=[group.form_exports for group in groups
                 if group.form_exports],
             report_slug=self.slug,
-            is_multimedia_previewer=is_multimedia_previewer
+            property_hash=self.properties(size_hash),
         )
-        if is_multimedia_previewer:
-            context.update(property_hash=self.properties(size_hash))
         return context
 
 

@@ -265,7 +265,7 @@ class RestoreConfig(object):
         response.append(xml.get_registration_element(user))
 
         # fixture block
-        for fixture in generator.get_fixtures(user, self.version, case_sync_op=None, last_sync=last_sync):
+        for fixture in generator.get_fixtures(user, self.version, last_sync):
             response.append(fixture)
 
         payload_fn = self._get_case_payload_batched if batch_enabled else self._get_case_payload
@@ -351,9 +351,12 @@ class RestoreConfig(object):
         )).hexdigest()
 
     def get_cached_payload(self):
+        if self.overwrite_cache:
+            return
+
         if self.sync_log:
             return self.sync_log.get_cached_payload(self.version)
-        elif not self.overwrite_cache:
+        else:
             return self.cache.get(self._initial_cache_key())
 
     def set_cached_payload_if_necessary(self, resp, duration):

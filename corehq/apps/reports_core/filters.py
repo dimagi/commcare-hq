@@ -91,7 +91,6 @@ class DatespanFilter(BaseFilter):
 
     def __init__(self, name, required=True, label='Datespan Filter',
                  css_id=None):
-        # todo: should these be in the constructor as well?
         self.label = label
         self.css_id = css_id or name
         params = [

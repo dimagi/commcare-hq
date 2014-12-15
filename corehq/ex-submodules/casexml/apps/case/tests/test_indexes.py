@@ -144,14 +144,6 @@ class IndexTest(TestCase):
 
         check_user_has_case(self, user, update_index_expected, version=V2)
 
-    def testBadIndexReference(self):
-        block = CaseBlock(create=True, case_id=self.CASE_ID, user_id=USER_ID, version=V2,
-                          index={'bad': ('bad-case', 'not-an-existing-id')})
-        xform = post_case_blocks([block.as_xml()])
-        self.assertIsInstance(xform, XFormError)
-        self.assertEqual(xform.doc_type, 'XFormError')
-        self.assertIn('IllegalCaseId', xform.problem)
-
     def testBadIndexReferenceDomain(self):
         case_in_other_domain = self.MOTHER_CASE_ID
         parent_domain = 'parent'

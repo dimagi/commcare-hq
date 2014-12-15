@@ -6,10 +6,7 @@ cloudCare.EMPTY = '---';
 
 var _caseListLoadError = function (response) {
     hideLoadingCallback();
-    showError("Unable to load the case list. If you are using a filter " +
-              "expression please double check the syntax and try again. " +
-              "Please report an issue if this problem persists.",
-              $("#cloudcare-notifications"));
+    showError(translatedStrings.caseListError, $("#cloudcare-notifications"));
 };
 
 cloudCare.CASE_PROPERTY_MAP = {

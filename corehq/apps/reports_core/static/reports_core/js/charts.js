@@ -134,7 +134,7 @@ var charts = (function() {
                 .rotateLabels(0)
                 .showControls(true)
                 .groupSpacing(0.1)
-                .stacked(true)
+                .stacked(config.is_stacked || false)
             ;
 
             d3.select(svgSelector)

@@ -21,6 +21,7 @@
             {# non-optional plugins don't need to be listed #}
             plugins: ['itemset'],
             {% endif %}
+            features: {{ features|JSON }},
             core: {
                 form: {{ form.source|to_javascript_string }},
                 formName: "{{ form.name|trans:app.langs|escapejs }}",

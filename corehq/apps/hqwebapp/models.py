@@ -21,7 +21,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import ensure_request_has_privilege, has_privilege
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -837,14 +837,12 @@ class CloudcareTab(UITab):
 
     @property
     def is_viewable(self):
-        try:
-            ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
-        except PermissionDenied:
-            return False
-        return (self.domain
-                and (self.couch_user.can_edit_data() or
-                     self.couch_user.is_commcare_user())
-                and not self.project.commconnect_enabled)
+        return (
+            has_privilege(self._request, privileges.CLOUDCARE)
+            and self.domain
+            and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
+            and not self.project.commconnect_enabled
+        )
 
 
 class MessagingTab(UITab):
@@ -861,21 +859,12 @@ class MessagingTab(UITab):
     @property
     @memoized
     def can_access_sms(self):
-        try:
-            ensure_request_has_privilege(self._request, privileges.OUTBOUND_SMS)
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self._request, privileges.OUTBOUND_SMS)
 
     @property
     @memoized
     def can_access_reminders(self):
-        try:
-            ensure_request_has_privilege(self._request,
-                                         privileges.REMINDERS_FRAMEWORK)
-            return True
-        except PermissionDenied:
-            return False
+        return has_privilege(self._request, privileges.REMINDERS_FRAMEWORK)
 
     @property
     def sidebar_items(self):
@@ -1150,11 +1139,7 @@ class ProjectUsersTab(UITab):
 
     @property
     def can_view_cloudcare(self):
-        try:
-            ensure_request_has_privilege(self._request, privileges.CLOUDCARE)
-        except PermissionDenied:
-            return False
-        return self.couch_user.is_domain_admin()
+        return has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin()
 
     @property
     def sidebar_items(self):
@@ -1301,13 +1286,8 @@ class ProjectSettingsTab(UITab):
         })
 
         can_view_orgs = (user_is_admin
-                         and self.project and self.project.organization)
-        if can_view_orgs:
-            try:
-                ensure_request_has_privilege(self._request,
-                                             privileges.CROSS_PROJECT_REPORTS)
-            except PermissionDenied:
-                can_view_orgs = False
+                         and self.project and self.project.organization
+                         and has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS))
 
         if can_view_orgs:
             from corehq.apps.domain.views import OrgSettingsView

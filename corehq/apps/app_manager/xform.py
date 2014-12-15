@@ -752,7 +752,7 @@ class XForm(WrappedNode):
                 "type": data_type,
             }
 
-            if items:
+            if items is not None:
                 options = []
                 for item in items:
                     translation = self.get_label_text(item, langs)

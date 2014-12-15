@@ -5,28 +5,18 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-    $('input').on("input", null, null, function() {
-        $(":submit").prop("disabled", false);
-    })
+        $(function() {
+            $('form[name="user_information"]').activateSubmitOnlyOnChange();
+            $('#id_language').select2();
+        });
     </script>
 {% endblock %}
 
 {% block page_content %}
+<p class="lead">
+    {% blocktrans %}
+    Changing your information here will update your account across all of your projects.
+    {% endblocktrans %}
+</p>
 {% crispy_b3 form form.new_helper 'bootstrap3_transitional' %}
-<form class="form form-horizontal"
-      name="user_information"
-      method="post">
-    <fieldset>
-        <legend>{% trans 'My Information' %}</legend>
-        <div class="form-horizontal-group">
-            <label class="control-label">{% trans 'Username' %}</label>
-            <div class="controls">
-                <span class="input-xlarge uneditable-input">{{ request.couch_user.html_username|safe }}</span>
-            </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary" disabled>{% trans 'Update Information' %}</button>
-        </div>
-    </fieldset>
-</form>
 {% endblock page_content %}

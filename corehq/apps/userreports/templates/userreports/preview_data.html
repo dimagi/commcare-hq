@@ -1,7 +1,7 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% block main_column %}
-<h1>{% blocktrans with display_name=data_source.display_name %}Preview table: {{ display_name}}{% endblocktrans %}</h1>
+<h1>{% blocktrans with display_name=data_source.display_name %}Preview table: {{ display_name }} ({{ total_rows }} total rows){% endblocktrans %}</h1>
 <table class="table">
     <tr>
     {% for column in columns %}

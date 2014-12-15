@@ -27,7 +27,8 @@ def get_related_cases(initial_case_list, domain, strip_history=False, search_up=
     # todo: should assert that domain exists here but this breaks tests
     case_db = CaseDbCache(domain=domain,
                           strip_history=strip_history,
-                          deleted_ok=True)
+                          deleted_ok=True,
+                          initial=initial_case_list)
 
     def related(case_db, case):
         return [case_db.get(index.referenced_id) for index in (case.indices if search_up else case.reverse_indices)]
@@ -447,8 +448,8 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
             group=True,
         )
         # we'll build a structure that looks like this for efficiency:
-        # { case_id: [{'token': '[token value', 'date': '[date value]'}, ...]}
-        all_case_updates_by_sync_token = defaultdict(lambda: [])
+        # { case_id: [{'token': 'token value', 'date': 'date value'}, ...]}
+        all_case_updates_by_sync_token = defaultdict(list)
         for row in modification_dates:
             # incoming format is a list of objects that look like this:
             # {

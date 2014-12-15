@@ -100,6 +100,17 @@
 
         {% block content %}{% endblock content %}
 
+        <footer class="footer">
+            <div class="container">
+                <p class="text-copyright text-center">
+                    {% blocktrans %}
+                        Copyright &copy; {{ year }} Dimagi, Inc.
+                        Read the <a href="#">End User License Agreement</a>.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </footer>
+
         {# Javascript #}
         {% compress js %}
             <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular.min.js' %}"></script>

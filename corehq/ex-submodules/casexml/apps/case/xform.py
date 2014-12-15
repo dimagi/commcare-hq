@@ -76,8 +76,7 @@ def process_cases_with_casedb(xform, case_db, config=None):
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
 
-        if config.reconcile:
-            relevant_log.reconcile_cases()
+        if config.reconcile and relevant_log.reconcile_cases():
             relevant_log.save()
 
     try:
@@ -122,8 +121,11 @@ class CaseDbCache(object):
     to the database. Also provides some type checking safety.
     """
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False):
-        self.cache = {}
+                 lock=False, initial=None):
+        if initial:
+            self.cache = {case['_id']: case for case in initial}
+        else:
+            self.cache = {}
         self.domain = domain
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
@@ -178,7 +180,7 @@ class CaseDbCache(object):
         self.validate_doc(case_doc)
         self.cache[case_id] = case_doc
         return case_doc
-        
+
     def set(self, case_id, case):
         self.cache[case_id] = case
         
@@ -189,7 +191,12 @@ class CaseDbCache(object):
         return case_id in self.cache
 
     def populate(self, case_ids):
-
+        """
+        Populates a set of IDs in the cache in bulk.
+        Use this if you know you are going to need to access these later for performance gains.
+        Does NOT overwrite what is already in the cache if there is already something there.
+        """
+        case_ids = set(case_ids) - set(self.cache.keys())
         def _iter_raw_cases(case_ids):
             if self.strip_history:
                 for ids in chunked(case_ids, 100):
@@ -257,14 +264,16 @@ def get_or_update_cases(xform, case_db):
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
+                # see CaseDbCache.validate_doc
                 referenced_case = case_db.get(index.referenced_id)
 
                 if not referenced_case:
-                    raise IllegalCaseId(
-                        ("Submitted index against an unknown case id: %s. "
-                         "This is not allowed. Most likely your case "
-                         "database is corrupt and you should restore your "
-                         "phone directly from the server.") % index.referenced_id)
+                    # just log, don't raise an error or modify the index
+                    logging.error(
+                        "Case '%s' references non-existent case '%s'",
+                        case.get_id,
+                        index.referenced_id,
+                    )
 
     [_validate_indices(case) for case in case_db.cache.values()]
 

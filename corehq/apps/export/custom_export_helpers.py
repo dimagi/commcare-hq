@@ -6,7 +6,7 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.standard import export
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
 from corehq.apps.reports.standard.export import DeidExportReport
-from couchexport.models import ExportTable, ExportSchema, ExportColumn
+from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
@@ -23,6 +23,23 @@ FORM_CASE_ID_PATH = 'form.case.@case_id'
 class AbstractProperty(object):
     def __get__(self, instance, owner):
         raise NotImplementedError()
+
+
+class DEID(object):
+    options = (
+        ('', ''),
+        (_('Sensitive ID'), 'couchexport.deid.deid_ID'),
+        (_('Sensitive Date'), 'couchexport.deid.deid_date'),
+    )
+    json_options = [{'label': label, 'value': value}
+                    for label, value in options]
+
+
+class ColumnTypesOptions(object):
+    json_options = [
+        {'label': meta.label, 'value': value}
+        for value, meta in display_column_types.items() if meta.label
+    ]
 
 
 class CustomExportHelper(object):
@@ -62,15 +79,6 @@ class CustomExportHelper(object):
             col.doc_type == 'StockExportColumn'
             for col in self.custom_export.tables[0].columns
         ) if self.custom_export.tables else False
-
-    class DEID(object):
-        options = (
-            ('', ''),
-            (_('Sensitive ID'), 'couchexport.deid.deid_ID'),
-            (_('Sensitive Date'), 'couchexport.deid.deid_date'),
-        )
-        json_options = [{'label': label, 'value': value}
-                        for label, value in options]
 
     def __init__(self, request, domain, export_id=None):
         self.request = request
@@ -158,7 +166,8 @@ class CustomExportHelper(object):
         return {
             'custom_export': self.custom_export,
             'default_order': self.default_order,
-            'deid_options': self.DEID.json_options,
+            'deid_options': DEID.json_options,
+            'column_type_options': ColumnTypesOptions.json_options,
             'presave': self.presave,
             'export_stock': self.export_stock,
             'DeidExportReport_name': DeidExportReport.name,
@@ -183,7 +192,7 @@ class FormCustomExportHelper(CustomExportHelper):
     allow_repeats = True
 
     default_questions = [FORM_CASE_ID_PATH, "form.meta.timeEnd", "_id", "id", "form.meta.username"]
-    questions_to_show = default_questions + ["form.meta.timeStart", "received_on"]
+    questions_to_show = default_questions + ["form.meta.timeStart", "received_on", "form.meta.location.#text"]
 
     @property
     def export_title(self):
@@ -248,6 +257,20 @@ class FormCustomExportHelper(CustomExportHelper):
                 ret.append(case_name_col.default_column())
             return ret
 
+        question_schema = self.custom_export.question_schema.question_schema
+
+        def update_multi_select_column(question, col):
+            if question in question_schema and not question_schema[question].repeat_context:
+                if self.creating_new_export:
+                    col["options"] = question_schema[question].options
+                    col["allOptions"] = question_schema[question].options
+                    col["doc_type"] = SplitColumn.__name__
+                    col["hasNewOptions"] = False
+                else:
+                    current_options = set(col.get("options", []))
+                    col["allOptions"] = list(set(question_schema[question].options) | current_options)
+                    col["hasNewOptions"] = bool(set(question_schema[question].options) - current_options)
+
         for col in column_conf:
             question = col["index"]
             if question in remaining_questions:
@@ -260,6 +283,8 @@ class FormCustomExportHelper(CustomExportHelper):
                 col["show"] = True
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
+
+            update_multi_select_column(question, col)
 
         requires_case = self.custom_export.uses_cases()
 
@@ -279,13 +304,42 @@ class FormCustomExportHelper(CustomExportHelper):
                 'display': ''
             })
 
+        # This adds [info] location.#text to the standard list of columns to export, even if no forms have been
+        # submitted with location data yet.
+        if self.custom_export.app and self.custom_export.app.auto_gps_capture:
+            loc_present = False
+            for col in column_conf:
+                if col['index'] == 'form.meta.location.#text':
+                    loc_present = True
+            if not loc_present:
+                column_conf.append({
+                    'index': 'form.meta.location.#text',
+                    'show': True,
+                    'is_sensitive': False,
+                    'selected': False,
+                    'transform': None,
+                    'tag': None,
+                    'display': '',
+                    'doc_type': None,
+                    'allOptions': None,
+                    'options': []
+                })
+
         column_conf.extend(generate_additional_columns(requires_case))
-        column_conf.extend([
-            ExportColumn(
-                index=q,
+
+        def get_remainder_column(question):
+            col = ExportColumn(
+                index=question,
                 display='',
                 show=True,
             ).to_config_format(selected=self.creating_new_export)
+
+            update_multi_select_column(question, col)
+
+            return col
+
+        column_conf.extend([
+            get_remainder_column(q)
             for q in remaining_questions
         ])
 
@@ -336,6 +390,9 @@ class CustomColumn(object):
             'tag': self.tag,
             'special': self.slug,
             'show': self.show,
+            'doc_type': None,
+            'allOptions': None,
+            'options': []
         }
 
 
@@ -390,6 +447,18 @@ class CaseCustomExportHelper(CustomExportHelper):
         def is_special_type(p):
             return any([p in self.meta_properties, p in self.server_properties, p in self.row_properties])
 
+        def update_multi_select_column(col):
+            if self.creating_new_export:
+                col["options"] = []
+                col["allOptions"] = []
+            else:
+                current_options = col.get("options", [])
+                col["allOptions"] = current_options
+
+            col["hasNewOptions"] = False
+
+            return col
+
         for col in column_conf:
             prop = col["index"]
             display = col.get('display') or prop
@@ -405,12 +474,14 @@ class CaseCustomExportHelper(CustomExportHelper):
                 if self.creating_new_export:
                     col["selected"] = True
 
+            update_multi_select_column(col)
+
         column_conf.extend([
-            ExportColumn(
+            update_multi_select_column(ExportColumn(
                 index=prop,
                 display='',
                 show=True,
-            ).to_config_format(selected=self.creating_new_export)
+            ).to_config_format(selected=self.creating_new_export))
             for prop in filter(lambda prop: not prop.startswith("parent/"), remaining_properties)
         ])
 
