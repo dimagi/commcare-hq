@@ -240,8 +240,9 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         # whether the phone thinks it owns an action block.
         # the only way this can't be true is if the block assigns to an
         # owner id that's not associated with the user on the phone
-        if "owner_id" in action.updated_known_properties and action.updated_known_properties["owner_id"]:
-            return action.updated_known_properties["owner_id"] in self.owner_ids_on_phone
+        owner = action.updated_known_properties.get("owner_id")
+        if owner:
+            return owner in self.owner_ids_on_phone
         return True
 
     def update_phone_lists(self, xform, case_list):
