@@ -123,14 +123,13 @@
     
     $(function(){
         kvm = KeywordActionsViewModel({{ form.current_values|JSON }});
-        // FIXME
-        ko.applyBindings(kvm);
+        ko.applyBindings(kvm, $("#keyword-form").get(0));
     });
 </script>
 {% endblock %}
 
 {% block main_column %}
-<form action="" method="post">
+<form id="keyword-form" action="" method="post">
     <div>
         <table class="parameter_table">
             <tbody>
