@@ -7,6 +7,8 @@ from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime
 from optparse import make_option
 from django.conf import settings
+from pillow_retry.models import PillowError
+
 
 class Command(BaseCommand):
     help = "Creates an HqDeploy document to record a successful deployment."
@@ -30,6 +32,13 @@ class Command(BaseCommand):
             code_snapshot=git_snapshot,
         )
         deploy.save()
+
+        #  reset PillowTop errors in the hope that a fix has been deployed
+        rows_updated = PillowError.bulk_reset_attempts(datetime.utcnow())
+        if rows_updated:
+            print "\n---------------- Pillow Errors Reset ----------------\n" \
+                  "{} pillow errors queued for retry\n".format(rows_updated)
+
         if options['mail_admins']:
             snapshot_table = render_to_string('hqadmin/partials/project_snapshot.html', dictionary={'snapshot': git_snapshot})
             message = "Deployed by %s, cheers!" % options['user']

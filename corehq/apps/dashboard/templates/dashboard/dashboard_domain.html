@@ -1,0 +1,73 @@
+{% extends 'dashboard/base.html' %}
+{% load i18n %}{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+
+{% block js %}{{ block.super }}
+<script type="text/javascript"
+        src="{% new_static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
+{% endblock %}
+
+{% block uncompressed-js %}{{ block.super }}
+<script type="text/javascript">
+(function (angular, undefined) {
+    'use strict';
+    var dashboardApp = angular.module('dashboardApp', [
+        'ui.bootstrap',
+        'ngResource',
+        'ngRoute',
+        'ng.django.rmi',
+        'hq.dashboard'
+    ]);
+    dashboardApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    dashboardApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+    dashboardApp.constant('dashboardConfig', {
+        staticRoot: '{{ STATIC_URL }}'
+    });
+}(window.angular));
+</script>
+{% endblock %}
+
+{% block dashboard-content %}
+<div class="page-header">
+    <h1>
+        {% if project.commtrack_enabled %}
+            {% trans 'Welcome Back to CommTrack' %}
+        {% else %}
+            {% trans 'Welcome Back to CommCare HQ' %}
+        {% endif %}
+    </h1>
+</div>
+<div data-ng-app="dashboardApp">
+    <div class="row">
+        {% for tile in dashboard_tiles %}
+        <tile-{{ tile.ng_directive }}
+                slug="{{ tile.slug }}"
+                title="{{ tile.title }}"
+                check-permissions=""
+                ng-show="hasPermissions"></tile-{{ tile.ng_directive }}>
+        {% endfor %}
+    </div>
+    <p class="lead text-center" style="margin-bottom: 5em;">
+        {% if project.commtrack_enabled %}
+            {% blocktrans %}
+                Thanks for using CommTrack! If you have questions, suggestions,
+                or other thoughts, <br />we invite you to join the discussion on the
+                <a href="https://groups.google.com/forum/#!forum/commtrack-users/join"
+                   target="_blank">CommTrack Users Mailing List</a>.
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans %}
+                Thanks for using CommCare HQ! If you have questions, suggestions,
+                or other thoughts, <br />we invite you to join the discussion on the
+                <a href="https://groups.google.com/forum/#!forum/commcare-users/join"
+                   target="_blank">CommCare Users Mailing List</a>.
+            {% endblocktrans %}
+        {% endif %}
+    </p>
+</div>
+{% endblock dashboard-content %}

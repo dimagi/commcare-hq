@@ -32,6 +32,7 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.util.quickcache import quickcache
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -377,7 +378,7 @@ class AdvancedFormActions(DocumentSchema):
             else:
                 parent = self.actions_meta_by_tag[action.parent_tag]['action']
                 if parent.case_type == parent_case_type:
-                    yield parent
+                    yield action
 
     def get_case_tags(self):
         for action in self.get_all_actions():
@@ -463,7 +464,7 @@ class FormSource(object):
 
         try:
             source = app.lazy_fetch_attachment(filename)
-        except (ResourceNotFound, KeyError):
+        except ResourceNotFound:
             source = ''
 
         return source
@@ -499,6 +500,32 @@ class CachedStringProperty(object):
         cache.set(key, value, 7*24*60*60)  # cache for 7 days
 
 
+class ScheduleVisit(DocumentSchema):
+    """
+    due:         Days after the anchor date that this visit is due
+    late_window: Days after the due day that this visit is valid until
+    """
+    due = IntegerProperty()
+    late_window = IntegerProperty()
+
+
+class FormSchedule(DocumentSchema):
+    """
+    anchor:                     Case property containing a date after which this schedule becomes active
+    expiry:                     Days after the anchor date that this schedule expires (optional)
+    visit_list:                 List of visits in this schedule
+    post_schedule_increment:    Repeat period for visits to occur after the last fixed visit (optional)
+    transition_condition:       Condition under which the schedule transitions to the next phase
+    termination_condition:      Condition under which the schedule terminates
+    """
+    anchor = StringProperty()
+    expires = IntegerProperty()
+    visits = SchemaListProperty(ScheduleVisit)
+    post_schedule_increment = IntegerProperty()
+    transition_condition = SchemaProperty(FormActionCondition)
+    termination_condition = SchemaProperty(FormActionCondition)
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -507,7 +534,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty()
+    name = DictProperty(unicode)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -521,6 +548,7 @@ class FormBase(DocumentSchema):
         choices=[WORKFLOW_DEFAULT, WORKFLOW_MODULE, WORKFLOW_PREVIOUS]
     )
     auto_gps_capture = BooleanProperty(default=False)
+    no_vellum = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -568,6 +596,10 @@ class FormBase(DocumentSchema):
             return form, app
         else:
             return form
+
+    @property
+    def schedule_form_id(self):
+        return self.unique_id[:6]
 
     def wrapped_xform(self):
         return XForm(self.source)
@@ -665,6 +697,7 @@ class FormBase(DocumentSchema):
         xform.exclude_languages(app.build_langs)
         xform.set_default_language(app.build_langs[0])
         xform.normalize_itext()
+        xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
     def render_xform(self):
@@ -672,8 +705,14 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    def get_questions(self, langs, **kwargs):
-        return XForm(self.source).get_questions(langs, **kwargs)
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups'])
+    def get_questions(self, langs, include_triggers=False,
+                      include_groups=False):
+        return XForm(self.source).get_questions(
+            langs=langs,
+            include_triggers=include_triggers,
+            include_groups=include_groups,
+        )
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -943,6 +982,18 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return []
 
     @memoized
+    def get_child_case_types(self):
+        '''
+        Return a list of each case type for which this Form opens a new child case.
+        :return:
+        '''
+        child_case_types = set()
+        for subcase in self.actions.subcases:
+            if subcase.close_condition.type == "never":
+                child_case_types.add(subcase.case_type)
+        return child_case_types
+
+    @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
         case_properties = set()
@@ -977,6 +1028,40 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
 
+class GraphAnnotations(IndexedSchema):
+    display_text = DictProperty()
+    x = StringProperty()
+    y = StringProperty()
+
+
+class GraphSeries(DocumentSchema):
+    config = DictProperty()
+    data_path = StringProperty()
+    x_function = StringProperty()
+    y_function = StringProperty()
+    radius_function = StringProperty()
+
+
+class GraphConfiguration(DocumentSchema):
+    config = DictProperty()
+    locale_specific_config = DictProperty()
+    annotations = SchemaListProperty(GraphAnnotations)
+    graph_type = StringProperty()
+    series = SchemaListProperty(GraphSeries)
+
+
+class DetailTab(IndexedSchema):
+    """
+    Represents a tab in the case detail screen on the phone. Ex:
+        {
+            'name': 'Medical',
+            'starting_index': 3
+        }
+    """
+    header = DictProperty()
+    starting_index = IntegerProperty()
+
+
 class DetailColumn(IndexedSchema):
     """
     Represents a column in case selection screen on the phone. Ex:
@@ -999,6 +1084,7 @@ class DetailColumn(IndexedSchema):
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
+    graph_configuration = SchemaProperty(GraphConfiguration)
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
@@ -1065,15 +1151,6 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
 
-    def values(self):
-        values = {
-            'field': self.field,
-            'type': self.type,
-            'direction': self.direction,
-        }
-
-        return values
-
 
 class SortOnlyDetailColumn(DetailColumn):
     """This is a mock type, not intended to be part of a document"""
@@ -1098,7 +1175,27 @@ class Detail(IndexedSchema):
     columns = SchemaListProperty(DetailColumn)
     get_columns = IndexedSchema.Getter('columns')
 
+    tabs = SchemaListProperty(DetailTab)
+    get_tabs = IndexedSchema.Getter('tabs')
+
     sort_elements = SchemaListProperty(SortElement)
+    filter = StringProperty()
+
+    def get_tab_spans(self):
+        '''
+        Return the starting and ending indices into self.columns deliminating
+        the columns that should be in each tab.
+        :return:
+        '''
+        tabs = list(self.get_tabs())
+        ret = []
+        for tab in tabs:
+            try:
+                end = tabs[tab.id + 1].starting_index
+            except IndexError:
+                end = len(self.columns)
+            ret.append((tab.starting_index, end))
+        return ret
 
     @parse_int([1])
     def get_column(self, i):
@@ -1107,18 +1204,6 @@ class Detail(IndexedSchema):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
-
-    def filter_xpath(self):
-        filters = []
-        for i,column in enumerate(self.columns):
-            if column.format == 'filter':
-                value = dot_interpolate(
-                    column.filter_xpath,
-                    '%s_%s_%s' % (column.model, column.field, i + 1)
-                )
-                filters.append("(%s)" % value)
-        xpath = ' and '.join(filters)
-        return partial_escape(xpath)
 
 
 class CaseList(IndexedSchema):
@@ -1151,7 +1236,7 @@ class DetailPair(DocumentSchema):
 
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
-    name = DictProperty()
+    name = DictProperty(unicode)
     unique_id = StringProperty()
     case_type = StringProperty()
 
@@ -1238,15 +1323,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                             'key': key,
                             'module': self.get_module_info(),
                         }
-            elif column.format == 'filter':
-                try:
-                    etree.XPath(column.filter_xpath or '')
-                except etree.XPathSyntaxError:
-                    yield {
-                        'type': 'invalid filter xpath',
-                        'module': self.get_module_info(),
-                        'column': column,
-                    }
             elif column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
@@ -1272,6 +1348,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 needs_case_detail=True
             ))
         return errors
+
+    @memoized
+    def get_child_case_types(self):
+        '''
+        Return a list of each case type for which this module has a form that
+        opens a new child case of that type.
+        :return:
+        '''
+        child_case_types = set()
+        for form in self.get_forms():
+            if hasattr(form, 'get_child_case_types'):
+                child_case_types.update(form.get_child_case_types())
+        return child_case_types
 
 
 class Module(ModuleBase):
@@ -1387,6 +1476,13 @@ class Module(ModuleBase):
         except Exception:
             return []
 
+    @property
+    def case_list_filter(self):
+        try:
+            return self.case_details.short.filter
+        except AttributeError:
+            return None
+
     def validate_for_build(self):
         errors = super(Module, self).validate_for_build()
         for sort_element in self.detail_sort_elements:
@@ -1398,6 +1494,20 @@ class Module(ModuleBase):
                     'field': sort_element.field,
                     'module': self.get_module_info(),
                 })
+        if self.case_list_filter:
+            try:
+                etree.XPath(self.case_list_filter)
+            except etree.XPathSyntaxError:
+                errors.append({
+                    'type': 'invalid filter xpath',
+                    'module': self.get_module_info(),
+                    'filter': self.case_list_filter,
+                })
+        if self.parent_select.active and not self.parent_select.module_id:
+            errors.append({
+                'type': 'no parent select id',
+                'module': self.get_module_info()
+            })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -1475,6 +1585,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
     actions = SchemaProperty(AdvancedFormActions)
+    schedule = SchemaProperty(FormSchedule, default=None)
 
     def add_stuff_to_xform(self, xform):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
@@ -1566,8 +1677,16 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 error.update(error_meta)
                 errors.append(error)
 
+        module = self.get_module()
+        if module.has_schedule and not (self.schedule and self.schedule.anchor):
+            error = {
+                'type': 'validation error',
+                'validation_message': _("All forms in this module require a visit schedule.")
+            }
+            error.update(error_meta)
+            errors.append(error)
+
         if validate_module:
-            module = self.get_module()
             errors.extend(module.get_case_errors(
                 needs_case_type=False,
                 needs_case_detail=module.requires_case_details(),
@@ -1595,7 +1714,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     subcase.case_properties.keys()
                 )
                 parent = self.actions.get_action_from_tag(subcase.parent_tag)
-                parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
+                if parent:
+                    parent_types.add((parent.case_type, subcase.parent_reference_id or 'parent'))
 
         return parent_types, case_properties
 
@@ -1608,6 +1728,7 @@ class AdvancedModule(ModuleBase):
     product_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
+    has_schedule = BooleanProperty()
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2315,15 +2436,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self
 
     @classmethod
-    def by_domain(cls, domain):
-        return cls.view('app_manager/applications_brief',
-                        startkey=[domain],
-                        endkey=[domain, {}],
-                        include_docs=True,
-                        #stale=settings.COUCH_STALE_QUERY,
-        ).all()
-
-    @classmethod
     def get_latest_build(cls, domain, app_id):
         build = cls.view('app_manager/saved_app',
                                      startkey=[domain, app_id, {}],
@@ -2509,13 +2621,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
-            for form in self.get_forms():
-                if form.has_fixtures:
-                    raise PermissionDenied(_(
-                        "Usage of lookup tables is not supported by your "
-                        "current subscription. Please upgrade your "
-                        "subscription before using this feature."
-                    ))
+            # remote apps don't support get_forms yet.
+            # for now they can circumvent the fixture limitation. sneaky bastards.
+            if hasattr(self, 'get_forms'):
+                for form in self.get_forms():
+                    if form.has_fixtures:
+                        raise PermissionDenied(_(
+                            "Usage of lookup tables is not supported by your "
+                            "current subscription. Please upgrade your "
+                            "subscription before using this feature."
+                        ))
 
     def validate_jar_path(self):
         build = self.get_build()
@@ -2654,12 +2769,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
-
-    def fetch_emulator_commcare_jar(self):
-        path = "Generic/WebDemo"
-        jadjar = self.get_preview_build().get_jadjar(path)
-        jadjar = jadjar.pack(self.create_all_files())
-        return jadjar.jar
 
     def make_build(self, comment=None, user_id=None, previous_version=None):
         copy = super(ApplicationBase, self).make_build()
@@ -2968,7 +3077,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             del setting_value
 
         if self.case_sharing:
-            app_profile['properties']['server-tether'] = 'sync'
+            app_profile['properties']['server-tether'] = {
+                'force': True,
+                'value': 'sync',
+            }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
@@ -3279,17 +3391,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_form_by_xmlns(self, xmlns):
+    def get_form_by_xmlns(self, xmlns, log_missing=True):
         if xmlns == "http://code.javarosa.org/devicereport":
             return None
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
-            logging.error('App %s in domain %s has %s forms with xmlns %s' % (
-                self.get_id,
-                self.domain,
-                len(forms),
-                xmlns,
-            ))
+            if log_missing or len(forms) > 1:
+                logging.error('App %s in domain %s has %s forms with xmlns %s' % (
+                    self.get_id,
+                    self.domain,
+                    len(forms),
+                    xmlns,
+                ))
             return None
         else:
             form, = forms
@@ -3323,9 +3436,38 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
+        if self._has_parent_child_selection_cycle({m.unique_id:m for m in self.get_modules()}):
+            errors.append({'type': 'parent cycle'})
+
         if not errors:
             errors = super(Application, self).validate_app()
         return errors
+
+    def _has_parent_child_selection_cycle(self, modules):
+        """
+        :param modules: A mapping of module unique_ids to Module objects
+        :return: True if there is a cycle in the parent-child selection graph
+        """
+        visited = set()
+        completed = set()
+
+        def cycle_helper(m):
+            if m.id in visited:
+                if m.id in completed:
+                    return False
+                return True
+            visited.add(m.id)
+            if hasattr(m, 'parent_select') and m.parent_select.active:
+                parent = modules.get(m.parent_select.module_id, None)
+                if parent != None and cycle_helper(parent):
+                    return True
+            completed.add(m.id)
+            return False
+        for module in modules.values():
+            if cycle_helper(module):
+                return True
+        return False
+
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
@@ -3346,6 +3488,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
+        if self.build_version < yaml_setting.get("since", "0"):
+            setting = yaml_setting.get("disabled_default", None)
+            if setting is not None:
+                return setting
         return yaml_setting.get("default")
 
     @property
@@ -3481,6 +3627,32 @@ class RemoteApp(ApplicationBase):
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions
+
+
+def get_apps_in_domain(domain, full=False, include_remote=True):
+    """
+    Returns all apps(not builds) in a domain
+
+    full use applications when true, otherwise applications_brief
+    """
+    if full:
+        view_name = 'app_manager/applications'
+        startkey = [domain, None]
+        endkey = [domain, None, {}]
+    else:
+        view_name = 'app_manager/applications_brief'
+        startkey = [domain]
+        endkey = [domain, {}]
+
+    view_results = Application.get_db().view(view_name,
+        startkey=startkey,
+        endkey=endkey,
+        include_docs=True,
+    )
+
+    remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
+    wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
+    return filter(remote_app_filter, wrapped_apps)
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False):

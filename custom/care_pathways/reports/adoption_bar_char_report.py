@@ -10,19 +10,20 @@ class AdoptionBarChartReport(CareBaseReport):
     name = 'Adoption Bar Chart'
     slug = 'adoption_bar_chart'
     report_title = 'Adoption Bar Chart'
+    report_template_path = 'care_pathways/adoption_bar_chart_report.html'
 
     @property
     def fields(self):
         filters = [GeographyFilter,
-              GroupByFilter,
-              PPTYearFilter,
-              TypeFilter,
-              GenderFilter,
-              GroupLeadershipFilter,
-              CBTNameFilter,
-              ]
+                   PPTYearFilter,
+                   GenderFilter,
+                   GroupLeadershipFilter,
+                   CBTNameFilter]
         if self.domain == 'pathways-india-mis':
             filters.append(ScheduleFilter)
+        filters.append(TypeFilter)
+        filters.append(GroupByFilter)
+        print self.report_template_path
 
         return filters
 
@@ -36,12 +37,23 @@ class AdoptionBarChartReport(CareBaseReport):
         return config
 
     def get_chart(self, rows, columns, x_label, y_label):
-        chart = MultiBarChart('Adoption of Practices', x_axis=Axis(x_label), y_axis=Axis(y_label))
-        chart.forceY = [0, 100]
-        chart.height = 700
-        chart.rotateLabels = -55
-        chart.marginBottom = 390
-        chart.marginLeft = 350
+        chart = MultiBarChart('Adoption of Practices', x_axis=Axis(x_label), y_axis=Axis(y_label, '%'))
+
+        if self.report_config['group'] == 'domain':
+            chart.height = 550
+            chart.rotateLabels = -55
+            chart.marginBottom = 250
+        elif self.report_config['group'] == 'practice':
+            chart.height = 700
+            chart.rotateLabels = -55
+            chart.marginBottom = 400
+        else:
+            chart.height = 320
+            chart.rotateLabels = 0
+            chart.marginBottom = 50
+
+        chart.marginLeft = 200
+        chart.marginRight = 150
         self._chart_data(chart, columns, rows)
         return [chart]
 
@@ -53,15 +65,18 @@ class AdoptionBarChartReport(CareBaseReport):
             TAG_RE = re.compile(r'<[^>]+>')
             return TAG_RE.sub('', text)
 
+        if self.request.GET.get('group_by', '') == 'domain':
+            rows = sorted(rows, key=lambda k: strip_html(k[0]))
+
         if rows:
             charts = [[], [], []]
             for row in rows:
                 group_name = strip_html(row[0])
                 for ix, column in enumerate(row[1:]):
-                    charts[ix].append({'x': group_name, 'y': p2f(column)})
+                    charts[ix].append({'x': group_name, 'y': p2f(column) / 100.0})
 
-            chart.add_dataset('All', charts[0], "blue")
-            chart.add_dataset('Some', charts[1], "green")
+            chart.add_dataset('All', charts[0], "green")
+            chart.add_dataset('Some', charts[1], "yellow")
             chart.add_dataset('None', charts[2], "red")
 
     @property

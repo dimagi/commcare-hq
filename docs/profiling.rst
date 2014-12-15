@@ -1,8 +1,8 @@
 Profiling
 =========
 
-Practical guide to profiling a slow view
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Practical guide to profiling a slow view or function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This will walkthrough one way to profile slow code using the `@profile decorator <https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py>`_.
 
@@ -157,4 +157,67 @@ Reloading the page twice (the first time to prime the cache and the second time 
 Yikes! It looks like this is already quite fast with a hot cache!
 And there don't appear to be any obvious candidates for further optimization.
 If it is still a problem it may be an indication that we need to prime the cache better, or increase the amount of data we are testing with locally to see more interesting results.
-To be continued...
+
+Aggregating data from multiple runs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In some cases it is useful to run a function a number of times and aggregate the profile data.
+To do this follow the steps above to create a set of '.prof' files (one for each run of the function) then use the
+'gather_profile_stats.py' script included with django (lib/python2.7/site-packages/django/bin/profiling/gather_profile_stats.py)
+to aggregate the data.
+
+This will produce a '.agg.prof' file which can be analysed with the `prof.py <https://gist.github.com/czue/4947238>`_ script.
+
+Line profiling
+^^^^^^^^^^^^^^^
+
+In addition to the above methods of profiling it is possible to do line profiling of code which attached profile
+data to individual lines of code as opposed to function names.
+
+The easiest way to do this is to use the `line_profile <https://github.com/dimagi/dimagi-utils/blob/master/dimagi/utils/decorators/profile.py#L51>`_
+decorator.
+
+Example output::
+
+    File: demo.py
+    Function: demo_follow at line 67
+    Total time: 1.00391 s
+    Line #      Hits         Time  Per Hit   % Time  Line Contents
+    ==============================================================
+        67                                           def demo_follow():
+        68         1           34     34.0      0.0      r = random.randint(5, 10)
+        69        11           81      7.4      0.0      for i in xrange(0, r):
+        70        10      1003800 100380.0    100.0          time.sleep(0.1)
+    File: demo.py
+    Function: demo_profiler at line 72
+    Total time: 1.80702 s
+    Line #      Hits         Time  Per Hit   % Time  Line Contents
+    ==============================================================
+        72                                           @line_profile(follow=[demo_follow])
+        73                                           def demo_profiler():
+        74         1           17     17.0      0.0      r = random.randint(5, 10)
+        75         9           66      7.3      0.0      for i in xrange(0, r):
+        76         8       802921 100365.1     44.4          time.sleep(0.1)
+        77
+        78         1      1004013 1004013.0     55.6      demo_follow()
+
+More details here:
+
+* https://github.com/dmclain/django-debug-toolbar-line-profiler
+* https://github.com/dcramer/django-devserver#devservermodulesprofilelineprofilermodule
+
+Additional references
+^^^^^^^^^^^^^^^^^^^^^
+* http://django-extensions.readthedocs.org/en/latest/runprofileserver.html
+
+Memory profiling
+~~~~~~~~~~~~~~~~
+
+Refer to these resources which provide good information on memory profiling:
+
+* `Diagnosing memory leaks <http://chase-seibert.github.io/blog/2013/08/03/diagnosing-memory-leaks-python.html>`_
+* `Using heapy <http://smira.ru/wp-content/uploads/2011/08/heapy.html>`_
+* `Diving into python memory <https://github.com/CyrilPeponnet/cyrilpeponnet.github.com/blob/master/_posts/2014-09-18-diving-into-python-memory.md>`_
+* `Memory usage graphs with ps <http://brunogirin.blogspot.com.au/2010/09/memory-usage-graphs-with-ps-and-gnuplot.html>`_
+    * `while true; do ps -C python -o etimes=,pid=,%mem=,vsz= >> mem.txt; sleep 1; done`
+

@@ -118,8 +118,8 @@ def new_static(url, **kwargs):
     return url
 
 
-@register.simple_tag
-def domains_for_user(request, selected_domain=None):
+@register.simple_tag(takes_context=True)
+def domains_for_user(context, request, selected_domain=None):
     """
     Generate pulldown menu for domains.
     Cache the entire string alongside the couch_user's doc_id that can get invalidated when
@@ -144,16 +144,17 @@ def domains_for_user(request, selected_domain=None):
         url=reverse('domain_homepage', args=[d.name]),
         name=d.long_display_name()
     ) for d in domain_list]
-    context = {
+    ctxt = {
         'is_public': selected_domain == 'public',
         'domain_list': domain_list,
         'current_domain': selected_domain,
+        'DOMAIN_TYPE': context['DOMAIN_TYPE']
     }
     template = {
         style_utils.BOOTSTRAP_2: 'hqwebapp/partials/domain_list_dropdown.html',
         style_utils.BOOTSTRAP_3: 'style/includes/domain_list_dropdown.html',
     }[style_utils.bootstrap_version(request)]
-    return mark_safe(render_to_string(template, context))
+    return mark_safe(render_to_string(template, ctxt))
 
 
 @register.simple_tag
@@ -219,11 +220,24 @@ def pretty_doc_info(doc_info):
     })
 
 
-@register.filter
-def toggle_enabled(request, toggle_name):
-    import corehq.toggles
-    toggle = getattr(corehq.toggles, toggle_name)
+def _toggle_enabled(module, request, toggle_or_toggle_name):
+    if isinstance(toggle_or_toggle_name, basestring):
+        toggle = getattr(module, toggle_or_toggle_name)
+    else:
+        toggle = toggle_or_toggle_name
     return (
         (hasattr(request, 'user') and toggle.enabled(request.user.username)) or
         (hasattr(request, 'domain') and toggle.enabled(request.domain))
     )
+
+
+@register.filter
+def toggle_enabled(request, toggle_or_toggle_name):
+    import corehq.toggles
+    return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
+
+
+@register.filter
+def feature_preview_enabled(request, toggle_name):
+    import corehq.feature_previews
+    return _toggle_enabled(corehq.feature_previews, request, toggle_name)

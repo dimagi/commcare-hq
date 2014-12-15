@@ -100,6 +100,7 @@ function CommcareSettings(options) {
     _(self.settings).each(function (setting) {
         var value = initialValues[setting.type][setting.id];
         setting.contingent_default = setting.contingent_default || [];
+        setting.disabled_default = setting.disabled_default || null;
         setting.value = ko.observable(value);
         if (!_.isObject(setting.since)) {
             setting.since = {'': setting.since};
@@ -164,6 +165,11 @@ function CommcareSettings(options) {
                 condition = self.parseCondition(_case.condition);
                 if (condition.check()) {
                     return _case.value;
+                }
+            }
+            if (!setting.versionOK()){
+                if (setting.disabled_default != null){
+                    return setting.disabled_default;
                 }
             }
             return setting['default'];

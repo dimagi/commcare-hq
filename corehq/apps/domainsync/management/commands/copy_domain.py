@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.stock.models import StockTransaction, StockReport, DocDomainMapping
 from corehq.apps.domain.models import Domain
+from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from dimagi.utils.couch.database import get_db, iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
 from couchdbkit.client import Database
@@ -13,6 +14,7 @@ from datetime import datetime
 
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
+
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
     'WeeklyNotification',
@@ -36,6 +38,11 @@ class Command(BaseCommand):
                     dest='doc_types_exclude',
                     default='',
                     help='Comma-separated list of Document Types to NOT copy.'),
+        make_option('--exclude-attachments',
+                    action='store_true',
+                    dest='exclude_attachments',
+                    default=False,
+                    help="Don't copy document attachments, just the docs themselves."),
         make_option('--since',
                     action='store',
                     dest='since',
@@ -78,6 +85,7 @@ class Command(BaseCommand):
         sourcedb = Database(args[0])
         domain = args[1].strip()
         simulate = options['simulate']
+        exclude_attachments = options['exclude_attachments']
 
         since = datetime.strptime(options['since'], '%Y-%m-%d').isoformat() if options['since'] else None
 
@@ -104,7 +112,7 @@ class Command(BaseCommand):
                 startkey = [x for x in [domain, type, since] if x is not None]
                 endkey = [x for x in [domain, type, {}] if x is not None]
                 self.copy_docs(sourcedb, domain, simulate, startkey, endkey, type=type, since=since,
-                               postgres_db=options['postgres_db'])
+                               postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
         elif options['id_file']:
             path = options['id_file']
             if not os.path.isfile(path):
@@ -118,13 +126,14 @@ class Command(BaseCommand):
                 print "Path '%s' does not contain any document ID's" % path
                 sys.exit(1)
 
-            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'])
+            self.copy_docs(sourcedb, domain, simulate, doc_ids=doc_ids, postgres_db=options['postgres_db'],
+                           exclude_attachments=exclude_attachments)
         else:
             startkey = [domain]
             endkey = [domain, {}]
             exclude_types = DEFAULT_EXCLUDE_TYPES + options['doc_types_exclude'].split(',')
             self.copy_docs(sourcedb, domain, simulate, startkey, endkey, exclude_types=exclude_types,
-                           postgres_db=options['postgres_db'])
+                           postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
 
     def list_types(self, sourcedb, domain, since):
         doc_types = sourcedb.view("domain/docs", startkey=[domain],
@@ -142,7 +151,7 @@ class Command(BaseCommand):
                 print "{0:<30}- {1}".format(doc_type, doc_count[doc_type])
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,
-                  type=None, since=None, exclude_types=None, postgres_db=None):
+                  type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
 
         if not doc_ids:
             doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
@@ -158,7 +167,7 @@ class Command(BaseCommand):
 
         queue = Queue(150)
         for i in range(NUM_PROCESSES):
-            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log).start()
+            Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log, exclude_attachments).start()
 
         for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
             count += 1
@@ -175,7 +184,7 @@ class Command(BaseCommand):
             print 'Failed document IDs written to %s' % err_log.name
 
         if postgres_db:
-            self.copy_postgres_data(sourcedb, domain, postgres_db, doc_ids=doc_ids, simulate=simulate)
+            copy_postgres_data_for_docs(postgres_db, doc_ids=doc_ids, simulate=simulate)
 
     def copy_domain(self, sourcedb, domain):
         print "Copying domain doc"
@@ -188,34 +197,10 @@ class Command(BaseCommand):
 
         if result and 'doc' in result:
             domain_doc = Domain.wrap(result['doc'])
-            dt = DocumentTransform(domain_doc, sourcedb)
+            dt = DocumentTransform(domain_doc._obj, sourcedb)
             save(dt, self.targetdb)
         else:
             print "Domain doc not found for domain %s." % domain
-
-    def copy_postgres_data(self, sourcedb, domain, postgres_slug, simulate, doc_ids):
-
-        # can make this more configurable or less hard coded eventually
-        # also note that ordering here is important for foreign key dependencies
-        postgres_models = [
-            (StockReport, 'form_id'),
-            (StockTransaction, 'case_id'),
-            (DocDomainMapping, 'doc_id'),
-            # StockState objects are "derived" and get created by StockTransaction post_save signal.
-            # We may want to directly port these over in the future.
-            # (StockState, 'case_id'),
-        ]
-        for model, doc_field in postgres_models:
-            query_set = model.objects.using(postgres_slug).filter(
-                **{'{}__in'.format(doc_field): doc_ids}
-            )
-            count = query_set.count()
-            print "Copying {} models ({})".format(model.__name__, count)
-            if not simulate:
-                for i, item in enumerate(query_set):
-                    # this can cause primary key conflicts to overwrite local data I think. Oh well?
-                    item.save(using='default')
-                    print 'Synced {}/{} {}'.format(i, count, model.__name__)
 
     def _get_err_log(self):
         name = 'copy_domain.err.%s'
@@ -227,12 +212,13 @@ class Command(BaseCommand):
 
 class Worker(Process):
 
-    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate, err_log):
+    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate, err_log, exclude_attachments):
         super(Worker, self).__init__()
         self.queue = queue
         self.sourcedb = sourcedb
         self.targetdb = targetdb
         self.exclude_types = exclude_types
+        self.exclude_attachments = exclude_attachments
         self.total = total
         self.simulate = simulate
         self.err_log = err_log
@@ -245,7 +231,7 @@ class Worker(Process):
                           (doc["doc_type"], count, self.total, doc["doc_type"], doc["_id"])
                 else:
                     if not self.simulate:
-                        dt = DocumentTransform(doc, self.sourcedb)
+                        dt = DocumentTransform(doc, self.sourcedb, self.exclude_attachments)
                         save(dt, self.targetdb)
                     print "     Synced %s/%s docs (%s: %s)" % (count, self.total, doc["doc_type"], doc["_id"])
             except Exception, e:

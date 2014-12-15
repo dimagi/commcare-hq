@@ -6,7 +6,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.modules import to_function
 
 
-def hq_fixtures(user, version, last_sync):
+def hq_fixtures(user, version, last_sync=None):
     if hasattr(user, "_hq_user") and user._hq_user is not None:
         user = user._hq_user
     if isinstance(user, CommCareUser):
@@ -17,7 +17,7 @@ def hq_fixtures(user, version, last_sync):
                     yield fixture
 
 
-def item_lists(user, version, last_sync):
+def item_lists(user, version, last_sync=None):
     assert isinstance(user, CommCareUser)
 
     all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(user.domain)])

@@ -3,10 +3,11 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
-from corehq import toggles
+from corehq import Domain
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
-from toggle.models import Toggle, generate_toggle_id
+from corehq.toggles import all_toggles
+from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
 
 
@@ -16,15 +17,8 @@ class ToggleBaseView(BasePageView):
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
 
-    def all_toggles(self):
-        for toggle_name in dir(toggles):
-            if not toggle_name.startswith('__'):
-                toggle = getattr(toggles, toggle_name)
-                if isinstance(toggle, toggles.StaticToggle):
-                    yield toggle
-
     def toggle_map(self):
-        return dict([(t.slug, t) for t in self.all_toggles()])
+        return dict([(t.slug, t) for t in all_toggles()])
 
 class ToggleListView(ToggleBaseView):
     urlname = 'toggle_list'
@@ -38,7 +32,7 @@ class ToggleListView(ToggleBaseView):
     @property
     def page_context(self):
         return {
-            'toggles': self.all_toggles(),
+            'toggles': all_toggles(),
         }
 
 
@@ -55,11 +49,15 @@ class ToggleEditView(ToggleBaseView):
         return reverse(self.urlname, args=[self.toggle_slug])
 
     @property
+    def expanded(self):
+        return self.request.GET.get('expand') == 'true'
+
+    @property
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
     def get_toggle(self):
-        if not self.toggle_slug in [t.slug for t in self.all_toggles()]:
+        if not self.toggle_slug in [t.slug for t in all_toggles()]:
             raise Http404()
         try:
             return Toggle.get(self.toggle_slug)
@@ -71,10 +69,18 @@ class ToggleEditView(ToggleBaseView):
 
     @property
     def page_context(self):
-        return {
-            'toggle_meta': self.toggle_meta(),
+        toggle_meta = self.toggle_meta()
+        context = {
+            'toggle_meta': toggle_meta,
             'toggle': self.get_toggle(),
+            'expanded': self.expanded,
         }
+        if self.expanded:
+            context['domain_toggle_list'] = sorted(
+                [(row['key'], toggle_meta.enabled(row['key'])) for row in Domain.get_all(include_docs=False)],
+                key=lambda domain_tup: (not domain_tup[1], domain_tup[0])
+            )
+        return context
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()

@@ -6,8 +6,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
 from casexml.apps.case.models import CommCareCase
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 from corehq import privileges
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
@@ -48,11 +47,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
 
     @property
     def can_view_deid(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
     def get_saved_exports(self):
         # add saved exports. because of the way in which the key is stored
@@ -93,11 +88,42 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         ]
 
 
+def sizeof_fmt(num):
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+        if num < 1024.0:
+            return "%3.1f %s" % (num, x)
+        num /= 1024.0
+
+
 class ExcelExportReport(FormExportReportBase):
     name = ugettext_noop("Export Forms")
     slug = "excel_export_data"
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
+
+    def _get_domain_attachments_size(self):
+        # hash of app_id, xmlns to size of attachments
+        startkey = [self.domain]
+
+        db = Application.get_db()
+        view = db.view('attachments/attachments', startkey=startkey,
+                       endkey=startkey + [{}], group_level=3, reduce=True,
+                       group=True)
+        return {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
+
+    def properties(self, size_hash):
+        properties = dict()
+        exports = self.get_saved_exports()
+
+        for export in exports:
+            for table in export.tables:
+                properties[export.name] = {
+                    'xmlns': export.index[1],
+                    'export_id': export._id,
+                    'size': size_hash.get((export.app_id, export.index[1]), None),
+                }
+
+        return properties
 
     @property
     def report_context(self):
@@ -105,9 +131,13 @@ class ExcelExportReport(FormExportReportBase):
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
         unknown_forms = []
+        startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
+
+        size_hash = self._get_domain_attachments_size()
+
         for f in db.view('exports_forms/by_xmlns',
-                         startkey=[self.domain], endkey=[self.domain, {}], group=True,
+                         startkey=startkey, endkey=startkey + [{}], group=True,
                          stale=settings.COUCH_STALE_QUERY):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
@@ -124,6 +154,14 @@ class ExcelExportReport(FormExportReportBase):
                 unknown_forms.append(form)
 
             form['current_app'] = form.get('app')
+            if 'id' in form['app']:
+                key = (form['app']['id'], form['xmlns'])
+            else:
+                key = None
+            if key in size_hash:
+                form['size'] = size_hash[key]
+            else:
+                form['size'] = None
             forms.append(form)
 
         if unknown_forms:
@@ -204,6 +242,8 @@ class ExcelExportReport(FormExportReportBase):
                         form['duplicate'] = True
                     else:
                         form['no_suggestions'] = True
+                    key = (None, form['xmlns'])
+                    form['size'] = size_hash.get(key, None)
 
         def _sortkey(form):
             app_id = form['app']['id']
@@ -237,6 +277,7 @@ class ExcelExportReport(FormExportReportBase):
             group_exports=[group.form_exports for group in groups
                 if group.form_exports],
             report_slug=self.slug,
+            property_hash=self.properties(size_hash),
         )
         return context
 

@@ -9,5 +9,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         user = args[0].strip()
         print "Deleting user %s" % user
-        WebUser.get_by_name(user).delete()
+        WebUser.get_by_username(user).delete()
         print "Operation completed"

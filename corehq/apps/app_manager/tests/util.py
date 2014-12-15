@@ -11,13 +11,17 @@ import difflib
 class TestFileMixin(object):
 
     file_path = ''
+    root = os.path.dirname(__file__)
 
     @property
     def base(self):
-        return os.path.join(os.path.dirname(__file__), *self.file_path)
+        return os.path.join(self.root, *self.file_path)
+
+    def get_path(self, name, ext):
+        return os.path.join(self.base, '%s.%s' % (name, ext))
 
     def get_file(self, name, ext):
-        with open(os.path.join(self.base, '%s.%s' % (name, ext))) as f:
+        with open(self.get_path(name, ext)) as f:
             return f.read()
 
     def get_json(self, name):
@@ -26,12 +30,20 @@ class TestFileMixin(object):
     def get_xml(self, name):
         return self.get_file(name, 'xml')
 
+    def assertXmlPartialEqual(self, expected, actual, xpath):
+        """
+        Extracts a section of XML using the xpath and compares it to the expected
+
+        Extracted XML is placed inside a <partial/> element prior to comparison.
+        """
+        expected = parse_normalize(expected)
+        actual = extract_xml_partial(actual, xpath)
+        self.assertXmlEqual(expected, actual, normalize=False)
+
     def assertXmlEqual(self, expected, actual, normalize=True):
         if normalize:
-            parser = lxml.etree.XMLParser(remove_blank_text=True)
-            parse = lambda *args: normalize_attributes(lxml.etree.XML(*args))
-            expected = lxml.etree.tostring(parse(expected, parser), pretty_print=True)
-            actual = lxml.etree.tostring(parse(actual, parser), pretty_print=True)
+            expected = parse_normalize(expected)
+            actual = parse_normalize(actual)
 
         # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
         checker = LXMLOutputChecker()
@@ -56,6 +68,22 @@ def normalize_attributes(xml):
             node.attrib.clear()
             node.attrib.update(attrs)
     return xml
+
+
+def parse_normalize(xml, to_string=True):
+    parser = lxml.etree.XMLParser(remove_blank_text=True)
+    parse = lambda *args: normalize_attributes(lxml.etree.XML(*args))
+    parsed = parse(xml, parser)
+    return lxml.etree.tostring(parsed, pretty_print=True) if to_string else parsed
+
+
+def extract_xml_partial(xml, xpath):
+    actual = parse_normalize(xml, to_string=False)
+    nodes = actual.findall(xpath)
+    root = lxml.etree.Element('partial')
+    for node in nodes:
+        root.append(node)
+    return lxml.etree.tostring(root, pretty_print=True)
 
 
 def add_build(version, build_number):

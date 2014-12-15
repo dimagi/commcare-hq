@@ -132,7 +132,7 @@
                                     'opened_on': 'opened_date',
                                     'closed_by': 'closed_by_user_id',
                                     'closed_on': 'closed_date'
-                                }
+                                };
                                 renamed_field = self.utils.rename(field, rename_map);
                                 if (meta.hasOwnProperty(field)) {
                                     return {tags: ['info'].concat(tags), field: renamed_field};
@@ -241,6 +241,17 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
+                        column.newOption = ko.observable("");
+                        column.addOption = function(e) {
+                            if (this.newOption() != "") {
+                                if (this.options.indexOf(this.newOption()) === -1) {
+                                    this.options.push(this.newOption());
+                                    this.allOptions.push(this.newOption());
+                                }
+                                this.newOption("");
+                            }
+                            return false;
+                        }.bind(column);
                     });
 
                     var sorted = self.utils.putInDefaultOrder(table.index(), columns);
@@ -288,13 +299,18 @@
                             columns: _(table.column_configuration()).filter(function (column) {
                                 return column.selected();
                             }).map(function (column) {
-                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special));
-                                return {
-                                    index: column.index,
-                                    display: column.display,
-                                    transform: column.transform() || null, // it doesn't save '' well
-                                    is_sensitive: Boolean(is_sensitive)
+                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special)),
+                                    col = {
+                                        index: column.index,
+                                        display: column.display,
+                                        transform: column.transform() || null, // it doesn't save '' well
+                                        is_sensitive: Boolean(is_sensitive)
                                 };
+                                if (column.doc_type() === 'SplitColumn'){
+                                    col.doc_type = column.doc_type;
+                                    col.options = column.options();
+                                }
+                                return col;
                             })
                         }
                     });
@@ -384,6 +400,7 @@
                 presave: {{ presave|JSON }},
                 export_stock: {{ export_stock|JSON }},
                 deid_options: {{ deid_options|JSON }},
+                column_type_options: {{ column_type_options|JSON }},
                 urls: {
                     save: {{ request.get_full_path|safe|JSON }}
                 },
@@ -480,13 +497,19 @@
                                 {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
+                            {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                            <th>{% trans "Type" %}</th>
+                            {% endif %}
                             {% if helper.allow_deid %}
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
                             {% endif %}
                         </tr>
                         </thead>
                         <tbody data-bind="sortable: column_configuration">
-                            <tr data-bind="visible:  $root.show_deleted() || ($data.show() || selected)">
+                            <tr data-bind="
+                                visible:  $root.show_deleted() || ($data.show() || selected),
+                                attr: {'data-order': _sortableOrder}
+                                ">
                                 <td class="sortable-handle">
                                     <i class="icon-resize-vertical"></i>
                                 </td>
@@ -499,6 +522,26 @@
 
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                <td class="input" data-bind="if: allOptions">
+                                    <span data-bind="if: hasNewOptions" class="pull-right">
+                                        <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
+                                    </span>
+                                    <select data-bind="
+                                        value: doc_type,
+                                        foreach: $root.column_type_options
+                                    ">
+                                        <option data-bind="value: value, text: label"></option>
+                                    </select>
+                                    <div data-bind="if: doc_type() === 'SplitColumn'">
+                                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                                        </select>
+                                        <br/>
+                                        <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                    </div>
+                                </td>
+                                {% endif %}
                                 {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
                                     <select data-bind="

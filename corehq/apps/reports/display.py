@@ -3,6 +3,8 @@ from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
+from dimagi.utils.decorators.memoized import memoized
+
 
 class StringWithAttributes(unicode):
     def replace(self, *args):
@@ -25,15 +27,19 @@ class FormType(object):
     def get_id_tuple(self):
         return self.domain, self.xmlns, self.app_id or None
 
-    def get_label(self, html=False, lang=None):
+
+    @property
+    @memoized
+    def metadata(self):
         try:
-            form = FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
+            return FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
         except Exception:
-            name = self.xmlns
-        else:
-            if not form:
-                name = self.xmlns
-            elif form.get('app'):
+            return None
+
+    def get_label(self, html=False, lang=None):
+        if self.metadata:
+            form = self.metadata
+            if form.get('app'):
                 langs = form['app']['langs']
                 if lang:
                     langs = [lang] + langs
@@ -73,6 +79,8 @@ class FormType(object):
                     name = title
             else:
                 name = self.xmlns
+        else:
+            name = self.xmlns
         return name
 
     @classmethod

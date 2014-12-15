@@ -29,7 +29,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
 from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
-from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase
+from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase, get_apps_in_domain
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, Domain)
@@ -122,6 +122,19 @@ class SnapshotApplicationForm(forms.Form):
             'phone_model',
             'user_type',
             'attribution_notes'
+        ]
+
+
+class SnapshotFixtureForm(forms.Form):
+    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
+    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_noop("A detailed technical description of the table"))
+
+    def __init__(self, *args, **kwargs):
+        super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = [
+            'publish',
+            'description',
         ]
 
 class SnapshotSettingsForm(SnapshotSettingsMixin):
@@ -304,6 +317,14 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
         help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
+    secure_submissions = BooleanField(
+        label=_("Only accept secure submissions"),
+        required=False,
+        help_text=_("Turn this on to prevent others from impersonating your "
+                    "mobile workers. To use, all of your deployed applications "
+                    "must be using secure submissions."),
+    )
+
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
@@ -365,14 +386,30 @@ class DomainGlobalSettingsForm(forms.Form):
                 domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
 
             global_tz = self.cleaned_data['default_timezone']
-            domain.default_timezone = global_tz
-            users = WebUser.by_domain(domain.name)
-            for user in users:
-                dm = user.get_domain_membership(domain.name)
-                if not dm.override_global_tz:
-                    dm.timezone = global_tz
-                    user.save()
+            if domain.default_timezone != global_tz:
+                domain.default_timezone = global_tz
+                users = WebUser.by_domain(domain.name)
+                users_to_save = []
+                for user in users:
+                    dm = user.get_domain_membership(domain.name)
+                    if not dm.override_global_tz and dm.timezone != global_tz:
+                        dm.timezone = global_tz
+                        users_to_save.append(user)
+                if users_to_save:
+                    WebUser.bulk_save(users_to_save)
+
+            secure_submissions = self.cleaned_data.get(
+                'secure_submissions', False)
+            apps_to_save = []
+            if secure_submissions != domain.secure_submissions:
+                for app in get_apps_in_domain(domain.name):
+                    if app.secure_submissions != secure_submissions:
+                        app.secure_submissions = secure_submissions
+                        apps_to_save.append(app)
+            domain.secure_submissions = secure_submissions
             domain.save()
+            if apps_to_save:
+                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception:
             return False
@@ -427,16 +464,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
-    )
-    ota_restore_caching = BooleanField(
-        label=_("Enable Restore Caching (beta)"),
-        required=False,
-        help_text=_(
-            "Speed up phone restores. Useful if you have users with "
-            "large case lists and are getting timeouts during restore. "
-            "This feature is still in testing. Don't enable unless "
-            "you are an advanced user."
-        )
     )
     secure_submissions = BooleanField(
         label=_("Only accept secure submissions"),
@@ -519,22 +546,11 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
             domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
-            domain.ota_restore_caching = self.cleaned_data.get('ota_restore_caching', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
                 domain.cloudcare_releases = cloudcare_releases
-            secure_submissions = self.cleaned_data.get('secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in ApplicationBase.by_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
             domain.save()
-            if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception, e:
             logging.exception("couldn't save project settings - error is %s" % e)
@@ -543,7 +559,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
 class DomainDeploymentForm(forms.Form):
     city = CharField(label=ugettext_noop("City"), required=False)
-    country = CharField(label=ugettext_noop("Country"), required=False)
+    countries = forms.MultipleChoiceField(label=ugettext_noop("Countries"),
+            choices=COUNTRIES)
     region = CharField(label=ugettext_noop("Region"), required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
     deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
@@ -553,7 +570,7 @@ class DomainDeploymentForm(forms.Form):
     def save(self, domain):
         try:
             domain.update_deployment(city=self.cleaned_data['city'],
-                country=self.cleaned_data['country'],
+                countries=self.cleaned_data['countries'],
                 region=self.cleaned_data['region'],
                 date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
                 description=self.cleaned_data['description'],
@@ -562,11 +579,13 @@ class DomainDeploymentForm(forms.Form):
         except Exception:
             return False
 
+
 def tuple_of_copies(a_list, blank=True):
     ret = [(item, item) for item in a_list]
     if blank:
         ret.insert(0, ('', '---'))
     return tuple(ret)
+
 
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
@@ -587,8 +606,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     sub_area = ChoiceField(label=ugettext_noop("Sub-Sector"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
     using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
     using_call_center = ChoiceField(label=ugettext_noop("Using Call Center?"), choices=tf_choices('Yes', 'No'), required=False)
-    custom_eula = ChoiceField(label=ugettext_noop("Custom Eula?"), choices=tf_choices('Yes', 'No'), required=False)
-    can_use_data = ChoiceField(label=ugettext_noop("Data Usage?"), choices=tf_choices('Yes', 'No'), required=False)
     organization_name = CharField(label=ugettext_noop("Organization Name"), required=False)
     notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
     platform = forms.MultipleChoiceField(label=ugettext_noop("Platform"), widget=forms.CheckboxSelectMultiple(),
@@ -597,9 +614,32 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
     goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
+    commtrack_domain = ChoiceField(label=ugettext_noop("CommTrack domain?"),
+                                   choices=tf_choices('Yes', 'No'), required=False)
+
+    def __init__(self, can_edit_eula, *args, **kwargs):
+        super(DomainInternalForm, self).__init__(*args, **kwargs)
+        self.can_edit_eula = can_edit_eula
+        if self.can_edit_eula:
+            self.fields['custom_eula'] = ChoiceField(
+                label=ugettext_noop("Custom Eula?"),
+                choices=tf_choices('Yes', 'No'),
+                required=False,
+                help_text='Set to "yes" if this project has a customized EULA as per their contract.'
+            )
+            self.fields['can_use_data'] = ChoiceField(
+                label=ugettext_noop("Can use project data?"),
+                choices=tf_choices('Yes', 'No'),
+                required=False,
+                help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
+            )
 
     def save(self, domain):
-        kw = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
+        kwargs = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
+        if self.can_edit_eula:
+            kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
+            kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
+
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
@@ -611,8 +651,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             sub_area=self.cleaned_data['sub_area'],
             using_adm=self.cleaned_data['using_adm'] == 'true',
             using_call_center=self.cleaned_data['using_call_center'] == 'true',
-            custom_eula=self.cleaned_data['custom_eula'] == 'true',
-            can_use_data=self.cleaned_data['can_use_data'] == 'true',
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
             platform=self.cleaned_data['platform'],
@@ -620,7 +658,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             phone_model=self.cleaned_data['phone_model'],
             goal_time_period=self.cleaned_data['goal_time_period'],
             goal_followup_rate=self.cleaned_data['goal_followup_rate'],
-            **kw
+            commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
+            **kwargs
         )
 
 
@@ -865,6 +904,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         self.plan_version, web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
                     )
                     subscription.is_active = True
+                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        subscription.do_not_invoice = True
                     subscription.save()
             else:
                 subscription = Subscription.new_domain_subscription(

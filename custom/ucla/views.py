@@ -58,25 +58,28 @@ def _ucla_form_modifier(form, question_ids):
     xform = form.wrapped_xform()
 
     # Get the questions specified in question_ids
-    question_dict = {q["value"]:FormQuestion.wrap(q) for q in form.get_questions(["en"])}
-    question_ids = {"/data/" + q for q in question_ids}.intersection(question_dict.keys())
+    question_dict = {q["value"].split("/")[-1]: FormQuestion.wrap(q) for q in form.get_questions(["en"])}
+    question_ids = {q for q in question_ids}.intersection(question_dict.keys())
     questions = [question_dict[k] for k in question_ids]
 
     # Get the existing subcases
     existing_subcases = {c.case_name:c for c in form.actions.subcases}
 
+    message += "Found %s questions.\n" % len(questions)
+
     for question in questions:
         for option in question.options:
 
-            hidden_value_path = question.value + "-" + option.value
+            hidden_value_tag = question.value.split("/")[-1] + "-" + option.value
+            hidden_value_path = "/data/" + hidden_value_tag
             hidden_value_text = option.label
 
             # Create new hidden values for each question option if they don't already exist:
 
-            if hidden_value_path not in question_dict:
+            if hidden_value_tag not in question_dict:
 
                 # Add data element
-                tag = "{x}%s" % hidden_value_path.replace("/data/", "")
+                tag = "{x}%s" % hidden_value_tag
                 element = etree.Element(tag.format(**namespaces))
                 xform.data_node.append(element)
 

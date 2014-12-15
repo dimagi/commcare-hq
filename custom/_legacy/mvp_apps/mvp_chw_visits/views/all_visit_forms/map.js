@@ -76,23 +76,33 @@ function(doc) {
                     if (emergency_signs.length < 1) {
                         var not_immunized = false;
                         if (age > 45 * MS_IN_DAY){
-                            if (indicators.prev_vaccination_birth.value === 'no' || indicators.vaccination_birth.value === 'no') {
+                            if (indicators.prev_vaccination_birth
+                                && (indicators.prev_vaccination_birth.value === 'no' || indicators.vaccination_birth.value === 'no')) {
                                 not_immunized = true;
                             }
-                            if (indicators.prev_vaccination_birth_2.value === 'no' || indicators.vaccination_birth_2.value === 'no') {
+                            if (indicators.prev_vaccination_birth_2
+                                && (indicators.prev_vaccination_birth_2.value === 'no' || indicators.vaccination_birth_2.value === 'no')) {
                                 not_immunized = true;
                             }
                         }
-                        if (age > 75 * MS_IN_DAY && (indicators.prev_vaccination_6week.value === 'no' || indicators.vaccination_6week.value === 'no')) {
+                        if (age > 75 * MS_IN_DAY
+                            && indicators.prev_vaccination_6week
+                            && (indicators.prev_vaccination_6week.value === 'no' || indicators.vaccination_6week.value === 'no')) {
                             not_immunized = true;
                         }
-                        if (age > 105 * MS_IN_DAY && (indicators.prev_vaccination_10week.value === 'no' || indicators.vaccination_10week.value === 'no')) {
+                        if (age > 105 * MS_IN_DAY
+                            && indicators.prev_vaccination_10week
+                            && (indicators.prev_vaccination_10week.value === 'no' || indicators.vaccination_10week.value === 'no')) {
                             not_immunized = true;
                         }
-                        if (age > 135 * MS_IN_DAY && (indicators.prev_vaccination_14week.value === 'no' || indicators.vaccination_14week.value === 'no')) {
+                        if (age > 135 * MS_IN_DAY
+                            && indicators.prev_vaccination_14week
+                            && (indicators.prev_vaccination_14week.value === 'no' || indicators.vaccination_14week.value === 'no')) {
                             not_immunized = true;
                         }
-                        if (age > 300 * MS_IN_DAY && (indicators.prev_vaccination_36week.value === 'no' || indicators.vaccination_36week.value === 'no')) {
+                        if (age > 300 * MS_IN_DAY
+                            && indicators.prev_vaccination_36week
+                            && (indicators.prev_vaccination_36week.value === 'no' || indicators.vaccination_36week.value === 'no')) {
                             not_immunized = true;
                         }
 
@@ -148,7 +158,7 @@ function(doc) {
             indicator_entries['household'] = case_id;
             if (indicators.num_bednets_observed && indicators.num_bednets_observed.value) {
                 indicator_entries['household bednet'] = case_id;
-                if (indicators.num_bednets_observerd.value > 0) {
+                if (indicators.num_bednets_observed.value > 0) {
                     indicator_entries['household atleastonebednet'] = case_id;
                 }
             }

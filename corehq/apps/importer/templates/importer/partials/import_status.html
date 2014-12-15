@@ -78,9 +78,7 @@
                 <p>
                     {% blocktrans %}
                         Owner name was used in the mapping but there were errors
-                        when uploading because of these values. Make sure the
-                        usernames are in the form
-                        &lt;username&gt;@&lt;project_name&gt;.commcarehq.org .
+                        when uploading because of these values.
                         The following row numbers had this issue and were ignored:
                     {% endblocktrans %}
                     {{ result.owner_name_errors|join:", " }}

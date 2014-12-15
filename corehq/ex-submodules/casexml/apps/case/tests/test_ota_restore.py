@@ -4,7 +4,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
 from casexml.apps.case.tests import delete_all_cases
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

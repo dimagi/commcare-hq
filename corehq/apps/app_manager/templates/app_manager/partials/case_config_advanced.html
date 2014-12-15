@@ -20,7 +20,7 @@
     <!--ko if: actionType == 'open'-->
     <div data-bind="template: {
         name: 'case-config:condition',
-        data: {condition: open_condition, case_transaction: $data},
+        data: {condition: open_condition, config: $data},
     }"></div>
     <!-- /ko -->
     <div data-bind="if: actionType == 'load'" class="row-fluid">
@@ -60,17 +60,20 @@
             {% endif %}
 
             <!-- ko if:  !auto_select && $index() > 0 -->
-            <div class="control-group">
+            <div class="control-group" data-bind="css: {warning: validate_subcase()}">
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: subcase"/>
                     {% trans "This case is a subcase of the previous case" %}
                 </label>
                 <span data-bind="if: subcase">
                     {% if show_custom_ref %}
-                        <label>{% trans "Override reference id: " %}</label>
+                    <div>
+                        <label>{% trans "Parent reference id: " %}</label>
                         <input type="text" data-bind="value: parent_reference_id, edit: $root.edit"/>
+                    </div>
                     {% endif %}
                 </span>
+                <span class="help-inline" data-bind="text: validate_subcase"></span>
             </div>
             <!-- /ko -->
         <!-- /ko -->
@@ -90,8 +93,10 @@
                         edit: $root.edit">
                     </select>
                     {% if show_custom_ref %}
-                        <label>{% trans "Override reference id: " %}</label>
+                    <div>
+                        <label>{% trans "Parent reference id: " %}</label>
                         <input type="text" data-bind="value: parent_reference_id, edit: $root.edit"/>
+                    </div>
                     {% endif %}
                 </span>
                 <span class="help-inline" data-bind="text: validate_subcase"></span>
@@ -105,7 +110,7 @@
                 </label>
                 <div data-bind="template: {
                     name: 'case-config:condition',
-                    data: {condition: close_condition, case_transaction: $data},
+                    data: {condition: close_condition, config: $data},
                     if: close_case
                 }"></div>
             </div>

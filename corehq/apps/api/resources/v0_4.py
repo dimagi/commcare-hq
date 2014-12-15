@@ -6,7 +6,8 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
+    _safe_bool
 
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
@@ -15,14 +16,15 @@ from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp, Form, get_app
+from corehq.apps.app_manager.models import get_apps_in_domain, Application, RemoteApp, Form, get_app
 from corehq.apps.receiverwrapper.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CouchUser, Permissions
 
-from corehq.apps.api.resources import v0_1, v0_3, JsonResource, DomainSpecificResourceMixin, dict_object, SimpleSortableResourceMixin
+from corehq.apps.api.resources import v0_1, v0_3, HqBaseResource, DomainSpecificResourceMixin, \
+    SimpleSortableResourceMixin
 from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
@@ -84,7 +86,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         list_allowed_methods = ['get']
 
 
-class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
+class RepeaterResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id', readonly=True, unique=True)
     type = fields.CharField(attribute='doc_type')
@@ -139,7 +141,6 @@ class RepeaterResource(JsonResource, DomainSpecificResourceMixin):
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
-
 
 
 def group_by_dict(objs, fn):
@@ -207,7 +208,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         ordering = ['server_date_modified', 'date_modified']
 
 
-class GroupResource(JsonResource, DomainSpecificResourceMixin):
+class GroupResource(HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', unique=True, readonly=True)
     domain = fields.CharField(attribute='domain')
     name = fields.CharField(attribute='name')
@@ -235,7 +236,7 @@ class GroupResource(JsonResource, DomainSpecificResourceMixin):
         resource_name = 'group'
 
 
-class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
+class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     This resource does not require "authorization" per se, but
     rather allows a POST of username and password and returns
@@ -287,12 +288,12 @@ class SingleSignOnResource(JsonResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['post']
 
 
-class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
+class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
-
     modules = fields.ListField()
+
     def dehydrate_module(self, app, module, langs):
         """
         Convert a Module object to a JValue representation
@@ -301,23 +302,29 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         NOTE: This is not a tastypie "magic"-name method to
         dehydrate the "module" field; there is no such field.
         """
-        dehydrated = {}
+        try:
+            dehydrated = {}
 
-        dehydrated['case_type'] = module.case_type
+            dehydrated['case_type'] = module.case_type
 
-        dehydrated['case_properties'] = app_manager_util.get_case_properties(app, [module.case_type], defaults=['name'])[module.case_type]
+            dehydrated['case_properties'] = app_manager_util.get_case_properties(
+                app, [module.case_type], defaults=['name']
+            )[module.case_type]
 
-        dehydrated['forms'] = []
-        for form in module.forms:
-            form = Form.get_form(form.unique_id)
-            form_jvalue = {
-                'xmlns': form.xmlns,
-                'name': form.name,
-                'questions': form.get_questions(langs),
+            dehydrated['forms'] = []
+            for form in module.forms:
+                form = Form.get_form(form.unique_id)
+                form_jvalue = {
+                    'xmlns': form.xmlns,
+                    'name': form.name,
+                    'questions': form.get_questions(langs),
+                }
+                dehydrated['forms'].append(form_jvalue)
+            return dehydrated
+        except Exception as e:
+            return {
+                'error': unicode(e)
             }
-            dehydrated['forms'].append(form_jvalue)
-
-        return dehydrated
 
     def dehydrate_modules(self, bundle):
         app = bundle.obj
@@ -327,16 +334,17 @@ class ApplicationResource(JsonResource, DomainSpecificResourceMixin):
         elif app.doc_type == RemoteApp._doc_type:
             return []
 
+    def dehydrate(self, bundle):
+        if not _safe_bool(bundle, "extras"):
+            return super(ApplicationResource, self).dehydrate(bundle)
+        else:
+            app_data = {}
+            app_data.update(bundle.obj._doc)
+            app_data.update(bundle.data)
+            return app_data
+
     def obj_get_list(self, bundle, domain, **kwargs):
-        # There should be few enough apps per domain that doing an explicit refresh for each is OK.
-        # This is the easiest way to filter remote apps
-        # Later we could serialize them to their URL or whatevs but it is not that useful yet
-        application_bases = ApplicationBase.by_domain(domain)
-
-        # This wraps in the appropriate class so that is_remote_app() returns the correct answer
-        applications = [get_app(domain, application_base.id) for application_base in application_bases]
-
-        return [app for app in applications if not app.is_remote_app()]
+        return get_apps_in_domain(domain, include_remote=False)
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])

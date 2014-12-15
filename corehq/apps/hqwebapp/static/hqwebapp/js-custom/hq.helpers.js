@@ -84,6 +84,11 @@ $.fn.addSpinnerToButton = function () {
 };
 
 
+$.fn.removeSpinnerFromButton = function () {
+    $(this).find('i').remove();
+};
+
+
 $.fn.disableButtonNoSpinner = function () {
     $(this).attr('disabled', 'disabled')
            .addClass('disabled');
@@ -94,3 +99,10 @@ $.fn.disableButton = function () {
     $(this).disableButtonNoSpinner();
     $(this).addSpinnerToButton();
 };
+
+
+$.fn.enableButton = function () {
+    $(this).removeSpinnerFromButton();
+    $(this).removeClass('disabled')
+           .removeAttr('disabled');
+}

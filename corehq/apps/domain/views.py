@@ -1,9 +1,11 @@
+import copy
 import datetime
 from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
@@ -26,7 +28,9 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
+from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -34,10 +38,9 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import toggles, privileges, feature_previews
+from corehq import privileges, feature_previews
 from django_prbac.decorators import requires_privilege_raise404
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType,
@@ -47,7 +50,7 @@ from corehq.apps.accounting.models import (
     PaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
-from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
+from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -62,7 +65,7 @@ from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
     SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
-    ConfirmSubscriptionRenewalForm,
+    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm,
 )
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import normalize_domain_name
@@ -83,10 +86,9 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from django.core.cache import cache
-from toggle.models import Toggle, generate_toggle_id
-from toggle.shortcuts import get_toggle_cache_key, update_toggle_cache, namespaced_item
+from django.utils.translation import ugettext as _, ugettext_noop
+from toggle.models import Toggle
+from toggle.shortcuts import update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -99,7 +101,7 @@ accounting_logger = logging.getLogger('accounting')
 def select(request, domain_select_template='domain/select.html'):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
-        return redirect('registration_domain')
+        return redirect('registration_domain', domain_type=get_domain_type(None, request))
 
     email = request.couch_user.get_email()
     open_invitations = DomainInvitation.by_email(email)
@@ -111,11 +113,28 @@ def select(request, domain_select_template='domain/select.html'):
     return render(request, domain_select_template, additional_context)
 
 
+@require_superuser
+def incomplete_email(request,
+                     incomplete_email_template='domain/incomplete_email.html'):
+    from corehq.apps.domain.tasks import (
+        incomplete_self_started_domains,
+        incomplete_domains_to_email
+    )
+    context = {
+        'self_started': incomplete_self_started_domains,
+        'dimagi_owned': incomplete_domains_to_email,
+    }
+    return render(request, incomplete_email_template, context)
+
+
 class DomainViewMixin(object):
     """
         Paving the way for a world of entirely class-based views.
         Let's do this, guys. :-)
+
+        Set strict_domain_fetching to True in subclasses to bypass the cache.
     """
+    strict_domain_fetching = False
 
     @property
     @memoized
@@ -126,7 +145,7 @@ class DomainViewMixin(object):
     @property
     @memoized
     def domain_object(self):
-        domain = Domain.get_by_name(self.domain, strict=True)
+        domain = Domain.get_by_name(self.domain, strict=self.strict_domain_fetching)
         if not domain:
             raise Http404()
         return domain
@@ -260,6 +279,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
     """
         The base class for all the edit project information views.
     """
+    strict_domain_fetching = True
 
     @property
     def autocomplete_fields(self):
@@ -276,7 +296,6 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
                 # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'restrict_superusers': self.domain_object.restrict_superusers,
-            'ota_restore_caching': self.domain_object.ota_restore_caching,
             'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
@@ -297,13 +316,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def can_use_custom_logo(self):
-        try:
-            ensure_request_has_privilege(
-                self.request, privileges.CUSTOM_BRANDING
-            )
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.CUSTOM_BRANDING)
 
     @property
     @memoized
@@ -314,7 +327,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'call_center_case_owner': self.domain_object.call_center_config.case_owner_id,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
-            'commtrack_enabled': self.domain_object.commtrack_enabled
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'secure_submissions': self.domain_object.secure_submissions,
         }
         if self.request.method == 'POST':
             if self.can_user_see_meta:
@@ -343,7 +357,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
                 'restrict_superusers',
-                'ota_restore_caching',
                 'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
@@ -386,7 +399,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def autocomplete_fields(self):
-        return ['city', 'country', 'region']
+        return ['city', 'countries', 'region']
 
     @property
     @memoized
@@ -400,7 +413,7 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
         }
         for attr in [
             'city',
-            'country',
+            'countries',
             'region',
             'description',
         ]:
@@ -484,7 +497,11 @@ def drop_repeater(request, domain, repeater_id):
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
-    form = GenericRepeaterForm({"url": url})
+    form = GenericRepeaterForm(
+        {"url": url},
+        domain=domain,
+        repeater_class=receiverwrapper.models.repeater_types[repeater_type]
+    )
     if form.is_valid():
         url = form.cleaned_data["url"]
         # now we fake a post
@@ -1101,12 +1118,7 @@ class SelectPlanView(DomainAccountingSettings):
     def is_non_ops_superuser(self):
         if not self.request.couch_user.is_superuser:
             return False
-        try:
-            ensure_request_has_privilege(
-                self.request, privileges.ACCOUNTING_ADMIN)
-            return False
-        except PermissionDenied:
-            return True
+        return not has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
 
     @property
     def parent_pages(self):
@@ -1438,6 +1450,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     template_name = 'domain/create_snapshot.html'
     urlname = 'domain_create_snapshot'
     page_title = ugettext_noop("Publish New Version")
+    strict_domain_fetching = True
 
     @property
     def parent_pages(self):
@@ -1451,8 +1464,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         context = {
             'form': self.snapshot_settings_form,
             'app_forms': self.app_forms,
+            'fixture_forms': self.fixture_forms,
             'can_publish_as_org': self.can_publish_as_org,
-            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
+            'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'countries', 'region'),
         }
         if self.published_snapshot:
             context.update({
@@ -1521,6 +1535,29 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
     @property
     @memoized
+    def published_fixtures(self):
+        return [f.copy_from for f in FixtureDataType.by_domain(self.published_snapshot._id)]
+
+    @property
+    def fixture_forms(self):
+        fixture_forms = []
+        for fixture in FixtureDataType.by_domain(self.domain_object.name):
+            fixture.id = fixture._id
+            if self.request.method == 'POST':
+                fixture_forms.append((fixture,
+                    SnapshotFixtureForm(self.request.POST, prefix=fixture._id)))
+            else:
+                fixture_forms.append((fixture,
+                                  SnapshotFixtureForm(
+                                      initial={
+                                          'publish': (self.published_snapshot == self.domain_object
+                                                      or fixture._id in self.published_fixtures)
+                                      }, prefix=fixture._id)))
+
+        return fixture_forms
+
+    @property
+    @memoized
     def snapshot_settings_form(self):
         if self.request.method == 'POST':
             form = SnapshotSettingsForm(self.request.POST, self.request.FILES)
@@ -1584,8 +1621,18 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
                     m_file.save()
 
+            ignore = []
+            if not request.POST.get('share_reminders', False):
+                ignore.append('CaseReminderHandler')
+
+            copy_by_id = set()
+            for k in request.POST.keys():
+                if k.endswith("-publish"):
+                    copy_by_id.add(k[:-len("-publish")])
+
             old = self.domain_object.published_snapshot()
-            new_domain = self.domain_object.save_snapshot()
+            new_domain = self.domain_object.save_snapshot(ignore=ignore,
+                                                          copy_by_id=copy_by_id)
             new_domain.license = new_license
             new_domain.description = request.POST['description']
             new_domain.short_description = request.POST['short_description']
@@ -1627,26 +1674,29 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id
-                if request.POST.get("%s-publish" % original_id, False):
-                    application.name = request.POST["%s-name" % original_id]
-                    application.description = request.POST["%s-description" % original_id]
-                    date_picked = request.POST["%s-deployment_date" % original_id]
-                    try:
-                        date_picked = dateutil.parser.parse(date_picked)
-                        if date_picked.year > 2009:
-                            application.deployment_date = date_picked
-                    except Exception:
-                        pass
-                    #if request.POST.get("%s-name" % original_id):
-                    application.phone_model = request.POST["%s-phone_model" % original_id]
-                    application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
-                    application.user_type = request.POST["%s-user_type" % original_id]
+                application.name = request.POST["%s-name" % original_id]
+                application.description = request.POST["%s-description" % original_id]
+                date_picked = request.POST["%s-deployment_date" % original_id]
+                try:
+                    date_picked = dateutil.parser.parse(date_picked)
+                    if date_picked.year > 2009:
+                        application.deployment_date = date_picked
+                except Exception:
+                    pass
+                application.phone_model = request.POST["%s-phone_model" % original_id]
+                application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
+                application.user_type = request.POST["%s-user_type" % original_id]
 
-                    if not new_domain.multimedia_included:
-                        application.multimedia_map = {}
-                    application.save()
-                else:
-                    application.delete()
+                if not new_domain.multimedia_included:
+                    application.multimedia_map = {}
+                application.save()
+
+            for fixture in FixtureDataType.by_domain(new_domain.name):
+                old_id = FixtureDataType.by_domain_tag(self.domain_object.name,
+                                                       fixture.tag).first()._id
+                fixture.description = request.POST["%s-description" % old_id]
+                fixture.save()
+
             if new_domain is None:
                 messages.error(request, _("Version creation failed; please try again"))
             else:
@@ -1770,8 +1820,15 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
-            return self.repeater_form_class(self.request.POST)
-        return self.repeater_form_class()
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
+        return self.repeater_form_class(
+            domain=self.domain,
+            repeater_class=self.repeater_class
+        )
 
     @property
     def page_context(self):
@@ -1784,6 +1841,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
+            format=self.add_repeater_form.cleaned_data['format']
         )
         return repeater
 
@@ -1845,6 +1903,7 @@ class OrgSettingsView(BaseAdminProjectSettingsView):
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
+    strict_domain_fetching = True
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
@@ -1868,12 +1927,14 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     urlname = 'domain_internal_settings'
     page_title = ugettext_noop("Project Information")
     template_name = 'domain/internal_settings.html'
+    strict_domain_fetching = True
 
     @property
     @memoized
     def internal_settings_form(self):
+        can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(self.request.POST)
+            return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {}
         internal_attrs = [
             'sf_contract_id',
@@ -1891,19 +1952,23 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'self_started',
             'using_adm',
             'using_call_center',
-            'custom_eula',
-            'can_use_data',
             'project_manager',
             'phone_model',
             'goal_time_period',
             'goal_followup_rate',
+            'commtrack_domain',
         ]
+        if can_edit_eula:
+            internal_attrs += [
+                'custom_eula',
+                'can_use_data',
+            ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        return DomainInternalForm(initial=initial)
+        return DomainInternalForm(can_edit_eula, initial=initial)
 
     @property
     def page_context(self):
@@ -1915,7 +1980,29 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
+            old_attrs = copy.copy(self.domain_object.internal)
             self.internal_settings_form.save(self.domain_object)
+            eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
+                                  bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
+
+            if eula_props_changed and settings.EULA_CHANGE_EMAIL:
+                message = '\n'.join([
+                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '',
+                    'The properties changed were:',
+                    '- Custom eula: {eula_old} --> {eula_new}',
+                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
+                ]).format(
+                    user=self.request.couch_user.username,
+                    domain=self.domain,
+                    eula_old=old_attrs.custom_eula,
+                    eula_new=self.domain_object.internal.custom_eula,
+                    can_use_data_old=old_attrs.can_use_data,
+                    can_use_data_new=self.domain_object.internal.can_use_data,
+                )
+                send_mail('Custom EULA or data use flags changed for {}'.format(self.domain),
+                          message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL])
+
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
         else:
@@ -2121,6 +2208,31 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
+
+
+class FeatureFlagsView(BaseAdminProjectSettingsView):
+    urlname = 'domain_feature_flags'
+    page_title = ugettext_noop("Feature Flags")
+    template_name = 'domain/admin/feature_flags.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
+
+    @memoized
+    def enabled_flags(self):
+        def _sort_key(toggle_enabled_tuple):
+            return (not toggle_enabled_tuple[1], toggle_enabled_tuple[0].label)
+        return sorted(
+            [(toggle, toggle.enabled(self.domain)) for toggle in all_toggles()],
+            key=_sort_key,
+        )
+
+    @property
+    def page_context(self):
+        return {
+            'flags': self.enabled_flags(),
+        }
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

@@ -30,6 +30,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         settings.INSTALLED_APPS = (tuple(settings.INSTALLED_APPS) +
                                    tuple(settings.TEST_APPS))
         settings.CELERY_ALWAYS_EAGER = True
+        settings.PILLOWTOPS = {}
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
@@ -45,6 +46,11 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         for (setting, value) in new_db_settings.items():
             setattr(settings, setting, value)
             print "set %s settting to %s" % (setting, value)
+
+        settings.EXTRA_COUCHDB_DATABASES = {
+            db_name: self.get_test_db_name(url)
+            for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
+        }
 
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
@@ -114,9 +120,13 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         """
         self._db_patch = patch('django.db.backends.util.CursorWrapper')
         db_mock = self._db_patch.start()
-        db_mock.side_effect = RuntimeError('No database present during SimpleTestCase run.')
+        error = RuntimeError(
+            "Attempt to access database in a 'no database' test suite run. "
+            "It could be that you don't have 'BASE_ADDRESS' set in your local_settings.py. "
+            "If your test really needs database access it must subclass 'TestCase' and not 'SimpleTestCase'.")
+        db_mock.side_effect = error
 
-        mock_couch = Mock(side_effect=RuntimeError('No database present during SimpleTestCase run.'), spec=[])
+        mock_couch = Mock(side_effect=error, spec=[])
 
         # register our dbs with the extension document classes
         old_handler = loading.couchdbkit_handler

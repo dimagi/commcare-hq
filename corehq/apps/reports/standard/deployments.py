@@ -12,10 +12,14 @@ from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
+from corehq.apps.users.models import CommCareUser
+from corehq.toggles import VIEW_SYNC_HISTORY
+from corehq.util.couch import get_document_or_404
 from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
+from dimagi.utils.couch.database import iter_docs
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -73,30 +77,15 @@ class ApplicationStatusReport(DeploymentsReport):
                              sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Last Sync"),
                              sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Application (Deployed Version)"))
+            DataTablesColumn(_("Application (Deployed Version)"),
+                help_text=_("""Displays application version of the last submitted form;
+                            The currently deployed version may be different."""))
         )
 
     @property
     def rows(self):
         rows = []
         selected_app = self.request_params.get(SelectApplicationFilter.slug, '')
-
-        def _fmt_date(date):
-            def _timedelta_class(delta):
-                if delta > timedelta(days=7):
-                    return "label label-important"
-                elif delta > timedelta(days=3):
-                    return "label label-warning"
-                else:
-                    return "label label-success"
-
-            if not date:
-                return self.table_cell(-1, '<span class="label">{0}</span>'.format(_("Never")))
-            else:
-                return self.table_cell(date.toordinal(), '<span class="{cls}">{text}</span>'.format(
-                    cls=_timedelta_class(datetime.utcnow() - date),
-                    text=naturaltime(date),
-                ))
 
         for user in self.users:
             last_seen = last_sync = app_name = None
@@ -144,3 +133,111 @@ class ApplicationStatusReport(DeploymentsReport):
                 [user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync), app_name or "---"]
             )
         return rows
+
+
+class SyncHistoryReport(DeploymentsReport):
+    name = ugettext_noop("User Sync History")
+    slug = "sync_history"
+    fields = ['corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return (
+            user
+            and VIEW_SYNC_HISTORY.enabled(user.username)
+            and super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
+        )
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Sync Log")),
+            DataTablesColumn(_("Sync Date"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("# of Cases"), sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("Sync Duration"), sort_type=DTSortType.NUMERIC),
+        )
+        headers.custom_sort = [[1, 'desc']]
+        return headers
+
+    @property
+    def rows(self):
+        user_id = self.request.GET.get('individual')
+        if not user_id:
+            return []
+
+        # security check
+        get_document_or_404(CommCareUser, self.domain, user_id)
+
+        sync_log_ids = [row['id'] for row in SyncLog.view(
+            "phone/sync_logs_by_user",
+            startkey=[user_id, {}],
+            endkey=[user_id],
+            descending=True,
+            reduce=False,
+            limit=10
+        )]
+
+        def _sync_log_to_row(sync_log):
+            def _fmt_duration(duration):
+                if isinstance(duration, int):
+                    return format_datatables_data(
+                        '<span class="{cls}">{text}</span>'.format(
+                            cls=_bootstrap_class(duration or 0, 20, 60),
+                            text=_('{} seconds').format(duration),
+                        ),
+                        duration
+                    )
+                else:
+                    return format_datatables_data(
+                        '<span class="label">{text}</span>'.format(
+                            text=_("Unknown"),
+                        ),
+                        -1,
+                    )
+
+            def _fmt_id(sync_log_id):
+                return '<a href="/search/?q={id}" target="_blank">{id:.5}...</a>'.format(
+                    id=sync_log_id
+                )
+
+            num_cases = len(sync_log.cases_on_phone)
+            return [
+                _fmt_id(sync_log.get_id),
+                _fmt_date(sync_log.date),
+                format_datatables_data(num_cases, num_cases),
+                _fmt_duration(sync_log.duration),
+            ]
+
+        return [
+            _sync_log_to_row(SyncLog.wrap(sync_log_json))
+            for sync_log_json in iter_docs(SyncLog.get_db(), sync_log_ids)
+        ]
+
+
+def _fmt_date(date):
+    def _timedelta_class(delta):
+        return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
+
+    if not date:
+        return format_datatables_data('<span class="label">{0}</span>'.format(_("Never")), -1)
+    else:
+        return format_datatables_data(
+            '<span class="{cls}">{text}</span>'.format(
+                cls=_timedelta_class(datetime.utcnow() - date),
+                text=naturaltime(date),
+            ),
+            date.toordinal(),
+        )
+
+
+def _bootstrap_class(obj, severe, warn):
+    """
+    gets a bootstrap class for an object comparing to thresholds.
+    assumes bigger is worse and default is good.
+    """
+    if obj > severe:
+        return "label label-important"
+    elif obj > warn:
+        return "label label-warning"
+    else:
+        return "label label-success"

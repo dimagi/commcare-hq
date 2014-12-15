@@ -1,27 +1,44 @@
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter, CheckboxFilter
+from collections import defaultdict
+from django.db.models.aggregates import Count
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, CheckboxFilter, BaseDrilldownOptionFilter
 from django.utils.translation import ugettext_noop as _
-from dimagi.utils.decorators.memoized import memoized
 from pillow_retry.models import PillowError
 
 
-class PillowFilter(BaseSingleOptionFilter):
-    slug = 'pillow'
-    label = _("Pillow Class")
-    default_text = _("Filter by pillow...")
+class PillowErrorFilter(BaseDrilldownOptionFilter):
+    slug = 'pillow_error'
+    label = _('Filter errors')
 
     @property
-    def options(self):
-        return [(p, p) for p in PillowError.get_pillows()]
+    def drilldown_map(self):
+        def err_item(val, val_count, next_list=None):
+            ret = {
+                'val': val,
+                'text': '{} ({})'.format(val, val_count)
+            }
+            if next_list:
+                ret['next'] = next_list
 
+            return ret
 
-class ErrorTypeFilter(BaseSingleOptionFilter):
-    slug = 'error'
-    label = _("Error Type")
-    default_text = _("Filter by error type...")
+        data = PillowError.objects.values('pillow', 'error_type').annotate(num_errors=Count('id'))
+        data_map = defaultdict(list)
+        pillow_counts = defaultdict(lambda: 0)
+        for row in data:
+            pillow = row['pillow']
+            error = row['error_type']
+            count = row['num_errors']
+            data_map[pillow].append(err_item(error, count))
+            pillow_counts[pillow] += count
 
-    @property
-    def options(self):
-        return [(e, e) for e in PillowError.get_error_types()]
+        return [err_item(pillow, pillow_counts[pillow], errors) for pillow, errors in data_map.items()]
+
+    @classmethod
+    def get_labels(cls):
+        return [
+            (_('Pillow Class'), 'Select pillow...', 'pillow'),
+            (_("Error Type"), 'Select error...', 'error'),
+        ]
 
 
 class DatePropFilter(BaseSingleOptionFilter):

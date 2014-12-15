@@ -10,9 +10,14 @@ CHILD_HEALTH_INDICATORS = dict(
                 indicator_key="under5"
             ),
             under5_danger_signs=dict(
+                description="No. of Under-5s with Danger Signs",
+                title="# Under-5s with Danger Signs",
+                indicator_key="under5_danger_signs"
+            ),
+            under5_danger_signs_referred=dict(
                 description="No. of Under-5s Referred for Danger Signs",
                 title="# Under-5s Referred for Danger Signs",
-                indicator_key="under5_danger_signs"
+                indicator_key="under5_danger_signs_referred"
             ),
             under5_fever=dict(
                 description="No. of Under-5s with uncomplicated Fever",
@@ -124,6 +129,13 @@ COUNT_UNIQUE_CHILD_HEALTH_INDICATORS = dict(
                 description="No. children aged 6-59 months with MUAC reading this time period",
                 title="# 6-59 month Children with MUAC reading",
                 indicator_key="muac_reading"
+            ),
+            child_length_reading=dict(
+                description="No. children aged 3-24 months receiving on-time "
+                            "routine length measurement (every 90 days) "
+                            "during the time period",
+                title="# 3-24 month Children receiving on-time Length (90 days)",
+                indicator_key="length_reading"
             ),
         ),
     )

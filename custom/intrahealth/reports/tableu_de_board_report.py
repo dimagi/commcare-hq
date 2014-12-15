@@ -46,7 +46,7 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
             rows = []
         else:
             if isinstance(data_provider, ConventureData) or isinstance(data_provider, RecapPassageData)\
-                    or isinstance(data_provider, DureeData):
+                    or isinstance(data_provider, DureeData) or isinstance(data_provider, PPSAvecDonnees):
                 columns = [c.data_tables_column for c in data_provider.columns]
                 headers = DataTablesHeader(*columns)
                 rows = data_provider.rows
@@ -153,6 +153,7 @@ class TableuDeBoardReport(MultiReport):
         if 'district_id' in config:
             return [
                 ConventureData(config=config),
+                PPSAvecDonnees(config=config),
                 TauxDeRuptures(config=config),
                 ConsommationData(config=config),
                 TauxConsommationData(config=config),
@@ -162,6 +163,7 @@ class TableuDeBoardReport(MultiReport):
         else:
             return [
                 ConventureData(config=config),
+                PPSAvecDonnees(config=config),
                 DispDesProducts(config=config),
                 TauxDeRuptures(config=config),
                 ConsommationData(config=config),

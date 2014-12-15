@@ -13,7 +13,7 @@ from casexml.apps.case import process_cases
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from couchforms.models import XFormInstance, XFormDeprecated
-from couchforms.util import post_xform_to_couch
+from couchforms.tests.testutils import post_xform_to_couch
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -81,9 +81,10 @@ class BaseCaseMultimediaTest(TestCase):
         """
         form = post_xform_to_couch(xml_data, dict_attachments)
         form.domain = TEST_DOMAIN
-        self.assertEqual(len(dict_attachments.keys()), len(form.attachments))
-        process_cases(form)
-
+        self.assertEqual(set(dict_attachments.keys()),
+                         set(form.attachments.keys()))
+        case, = process_cases(form)
+        self.assertEqual(case.case_id, TEST_CASE_ID)
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments):
         self._do_submit(xml_data, dict_attachments)
@@ -141,6 +142,21 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertTrue(single_attach in case.case_attachments)
         self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
         self.assertEqual(self._calc_file_hash(single_attach), hashlib.md5(case.get_attachment(single_attach)).hexdigest())
+
+    def testArchiveAfterAttach(self):
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
+
+        single_attach = 'fruity_file'
+        self._doCreateCaseWithMultimedia(attachments=[single_attach])
+
+        case = CommCareCase.get(TEST_CASE_ID)
+
+        for xform in case.xform_ids:
+            form = XFormInstance.get(xform)
+            form.archive()
+            self.assertEqual('XFormArchived', form.doc_type)
+            form.unarchive()
+            self.assertEqual('XFormInstance', form.doc_type)
 
     def testAttachRemoveSingle(self):
         self.testAttachInCreate()

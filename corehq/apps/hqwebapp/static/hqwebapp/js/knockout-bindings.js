@@ -126,41 +126,82 @@ ko.bindingHandlers.langcode = {
     update: ko.bindingHandlers.editableString.update
 };
 ko.bindingHandlers.sortable = {
+    updateSortableList: function (itemList) {
+        _(itemList()).each(function (item, index) {
+            if (item._sortableOrder === undefined) {
+                item._sortableOrder = ko.observable(index);
+            } else {
+                item._sortableOrder(index);
+            }
+        });
+    },
+    getList: function (valueAccessor) {
+        /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
+        var modelValue = valueAccessor(),
+            unwrappedValue = ko.utils.peekObservable(modelValue);
+            if ((!unwrappedValue) || typeof unwrappedValue.length == "number") {
+                return modelValue;
+            } else {
+                return unwrappedValue['data'];
+            }
+    },
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         // based on http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-        var list = valueAccessor();
+        // note: although by this point we've deviated from that solution quite a bit
+        var list = ko.bindingHandlers.sortable.getList(valueAccessor);
+        var forceUpdate = function () {
+            ko.bindingHandlers.sortable.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        };
+        list.subscribe(forceUpdate);
         $(element).sortable({
             handle: '.sortable-handle',
             update: function(event, ui) {
-                var parent = ui.item.parent();
-                var oldPosition = parseInt(ui.item.data('order'), 10);
-                var newPosition = ko.utils.arrayIndexOf(parent.children(), ui.item.get(0));
-                var item = list()[oldPosition];
-                // this is voodoo to me, but I have to remove the ui item from its new position
-                // and *not replace* it in its original position for all the foreach mechanisms to work correctly
-                // I found this by trial and error
-                ui.item.detach();
-                //remove the item and add it back in the right spot
-                if (newPosition >= 0) {
-                    list.remove(item);
-                    list.splice(newPosition, 0, item);
-                    // Knockout 2.3 fix: refresh all of the `data-order`s
-                    // this is an O(n) operation, so if experiencing slowness
-                    // start here
-                    parent.children().each(function (i) {
-                        $(this).data('order', i);
-                    });
+                var parent = ui.item.parent(),
+                    oldPosition = ui.item.data('order');
+                if (oldPosition === undefined) {
+                    console.warn(
+                        "NOT UPDATING THE SORT OF THE ACTUAL LIST! " +
+                        "Did you forget to add `attr: {'data-order': _sortableOrder}` " +
+                        "to the data-bind attribute of your main sorting " +
+                        "element?"
+                    );
+                    return;
+                }
+                oldPosition = parseInt(oldPosition);
+                var newPosition = ko.utils.arrayIndexOf(parent.children(), ui.item.get(0)),
+                    item = list()[oldPosition];
+
+                if (item === undefined) {
+                    forceUpdate();
+                    console.warn('Fetched an undefined item. Check your code.');
+                    return;
+                }
+
+                if (item !== undefined) {
+                    // this is voodoo to me, but I have to remove the ui item from its new position
+                    // and *not replace* it in its original position for all the foreach mechanisms to work correctly
+                    // I found this by trial and error
+                    ui.item.detach();
+                    //remove the item and add it back in the right spot
+                    if (newPosition >= 0) {
+                        list.remove(item);
+                        list.splice(newPosition, 0, item);
+                        // Knockout 2.3 fix: refresh all of the `data-order`s
+                        // this is an O(n) operation, so if experiencing slowness
+                        // start here
+                        parent.children().each(function (i) {
+                            $(this).data('order', i);
+                        });
+                    }
                 }
             }
         });
         return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var ret = ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-        $(element).children().each(function (i) {
-            $(this).data('order', "" + i);
-        });
-        return ret;
+        var list = ko.bindingHandlers.sortable.getList(valueAccessor);
+        ko.bindingHandlers.sortable.updateSortableList(list);
+        return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     }
 };
 
@@ -565,4 +606,90 @@ ko.bindingHandlers.multiTypeahead = {
             source: contacts
         }).focus();
     }
-}
+};
+
+/**
+ * A custom knockout binding that replaces the element's contents with a jquery
+ * element.
+ * @type {{update: update}}
+ */
+ko.bindingHandlers.jqueryElement = {
+    init: function () {
+        // This excludes this element from ko.applyBindings
+        // which means that whatever controls that element
+        // is free to use its own knockout without conflicting
+        return {controlsDescendantBindings: true};
+    },
+    update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        $(element).empty();
+        $(element).append(ko.unwrap(valueAccessor()));
+    }
+};
+
+ko.bindingHandlers.__copyPasteSharedInit = function () {
+    var offScreen = {top: -10000, left: -10000};
+    var hiddenTextarea = $('<textarea></textarea>').css({
+        position: 'absolute',
+        width: 0,
+        height: 0
+    }).css(offScreen).appendTo('body');
+    var focusTextarea = function ($element, value) {
+        hiddenTextarea.css({top: $element.offset().top});
+        hiddenTextarea.val(value);
+        hiddenTextarea.focus();
+        hiddenTextarea.select();
+    };
+    var unfocusTextarea = function ($element) {
+        $element.focus();
+        return hiddenTextarea.val();
+    };
+    // Firefox only fires copy/paste when it thinks it's appropriate
+    // Chrome doesn't fire copy/paste after key down has changed the focus
+    // So we need implement both copy/paste as catching keystrokes Ctrl+C/V
+    $(document).on('copy paste keydown', function (e) {
+        var $element, callback;
+        if (e.type === 'copy' || e.metaKey && String.fromCharCode(e.keyCode) === 'C') {
+            $element = $(':focus');
+            callback = $element.data('copyCallback');
+            if (callback) {
+                focusTextarea($element, callback());
+                setTimeout(function () {
+                    unfocusTextarea($element);
+                }, 0);
+            }
+        } else if (e.type === 'paste' || e.metaKey && String.fromCharCode(e.keyCode) === 'V') {
+            $element = $(':focus');
+            callback = $element.data('pasteCallback');
+            if (callback) {
+                focusTextarea($element);
+                setTimeout(function () {
+                    var pasteValue = unfocusTextarea($element);
+                    // part of the above hack
+                    // on chrome this gets called twice,
+                    // the first time with a blank value
+                    if (pasteValue) {
+                        callback(pasteValue);
+                    }
+                }, 0);
+            }
+        }
+    });
+
+    // only ever call this function once
+    ko.bindingHandlers.__copyPasteSharedInit = function () {};
+};
+
+ko.bindingHandlers.copy = {
+    init: function (element, valueAccessor) {
+        ko.bindingHandlers.__copyPasteSharedInit();
+        $(element).data('copyCallback', valueAccessor());
+    }
+};
+
+ko.bindingHandlers.paste = {
+    init: function (element, valueAccessor) {
+        ko.bindingHandlers.__copyPasteSharedInit();
+        var callback = valueAccessor();
+        $(element).data('pasteCallback', valueAccessor());
+    }
+};

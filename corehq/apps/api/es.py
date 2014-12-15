@@ -216,6 +216,7 @@ class CaseES(ESView):
     """
     index = "hqcases"
 
+
 class ReportCaseES(ESView):
     index = 'report_cases'
 
@@ -266,6 +267,7 @@ class XFormES(ESView):
                         pass
 
                 res['_source']['es_readable_name'] = name
+
         return es_results
 
 

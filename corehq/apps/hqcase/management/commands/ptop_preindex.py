@@ -1,9 +1,11 @@
+from gevent import monkey; monkey.patch_all()
+from cStringIO import StringIO
+import traceback
 from datetime import datetime
 from optparse import make_option
 from django.core.mail import mail_admins
 from pillowtop import get_all_pillows
 from corehq.pillows.user import add_demo_user_to_user_index
-from gevent import monkey; monkey.patch_all()
 import gevent
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
@@ -30,7 +32,6 @@ def get_reindex_commands(pillow_class_name):
         'AppPillow': ['ptop_fast_reindex_apps'],
         'GroupPillow': ['ptop_fast_reindex_groups'],
         'SMSPillow': ['ptop_fast_reindex_smslogs'],
-        'TCSMSPillow': ['ptop_fast_reindex_tc_smslogs'],
         'ReportXFormPillow': ['ptop_fast_reindex_reportxforms'],
         'ReportCasePillow': ['ptop_fast_reindex_reportcases'],
     }
@@ -125,13 +126,23 @@ class Command(BaseCommand):
             g = gevent.spawn(do_reindex, pillow.__class__.__name__)
             runs.append(g)
 
-        gevent.joinall(runs)
         if len(reindex_pillows) > 0:
-            mail_admins(
-                "Pillow preindexing completed",
-                "Reindexing %s took %s seconds" % (
-                    ', '.join([x.__class__.__name__ for x in reindex_pillows]),
-                    (datetime.utcnow() - start).seconds
+            gevent.joinall(runs)
+            try:
+                for job in runs:
+                    job.get()
+            except Exception:
+                f = StringIO()
+                traceback.print_exc(file=f)
+                mail_admins("Pillow preindexing failed", f.getvalue())
+                raise
+            else:
+                mail_admins(
+                    "Pillow preindexing completed",
+                    "Reindexing %s took %s seconds" % (
+                        ', '.join([x.__class__.__name__ for x in reindex_pillows]),
+                        (datetime.utcnow() - start).seconds
+                    )
                 )
-            )
+
         print "All pillowtop reindexing jobs completed"

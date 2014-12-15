@@ -20,7 +20,7 @@ ko.bindingHandlers.select2 = {
                 return value; };
             if ("optionsText" in allBindings) {
                 textAccessor = function(value) {
-                    var valueAccessor = function (item) { return item; }
+                    var valueAccessor = function (item) { return item; };
                     if ("optionsValue" in allBindings) {
                         valueAccessor = function (item) { return item[allBindings.optionsValue]; }
                     }
@@ -37,6 +37,20 @@ ko.bindingHandlers.select2 = {
                     converted.push({id: value, text: textAccessor(value)});
                 }
             });
+            converted = _.uniq(converted, function(obj) {return obj.id;});
+            var data = $(el).select2('data');
+            if (_.indexOf(_.pluck(data, 'id'), '0') === 0 && data.length > 1) {
+                converted.splice(0, 1);
+            } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === converted.length && converted.length > 1) {
+                converted = converted[_.indexOf(_.pluck(converted, 'id'), '0')];
+                var tmplist = allBindings.selectedOptions().slice(0);
+                $.each(tmplist, function (key, value) {
+                    if (textAccessor(value) !== '' && value !== '0') {
+                        allBindings.selectedOptions().pop();
+                    }
+                });
+            }
+
             $(el).select2("data", converted);
         }
     }
@@ -58,6 +72,7 @@ var DrilldownOptionFilterControl = function (options) {
     };
 
     self.updateNextDrilldown = function (trigger_level) {
+        function get_val(obj) {return obj.val;}
         var current_control = self.controls()[trigger_level];
         var current_selection = current_control.selected(),
             current_options = current_control.control_options();
@@ -67,14 +82,12 @@ var DrilldownOptionFilterControl = function (options) {
             }
             return null;
         }
-        self.notification.changeMessage('');
 
         if (current_selection.length == 0) {
             self.controls()[trigger_level + 1].selected.removeAll();
             self.controls()[trigger_level + 1].control_options([]);
             self.updateNextDrilldown(self.controls()[trigger_level + 1].level);
-        }
-        else {
+        } else {
             var next_options = [];
             for(var i=0; i < current_selection.length; i++) {
                 var current_index = _.indexOf(_.pluck(current_options, 'val'), current_selection[i]);
@@ -82,7 +95,7 @@ var DrilldownOptionFilterControl = function (options) {
                 for (var l = trigger_level+1; l < self.controls().length; l++) {
                     if (current_index >= 0 && l === trigger_level+1) {
                         next_options.push.apply(next_options, current_options[current_index].next);
-                        self.controls()[trigger_level+1].control_options(next_options);
+                        self.controls()[trigger_level+1].control_options(_.uniq(next_options, get_val));
                     } else {
                         self.controls()[l].control_options([]);
                     }
@@ -116,11 +129,15 @@ var DrilldownOption = function (select, drilldown_map) {
     self.level = select.level;
 
     self.control_options = ko.observableArray((self.level === 0) ? drilldown_map : []);
-    self.selected = ko.observableArray();
+    self.selected = ko.observableArray(["0"]);
 
     self.is_visible = ko.computed(function () {
         if (!(self.control_options().length)) {
-            self.selected.removeAll()
+            self.selected.removeAll();
+        }
+
+        if (self.selected.length === 0){
+            self.selected.push("0");
         }
         return !!(self.control_options().length);
     });

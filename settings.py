@@ -17,6 +17,10 @@ CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
+# Enable LESS_WATCH if you want less.js to constantly recompile.
+# Useful if you're making changes to the less files and don't want to refresh
+# your page.
+LESS_WATCH = False
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -180,12 +184,14 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djkombu',
+    'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
     'django.contrib.markup',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
+    'mptt',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
@@ -219,6 +225,8 @@ HQ_APPS = (
     'corehq.apps.hqmedia',
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
+    'corehq.apps.products',
+    'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'couchforms',
@@ -233,6 +241,7 @@ HQ_APPS = (
     'corehq.apps.announcements',
     'corehq.apps.callcenter',
     'corehq.apps.crud',
+    'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
@@ -241,7 +250,6 @@ HQ_APPS = (
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
-    'corehq.apps.reportfixtures',
     'corehq.apps.translations',
     'corehq.apps.users',
     'corehq.apps.settings',
@@ -262,6 +270,8 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
+    'corehq.apps.reports_core',
+    'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -282,13 +292,14 @@ HQ_APPS = (
     'toggle',
     'touchforms.formplayer',
     'phonelog',
-    'hutch',
     'pillowtop',
     'pillow_retry',
     'corehq.apps.style',
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
+    'corehq.apps.public',
+    'corehq.util',
 
     # custom reports
     'a5288',
@@ -299,8 +310,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
-    'custom.opm.opm_reports',
-    'custom.opm.opm_tasks',
+    'custom.opm',
     'pathfinder',
     'pathindia',
     'pact',
@@ -310,11 +320,12 @@ HQ_APPS = (
     'custom.reports.care_sa',
     'custom.apps.cvsu',
     'custom.reports.mc',
-    'custom.trialconnect',
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.openlmis',
+    'custom.logistics',
     'custom.ilsgateway',
+    'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -323,6 +334,10 @@ HQ_APPS = (
 
     'custom.colalife',
     'custom.intrahealth',
+    'custom.world_vision',
+    'custom.tdh',
+    'custom.up_nrhm',
+
     'custom.care_pathways',
     'bootstrap3_crispy',
 )
@@ -338,7 +353,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.mach',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.apps.sislog',
     'corehq.apps.telerivet',
     'corehq.apps.tropo',
     'corehq.apps.megamobile',
@@ -370,6 +384,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'fluff_filter',
     'freddy',
     'pillowtop',
+    'pillow_retry',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -422,11 +437,19 @@ BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
-# email settings: these ones are the custom hq ones
+# These are non-standard setting names that are used in localsettings
+# The standard variables are then set to these variables after localsettings
+# Todo: Change to use standard settings variables
+# Todo: Will require changing salt pillar and localsettings template
+# Todo: or more likely in ansible once that's a thing
 EMAIL_LOGIN = "user@domain.com"
 EMAIL_PASSWORD = "changeme"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
+# These are the normal Django settings
+EMAIL_USE_TLS = True
+SEND_BROKEN_LINK_EMAILS = True
+
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
@@ -439,6 +462,8 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+MASTER_LIST_EMAIL = 'master-list@dimagi.com'
+EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
@@ -459,9 +484,9 @@ HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.reportfixtures.fixturegenerators.indicators",
-    "corehq.apps.commtrack.fixtures.product_fixture_generator",
-    "corehq.apps.commtrack.fixtures.program_fixture_generator",
+    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+    "corehq.apps.products.fixtures.product_fixture_generator",
+    "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     # custom
     "custom.bihar.reports.indicators.fixtures.generator",
@@ -617,6 +642,10 @@ PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
 PILLOW_RETRY_BACKOFF_FACTOR = 2
 
+# After an error's total attempts exceeds this number it will only be re-attempted
+# once after being reset. This is to prevent numerous retries of errors that aren't
+# getting fixed
+PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -642,7 +671,8 @@ AUDIT_VIEWS = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': ''
+    'PINGDOM_ID': '',
+    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -764,7 +794,7 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
+            'class': 'corehq.util.log.HqAdminEmailHandler',
         },
         'sentry': {
             'level': 'ERROR',
@@ -897,7 +927,7 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuples
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -932,6 +962,7 @@ COUCHDB_APPS = [
     'couchforms',
     'couchexport',
     'ctable',
+    'custom_data_fields',
     'hqadmin',
     'domain',
     'facilities',
@@ -949,8 +980,9 @@ COUCHDB_APPS = [
     'phone',
     'pillowtop',
     'pillow_retry',
+    'products',
+    'programs',
     'reminders',
-    'reportfixtures',
     'reports',
     'sofabed',
     'sms',
@@ -963,7 +995,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'hutch',
     'wisepill',
     'fri',
     'crs_reports',
@@ -977,32 +1008,37 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
-    'opm_tasks',
     'pathfinder',
     'pathindia',
     'pact',
     'psi',
-    'trialconnect',
     'accounting',
     'succeed',
     'ilsgateway',
+    'ewsghana',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
     ('receiverwrapper', 'receiverwrapper'),
+    ('userreports', 'meta'),
+    ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm_reports', 'fluff-opm'),
+    ('opm', 'fluff-opm'),
     ('fluff', 'fluff-opm'),
     ('care_sa', 'fluff-care_sa'),
     ('cvsu', 'fluff-cvsu'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
+    ('wvindia2', 'wvindia2'),
+    ('export', 'meta'),
+    'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -1014,8 +1050,8 @@ EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
-EMAIL_USE_TLS = True
-SEND_BROKEN_LINK_EMAILS = True
+# EMAIL_USE_TLS and SEND_BROKEN_LINK_EMAILS are set above
+# so they can be overridden in localsettings (e.g. in a dev environment)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -1043,7 +1079,8 @@ DEFAULT_CURRENCY_SYMBOL = "$"
 
 SMS_HANDLERS = [
     'corehq.apps.sms.handlers.forwarding.forwarding_handler',
-    'custom.ilsgateway.handler.handle',
+    'custom.ilsgateway.tanzania.handler.handle',
+    'custom.ewsghana.handler.handle',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1117,6 +1154,7 @@ PILLOWTOPS = {
         'corehq.pillows.user.GroupToUserPillow',
         'corehq.pillows.user.UnknownUsersPillow',
         'corehq.pillows.sofabed.FormDataPillow',
+        'corehq.pillows.sofabed.CaseDataPillow',
     ],
     'phonelog': [
         'corehq.pillows.log.PhoneLogPillow',
@@ -1124,18 +1162,19 @@ PILLOWTOPS = {
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
+        'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
     ],
     'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.opm_reports.models.OpmCaseFluffPillow',
-        'custom.opm.opm_reports.models.OpmUserFluffPillow',
-        'custom.opm.opm_reports.models.OpmFormFluffPillow',
-        'custom.opm.opm_reports.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.opm_reports.models.OPMHierarchyFluffPillow',
-        'custom.opm.opm_reports.models.VhndAvailabilityFluffPillow',
+        'custom.opm.models.OpmCaseFluffPillow',
+        'custom.opm.models.OpmUserFluffPillow',
+        'custom.opm.models.OpmFormFluffPillow',
+        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
+        'custom.opm.models.OPMHierarchyFluffPillow',
+        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
@@ -1152,14 +1191,23 @@ PILLOWTOPS = {
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
-        'custom.care_pathways.models.FarmerRecordFluffPillow'
+        'custom.care_pathways.models.FarmerRecordFluffPillow',
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
+        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+        'custom.tdh.models.TDHEnrollChildFluffPillow',
+        'custom.tdh.models.TDHInfantClassificationFluffPillow',
+        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
+        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
+        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
+        'custom.tdh.models.TDHChildClassificationFluffPillow',
+        'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.up_nrhm.models.UpNRHMLocationHierarchyFluffPillow',
+        'custom.up_nrhm.models.ASHAFacilitatorsFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
         'corehq.apps.indicators.pillows.CaseIndicatorPillow',
-    ],
-    'trialconnect': [
-        'custom.trialconnect.smspillow.TCSMSPillow',
     ],
 }
 
@@ -1180,6 +1228,8 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
+    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1212,6 +1262,8 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
+    'custom.ilsgateway',
+    'custom.ewsghana',
 ]
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
@@ -1242,23 +1294,28 @@ DOMAIN_MODULE_MAP = {
     'mvp-ruhiira': 'mvp',
     'mvp-mwandama': 'mvp',
     'mvp-sada': 'mvp',
-    'opm': 'custom.opm.opm_reports',
+    'opm': 'custom.opm',
     'psi-unicef': 'psi',
     'project': 'custom.apps.care_benin',
 
-    'gc': 'custom.trialconnect',
-    'tc-test': 'custom.trialconnect',
-    'trialconnect': 'custom.trialconnect',
     'ipm-senegal': 'custom.intrahealth',
     'testing-ipm-senegal': 'custom.intrahealth',
+    'up-nrhm': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 
     'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
+    'ilsgateway-test-1': 'custom.ilsgateway',
+    'ilsgateway-test-2': 'custom.ilsgateway',
+    'ews-ghana-test': 'custom.ewsghana',
+    'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
+    'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
+    'tdhtesting': 'custom.tdh',
+    'rec': 'custom.tdh'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
@@ -1294,4 +1351,5 @@ COMPRESS_OFFLINE_CONTEXT = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
+    'less_watch': LESS_WATCH,
 }

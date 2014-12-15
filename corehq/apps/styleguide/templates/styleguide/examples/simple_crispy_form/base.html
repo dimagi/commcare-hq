@@ -1,0 +1,14 @@
+{% extends 'style/base_section.html' %}
+{% load crispy_forms_tags_b3 %}
+{% load i18n %}
+
+{% block page_content %}
+    <p class="lead">
+        Use this form to register a new user in CommCare HQ.
+    </p>
+    <div class="alert alert-info">
+        <strong>Note:</strong> This doesn't register a user for reals&mdash;just
+        a coding example.
+    </div>
+    {% crispy_b3 simple_crispy_form %}
+{% endblock page_content %}

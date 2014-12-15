@@ -1,10 +1,10 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CouchUser, CommCareUser
-from couchforms.models import XFormInstance
+
 
 class UpdateTestCase(TestCase):
-    
+
     def setUp(self):
         all_users = CouchUser.all()
         for user in all_users:

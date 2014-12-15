@@ -11,7 +11,8 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
+from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, SuperuserAuthentication
+from corehq.apps.es import UserES
 
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
@@ -19,13 +20,14 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
-from . import JsonResource, DomainSpecificResourceMixin
+from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 
 
 MOCK_BULK_USER_ES = None
 
-class BulkUserResource(JsonResource, DomainSpecificResourceMixin):
+
+class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
     Supported Params: limit offset q fields
@@ -210,6 +212,23 @@ class WebUserResource(v0_1.WebUserResource):
         return bundle
 
 
+class AdminWebUserResource(v0_1.UserResource):
+    domains = fields.ListField(attribute='domains')
+
+    def obj_get(self, bundle, **kwargs):
+        return WebUser.get(kwargs['pk'])
+
+    def obj_get_list(self, bundle, **kwargs):
+        if 'username' in bundle.request.GET:
+            return [WebUser.get_by_username(bundle.request.GET['username'])]
+        return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
+
+    class Meta(WebUserResource.Meta):
+        authentication = SuperuserAuthentication()
+        detail_allowed_methods = ['get']
+        list_allowed_methods = ['get']
+
+
 class GroupResource(v0_4.GroupResource):
 
     class Meta(v0_4.GroupResource.Meta):
@@ -341,7 +360,38 @@ class DomainAuthorization(ReadOnlyAuthorization):
         return object_list.filter(domain=bundle.request.domain)
 
 
-class DeviceReportResource(JsonResource, ModelResource):
+class NoCountingPaginator(Paginator):
+    """
+    The default paginator contains the total_count value, which shows how
+    many objects are in the underlying object list. Obtaining this data from
+    the database is inefficient, especially with large datasets, and unfiltered API requests.
+
+    This class does not perform any counting and return 'null' as the value of total_count.
+
+    See:
+        * http://django-tastypie.readthedocs.org/en/latest/paginator.html
+        * http://wiki.postgresql.org/wiki/Slow_Counting
+    """
+    def get_previous(self, limit, offset):
+        if offset - limit < 0:
+            return None
+
+        return self._generate_uri(limit, offset-limit)
+
+    def get_next(self, limit, offset, count):
+        """
+        Always generate the next URL even if there may be no records.
+        """
+        return self._generate_uri(limit, offset+limit)
+
+    def get_count(self):
+        """
+        Don't do any counting.
+        """
+        return None
+
+
+class DeviceReportResource(HqBaseResource, ModelResource):
     class Meta:
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']
@@ -349,7 +399,7 @@ class DeviceReportResource(JsonResource, ModelResource):
         resource_name = 'device-log'
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
         authorization = DomainAuthorization()
-        paginator_class = Paginator
+        paginator_class = NoCountingPaginator
         filtering = {
             # this is needed for the domain filtering but any values passed in via the URL get overridden
             "domain": ('exact',),

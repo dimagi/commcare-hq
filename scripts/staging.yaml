@@ -43,55 +43,24 @@
 trunk: master
 name: autostaging
 branches:
-  - archive-products+explicit_case_processing # tw 8/14
-  - explicit_case_processing # danny?
-  - master+schedule # Nick P 9/11
-  - schedule # SK 7/17
-#  - add-build-ui
-  - hq-dropdown # sravan 5/7
-  - refactor-domain-copy2  # Brian 5/20
-  - logos # Nick P 5/28
-  - admin-reports # Nick P 8/13
-#  - subscription-no-contact-info # bb 8/4
-#  - cachecomparisons  # SK 8/11
-  - increase-es-timeout # Nick P 8/11
-  - parent-child-select-revised # Noah 8/14
-  - archive-products # tw 8/14
-  - custom-exports-better-ordering  # (lwyszomi/86347-2) Danny 8/26
+  - caching-speedups  # Danny 12/11
   - subscription-no-contact-info # bb 8/4
-  - fix-timeout # Nick P 8/26
-  - caselistmixin-refactor # Noah 8/14
-  - outputrefs # SK 9/6
-  - custom_user_data # tw+Ethan 9/9
-  - lwyszomi:better_date_filters_improvment
-  - lwyszomi:uservoice-pending-invitations
   # - lwyszomi:b3-mobile-layout
-  - lwyszomi:ilsgateway-bugs
-  - perf-improvements # Nick P 9/11
+  - revert-4205-revert-3841-86347-2 # Daniel 9/11
+  - hq-dropdown # sravan 5/7
+  - vellum-staging # J$ 11/13
+  - custom_location_data  # Ethan & tw 11/17
+  - custom-case-list-pane # Noah 11/24
+  - quickview # Simon 11/25
+  - double-management # SK 12/1
+  - logo-uploader # Nick P 12/2
+  - userreports-delete # Nick P 12/10
 submodules:
-  submodules/couchlog-src:
+  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
-      - static-tags # Nick P 5/20
-  submodules/django-soil-src:
-    branches:
-      - static-tags # Nick P 5/20
-#  submodules/formdesigner:
-#    branches:
-#      - develop-staging # Daniel 6/12 (major refactor + itemsets?)
-#      - universal-analytics-upgrade # Nick P 7/8
-  submodules/formtranslate-src:
-    branches:
-      - static-tags # Nick P 5/20
-      # Danny 8/12. If form validation seems wonky on staging, just remove this
-      - clean-up-api
-  submodules/touchforms-src:
-    branches:
-      - static-tags # Nick P 5/20
-#  submodules/dimagi-utils-src:
-#    branches:
-#      - json_response-status
+      - debug-yui # Nick P 11/4
+      - logos # Nick P 12/2
   submodules/dimagi-utils-src:
-    branches:
-      # Danny 8/12. If there's weird errors or issues in saving forms
-      # or saving apps, just remove this
-      - faster-lazy-attachments
+    # let's leave this here even when empty
+    # just so we always get latest master
+    branches: []

@@ -1,6 +1,6 @@
 Hi!
 
-{{ inviter }} has invited you to join the {{ domain }} domain at CommCareHQ.
+{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s)
 
 CommCareHQ is a tool that helps manage frontline workers around the world.
 

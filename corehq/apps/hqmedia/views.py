@@ -125,27 +125,6 @@ def media_urls(request, domain, app_id):
     return HttpResponse(json.dumps(pathUrls))
 
 
-def media_from_path(request, domain, app_id, file_path):
-    # Not sure what the intentions were for this. I didn't see it getting used anywhere.
-    # Rewrote it to use new media refs.
-    # Yedi, care to comment?
-    app = get_app(domain, app_id)
-    if isinstance(app, RemoteApp):
-        raise Http404('Media not yet available for remote apps')
-
-    # todo remove get_media_references
-    multimedia = app.get_media_references()
-
-    for section, types in multimedia['references'].items():
-        for media_type, info in types.items():
-            for media_map in info['maps']:
-                # [10:] is to remove the 'jr://file/'
-                if media_map['path'][10:] == file_path and media_map.get('url'):
-                    return HttpResponseRedirect(media_map['url'])
-
-    raise Http404('No Media Found')
-
-
 class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
 
     @property

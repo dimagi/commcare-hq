@@ -1,6 +1,6 @@
 {% load i18n %}
 <fieldset>
-    <legend>Upload Options</legend>
+    <legend>{% trans "Upload Options" %}</legend>
     {% block additional_options %}
     {% endblock %}
     <div class="control-group">
@@ -11,17 +11,17 @@
     </div>
 </fieldset>
 <fieldset class="hqm-sharing hide">
-    <legend>Multimedia Sharing Options</legend>
+    <legend>{% trans "Multimedia Sharing Options" %}</legend>
     <div class="control-group">
         <div class="control-label">{% trans "License" %}</div>
         <div class="controls">
             <select name="license">
-                <option value="cc-nc">Creative Commons Attribution, Non-Commercial</option>
-                <option value="cc-nd">Creative Commons Attribution, No Derivatives</option>
-                <option value="cc" selected="selected">Creative Commons Attribution</option>
-                <option value="cc-nc-sa">Creative Commons Attribution, Non-Commercial, and Share Alike</option>
-                <option value="cc-nc-nd">Creative Commons Attribution, Non-Commercial, and No Derivatives</option>
-                <option value="cc-sa">Creative Commons Attribution, Share Alike</option>
+                <option value="cc-nc">{% trans "Creative Commons Attribution, Non-Commercial" %}</option>
+                <option value="cc-nd">{% trans "Creative Commons Attribution, No Derivatives" %}</option>
+                <option value="cc" selected="selected">{% trans "Creative Commons Attribution" %}</option>
+                <option value="cc-nc-sa">{% trans "Creative Commons Attribution, Non-Commercial, and Share Alike" %}</option>
+                <option value="cc-nc-nd">{% trans "Creative Commons Attribution, Non-Commercial, and No Derivatives" %}</option>
+                <option value="cc-sa">{% trans "Creative Commons Attribution, Share Alike" %}</option>
             </select>
         </div>
     </div>

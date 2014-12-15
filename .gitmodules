@@ -40,9 +40,6 @@
 [submodule "submodules/django-soil-src"]
 	path = submodules/django-soil-src
 	url = git://github.com/dimagi/django-soil.git
-[submodule "submodules/hutch-src"]
-	path = submodules/hutch-src
-	url = git://github.com/dimagi/hutch.git
 [submodule "submodules/pillowtop-src"]
 	path = submodules/pillowtop-src
 	url = git://github.com/dimagi/pillowtop.git
@@ -82,3 +79,9 @@
 [submodule "submodules/bootstrap3_crispy"]
 	path = submodules/bootstrap3_crispy
 	url = https://github.com/dimagi/django-crispy-forms.git
+[submodule "corehq/apps/style/static/style/lib/ui-select"]
+	path = corehq/apps/style/static/style/lib/ui-select
+	url = https://github.com/angular-ui/ui-select.git
+[submodule "corehq/apps/style/static/style/lib/select2"]
+	path = corehq/apps/style/static/style/lib/select2
+	url = https://github.com/ivaynberg/select2.git

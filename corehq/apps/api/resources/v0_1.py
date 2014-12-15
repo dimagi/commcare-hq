@@ -4,6 +4,7 @@ from functools import wraps
 import json
 
 # Django imports
+import datetime
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
@@ -17,18 +18,35 @@ from tastypie.throttle import CacheThrottle
 
 # External imports
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.es import FormES
 from corehq.apps.users.decorators import require_permission, require_permission_raw
 from couchforms.models import XFormInstance
 
 # CCHQ imports
-from corehq.apps.domain.decorators import login_or_digest, domain_admin_required
+from corehq.apps.domain.decorators import login_or_digest, login_or_basic
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.api.resources import JsonResource, DomainSpecificResourceMixin
+from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin
+from dimagi.utils.parsing import string_to_boolean
+
+
+def determine_authtype(request):
+    """
+    Guess the auth type, based on request.
+    """
+    auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
+    if auth_header.startswith('basic '):
+        return 'basic'
+    elif auth_header.startswith('digest '):
+        return 'digest'
+
+    # the initial digest request doesn't have any authorization, so default to
+    # digest in order to send back
+    return 'digest'
 
 
 def api_auth(view_func):
@@ -48,24 +66,39 @@ def api_auth(view_func):
 
 
 class LoginAndDomainAuthentication(Authentication):
-    def is_authenticated(self, request, **kwargs):
-        PASSED_AUTH = 'is_authenticated'
 
-        @api_auth
-        @login_or_digest
+    def is_authenticated(self, request, **kwargs):
+        return self._auth_test(request, wrappers=[self._get_auth_decorator(request), api_auth], **kwargs)
+
+    def _get_auth_decorator(self, request):
+        decorator_map = {
+            'digest': login_or_digest,
+            'basic': login_or_basic,
+        }
+        return decorator_map[determine_authtype(request)]
+
+    def _auth_test(self, request, wrappers, **kwargs):
+        PASSED_AUTH = 'is_authenticated'
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
+
+        wrapped_dummy = dummy
+        for wrapper in wrappers:
+            wrapped_dummy = wrapper(wrapped_dummy)
 
         if not kwargs.has_key('domain'):
             kwargs['domain'] = request.domain
 
-        response = dummy(request, **kwargs)
+        try:
+            response = wrapped_dummy(request, **kwargs)
+        except PermissionDenied:
+            response = HttpResponseForbidden()
+
 
         if response == PASSED_AUTH:
             return True
         else:
             return response
-
 
     def get_identifier(self, request):
         return request.couch_user.username
@@ -77,45 +110,35 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         self.permission = permission
 
     def is_authenticated(self, request, **kwargs):
-        PASSED_AUTH = 'is_authenticated'
-
-        @api_auth
-        @require_permission(self.permission, login_decorator=login_or_digest)
-        def dummy(request, domain, **kwargs):
-            return PASSED_AUTH
-
-        if not kwargs.has_key('domain'):
-            kwargs['domain'] = request.domain
-
-        try:
-            response = dummy(request, **kwargs)
-        except PermissionDenied:
-            response = HttpResponseForbidden()
-
-        if response == PASSED_AUTH:
-            return True
-        else:
-            return response
+        wrappers = [
+            require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
 class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
-        PASSED_AUTH = 'is_authenticated'
         permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
-        @api_auth
-        @require_permission_raw(permission_check, login_decorator=login_or_digest)
-        def dummy(request, domain, **kwargs):
-            return PASSED_AUTH
+        wrappers = [
+            require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
 
-        if not kwargs.has_key('domain'):
-            kwargs['domain'] = request.domain
 
-        response = dummy(request, **kwargs)
-        if response == PASSED_AUTH:
-            return True
-        else:
-            return response
+class SuperuserAuthentication(LoginAndDomainAuthentication):
+
+    def is_authenticated(self, request, **kwargs):
+        permission_check = lambda couch_user, domain: couch_user.is_superuser
+        wrappers = [
+            require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
+            api_auth,
+        ]
+        # passing the domain is a hack to work around non-domain-specific requests
+        # failing on auth
+        return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)
 
 
 class CustomResourceMeta(object):
@@ -126,7 +149,8 @@ class CustomResourceMeta(object):
     throttle = CacheThrottle(throttle_at=getattr(settings, 'CCHQ_API_THROTTLE_REQUESTS', 25),
                              timeframe=getattr(settings, 'CCHQ_API_THROTTLE_TIMEFRAME', 15))
 
-class UserResource(JsonResource, DomainSpecificResourceMixin):
+
+class UserResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "user"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     username = fields.CharField(attribute='username', unique=True)
@@ -159,8 +183,45 @@ class CommCareUserResource(UserResource):
         object_class = CommCareUser
         resource_name = 'user'
 
+    def dehydrate(self, bundle):
+        show_extras = _safe_bool(bundle, 'extras')
+        if show_extras:
+            extras = {}
+            now = datetime.datetime.utcnow()
+            form_es_base = (FormES()
+                .domain(bundle.request.domain)
+                .user_id([bundle.obj._id])
+            )
+            extras['submitted_last_30'] = (form_es_base
+                .submitted(gte=now - datetime.timedelta(days=30),
+                           lte=now)
+                .run()
+            ).total
+            extras['completed_last_30'] = (form_es_base
+                .completed(gte=now - datetime.timedelta(days=30),
+                           lte=now)
+                .run()
+            ).total
+            first_of_this_month = datetime.datetime(now.year, now.month, 1)
+            first_of_last_month = (first_of_this_month - datetime.timedelta(days=1)).replace(day=1)
+            extras['submitted_last_month'] = (form_es_base
+                .submitted(gte=first_of_last_month,
+                           lte=first_of_this_month)
+                .run()
+            ).total
+            extras['completed_last_month'] = (form_es_base
+                .completed(gte=first_of_last_month,
+                           lte=first_of_this_month)
+                .run()
+            ).total
+            bundle.data['extras'] = extras
+        return super(UserResource, self).dehydrate(bundle)
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
+
+
+        show_archived = _safe_bool(bundle, 'archived')
         group_id = bundle.request.GET.get('group')
         if group_id:
             group = Group.get(group_id)
@@ -168,7 +229,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            return list(CommCareUser.by_domain(domain, strict=True))
+            return list(CommCareUser.by_domain(domain, strict=True, is_active=not show_archived))
 
 
 class WebUserResource(UserResource):
@@ -199,7 +260,7 @@ class WebUserResource(UserResource):
         return list(WebUser.by_domain(domain))
 
 
-class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     user_id = fields.CharField(attribute='user_id')
@@ -248,7 +309,7 @@ class CommCareCaseResource(JsonResource, DomainSpecificResourceMixin):
         resource_name = 'case'
 
 
-class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 
@@ -270,3 +331,9 @@ class XFormInstanceResource(JsonResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         resource_name = 'form'
         serializer = XFormInstanceSerializer()
+
+def _safe_bool(bundle, param, default=False):
+    try:
+        return string_to_boolean(bundle.request.GET.get(param))
+    except ValueError:
+        return default

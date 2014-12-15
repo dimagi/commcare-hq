@@ -1,17 +1,20 @@
+import HTMLParser
 import json
 import logging
 import socket
 import time
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
+import dateutil
+from django.utils.datastructures import SortedDict
 
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.core import management
+from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
@@ -31,6 +34,10 @@ from django.http import (
 from restkit import Resource
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from couchdbkit import ResourceNotFound
+from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.apps.ota.tasks import prime_restore
 from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
@@ -47,24 +54,27 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
+from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm, PrimeRestoreCacheForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
+from corehq.apps.hqadmin.reporting.reports import (
+    get_project_spaces,
+    get_stats_data,
+)
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.standard.domains import es_domain_query
 from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
-from corehq.elastic import get_stats_data, parse_args_for_es, es_query, ES_URLS, ES_MAX_CLAUSE_COUNT
+from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
@@ -75,6 +85,7 @@ from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 
 from .multimech import GlobalConfig
+from soil import DownloadBase
 
 
 @require_superuser
@@ -551,7 +562,7 @@ def update_domains(request):
     headers = DataTablesHeader(
         DataTablesColumn("Domain"),
         DataTablesColumn("City"),
-        DataTablesColumn("Country"),
+        DataTablesColumn("Countries"),
         DataTablesColumn("Region"),
         DataTablesColumn("Project Type"),
         DataTablesColumn("Customer Type"),
@@ -571,7 +582,7 @@ def update_domains(request):
 @require_superuser
 def domain_list_download(request):
     domains = Domain.get_all()
-    properties = ("name", "city", "country", "region", "project_type", 
+    properties = ("name", "city", "countries", "region", "project_type",
                   "customer_type", "is_test?")
     
     def _row(domain):
@@ -818,7 +829,9 @@ def admin_restore(request):
     user = CommCareUser.get_by_username(full_username)
     if not user:
         return HttpResponseNotFound('User %s not found.' % full_username)
-    return get_restore_response(user.domain, user, **get_restore_params(request))
+
+    overwrite_cache = request.GET.get('ignore_cache') == 'true'
+    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, **get_restore_params(request))
 
 @require_superuser
 def management_commands(request, template="hqadmin/management_commands.html"):
@@ -864,78 +877,48 @@ class FlagBrokenBuilds(FormView):
         return HttpResponse("posted!")
 
 
-def get_domain_stats_data(params, datespan, interval='week', datefield="date_created"):
-    q = {
-        "query": {"bool": {"must":
-                                  [{"match": {'doc_type': "Domain"}},
-                                   {"term": {"is_snapshot": False}}]}},
-        "facets": {
-            "histo": {
-                "date_histogram": {
-                    "field": datefield,
-                    "interval": interval
-                },
-                "facet_filter": {
-                    "and": [{
-                        "range": {
-                            datefield: {
-                                "from": datespan.startdate_display,
-                                "to": datespan.enddate_display,
-                            }}}]}}}}
-
-    histo_data = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
-
-    del q["facets"]
-    q["filter"] = {
-        "and": [
-            {"range": {datefield: {"lt": datespan.startdate_display}}},
-        ],
-    }
-
-    domains_before_date = es_query(params, q=q, size=0, es_url=ES_URLS["domains"])
-
-    return {
-        'histo_data': {"All Domains": histo_data["facets"]["histo"]["entries"]},
-        'initial_values': {"All Domains": domains_before_date["hits"]["total"]},
-        'startdate': datespan.startdate_key_utc,
-        'enddate': datespan.enddate_key_utc,
-    }
-
-
 @require_superuser
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
     datefield = request.GET.get("datefield")
-    individual_domain_limit = request.GET.get("individual_domain_limit[]") or 16
+    get_request_params_json = request.GET.get("get_request_params", None)
+    get_request_params = (
+        json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
+        if get_request_params_json is not None else {}
+    )
+
+    stats_kwargs = {
+        k: get_request_params[k]
+        for k in get_request_params if k != "domain_params_es"
+    }
+    if datefield is not None:
+        stats_kwargs['datefield'] = datefield
+
+    domain_params_es = get_request_params.get("domain_params_es", {})
 
     if not request.GET.get("enddate"):  # datespan should include up to the current day when unspecified
         request.datespan.enddate += timedelta(days=1)
 
-    params, __ = parse_args_for_es(request, prefix='es_')
+    domain_params, __ = parse_args_for_es(request, prefix='es_')
+    domain_params.update(domain_params_es)
 
-    if histo_type == "domains":
-        return json_response(get_domain_stats_data(params, request.datespan, interval=interval, datefield=datefield))
+    domains = get_project_spaces(facets=domain_params)
 
-    if params:
-        domain_results = es_domain_query(params, fields=["name"], size=99999, show_stats=False)
-        domains = [d["fields"]["name"] for d in domain_results["hits"]["hits"]]
+    return json_response(get_stats_data(
+        histo_type,
+        domains,
+        request.datespan,
+        interval,
+        **stats_kwargs
+    ))
 
-        if len(domains) <= individual_domain_limit:
-            domain_info = [{"names": [d], "display_name": d} for d in domains]
-        elif len(domains) < ES_MAX_CLAUSE_COUNT:
-            domain_info = [{"names": [d for d in domains], "display_name": _("Domains Matching Filter")}]
-        else:
-            domain_info = [{
-                "names": None,
-                "display_name": _("All Domains (NOT applying filters. > %s projects)" % ES_MAX_CLAUSE_COUNT)
-            }]
-    else:
-        domain_info = [{"names": None, "display_name": _("All Domains")}]
 
-    stats_data = get_stats_data(domain_info, histo_type, request.datespan, interval=interval)
-    return json_response(stats_data)
+@require_superuser
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+def admin_reports_stats_data(request):
+    return stats_data(request)
 
 
 @require_superuser
@@ -1005,3 +988,146 @@ def loadtest(request):
 
     template = "hqadmin/loadtest.html"
     return render(request, template, context)
+
+@require_superuser
+def doc_in_es(request):
+    doc_id = request.GET.get("id")
+    if not doc_id:
+        return render(request, "hqadmin/doc_in_es.html", {})
+    try:
+        couch_doc = get_db().get(doc_id)
+    except ResourceNotFound:
+        couch_doc = {}
+    query = {"filter":
+                {"ids": {
+                    "values": [doc_id]}}}
+
+    def to_json(doc):
+        return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
+
+    found_indices = {}
+    doc_type = couch_doc.get('doc_type')
+    es_doc_type = None
+    for index, url in ES_URLS.items():
+        res = run_query(url, query)
+        if res['hits']['total'] == 1:
+            es_doc = res['hits']['hits'][0]['_source']
+            found_indices[index] = to_json(es_doc)
+            es_doc_type = es_doc_type or es_doc.get('doc_type')
+
+    doc_type = doc_type or es_doc_type or 'Unknown'
+
+    context = {
+        "doc_id": doc_id,
+        "status": "found" if found_indices else "NOT FOUND!",
+        "doc_type": doc_type,
+        "couch_doc": to_json(couch_doc),
+        "found_indices": found_indices,
+    }
+    return render(request, "hqadmin/doc_in_es.html", context)
+
+
+@require_superuser
+def callcenter_test(request):
+    user_id = request.GET.get("user_id")
+    date_param = request.GET.get("date")
+    enable_caching = request.GET.get('cache')
+    doc_id = request.GET.get('doc_id')
+
+    if not user_id and not doc_id:
+        return render(request, "hqadmin/callcenter_test.html", {"enable_caching": enable_caching})
+
+    error = None
+    user = None
+    user_case = None
+    domain = None
+    if user_id:
+        try:
+            user = CommCareUser.get(user_id)
+            domain = user.project
+        except ResourceNotFound:
+            error = "User Not Found"
+    elif doc_id:
+        try:
+            doc = CommCareUser.get_db().get(doc_id)
+            doc_type = doc.get('doc_type', None)
+            if doc_type == 'CommCareUser':
+                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], include_docs=True)
+            elif doc_type == 'CommCareCase':
+                if doc.get('hq_user_id'):
+                    user_case = CommCareCase.wrap(doc)
+                else:
+                    error = 'Case ID does does not refer to a Call Center Case'
+        except ResourceNotFound:
+            error = "User Not Found"
+
+    if user_case:
+        domain = Domain.get_by_name(user_case['domain'])
+
+    try:
+        query_date = dateutil.parser.parse(date_param)
+    except ValueError:
+        error = "Unable to parse date, using today"
+        query_date = date.today()
+
+    def view_data(case_id, indicators):
+        new_dict = SortedDict()
+        key_list = sorted(indicators.keys())
+        for key in key_list:
+            new_dict[key] = indicators[key]
+        return {
+            'indicators': new_dict,
+            'case': CommCareCase.get(case_id),
+        }
+
+    if user or user_case:
+        custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        cci = CallCenterIndicators(
+            domain,
+            user,
+            custom_cache=custom_cache,
+            override_date=query_date,
+            override_cases=[user_case] if user_case else None
+        )
+        data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
+    else:
+        data = {}
+
+    context = {
+        "error": error,
+        "mobile_user": user,
+        "date": query_date.strftime("%Y-%m-%d"),
+        "enable_caching": enable_caching,
+        "data": data,
+        "doc_id": doc_id
+    }
+    return render(request, "hqadmin/callcenter_test.html", context)
+
+
+class PrimeRestoreCache(FormView):
+    template_name = "hqadmin/prime_restore_cache.html"
+    form_class = PrimeRestoreCacheForm
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(PrimeRestoreCache, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        domain = form.cleaned_data['domain']
+        if form.cleaned_data['all_users']:
+            user_ids = CommCareUser.ids_by_domain(domain)
+        else:
+            user_ids = form.user_ids
+
+        download = DownloadBase()
+        res = prime_restore.delay(
+            domain,
+            user_ids,
+            version=form.cleaned_data['version'],
+            cache_timeout_hours=form.cleaned_data['cache_timeout'],
+            overwrite_cache=form.cleaned_data['overwrite_cache'],
+            check_cache_only=form.cleaned_data['check_cache_only']
+        )
+        download.set_task(res)
+
+        return redirect('hq_soil_download', domain, download.download_id)
