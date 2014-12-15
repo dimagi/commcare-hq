@@ -26,6 +26,7 @@ class ReportColumn(JsonObject):
     display = StringProperty()
     field = StringProperty(required=True)
     aggregation = StringProperty(required=True)
+    alias = StringProperty()
 
     def get_sql_column(self):
         # todo: find a better home for this
@@ -33,8 +34,12 @@ class ReportColumn(JsonObject):
             'sum': SumColumn,
             'simple': SimpleColumn,
         }
-        return DatabaseColumn(self.display, sqlagg_column_map[self.aggregation](self.field),
-                              sortable=False, data_slug=self.field)
+        return DatabaseColumn(
+            self.display,
+            sqlagg_column_map[self.aggregation](self.field, alias=self.alias),
+            sortable=False,
+            data_slug=self.field,
+        )
 
 
 class FilterChoice(JsonObject):
@@ -91,6 +96,7 @@ class MultibarChartSpec(ChartSpec):
     aggregation_column = StringProperty()
     x_axis_column = StringProperty(required=True)
     y_axis_columns = ListProperty(unicode)
+    is_stacked = BooleanProperty(default=False)
 
 
 class MultibarAggregateChartSpec(ChartSpec):

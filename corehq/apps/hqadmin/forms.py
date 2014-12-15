@@ -69,6 +69,8 @@ class PrimeRestoreCacheForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-2'
         self.helper.field_class = 'col-lg-4'
+        self.helper.form_method = 'post'
+        self.helper.form_action = '.'
         self.helper.layout = crispy.Layout(
             crispy.Field('check_cache_only', data_ng_model='check_cache_only'),
             crispy.Div(

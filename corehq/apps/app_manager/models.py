@@ -32,6 +32,7 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.util.quickcache import quickcache
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -463,7 +464,7 @@ class FormSource(object):
 
         try:
             source = app.lazy_fetch_attachment(filename)
-        except (ResourceNotFound, KeyError):
+        except ResourceNotFound:
             source = ''
 
         return source
@@ -704,8 +705,14 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    def get_questions(self, langs, **kwargs):
-        return XForm(self.source).get_questions(langs, **kwargs)
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups'])
+    def get_questions(self, langs, include_triggers=False,
+                      include_groups=False):
+        return XForm(self.source).get_questions(
+            langs=langs,
+            include_triggers=include_triggers,
+            include_groups=include_groups,
+        )
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -3384,17 +3391,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_form_by_xmlns(self, xmlns):
+    def get_form_by_xmlns(self, xmlns, log_missing=True):
         if xmlns == "http://code.javarosa.org/devicereport":
             return None
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
-            logging.error('App %s in domain %s has %s forms with xmlns %s' % (
-                self.get_id,
-                self.domain,
-                len(forms),
-                xmlns,
-            ))
+            if log_missing or len(forms) > 1:
+                logging.error('App %s in domain %s has %s forms with xmlns %s' % (
+                    self.get_id,
+                    self.domain,
+                    len(forms),
+                    xmlns,
+                ))
             return None
         else:
             form, = forms

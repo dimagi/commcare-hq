@@ -56,3 +56,20 @@ def doc_type(doc_type):
 
 def doc_id(doc_id):
     return term("_id", doc_id)
+
+
+def missing(field, exist=True, null=True):
+    return {
+        "missing": {
+            "field": field,
+            "existence": exist,
+            "null_value": null
+        }
+    }
+
+
+def exists(field):
+    """
+    Only return docs which have 'field'
+    """
+    return {"exists": {"field": field}}

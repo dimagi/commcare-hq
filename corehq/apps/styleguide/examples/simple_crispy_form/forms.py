@@ -1,9 +1,9 @@
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _
-from bootstrap3_crispy import bootstrap as twbs
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy import layout as crispy
-from corehq.apps.style.crispy import FormActions
+from bootstrap3_crispy import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
 
 
 class ExampleUserLoginForm(forms.Form):
@@ -32,6 +32,10 @@ class ExampleUserLoginForm(forms.Form):
         label=ugettext_noop("Has Staff Privileges"),
         required=False,
     )
+    language = forms.ChoiceField(
+        label=ugettext_noop("Language"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super(ExampleUserLoginForm, self).__init__(*args, **kwargs)
@@ -41,8 +45,15 @@ class ExampleUserLoginForm(forms.Form):
 
         # This is necessary to make the form a horizontal form
         self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-6'
+
+        # What do all these col-sm-3, col-md-2, col-lg-6 things mean? They
+        # specify the column sizes for the label and field columns depending
+        # on what the screen size is. This is called Responsive Design, and
+        # you should visit
+        # [Bootstrap 3's Responsive Docs](http://getbootstrap.com/css/#responsive-utilities)
+        # for more information.
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         # This is the layout of the form where we can explicitly specify the
         # order of fields and group fields into fieldsets.
@@ -58,13 +69,13 @@ class ExampleUserLoginForm(forms.Form):
             crispy.Fieldset(
                 _("Advanced Information"),
                 'is_staff',
-                twbs.PrependedText('phone_number', '+',
-                                   placeholder='15555555555'),
+                twbscrispy.PrependedText('phone_number', '+',
+                                         placeholder='15555555555'),
             ),
-            FormActions(
-                twbs.StrictButton(_("Create User"),
-                                  type='submit',
-                                  css_class='btn-primary'),
-                twbs.StrictButton(_("Cancel"), css_class='btn-default'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(_("Create User"),
+                                        type='submit',
+                                        css_class='btn-primary'),
+                twbscrispy.StrictButton(_("Cancel"), css_class='btn-default'),
             ),
         )

@@ -1,0 +1,12 @@
+{% extends 'style/base_section.html' %}
+{% load crispy_forms_tags_b3 %}
+{% load i18n %}
+
+{% block page_content %}
+    <p class="lead">
+        {% blocktrans %}
+        This form demonstrates the variety of controls.
+        {% endblocktrans %}
+    </p>
+    {% crispy_b3 controls_demo_form %}
+{% endblock page_content %}

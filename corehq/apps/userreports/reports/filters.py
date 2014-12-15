@@ -22,17 +22,17 @@ class DateFilterValue(FilterValue):
 
     def __init__(self, filter, value):
         assert filter.type == 'date'
-        # todo: might want some better way to set defaults
-        if value is None:
-            # default to one week
-            value = DateSpan.since(7)
-        assert isinstance(value, DateSpan)
+        assert isinstance(value, DateSpan) or value is None
         super(DateFilterValue, self).__init__(filter, value)
 
     def to_sql_filter(self):
+        if self.value is None:
+            return ""
         return "{} between :startdate and :enddate".format(self.filter.field)
 
     def to_sql_values(self):
+        if self.value is None:
+            return {}
         return {
             'startdate': self.value.startdate,
             'enddate': self.value.enddate,

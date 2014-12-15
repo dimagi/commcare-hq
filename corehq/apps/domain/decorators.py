@@ -15,8 +15,7 @@ from django.utils.translation import ugettext as _
 
 # External imports
 from django_digest.decorators import httpdigest
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login
@@ -38,11 +37,7 @@ def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
     domain = Domain.get_by_name(domain_name)
     req.project = domain
-    req.can_see_organization = True
-    try:
-        ensure_request_has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
-    except PermissionDenied:
-        req.can_see_organization = False
+    req.can_see_organization = has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
     return domain_name, domain
 
 ########################################################################################################
