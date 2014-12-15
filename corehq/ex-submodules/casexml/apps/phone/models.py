@@ -314,9 +314,17 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         Goes through the cases expected to be on the phone and reconciles
         any duplicate records.
+
+        Return True if any duplicates were found.
         """
+        num_cases_on_phone_before = len(self.cases_on_phone)
+        num_dependent_cases_before = len(self.dependent_cases_on_phone)
+
         self.cases_on_phone = list(set(self.cases_on_phone))
         self.dependent_cases_on_phone = list(set(self.dependent_cases_on_phone))
+
+        return num_cases_on_phone_before != len(self.cases_on_phone) \
+               or num_dependent_cases_before != len(self.dependent_cases_on_phone)
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
