@@ -594,6 +594,61 @@ class OPMCaseRow(object):
             amt=self.cash_amt,
         )
 
+    @property
+    def bp1(self):
+        if 3 < self.preg_month < 7:
+            return self.bp_conditions
+
+    @property
+    def bp2(self):
+        if 6 < self.preg_month < 10:
+            return self.bp_conditions
+
+    @property
+    def bp_conditions(self):
+        if self.status == "pregnant":
+            return False not in [
+                self.preg_attended_vhnd,
+                self.preg_weighed,
+                self.preg_received_ifa,
+            ]
+
+    @property
+    def child_followup(self):
+        """
+        wazirganj - total_soft_conditions = 1
+        """
+        if self.status == 'mother':
+            return False not in [
+                self.child_attended_vhnd,
+                self.child_received_ors,
+                self.child_growth_calculated,
+                self.child_weighed_once,
+                self.child_birth_registered,
+                self.child_received_measles_vaccine,
+                self.child_breastfed,
+            ]
+
+    @property
+    def bp1_cash(self):
+        return MONTH_AMT if self.bp1 else 0
+
+    @property
+    def bp2_cash(self):
+        return MONTH_AMT if self.bp2 else 0
+
+    @property
+    def child_cash(self):
+        return MONTH_AMT if self.child_followup else 0
+
+    @property
+    def total_cash(self):
+        return min(
+            MONTH_AMT,
+            self.bp1_cash + self.bp2_cash + self.child_cash
+        ) + self.year_end_bonus_cash
+
+
 
 class ConditionsMet(OPMCaseRow):
     method_map = [
@@ -673,7 +728,7 @@ class Beneficiary(OPMCaseRow):
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
         ('child_cash', _("Child Followup Form"), True),
         ('year_end_bonus_cash', _("Bonus Payment"), True),
-        ('total', _("Amount to be paid to beneficiary"), True),
+        ('total_cash', _("Amount to be paid to beneficiary"), True),
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner ID"), False),
         ('closed_date', _("Closed On"), True),
@@ -683,49 +738,7 @@ class Beneficiary(OPMCaseRow):
     def __init__(self, case, report, child_index=1):
         super(Beneficiary, self).__init__(case, report, child_index=child_index)
         self.child_count = 0 if self.status == "pregnant" else 1
-        self.bp1_cash = MONTH_AMT if self.bp1 else 0
-        self.bp2_cash = MONTH_AMT if self.bp2 else 0
-        self.child_cash = MONTH_AMT if self.child_followup else 0
-        self.total = min(
-            MONTH_AMT,
-            self.bp1_cash + self.bp2_cash + self.child_cash
-        )
-        self.total += self.year_end_bonus_cash
         # Show only cases that require payment
-        if self.total == 0:
+
+        if self.total_cash == 0:
             raise InvalidRow
-
-    @property
-    def bp1(self):
-        if 3 < self.preg_month < 7:
-            return self.bp_conditions
-
-    @property
-    def bp2(self):
-        if 6 < self.preg_month < 10:
-            return self.bp_conditions
-
-    @property
-    def bp_conditions(self):
-        if self.status == "pregnant":
-            return False not in [
-                self.preg_attended_vhnd,
-                self.preg_weighed,
-                self.preg_received_ifa,
-            ]
-
-    @property
-    def child_followup(self):
-        """
-        wazirganj - total_soft_conditions = 1
-        """
-        if self.status == 'mother':
-            return False not in [
-                self.child_attended_vhnd,
-                self.child_received_ors,
-                self.child_growth_calculated,
-                self.child_weighed_once,
-                self.child_birth_registered,
-                self.child_received_measles_vaccine,
-                self.child_breastfed,
-            ]
