@@ -761,7 +761,7 @@ class XForm(WrappedNode):
         match = re.match(regex, label.attrib['ref'])
         try:
             return match.groups()[0]
-        except (AttributeError, IndexError) as e:
+        except (AttributeError, IndexError):
             return None
 
     def get_questions(self, langs, include_triggers=False,
