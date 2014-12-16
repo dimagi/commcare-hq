@@ -1058,6 +1058,9 @@ class CaseReminderHandler(Document):
         check_attr("max_iteration_count")
         check_attr("start_offset")
 
+        if len(self.events) == 0:
+            raise IllegalModelStateException("len(events) must be > 0")
+
         last_day = 0
         for event in self.events:
             check_attr("day_num", obj=event)

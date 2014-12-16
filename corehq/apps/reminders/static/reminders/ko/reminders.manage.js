@@ -268,8 +268,18 @@ var ManageRemindersViewModel = function (
             initSelection : function (element, callback) {
                 if (element.val()) {
                     try {
-                        var data = $.parseJSON(element.val());
-                        callback(data);
+                        $.ajax({
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                action: "search_form_by_id",
+                                term: element.val()
+                            }
+                        }).done(function(data, textStatus, jqXHR) {
+                            if(data.id && data.text) {
+                                callback(data);
+                            }
+                        });
                     } catch (e) {
                         // pass
                     }

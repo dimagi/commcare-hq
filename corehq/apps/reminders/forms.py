@@ -1623,11 +1623,13 @@ class BaseScheduleCaseReminderForm(forms.Form):
             if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
                 event['form_unique_id'] = None
             else:
-                if not event.get('form_unique_id'):
+                form_unique_id = event.get('form_unique_id')
+                if not form_unique_id:
                     raise ValidationError(_(
                         "Please create a form for the survey first, "
                         "and then create the reminder."
                     ))
+                validate_form_unique_id(form_unique_id, self.domain)
 
             fire_time_type = event['fire_time_type']
 
@@ -1650,7 +1652,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # clean time_window_length:
             time_window_length = event['time_window_length']
             if fire_time_type != FIRE_TIME_RANDOM:
-                event['time_window_length'] = 0
+                event['time_window_length'] = None
             elif not (0 < time_window_length < 1440):
                 raise ValidationError(_(
                     "Window Length must be greater than 0 and less "
@@ -1685,7 +1687,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         schedule_length.
         """
         max_day_num = 0
-        for event in self.cleaned_data["events"]:
+        for event in self.cleaned_data.get("events", []):
             day_num = event['day_num']
             if day_num > max_day_num:
                 max_day_num = day_num
@@ -1798,7 +1800,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'event_interpretation',
             'schedule_length',
             'max_iteration_count',
-            'stop_condition',
             'until',
             'submit_partial_forms',
             'include_case_side_effects',
@@ -1839,17 +1840,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         for langcode in available_languages:
                             if langcode not in event_json["message"]:
                                 event_json["message"][langcode] = ""
-
-                        form_unique_id = event_json.get("form_unique_id")
-                        if form_unique_id:
-                            try:
-                                form = CCHQForm.get_form(form_unique_id)
-                                event_json["form_unique_id"] = json.dumps({
-                                    'text': form.full_path_name,
-                                    'id': form_unique_id,
-                                })
-                            except ResourceNotFound:
-                                pass
 
                         timeouts = [str(i) for i in
                             event_json["callback_timeout_intervals"]]

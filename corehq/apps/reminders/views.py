@@ -13,7 +13,7 @@ from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -650,6 +650,22 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return result
 
     @property
+    def search_form_by_id_response(self):
+        """
+        Returns a dict of {"id": [form unique id], "text": [full form path]}
+        """
+        form_unique_id = self.search_term
+        try:
+            form = Form.get_form(form_unique_id)
+            assert form.get_app().domain == self.domain
+            return {
+                'text': form.full_path_name,
+                'id': form_unique_id,
+            }
+        except:
+            return {}
+
+    @property
     def search_case_property_response(self):
         """
         Returns a dict of {case type: [case properties...]}
@@ -735,6 +751,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             'search_case_property',
             'search_subcase_property',
             'search_forms',
+            'search_form_by_id',
         ]:
             return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
