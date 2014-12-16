@@ -131,7 +131,7 @@ class EWSApi(APISynchronization):
     def prepare_commtrack_config(self):
         domain = Domain.get_by_name(self.domain)
         domain.location_types = [
-            LocationType(name="country", allowed_parents=[],
+            LocationType(name="country", allowed_parents=[""],
                          administrative=True),
             LocationType(name="region", allowed_parents=["country"],
                          administrative=True),
