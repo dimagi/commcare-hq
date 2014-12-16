@@ -96,28 +96,55 @@ class GhanaEndpoint(LogisticsEndpoint):
 
 class EWSApi(APISynchronization):
 
+    def _create_location_type_if_not_exists(self, supply_point, location):
+        domain = Domain.get_by_name(self.domain)
+        if not filter(lambda l: l.name == supply_point.type, domain.location_types):
+            domain.location_types.append(LocationType(
+                name=supply_point.type,
+                allowed_parents=[location.location_type],
+                administrative=False
+            ))
+            domain.save()
+
+    def _create_location_from_supply_point(self, supply_point, location):
+        self._create_location_type_if_not_exists(supply_point, location)
+        new_location = Loc(parent=location)
+        new_location.domain = self.domain
+        new_location.location_type = supply_point.type
+        new_location.name = supply_point.name
+        new_location.site_code = supply_point.code
+        if supply_point.supervised_by:
+            new_location.metadata['supervised_by'] = supply_point.supervised_by
+        new_location.save()
+
+        new_location.external_id = str(supply_point.id)
+        SupplyPointCase.create_from_location(self.domain, new_location)
+
+    def _create_supply_point_from_location(self, supply_point, location):
+        if not SupplyPointCase.get_by_location(location):
+            if supply_point.supervised_by:
+                location.metadata['supervised_by'] = supply_point.supervised_by
+                location.save()
+            sp = SupplyPointCase.create_from_location(self.domain, location)
+            sp.external_id = str(supply_point.id)
+            sp.save()
+
     def prepare_commtrack_config(self):
         domain = Domain.get_by_name(self.domain)
-        domain.location_types = []
-        for i, value in enumerate(LOCATION_TYPES):
-            if not any(lt.name == value
-                       for lt in domain.location_types):
-                allowed_parents = [LOCATION_TYPES[i - 1]] if i > 0 else [""]
-                domain.location_types.append(
-                    LocationType(name=value, allowed_parents=allowed_parents,
-                                 administrative=(value.lower() != 'facility')))
-
-        domain.location_types.append(LocationType(
-            name='regional warehouse',
-            allowed_parents=['region'],
-            administrative=False
-        ))
-
-        domain.location_types.append(LocationType(
-            name='national warehouse',
-            allowed_parents=['country'],
-            administrative=False
-        ))
+        domain.location_types = [
+            LocationType(name="country", allowed_parents=[],
+                         administrative=True),
+            LocationType(name="region", allowed_parents=["country"],
+                         administrative=True),
+            LocationType(name="district", allowed_parents=["region"],
+                         administrative=True),
+            LocationType(name="facility", allowed_parents=["district"],
+                         administrative=False),
+            LocationType(name='regional warehouse', allowed_parents=['region'],
+                         administrative=False),
+            LocationType(name='national warehouse', allowed_parents=['country'],
+                         administrative=False)
+        ]
         domain.save()
         try:
             SQLLocation.objects.get(domain=self.domain, site_code='default_location')
@@ -145,8 +172,6 @@ class EWSApi(APISynchronization):
             location = Loc.get(sql_loc.location_id)
         except SQLLocation.DoesNotExist:
             location = None
-        except SQLLocation.MultipleObjectsReturned:
-            return
 
         if not location:
             if ews_location.parent_id:
@@ -173,8 +198,6 @@ class EWSApi(APISynchronization):
             location.domain = self.domain
             location.name = ews_location.name
             location.metadata = {}
-            if ews_location.groups:
-                location.metadata['groups'] = ews_location.groups
             if ews_location.latitude:
                 location.latitude = float(ews_location.latitude)
             if ews_location.longitude:
@@ -187,34 +210,10 @@ class EWSApi(APISynchronization):
             supply_points = filter(lambda x: x.last_reported, ews_location.supply_points)
             if len(supply_points) > 1:
                 for supply_point in supply_points:
-                    domain = Domain.get_by_name(self.domain)
-                    if not filter(lambda l: l.name == supply_point.type, domain.location_types):
-                        domain.location_types.append(LocationType(
-                            name=supply_point.type,
-                            allowed_parents=[location.location_type],
-                            administrative=False
-                        ))
-                        domain.save()
-                    new_location = Loc(parent=location)
-                    new_location.domain = self.domain
-                    new_location.location_type = supply_point.type
-                    new_location.name = supply_point.name
-                    new_location.site_code = supply_point.code
-                    if supply_point.supervised_by:
-                        new_location.metadata['supervised_by'] = supply_point.supervised_by
-                    new_location.save()
-
-                    new_location.external_id = str(supply_point.id)
-                    SupplyPointCase.create_from_location(self.domain, new_location)
+                    self._create_location_from_supply_point(supply_point, location)
             elif supply_points:
                 supply_point = supply_points[0]
-                if not SupplyPointCase.get_by_location(location):
-                    if supply_point.supervised_by:
-                        location.metadata['supervised_by'] = supply_point.supervised_by
-                        location.save()
-                    sp = SupplyPointCase.create_from_location(self.domain, location)
-                    sp.external_id = str(supply_point.id)
-                    sp.save()
+                self._create_supply_point_from_location(supply_point, location)
         else:
             location_dict = {
                 'name': ews_location.name,
@@ -223,8 +222,6 @@ class EWSApi(APISynchronization):
                 'site_code': ews_location.code.lower(),
                 'external_id': str(ews_location.id),
             }
-            if ews_location.groups:
-                location_dict['metadata']['groups'] = ews_location.groups
 
             if apply_updates(location, location_dict):
                 location.save()
