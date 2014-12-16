@@ -29,7 +29,7 @@ class TestPriorMonthReferences(OPMCaseReportTestBase):
         })
         row = self._make_row(data_provider)
         self.assertTrue(row.vhnd_available)
-        self.assertFalse(row.vhnd_available_last_month)
+        self.assertFalse(row.last_month_row.vhnd_available)
 
     def test_available_last_month(self):
         data_provider = MockDataProvider(explicit_map={
@@ -39,4 +39,4 @@ class TestPriorMonthReferences(OPMCaseReportTestBase):
         })
         row = self._make_row(data_provider)
         self.assertFalse(row.vhnd_available)
-        self.assertTrue(row.vhnd_available_last_month)
+        self.assertTrue(row.last_month_row.vhnd_available)

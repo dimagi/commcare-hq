@@ -523,11 +523,6 @@ class OPMCaseRow(object):
 
     @property
     @memoized
-    def vhnd_available_last_month(self):
-        return self.last_month_row.is_service_available('vhnd_available', months=1)
-
-    @property
-    @memoized
     def is_vhnd_last_three_months(self):
         return self.is_service_available('vhnd_available', months=3)
 
