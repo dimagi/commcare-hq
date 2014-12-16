@@ -72,6 +72,25 @@ class BulkAppTranslationTest(SimpleTestCase):
         )
 
 
+class MismatchedItextReferenceTest(SimpleTestCase, TestFileMixin):
+    """
+    Test the bulk app translation upload when the itext reference in a question
+    in the xform body does not match the question's id/path.
+
+    The upload is an unchanged download.
+    """
+    file_path = "data", "bulk_app_translation", "mismatched_ref"
+
+    def test_unchanged_upload(self):
+        """
+        Make sure no exceptions are raised during the upload.
+        :return:
+        """
+        app = Application.wrap(self.get_json("app"))
+        with codecs.open(self.get_path("upload", "xlsx")) as f:
+            process_bulk_app_translation_upload(app, f)
+
+
 class BulkAppTranslationFormTest(SimpleTestCase, TestFileMixin):
 
     # Note:

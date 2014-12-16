@@ -739,7 +739,6 @@ class XForm(WrappedNode):
         if item_num:
             node = node.find("./{f}item[%s]" % item_num)
         return node.find('./{f}label')
-        #return self.find("{h}body//*[@ref='/data/%s']/{f}label" % question_id)
 
     def get_question_itext_id(self, question_id):
         """
