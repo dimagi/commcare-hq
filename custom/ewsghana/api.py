@@ -4,7 +4,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
-from custom.ewsghana import LOCATION_TYPES
 from custom.ewsghana.extensions import ews_smsuser_extension, ews_webuser_extension, ews_product_extension
 from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from custom.ilsgateway.api import ProductStock, StockTransaction
