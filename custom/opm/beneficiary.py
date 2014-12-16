@@ -252,15 +252,16 @@ class OPMCaseRow(object):
         elif condition is False:
             return self.img_elem % image_n
 
-    @property
-    def preg_attended_vhnd(self):
+    def _preg_attended_vhnd(self, prev_month=0):
         if self.status == 'pregnant':
             # in month 9 they always meet this condition
-            if self.preg_month == 9:
+            if self.preg_month - prev_month == 9:
                 return True
-            if not self.vhnd_available:
+            if not prev_month and not self.vhnd_available:
                 return True
-            elif 9 > self.preg_month > 3:
+            elif prev_month and not self.is_service_available('vhnd_available', months=1, prev_months=1):
+                return True
+            elif 9 > self.preg_month - prev_month > 3:
                 def _legacy_method():
                     vhnd_attendance = {
                         4: self.case_property('attendance_vhnd_1', 0),
@@ -269,15 +270,17 @@ class OPMCaseRow(object):
                         7: self.case_property('month_7_attended', 0),
                         8: self.case_property('month_8_attended', 0)
                     }
-                    return vhnd_attendance[self.preg_month] == '1'
+                    return vhnd_attendance[self.preg_month - prev_month] == '1'
 
                 def _new_method():
-                    if self.preg_month == 4:
+                    if self.preg_month - prev_month == 4:
                         kwargs = {
-                            'explicit_start': self.preg_first_eligible_datetime
+                            'explicit_start': add_months_to_date(self.preg_first_eligible_datetime, -prev_month),
+                            'explicit_end': datetime.datetime.combine(add_months_to_date(self.edd, -prev_month),
+                                                                      datetime.time())
                         }
                     else:
-                        kwargs = {'months_before': 1}
+                        kwargs = {'months_before': 1 + prev_month}
                     return any(
                         form.xpath('form/pregnancy_questions/attendance_vhnd') == '1'
                         for form in self.filtered_forms(BIRTH_PREP_XMLNS, **kwargs)
@@ -285,6 +288,14 @@ class OPMCaseRow(object):
                 return _legacy_method() or _new_method()
             else:
                 return False
+
+    @property
+    def preg_attended_vhnd(self):
+        return self._preg_attended_vhnd()
+
+    @property
+    def preg_attended_vhnd_last_month(self):
+        return self._preg_attended_vhnd(prev_month=1)
 
     @property
     def child_attended_vhnd(self):
@@ -298,6 +309,18 @@ class OPMCaseRow(object):
                     form.xpath(self.child_xpath('form/child_{num}/child{num}_attendance_vhnd')) == '1'
                     for form in self.filtered_forms(CHILDREN_FORMS, 1)
                 )
+
+    @property
+    def child_attended_vhnd_last_month(self):
+        if self.status == 'mother':
+            if self.child_age == 1:
+                return True
+            elif not self.is_service_available('vhnd_available', months=1, prev_months=1):
+                return True
+            else:
+                return any(
+                    form.xpath(self.child_xpath('form/child_{num}/child{num}_attendance_vhnd')) == '1'
+                    for form in self.filtered_forms(CHILDREN_FORMS, 2))
 
     @property
     def preg_weighed(self):
@@ -321,6 +344,25 @@ class OPMCaseRow(object):
 
             return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
 
+    @property
+    def preg_weighed_last_month(self):
+        def _from_case(property):
+            return self.case_property(property, 0) == 'received'
+
+        def _from_forms(filter_kwargs):
+            return any(
+                form.xpath('form/pregnancy_questions/mother_weight') == '1'
+                for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
+            )
+
+        if self.preg_month == 7:
+            if not self.is_service_available('vhnd_adult_scale_available', months=3, prev_months=1):
+                return True
+
+            return _from_case('weight_tri_1') or _from_forms({
+                'explicit_start': add_months_to_date(self.preg_first_eligible_datetime, -1),
+                'explicit_end': datetime.datetime.combine(add_months_to_date(self.edd, -1), datetime.time())})
+
     def get_months_before(self, months_before=None):
         new_year, new_month = add_months(self.year, self.month, -months_before)
         return first_of_next_month(datetime.datetime(new_year, new_month, 1))
@@ -329,7 +371,8 @@ class OPMCaseRow(object):
         new_year, new_month = add_months(self.year, self.month, months_after)
         return first_of_next_month(datetime.datetime(new_year, new_month, 1))
 
-    def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None, explicit_start=None):
+    def filtered_forms(self, xmlns_or_list=None, months_before=None, months_after=None, explicit_start=None,
+                       explicit_end=None):
         """
         Returns a list of forms filtered by xmlns if specified
         and from the previous number of calendar months if specified
@@ -346,6 +389,8 @@ class OPMCaseRow(object):
 
         if months_after is not None:
             end = self.get_months_after(months_after)
+        elif explicit_end is not None:
+            end = explicit_end
         else:
             end = datetime.datetime.combine(self.reporting_window_end, datetime.time())
 
@@ -372,6 +417,18 @@ class OPMCaseRow(object):
             )
 
     @property
+    def child_growth_calculated_last_month(self):
+        if (self.child_age - 1) % 3 == 0:
+            if not self.is_service_available('vhnd_child_scale_available', months=3, prev_months=1):
+                return True
+
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
+            return any(
+                form.xpath(xpath) == '1'
+                for form in self.filtered_forms(CHILDREN_FORMS, 4)
+            )
+
+    @property
     def preg_received_ifa(self):
         if self.preg_month == 6:
             if self.block == "atri":
@@ -390,12 +447,46 @@ class OPMCaseRow(object):
                 return _from_case() or _from_forms()
 
     @property
+    def preg_received_ifa_last_month(self):
+        if self.preg_month == 7:
+            if self.block == "atri":
+                if not self.is_service_available('vhnd_ifa_available', months=3, prev_months=1):
+                    return True
+
+                def _from_case():
+                    return self.case_property('ifa_tri_1', 0) == 'received'
+
+                def _from_forms():
+                    return any(
+                        form.xpath('form/pregnancy_questions/ifa_receive') == '1' for form in self.filtered_forms(
+                            BIRTH_PREP_XMLNS,
+                            explicit_start=add_months_to_date(self.preg_first_eligible_datetime, -1),
+                            explicit_end=datetime.datetime.combine(add_months_to_date(self.edd, -1),
+                                                                   datetime.time()))
+                    )
+                return _from_case() or _from_forms()
+
+    @property
     def child_received_ors(self):
         if self.child_age % 3 == 0:
             if not self.is_service_available('vhnd_ors_available', months=3):
                 return True
 
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
+                xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
+                if form.xpath(xpath) == '0':
+                    return False
+            return True
+
+    @property
+    def child_received_ors_last_month(self):
+        if (self.child_age - 1) % 3 == 0:
+            if not self.is_service_available('vhnd_ors_available', months=3, prev_months=1):
+                return True
+
+            for form in self.filtered_forms(CHILDREN_FORMS, 4,
+                                            explicit_end=datetime.datetime.combine(
+                                                add_months_to_date(self.edd, -1), datetime.time())):
                 xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
                 if form.xpath(xpath) == '0':
                     return False
@@ -414,6 +505,18 @@ class OPMCaseRow(object):
             )
 
     @property
+    def child_weighed_once_last_month(self):
+        if self.child_age == 4:
+            def _test(form):
+                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
+
+            return any(
+                _test(form)
+                for form in self.filtered_forms(CFU1_XMLNS, 4, explicit_end=datetime.datetime.combine(
+                    add_months_to_date(self.edd, -1), datetime.time()))
+            )
+
+    @property
     def child_birth_registered(self):
         if self.child_age == 6:
             if not self.is_vhnd_last_three_months:
@@ -424,6 +527,20 @@ class OPMCaseRow(object):
             return any(
                 _test(form)
                 for form in self.filtered_forms(CFU1_XMLNS, 3)
+            )
+
+    @property
+    def child_birth_registered_last_month(self):
+        if self.child_age == 7:
+            if not self.is_service_available('vhnd_available', months=3, prev_months=1):
+                return True
+
+            def _test(form):
+                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
+            return any(
+                _test(form)
+                for form in self.filtered_forms(CFU1_XMLNS, 4, explicit_end=datetime.datetime.combine(
+                    add_months_to_date(self.edd, -1), datetime.time()))
             )
 
     @property
@@ -438,6 +555,22 @@ class OPMCaseRow(object):
             return any(
                 _test(form)
                 for form in self.filtered_forms([CFU1_XMLNS, CFU2_XMLNS],3)
+            )
+
+    @property
+    def child_received_measles_vaccine_last_month(self):
+        if self.child_age == 13:
+            if not self.is_service_available('vhnd_measles_vacc_available', months=3, prev_months=1):
+                return True
+
+            def _test(form):
+                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_measlesvacc')) == '1'
+
+            return any(
+                _test(form)
+                for form in self.filtered_forms([CFU1_XMLNS, CFU2_XMLNS], 4,
+                                                explicit_end=datetime.datetime.combine(
+                                                    add_months_to_date(self.edd, -1), datetime.time()))
             )
 
     @property
@@ -468,6 +601,14 @@ class OPMCaseRow(object):
             return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
 
     @property
+    def child_breastfed_last_month(self):
+        if self.child_age == 7 and self.block == 'atri':
+            xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
+            forms = self.filtered_forms(CHILDREN_FORMS, explicit_end=datetime.datetime.combine(
+                add_months_to_date(self.edd, -1), datetime.time()))
+            return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
+
+    @property
     def weight_grade_normal(self):
         if self.block == "wazirganj":
             if self.child_age in [24, 36]:
@@ -484,6 +625,24 @@ class OPMCaseRow(object):
                 return False
 
     @property
+    def weight_grade_normal_last_month(self):
+        if self.block == "wazirganj":
+            if self.child_age in [25, 37]:
+                if self.child_index == 1:
+                    form_prop = 'interpret_grade'
+                else:
+                    form_prop = 'interpret_grade_{}'.format(self.child_index)
+                forms = self.filtered_forms(CHILDREN_FORMS, 4,
+                                            explicit_end=datetime.datetime.combine(
+                                                add_months_to_date(self.edd, -1), datetime.time()))
+                if len(forms) == 0:
+                    return False
+                form = sorted(forms, key=lambda form: form.received_on)[-1]
+                if form.form.get(form_prop) == 'normal':
+                    return (self.child_age - 1) / 12
+                return False
+
+    @property
     def birth_spacing_years(self):
         """
         returns None if inapplicable, False if not met, or
@@ -494,7 +653,16 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(CHILDREN_FORMS):
                     if form.form.get('birth_spacing_prompt') == '1':
                         return False
-                return self.child_age/12
+                return self.child_age / 12
+
+    @property
+    def birth_spacing_years_last_month(self):
+        if self.block == "atri":
+            if self.child_age in [25, 37]:
+                for form in self.filtered_forms(CHILDREN_FORMS):
+                    if form.form.get('birth_spacing_prompt') == '1':
+                        return False
+                return (self.child_age - 1) / 12
 
     def case_property(self, name, default=None):
         prop = getattr(self.case, name, default)
@@ -517,11 +685,11 @@ class OPMCaseRow(object):
     def is_vhnd_last_six_months(self):
         return self.is_service_available('vhnd_available', months=6)
 
-    def is_service_available(self, prop, months=1):
+    def is_service_available(self, prop, months=1, prev_months=0):
         return bool(self.data_provider.get_dates_in_range(
             owner_id=self.owner_id,
-            startdate=self.get_months_before(months).date(),
-            enddate=self.reporting_window_end,
+            startdate=self.get_months_before(months + prev_months).date(),
+            enddate=self.get_months_before(prev_months).date() if prev_months else self.reporting_window_end,
             prop=prop,
         ))
 
@@ -563,6 +731,14 @@ class OPMCaseRow(object):
     @property
     def year_end_bonus_cash(self):
         year_value = self.birth_spacing_years or self.weight_grade_normal
+        return {
+            2: TWO_YEAR_AMT,
+            3: THREE_YEAR_AMT,
+        }.get(year_value, 0)
+
+    @property
+    def year_end_bonus_cash_last_month(self):
+        year_value = self.birth_spacing_years_last_month or self.weight_grade_normal_last_month
         return {
             2: TWO_YEAR_AMT,
             3: THREE_YEAR_AMT,
@@ -663,6 +839,12 @@ class Beneficiary(OPMCaseRow):
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner ID"), False),
         ('closed_date', _("Closed On"), True),
+        ('vhnd_organised', 'VHND organised this month', True),
+        ('unconditional_payment', "Unconditional Payment this month", True),
+        ('total_last_month', "Payment last month", True),
+        ('unconditional_payment_last', "Unconditional Payment last month", True),
+        ('preg_month', "Preg month", True),
+        ('issue', "Issue", True)
     ]
 
     def __init__(self, case, report, child_index=1):
@@ -675,7 +857,25 @@ class Beneficiary(OPMCaseRow):
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.child_cash
         )
+
+        self.bp1_last_month_cash = MONTH_AMT if self.bp1_last_month else 0
+        self.bp2_last_month_cash = MONTH_AMT if self.bp2_last_month else 0
+        self.child_last_month_cash = MONTH_AMT if self.child_followup_last_month else 0
+        self.total_last_month = min(
+            MONTH_AMT,
+            self.bp1_last_month_cash + self.bp2_last_month_cash + self.child_last_month_cash
+        )
         self.total += self.year_end_bonus_cash
+        self.total_last_month += self.year_end_bonus_cash_last_month
+        self.vhnd_organised = 'Yes' if self.preg_attended_vhnd else 'No'
+        self.unconditional_payment = 'Yes' if self.is_service_available('vhnd_available', months=1) \
+            or self.vhnd_organised == 'Yes' else 'No'
+        self.unconditional_payment_last = 'Yes' \
+            if self.is_service_available('vhnd_available', months=1, prev_months=1) \
+            or self.preg_attended_vhnd_last_month else 'No'
+
+        self.issue = ''
+
         # Show only cases that require payment
         if self.total == 0:
             raise InvalidRow
@@ -686,7 +886,17 @@ class Beneficiary(OPMCaseRow):
             return self.bp_conditions
 
     @property
+    def bp1_last_month(self):
+        if 4 < self.preg_month < 8:
+            return self.bp_conditions_last_month
+
+    @property
     def bp2(self):
+        if 5 < self.preg_month < 9:
+            return self.bp_conditions_last_month
+
+    @property
+    def bp2_last_month(self):
         if 6 < self.preg_month < 10:
             return self.bp_conditions
 
@@ -697,6 +907,15 @@ class Beneficiary(OPMCaseRow):
                 self.preg_attended_vhnd,
                 self.preg_weighed,
                 self.preg_received_ifa,
+            ]
+
+    @property
+    def bp_conditions_last_month(self):
+        if self.status == "pregnant":
+            return False not in [
+                self.preg_attended_vhnd_last_month,
+                self.preg_weighed_last_month,
+                self.preg_received_ifa_last_month,
             ]
 
     @property
@@ -713,4 +932,17 @@ class Beneficiary(OPMCaseRow):
                 self.child_birth_registered,
                 self.child_received_measles_vaccine,
                 self.child_breastfed,
+            ]
+
+    @property
+    def child_followup_last_month(self):
+        if self.status == 'mother':
+            return False not in [
+                self.child_attended_vhnd_last_month,
+                self.child_received_ors_last_month,
+                self.child_growth_calculated_last_month,
+                self.child_weighed_once_last_month,
+                self.child_birth_registered_last_month,
+                self.child_received_measles_vaccine_last_month,
+                self.child_breastfed_last_month,
             ]
