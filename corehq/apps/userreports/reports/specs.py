@@ -1,6 +1,6 @@
 from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty
 from jsonobject.base import DefaultProperty
-from sqlagg import SumColumn
+from sqlagg import CountUniqueColumn, SumColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
@@ -31,6 +31,7 @@ class ReportColumn(JsonObject):
     def get_sql_column(self):
         # todo: find a better home for this
         sqlagg_column_map = {
+            'count_unique': CountUniqueColumn,
             'sum': SumColumn,
             'simple': SimpleColumn,
         }
