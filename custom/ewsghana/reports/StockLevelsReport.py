@@ -297,6 +297,7 @@ class InventoryManagementData(EWSData):
                                                                                   timedelta(weeks=i))})
         return rows
 
+
 @memoized
 def get_users_by_location_id(domain, location_id):
     rows = []
