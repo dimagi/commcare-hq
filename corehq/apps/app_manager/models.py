@@ -3707,7 +3707,6 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
     return app
 
 EXAMPLE_DOMAIN = 'example'
-BUG_REPORTS_DOMAIN = 'bug-reports'
 
 
 def _get_or_create_app(app_id):
