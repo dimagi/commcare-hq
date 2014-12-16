@@ -2,7 +2,7 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
-from dimagi.utils.couch.database import get_db, iter_docs
+from dimagi.utils.couch.database import iter_docs
 from django import forms
 from django.core.urlresolvers import reverse
 from datetime import datetime
@@ -10,6 +10,7 @@ from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
 
 
@@ -27,6 +28,7 @@ class SQLLocation(MPTTModel):
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    products = models.ManyToManyField(SQLProduct, null=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
