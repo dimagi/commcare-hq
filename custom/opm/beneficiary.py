@@ -65,10 +65,13 @@ class OPMCaseRow(object):
 
         self.set_case_properties()
         self.add_extra_children()
-        if explicit_month is None:
+        if explicit_month is None and child_index == 1:
             # if we were called directly, set the last month's row on this
             last_year, last_month = add_months(self.year, self.month, -1)
-            self.last_month_row = OPMCaseRow(case, report, 1, last_month, last_year)
+            try:
+                self.last_month_row = OPMCaseRow(case, report, 1, last_month, last_year)
+            except InvalidRow:
+                self.last_month_row = None
 
     @property
     def readable_status(self):
@@ -138,6 +141,8 @@ class OPMCaseRow(object):
     @memoized
     def preg_month(self):
         if self.status == 'pregnant':
+            if not self.edd:
+                raise InvalidRow('No edd found for pregnant mother.')
             base_window_start = add_months_to_date(self.edd, -9)
             non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
 
