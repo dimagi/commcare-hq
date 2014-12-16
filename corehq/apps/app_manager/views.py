@@ -771,6 +771,11 @@ def get_module_view_context_and_template(app, module):
     if app.case_sharing:
         defaults += ('#owner_name',)
     builder = ParentCasePropertyBuilder(app, defaults=defaults)
+    child_case_types = set()
+    for m in app.get_modules():
+        if m.case_type == module.case_type:
+            child_case_types.update(m.get_child_case_types())
+    child_case_types = list(child_case_types)
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
@@ -805,7 +810,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
                 {
                     'label': _('Task List'),
@@ -816,7 +821,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
             ],
         }
@@ -832,7 +837,7 @@ def get_module_view_context_and_template(app, module):
                 'sort_elements': module.case_details.short.sort_elements,
                 'short': module.case_details.short,
                 'long': module.case_details.long,
-                'child_case_types': list(module.get_child_case_types()),
+                'child_case_types': child_case_types,
             }]
 
             if app.commtrack_enabled:
@@ -844,7 +849,7 @@ def get_module_view_context_and_template(app, module):
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
                     'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 })
 
             return details
@@ -867,7 +872,7 @@ def get_module_view_context_and_template(app, module):
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
             ],
         }
