@@ -325,9 +325,6 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
         for row in rows:
             question_id = row['label']
-            # TODO: Write a test for this bug.
-            # It can just involve uploading a translation for one of these funky
-            # forms and checking for exceptions.
             text_node = translation_node.find(
                 "./{f}text[@id='%s']" % xform.get_question_itext_id(
                     question_id
