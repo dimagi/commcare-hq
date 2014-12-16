@@ -733,12 +733,15 @@ class Beneficiary(OPMCaseRow):
         ('owner_id', _("Owner ID"), False),
         ('closed_date', _("Closed On"), True),
         ('vhnd_available_display', 'VHND organised this month', True),
+        ('payment_last_month', 'Payment last month', True),
     ]
 
     def __init__(self, case, report, child_index=1):
         super(Beneficiary, self).__init__(case, report, child_index=child_index)
         self.child_count = 0 if self.status == "pregnant" else 1
-        # Show only cases that require payment
 
+        # Show only cases that require payment
         if self.total_cash == 0:
             raise InvalidRow
+
+        self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
