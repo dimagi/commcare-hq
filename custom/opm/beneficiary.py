@@ -6,6 +6,7 @@ import re
 import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
+from django.template.defaultfilters import yesno
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -48,14 +49,14 @@ VHND_NO = 'VHND_no.png'
 
 class OPMCaseRow(object):
 
-    def __init__(self, case, report, child_index=1):
+    def __init__(self, case, report, child_index=1, explicit_month=None, explicit_year=None):
         self.child_index = child_index
         self.case = case
         self.report = report
         self.data_provider = report.data_provider
         self.block = report.block.lower()
-        self.month = report.month
-        self.year = report.year
+        self.month = explicit_month or report.month
+        self.year = explicit_year or report.year
 
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s"></div>'
@@ -64,6 +65,13 @@ class OPMCaseRow(object):
 
         self.set_case_properties()
         self.add_extra_children()
+        if explicit_month is None and child_index == 1:
+            # if we were called directly, set the last month's row on this
+            last_year, last_month = add_months(self.year, self.month, -1)
+            try:
+                self.last_month_row = OPMCaseRow(case, report, 1, last_month, last_year)
+            except InvalidRow:
+                self.last_month_row = None
 
     @property
     def readable_status(self):
@@ -133,6 +141,8 @@ class OPMCaseRow(object):
     @memoized
     def preg_month(self):
         if self.status == 'pregnant':
+            if not self.edd:
+                raise InvalidRow('No edd found for pregnant mother.')
             base_window_start = add_months_to_date(self.edd, -9)
             non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
 
@@ -508,6 +518,10 @@ class OPMCaseRow(object):
         return self.is_service_available('vhnd_available', months=1)
 
     @property
+    def vhnd_available_display(self):
+        return yesno(self.vhnd_available)
+
+    @property
     @memoized
     def is_vhnd_last_three_months(self):
         return self.is_service_available('vhnd_available', months=3)
@@ -579,6 +593,61 @@ class OPMCaseRow(object):
             color="red" if self.cash_amt == 0 else "green",
             amt=self.cash_amt,
         )
+
+    @property
+    def bp1(self):
+        if 3 < self.preg_month < 7:
+            return self.bp_conditions
+
+    @property
+    def bp2(self):
+        if 6 < self.preg_month < 10:
+            return self.bp_conditions
+
+    @property
+    def bp_conditions(self):
+        if self.status == "pregnant":
+            return False not in [
+                self.preg_attended_vhnd,
+                self.preg_weighed,
+                self.preg_received_ifa,
+            ]
+
+    @property
+    def child_followup(self):
+        """
+        wazirganj - total_soft_conditions = 1
+        """
+        if self.status == 'mother':
+            return False not in [
+                self.child_attended_vhnd,
+                self.child_received_ors,
+                self.child_growth_calculated,
+                self.child_weighed_once,
+                self.child_birth_registered,
+                self.child_received_measles_vaccine,
+                self.child_breastfed,
+            ]
+
+    @property
+    def bp1_cash(self):
+        return MONTH_AMT if self.bp1 else 0
+
+    @property
+    def bp2_cash(self):
+        return MONTH_AMT if self.bp2 else 0
+
+    @property
+    def child_cash(self):
+        return MONTH_AMT if self.child_followup else 0
+
+    @property
+    def total_cash(self):
+        return min(
+            MONTH_AMT,
+            self.bp1_cash + self.bp2_cash + self.child_cash
+        ) + self.year_end_bonus_cash
+
 
 
 class ConditionsMet(OPMCaseRow):
@@ -659,58 +728,20 @@ class Beneficiary(OPMCaseRow):
         ('bp2_cash', _("Birth Preparedness Form 2"), True),
         ('child_cash', _("Child Followup Form"), True),
         ('year_end_bonus_cash', _("Bonus Payment"), True),
-        ('total', _("Amount to be paid to beneficiary"), True),
+        ('total_cash', _("Amount to be paid to beneficiary"), True),
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner ID"), False),
         ('closed_date', _("Closed On"), True),
+        ('vhnd_available_display', _('VHND organised this month'), True),
+        ('payment_last_month', _('Payment last month'), True),
     ]
 
     def __init__(self, case, report, child_index=1):
         super(Beneficiary, self).__init__(case, report, child_index=child_index)
         self.child_count = 0 if self.status == "pregnant" else 1
-        self.bp1_cash = MONTH_AMT if self.bp1 else 0
-        self.bp2_cash = MONTH_AMT if self.bp2 else 0
-        self.child_cash = MONTH_AMT if self.child_followup else 0
-        self.total = min(
-            MONTH_AMT,
-            self.bp1_cash + self.bp2_cash + self.child_cash
-        )
-        self.total += self.year_end_bonus_cash
+
         # Show only cases that require payment
-        if self.total == 0:
+        if self.total_cash == 0:
             raise InvalidRow
 
-    @property
-    def bp1(self):
-        if 3 < self.preg_month < 7:
-            return self.bp_conditions
-
-    @property
-    def bp2(self):
-        if 6 < self.preg_month < 10:
-            return self.bp_conditions
-
-    @property
-    def bp_conditions(self):
-        if self.status == "pregnant":
-            return False not in [
-                self.preg_attended_vhnd,
-                self.preg_weighed,
-                self.preg_received_ifa,
-            ]
-
-    @property
-    def child_followup(self):
-        """
-        wazirganj - total_soft_conditions = 1
-        """
-        if self.status == 'mother':
-            return False not in [
-                self.child_attended_vhnd,
-                self.child_received_ors,
-                self.child_growth_calculated,
-                self.child_weighed_once,
-                self.child_birth_registered,
-                self.child_received_measles_vaccine,
-                self.child_breastfed,
-            ]
+        self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
