@@ -54,7 +54,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
 from dimagi.utils.web import json_request, json_response
 from soil import DownloadBase
 from soil.tasks import prepare_download
@@ -1262,10 +1262,11 @@ def form_multimedia_export(request, domain):
         xmlns = request.GET["xmlns"]
         startdate = request.GET["startdate"]
         enddate = request.GET["enddate"]
+        enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
         zip_name = request.GET.get("name", None)
-    except KeyError:
+    except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
