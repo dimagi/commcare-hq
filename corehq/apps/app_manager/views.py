@@ -760,14 +760,11 @@ def get_module_view_context_and_template(app, module):
     if app.case_sharing:
         defaults += ('#owner_name',)
     builder = ParentCasePropertyBuilder(app, defaults=defaults)
-    child_case_types = list({
-        c for cases in [
-            m.get_child_case_types()
-            for m in app.get_modules()
-            if m.case_type == module.case_type
-        ]
-        for c in cases
-    })
+    child_case_types = set()
+    for m in app.get_modules():
+        if m.case_type == module.case_type:
+            child_case_types.update(m.get_child_case_types())
+    child_case_types = list(child_case_types)
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
