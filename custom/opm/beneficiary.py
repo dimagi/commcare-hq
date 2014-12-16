@@ -732,8 +732,8 @@ class Beneficiary(OPMCaseRow):
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner ID"), False),
         ('closed_date', _("Closed On"), True),
-        ('vhnd_available_display', 'VHND organised this month', True),
-        ('payment_last_month', 'Payment last month', True),
+        ('vhnd_available_display', _('VHND organised this month'), True),
+        ('payment_last_month', _('Payment last month'), True),
     ]
 
     def __init__(self, case, report, child_index=1):
