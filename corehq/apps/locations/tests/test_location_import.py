@@ -2,10 +2,16 @@ from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.locations.models import Location
-from corehq.apps.locations.bulk import import_location
+from corehq.apps.locations.bulk import LocationImporter
 from mock import patch
 from corehq.apps.consumption.shortcuts import get_default_consumption
 from corehq.apps.products.models import Product
+
+
+def import_location(domain, loc_type, data):
+    excel_importer = type("FakeImporter", (), {"worksheets": []})
+    importer = LocationImporter(domain, excel_importer)
+    return importer.import_location(loc_type, data)
 
 
 class LocationImportTest(CommTrackTest):
