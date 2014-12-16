@@ -1,5 +1,6 @@
 from collections import defaultdict
 import logging
+import re
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
 from lxml import etree as ET
@@ -712,6 +713,57 @@ class XForm(WrappedNode):
         for translation in itext.findall('{f}translation'):
             langs.append(translation.attrib['lang'])
         return langs
+
+    @raise_if_none("Can't find <label>")
+    def get_question_label(self, question_id):
+        """
+        Return the label child of the element in the xform body with
+        ref=quesiton_id
+        :param question_id: The path to the question, ex: "foo/age". Note that
+        "/data/" should not be included at the begining of the path.
+        :return:
+        """
+
+        # TODO: Is there a better way to identify multiselects?
+        regex = '(.*)-item([0-9]*)$'
+        match = re.match(regex, question_id)
+        if match:
+            # Its a select
+            ref = match.groups()[0]
+            item_num = match.groups()[1]
+        else:
+            ref = question_id
+            item_num = None
+
+        node = self.find("{h}body//*[@ref='/data/%s']" % ref)
+        if item_num:
+            node = node.find("./{f}item[%s]" % item_num)
+        return node.find('./{f}label')
+        #return self.find("{h}body//*[@ref='/data/%s']/{f}label" % question_id)
+
+    def get_question_itext_id(self, question_id):
+        """
+        Return the id of the <text> node representing this question's label.
+        Assumes that the label node for this question has a ref in the form:
+        "jr:itext(ITEXT_ID)"
+
+        You might assume that the <text> id is simply the question id. However,
+        This is not always the case. For example, if you change a question
+        group id in vellum, questions in that group will not have their
+        referenced <text> ids altered (but the paths of those questions will
+        change).
+
+        :param question_id: the path to the quesiton, ex: "foo/age". Not that
+        "/data/" should not be included at the begining of the path.
+        :return:
+        """
+        regex = r'jr:itext\([\'"](.*)[\'"]\)'
+        label = self.get_question_label(question_id)
+        match = re.match(regex, label.attrib['ref'])
+        try:
+            return match.groups()[0]
+        except (AttributeError, IndexError) as e:
+            return None
 
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False):

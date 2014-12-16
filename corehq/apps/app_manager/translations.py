@@ -325,9 +325,13 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
         for row in rows:
             question_id = row['label']
+            # TODO: Write a test for this bug.
+            # It can just involve uploading a translation for one of these funky
+            # forms and checking for exceptions.
             text_node = translation_node.find(
-                "./{f}text[@id='%s-label']" % question_id)
-            assert(text_node.exists())
+                "./{f}text[@id='%s']" % xform.get_question_itext_id(
+                    question_id
+                ))
 
             # Add or remove translations
             for trans_type in ['default', 'audio', 'image', 'video']:
@@ -545,7 +549,7 @@ def get_translation(id, lang, form, media=None):
     media path if provided.
     :return: The label, media path, or "" if no translation is found
     '''
-    node_id = "%s-label" % id
+    node_id = form.get_question_itext_id(id)
     xpath = "./{f}translation[@lang='%s']/{f}text[@id='%s']/{f}value" % \
             (lang, node_id)
 
