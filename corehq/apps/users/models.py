@@ -1705,14 +1705,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         else:
             return 0
 
+    def location_group_ids(self):
+        """
+        Return generated ID's that represent the virtual
+        groups used to send location data in the restore
+        payload.
+        """
+        return [self.location.get_group_object(self)._id]
+
     def get_owner_ids(self):
         from corehq.apps.groups.models import Group
 
         owner_ids = [self.user_id]
         owner_ids.extend(Group.by_user(self, wrap=False))
 
+        if self.project.locations_enabled:
+            owner_ids.extend(self.location_group_ids())
+
         return owner_ids
-        
+
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
@@ -1774,11 +1785,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         else:
             return None
 
-    @memoized
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
+        # get faked location group object
+        groups = []
+        if self.location:
+            groups.append(self.location.get_group_object(self))
 
-        return [group for group in Group.by_user(self) if group.case_sharing]
+        groups += [group for group in Group.by_user(self) if group.case_sharing]
+
+        return groups
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):

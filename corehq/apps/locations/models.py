@@ -378,6 +378,19 @@ class Location(CachedCouchDocumentMixin, Document):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
 
+    def get_group_object(self, user):
+        from corehq.apps.groups.models import Group
+        g = Group()
+        g.domain = self.domain
+        g.name = 'TODO-give-me-a-real-name'  # TODO
+        g.users = [user.user_id]
+        g.case_sharing = True
+        g.last_modified = datetime.now()
+        # TODO make this a constant
+        g._id = 'locationgroup-' + self._id
+
+        return g
+
 
 def root_locations(domain):
     results = Location.get_db().view('locations/hierarchy',
