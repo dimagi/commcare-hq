@@ -6,6 +6,7 @@ import re
 import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
+from django.template.defaultfilters import yesno
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -48,14 +49,14 @@ VHND_NO = 'VHND_no.png'
 
 class OPMCaseRow(object):
 
-    def __init__(self, case, report, child_index=1):
+    def __init__(self, case, report, child_index=1, explicit_month=None, explicit_year=None):
         self.child_index = child_index
         self.case = case
         self.report = report
         self.data_provider = report.data_provider
         self.block = report.block.lower()
-        self.month = report.month
-        self.year = report.year
+        self.month = explicit_month or report.month
+        self.year = explicit_year or report.year
 
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s"></div>'
@@ -64,6 +65,10 @@ class OPMCaseRow(object):
 
         self.set_case_properties()
         self.add_extra_children()
+        if explicit_month is None:
+            # if we were called directly, set the last month's row on this
+            last_year, last_month = add_months(self.year, self.month, -1)
+            self.last_month_row = OPMCaseRow(case, report, 1, last_month, last_year)
 
     @property
     def readable_status(self):
@@ -508,6 +513,15 @@ class OPMCaseRow(object):
         return self.is_service_available('vhnd_available', months=1)
 
     @property
+    def vhnd_available_display(self):
+        return yesno(self.vhnd_available)
+
+    @property
+    @memoized
+    def vhnd_available_last_month(self):
+        return self.last_month_row.is_service_available('vhnd_available', months=1)
+
+    @property
     @memoized
     def is_vhnd_last_three_months(self):
         return self.is_service_available('vhnd_available', months=3)
@@ -663,6 +677,7 @@ class Beneficiary(OPMCaseRow):
         ('case_id', _('Case ID'), True),
         ('owner_id', _("Owner ID"), False),
         ('closed_date', _("Closed On"), True),
+        ('vhnd_available_display', 'VHND organised this month', True),
     ]
 
     def __init__(self, case, report, child_index=1):
