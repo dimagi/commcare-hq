@@ -501,7 +501,8 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
         return cases
     else:
         case_ids = [case['_id'] for case in cases]
-        case_log_map = CommCareCase.get_db().view('phone/cases_to_sync_logs',
+        case_log_map = CommCareCase.get_db().view(
+            'phone/cases_to_sync_logs',
             keys=case_ids,
             reduce=False,
         )
@@ -511,7 +512,8 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
         #   'key': '[case id]',
         # }
         unique_combinations = set((row['key'], row['value']) for row in case_log_map)
-        modification_dates = CommCareCase.get_db().view('phone/case_modification_status',
+        modification_dates = CommCareCase.get_db().view(
+            'phone/case_modification_status',
             keys=[list(combo) for combo in unique_combinations],
             reduce=True,
             group=True,
