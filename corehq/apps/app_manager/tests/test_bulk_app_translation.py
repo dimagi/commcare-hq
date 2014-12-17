@@ -9,57 +9,68 @@ from corehq.apps.app_manager.translations import \
     process_bulk_app_translation_upload
 
 
-class BulkAppTranslationTest(SimpleTestCase):
+class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
 
-    @classmethod
-    def setUpClass(cls):
-        with codecs.open(os.path.join(
-                os.path.dirname(__file__), "data", "bulk_translate_app.json"
-        ), encoding='utf-8') as f:
+    def setUp(self):
+        """
+        Instantiate an app from file_path + app.json
+        """
+        super(BulkAppTranslationTestBase, self).setUp()
+        self.app = app = Application.wrap(self.get_json("app"))
 
-            cls.app = Application.wrap(json.load(f))
+    def do_upload(self, name, expected_messages=None):
+        """
+        Upload the bulk app translation file at file_path + upload.xlsx
+        """
+        if not expected_messages:
+            expected_messages = ["App Translations Updated!"]
 
-    def test_set_up(self):
-        form = self.app.get_module(0).get_form(0)
-
-        labels = {}
-        for lang in self.app.langs:
-            for question in form.get_questions(
-                    [lang], include_triggers=True, include_groups=True):
-                labels[(question['value'], lang)] = question['label']
-
-        self.assertEqual(labels["/data/question1", "en"], "question1")
-
-    def test_no_change_upload(self):
-        with codecs.open(os.path.join(
-                os.path.dirname(__file__), "data",
-                "bulk_app_translations_no_change.xlsx")) as f:
+        with codecs.open(self.get_path(name, "xlsx")) as f:
             messages = process_bulk_app_translation_upload(self.app, f)
 
         self.assertListEqual(
-            [m[1] for m in messages], ["App Translations Updated!"]
+            [m[1] for m in messages], expected_messages
         )
 
-    def test_upload(self):
-        with codecs.open(os.path.join(
-                os.path.dirname(__file__), "data",
-                "bulk_app_translations.xlsx")) as f:
-            messages = process_bulk_app_translation_upload(self.app, f)
-            self.assertListEqual(
-                [m[1] for m in messages],
-                ["App Translations Updated!"]
-            )
-
-        form = self.app.get_module(0).get_form(0)
-
+    def assert_question_label(self, text, module_id, form_id, language, question_path):
+        """
+        assert that the given text is equal to the label of the given question.
+        Return the label of the given question
+        :param text:
+        :param module_id: module index
+        :param form_id: form index
+        :param question_path: path to question (including "/data/")
+        :return: the label of the question
+        """
+        form = self.app.get_module(module_id).get_form(form_id)
         labels = {}
         for lang in self.app.langs:
             for question in form.get_questions(
                     [lang], include_triggers=True, include_groups=True):
                 labels[(question['value'], lang)] = question['label']
 
-        self.assertEqual(labels[("/data/question1", "en")], "in english")
-        self.assertEqual(labels[("/data/question1", "fra")], "in french")
+        self.assertEqual(
+            labels[(question_path, language)],
+            text
+        )
+
+
+class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
+
+    file_path = "data", "bulk_app_translation", "basic"
+
+    def test_set_up(self):
+        self.assert_question_label("question1", 0, 0, "en", "/data/question1")
+
+    def test_no_change_upload(self):
+        self.do_upload("upload_no_change")
+        self.assert_question_label("question1", 0, 0, "en", "/data/question1")
+
+    def test_change_upload(self):
+        self.do_upload("upload")
+
+        self.assert_question_label("in english", 0, 0, "en", "/data/question1")
+        self.assert_question_label("in french", 0, 0, "fra", "/data/question1")
 
         module = self.app.get_module(0)
         self.assertEqual(
@@ -72,8 +83,7 @@ class BulkAppTranslationTest(SimpleTestCase):
         )
 
 
-# TODO: Eliminate some of the code reuse in these classes
-class MismatchedItextReferenceTest(SimpleTestCase, TestFileMixin):
+class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
     """
     Test the bulk app translation upload when the itext reference in a question
     in the xform body does not match the question's id/path.
@@ -83,37 +93,15 @@ class MismatchedItextReferenceTest(SimpleTestCase, TestFileMixin):
     file_path = "data", "bulk_app_translation", "mismatched_ref"
 
     def test_unchanged_upload(self):
-        """
-        Make sure no exceptions are raised during the upload.
-        :return:
-        """
-        app = Application.wrap(self.get_json("app"))
-        with codecs.open(self.get_path("upload", "xlsx")) as f:
-            messages = process_bulk_app_translation_upload(app, f)
-
-        self.assertListEqual(
-            [m[1] for m in messages], ["App Translations Updated!"]
-        )
+        self.do_upload("upload")
+        self.assert_question_label("question2", 0, 0, "en", "/data/foo/question2")
 
 
-class BulkAppTranslationFormTest(SimpleTestCase, TestFileMixin):
-
-    # Note:
-    # This test seeks to demonstrate that the bulk app translator behaves the
-    # same way as the bulk form translator in vellum on STAGING at the moment
-    # (9257af38c646cf91575ded602d4a20e16959b7da).
-    # Vellum's bulk app translator on prod seems to not know how to handle
-    # deleted translations at the moment.
-    #
-    # There is one difference in the behavior:
-    # - Bulk app translator allows for empty <text> nodes, and will not remove
-    #   a <text> node if all <value> (translation) nodes are removed from it.
+class BulkAppTranslationFormTest(BulkAppTranslationTestBase):
 
     file_path = "data", "bulk_app_translation", "form_modifications"
 
     def test_removing_form_translations(self):
-        app = Application.wrap(self.get_json("app"))
-        with codecs.open(self.get_path("modifications", "xlsx")) as f:
-            process_bulk_app_translation_upload(app, f)
-        form = app.get_module(0).get_form(0)
+        self.do_upload("modifications")
+        form = self.app.get_module(0).get_form(0)
         self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
