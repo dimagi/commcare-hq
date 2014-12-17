@@ -82,6 +82,9 @@ To add a schema to custom data for an entiy, you need to do the following:
 
 # Provide a subclass of ``CustomDataModelMixin`` specific to that entity
 type.
+# Add that view to the appropriate ``urls.py`` and to the site map in
+``corehq.apps.hqwebapp.models``.  You should have available
+``UserFieldsView.page_name()`` and ``UserFieldsView.urlname`` for this.
 # Initialize and use the ``CustomDataEditor`` in the create and edit views
 for that entity (and their templates).
 # Use the *custom data validator* on bulk upload.

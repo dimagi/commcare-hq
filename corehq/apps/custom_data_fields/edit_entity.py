@@ -22,6 +22,19 @@ def add_prefix(field_dict):
     }
 
 
+def get_prefixed(field_dict):
+    """
+    The inverse of add_prefix.
+    Returns all prefixed elements of a dict with the prefices stripped.
+    """
+    prefix_len = len(CUSTOM_DATA_FIELD_PREFIX) + 1
+    return {
+        k[prefix_len:]: v
+        for k, v in field_dict.items()
+        if k.startswith(CUSTOM_DATA_FIELD_PREFIX)
+    }
+
+
 def _make_field(field):
     if field.choices:
         return forms.ChoiceField(
@@ -55,6 +68,11 @@ class CustomDataEditor(object):
 
     def is_valid(self):
         return self.form.is_valid()
+
+    @property
+    def errors(self):
+        self.form.is_valid()
+        return self.form.errors
 
     def get_data_to_save(self):
         cleaned_data = self.form.cleaned_data
