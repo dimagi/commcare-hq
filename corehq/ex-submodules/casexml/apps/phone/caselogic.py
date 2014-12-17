@@ -331,6 +331,18 @@ class CaseSyncBatch(object):
 
         return case_updates_to_sync
 
+    def _fetch_missing_cases_and_wrap(self, casedoc_list):
+        cases = []
+        to_fetch = []
+        for doc in casedoc_list:
+            if doc['doc_type'] == 'CommCareCase':
+                cases.append(CommCareCase.wrap(doc))
+            else:
+                to_fetch.append(doc['_id'])
+
+        cases.extend(CommCareCase.bulk_get_lite(to_fetch, wrapper=CommCareCase, chunksize=self.chunksize))
+        return cases
+
 
 class CaseSyncPhoneBatch(CaseSyncBatch):
     """
@@ -339,16 +351,17 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
     """
     @property
     def case_updates_to_sync(self):
-        other_case_ids_on_phone = set([
-            case_id for case_id in self.last_sync.get_footprint_of_cases_on_phone()
+        other_cases_on_phone = set([
+            self.global_state.minimal_cases[case_id]
+            for case_id in self.last_sync.get_footprint_of_cases_on_phone()
             if case_id not in self.global_state.actual_relevant_cases_dict
         ])
-        other_cases_on_phone = CommCareCase.view(
-            "case/get_lite",
-            keys=list(other_case_ids_on_phone)
-        ).all()
+
         potential_to_sync = self._get_potential_cases(other_cases_on_phone)
-        case_sync_updates = self._case_sync_updates(potential_to_sync)
+
+        cases_to_sync = self._fetch_missing_cases_and_wrap(potential_to_sync)
+        case_sync_updates = self._case_sync_updates(cases_to_sync)
+
         self.global_state.update_synced_cases(case_sync_updates)
         return case_sync_updates
 
@@ -385,7 +398,9 @@ class CaseSyncCouchBatch(CaseSyncBatch):
         actual_relevant_cases = self.global_state.update_relevant_cases(all_relevant_cases_dict.values())
 
         potential_to_sync = self._get_potential_cases(actual_relevant_cases)
-        case_sync_updates = self._case_sync_updates(potential_to_sync)
+
+        cases_to_sync = self._fetch_missing_cases_and_wrap(potential_to_sync)
+        case_sync_updates = self._case_sync_updates(cases_to_sync)
         self.global_state.update_synced_cases(case_sync_updates)
 
         return case_sync_updates
