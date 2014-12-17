@@ -1,6 +1,5 @@
 from collections import defaultdict
 import logging
-import re
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
 from lxml import etree as ET

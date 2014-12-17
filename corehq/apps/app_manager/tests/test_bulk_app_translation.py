@@ -16,7 +16,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
         Instantiate an app from file_path + app.json
         """
         super(BulkAppTranslationTestBase, self).setUp()
-        self.app = app = Application.wrap(self.get_json("app"))
+        self.app = Application.wrap(self.get_json("app"))
 
     def do_upload(self, name, expected_messages=None):
         """
