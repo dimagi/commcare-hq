@@ -392,7 +392,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
 
     def _view_results(self):
         results = CommCareCase.get_db().view(
-            "case/by_owner_lite",
+            "case/by_owner",
             **self.view_kwargs
         )
         len_results = len(results)
@@ -411,13 +411,48 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             )
 
     def _actual_owned_cases(self):
+        """
+        This returns a list of case dicts. Each dict will either be an actual case dict or else
+        a dict containing only these keys: '_id', 'type', 'indices'. These 'minimal cases' are
+        created from CaseState objects from the previous SyncLog.
+        """
+        class NoopWrapper(object):
+            @classmethod
+            def wrap(cls, doc):
+                return doc
+
         def _case_domain_match(case):
             return not self.domain or self.domain == case.get('domain')
 
-        return [
-            CommCareCase.wrap(result['value']) for result in self._view_results()
-            if _case_domain_match(result['value'])
-        ]
+        view_results = self._view_results()
+        minimal_cases = []
+        if self.last_sync:
+            # First we check to see if there is a case state available that we can use
+            # rather than fetching the whole case.
+            cases_to_fetch = []
+            for result in view_results:
+                minimal_case = self.global_state.minimal_cases.get(result['id'])
+                if minimal_case:
+                    minimal_cases.append(minimal_case)
+                else:
+                    cases_to_fetch.append(result['id'])
+
+            logger.debug(
+                "%s cases found in previous SyncLog. %s still to fetch",
+                len(minimal_cases), len(cases_to_fetch)
+            )
+        else:
+            cases_to_fetch = [result['id'] for result in view_results]
+            logger.debug("No previous SyncLog. Fetching %s cases", len(cases_to_fetch))
+
+        if cases_to_fetch:
+            cases = CommCareCase.bulk_get_lite(cases_to_fetch, wrapper=NoopWrapper, chunksize=self.chunksize)
+            minimal_cases.extend(
+                case_doc for case_doc in cases
+                if _case_domain_match(case_doc)
+            )
+
+        return minimal_cases
 
     def _all_relevant_cases_dict(self, cases):
         return get_footprint(cases, domain=self.domain)
