@@ -33,7 +33,6 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.translations import (
     expected_bulk_app_sheet_headers,
-    get_translation,
     process_bulk_app_translation_upload
 )
 from corehq.apps.programs.models import Program
