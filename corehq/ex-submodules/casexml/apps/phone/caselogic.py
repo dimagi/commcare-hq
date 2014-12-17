@@ -36,17 +36,18 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
                           wrap=wrap,
                           initial=initial_cases)
 
+    def indices(case):
+        return case['indices'] if search_up else reverse_indices(CommCareCase.get_db(), case, wrap=False)
+
     def related(case_db, case):
-        return [case_db.get(index['referenced_id']) for index in (
-            case['indices'] if search_up else reverse_indices(case, wrap=False))]
+        return [case_db.get(index['referenced_id']) for index in indices(case)]
 
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
     queue = list(case for case in initial_cases)
     directly_referenced_indices = itertools.chain(
-        *[[index['referenced_id'] for index in (
-            case['indices'] if search_up else reverse_indices(case, wrap=False))]
+        *[[index['referenced_id'] for index in indices(case)]
           for case in initial_cases]
     )
     case_db.populate(directly_referenced_indices)
