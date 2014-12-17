@@ -495,10 +495,6 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         Select2InvoiceTriggerHandler,
     ]
 
-    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(TriggerInvoiceView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def trigger_form(self):
@@ -536,10 +532,6 @@ class TriggerBookkeeperEmailView(AccountingSectionView):
     page_title = "Trigger Bookkeeper Email"
     template_name = 'accounting/trigger_bookkeeper.html'
 
-    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(TriggerBookkeeperEmailView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def trigger_email_form(self):
@@ -569,10 +561,6 @@ class TestRenewalEmailView(AccountingSectionView):
     urlname = 'accocunting_test_renewal_email'
     page_title = "Test Renewal Reminder Email"
     template_name = 'accounting/test_reminder_emails.html'
-
-    @method_decorator(toggles.INVOICE_TRIGGER.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(TestRenewalEmailView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
