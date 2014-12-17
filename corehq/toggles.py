@@ -254,3 +254,8 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     "in the format 'soh abc 100.20'",
     [NAMESPACE_DOMAIN]
 )
+
+COMMCARE_LOGO_UPLOADER = StaticToggle(
+    'commcare_logo_uploader',
+    'CommCare logo uploader',
+)
