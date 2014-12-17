@@ -253,7 +253,6 @@
     </div>
 
     {% for detail in details %}
-    {# rename this <detail.type>-list-screen-config-tab or something like that #}
     <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
         {% if detail.type == 'case' %}
         <div class="alert alert-warning" id="detail-screen-config-warning"

@@ -380,12 +380,10 @@ class Sort(AbstractTemplate):
 class Style(XmlObject):
     ROOT_NAME = 'style'
 
-    # Add choices to the strings?
     horz_align = StringField("@horz-align")
     vert_align = StringField("@vert-align")
     font_size = StringField("@font-size")
     css_id = StringField("@css-id")
-    # Should I be making a separate Grid class instead?
     grid_height = StringField("grid/@grid-height")
     grid_width = StringField("grid/@grid-width")
     grid_x = StringField("grid/@grid-x")
@@ -401,7 +399,6 @@ class Field(OrderedXmlObject):
     header = NodeField('header', Header)
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
-    # Should I disallow sort_node if background is present? (and vice versa)
     background = NodeField('background/text', Text)
 
 
