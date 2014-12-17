@@ -117,10 +117,11 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
 
 
 def reverse_indices(db, case, wrap=True):
-    kwargs = {}
-    if wrap:
-        kwargs['wrapper'] = lambda r: CommCareCaseIndex.wrap(r['value'])
-    return db.view("case/related",
+    kwargs = {
+        'wrapper': lambda r: CommCareCaseIndex.wrap(r['value']) if wrap else r['value']
+    }
+    return db.view(
+        "case/related",
         key=[case['domain'], case['_id'], "reverse_index"],
         reduce=False,
         **kwargs
