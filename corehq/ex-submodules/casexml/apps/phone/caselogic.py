@@ -500,7 +500,7 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
     if not last_sync:
         return cases
     else:
-        case_ids = [case._id for case in cases]
+        case_ids = [case['_id'] for case in cases]
         case_log_map = CommCareCase.get_db().view('phone/cases_to_sync_logs',
             keys=case_ids,
             reduce=False,
@@ -530,12 +530,13 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
                     {'token': row['key'][1], 'date': datetime.strptime(row['value'], '%Y-%m-%dT%H:%M:%SZ')}
                 )
 
-        def case_modified_elsewhere_since_sync(case):
+        def case_modified_elsewhere_since_sync(case_id):
             # NOTE: uses closures
             return any([row['date'] >= last_sync.date and row['token'] != last_sync._id
-                        for row in all_case_updates_by_sync_token[case._id]])
+                        for row in all_case_updates_by_sync_token[case_id]])
 
         def relevant(case):
-            return case_modified_elsewhere_since_sync(case) or not last_sync.phone_is_holding_case(case.get_id)
+            case_id = case['_id']
+            return case_modified_elsewhere_since_sync(case_id) or not last_sync.phone_is_holding_case(case_id)
 
         return filter(relevant, cases)
