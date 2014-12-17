@@ -2835,11 +2835,6 @@ def download_bulk_app_translations(request, domain, app_id):
             # Populate form sheet
             rows[form_string] = []
 
-            # Get non empty items from itext
-            # Vellum makes an item for each id (it loops through each item in
-            # each language block and makes a new item for each new id it
-            # encounters)
-
             itext_items = OrderedDict()
             for translation_node in xform.itext_node.findall("./{f}translation"):
                 lang = translation_node.attrib['lang']
