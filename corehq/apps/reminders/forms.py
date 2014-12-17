@@ -1755,12 +1755,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
             ))
         return value
 
-    def clean_force_surveys_to_use_triggered_case(self):
-        method = self.cleaned_data['method']
-        if method == METHOD_SMS or method == METHOD_SMS_CALLBACK:
-            return False
-        return self.cleaned_data['force_surveys_to_use_triggered_case']
-
     def clean_use_custom_content_handler(self):
         if self.is_previewer:
             return self.cleaned_data["use_custom_content_handler"]
