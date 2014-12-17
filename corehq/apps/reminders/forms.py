@@ -888,12 +888,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         )
     )
 
-    # contains a string-ified JSON object of events
-    events = forms.CharField(
-        required=False,
-        widget=forms.HiddenInput
-    )
-
     event_timing = forms.ChoiceField(
         label=ugettext_noop("Time of Day"),
     )
@@ -906,6 +900,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
             (EVENT_AS_SCHEDULE, ugettext_noop("Schedule-based")),
         ),
         widget=forms.HiddenInput  # validate as choice, but don't show the widget.
+    )
+
+    # contains a string-ified JSON object of events
+    events = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput
     )
 
     # Fieldset: Repeat
@@ -1585,6 +1585,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             ))
 
         default_lang = self.cleaned_data["default_lang"]
+        has_fire_time_case_property = False
         for event in events:
             eventForm = CaseReminderEventForm(
                 data=event,
@@ -1636,6 +1637,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # clean fire_time:
             if fire_time_type == FIRE_TIME_CASE_PROPERTY:
                 event['fire_time'] = None
+                has_fire_time_case_property = True
 
             if event['is_immediate']:
                 event['fire_time'] = ONE_MINUTE_OFFSET
@@ -1678,6 +1680,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # delete all data that was just UI based:
             del event['message_data']  # this is only for storing the stringified version of message
             del event['is_immediate']
+
+        event_interpretation = self.cleaned_data["event_interpretation"]
+        if (event_interpretation == EVENT_AS_SCHEDULE and
+            not has_fire_time_case_property):
+            event_time = lambda e : (
+                (1440 * e['day_num']) +
+                (60 * e['fire_time'].hour) +
+                e['fire_time'].minute)
+            events.sort(key=event_time)
+
         return events
 
     def get_min_schedule_length(self):
