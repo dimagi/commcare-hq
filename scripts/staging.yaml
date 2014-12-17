@@ -43,8 +43,8 @@
 trunk: master
 name: autostaging
 branches:
-# this branch didn't exist on github
-  - historical-forms  # DR 11/4
+  - gaTrackLink-rebase
+  - historical-forms  # Danny 12/1
 #  - add-build-ui
 #  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
@@ -66,8 +66,9 @@ branches:
   - locations-for-everyone # tw 11/18
   - custom-case-list-pane # Noah 11/24
   - system-custom-data  # Ethan 11/24
-  - event-tracking-wrapper # Nick P 11/25
   - quickview # Simon 11/25
+  - fix-form-filtering # Nick P 11/26
+  - double-management # SK 12/1
 submodules:
   submodules/couchlog-src:
     branches:
@@ -78,8 +79,6 @@ submodules:
   submodules/formtranslate-src:
     branches:
       - static-tags # Nick P 5/20
-      # Danny 8/12. If form validation seems wonky on staging, just remove this
-      # - clean-up-api  # removed by cory on nov 25 per above. http://manage.dimagi.com/default.asp?148170
       - update-jar # J$ 11/10
   submodules/touchforms-src:
     branches:

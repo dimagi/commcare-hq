@@ -558,25 +558,6 @@ def get_app_view_context(request, app):
     build_spec_setting['options_map'] = options_map
     build_spec_setting['default_app_version'] = app.application_version
 
-    if app.get_doc_type() == 'Application':
-        try:
-            # todo remove get_media_references
-            multimedia = app.get_media_references()
-        except ProcessTimedOut:
-            notify_exception(request)
-            messages.warning(request, (
-                "We were unable to check if your forms had errors. "
-                "Refresh the page and we will try again."
-            ))
-            multimedia = {
-                'references': {},
-                'form_errors': True,
-                'missing_refs': False,
-            }
-        context.update({
-            'multimedia': multimedia,
-        })
-
     context.update({
         'bulk_upload': {
             'action': reverse('upload_translations',
@@ -628,16 +609,25 @@ def _clear_app_cache(request, domain):
         cache.delete(key)
 
 
+def _get_edit(request, domain):
+    if getattr(request, 'couch_user', None):
+        return (
+            (request.GET.get('edit', 'true') == 'true') and
+            (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+        )
+    else:
+        return False
+
+
 def get_apps_base_context(request, domain, app):
 
     lang, langs = get_langs(request, app)
 
+    edit = _get_edit(request, domain)
+
     if getattr(request, 'couch_user', None):
-        edit = ((request.GET.get('edit', 'true') == 'true') and
-                (request.couch_user.can_edit_apps(domain) or request.user.is_superuser))
         timezone = report_utils.get_timezone(request.couch_user, domain)
     else:
-        edit = False
         timezone = None
 
     context = {
@@ -786,9 +776,6 @@ def get_module_view_context_and_template(app, module):
             'is_parent': mod.unique_id in parent_module_ids,
         } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
-    def get_sort_elements(details):
-        return [prop.values() for prop in details.sort_elements]
-
     ensure_unique_ids()
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
@@ -800,7 +787,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'careplan_goal',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_GOAL)),
-                    'sort_elements': json.dumps(get_sort_elements(module.goal_details.short)),
+                    'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
                     'child_case_types': list(module.get_child_case_types()),
@@ -811,7 +798,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'careplan_task',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(CAREPLAN_TASK)),
-                    'sort_elements': json.dumps(get_sort_elements(module.task_details.short)),
+                    'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
                     'child_case_types': list(module.get_child_case_types()),
@@ -827,7 +814,7 @@ def get_module_view_context_and_template(app, module):
                 'type': 'case',
                 'model': 'case',
                 'properties': sorted(builder.get_properties(case_type)),
-                'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                'sort_elements': module.case_details.short.sort_elements,
                 'short': module.case_details.short,
                 'long': module.case_details.long,
                 'child_case_types': list(module.get_child_case_types()),
@@ -840,7 +827,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'product',
                     'model': 'product',
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-                    'sort_elements': json.dumps(get_sort_elements(module.product_details.short)),
+                    'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
                     'child_case_types': list(module.get_child_case_types()),
                 })
@@ -861,7 +848,7 @@ def get_module_view_context_and_template(app, module):
                     'type': 'case',
                     'model': 'case',
                     'properties': sorted(builder.get_properties(case_type)),
-                    'sort_elements': json.dumps(get_sort_elements(module.case_details.short)),
+                    'sort_elements': module.case_details.short.sort_elements,
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
@@ -944,12 +931,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
-        module_context["enable_calc_xpaths"] = (
-            feature_previews.CALC_XPATHS.enabled(getattr(req, 'domain', None))
-        )
-        module_context["enable_enum_image"] = (
-            feature_previews.ENUM_IMAGE.enabled(getattr(req, 'domain', None))
-        )
         context.update(module_context)
     else:
         template = "app_manager/app_view.html"
@@ -1037,6 +1018,35 @@ def view_app(req, domain, app_id=None):
                             form_id=form_id)
 
     return view_generic(req, domain, app_id)
+
+
+@require_deploy_apps
+def multimedia_ajax(request, domain, app_id, template='app_manager/partials/multimedia_ajax.html'):
+    app = get_app(domain, app_id)
+    if app.get_doc_type() == 'Application':
+        try:
+            # todo remove get_media_references
+            multimedia = app.get_media_references()
+        except ProcessTimedOut:
+            notify_exception(request)
+            messages.warning(request, (
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            ))
+            multimedia = {
+                'references': {},
+                'form_errors': True,
+                'missing_refs': False,
+            }
+        context = {
+            'multimedia': multimedia,
+            'domain': domain,
+            'app': app,
+            'edit': _get_edit(request, domain)
+        }
+        return render(request, template, context)
+    else:
+        raise Http404()
 
 
 @require_can_edit_apps
@@ -2174,7 +2184,7 @@ def _download_index_files(request):
                  if path.startswith('files/')]
     else:
         try:
-            files = sorted(request.app.create_all_files().items())
+            files = request.app.create_all_files().items()
         except Exception:
             messages.error(request, _(
                 "We were unable to get your files "
@@ -2183,7 +2193,7 @@ def _download_index_files(request):
                 "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
             ), extra_tags='html')
-    return files
+    return sorted(files)
 
 
 @safe_download
