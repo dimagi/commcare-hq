@@ -1910,7 +1910,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             initial['event_timing'] = cls._format_event_timing_choice(
                 reminder_handler.event_interpretation,
                 reminder_handler.events[0].fire_time_type,
-                EVENT_TIMING_IMMEDIATE if sends_immediately else None,
+                (EVENT_TIMING_IMMEDIATE if sends_immediately and
+                 reminder_handler.ui_type == UI_SIMPLE_FIXED else None),
             )
 
         if reminder_handler.until:
