@@ -152,6 +152,7 @@ def get_address_from_invoice(invoice):
             second_line=contact_info.second_line,
             city=contact_info.city,
             region=contact_info.state_province_region,
+            postal_code=contact_info.postal_code,
             country=contact_info.country,
         )
     except BillingContactInfo.DoesNotExist:
