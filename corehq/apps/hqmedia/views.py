@@ -355,7 +355,7 @@ class ProcessImageFileUploadView(BaseProcessFileUploadView):
         return ['image']
 
 
-class ProcessIconFileUploadView(ProcessImageFileUploadView):
+class ProcessLogoFileUploadView(ProcessImageFileUploadView):
     name = "hqmedia_uploader_logo"
 
     @property
@@ -371,7 +371,7 @@ class ProcessIconFileUploadView(ProcessImageFileUploadView):
         if self.app.icon_refs is None:
             self.app.icon_refs = {}
         ref = super(
-            ProcessIconFileUploadView, self
+            ProcessLogoFileUploadView, self
         ).process_upload()
         self.app.icon_refs[self.filename] = ref['ref']
         self.app.save()
