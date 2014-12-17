@@ -449,8 +449,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         for ids in chunked(ids, 100):
             for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
                 if wrapper is None:
-                    wrapper = cls.get_wrap_class(row['value'])
-                yield wrapper.wrap(row['value'])
+                    wrapper_class = cls.get_wrap_class(row['value'])
+                    wrapper = lambda doc: wrapper_class.wrap(doc)
+                yield wrapper(row['value'])
 
     def get_preloader_dict(self):
         """
