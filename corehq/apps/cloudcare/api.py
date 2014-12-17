@@ -121,7 +121,7 @@ class CaseAPIHelper(object):
                             return False
                 return True
 
-        if not self.ids_only or self.filters or self.footprint:
+        if not self.ids_only or self.filters or self.footprint or self.include_children:
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
             base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
