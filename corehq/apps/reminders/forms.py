@@ -1360,7 +1360,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                        "case should be created, updated or closed.  This is may not be safe to do if "
                                        "the form has not been completed. ")
                 ),
-                data_bind="visible: submit_partial_forms",
+                data_bind="visible: isPartialSubmissionsVisible() && submit_partial_forms()",
             ),
             crispy.Div(
                 'force_surveys_to_use_triggered_case',
