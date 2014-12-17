@@ -54,7 +54,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
 from dimagi.utils.web import json_request, json_response
 from soil import DownloadBase
 from soil.tasks import prepare_download
@@ -1254,26 +1254,30 @@ def find_question_id(form, value):
     return None
 
 
-@toggles.MULTIMEDIA_EXPORT.required_decorator()
 @require_form_view_permission
 @login_and_domain_required
 @require_GET
-def form_multimedia_export(request, domain, app_id):
+def form_multimedia_export(request, domain):
     try:
         xmlns = request.GET["xmlns"]
         startdate = request.GET["startdate"]
         enddate = request.GET["enddate"]
+        enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
+        app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
         zip_name = request.GET.get("name", None)
-    except KeyError:
+    except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):
-        return "%s-%s-%s-%s.%s" % (form['form']['@name'],
-                                   unidecode(question_id),
-                                   form['form']['meta']['username'],
-                                   form['_id'], extension)
+        meta = form['form'].get('meta', dict())
+        return "%s-%s-%s-%s%s" % (form['form'].get('@name', 'unknown form'),
+                                  unidecode(question_id),
+                                  meta.get('username', 'unknown_user'),
+                                  form['_id'], extension)
 
+    if not app_id:
+        zip_name = 'Unrelated Form'
     key = [domain, app_id, xmlns]
     stream_file = cStringIO.StringIO()
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
@@ -1294,7 +1298,7 @@ def form_multimedia_export(request, domain, app_id):
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         f = XFormInstance.wrap(form)
         if not zip_name:
-            zip_name = unidecode(form['form']['@name'])
+            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
         for key in form['_attachments'].keys():
             if form['_attachments'][key]['content_type'] == 'text/xml':
                 continue

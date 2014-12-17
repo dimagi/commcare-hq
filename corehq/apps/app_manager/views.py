@@ -138,7 +138,7 @@ from corehq.apps.app_manager.decorators import safe_download, no_conflict_requir
     require_can_edit_apps, require_deploy_apps
 from django.contrib import messages
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import ensure_request_has_privilege, has_privilege
 # Numbers in paths is prohibited, hence the use of importlib
 import importlib
 FilterMigration = importlib.import_module('corehq.apps.app_manager.migrations.0002_add_filter_to_Detail').Migration
@@ -518,12 +518,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
 def get_app_view_context(request, app):
 
-    is_cloudcare_allowed = False
-    try:
-        ensure_request_has_privilege(request, privileges.CLOUDCARE)
-        is_cloudcare_allowed = True
-    except PermissionDenied:
-        pass
+    is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
 
     settings_layout = copy.deepcopy(
         commcare_settings.LAYOUT[app.get_doc_type()])
@@ -776,6 +771,11 @@ def get_module_view_context_and_template(app, module):
     if app.case_sharing:
         defaults += ('#owner_name',)
     builder = ParentCasePropertyBuilder(app, defaults=defaults)
+    child_case_types = set()
+    for m in app.get_modules():
+        if m.case_type == module.case_type:
+            child_case_types.update(m.get_child_case_types())
+    child_case_types = list(child_case_types)
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
@@ -810,7 +810,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
                 {
                     'label': _('Task List'),
@@ -821,7 +821,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
             ],
         }
@@ -837,7 +837,7 @@ def get_module_view_context_and_template(app, module):
                 'sort_elements': module.case_details.short.sort_elements,
                 'short': module.case_details.short,
                 'long': module.case_details.long,
-                'child_case_types': list(module.get_child_case_types()),
+                'child_case_types': child_case_types,
             }]
 
             if app.commtrack_enabled:
@@ -849,7 +849,7 @@ def get_module_view_context_and_template(app, module):
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
                     'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 })
 
             return details
@@ -872,7 +872,7 @@ def get_module_view_context_and_template(app, module):
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
             ],
         }
@@ -1114,7 +1114,9 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
-        'sessionid': req.COOKIES.get('sessionid')
+        'sessionid': req.COOKIES.get('sessionid'),
+        'features': toggles.toggles_dict(username=req.user.username,
+                                         domain=domain)
     })
     return render(req, 'app_manager/form_designer.html', context)
 

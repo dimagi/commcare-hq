@@ -89,6 +89,14 @@ def all_toggles():
                 yield toggle
 
 
+def toggles_dict(username=None, domain=None):
+    """
+    Loads all toggles into a dictonary for use in JS
+    """
+    return {t.slug: True for t in all_toggles() if (t.enabled(username) or
+                                                    t.enabled(domain))}
+
+
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'Custom case parent reference'
@@ -176,7 +184,8 @@ VISIT_SCHEDULER = StaticToggle(
 
 EDIT_SUBMISSIONS = StaticToggle(
     'edit_submissions',
-    'Submission Editing on HQ'
+    'Submission Editing on HQ',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
@@ -209,11 +218,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MULTIMEDIA_EXPORT = StaticToggle(
-    'multimedia_export',
-    'Export multimedia from forms'
-)
-
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
@@ -227,8 +231,26 @@ BATCHED_RESTORE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+SPLIT_MULTISELECT_EXPORT = StaticToggle(
+    'split_multiselect_export',
+    'Split multiselect columns in custom exports',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
+)
+
+VELLUM_HELP_TEXT = StaticToggle(
+    'add_help_text',
+    "Adds a help text in the form builder"
+)
+
+STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
+    'stock_and_sms_handler',
+    "Enable the stock report handler to accept both stock and receipt values "
+    "in the format 'soh abc 100.20'",
+    [NAMESPACE_DOMAIN]
 )

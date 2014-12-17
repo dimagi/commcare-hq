@@ -43,13 +43,9 @@
 trunk: master
 name: autostaging
 branches:
-  - refactor-case-list
-#  - add-build-ui
-#  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - bulk-app-translate # Noah 9/18
   - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
   - custom_location_data  # Ethan & tw 11/17
@@ -58,22 +54,11 @@ branches:
   - double-management # SK 12/1
   - logo-uploader # Nick P 12/2
 submodules:
-  submodules/couchlog-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/django-soil-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/formtranslate-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/touchforms-src:
-    branches:
-      - static-tags # Nick P 5/20
-#  submodules/dimagi-utils-src:
-#    branches:
-#      - json_response-status
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
       - debug-yui # Nick P 11/4
       - logos # Nick P 12/2
+  submodules/dimagi-utils-src:
+    # let's leave this here even when empty
+    # just so we always get latest master
+    branches: []

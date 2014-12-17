@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import get_app, Form, RemoteApp
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
@@ -609,6 +610,18 @@ class FormExportSchema(HQExportSchema):
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
 
+    def update_schema(self):
+        super(FormExportSchema, self).update_schema()
+        self.update_question_schema()
+
+    def update_question_schema(self):
+        schema = self.question_schema
+        schema.update_schema()
+
+    @property
+    def question_schema(self):
+        return FormQuestionSchema.get_or_create(self.domain, self.app_id, self.xmlns)
+
     @property
     @memoized
     def app(self):
@@ -710,6 +723,7 @@ class FormDeidExportSchema(FormExportSchema):
     @classmethod
     def get_case(cls, doc, case_id):
         pass
+
 
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'

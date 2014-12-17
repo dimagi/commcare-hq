@@ -21,8 +21,13 @@ from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.programs.models import Program
+
+# Bootstrap 3 Crispy Forms
 from bootstrap3_crispy import layout as cb3_layout
 from bootstrap3_crispy import helper as cb3_helper
+from bootstrap3_crispy import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
+
 import re
 import settings
 
@@ -174,25 +179,48 @@ class BaseUserInfoForm(forms.Form):
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     email_opt_out = forms.BooleanField(
         required=False,
-        label="",
-        help_text=ugettext_lazy(
-            "Opt out of emails about CommCare updates."
-        ),
+        label=ugettext_noop("Opt out of emails about CommCare updates."),
     )
 
     def __init__(self, *args, **kwargs):
+        self.username = kwargs.pop('username') if 'username' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
+
+        username_controls = []
+        if self.username:
+            username_controls.append(hqcrispy.StaticField(
+                _('Username'), self.username)
+            )
+
+        self.fields['language'].label = _("My Language")
 
         self.new_helper = cb3_helper.FormHelper()
         self.new_helper.form_method = 'POST'
         self.new_helper.form_class = 'form-horizontal'
-        self.new_helper.label_class = 'col-lg-2'
-        self.new_helper.field_class = 'col-lg-8'
+        self.new_helper.attrs = {
+            'name': 'user_information',
+        }
+        self.new_helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.new_helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
                 _("Basic"),
-                cb3_layout.Field('email'),
-                cb3_layout.Field('first_name'),
+                cb3_layout.Div(*username_controls),
+                hqcrispy.Field('first_name'),
+                hqcrispy.Field('last_name'),
+                hqcrispy.Field('email'),
+                hqcrispy.Field('email_opt_out'),
+            ),
+            cb3_layout.Fieldset(
+                _("Other Options"),
+                hqcrispy.Field('language'),
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Update My Information"),
+                    type='submit',
+                    css_class='btn-primary',
+                )
             )
         )
 

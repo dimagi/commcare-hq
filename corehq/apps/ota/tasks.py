@@ -51,7 +51,7 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None
 
             if check_cache_only:
                 cached_payload = _get_cached_payload(restore_config)
-                ret['MESSAGES'].append('Restore cache {} for user: {}'.format(
+                ret['messages'].append(u'Restore cache {} for user: {}'.format(
                     'EXISTS' if cached_payload else 'does not exist',
                     couch_user.human_friendly_name,
                 ))

@@ -53,10 +53,15 @@
             default: property.defaultKey,
             edit: $root.edit,
             casePropertyTypeahead: suggestedProperties,
-            event: { change: function(){
-                    $element.value =  $element.value.replace(/ /g,'_');
-                return true;
-            }}
+            event: {
+                change: function(){
+                    var el = $($element)
+                    var caretPosition = el.caret();
+                    el.val(el.val().replace(/ /g,'_'));
+                    el.caret(caretPosition);
+                    return true;
+                }
+            }
         "/>
     </span>
     <span data-bind="visible: property.required()">

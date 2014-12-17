@@ -298,6 +298,7 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.apps.grapevine',
     'corehq.apps.dashboard',
+    'corehq.apps.public',
     'corehq.util',
 
     # custom reports
@@ -385,6 +386,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'fluff_filter',
     'freddy',
     'pillowtop',
+    'pillow_retry',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -671,7 +673,8 @@ AUDIT_VIEWS = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': ''
+    'PINGDOM_ID': '',
+    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
 }
 
 OPEN_EXCHANGE_RATES_ID = ''
@@ -931,7 +934,7 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuples
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -1035,12 +1038,14 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('wvindia2', 'wvindia2'),
+    ('export', 'meta'),
     'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -1310,6 +1315,7 @@ DOMAIN_MODULE_MAP = {
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
+    'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',

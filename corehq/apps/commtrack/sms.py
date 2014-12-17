@@ -4,6 +4,7 @@ from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq import toggles
 from lxml import etree
 import logging
 from dimagi.utils.couch.loosechange import map_reduce
@@ -23,13 +24,15 @@ from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
     NotAUserClassError,
 )
-
 import uuid
+import re
 
 logger = logging.getLogger('commtrack.sms')
 
+
 class SMSError(RuntimeError):
     pass
+
 
 def handle(verified_contact, text, msg=None):
     """top-level handler for incoming stock report messages"""
@@ -38,7 +41,12 @@ def handle(verified_contact, text, msg=None):
         return False
 
     try:
-        data = StockReportParser(domain, verified_contact).parse(text.lower())
+        if toggles.STOCK_AND_RECEIPT_SMS_HANDLER.enabled(domain):
+            # handle special stock parser for custom domain logic
+            data = StockAndReceiptParser(domain, verified_contact).parse(text.lower())
+        else:
+            # default report parser
+            data = StockReportParser(domain, verified_contact).parse(text.lower())
         if not data:
             return False
     except NotAUserClassError:
@@ -165,7 +173,7 @@ class StockReportParser(object):
     def single_action_transactions(self, action, args, make_tx):
         # special case to handle immediate stock-out reports
         if action.action == const.StockActions.STOCKOUT:
-            if all(looks_like_prod_code(arg) for arg in args):
+            if all(self.looks_like_prod_code(arg) for arg in args):
                 for prod_code in args:
                     yield make_tx(
                         product=self.product_from_code(prod_code),
@@ -179,7 +187,7 @@ class StockReportParser(object):
 
         products = []
         for arg in args:
-            if looks_like_prod_code(arg):
+            if self.looks_like_prod_code(arg):
                 products.append(self.product_from_code(arg))
             else:
                 if not products:
@@ -270,13 +278,80 @@ class StockReportParser(object):
             raise SMSError('invalid product code "%s"' % prod_code)
         return p
 
+    def looks_like_prod_code(self, code):
+        try:
+            int(code)
+            return False
+        except ValueError:
+            return True
 
-def looks_like_prod_code(code):
-    try:
-        int(code)
-        return False
-    except:
-        return True
+
+class StockAndReceiptParser(StockReportParser):
+    """
+    This parser (originally written for EWS) allows
+    a slightly different requirement for SMS formats,
+    this class exists to break that functionality
+    out of the default SMS handler to live in the ewsghana
+
+    They send messages of the format:
+
+        'soh nets 100.22'
+
+    In this example, the data reflects:
+
+        nets = product sms code
+        100 = the facility stating that they have 100 nets
+        20 = the facility stating that they received 20 in this period
+
+    There is some duplication here, but it felt better to
+    add duplication instead of complexity. The goal is to
+    override only the couple methods that required modifications.
+    """
+    def looks_like_prod_code(self, code):
+        """
+        Special for EWS, this version doesn't consider "10.20"
+        as an invalid quantity.
+        """
+        try:
+            float(code)
+            return False
+        except ValueError:
+            return True
+
+    def single_action_transactions(self, action, args, make_tx):
+        products = []
+        for arg in args:
+            if self.looks_like_prod_code(arg):
+                products.append(self.product_from_code(arg))
+            else:
+                if not products:
+                    raise SMSError('quantity "%s" doesn\'t have a product' % arg)
+                if len(products) > 1:
+                    raise SMSError('missing quantity for product "%s"' % products[-1].code)
+
+                # NOTE also custom code here, must be formatted like 11.22
+                if re.compile("^\d+\.\d+$").match(arg):
+                    value = arg
+                else:
+                    raise SMSError('could not understand product quantity "%s"' % arg)
+
+                for p in products:
+                    # for EWS we have to do two transactions, one being a receipt
+                    # and second being a transaction (that's reverse of the order
+                    # the user provides them)
+                    yield make_tx(
+                        product=p,
+                        action=const.StockActions.RECEIPTS,
+                        quantity=value.split('.')[1]
+                    )
+                    yield make_tx(
+                        product=p,
+                        action=const.StockActions.STOCKONHAND,
+                        quantity=value.split('.')[0]
+                    )
+                products = []
+        if products:
+            raise SMSError('missing quantity for product "%s"' % products[-1].code)
 
 
 def verify_transaction_cases(transactions):
