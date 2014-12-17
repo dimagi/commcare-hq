@@ -305,10 +305,11 @@ class CaseSyncBatch(object):
     """
     Object representing a batch of case updates to sync.
     """
-    def __init__(self, global_state, domain, last_sync):
+    def __init__(self, global_state, domain, last_sync, chunksize):
         self.global_state = global_state
         self.domain = domain
         self.last_sync = last_sync
+        self.chunksize = chunksize
         self.next_batch = None
 
     @property
@@ -360,8 +361,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
     Batch of case updates for cases 'owned' by the user.
     """
     def __init__(self, global_state, domain, last_sync, chunksize, startkey, startkey_docid=None):
-        super(CaseSyncCouchBatch, self).__init__(global_state, domain, last_sync)
-        self.chunksize = chunksize
+        super(CaseSyncCouchBatch, self).__init__(global_state, domain, last_sync, chunksize)
         self.startkey = startkey
         self.startkey_docid = startkey_docid
         self.view_kwargs = {
