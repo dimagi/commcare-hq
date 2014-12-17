@@ -10,6 +10,8 @@ from .xpath import CaseIDXPath, session_var, CaseTypeXpath
 from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
+ITEXT_REF_REGEX = re.compile(r'jr:itext\([\'"](.*)[\'"]\)')
+SELECT_ITEM_REGEX = re.compile('(.*)-item([0-9]*)$')
 
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
@@ -724,9 +726,8 @@ class XForm(WrappedNode):
         :return:
         """
 
-        # TODO: Is there a better way to identify multiselects?
-        regex = '(.*)-item([0-9]*)$'
-        match = re.match(regex, question_id)
+        # TODO: Is there a better way to identify select items?
+        match = re.match(SELECT_ITEM_REGEX, question_id)
         if match:
             # Its a select
             ref = match.groups()[0]
@@ -756,9 +757,8 @@ class XForm(WrappedNode):
         "/data/" should not be included at the begining of the path.
         :return:
         """
-        regex = r'jr:itext\([\'"](.*)[\'"]\)'
         label = self.get_question_label(question_id)
-        match = re.match(regex, label.attrib['ref'])
+        match = re.match(ITEXT_REF_REGEX, label.attrib['ref'])
         try:
             return match.groups()[0]
         except (AttributeError, IndexError):
