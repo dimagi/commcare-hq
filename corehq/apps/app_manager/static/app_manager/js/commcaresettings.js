@@ -383,10 +383,10 @@ CommcareSettings.widgets.image_uploader = function (self) {
     self.href = "#" + self.slug;
     self.is_uploader = function(slug) {
         return slug == self.slug;
-    }
+    };
     self.triggerUpload = function() {
         triggerUploadForLogo(self.slug);
-    }
+    };
 };
 
 $(function () {
