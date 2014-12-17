@@ -140,12 +140,6 @@ GRAPH_CREATION = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-INVOICE_TRIGGER = StaticToggle(
-    'invoice_trigger',
-    'Accounting Trigger Invoices',
-    [NAMESPACE_USER]
-)
-
 OFFLINE_CLOUDCARE = StaticToggle(
     'offline-cloudcare',
     'Offline Cloudcare'
