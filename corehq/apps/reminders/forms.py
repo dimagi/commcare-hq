@@ -1689,7 +1689,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         event_interpretation = self.cleaned_data["event_interpretation"]
         if (event_interpretation == EVENT_AS_SCHEDULE and
             not has_fire_time_case_property):
-            event_time = lambda e : (
+            event_time = lambda e: (
                 (1440 * e['day_num']) +
                 (60 * e['fire_time'].hour) +
                 e['fire_time'].minute)

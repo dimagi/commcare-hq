@@ -23,6 +23,7 @@ from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 
+
 class IllegalModelStateException(Exception):
     pass
 
@@ -1111,7 +1112,6 @@ class CaseReminderHandler(Document):
             raise IllegalModelStateException("unknown custom_content_handler")
 
         self.check_min_tick()
-
 
     def check_min_tick(self, minutes=60):
         """
