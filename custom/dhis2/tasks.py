@@ -108,21 +108,49 @@ def push_child_entities(children):
                 'cchq_case_id': child['_id'],
 
                 'Name': child['name'],
-                'Height': child['height'],
-                'Weight': child['weight'],
-                'Age at time of visit': child['age'],
-                'Body-mass index': child['bmi'],
-                # TODO: And the rest of the attributes
+                'Height': child['child_height'],
+                'Weight': child['child_weight'],  # ?
+                'Age at time of visit': child['age'],  # ?
+                'Body-mass index': child['bmi'],  # ?
+                # Spec gives these as program event attributes, but they seem more
+                # like tracked entity instance attributes than event attributes.
+                # TODO: Check
+                'First Name': child['child_first_name'],
+                'Last Name': child['last_name'],  # ?
+                'Date of Birth': child['dob'],
+                'Gender': child['child_gender'],
+                'Name of Mother/Guardian': child['mother_first_name'],
+                'Mobile Number of the Mother': child['mother_phone_number'],
+                'Address': ', '.join((child['street_name'],
+                                     child['village'],
+                                     child['district'],
+                                     child['province']))
             }
             result = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
             # TODO: What does result look like?
             dhis2_child_id = result['Identity']
 
         # Enroll in Pediatric Nutrition Assessment
-        dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, today)
+        event_data = {
+            # Spec gives these as program event attributes, but they seem more
+            # like tracked entity instance attributes than event attributes.
+            # TODO: Check
+            'First Name': child['child_first_name'],
+            'Last Name': child['last_name'],  # ?
+            'Date of Birth': child['dob'],
+            'Gender': child['child_gender'],
+            'Name of Mother/Guardian': child['mother_first_name'],
+            'Mobile Number of the Mother': child['mother_phone_number'],
+            'Address': ', '.join((child['street_name'],
+                                 child['village'],
+                                 child['district'],
+                                 child['province']))
+        }
+        dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, today, event_data)
 
         # Enroll in Underlying Risk Assessment
-        dhis2_api.enroll_in_id(dhis2_child_id, risk_id, today)
+        if is_at_risk(child):
+            dhis2_api.enroll_in_id(dhis2_child_id, risk_id, today)
 
         # Set external_id in CCHQ to flag the case as pushed.
         commcare_user = CommCareUser.get(child['owner_id'])
@@ -136,6 +164,15 @@ def push_child_entities(children):
         )
         casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, commcare_user.project.name)
+
+
+def is_at_risk(child):
+    """
+    Determines whether a child should be enrolled in the Underlying Risk
+    Assessment program
+    """
+    # TODO: Criteria TBD
+    return True  # For the sake of testing
 
 
 def pull_child_entities(domain, dhis2_children):
