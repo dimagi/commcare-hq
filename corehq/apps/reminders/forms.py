@@ -1900,6 +1900,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 EVENT_TIMING_IMMEDIATE if sends_immediately else None,
             )
 
+        if reminder_handler.until:
+            initial['stop_condition'] = STOP_CONDITION_CASE_PROPERTY
+
         return initial
 
 
