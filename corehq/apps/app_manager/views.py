@@ -2838,16 +2838,16 @@ def download_bulk_app_translations(request, domain, app_id):
             for translation_node in xform.itext_node.findall("./{f}translation"):
                 lang = translation_node.attrib['lang']
                 for text_node in translation_node.findall("./{f}text"):
-                    id = text_node.attrib['id']
-                    itext_items[id] = itext_items.get(id, {})
+                    text_id = text_node.attrib['id']
+                    itext_items[text_id] = itext_items.get(text_id, {})
 
                     for value_node in text_node.findall("./{f}value"):
                         value_form = value_node.attrib.get("form", "default")
                         value = value_node.text
-                        itext_items[id][(lang, value_form)] = value
+                        itext_items[text_id][(lang, value_form)] = value
 
-            for id, values in itext_items.iteritems():
-                row = [id]
+            for text_id, values in itext_items.iteritems():
+                row = [text_id]
                 for value_form in ["default", "audio", "image", "video"]:
                     # Get the fallback value for this form
                     fallback = ""
@@ -2859,7 +2859,7 @@ def download_bulk_app_translations(request, domain, app_id):
                     for lang in app.langs:
                         row.append(values.get((lang, value_form), fallback))
                 # Don't add empty rows:
-                if len(filter(None, row[1:])):
+                if any(row[1:]):
                     rows[form_string].append(row)
 
     temp = StringIO()
