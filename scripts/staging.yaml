@@ -53,6 +53,7 @@ branches:
   - quickview # Simon 11/25
   - double-management # SK 12/1
   - logo-uploader # Nick P 12/2
+  - cloudcare-speedup  # cz/sk 12/17
 submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
