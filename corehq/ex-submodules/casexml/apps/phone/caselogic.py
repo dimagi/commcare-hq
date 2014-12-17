@@ -266,6 +266,12 @@ class BatchedCaseSyncOperation(object):
         case_updates = batch.case_updates_to_sync
 
     global_state = op.global_state
+
+    Throughout this process any case should be assumed to only contain the following properties:
+    '_id', 'type', 'indices', 'doc_type'.
+
+    If 'doc_type' = CommCareCase then the case is a real case but if it is CaseState then it is
+    a 'minimal case'.
     """
     def __init__(self, user, last_sync, chunk_size=1000):
         self.user = user
