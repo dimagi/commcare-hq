@@ -72,6 +72,7 @@ class BulkAppTranslationTest(SimpleTestCase):
         )
 
 
+# TODO: Eliminate some of the code reuse in these classes
 class MismatchedItextReferenceTest(SimpleTestCase, TestFileMixin):
     """
     Test the bulk app translation upload when the itext reference in a question
@@ -88,7 +89,11 @@ class MismatchedItextReferenceTest(SimpleTestCase, TestFileMixin):
         """
         app = Application.wrap(self.get_json("app"))
         with codecs.open(self.get_path("upload", "xlsx")) as f:
-            process_bulk_app_translation_upload(app, f)
+            messages = process_bulk_app_translation_upload(app, f)
+
+        self.assertListEqual(
+            [m[1] for m in messages], ["App Translations Updated!"]
+        )
 
 
 class BulkAppTranslationFormTest(SimpleTestCase, TestFileMixin):
