@@ -6,8 +6,8 @@ import datetime
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
+from casexml.apps.case.util import iter_cases
 from couchforms.models import XFormInstance
-from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import (
     IllegalCaseId,
     NoDomainProvided,
@@ -210,20 +210,8 @@ class CaseDbCache(object):
         Does NOT overwrite what is already in the cache if there is already something there.
         """
         case_ids = set(case_ids) - set(self.cache.keys())
-        def _iter_raw_cases(case_ids):
-            if self.strip_history:
-                for ids in chunked(case_ids, 100):
-                    for row in CommCareCase.get_db().view("case/get_lite", keys=ids, include_docs=False):
-                        yield row['value']
-            else:
-                for raw_case in iter_docs(CommCareCase.get_db(), case_ids):
-                    yield raw_case
-
-        for raw_case in _iter_raw_cases(case_ids):
-            if self.wrap:
-                self.set(raw_case['_id'], CommCareCase.wrap(raw_case))
-            else:
-                self.set(raw_case['_id'], raw_case)
+        for case in iter_cases(case_ids, self.strip_history, self.wrap):
+            self.set(case['_id'], case)
 
     def mark_changed(self, case):
         assert self.cache.get(case.case_id) is case

@@ -1,6 +1,7 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from casexml.apps.case.util import iter_cases
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
@@ -97,23 +98,6 @@ class CaseAPIHelper(object):
         self.filters = filters
         self.include_children = include_children
 
-
-    def iter_cases(self, ids):
-        class NoopWrapper(object):
-            @classmethod
-            def wrap(cls, doc):
-                return doc
-
-        wrapper = CommCareCase if self.wrap else NoopWrapper
-        database = CommCareCase.get_db()
-        if not self.strip_history:
-            for doc in iter_docs(database, ids):
-                yield wrapper.wrap(doc)
-        else:
-            for doc_ids in chunked(ids, 100):
-                for case in CommCareCase.bulk_get_lite(doc_ids, wrapper=wrapper):
-                    yield case
-
     def _case_results(self, case_id_list):
         def _filter(res):
             if self.filters:
@@ -132,7 +116,7 @@ class CaseAPIHelper(object):
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
             base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
-                            for case in self.iter_cases(case_id_list)]
+                            for case in iter_cases(case_id_list, self.strip_history, self.wrap)]
 
         else:
             base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]

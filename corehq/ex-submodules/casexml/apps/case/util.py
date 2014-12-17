@@ -8,6 +8,7 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
 
 
 def couchable_property(prop):
@@ -129,3 +130,14 @@ def reverse_indices(db, case, wrap=True):
 def primary_actions(case):
     return filter(lambda a: a.action_type != const.CASE_ACTION_REBUILD,
                   case.actions)
+
+
+def iter_cases(case_ids, strip_history=False, wrap=True):
+    from casexml.apps.case.models import CommCareCase
+    wrapper = lambda doc: CommCareCase.wrap(doc) if wrap else doc
+    if not strip_history:
+        for doc in iter_docs(CommCareCase.get_db(), case_ids):
+            yield wrapper(doc)
+    else:
+        for case in CommCareCase.bulk_get_lite(case_ids, wrapper=wrapper):
+            yield case
