@@ -25,6 +25,7 @@ from corehq.apps.domain.decorators import domain_admin_required, login_and_domai
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product
+from corehq.apps.users.forms import MultipleSelectionForm
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location
@@ -476,3 +477,40 @@ class ProductsPerLocationView(BaseLocationView):
     urlname = 'products_per_location'
     page_title = ugettext_noop("Products Per Location")
     template_name = 'locations/manage/products_per_location.html'
+
+    @property
+    @memoized
+    def location(self):
+        pass
+
+    @property
+    @memoized
+    def products_at_location(self):
+        return ['product2', 'product4']
+
+    @property
+    @memoized
+    def all_products(self):
+        return [
+            ('product1', "Product 1"),
+            ('product2', "Product 2"),
+            ('product3', "Product 3"),
+            ('product4', "Product 4"),
+            ('product5', "Product 5"),
+        ]
+
+    @property
+    @memoized
+    def products_form(self):
+        form = MultipleSelectionForm(initial={
+            'selected_ids': self.products_at_location
+        })
+        form.fields['selected_ids'].choices = self.all_products
+        return form
+
+
+    @property
+    def page_context(self):
+        return {
+            'products_per_location_form': self.products_form,
+        }
