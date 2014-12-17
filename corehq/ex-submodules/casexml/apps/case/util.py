@@ -135,10 +135,9 @@ def primary_actions(case):
 
 def iter_cases(case_ids, strip_history=False, wrap=True):
     from casexml.apps.case.models import CommCareCase
-    wrapper = lambda doc: CommCareCase.wrap(doc) if wrap else doc
     if not strip_history:
         for doc in iter_docs(CommCareCase.get_db(), case_ids):
-            yield wrapper(doc)
+            yield CommCareCase.wrap(doc) if wrap else doc
     else:
-        for case in CommCareCase.bulk_get_lite(case_ids, wrapper=wrapper):
+        for case in CommCareCase.bulk_get_lite(case_ids, wrap=wrap):
             yield case
