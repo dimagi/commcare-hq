@@ -78,9 +78,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     field_type = 'LocationFields'
     entity_string = _("Location")
 
-    def get(self, *args, **kwargs):
-        return super(LocationFieldsView, self).get(*args, **kwargs)
-
 
 class LocationSettingsView(BaseCommTrackManageView):
     urlname = 'location_settings'
@@ -470,3 +467,12 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
+
+
+class ProductsPerLocationView(BaseLocationView):
+    """
+    Manage products stocked at each location
+    """
+    urlname = 'products_per_location'
+    page_title = ugettext_noop("Products Per Location")
+    template_name = 'locations/manage/products_per_location.html'
