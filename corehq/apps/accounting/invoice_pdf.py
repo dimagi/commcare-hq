@@ -59,7 +59,7 @@ class Address(object):
         self.website = website
 
     def __str__(self):
-        return '''%(name)s%(company_name)s
+        return ('''%(name)s%(company_name)s
 %(first_line)s%(second_line)s
 %(city)s%(region)s %(postal_code)s
 %(country)s%(phone_number)s%(email_address)s%(website)s
@@ -75,7 +75,7 @@ class Address(object):
             'phone_number': prepend_newline_if_not_empty(self.phone_number),
             'email_address': prepend_newline_if_not_empty(self.email),
             'website': prepend_newline_if_not_empty(self.website),
-        }
+        }).lstrip()
 
 
 LIGHT_GRAY = (0.7, 0.7, 0.7)
