@@ -2845,11 +2845,19 @@ def download_bulk_app_translations(request, domain, app_id):
                         value_form = value_node.attrib.get("form", "default")
                         value = value_node.text
                         itext_items[id][(lang, value_form)] = value
+
             for id, values in itext_items.iteritems():
                 row = [id]
                 for value_form in ["default", "audio", "image", "video"]:
+                    # Get the fallback value for this form
+                    fallback = ""
                     for lang in app.langs:
-                        row.append(values.get((lang, value_form), ""))
+                        fallback = values.get((lang, value_form), fallback)
+                        if fallback:
+                            break
+                    # Populate the row
+                    for lang in app.langs:
+                        row.append(values.get((lang, value_form), fallback))
                 # Don't add empty rows:
                 if len(filter(None, row[1:])):
                     rows[form_string].append(row)
