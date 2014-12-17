@@ -1009,8 +1009,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         self.domain = domain
         self.is_edit = is_edit
         self.is_previewer = is_previewer
-        self.use_custom_content_handler = use_custom_content_handler
-        self.custom_content_handler = custom_content_handler
 
         self.fields['user_group_id'].choices = Group.choices_by_domain(self.domain)
         self.fields['default_lang'].choices = [(l, l) for l in available_languages]
@@ -1282,8 +1280,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     @property
     def section_advanced(self):
-        return FieldsetAccordionGroup(
-            _("Advanced Options"),
+        fields = [
             BootstrapMultiField(
                 _("Stop Condition"),
                 InlineField(
@@ -1366,19 +1363,27 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 'force_surveys_to_use_triggered_case',
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
-            BootstrapMultiField(
-                "",
-                InlineField(
-                    'use_custom_content_handler',
-                    data_bind="checked: use_custom_content_handler",
-                ),
-                InlineField(
-                    'custom_content_handler',
-                    css_class="input-xxlarge",
-                    data_bind="visible: use_custom_content_handler",
-                ),
-            ),
-            active=False,
+        ]
+        if self.is_previewer:
+            fields.append(
+                BootstrapMultiField(
+                    "",
+                    InlineField(
+                        'use_custom_content_handler',
+                        data_bind="checked: use_custom_content_handler",
+                    ),
+                    InlineField(
+                        'custom_content_handler',
+                        css_class="input-xxlarge",
+                        data_bind="visible: use_custom_content_handler",
+                    ),
+                )
+            )
+
+        return FieldsetAccordionGroup(
+            _("Advanced Options"),
+            *fields,
+            active=False
         )
 
     @property
@@ -1759,7 +1764,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         if self.is_previewer:
             return self.cleaned_data["use_custom_content_handler"]
         else:
-            return self.use_custom_content_handler
+            return None
 
     def clean_custom_content_handler(self):
         if self.is_previewer:
@@ -1772,7 +1777,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             else:
                 return None
         else:
-            return self.custom_content_handler
+            return None
 
     def save(self, reminder_handler):
         if not isinstance(reminder_handler, CaseReminderHandler):
@@ -1789,7 +1794,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             event_objects.append(new_event)
         reminder_handler.events = event_objects
 
-        for field in [
+        fields = [
             'nickname',
             'case_type',
             'start_property',
@@ -1812,8 +1817,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'default_lang',
             'max_question_retries',
             'force_surveys_to_use_triggered_case',
-            'custom_content_handler',
-        ]:
+        ]
+        if self.is_previewer:
+            fields.append('custom_content_handler')
+        for field in fields:
             value = self.cleaned_data[field]
             if field == 'recipient' and value == RECIPIENT_ALL_SUBCASES:
                 value = RECIPIENT_SUBCASE
