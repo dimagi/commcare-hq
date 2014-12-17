@@ -368,12 +368,12 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
         return self.kwargs.get('logo_name')
 
     def process_upload(self):
-        if self.app.icon_refs is None:
-            self.app.icon_refs = {}
+        if self.app.logo_refs is None:
+            self.app.logo_refs = {}
         ref = super(
             ProcessLogoFileUploadView, self
         ).process_upload()
-        self.app.icon_refs[self.filename] = ref['ref']
+        self.app.logo_refs[self.filename] = ref['ref']
         self.app.save()
         return ref
 

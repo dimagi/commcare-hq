@@ -1018,15 +1018,15 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         ],
         "refs": {
             slug: ApplicationMediaReference(
-                app.icon_refs.get(slug)["path"],
+                app.logo_refs.get(slug)["path"],
                 media_class=CommCareImage,
-                module_id=app.icon_refs.get(slug)["m_id"],
+                module_id=app.logo_refs.get(slug)["m_id"],
             ).as_dict()
-            for slug in uploader_slugs if app.icon_refs.get(slug)
+            for slug in uploader_slugs if app.logo_refs.get(slug)
         },
         "media_info": {
-            slug: app.icon_refs.get(slug)
-            for slug in uploader_slugs if app.icon_refs.get(slug)
+            slug: app.logo_refs.get(slug)
+            for slug in uploader_slugs if app.logo_refs.get(slug)
         },
     })
 
