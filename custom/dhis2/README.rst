@@ -407,6 +407,7 @@ must include:
   to DHIS2 as an event
 
 
+.. _setting_up_dhis2:
 Setting up DHIS2
 ^^^^^^^^^^^^^^^^
 
@@ -428,3 +429,22 @@ DHIS2 Child tracked entity instances to be enrolled in:
 
 1. "Pediatric Nutrition Assessment"
 2. "Underlying Risk Assessment"
+
+
+Development
+-----------
+
+A DHIS2 instance for development can be installed and run very easily.
+Download the `DHIS 2 Live package`_, unzip it, and run the executable. It will
+start the service locally on port 8082, and open a browser tab to the login
+screen.
+
+Credentials are "admin" / "district".
+
+Create some organisation units, a tracked entity, some attributes and some
+projects according to :ref:`setting_up_dhis2`.
+
+You can get to the API at http://localhost:8082/api/resources.json
+
+
+.. _DHIS 2 Live package: https://www.dhis2.org/downloads
