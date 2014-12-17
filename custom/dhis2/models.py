@@ -241,38 +241,43 @@ class Dhis2Api(object):
             else:
                 break
 
-    def enroll_in(self, te_inst_id, program, when=None):
+    def enroll_in(self, te_inst_id, program, when=None, data=None):
         """
         Enroll the given tracked entity instance in the given program
 
         :param te_inst_id: The ID of a tracked entity instance
         :param program: The *name* of a program
         :param when: The date ("YYYY-MM-DD") of enrollment. Defaults to today.
+        :param data: Dictionary of additional data values of event.
         :return: The API response
         """
         program_id = self.get_resource_id('programs', program)
-        return self.enroll_in_id(te_inst_id, program_id, when)
+        return self.enroll_in_id(te_inst_id, program_id, when, data)
 
-    def enroll_in_id(self, te_inst_id, program_id, when=None):
+    def enroll_in_id(self, te_inst_id, program_id, when=None, data=None):
         """
         Enroll the given tracked entity instance in the given program
 
         :param te_inst_id: The ID of a tracked entity instance
         :param program_id: The ID of a program
         :param when: The date ("YYYY-MM-DD") of enrollment. Defaults to today.
+        :param data: Dictionary of additional data values of event.
         :return: The API response
         """
         # cf. https://www.dhis2.org/doc/snapshot/en/user/html/ch31s34.html
         if when is None:
             when = date.today().strftime('%Y-%m-%d')
-        __, json = self._request.post(
-            'enrollments',
-            {
-                "trackedEntityInstance": te_inst_id,
-                "program": program_id,
-                "dateOfEnrollment": when,
-                "dateOfIncident": when
-            })
+        request_data = {
+            "trackedEntityInstance": te_inst_id,
+            "program": program_id,
+            "dateOfEnrollment": when,
+            "dateOfIncident": when
+        }
+        if data is not None:
+            if any(key not in self._tracked_entity_attributes for key in data):
+                self._fetch_tracked_entity_attributes()
+            request_data['dataValues'] = {self._tracked_entity_attributes[k]: v for k, v in data.iteritems()}
+        __, json = self._request.post('enrollments', request_data)
         return json
 
     def form_to_event(self, program_id, form, data_element_names):
