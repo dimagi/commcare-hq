@@ -442,8 +442,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return cls
 
     @classmethod
-    def bulk_get_lite(cls, ids, wrapper=None):
-        for ids in chunked(ids, 100):
+    def bulk_get_lite(cls, ids, wrapper=None, chunksize=100):
+        for ids in chunked(ids, chunksize):
             for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
                 if wrapper is None:
                     wrapper = cls.get_wrap_class(row['value'])
