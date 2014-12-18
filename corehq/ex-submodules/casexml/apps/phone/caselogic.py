@@ -347,7 +347,7 @@ class CaseSyncBatch(object):
             else:
                 to_fetch.append(doc['_id'])
 
-        cases.extend(CommCareCase.bulk_get_lite(to_fetch, wrapper=CommCareCase, chunksize=self.chunksize))
+        cases.extend(CommCareCase.bulk_get_lite(to_fetch, wrap=True, chunksize=self.chunksize))
         return cases
 
 
@@ -439,11 +439,6 @@ class CaseSyncCouchBatch(CaseSyncBatch):
         a dict containing only these keys: '_id', 'type', 'indices'. These 'minimal cases' are
         created from CaseState objects from the previous SyncLog.
         """
-        class NoopWrapper(object):
-            @classmethod
-            def wrap(cls, doc):
-                return doc
-
         def _case_domain_match(case):
             return not self.domain or self.domain == case.get('domain')
 
@@ -469,7 +464,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             logger.debug("No previous SyncLog. Fetching %s cases", len(cases_to_fetch))
 
         if cases_to_fetch:
-            cases = CommCareCase.bulk_get_lite(cases_to_fetch, wrapper=NoopWrapper, chunksize=self.chunksize)
+            cases = CommCareCase.bulk_get_lite(cases_to_fetch, wrap=False, chunksize=self.chunksize)
             minimal_cases.extend(
                 case_doc for case_doc in cases
                 if _case_domain_match(case_doc)
