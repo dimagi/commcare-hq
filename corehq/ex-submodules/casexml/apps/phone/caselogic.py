@@ -455,6 +455,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
                 self.last_sync,
                 self.chunksize,
                 self.startkey,
+                self.case_sharing,
                 startkey_docid=result['id']
             )
 
