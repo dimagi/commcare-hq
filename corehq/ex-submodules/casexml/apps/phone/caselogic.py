@@ -198,13 +198,13 @@ class GlobalSyncState(object):
 
     Also used after the sync is complete to provide list of CaseState objects
     """
-    def __init__(self, last_sync):
+    def __init__(self, last_sync, case_sharing=False):
         self.actual_relevant_cases_dict = {}
         self.actual_owned_cases_dict = {}
         self.all_synced_cases_dict = {}
 
         self.minimal_cases = {}
-        if last_sync:
+        if last_sync and not case_sharing:
             def state_to_case_doc(state):
                 doc = state.to_json()
                 doc['_id'] = state.case_id
@@ -283,7 +283,6 @@ class BatchedCaseSyncOperation(object):
         if chunk_size:
             self.chunk_size = chunk_size
         self.domain = self.user.domain
-        self.global_state = GlobalSyncState(self.last_sync)
 
         try:
             self.owner_keys = [[owner_id, False] for owner_id in self.user.get_owner_ids()]
@@ -291,6 +290,7 @@ class BatchedCaseSyncOperation(object):
             self.owner_keys = [[self.user.user_id, False]]
 
         self.case_sharing = len(self.owner_keys) > 1
+        self.global_state = GlobalSyncState(self.last_sync, self.case_sharing)
 
     def batches(self):
         for key in self.owner_keys:
