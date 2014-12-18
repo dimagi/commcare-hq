@@ -167,7 +167,7 @@ class NewLocationView(BaseLocationView):
         except MultipleSupplyPointException:
             consumption = []
             logging.error('Unexpected error building app', exc_info=True,
-                           extra={'request': self.request})
+                          extra={'request': self.request})
             messages.error(self.request, _(
                 "There was a problem with the setup for your project. " +
                 "Please contact support at commcarehq-support@dimagi.com."
