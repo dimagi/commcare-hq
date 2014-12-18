@@ -319,7 +319,7 @@ class RestoreConfig(object):
             # case blocks
             case_xml_elements = (
                 xml.get_case_element(op.case, op.required_updates, self.version)
-                for op in batch.case_updates_to_sync
+                for op in batch.case_updates_to_sync()
             )
             for case_elem in case_xml_elements:
                 response.append(case_elem)

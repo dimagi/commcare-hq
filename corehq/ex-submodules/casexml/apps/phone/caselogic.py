@@ -366,7 +366,6 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
     Batch of updates representing all cases that are on the phone
     but aren't part of the 'owned' cases of the user.
     """
-    @property
     def case_updates_to_sync(self):
         other_case_ids_on_phone = set([
             case_id
@@ -420,7 +419,6 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             self.view_kwargs['startkey_docid'] = self.startkey_docid
             self.view_kwargs['skip'] = 1
 
-    @property
     def case_updates_to_sync(self):
         actual_owned_cases = self._actual_owned_cases()
         if not actual_owned_cases:
