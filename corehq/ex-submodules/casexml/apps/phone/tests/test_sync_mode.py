@@ -20,6 +20,7 @@ from datetime import datetime
 from xml.etree import ElementTree
 
 USER_ID = "main_user"
+USERNAME = "syncguy"
 OTHER_USER_ID = "someone_else"
 SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
@@ -36,7 +37,7 @@ class SyncBaseTest(TestCase):
         delete_all_xforms()
         delete_all_sync_logs()
 
-        self.user = User(user_id=USER_ID, username="syncguy", 
+        self.user = User(user_id=USER_ID, username=USERNAME,
                          password="changeme", date_joined=datetime(2011, 6, 9)) 
         # this creates the initial blank sync token in the database
         restore_config = RestoreConfig(self.user)

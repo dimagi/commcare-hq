@@ -234,7 +234,7 @@ class GlobalSyncState(object):
 
     def update_owned_cases(self, cases):
         self.actual_owned_cases_dict.update(
-            {case.case_id: CaseState.from_case(case) for case in cases}
+            {case['_id']: CaseState.from_case(case) for case in cases}
         )
 
     def update_relevant_cases(self, cases):
@@ -414,6 +414,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
     def _view_results(self):
         results = CommCareCase.get_db().view(
             "case/by_owner",
+            reduce=False,
             **self.view_kwargs
         )
         len_results = len(results)
