@@ -12,3 +12,6 @@ class InvalidProductException(Exception):
 
 class NoDefaultLocationException(Exception):
     pass
+
+class MultipleSupplyPointException(Exception):
+	pass

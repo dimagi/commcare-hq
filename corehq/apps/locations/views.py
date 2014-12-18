@@ -11,6 +11,7 @@ from corehq.apps.locations.forms import LocationForm
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.facilities.models import FacilityRegistry
@@ -20,6 +21,7 @@ from django.contrib import messages
 from couchdbkit import ResourceNotFound, MultipleResultsFound
 import urllib
 import json
+import logging
 
 from django.utils.translation import ugettext as _, ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
@@ -160,25 +162,22 @@ class NewLocationView(BaseLocationView):
 
     @property
     def page_context(self):
-        return {
-            'form': self.location_form,
-            'location': self.location,
-            'consumption': self.consumption,
-            'metadata': self.metadata
-        }
-
-    def get(self, request, *args, **kwargs):
         try:
-            context = self.get_context_data(**kwargs)
-            return self.render_to_response(context)
-        except MultipleResultsFound:
-            messages.error(request, _(
+            consumption = self.consumption
+        except MultipleSupplyPointException:
+            consumption = []
+            logging.error('Unexpected error building app', exc_info=True,
+                           extra={'request': self.request})
+            messages.error(self.request, _(
                 "There was a problem with the setup for your project. " +
                 "Please contact support at commcarehq-support@dimagi.com."
             ))
-        return HttpResponseRedirect(
-            reverse(LocationsListView.urlname, args=[self.domain])
-        )
+        return {
+            'form': self.location_form,
+            'location': self.location,
+            'consumption': consumption,
+            'metadata': self.metadata
+        }
 
     def post(self, request, *args, **kwargs):
         if self.location_form.is_valid():
@@ -236,7 +235,11 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def supply_point(self):
-        return SupplyPointCase.get_by_location(self.location)
+        try:
+            return SupplyPointCase.get_by_location(self.location)
+        except MultipleResultsFound:
+            raise MultipleSupplyPointException
+
 
     @property
     def consumption(self):
