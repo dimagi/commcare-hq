@@ -493,12 +493,12 @@ class MultiUserSyncTest(SyncBaseTest):
             CaseBlock(create=False, case_id=case_id, user_id=OTHER_USER_ID,
                       version=V2, update={'greeting': "Hello!"}
         ).as_xml(), latest_sync.get_id)
-        
+
         # original user syncs again
         # make sure updates take
-        match = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        _, match = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("Hello!" in ElementTree.tostring(match))
-    
+
     def testOtherUserAddsIndex(self):
         time = datetime.now()
 
@@ -556,7 +556,7 @@ class MultiUserSyncTest(SyncBaseTest):
         check_user_has_case(self, self.user, expected_parent_case,
                             restore_id=self.sync_log.get_id, version=V2,
                             purge_restore_cache=True)
-        orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        _, orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("index" in ElementTree.tostring(orig))
 
     def testMultiUserEdits(self):

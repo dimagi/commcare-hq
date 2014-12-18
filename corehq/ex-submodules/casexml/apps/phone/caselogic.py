@@ -273,10 +273,15 @@ class BatchedCaseSyncOperation(object):
     If 'doc_type' = CommCareCase then the case is a real case but if it is CaseState then it is
     a 'minimal case'.
     """
-    def __init__(self, user, last_sync, chunk_size=1000):
+
+    # use class variable to allow patching in tests
+    chunk_size = 1000
+
+    def __init__(self, user, last_sync, chunk_size=None):
         self.user = user
         self.last_sync = last_sync
-        self.chunk_size = chunk_size
+        if chunk_size:
+            self.chunk_size = chunk_size
         self.domain = self.user.domain
         self.global_state = GlobalSyncState(self.last_sync)
 
@@ -369,6 +374,7 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
             if case_id not in self.global_state.actual_relevant_cases_dict
         ])
 
+        logger.debug("%s other cases on phone", len(other_case_ids_on_phone))
         if not other_case_ids_on_phone:
             return []
 
@@ -489,8 +495,9 @@ class CaseSyncCouchBatch(CaseSyncBatch):
                 )
             return minimal_cases
         else:
-            return [result['value'] for result in view_results]
-            logger.debug("No previous SyncLog. Fetching %s cases", len(cases_to_fetch))
+            cases = [result['value'] for result in view_results]
+            logger.debug("No previous SyncLog. Fetched %s cases", len(cases))
+            return cases
 
     def _all_relevant_cases_dict(self, cases):
         return get_footprint(cases, domain=self.domain)

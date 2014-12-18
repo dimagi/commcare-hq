@@ -135,6 +135,9 @@ class RestoreConfig(object):
 
         self.cache = get_redis_default_cache()
 
+        # keep track of the number of batches (if any) for comparison in unit tests
+        self.num_batches = None
+
     @property
     @memoized
     def sync_log(self):
@@ -307,8 +310,10 @@ class RestoreConfig(object):
     def _get_case_payload_batched(self, response, user, last_sync, synclog):
         synclog.save(**get_safe_write_kwargs())
 
+        self.num_batches = 0
         sync_operation = BatchedCaseSyncOperation(user, last_sync)
         for batch in sync_operation.batches():
+            self.num_batches += 1
             logger.debug(batch)
 
             # case blocks
