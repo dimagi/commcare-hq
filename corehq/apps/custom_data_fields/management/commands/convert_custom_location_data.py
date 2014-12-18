@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from corehq.apps.custom_data_fields import models as cdm
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.database import iter_docs
 
 
 class Command(BaseCommand):
