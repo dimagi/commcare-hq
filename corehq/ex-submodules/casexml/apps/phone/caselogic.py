@@ -303,7 +303,8 @@ class BatchedCaseSyncOperation(object):
             yield CaseSyncPhoneBatch(
                 self.global_state,
                 self.domain,
-                self.last_sync
+                self.last_sync,
+                self.chunk_size,
             )
 
 
