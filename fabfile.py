@@ -1192,7 +1192,7 @@ def set_celery_supervisorconf():
 def set_pillowtop_supervisorconf():
     # in reality this also should be another machine
     # if the number of listeners gets too high
-    if env.environment not in ['preview']:
+    if env.environment not in ['preview', 'dev']:
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
