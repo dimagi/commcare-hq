@@ -1,3 +1,7 @@
+from django.utils.translation import ugettext as _
+
+from dimagi.utils.decorators.memoized import memoized
+
 from .utils import normal_format, format_percent
 
 
@@ -68,3 +72,81 @@ class HealthStatus(object):
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
+
+
+class AWCHealthStatus(object):
+    """
+    Takes a set of OPMCaseRow objects, all from the same AWC, and performs
+    aggregations on it.
+    """
+    method_map = [
+        # method, header, count_method
+        ('awc_name', _("AWC Name"), 'no_denom'),
+        ('beneficiaries', _("Total Beneficiaries"), 'no_denom'),
+        ('pregnancies', _("Pregnant Women"), 'beneficiaries'),
+        ('mothers', _("Mothers of Children Aged 3 Years and Below"), 'beneficiaries'),
+        ('children', _("Children Between 0 and 3 Years of Age"), 'beneficiaries'),
+        ('vhnd_monthly', _("Beneficiaries Attending VHND Monthly"), 'Beneficiaries'),
+        ('ifa_tablets', _("Pregnant Women Who Have Received at least 30 IFA Tablets"), 'no_denom'),
+        ('preg_weighed', _("Pregnant Women Whose Weight Gain Was Monitored"), 'no_denom'),
+        ('child_weighed', _("Children Whose Weight Was Monitored"), 'no_denom'),
+        ('children_registered', _("Children Whose Birth Was Registered"), 'no_denom'),
+    ]
+    # TODO possible general approach in the future:
+    # subclass OPMCaseRow specifically for this report, and add in indicators to
+    # our hearts' content
+    def __init__(self, cases):
+        self.cases = cases
+        self.awc_name = cases[0].awc_name
+
+    @property
+    def no_denom(self):
+        return None
+
+    @property
+    @memoized
+    def beneficiaries(self):
+        return len(self.cases)
+
+    @property
+    def pregnancies(self):
+        return len([c for c in self.cases if c.status == 'pregnant'])
+
+    @property
+    def mothers(self):
+        return len([c for c in self.cases if c.status == 'mother'])
+
+    @property
+    def children(self):
+        return sum([c.num_children for c in self.cases])
+
+    @property
+    def vhnd_monthly(self):
+        # TODO in preg month 9 and child month 1 this condition is always met.
+        # TODO counts as yes if VHND was not available
+        # Include that or not?
+        return len([c for c in self.cases
+                    if c.preg_attended_vhnd or c.child_attended_vhnd])
+
+    @property
+    def ifa_tablets(self):
+        # TODO this is only relevant for women in their 6th month of pregnancy
+        # TODO counts as yes if VHND was not available
+        return len([c for c in self.cases if c.preg_received_ifa])
+
+    @property
+    def preg_weighed(self):
+        # TODO only counts months 6 and 9
+        # TODO counts as yes if VHND was not available
+        return len([c for c in self.cases if c.preg_weighed])
+
+    @property
+    def child_weighed(self):
+        # TODO only counts when child_age == 3
+        return len([c for c in self.cases if c.child_weighed_once])
+
+    @property
+    def children_registered(self):
+        # TODO only counts at child_age == 6
+        # TODO counts as yes if VHND was not available
+        return len([c for c in self.cases if c.child_birth_registered])
