@@ -98,12 +98,12 @@ class MockCaseRow(OPMCaseRow):
     """
     Spoof the following fields to create example cases
     """
-    def __init__(self, case, report, data_provider=None, child_index=1):
+    def __init__(self, case, report, data_provider=None, child_index=1, **kwargs):
         self.case = case
         self.report = report
         self.report.is_rendered_as_email = None
         self.report._data_provider = data_provider or MockDataProvider(report.datespan.enddate.date())
-        super(MockCaseRow, self).__init__(case, report, child_index=child_index)
+        super(MockCaseRow, self).__init__(case, report, child_index=child_index, **kwargs)
 
 
 class OPMCaseReportTestBase(TestCase):
