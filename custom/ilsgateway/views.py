@@ -20,6 +20,7 @@ from custom.ilsgateway.tasks import ils_stock_data_task, report_run, ils_clear_s
 from custom.logistics.models import MigrationCheckpoint
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import resync_webusers_passwords_task
+from dimagi.utils.couch.database import iter_docs
 
 
 class GlobalStats(BaseDomainView):
@@ -30,12 +31,10 @@ class GlobalStats(BaseDomainView):
 
     @property
     def main_context(self):
-        contacts = CommCareUser.by_domain(self.domain)
+        contacts = CommCareUser.by_domain(self.domain, reduce=True)
         web_users = WebUser.by_domain(self.domain)
         web_users_admins = web_users_read_only = 0
-        clinic_count = chps_facility_count = district_hospital_count = health_centre_count = hospital_count = 0
-        psychiatric_hospital_count = regional_medical_store_count = regional_hospital_count = polyclinic_count = 0
-        teaching_hospital_count = central_medical_store_count = 0
+        facilities = SQLLocation.objects.filter(domain=self.domain, location_type__iexact='FACILITY')
 
         for web_user in web_users:
             role = web_user.get_domain_membership(self.domain).role
@@ -50,40 +49,13 @@ class GlobalStats(BaseDomainView):
             domain=self.domain, location_type=location_type.name).count() for location_type in location_types
             if not location_type.administrative])
 
-        facilities = SQLLocation.objects.filter(domain=self.domain, location_type__iexact='FACILITY')
-        for facility in facilities:
-            supply_point_type = Location.get(facility.location_id).metadata.get('supply_point_type', "").lower()
-            if supply_point_type == 'clinic':
-                clinic_count += 1
-            elif supply_point_type == 'chps facility':
-                chps_facility_count += 1
-            elif supply_point_type == 'district hospital':
-                district_hospital_count += 1
-            elif supply_point_type == 'health centre':
-                health_centre_count += 1
-            elif supply_point_type == 'hospital':
-                hospital_count += 1
-            elif supply_point_type == 'psychiatric hospital':
-                psychiatric_hospital_count += 1
-            elif supply_point_type == 'regional medical store':
-                regional_medical_store_count += 1
-            elif supply_point_type == 'regional hospital':
-                regional_hospital_count += 1
-            elif supply_point_type == 'polyclinic':
-                polyclinic_count += 1
-            elif supply_point_type == 'teaching hospital':
-                teaching_hospital_count += 1
-            elif supply_point_type == 'central medical store':
-                central_medical_store_count += 1
-
         context = {
             'country': SQLLocation.objects.filter(domain=self.domain, location_type='country').count(),
             'region': SQLLocation.objects.filter(domain=self.domain, location_type='region').count(),
             'district': SQLLocation.objects.filter(domain=self.domain, location_type='district').count(),
             'entities_reported_stock': entities_reported_stock,
             'facilities': len(facilities),
-            'central_medical_store': central_medical_store_count,
-            'contacts': len(contacts),
+            'contacts': contacts[0]['value'] if contacts else 0,
             'web_users': len(web_users),
             'web_users_admins': web_users_admins,
             'web_users_read_only': web_users_read_only,
@@ -95,17 +67,27 @@ class GlobalStats(BaseDomainView):
         }
 
         if self.show_supply_point_types:
+            supply_point_types = ['clinic', 'chps facility', 'district hospital', 'health centre', 'hospital',
+                              'psychiatric hospital', 'regional medical store', 'regional hospital', 'polyclinic',
+                              'teaching hospital', 'central medical store', '']
+            supply_point_types_map = {supply_point_type: 0 for supply_point_type in supply_point_types}
+            facility_ids = [facility.location_id for facility in facilities]
+            for facility in iter_docs(Location.get_db(), facility_ids):
+                supply_point_type = facility.get('metadata', {}).get('supply_point_type', "").lower()
+                supply_point_types_map[supply_point_type] += 1
+
             context.update({
-                'clinic': clinic_count,
-                'chps_facility': chps_facility_count,
-                'district_hospital': district_hospital_count,
-                'health_centre': health_centre_count,
-                'hospital': hospital_count,
-                'psychiatric_hospital': psychiatric_hospital_count,
-                'regional_medical_store': regional_medical_store_count,
-                'regional_hospital': regional_hospital_count,
-                'polyclinic': polyclinic_count,
-                'teaching_hospital': teaching_hospital_count})
+                'clinic': supply_point_types_map['clinic'],
+                'chps_facility': supply_point_types_map['chps facility'],
+                'district_hospital': supply_point_types_map['district hospital'],
+                'health_centre': supply_point_types_map['health centre'],
+                'hospital': supply_point_types_map['hospital'],
+                'psychiatric_hospital': supply_point_types_map['psychiatric hospital'],
+                'regional_medical_store': supply_point_types_map['regional medical store'],
+                'regional_hospital': supply_point_types_map['regional hospital'],
+                'polyclinic': supply_point_types_map['polyclinic'],
+                'teaching_hospital': supply_point_types_map['teaching hospital'],
+                'central_medical_store': supply_point_types_map['central medical store']})
 
         main_context.update(context)
         return main_context
