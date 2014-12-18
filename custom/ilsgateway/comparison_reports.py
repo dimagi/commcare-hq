@@ -54,8 +54,12 @@ class LocationsCompareReport(BaseComparisonReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn('Name'), DataTablesColumn('Code'),
-                                DataTablesColumn('Is migrated'))
+        return DataTablesHeader(
+            DataTablesColumn('Name'),
+            DataTablesColumn('Type'),
+            DataTablesColumn('Code'),
+            DataTablesColumn('Is migrated')
+        )
 
     @property
     def rows(self):
@@ -76,7 +80,7 @@ class LocationsCompareReport(BaseComparisonReport):
             except SQLLocation.DoesNotExist:
                 is_migrated = False
             finally:
-                rows.append([location.name, location.code, is_migrated])
+                rows.append([location.name, location.type, location.code, is_migrated])
         return rows
 
 
