@@ -128,10 +128,16 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
     [NAMESPACE_USER]
 )
 
+CASE_LIST_CUSTOM_XML = StaticToggle(
+    'case_list_custom_xml',
+    'Show text area for entering custom case list xml',
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+
 )
 
 GRAPH_CREATION = StaticToggle(

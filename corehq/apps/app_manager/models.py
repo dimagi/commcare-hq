@@ -1180,6 +1180,7 @@ class Detail(IndexedSchema):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
+    custom_xml = StringProperty()
 
     def get_tab_spans(self):
         '''
