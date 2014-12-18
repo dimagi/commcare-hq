@@ -4,6 +4,11 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 import requests
 
 
+# TODO: Move to init
+DOMAIN = 'wv-lanka'
+LOOKUP_TABLE = 'dhis2_org_unit'
+
+
 class JsonApiError(Exception):
     """
     JsonApiError is raised for HTTP or socket errors.
@@ -15,6 +20,10 @@ class Dhis2ApiQueryError(JsonApiError):
     """
     Dhis2ApiQueryError is raised when the API returns an unexpected response.
     """
+    pass
+
+
+class Dhis2ConfigurationError(Exception):
     pass
 
 
@@ -237,6 +246,26 @@ class Dhis2Api(object):
             for inst in instances:
                 yield inst
             if page < json['metaData']['pager']['pageCount']:
+                page += 1
+            else:
+                break
+
+    def gen_org_units(self):
+        """
+        Yields organisation units
+        """
+        page = 1
+        while True:
+            __, json = self._request.get(
+                'organisationUnits',
+                params={
+                    'paging': 'true',
+                    'page': page,
+                    'links': 'false'
+                })
+            for org_unit in json['organisationUnits']:
+                yield org_unit
+            if page < json['pager']['pageCount']:
                 page += 1
             else:
                 break
@@ -497,6 +526,9 @@ class Dhis2OrgUnit(object):
 
     def save(self):
         data_type = FixtureDataType.by_domain_tag(self.objects.domain, self.objects.tag).one()
+        if data_type is None:
+            raise Dhis2ConfigurationError(
+                'Unable to find lookup table in domain "%s" with ID "%s".' % (self.objects.domain, self.objects.tag))
         data_item = FixtureDataItem()
         data_item.data_type_id = data_type.get_id
         data_item.domain = self.objects.domain
@@ -513,4 +545,4 @@ class Dhis2OrgUnit(object):
         item = FixtureDataItem.get(self._fixture_id)
         item.delete()
 
-Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, 'dhis2', 'dhis2_org_unit')
+Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, DOMAIN, LOOKUP_TABLE)

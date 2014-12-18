@@ -19,7 +19,7 @@ from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiE
 
 
 # TODO: Move to init
-DOMAIN = 'barproject'
+DOMAIN = 'wv-lanka'
 DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element names
     # We could map to IDs, which would save an API request, but would reduce readability.
     'height': 'Height',
@@ -27,10 +27,6 @@ DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element na
     'age': 'Age at time of visit',
     'bmi': 'Body-mass index',
 }
-
-
-class Dhis2ConfigurationError(Exception):
-    pass
 
 
 # @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
@@ -47,16 +43,9 @@ def sync_org_units():
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    request = JsonApiRequest(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    try:
-        __, json = request.get('organisationUnits', params={'paging': 'false', 'links': 'false'})
-    except JsonApiError:
-        # TODO: Retry recoverable errors, like timeouts.
-        # http://celery.readthedocs.org/en/latest/userguide/tasks.html#retrying
-        # raise self.retry(exc=err)
-        raise
-    their_org_units = {ou['id']: ou for ou in json['organisationUnits']}
-    our_org_units = {ou.id_: ou for ou in Dhis2OrgUnit.objects.all()}
+    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units()}  # TODO: Is this a bad idea?
+    our_org_units = {ou.id_: ou for ou in Dhis2OrgUnit.objects.all()}  # ... or just drop ours, and read theirs
     # Add new org units
     for id_, ou in their_org_units.iteritems():
         if id_ not in our_org_units:
