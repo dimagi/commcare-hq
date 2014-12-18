@@ -19,8 +19,6 @@ class BaseComparisonReport(GenericTabularReport, CustomProjectReport, ProjectRep
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        if domain and project and user is None:
-            return True
         if user and user.is_domain_admin(domain):
             return True
         return False
