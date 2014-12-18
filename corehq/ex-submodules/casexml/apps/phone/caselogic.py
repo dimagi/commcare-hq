@@ -358,12 +358,13 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
     """
     @property
     def case_updates_to_sync(self):
-        other_cases_on_phone = set([
-            self.global_state.minimal_cases[case_id]
+        other_case_ids_on_phone = set([
+            case_id
             for case_id in self.last_sync.get_footprint_of_cases_on_phone()
             if case_id not in self.global_state.actual_relevant_cases_dict
         ])
 
+        other_cases_on_phone = [self.global_state.minimal_cases[case_id] for case_id in other_case_ids_on_phone]
         potential_to_sync = self._get_potential_cases(other_cases_on_phone)
 
         cases_to_sync = self._fetch_missing_cases_and_wrap(potential_to_sync)
