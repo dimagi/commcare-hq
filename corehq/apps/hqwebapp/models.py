@@ -445,6 +445,10 @@ class SetupTab(UITab):
                     'title': LocationImportStatusView.page_title,
                     'urlname': LocationImportStatusView.urlname,
                 },
+                {
+                    'title': LocationFieldsView.page_name(),
+                    'urlname': LocationFieldsView.urlname,
+                },
             ]
         }
         advanced_locations_config = {
