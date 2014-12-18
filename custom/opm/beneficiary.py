@@ -65,6 +65,7 @@ class OPMCaseRow(object):
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
         self.set_case_properties()
+        self.last_month_row = None
         if not is_secondary:
             self.add_extra_children()
             # if we were called directly, set the last month's row on this
@@ -73,7 +74,7 @@ class OPMCaseRow(object):
                 self.last_month_row = OPMCaseRow(case, report, 1, is_secondary=True,
                                                  explicit_month=last_month, explicit_year=last_year)
             except InvalidRow:
-                self.last_month_row = None
+                pass
 
     @property
     def readable_status(self):
