@@ -102,7 +102,7 @@ class CustomDataEditor(object):
     def get_uncategorized_form(self):
 
         def FakeInput(val):
-            return HTML('<span class="input-xlarge uneditable-input">{}</span>'
+            return HTML(u'<span class="input-xlarge uneditable-input">{}</span>'
                         .format(val))
 
         def Label(val):
