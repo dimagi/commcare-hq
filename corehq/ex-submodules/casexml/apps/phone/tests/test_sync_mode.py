@@ -22,6 +22,7 @@ from xml.etree import ElementTree
 USER_ID = "main_user"
 USERNAME = "syncguy"
 OTHER_USER_ID = "someone_else"
+OTHER_USERNAME = "ferrel"
 SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
 
@@ -455,7 +456,7 @@ class MultiUserSyncTest(SyncBaseTest):
         super(MultiUserSyncTest, self).setUp()
         # the other user is an "owner" of the original users cases as well,
         # for convenience
-        self.other_user = User(user_id=OTHER_USER_ID, username="ferrel",
+        self.other_user = User(user_id=OTHER_USER_ID, username=OTHER_USERNAME,
                                password="changeme", date_joined=datetime(2011, 6, 9),
                                additional_owner_ids=[SHARED_ID])
         

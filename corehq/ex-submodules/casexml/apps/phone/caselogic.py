@@ -285,6 +285,8 @@ class BatchedCaseSyncOperation(object):
         except AttributeError:
             self.owner_keys = [[self.user.user_id, False]]
 
+        self.case_sharing = len(self.owner_keys) > 1
+
     def batches(self):
         for key in self.owner_keys:
             batch = CaseSyncCouchBatch(
@@ -292,7 +294,8 @@ class BatchedCaseSyncOperation(object):
                 self.domain,
                 self.last_sync,
                 self.chunk_size,
-                key
+                key,
+                case_sharing=self.case_sharing
             )
             yield batch
             while batch.next_batch:
@@ -305,6 +308,7 @@ class BatchedCaseSyncOperation(object):
                 self.domain,
                 self.last_sync,
                 self.chunk_size,
+                case_sharing=self.case_sharing
             )
 
 
@@ -312,11 +316,12 @@ class CaseSyncBatch(object):
     """
     Object representing a batch of case updates to sync.
     """
-    def __init__(self, global_state, domain, last_sync, chunksize):
+    def __init__(self, global_state, domain, last_sync, chunksize, case_sharing):
         self.global_state = global_state
         self.domain = domain
         self.last_sync = last_sync
         self.chunksize = chunksize
+        self.case_sharing = case_sharing
         self.next_batch = None
 
     @property
@@ -364,9 +369,18 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
             if case_id not in self.global_state.actual_relevant_cases_dict
         ])
 
-        other_cases_on_phone = [self.global_state.minimal_cases[case_id] for case_id in other_case_ids_on_phone]
-        potential_to_sync = self._get_potential_cases(other_cases_on_phone)
+        if not other_case_ids_on_phone:
+            return []
 
+        if self.case_sharing:
+            # case sharing is in use so we need to fetch the cases from the DB in case
+            # they were modified by another user or reference cases owned by another user
+            other_cases_on_phone = CommCareCase.bulk_get_lite(other_case_ids_on_phone, wrap=False, chunksize=len(other_case_ids_on_phone))
+        else:
+            other_cases_on_phone = [self.global_state.minimal_cases[case_id] for case_id in other_case_ids_on_phone]
+
+
+        potential_to_sync = self._get_potential_cases(other_cases_on_phone)
         cases_to_sync = self._fetch_missing_cases_and_wrap(potential_to_sync)
         case_sync_updates = self._case_sync_updates(cases_to_sync)
 
@@ -381,10 +395,16 @@ class CaseSyncCouchBatch(CaseSyncBatch):
     """
     Batch of case updates for cases 'owned' by the user.
     """
-    def __init__(self, global_state, domain, last_sync, chunksize, startkey, startkey_docid=None):
-        super(CaseSyncCouchBatch, self).__init__(global_state, domain, last_sync, chunksize)
+    def __init__(self, global_state, domain, last_sync, chunksize, startkey, case_sharing=False, startkey_docid=None):
+        super(CaseSyncCouchBatch, self).__init__(global_state, domain, last_sync, chunksize, case_sharing)
         self.startkey = startkey
         self.startkey_docid = startkey_docid
+
+        # We can only use minimal cases if:
+        # * there is a SyncLog which we can use that has cases in it
+        # * the user is not part of any case sharing groups
+        self.use_minimal_cases = self.last_sync and not case_sharing
+
         self.view_kwargs = {
             'startkey': startkey,
             'endkey': startkey,
@@ -415,7 +435,7 @@ class CaseSyncCouchBatch(CaseSyncBatch):
 
     def _view_results(self):
         results = CommCareCase.get_db().view(
-            "case/by_owner",
+            "case/by_owner" if self.use_minimal_cases else "case/by_owner_lite",
             reduce=False,
             **self.view_kwargs
         )
@@ -444,10 +464,10 @@ class CaseSyncCouchBatch(CaseSyncBatch):
             return not self.domain or self.domain == case.get('domain')
 
         view_results = self._view_results()
-        minimal_cases = []
-        if self.last_sync:
+        if self.use_minimal_cases:
             # First we check to see if there is a case state available that we can use
             # rather than fetching the whole case.
+            minimal_cases = []
             cases_to_fetch = []
             for result in view_results:
                 minimal_case = self.global_state.minimal_cases.get(result['id'])
@@ -460,27 +480,27 @@ class CaseSyncCouchBatch(CaseSyncBatch):
                 "%s cases found in previous SyncLog. %s still to fetch",
                 len(minimal_cases), len(cases_to_fetch)
             )
+
+            if cases_to_fetch:
+                cases = CommCareCase.bulk_get_lite(cases_to_fetch, wrap=False, chunksize=self.chunksize)
+                minimal_cases.extend(
+                    case_doc for case_doc in cases
+                    if _case_domain_match(case_doc)
+                )
+            return minimal_cases
         else:
-            cases_to_fetch = [result['id'] for result in view_results]
+            return [result['value'] for result in view_results]
             logger.debug("No previous SyncLog. Fetching %s cases", len(cases_to_fetch))
-
-        if cases_to_fetch:
-            cases = CommCareCase.bulk_get_lite(cases_to_fetch, wrap=False, chunksize=self.chunksize)
-            minimal_cases.extend(
-                case_doc for case_doc in cases
-                if _case_domain_match(case_doc)
-            )
-
-        return minimal_cases
 
     def _all_relevant_cases_dict(self, cases):
         return get_footprint(cases, domain=self.domain)
 
     def __repr__(self):
-        return "CaseSyncCouchBatch(startkey={}, startkey_docid={}, chunksize={})".format(
+        return "CaseSyncCouchBatch(startkey={}, startkey_docid={}, chunksize={}, use_minimal_cases={})".format(
             self.startkey,
             self.startkey_docid,
-            self.chunksize
+            self.chunksize,
+            self.use_minimal_cases
         )
 
 
