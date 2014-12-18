@@ -6,7 +6,7 @@ Replace this with more appropriate tests for your application.
 """
 from unittest import skip
 from custom.dhis2.models import Dhis2Api
-from custom.dhis2.tasks import push_child_entities, gen_children_only_ours, sync_child_entities, DOMAIN
+from custom.dhis2.tasks import push_child_entities, gen_children_only_ours, sync_child_entities, DOMAIN, sync_org_units
 
 from django.test import TestCase
 from mock import patch
@@ -67,11 +67,31 @@ class TaskTest(TestCase):
 
 class MockOutThisTest(TestCase):
 
-    host = 'http://dhis1.internal.commcarehq.org:8080/dhis'
+    # host = 'http://dhis1.internal.commcarehq.org:8080/dhis'
+    host = 'http://localhost:8082'
     username = 'admin'
     password = 'district'
 
-    domain = 'barproject'
+    domain = 'wv-lanka'
+
+    def step_into_sync_org_units(self):
+        import ipdb; ipdb.set_trace()
+        sync_org_units()
+        # E
+        # ======================================================================
+        # ERROR: test_sync_org_units (custom.dhis2.tests.MockOutThisTest)
+        # ----------------------------------------------------------------------
+        # Traceback (most recent call last):
+        #   File "/home/nhooper/src/commcare-hq/custom/dhis2/tests.py", line 112, in test_sync_org_units
+        #     sync_org_units()
+        #   File "/home/nhooper/src/commcare-hq/custom/dhis2/tasks.py", line 53, in sync_org_units
+        #     org_unit.save()
+        #   File "/home/nhooper/src/commcare-hq/custom/dhis2/models.py", line 531, in save
+        #     'Unable to find lookup table in domain "%s" with ID "%s".' % (self.objects.domain, self.objects.tag))
+        # Dhis2ConfigurationError: Unable to find lookup table in domain "wv-lanka" with ID "dhis2_org_unit".
+        #
+        # ----------------------------------------------------------------------
+
 
     def test_list_their_instances(self):
         """
@@ -98,8 +118,8 @@ class MockOutThisTest(TestCase):
         except StopIteration:
             self.fail('Expected at least one instance of case type "child_gmp"')
 
-    def step_into_test_sync_child_entities(self):
-        # import ipdb; ipdb.set_trace()
+    def step_into_sync_child_entities(self):
+        import ipdb; ipdb.set_trace()
         sync_child_entities()
 
     def test_sync_child_entities(self):
@@ -118,3 +138,9 @@ class MockOutThisTest(TestCase):
             pull_mock.assert_called_with(DOMAIN, foo)
             only_ours_mock.assert_called_with(DOMAIN)
             push_mock.assert_called_with(bar)
+
+    def test_pull_child_entities(self):
+        pass
+
+    def test_push_child_entities(self):
+        pass
