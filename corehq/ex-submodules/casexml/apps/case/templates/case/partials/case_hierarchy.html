@@ -62,13 +62,6 @@
     </thead>
     <tbody>
         {% for case in case_list %}
-        {% if case == None %}
-        <tr>
-            <td>
-                {% trans "Parent case not found" %}
-            </td>
-        </tr>
-        {% else %}
         <tr data-tt-id="{{ case.case_id }}"
             class="{% if case.closed %}case-closed{% endif %}"
             {% if case.treetable_parent_node_id %}
@@ -140,7 +133,6 @@
             <td>{{ column.value|safe }}</td>
             {% endfor %}
         </tr>
-        {% endif%}
 
         {% empty %}
         <tr>
