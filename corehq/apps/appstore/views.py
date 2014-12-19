@@ -244,7 +244,7 @@ def copy_snapshot(request, domain):
 
         if request.POST.get('new_project_name', ""):
             if not dom.published:
-                messages.error(request, "This project is not published and can't be downloaded")
+                messages.error(request, _("This project is not published and can't be downloaded"))
                 return project_info(request, domain)
 
             if form.is_valid():
