@@ -637,7 +637,8 @@ class Domain(Document, SnapshotMixin):
         ignore = ignore if ignore is not None else []
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
-        db = get_db()
+
+        db = Domain.get_db()
 
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
