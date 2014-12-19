@@ -257,14 +257,13 @@ def copy_snapshot(request, domain):
                 messages.error(request, _("A project by that name already exists"))
                 return project_info(request, domain)
 
+            # sign new project up for trial
+            create_30_day_trial(new_domain)
+
             def inc_downloads(d):
                 d.downloads += 1
 
             apply_update(dom, inc_downloads)
-
-            # sign project up for trial
-            create_30_day_trial(new_domain)
-
             messages.success(request, render_to_string("appstore/partials/view_wiki.html",
                                                        {"pre": _("Project copied successfully!")}),
                              extra_tags="html")
