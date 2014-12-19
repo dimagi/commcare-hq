@@ -12,7 +12,7 @@ from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
 from custom.dhis2.tasks import push_child_entities, gen_children_only_ours, sync_child_entities, DOMAIN, sync_org_units
 
 from django.test import TestCase
-from mock import patch
+from mock import patch, Mock
 
 
 class Dhis2OrgUnitTest(TestCase):
@@ -105,11 +105,57 @@ class MockOutThisTest(TestCase):
 
     domain = DOMAIN
 
+    def test_sync_org_units_dict_comps(self):
+        """
+        sync_org_units should create dictionaries of CCHQ and DHIS2 org units
+        """
+        with patch('dhis2_api.gen_org_units') as gen_org_units_patch, \
+                patch('Dhis2OrgUnit.objects.all') as objects_all_patch:
+            ou_dict = {'id': '1', 'name': 'Sri Lanka'}
+            ou_obj = type('OrgUnit', (object,), ou_dict)  # An object with attributes == ou_dict items
+            gen_org_units_patch.side_effect = lambda: (d for d in ou_dict)  # Generates org unit dicts
+            objects_all_patch.side_effect = lambda: (o for o in ou_obj)  # Generates org unit objects
+
+            sync_org_units()
+
+            gen_org_units_patch.assert_called()
+            objects_all_patch.assert_called()
+
+    def test_sync_org_units_adds(self):
+        """
+        sync_org_units should add new org units
+        """
+        with patch('dhis2_api.gen_org_units') as gen_org_units_patch, \
+                patch('Dhis2OrgUnit.objects.all') as objects_all_patch, \
+                patch('Dhis2OrgUnit') as org_unit_patch:
+            ou_dict = {'id': '1', 'name': 'Sri Lanka'}
+            gen_org_units_patch.side_effect = lambda: (d for d in ou_dict)
+            objects_all_patch.side_effect = lambda: (o for o in [])
+
+            sync_org_units()
+
+            org_unit_patch.__init__.assert_called_with(id='1', name='Sri Lanka')
+            org_unit_patch.save.assert_called()
+
+    def test_sync_org_units_deletes(self):
+        """
+        sync_org_units should delete old org units
+        """
+        with patch('dhis2_api.gen_org_units') as gen_org_units_patch, \
+                patch('Dhis2OrgUnit.objects.all') as objects_all_patch:
+            delete_mock = Mock()
+            ou_obj = type('OrgUnit', (object,), {'id': '1', 'name': 'Sri Lanka', 'delete': delete_mock})
+            gen_org_units_patch.side_effect = lambda: (d for d in [])
+            objects_all_patch.side_effect = lambda: (o for o in ou_obj)
+
+            sync_org_units()
+
+            delete_mock.assert_called()
+
     def step_into_sync_org_units(self):
         import ipdb; ipdb.set_trace()
         with fixture_type_context(), org_unit_context():
             sync_org_units()
-
 
     def test_list_their_instances(self):
         """
