@@ -80,24 +80,87 @@ class AWCHealthStatus(object):
     aggregations on it.
     """
     method_map = [
-        # method, header, count_method
-        ('awc_name', _("AWC Name"), 'no_denom'),
-        ('beneficiaries', _("Total Beneficiaries"), 'no_denom'),
-        ('pregnancies', _("Pregnant Women"), 'beneficiaries'),
-        ('mothers', _("Mothers of Children Aged 3 Years and Below"), 'beneficiaries'),
-        ('children', _("Children Between 0 and 3 Years of Age"), 'beneficiaries'),
-        ('vhnd_monthly', _("Beneficiaries Attending VHND Monthly"), 'Beneficiaries'),
-        ('ifa_tablets', _("Pregnant Women Who Have Received at least 30 IFA Tablets"), 'no_denom'),
-        ('preg_weighed', _("Pregnant Women Whose Weight Gain Was Monitored"), 'no_denom'),
-        ('child_weighed', _("Children Whose Weight Was Monitored"), 'no_denom'),
-        ('children_registered', _("Children Whose Birth Was Registered"), 'no_denom'),
+        # method, header, help_text, count_method
+        ('awc_name',
+         _("AWC Name"),
+         "",
+         'no_denom'),
+        ('beneficiaries',
+         _("Total Beneficiaries"),
+         _("Pregnant women and new mothers"),
+         'no_denom'),
+        ('pregnancies',
+         _("Pregnant Women"),
+         "",
+         'beneficiaries'),
+        ('mothers',
+         _("New Mothers"),
+         _("Mothers of children aged 3 years and below"),
+         'beneficiaries'),
+        ('children',
+         _("Children"),
+         _("Children below 3 years of age"),
+         'beneficiaries'),
+        ('eligible_by_fulfillment',
+         _("Eligible By Fulfillment"),
+        _("Number of beneficiaries eligilble for monthly cash payment in the "
+          "presence of a VHND in the last month."),
+         'beneficiaries'),
+        ('eligible_by_default',
+         _("Eligible By Default"),
+        _("Number of beneficiaries eligilble for monthly cash payment on "
+          "absence of services at VHND in the last month."),
+         'beneficiaries'),
+        ('total_payment',
+         _("Total Payment"),
+        _("Total Monthly cash payment made to beneficiaries"),
+         'no_denom'),
+        # ('',
+         # _(""),
+        # _(""),
+         # ''),
+        ('preg_vhnd',
+         _("Pregnant VHND Attendance"),
+         _("Pregnant women who attended a VHND this month or were or exempt.  "
+           "Beneficiaries are exempt during the 9th month of pregancy, and when "
+           "there is no VHND"),
+         'pregnancies'),
+        ('child_vhnd',
+         _("Child VHND Attendance"),
+         _("New mothers who attended a VHND this month or were exempt.  "
+           "Beneficiaries are exempt during the 1st month after childbirth, "
+           "and when there is no VHND"),
+         'mothers'),
+        ('ifa_tablets',
+         _("IFA Receipts"),
+         _("Women 6 months pregnant who have received IFA tablets.  Exempt if no VHND."),
+         'preg_6_months'),
+        ('preg_weighed',
+         _("Pregnancy Weight Monitoring"),
+         _("Women 6 or 9 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
+         'preg_6_or_9_months'),
+        ('child_weighed',
+         _("Child Weight Monitoring"),
+         _("3-month-old children who have been weighed since birth"),
+         'child_3_months'),
+        ('children_registered',
+         _("Births Registered"),
+         _("6-month-old children whose birth was registered.  Exempt if no VHND."),
+         'child_6_months'),
     ]
+
     # TODO possible general approach in the future:
     # subclass OPMCaseRow specifically for this report, and add in indicators to
-    # our hearts' content
+    # our hearts' content.  This would allow us to override definitions of
+    # indicators based on their meanings in THIS report.
     def __init__(self, cases):
         self.cases = cases
         self.awc_name = cases[0].awc_name
+        print self.awc_name
+        for c in cases:
+            print c.all_conditions_met, c.cash_amt
+        print self.eligible_by_fulfillment
+        print self.eligible_by_default
 
     @property
     def no_denom(self):
@@ -109,10 +172,12 @@ class AWCHealthStatus(object):
         return len(self.cases)
 
     @property
+    @memoized
     def pregnancies(self):
         return len([c for c in self.cases if c.status == 'pregnant'])
 
     @property
+    @memoized
     def mothers(self):
         return len([c for c in self.cases if c.status == 'mother'])
 
@@ -121,32 +186,55 @@ class AWCHealthStatus(object):
         return sum([c.num_children for c in self.cases])
 
     @property
-    def vhnd_monthly(self):
-        # TODO in preg month 9 and child month 1 this condition is always met.
-        # TODO counts as yes if VHND was not available
-        # Include that or not?
+    def eligible_by_fulfillment(self):
         return len([c for c in self.cases
-                    if c.preg_attended_vhnd or c.child_attended_vhnd])
+                    if c.vhnd_available and c.all_conditions_met])
+
+    @property
+    def eligible_by_default(self):
+        return len([c for c in self.cases
+                    if not c.vhnd_available and c.all_conditions_met])
+
+    @property
+    def total_payment(self):
+        return sum([c.cash_amt for c in self.cases])
+
+    @property
+    def preg_vhnd(self):
+        return len([c for c in self.cases if c.preg_attended_vhnd])
+
+    @property
+    def child_vhnd(self):
+        return len([c for c in self.cases if c.child_attended_vhnd])
 
     @property
     def ifa_tablets(self):
-        # TODO this is only relevant for women in their 6th month of pregnancy
-        # TODO counts as yes if VHND was not available
         return len([c for c in self.cases if c.preg_received_ifa])
 
     @property
+    def preg_6_months(self):
+        return len([c for c in self.cases if c.preg_month == 6])
+
+    @property
+    def preg_6_or_9_months(self):
+        return len([c for c in self.cases if c.preg_month in (6, 9)])
+
+    @property
     def preg_weighed(self):
-        # TODO only counts months 6 and 9
-        # TODO counts as yes if VHND was not available
         return len([c for c in self.cases if c.preg_weighed])
 
     @property
     def child_weighed(self):
-        # TODO only counts when child_age == 3
         return len([c for c in self.cases if c.child_weighed_once])
 
     @property
+    def child_3_months(self):
+        return len([c for c in self.cases if c.child_age == 3])
+
+    @property
     def children_registered(self):
-        # TODO only counts at child_age == 6
-        # TODO counts as yes if VHND was not available
         return len([c for c in self.cases if c.child_birth_registered])
+
+    @property
+    def child_6_months(self):
+        return len([c for c in self.cases if c.child_age == 6])

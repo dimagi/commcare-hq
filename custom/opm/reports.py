@@ -934,6 +934,13 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return OPMCaseRow(row, self)
 
     @property
+    def headers(self):
+        headers = []
+        for __, title, text, __ in self.model.method_map:
+            headers.append(DataTablesColumn(name=title, help_text=text))
+        return DataTablesHeader(*headers)
+
+    @property
     def rows(self):
         case_objects = self.row_objects
         # Consolidate rows with the same awc
@@ -947,13 +954,13 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             # yield [self.format_cell(val, denominator)
             yield [self.format_cell(getattr(awc, method),
                                     getattr(awc, count_method))
-                   for method, header, count_method in self.model.method_map]
+                   for method, _, _, count_method in self.model.method_map]
 
     def format_cell(self, val, denom):
         if denom is None:
             return val
-        pct = (float(val) / denom) if denom != 0 else "--"
-        return "{} / {} ({:.0%})".format(val, denom, pct)
+        pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        return "{} / {}{}".format(val, denom, pct)
 
 
 class UsersIdsData(SqlData):
