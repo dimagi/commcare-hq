@@ -4,8 +4,11 @@ when you run "manage.py test".
 
 Replace this with more appropriate tests for your application.
 """
+from contextlib import contextmanager
 from unittest import skip
-from custom.dhis2.models import Dhis2Api
+from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from couchdbkit import ResourceNotFound
+from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
 from custom.dhis2.tasks import push_child_entities, gen_children_only_ours, sync_child_entities, DOMAIN, sync_org_units
 
 from django.test import TestCase
@@ -65,6 +68,34 @@ class TaskTest(TestCase):
         pass
 
 
+@contextmanager
+def fixture_type_context():
+    fixture_type = FixtureDataType(
+        domain=DOMAIN,
+        tag='dhis2_org_unit',
+        fields=[FixtureTypeField(field_name='id', properties=[]),
+                FixtureTypeField(field_name='name', properties=[])]
+    )
+    fixture_type.save()
+    try:
+        yield fixture_type
+    finally:
+        fixture_type.delete()
+
+
+@contextmanager
+def org_unit_context():
+    org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West')
+    org_unit.save()
+    try:
+        yield org_unit
+    finally:
+        try:
+            org_unit.delete()
+        except ResourceNotFound:
+            pass
+
+
 class MockOutThisTest(TestCase):
 
     # host = 'http://dhis1.internal.commcarehq.org:8080/dhis'
@@ -72,25 +103,12 @@ class MockOutThisTest(TestCase):
     username = 'admin'
     password = 'district'
 
-    domain = 'wv-lanka'
+    domain = DOMAIN
 
     def step_into_sync_org_units(self):
         import ipdb; ipdb.set_trace()
-        sync_org_units()
-        # E
-        # ======================================================================
-        # ERROR: test_sync_org_units (custom.dhis2.tests.MockOutThisTest)
-        # ----------------------------------------------------------------------
-        # Traceback (most recent call last):
-        #   File "/home/nhooper/src/commcare-hq/custom/dhis2/tests.py", line 112, in test_sync_org_units
-        #     sync_org_units()
-        #   File "/home/nhooper/src/commcare-hq/custom/dhis2/tasks.py", line 53, in sync_org_units
-        #     org_unit.save()
-        #   File "/home/nhooper/src/commcare-hq/custom/dhis2/models.py", line 531, in save
-        #     'Unable to find lookup table in domain "%s" with ID "%s".' % (self.objects.domain, self.objects.tag))
-        # Dhis2ConfigurationError: Unable to find lookup table in domain "wv-lanka" with ID "dhis2_org_unit".
-        #
-        # ----------------------------------------------------------------------
+        with fixture_type_context(), org_unit_context():
+            sync_org_units()
 
 
     def test_list_their_instances(self):

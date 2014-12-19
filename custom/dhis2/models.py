@@ -1,6 +1,6 @@
 # from django.db import models
 from datetime import date
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
 import requests
 
 
@@ -490,6 +490,20 @@ class Dhis2Api(object):
         return entities
 
 
+def to_field_list(value):
+    """
+    Return a field value as a FieldList
+    """
+    return FieldList(field_list=[FixtureItemField(field_value=value, properties={})])
+
+
+def to_field_value(field_list):
+    """
+    Return the first field value in a FieldList
+    """
+    return field_list.field_list[0].field_value
+
+
 class FixtureManager(object):
     """
     Reuses the Django manager pattern for fixtures
@@ -500,44 +514,55 @@ class FixtureManager(object):
         self.domain = domain
         self.tag = tag
 
-    def get(self, id_):
-        data_type = FixtureDataType.by_domain_tag(self.domain, self.tag).one()
-        item = FixtureDataItem.by_field_value(self.domain, data_type, 'id_', id_).one()
-        return self.model_class(_fixture_id=item.get_id, **item.fields)
+    def get(self, fixture_id):
+        item = FixtureDataItem.get(fixture_id)
+        fields = {k: to_field_value(v) for k, v in item.fields.iteritems()}
+        return self.model_class(_fixture_id=item.get_id, **fields)
 
     def all(self):
         for item in FixtureDataItem.get_item_list(self.domain, self.tag):
-            yield self.model_class(_fixture_id=item.get_id, **item.fields)
+            fields = {k: to_field_value(v) for k, v in item.fields.iteritems()}
+            yield self.model_class(_fixture_id=item.get_id, **fields)
 
 
-# TODO: Keep on eye on if/where this is used. Remove if unused.
 class Dhis2OrgUnit(object):
     """
     Simplify the management of DHIS2 Organisation Units, which are
     stored in a lookup table.
     """
 
-    objects = None  # Manager is set outside of class definition so that we can pass the class to the manager
+    # The manager is set outside of the class definition so that we can pass
+    # the class to the manager
+    objects = None
 
-    def __init__(self, id_, name, _fixture_id=None):
-        self.id_ = id_  # param is called "id_" because "id" is a built-in
+    def __init__(self, id, name, _fixture_id=None):
+        # It's not nice to shadow the "id" built-in, but naming the param "id"
+        # allows us to pass values in from CouchDB as kwargs with less fuss.
+        self.id = id
         self.name = name
         self._fixture_id = _fixture_id
+
+    def get_id(self):
+        # Pity we've got an attribute called "id" that isn't our REAL ID. This
+        # returns the fixture ID.
+        return self._fixture_id
 
     def save(self):
         data_type = FixtureDataType.by_domain_tag(self.objects.domain, self.objects.tag).one()
         if data_type is None:
             raise Dhis2ConfigurationError(
-                'Unable to find lookup table in domain "%s" with ID "%s".' % (self.objects.domain, self.objects.tag))
-        data_item = FixtureDataItem()
-        data_item.data_type_id = data_type.get_id
-        data_item.domain = self.objects.domain
-        data_item.fields = {
-            'id_': self.id_,   # Use key "id_" instead of "id" so we have the option of passing as kwargs to __init__
-            'name': self.name  # ... which is exactly what FixtureManager does in objects.get() and objects.all()
-        }
+                'Unable to find lookup table in domain "%s" with ID "%s".' %
+                (self.objects.domain, self.objects.tag))
+        data_item = FixtureDataItem(
+            data_type_id=data_type.get_id,
+            domain=self.objects.domain,
+            fields={
+                'id': to_field_list(self.id),
+                'name': to_field_list(self.name)
+            })
         data_item.save()
         self._fixture_id = data_item.get_id
+        return self._fixture_id
 
     def delete(self):
         if self._fixture_id is None:

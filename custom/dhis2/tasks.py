@@ -44,18 +44,19 @@ def sync_org_units():
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units()}  # TODO: Is this a bad idea?
-    our_org_units = {ou.id_: ou for ou in Dhis2OrgUnit.objects.all()}  # ... or just drop ours, and read theirs
+    # TODO: Is it a bad idea to read all org units into dictionaries and sync them ...
+    their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units()}
+    # ... or should we rather just drop all ours and import all theirs every time?
+    our_org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}
     # Add new org units
     for id_, ou in their_org_units.iteritems():
         if id_ not in our_org_units:
-            org_unit = Dhis2OrgUnit(id_=id_, name=ou['name'])
+            org_unit = Dhis2OrgUnit(id=id_, name=ou['name'])
             org_unit.save()
     # Delete former org units
-    for id_ in our_org_units:
+    for id_, ou in our_org_units.iteritems():
         if id_ not in their_org_units:
-            org_unit = Dhis2OrgUnit.objects.get(id_)
-            org_unit.delete()
+            ou.delete()
 
 
 def push_child_entities(children):
