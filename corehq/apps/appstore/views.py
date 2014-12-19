@@ -200,7 +200,9 @@ def import_app(request, domain):
             messages.error(request, _("You don't belong to that project"))
             return project_info(request, domain)
 
-        for app in from_project.full_applications(include_builds=False):
+        full_apps = from_project.full_applications(include_builds=False)
+        assert full_apps, 'Bad attempt to copy apps from a project without any!'
+        for app in full_apps:
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
         _clear_app_cache(request, to_project_name)
 
@@ -220,6 +222,8 @@ def copy_snapshot(request, domain):
 
     dom = Domain.get(domain)
     if request.method == "POST" and dom.is_snapshot:
+        assert dom.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
+
         from corehq.apps.registration.forms import DomainRegistrationForm
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
         form = DomainRegistrationForm(args)
