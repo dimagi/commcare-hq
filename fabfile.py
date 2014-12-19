@@ -818,6 +818,14 @@ def _deploy_without_asking():
 
 
 @task
+def force_update_static():
+    execute(_do_collectstatic)
+    execute(_do_compress)
+    execute(update_manifest)
+    execute(services_restart)
+
+
+@task
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
     _require_target()
