@@ -374,7 +374,7 @@ class OPMCaseRow(object):
 
     @property
     def child_growth_calculated(self):
-        if self.child_age % 3 == 0:
+        if self.child_age and self.child_age % 3 == 0:
             if not self.is_service_available('vhnd_child_scale_available', months=3):
                 return True
 
@@ -542,10 +542,16 @@ class OPMCaseRow(object):
             prop=prop,
         ))
 
+    @property
+    def num_children(self):
+        if self.status == 'pregnant':
+            return 0
+        return int(self.case_property("live_birth_amount", 0))
+
     def add_extra_children(self):
         if self.child_index == 1:
             # app supports up to three children only
-            num_children = min(int(self.case_property("live_birth_amount", 1)), 3)
+            num_children = min(self.num_children, 3)
             if num_children > 1:
                 extra_child_objects = [
                     self.__class__(self.case, self.report, child_index=num + 2, is_secondary=True)
