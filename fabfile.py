@@ -819,6 +819,7 @@ def _deploy_without_asking():
 
 @task
 def force_update_static():
+    _require_target()
     execute(_do_collectstatic)
     execute(_do_compress)
     execute(update_manifest)
