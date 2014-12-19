@@ -59,7 +59,8 @@ def can_view_app(req, dom):
     if not dom or not dom.is_snapshot:
         return False
     if not dom.is_approved and (
-        not getattr(req, "couch_user", "") or not req.couch_user.is_domain_admin(dom.copied_from.name)):
+        not getattr(req, "couch_user", "") or not req.couch_user.is_domain_admin(dom.copied_from.name)
+    ):
         return False
     return True
 
@@ -152,10 +153,11 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
     if facets is None:
         facets = []
     q = {"sort": {sort_by: {"order": "desc"}},
-         "query": {"bool": {"must":
-                                [{"match": {'doc_type': "Domain"}},
-                                 {"term": {"published": True}},
-                                 {"term": {"is_snapshot": True}}]}},
+         "query": {"bool": {"must": [
+             {"match": {'doc_type': "Domain"}},
+             {"term": {"published": True}},
+             {"term": {"is_snapshot": True}}
+         ]}},
          "filter": {"and": [{"term": {"is_approved": params.get('is_approved', None) or True}}]}}
 
     search_query = params.get('search', "")

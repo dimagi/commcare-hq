@@ -5,7 +5,6 @@ slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
-from toggle.shortcuts import namespaced_item
 
 from .toggles import StaticToggle, NAMESPACE_DOMAIN
 
