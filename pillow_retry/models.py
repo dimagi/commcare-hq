@@ -83,7 +83,8 @@ class PillowError(models.Model):
             )
 
             if change_meta:
-                date = parse(change_meta.get('date'))
+                date_string = change_meta.get('date')
+                date = parse(date_string) if date_string is not None else None
                 domains = ','.join(change_meta.get('domains'))
                 error.domains = (domains[:252] + '...') if len(domains) > 255 else domains
                 error.doc_type = change_meta.get('doc_type')
