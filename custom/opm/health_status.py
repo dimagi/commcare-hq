@@ -149,6 +149,33 @@ class AWCHealthStatus(object):
           "attended at least one growth monitoring session in the last 3 "
           "months.  Exempt if no scale was available at the VHND."),
          'child_mult_3_months'),
+        # TODO ors is hard, skipping for now
+        # ('ors_received',
+         # _("ORS received"),
+        # _("Number of children who contracted diarrhea and received ORS and "
+          # "Zinc treatment."),
+         # 'children_with_diarrhea'),
+        ('child_breastfed',
+         _("Children Breastfed"),
+        _("Number of Children 6 months old reported to have exclusively breastfed"),
+         'child_6_months'),
+        ('measles_vaccine',
+         _("Measles Vaccine"),
+        _("Number of children 12 months of age who have received measles "
+          "vaccine.  Exempt if no vaccine was available."),
+         'child_12_months'),
+        ('vhnd_held',
+         _("VHND"),
+        _("VHND organized at AWC"),
+         'no_denom'),
+        ('adult_scale',
+         _("Adult Weighing Machine"),
+        _("Adult weighing machine available at vhnd"),
+         'no_denom'),
+        ('child_scale',
+         _("Child Weighing Machine"),
+        _("Child weighing machine available at vhnd"),
+         'no_denom'),
         # ('',
          # _(""),
         # _(""),
@@ -249,3 +276,30 @@ class AWCHealthStatus(object):
         # number of children whose age is a multiple of 3 months
         return len([c for c in self.cases
                     if c.child_age and c.child_age % 3 == 0])
+
+    @property
+    def child_breastfed(self):
+        return len([c for c in self.cases if c.child_breastfed])
+
+    @property
+    def measles_vaccine(self):
+        return len([c for c in self.cases if c.child_received_measles_vaccine])
+
+    @property
+    def child_12_months(self):
+        return len([c for c in self.cases if c.child_age == 12])
+
+    @property
+    def vhnd_held(self):
+        return 1 if self.cases[0].vhnd_available else 0
+
+    def service_available(self, service):
+        return 1 if self.cases[0].is_service_available(service, 1) else 0
+
+    @property
+    def adult_scale(self):
+        return self.service_available('vhnd_adult_scale_available')
+
+    @property
+    def child_scale(self):
+        return self.service_available('vhnd_child_scale_available')
