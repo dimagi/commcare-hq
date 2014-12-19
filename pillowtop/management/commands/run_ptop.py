@@ -37,7 +37,6 @@ class Command(NoArgsCommand):
         pillow_name = options['pillow_name']
         pillow_key = options['pillow_key']
         all_pillows = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
-        pillows_to_run = []
 
         if list_all:
             print "\nPillows registered in system:"
