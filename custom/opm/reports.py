@@ -951,7 +951,6 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         # Use the AWCHealthStatus model to handle the aggregation
         # TODO use all awcs, not just ones with data
         for awc in map(AWCHealthStatus, awcs.values()):
-            # yield [self.format_cell(val, denominator)
             yield [self.format_cell(getattr(awc, method),
                                     getattr(awc, count_method))
                    for method, _, _, count_method in self.model.method_map]

@@ -373,7 +373,7 @@ class OPMCaseRow(object):
 
     @property
     def child_growth_calculated(self):
-        if self.child_age % 3 == 0:
+        if self.child_age and self.child_age % 3 == 0:
             if not self.is_service_available('vhnd_child_scale_available', months=3):
                 return True
 

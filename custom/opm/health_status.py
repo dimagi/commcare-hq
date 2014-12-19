@@ -115,10 +115,6 @@ class AWCHealthStatus(object):
          _("Total Payment"),
         _("Total Monthly cash payment made to beneficiaries"),
          'no_denom'),
-        # ('',
-         # _(""),
-        # _(""),
-         # ''),
         ('preg_vhnd',
          _("Pregnant VHND Attendance"),
          _("Pregnant women who attended a VHND this month or were or exempt.  "
@@ -147,6 +143,16 @@ class AWCHealthStatus(object):
          _("Births Registered"),
          _("6-month-old children whose birth was registered.  Exempt if no VHND."),
          'child_6_months'),
+        ('child_growth_monitored',
+         _("Child Growth Monitored"),
+        _("Number of children whose age is a multiple of 3 months who have "
+          "attended at least one growth monitoring session in the last 3 "
+          "months.  Exempt if no scale was available at the VHND."),
+         'child_mult_3_months'),
+        # ('',
+         # _(""),
+        # _(""),
+         # ''),
     ]
 
     # TODO possible general approach in the future:
@@ -156,11 +162,6 @@ class AWCHealthStatus(object):
     def __init__(self, cases):
         self.cases = cases
         self.awc_name = cases[0].awc_name
-        print self.awc_name
-        for c in cases:
-            print c.all_conditions_met, c.cash_amt
-        print self.eligible_by_fulfillment
-        print self.eligible_by_default
 
     @property
     def no_denom(self):
@@ -238,3 +239,13 @@ class AWCHealthStatus(object):
     @property
     def child_6_months(self):
         return len([c for c in self.cases if c.child_age == 6])
+
+    @property
+    def child_growth_monitored(self):
+        return len([c for c in self.cases if c.child_growth_calculated])
+
+    @property
+    def child_mult_3_months(self):
+        # number of children whose age is a multiple of 3 months
+        return len([c for c in self.cases
+                    if c.child_age and c.child_age % 3 == 0])
