@@ -37,6 +37,7 @@ class ReportColumn(JsonObject):
         required=True,
     )
     alias = StringProperty()
+    format = StringProperty(default='default')
 
     def get_sql_column(self):
         return DatabaseColumn(
