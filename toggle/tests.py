@@ -7,11 +7,10 @@ from .shortcuts import toggle_enabled
 
 class ToggleTestCase(TestCase):
     
-    def testGenerateId(self):
+    def test_generate_id(self):
         self.assertEqual('hqFeatureToggle-sluggy', generate_toggle_id('sluggy'))
 
-
-    def testSaveAndGetId(self):
+    def test_save_and_get_id(self):
         slug = 'batcave'
         users = ['bruce', 'alfred']
         toggle = Toggle(slug=slug, enabled_users=users)
@@ -22,7 +21,7 @@ class ToggleTestCase(TestCase):
             self.assertEqual(slug, fromdb.slug)
             self.assertEqual(users, fromdb.enabled_users)
 
-    def testNoOverwrite(self):
+    def test_no_overwrite(self):
         slug = 'conflict'
         somedoc = Document(_id=generate_toggle_id(slug))
         Toggle.get_db().save_doc(somedoc)
@@ -33,7 +32,7 @@ class ToggleTestCase(TestCase):
         except ResourceConflict:
             pass
 
-    def testToggleEnabled(self):
+    def test_toggle_enabled(self):
         slug = 'mansion'
         users = ['prof', 'logan']
         toggle = Toggle(slug=slug, enabled_users=users)
