@@ -80,6 +80,16 @@ class PillowRetryTestCase(TestCase):
         self.assertEqual(get.doc_date, parse(date))
         get.save()
 
+    def test_null_meta_date(self):
+        id = '12335'
+        meta = {
+            'domains': ['a' * 247, '123456789'],
+            'doc_type': 'something',
+            'date': None,
+        }
+        get = PillowError.get_or_create({'id': id}, FakePillow(), meta)
+        self.assertEqual(None, get.doc_date)
+
     def test_get_errors_to_process(self):
         # Only re-process errors with
         # current_attempt < setting.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
