@@ -15,6 +15,11 @@ class Command(LabelCommand):
 
     option_list = LabelCommand.option_list + \
                   (
+                      make_option('--code_red',
+                                  action='store_true',
+                                  dest='code_red',
+                                  default=False,
+                                  help="Code red! Delete all indices and pillow checkpoints and start afresh."),
                       make_option('--flip_all_aliases',
                                   action='store_true',
                                   dest='flip_all',
@@ -43,10 +48,31 @@ class Command(LabelCommand):
         list_pillows = options['list_pillows']
         flip_all = options['flip_all']
         flip_single = options['pillow_class']
+        code_red = options['code_red']
         es = get_es()
 
         pillows = get_all_pillows()
         aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
+
+        if code_red:
+            if raw_input('\n'.join([
+                'CODE RED!!!',
+                'Really delete ALL the elastic indices and pillow checkpoints?',
+                'The following pillows will be affected:',
+                '\n'.join([type(p).__name__ for p in aliased_pillows]),
+                'This is a PERMANENT action. (Type "code red" to continue):',
+                '',
+            ])).lower() == 'code red':
+                for pillow in aliased_pillows:
+                    pillow.delete_index()
+                    print 'deleted elastic index: {}'.format(pillow.es_index)
+                    checkpoint_id = pillow.get_checkpoint_doc_name()
+                    if pillow.couch_db.doc_exist(checkpoint_id):
+                        pillow.couch_db.delete_doc(checkpoint_id)
+                        print 'deleted checkpoint: {}'.format(checkpoint_id)
+            else:
+                print 'Safety first!'
+            return
 
         if show_info:
             print "\n\tHQ ES Index Alias Mapping Status"
@@ -68,7 +94,6 @@ class Command(LabelCommand):
             print aliased_pillows
 
         if flip_all:
-            aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
             for pillow in aliased_pillows:
                 pillow.assume_alias()
             print simplejson.dumps(es.get('_aliases'), indent=4)
@@ -80,18 +105,6 @@ class Command(LabelCommand):
                     [x.__class__.__name__ for x in aliased_pillows])
                 sys.exit()
 
-            #ok we got the pillow
             target_pillow = pillow_to_use[0]
             target_pillow.assume_alias()
             print es.get('_aliases')
-
-
-
-
-
-
-
-
-
-
-
