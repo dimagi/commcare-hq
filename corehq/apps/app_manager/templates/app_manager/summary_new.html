@@ -1,0 +1,98 @@
+{% extends "style/base_section.html" %}
+{% load xforms_extras %}
+{% load url_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load compress %}
+{% load djangular_tags %}
+
+{% block stylesheets %}
+{#{% compress css %}#}
+{#    <link type="text/less"#}
+{#          rel="stylesheet"#}
+{#          media="all"#}
+{#          href="{% new_static 'dashboard/less/dashboard.less' %}" />#}
+{#{% endcompress %}#}
+{% endblock stylesheets %}
+
+{% block js %}{% endblock js %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        (function (angular, undefined) {
+            'use strict';
+
+            var summaryModule = angular.module('appSummary', ['ng.django.rmi']);
+            summaryModule.config(['$httpProvider', function($httpProvider) {
+                $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+            }]);
+            summaryModule.config(["djangoRMIProvider", function(djangoRMIProvider) {
+                djangoRMIProvider.configure({% djng_current_rmi %});
+            }]);
+
+            var controllers = {};
+            controllers.CaseController = function ($scope, djangoRMI) {
+                var self = this;
+
+                self.init = function (attrs) {
+                    self.refreshData();
+                };
+
+                self.refreshData = function () {
+                    djangoRMI.get_case_data({
+                    }).success(self.updateView).error(self.retry);
+                };
+
+                self.updateView = function (data) {
+                    if (data.success) {
+                        console.log(data);
+                    }
+                };
+
+                self.retry = function () {
+                    self.retries ++;
+                    if (self.retries <= 10) {
+                        self.refreshData();
+                    }
+                };
+                self.init();
+            };
+            summaryModule.controller(controllers);
+
+        }(window.angular));
+    </script>
+{% endblock %}
+
+{#{% block page_navigation %}#}
+{#{% endblock %}#}
+{% block page_content %}
+    <div role="tabpanel">
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a href="#form_summary" role="tab" data-toggle="tab">{% trans "Form Summary" %}</a></li>
+            <li role="presentation"><a href="#case_summary" role="tab" data-toggle="tab">{% trans "Case Summary" %}</a></li>
+        </ul>
+    </div>
+    <div class="tab-content" ng-app="appSummary">
+        <div role="tabpanel" class="tab-pane active" id="form_summary">
+            <div id="langs">
+                {% if not app.is_remote_app %}
+                Language:
+                <select class="code" name="lang">
+                    {% for lang in app.langs %}
+                    <option value="{% urlencode request.path request.GET with "lang" as lang %}"
+                    {% if lang == langs.0 %}selected=""{% endif %}>
+                    {{ lang }} {% if lang == app.langs.0 %}(default){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <select style="visibility: hidden;"></select>
+                {% endif %}
+            </div>
+            {% include 'app_manager/partials/app_summary.html' %}
+        </div>
+        <div role="tabpanel" class="tab-pane" id="case_summary" ng-controller="CaseController">
+            {% include 'app_manager/partials/case_summary.html' %}
+        </div>
+    </div>
+{% endblock %}

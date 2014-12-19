@@ -3,6 +3,7 @@ import copy
 import logging
 import hashlib
 import itertools
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from lxml import etree
 import os
 import re
@@ -13,7 +14,7 @@ from xml.dom.minidom import parseString
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, get_language
+from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
 from corehq.apps.app_manager import commcare_settings
@@ -35,6 +36,8 @@ from corehq.apps.app_manager.translations import (
     expected_bulk_app_sheet_headers,
     process_bulk_app_translation_upload
 )
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.programs.models import Program
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -79,7 +82,7 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
@@ -2637,6 +2640,64 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/summary.html", context)
     else:
         return render(request, "app_manager/exchange_summary.html", context)
+
+
+class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
+    urlname = 'app_summary_new'
+    page_title = ugettext_noop("App Summary")
+    template_name = 'app_manager/summary_new.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        request.preview_bootstrap3 = True
+        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(AppSummaryView, self).main_context
+        context.update({
+            'domain': self.domain,
+        })
+        return context
+
+    @property
+    def page_context(self):
+        if self.app.doc_type == 'RemoteApp':
+            raise Http404()
+
+        context = get_apps_base_context(self.request, self.domain, self.app)
+        langs = context['langs']
+
+        modules = []
+
+        for module in self.app.get_modules():
+            forms = []
+            for form in module.get_forms():
+                questions, messages = _questions_for_form(self.request, form, langs)
+                forms.append({'name': _find_name(form.name, langs),
+                              'questions': [FormQuestionResponse(q) for q in questions],
+                              'messages': dict(messages)})
+
+            modules.append({'name': _find_name(module.name, langs), 'forms': forms})
+
+        context['modules'] = modules
+        context['summary'] = True
+        return context
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.app_id])
+
+    @allow_remote_invocation
+    def get_case_data(self, in_data):
+        if False:
+            return {
+                'success': False,
+                'message': _('You do not have permission to access this tile.'),
+            }
+        return {
+            'response': 'response',
+            'success': True,
+        }
 
 
 def get_default_translations_for_download(app):
