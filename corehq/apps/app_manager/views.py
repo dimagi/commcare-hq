@@ -94,8 +94,8 @@ from corehq.apps.app_manager.xform import (
     CaseError,
     XForm,
     XFormError,
-    XFormValidationError
-)
+    XFormValidationError,
+    VELLUM_TYPES)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -2668,7 +2668,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         langs = context['langs']
 
         modules = []
-
+        form_name_map = {}
         for module in self.app.get_modules():
             forms = []
             for form in module.get_forms():
@@ -2677,10 +2677,18 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
                               'questions': [FormQuestionResponse(q) for q in questions],
                               'messages': dict(messages)})
 
+                form_name_map[form.unique_id] = {
+                    'module_name': module.name,
+                    'form_name': form.name
+                }
+
             modules.append({'name': _find_name(module.name, langs), 'forms': forms})
 
         context['modules'] = modules
         context['summary'] = True
+        context['VELLUM_TYPES'] = VELLUM_TYPES
+        context['form_name_map'] = form_name_map
+
         return context
 
     @property
@@ -2689,13 +2697,8 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 
     @allow_remote_invocation
     def get_case_data(self, in_data):
-        if False:
-            return {
-                'success': False,
-                'message': _('You do not have permission to access this tile.'),
-            }
         return {
-            'response': 'response',
+            'response': self.app.get_case_metadata().to_json(),
             'success': True,
         }
 

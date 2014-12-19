@@ -1,0 +1,13 @@
+<div>
+    <h5>{{ title }}</h5>
+    <ul>
+        <li ng-repeat="(form_id, conditions) in forms">
+            {{ getFormName(form_id) }}
+            <ul ng-if="conditions.length">
+                <li ng-repeat="condition in conditions">
+                    If {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>

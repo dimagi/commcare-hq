@@ -1,0 +1,11 @@
+<ul>
+    <li ng-repeat="question in questions">
+        <i class="fcc {{ getIcon(question.question.type) }}"></i>
+        {{ question.question.value }}
+        <ul ng-if="question.condition">
+            <li>
+                If {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
+            </li>
+        </ul>
+    </li>
+</ul>

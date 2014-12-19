@@ -1,3 +1,4 @@
+from collections import defaultdict
 import functools
 import json
 import itertools
@@ -8,6 +9,9 @@ from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
 from django.core.cache import cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_app_id(form):
@@ -152,8 +156,25 @@ class ParentCasePropertyBuilder(object):
     def get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
 
-    def get_case_property_map(self, case_types,
-                              include_shared_properties=True):
+    def get_parent_type_map(self, case_types):
+        parent_map = defaultdict(dict)
+        for case_type in case_types:
+            parent_types, _ = self.get_parent_types_and_contributed_properties(case_type)
+            rel_map = defaultdict(list)
+            for parent_type, relationship in parent_types:
+                rel_map[relationship].append(parent_type)
+
+            for relationship, types in rel_map.items():
+                if len(types) > 1:
+                    logger.error(
+                        "Case Type '%s' has multiple parents for relationship '%s': %s",
+                        case_type, relationship, types
+                    )
+                parent_map[case_type][relationship] = types[0] if types else []
+
+        return parent_map
+
+    def get_case_property_map(self, case_types, include_shared_properties=True):
         case_types = sorted(case_types)
         return {
             case_type: sorted(self.get_properties(
