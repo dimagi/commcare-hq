@@ -94,10 +94,12 @@ class SafeSaveDocument(Document):
             params['w'] = bigcouch_quorum_count()
         return super(SafeSaveDocument, self).save(**params)
 
+
 def safe_delete(db, doc_or_id):
     if not isinstance(doc_or_id, basestring):
         doc_or_id = doc_or_id._id
     db.delete_doc(doc_or_id, **get_safe_write_kwargs())
+
 
 def apply_update(doc, update_fn, max_tries=5):
     """
@@ -112,5 +114,5 @@ def apply_update(doc, update_fn, max_tries=5):
             return doc
         except ResourceConflict:
             doc = doc.__class__.get(doc._id)
-        tries+=1
+        tries += 1
     raise ResourceConflict("Document update conflict. -- Max Retries Reached")
