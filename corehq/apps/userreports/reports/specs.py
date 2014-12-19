@@ -3,8 +3,16 @@ from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from corehq.apps.userreports.specs import TypeProperty
+
+
+SQLAGG_COLUMN_MAP = {
+    'count_unique': CountUniqueColumn,
+    'sum': SumColumn,
+    'simple': SimpleColumn,
+}
 
 
 class ReportFilter(JsonObject):
@@ -29,18 +37,25 @@ class ReportColumn(JsonObject):
     alias = StringProperty()
 
     def get_sql_column(self):
-        # todo: find a better home for this
-        sqlagg_column_map = {
-            'count_unique': CountUniqueColumn,
-            'sum': SumColumn,
-            'simple': SimpleColumn,
-        }
         return DatabaseColumn(
             self.display,
-            sqlagg_column_map[self.aggregation](self.field, alias=self.alias),
+            SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
             sortable=False,
             data_slug=self.field,
         )
+
+    @classmethod
+    def wrap(cls, obj):
+        if 'aggregation' in obj:
+            aggregation = obj.get('aggregation')
+            if aggregation not in SQLAGG_COLUMN_MAP:
+                raise BadSpecError(
+                    "'{0}' is not a valid aggregation. Choices are {1}.".format(
+                        aggregation,
+                        sorted(SQLAGG_COLUMN_MAP.keys()),
+                    )
+                )
+        return super(ReportColumn, cls).wrap(obj)
 
 
 class FilterChoice(JsonObject):
