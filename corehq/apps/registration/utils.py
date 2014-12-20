@@ -17,9 +17,7 @@ from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.feature_previews import enable_commtrack_previews
-from corehq.toggles import NAMESPACE_DOMAIN
-from toggle.shortcuts import update_toggle_cache, namespaced_item
-from toggle.models import Toggle
+
 
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
 
@@ -394,15 +392,6 @@ You can view the %s here: %s""" % (
 
 
 def create_30_day_trial(domain_obj):
-    from corehq.apps.accounting.models import (
-        DefaultProductPlan,
-        SoftwarePlanEdition,
-        BillingAccount,
-        Currency,
-        BillingAccountType,
-        Subscription,
-        SubscriptionAdjustmentMethod,
-    )
     # Create a 30 Day Trial subscription to the Advanced Plan
     advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
         domain_obj, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
