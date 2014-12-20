@@ -6,15 +6,6 @@
 {% load compress %}
 {% load djangular_tags %}
 
-{% block stylesheets %}
-{% compress css %}
-{#    <link type="text/less"#}
-{#          rel="stylesheet"#}
-{#          media="all"#}
-{#          href="{% new_static 'dashboard/less/dashboard.less' %}" />#}
-{% endcompress %}
-{% endblock stylesheets %}
-
 {% block js %}
     <script type="text/javascript" src="{% new_static 'app_manager/js/app_summary.ng.js' %}"></script>
 {% endblock js %}
@@ -24,7 +15,7 @@
         (function (angular, undefined) {
             'use strict';
 
-            var summaryApp = angular.module('SummaryApp', ['SummaryModule']);
+            var summaryApp = angular.module('summaryApp', ['ngRoute', 'summaryModule']);
             summaryApp.config(['$httpProvider', function($httpProvider) {
                 $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             }]);
@@ -38,40 +29,36 @@
                 formNameMap: {{ form_name_map|JSON }}
             });
 
+            summaryApp.config(['$routeProvider', function($routeProvider) {
+                console.log('asdfasdf');
+                $routeProvider.
+                    when('/form', {
+                        templateUrl: '{{ STATIC_URL }}app_manager/ng_partials/form_summary_view.html',
+                        controller: 'FormController'
+                    }).
+                    when('/case', {
+                        templateUrl: '{{ STATIC_URL }}app_manager/ng_partials/case_summary_view.html',
+                        controller: 'CaseController'
+                    }).
+                    otherwise({
+                        redirectTo: '/case'
+                    });
+            }]);
         }(window.angular));
     </script>
 {% endblock %}
 
-{#{% block page_navigation %}#}
-{#{% endblock %}#}
-{% block page_content %}
-    <div role="tabpanel">
-        <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation"><a href="#form_summary" role="tab" data-toggle="tab">{% trans "Form Summary" %}</a></li>
-            <li role="presentation" class="active"><a href="#case_summary" role="tab" data-toggle="tab">{% trans "Case Summary" %}</a></li>
-        </ul>
+{% block content %}
+<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
+    {% for parent in current_page.parents %}
+        <li><a href="{{ parent.url }}">{{ parent.title }}</a></li>
+    {% endfor %}
+    <li class="active">{{ current_page.page_name }}</li>
+</ol>
+<div class="container-fluid" ng-app="summaryApp">
+    <div class="row">
+        <ng-view></ng-view>
     </div>
-    <div class="tab-content" ng-app="SummaryApp">
-        <div role="tabpanel" class="tab-pane" id="form_summary">
-            <div id="langs">
-                {% if not app.is_remote_app %}
-                Language:
-                <select class="code" name="lang">
-                    {% for lang in app.langs %}
-                    <option value="{% urlencode request.path request.GET with "lang" as lang %}"
-                    {% if lang == langs.0 %}selected=""{% endif %}>
-                    {{ lang }} {% if lang == app.langs.0 %}(default){% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-                {% else %}
-                <select style="visibility: hidden;"></select>
-                {% endif %}
-            </div>
-            {% include 'app_manager/partials/app_summary.html' %}
-        </div>
-        <div role="tabpanel" class="tab-pane active" id="case_summary" ng-controller="CaseController">
-            {% include 'app_manager/partials/case_summary.html' %}
-        </div>
-    </div>
-{% endblock %}
+</div>
+{% endblock content %}

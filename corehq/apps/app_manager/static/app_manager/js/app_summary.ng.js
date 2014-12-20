@@ -2,6 +2,9 @@
     'use strict';
 
     var utils = {
+        getUrl: function (config, prefix) {
+            return config.staticRoot + prefix;
+        },
         getTemplate: function (config, filename) {
             return config.staticRoot + 'app_manager/ng_partials/' + filename;
         },
@@ -21,7 +24,9 @@
         }
     };
 
-    var summaryModule = angular.module('SummaryModule', ['ng.django.rmi']);
+    var summaryModule = angular.module('summaryModule', [
+        'ng.django.rmi'
+    ]);
 
     summaryModule.constant('summaryConfig', {
         staticRoot: '/',
@@ -30,12 +35,23 @@
     });
 
     var controllers = {};
+    controllers.FormController = function ($scope, djangoRMI, summaryConfig) {
+        var self = this;
+
+        $scope.loading = true;
+
+        $scope.getUrl = function (prefix) {
+            return utils.getUrl(summaryConfig, prefix);
+        };
+    };
+
     controllers.CaseController = function ($scope, djangoRMI, summaryConfig) {
         var self = this;
 
         $scope.caseTypes = [];
-        $scope.loading = false;
+        $scope.loading = true;
         $scope.lang = 'en';
+        $scope.typeSearch = {name: ''};
 
         self.init = function (attrs) {
             self.refreshData();
@@ -61,6 +77,14 @@
 
         $scope.getFormName = function (formId) {
             return utils.getFormName(summaryConfig, formId, $scope.lang);
+        };
+
+        $scope.getUrl = function (prefix) {
+            return utils.getUrl(summaryConfig, prefix);
+        };
+
+        $scope.filterCaseTypes = function (caseType) {
+            $scope.typeSearch.name = caseType;
         };
 
         self.init();

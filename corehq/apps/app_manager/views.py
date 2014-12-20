@@ -2692,6 +2692,13 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         return context
 
     @property
+    def parent_pages(self):
+        return [{
+            'title': _("Applications"),
+            'url': reverse('view_app', args=[self.domain, self.app_id]),
+        }]
+
+    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.app_id])
 
