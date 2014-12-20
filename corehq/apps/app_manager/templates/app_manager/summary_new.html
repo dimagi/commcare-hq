@@ -33,11 +33,11 @@
                 console.log('asdfasdf');
                 $routeProvider.
                     when('/form', {
-                        templateUrl: '{{ STATIC_URL }}app_manager/ng_partials/form_summary_view.html',
+                        templateUrl: '{% url 'ng_template' domain 'form_summary_view' %}',
                         controller: 'FormController'
                     }).
                     when('/case', {
-                        templateUrl: '{{ STATIC_URL }}app_manager/ng_partials/case_summary_view.html',
+                        templateUrl: '{% url 'ng_template' domain 'case_summary_view' %}',
                         controller: 'CaseController'
                     }).
                     otherwise({
