@@ -81,7 +81,7 @@ def commtrackify(domain_name, checked):
     if checked:
         # turning on commtrack should turn on locations, but not the other way around
         domain.locations_enabled = True
-        enable_commtrack_previews()
+        enable_commtrack_previews(domain)
 
     domain.save()
 
