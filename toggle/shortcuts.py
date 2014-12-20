@@ -28,7 +28,10 @@ def set_toggle(slug, item, enabled, namespace=None):
     """
     item = namespaced_item(item, namespace)
     if toggle_enabled(slug, item) != enabled:
-        toggle_doc = Toggle.get(slug)
+        try:
+            toggle_doc = Toggle.get(slug)
+        except ResourceNotFound:
+            toggle_doc = Toggle(slug=slug, enabled_users=[])
         if enabled:
             toggle_doc.add(item)
         else:
