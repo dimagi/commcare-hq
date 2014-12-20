@@ -342,9 +342,8 @@ def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time
         terms = ['is_approved', 'sort_by', 'search']
     if facets is None:
         facets = []
-    q = {"query": {"bool": {"must":
-                                [{"match": {'doc_type': "Domain"}},
-                                 {"term": {"deployment.public": True}}]}}}
+    q = {"query": {"bool": {"must": [{"match": {'doc_type': "Domain"}},
+                                     {"term": {"deployment.public": True}}]}}}
 
     search_query = params.get('search', "")
     if search_query:
