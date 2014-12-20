@@ -1,17 +1,23 @@
 <div id="hq-sidebar" class="col-xs-4 col-sm-3 col-lg-2 col-hq-sidebar" role="navigation">
     <nav class="app-manager-content">
-        <ul class="nav nav-list">
-            <li>
+        <ul class="nav nav-pills nav-stacked">
+            <li role="presentation">
                 <a href="#/form">
                     <i class="fa fa-file-text-o"></i>
                     Form Summary
                 </a>
             </li>
+            <li role="presentation" class="active">
+                <a>
+                    <i class="fa fa-envelope-square"></i>
+                    Case Summary
+                </a>
+            </li>
             <li role="presentation" class="divider"></li>
-            <li>
+            <li role="presentation">
                 <a ng-click="filterCaseTypes()">All Case Types</a>
                 <ul>
-                    <li ng-repeat="caseType in caseTypes">
+                    <li role="presentation" ng-repeat="caseType in caseTypes" ng-class="typeSearch.name === caseType.name ? 'active' : ''">
                         <a ng-click="filterCaseTypes(caseType.name)">{{ caseType.name }}</a>
                     </li>
                 </ul>
