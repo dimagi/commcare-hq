@@ -2644,7 +2644,7 @@ def summary(request, domain, app_id, should_edit=True):
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary_new'
-    page_title = ugettext_noop("App Summary")
+    page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary_new.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -2693,10 +2693,16 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 
     @property
     def parent_pages(self):
-        return [{
-            'title': _("Applications"),
-            'url': reverse('view_app', args=[self.domain, self.app_id]),
-        }]
+        return [
+            {
+                'title': _("Applications"),
+                'url': reverse('view_app', args=[self.domain, self.app_id]),
+            },
+            {
+                'title': self.app.name,
+                'url': reverse('view_app', args=[self.domain, self.app_id]),
+            }
+        ]
 
     @property
     def page_url(self):

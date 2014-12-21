@@ -30,18 +30,17 @@
             });
 
             summaryApp.config(['$routeProvider', function($routeProvider) {
-                console.log('asdfasdf');
                 $routeProvider.
-                    when('/form', {
+                    when('/forms', {
                         templateUrl: '{% url 'ng_template' domain 'form_summary_view' %}',
                         controller: 'FormController'
                     }).
-                    when('/case', {
+                    when('/cases', {
                         templateUrl: '{% url 'ng_template' domain 'case_summary_view' %}',
                         controller: 'CaseController'
                     }).
                     otherwise({
-                        redirectTo: '/case'
+                        redirectTo: '/cases'
                     });
             }]);
         }(window.angular));

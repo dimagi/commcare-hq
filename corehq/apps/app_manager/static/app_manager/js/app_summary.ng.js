@@ -1,29 +1,6 @@
 (function (angular, undefined) {
     'use strict';
 
-    var utils = {
-        getUrl: function (config, prefix) {
-            return config.staticRoot + prefix;
-        },
-        getTemplate: function (config, filename) {
-            return config.staticRoot + 'app_manager/ng_partials/' + filename;
-        },
-        getIcon: function (config, type) {
-            var vtype = config.vellumTypes[type];
-            if (vtype) {
-                return vtype.icon_bs3;
-            }
-            return ''
-        },
-        getFormName: function (config, formId, lang) {
-            var name = config.formNameMap[formId];
-            if (name) {
-                return name.module_name[lang] + ' -> ' + name.form_name[lang];
-            }
-            return formId;
-        }
-    };
-
     var summaryModule = angular.module('summaryModule', [
         'ng.django.rmi'
     ]);
@@ -34,24 +11,53 @@
         formNameMap: {}
     });
 
+    summaryModule.factory('utils', ['$location', 'summaryConfig', function utilsFactory($location, config) {
+        var utils = {
+            getTemplate: function (filename) {
+                return config.staticRoot + 'app_manager/ng_partials/' + filename;
+            },
+            getIcon: function (type) {
+                var vtype = config.vellumTypes[type];
+                if (vtype) {
+                    return vtype.icon_bs3;
+                }
+                return ''
+            },
+            getFormName: function (formId, lang) {
+                var name = config.formNameMap[formId];
+                if (name) {
+                    return name.module_name[lang] + ' -> ' + name.form_name[lang];
+                }
+                return formId;
+            },
+            isActive: function (path) {
+                return $location.path().substr(0, path.length) == path;
+            }
+        };
+        return utils;
+    }]);
+
     var controllers = {};
-    controllers.FormController = function ($scope, djangoRMI, summaryConfig) {
+    controllers.FormController = function ($scope, djangoRMI, summaryConfig, utils) {
         var self = this;
 
         $scope.loading = true;
-
-        $scope.getUrl = function (prefix) {
-            return utils.getUrl(summaryConfig, prefix);
-        };
+        $scope.isActive = utils.isActive;
     };
 
-    controllers.CaseController = function ($scope, djangoRMI, summaryConfig) {
+    controllers.CaseController = function ($scope, djangoRMI, summaryConfig, utils) {
         var self = this;
 
         $scope.caseTypes = [];
         $scope.loading = true;
         $scope.lang = 'en';
         $scope.typeSearch = {name: ''};
+        $scope.isActive = utils.isActive;
+        $scope.getFormName = utils.getFormName;
+
+        $scope.filterCaseTypes = function (caseType) {
+            $scope.typeSearch.name = caseType;
+        };
 
         self.init = function (attrs) {
             self.refreshData();
@@ -75,54 +81,52 @@
             }
         };
 
-        $scope.getFormName = function (formId) {
-            return utils.getFormName(summaryConfig, formId, $scope.lang);
-        };
-
-        $scope.getUrl = function (prefix) {
-            return utils.getUrl(summaryConfig, prefix);
-        };
-
-        $scope.filterCaseTypes = function (caseType) {
-            $scope.typeSearch.name = caseType;
-        };
-
         self.init();
     };
     summaryModule.controller(controllers);
 
-    var directives = {};
-    directives.openerCloser = function (summaryConfig) {
+    summaryModule.directive('openerCloser', ['utils', function (utils) {
         return {
             restrict: 'E',
-            templateUrl: utils.getTemplate(summaryConfig, 'opener_closer.html'),
+            templateUrl: '/opener_closer.html',
             scope: {
                 title: '@',
                 forms: '=',
                 lang: '='
             },
             controller: function ($scope) {
-                $scope.getFormName = function (formId) {
-                    return utils.getFormName(summaryConfig, formId, $scope.lang);
-                };
+                $scope.getFormName = utils.getFormName;
             }
         }
-    };
+    }]);
 
-    directives.formQuestions = function (summaryConfig) {
+    summaryModule.directive('formQuestions', ['utils', function (utils) {
         return {
             restrict: 'E',
-            templateUrl: utils.getTemplate(summaryConfig, 'form_questions.html'),
+            templateUrl: '/form_questions.html',
             scope: {
                 questions: '='
             },
             controller: function ($scope) {
-                $scope.getIcon = function (questionType) {
-                    return utils.getIcon(summaryConfig, questionType);
-                };
+                $scope.getIcon = utils.getIcon;
             }
         }
-    };
-    summaryModule.directive(directives);
+    }]);
+    summaryModule.directive('loading', function () {
+        return {
+            restrict: 'E',
+            replace: true,
+            templateUrl: '/loading.html',
+            link: function (scope, element, attr) {
+                scope.$watch('loading', function (val) {
+                    if (val) {
+                        $(element).show();
+                    } else {
+                        $(element).hide();
+                    }
+                });
+            }
+        }
+    });
 
 }(window.angular));

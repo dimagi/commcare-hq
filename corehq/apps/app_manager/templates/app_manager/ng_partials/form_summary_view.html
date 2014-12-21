@@ -1,0 +1,23 @@
+{% extends "app_manager/ng_partials/base_summary_view.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+{% block navigation_extra %}
+{% angularjs %}
+    <li role="presentation">
+        <a>{% trans "All Forms" %}</a>
+    </li>
+{% endangularjs %}
+{% endblock %}
+
+{% block content %}
+{% angularjs %}
+    <div class="page-header" style="margin-top: 0;">
+        <h1 style="font-size: 1.8em;">{% trans "Form Summary" %}</h1>
+    </div>
+    <div>
+        <loading></loading>
+    </div>
+{% endangularjs %}
+{% endblock %}
