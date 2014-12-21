@@ -63,8 +63,8 @@ def sync(app, verbosity=2, temp=None):
         if verbosity >=1:
             print "sync `%s` in CouchDB" % app_sync_info.name
 
-        if design_info.path is None and settings.DEBUG:
-            print >>sys.stderr, "%s doesn't exist, no ddoc synchronized" % design_path
+        if design_info.design_path is None and settings.DEBUG:
+            print >>sys.stderr, "%s doesn't exist, no ddoc synchronized" % design_info.design_path
             continue
 
         # these lines differ from the original
@@ -72,14 +72,14 @@ def sync(app, verbosity=2, temp=None):
         # improved method
         sync_design_docs(
             db=design_info.db,
-            design_dir=design_info.path,
-            design_name=design_info.label,
+            design_dir=design_info.design_path,
+            design_name=design_info.app_label,
             temp=temp,
         )
 
 
 AppSyncInfo = namedtuple('AppSyncInfo', ['name', 'designs'])
-DesignInfo = namedtuple('DesignInfo', ['label', 'db', 'path'])
+DesignInfo = namedtuple('DesignInfo', ['db', 'app_label', 'design_path'])
 
 
 def get_app_sync_info(app):
@@ -104,6 +104,6 @@ def get_app_sync_info(app):
         design_path = "%s/%s" % (app_path, "_design")
         if not os.path.isdir(design_path):
             design_path = None
-        designs.append(DesignInfo(label=app_label, db=db, path=design_path))
+        designs.append(DesignInfo(db=db, app_label=app_label, design_path=design_path))
 
     return AppSyncInfo(name=app_name, designs=designs)
