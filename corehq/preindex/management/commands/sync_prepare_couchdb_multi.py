@@ -14,7 +14,6 @@ from datetime import datetime
 from gevent.pool import Pool
 from django.conf import settings
 setattr(settings, 'COUCHDB_TIMEOUT', 999999)
-from couchdbkit.ext.django.loading import couchdbkit_handler
 
 
 POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
