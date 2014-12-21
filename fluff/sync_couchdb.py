@@ -6,40 +6,24 @@ from couchdbkit.ext.django.loading import get_db
 # - be ok with intentionally introducing this dependency
 #   for something that's pretty bound to our specific deploy workflow
 from corehq.preindex import PreindexPlugin
+from dimagi.utils.couch.sync_docs import DesignInfo
 from pillowtop.utils import get_all_pillows
 from dimagi.utils.couch import sync_docs
 
 
 class FluffPreindexPlugin(PreindexPlugin):
-    def sync_design_docs(self, temp=None):
-        synced = set()
-        for pillow in get_all_pillows(instantiate=False):
-            if hasattr(pillow, 'indicator_class'):
-                app_label = pillow.indicator_class._meta.app_label
-                db = get_db(app_label)
-                if db not in synced:
-                    sync_docs.sync_design_docs(
-                        db=db,
-                        design_dir=os.path.join(self.dir, "_design"),
-                        design_name=self.app_label,
-                        temp=temp,
-                    )
-                    synced.add(db)
 
-    def copy_designs(self, temp=None, delete=True):
-        copied = set()
+    def get_designs(self):
+        designs = []
         for pillow in get_all_pillows(instantiate=False):
             if hasattr(pillow, 'indicator_class'):
                 app_label = pillow.indicator_class._meta.app_label
-                db = get_db(app_label)
-                if db not in copied:
-                    sync_docs.copy_designs(
-                        db=db,
-                        design_name=self.app_label,
-                        temp=temp,
-                        delete=delete,
-                    )
-                    copied.add(db)
+                designs.append(DesignInfo(
+                    app_label=self.app_label,
+                    db=get_db(app_label),
+                    design_path=os.path.join(self.dir, "_design")
+                ))
+        return designs
 
 
 FluffPreindexPlugin.register('fluff', __file__)
