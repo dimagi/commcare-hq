@@ -7,7 +7,6 @@ from django.db.models import get_apps
 from corehq.preindex import get_preindex_plugins
 from dimagi.utils.couch.database import get_design_docs
 from dimagi.utils.couch.sync_docs import get_app_sync_info
-import settings
 
 
 class Command(BaseCommand):
@@ -54,9 +53,9 @@ class Command(BaseCommand):
                     'If any of these views are actually live, bad things will happen. '
                     '(Type "delete designs" to continue):',
                     '',
-                ])).lower() == 'delete designs':
-                    for db, design_docs in designs_to_delete.items():
-                        db.delete_docs(design_docs)
+            ])).lower() == 'delete designs':
+                for db, design_docs in designs_to_delete.items():
+                    db.delete_docs(design_docs)
             else:
                 print 'aborted!'
         else:
