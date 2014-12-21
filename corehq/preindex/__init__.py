@@ -4,6 +4,7 @@ import os
 from south.signals import post_migrate
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch import sync_docs
+from dimagi.utils.couch.sync_docs import DesignInfo
 
 
 PREINDEX_PLUGINS = {}
@@ -31,11 +32,34 @@ class PreindexPlugin(object):
         dir = os.path.abspath(os.path.dirname(file))
         register_preindex_plugin(cls(app_label, dir, app_db_map))
 
-    def sync_design_docs(self, temp=None):
+    def get_designs(self):
         raise NotImplementedError()
 
+    def sync_design_docs(self, temp=None):
+        synced = set()
+        for design in self.get_designs():
+            key = (design.db.uri, design.app_label)
+            if key not in synced:
+                sync_docs.sync_design_docs(
+                    db=design.db,
+                    design_dir=design.design_path,
+                    design_name=design.app_label,
+                    temp=temp,
+                )
+                synced.add(key)
+
     def copy_designs(self, temp=None, delete=True):
-        raise NotImplementedError()
+        copied = set()
+        for design in self.get_designs():
+            key = (design.db.uri, design.app_label)
+            if key not in copied:
+                sync_docs.copy_designs(
+                    db=design.db,
+                    design_name=design.app_label,
+                    temp=temp,
+                    delete=delete,
+                )
+                copied.add(key)
 
     def __repr__(self):
         return '{cls.__name__}({self.app_label!r}, {self.dir!r})'.format(
@@ -64,23 +88,11 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
         return [d for d in os.listdir(self.dir)
                 if os.path.isdir(os.path.join(self.dir, d))]
 
-    def sync_design_docs(self, temp=None):
-        for app_label in self.get_couchapps():
-            sync_docs.sync_design_docs(
-                db=self.db(app_label),
-                design_dir=os.path.join(self.dir, app_label),
-                design_name=app_label,
-                temp=temp,
-            )
-
-    def copy_designs(self, temp=None, delete=True):
-        for app_label in self.get_couchapps():
-            sync_docs.copy_designs(
-                db=self.db(app_label),
-                design_name=app_label,
-                temp=temp,
-                delete=delete,
-            )
+    def get_designs(self):
+        return [
+            DesignInfo(app_label=app_label, db=self.db(app_label), design_path=os.path.join(self.dir, app_label))
+            for app_label in self.get_couchapps()
+        ]
 
 
 def get_preindex_plugins():
