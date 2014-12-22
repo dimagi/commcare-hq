@@ -8,22 +8,28 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
 
-        # Adding M2M table for field products on 'SQLLocation'
-        db.create_table(u'locations_sqllocation_products', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('sqllocation', models.ForeignKey(orm[u'locations.sqllocation'], null=False)),
-            ('sqlproduct', models.ForeignKey(orm[u'products.sqlproduct'], null=False))
+        # Adding model 'ProductAtLocation'
+        db.create_table(u'locations_productatlocation', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('product', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['products.SQLProduct'])),
+            ('location', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['locations.SQLLocation'])),
         ))
-        db.create_unique(u'locations_sqllocation_products', ['sqllocation_id', 'sqlproduct_id'])
+        db.send_create_signal(u'locations', ['ProductAtLocation'])
 
 
     def backwards(self, orm):
 
-        # Removing M2M table for field products on 'SQLLocation'
-        db.delete_table('locations_sqllocation_products')
+        # Deleting model 'ProductAtLocation'
+        db.delete_table(u'locations_productatlocation')
 
 
     models = {
+        u'locations.productatlocation': {
+            'Meta': {'object_name': 'ProductAtLocation'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'location': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['locations.SQLLocation']"}),
+            'product': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['products.SQLProduct']"})
+        },
         u'locations.sqllocation': {
             'Meta': {'unique_together': "(('domain', 'site_code'),)", 'object_name': 'SQLLocation'},
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -41,7 +47,7 @@ class Migration(SchemaMigration):
             'metadata': ('json_field.fields.JSONField', [], {'default': '{}'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
             'parent': ('mptt.fields.TreeForeignKey', [], {'blank': 'True', 'related_name': "'children'", 'null': 'True', 'to': u"orm['locations.SQLLocation']"}),
-            'products': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['products.SQLProduct']", 'null': 'True', 'symmetrical': 'False'}),
+            'products': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['products.SQLProduct']", 'null': 'True', 'through': u"orm['locations.ProductAtLocation']", 'symmetrical': 'False'}),
             u'rght': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
             'site_code': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'supply_point_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'unique': 'True', 'null': 'True', 'db_index': 'True'}),
