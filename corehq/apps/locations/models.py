@@ -27,7 +27,7 @@ class SQLLocation(MPTTModel):
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
-    products = models.ManyToManyField(SQLProduct, null=True, through='ProductAtLocation')
+    products = models.ManyToManyField(SQLProduct, null=True)#, through='ProductAtLocation')
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
@@ -66,10 +66,26 @@ class SQLLocation(MPTTModel):
         """
         return self.products.all() or SQLProduct.by_domain(self.domain)
 
+    # def set_products(self, products):
+        # """
+        # Set the list of products stored at this location
+        # """
+        # existing = self.products.all().delete()
+        # print "*"*40, 'ESOE:existing  ', "*"*40
+        # print existing
+        # # self.products.clear() ?
+        # # import ipdb; ipdb.set_trace()
+        # for product in products:
+            # print product.name
+            # ProductAtLocation.objects.create(
+                # product=product,
+                # location=self,
+            # )
 
-class ProductAtLocation(models.Model):
-    product = models.ForeignKey(SQLProduct)
-    location = models.ForeignKey(SQLLocation)
+
+# class ProductAtLocation(models.Model):
+    # product = models.ForeignKey(SQLProduct)
+    # location = models.ForeignKey(SQLLocation)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):

@@ -476,10 +476,6 @@ def sync_openlmis(request, domain):
     return HttpResponse('OK')
 
 
-def sql_to_tuple(product):
-    return (product.product_id, product.name)
-
-
 class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
     """
     Manage products stocked at each location
@@ -489,17 +485,18 @@ class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
     template_name = 'locations/manage/products_per_location.html'
 
     @property
-    @memoized
+    # @memoized
     def products_at_location(self):
-        return map(sql_to_tuple, self.sql_location.get_products())
+        return [p.product_id for p in self.sql_location.products.all()]
 
     @property
-    @memoized
+    # @memoized
     def all_products(self):
-        return map(sql_to_tuple, SQLProduct.by_domain(self.domain))
+        return [(p.product_id, p.name)
+                for p in SQLProduct.by_domain(self.domain)]
 
     @property
-    @memoized
+    # @memoized
     def products_form(self):
         form = MultipleSelectionForm(initial={
             'selected_ids': self.products_at_location
@@ -507,9 +504,18 @@ class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
         form.fields['selected_ids'].choices = self.all_products
         return form
 
-
     @property
     def page_context(self):
         return {
             'products_per_location_form': self.products_form,
         }
+
+    def post(self, request, *args, **kwargs):
+        products = SQLProduct.objects.filter(
+            product_id__in=request.POST.getlist('selected_ids', [])
+        )
+        self.sql_location.products = products
+        self.sql_location.save()
+        msg = _("Products updated for {}").format(self.location.name)
+        messages.success(request, msg)
+        return self.get(request, *args, **kwargs)

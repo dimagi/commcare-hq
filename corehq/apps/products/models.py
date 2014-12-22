@@ -273,6 +273,18 @@ class Product(Document):
         return p
 
 
+class ProductAtLocationManager(models.Manager):
+    # make this be the manager used from location.products
+    use_for_related_fields = True
+
+    def only_explicit(self):
+        return super(ProductAtLocationManager, self).all()
+
+    def all(self):
+        print "*"*40, 'ESOE:ProductAtLocationManager ', "*"*40
+        return self.only_explicit()# or SQLProduct.by_domain(self.domain)
+
+
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
@@ -295,6 +307,10 @@ class SQLProduct(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    # can there be only one?
+    # objects = models.Manager()
+    # products_at_location = ProductAtLocationManager()
 
     def __repr__(self):
         return "<SQLProduct(domain=%s, name=%s)>" % (
