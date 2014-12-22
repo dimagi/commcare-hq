@@ -4,6 +4,7 @@ from corehq.apps.reminders.models import (CaseReminderHandler,
     RECIPIENT_SURVEY_SAMPLE)
 from dimagi.utils.couch.database import iter_docs
 
+
 class Command(BaseCommand):
     """
       The new reminders UI removes support for some edge cases, and the
@@ -56,4 +57,3 @@ class Command(BaseCommand):
                 self.check_for_multiple_fire_time_types(handler)
                 self.check_for_datetime_criteria(handler)
                 self.check_for_case_group_recipient(handler)
-
