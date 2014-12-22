@@ -22,6 +22,23 @@ def toggle_enabled(slug, item, check_cache=True, namespace=None):
     return ret
 
 
+def set_toggle(slug, item, enabled, namespace=None):
+    """
+    Sets a toggle value explicitly. Should only save anything if the value needed to be changed.
+    """
+    item = namespaced_item(item, namespace)
+    if toggle_enabled(slug, item) != enabled:
+        try:
+            toggle_doc = Toggle.get(slug)
+        except ResourceNotFound:
+            toggle_doc = Toggle(slug=slug, enabled_users=[])
+        if enabled:
+            toggle_doc.add(item)
+        else:
+            toggle_doc.remove(item)
+        update_toggle_cache(slug, item, enabled)
+
+
 def clear_toggle_cache(slug, item, namespace=None):
     item = namespaced_item(item, namespace)
     cache_key = get_toggle_cache_key(slug, item)
@@ -29,8 +46,7 @@ def clear_toggle_cache(slug, item, namespace=None):
 
 
 def update_toggle_cache(slug, item, state, namespace=None):
-    item = namespaced_item(item, namespace)
-    cache_key = get_toggle_cache_key(slug, item)
+    cache_key = get_toggle_cache_key(slug, namespaced_item(item, namespace))
     cache.set(cache_key, state)
 
 

@@ -24,6 +24,22 @@ class Toggle(Document):
             docid = generate_toggle_id(docid)
         return super(Toggle, cls).get(docid, rev=None, db=None, dynamic_properties=True)
 
+    def add(self, item):
+        """
+        Adds an item to the toggle. Only saves if necessary.
+        """
+        if item not in self.enabled_users:
+            self.enabled_users.append(item)
+            self.save()
+
+    def remove(self, item):
+        """
+        Removes an item from the toggle. Only saves if necessary.
+        """
+        if item in self.enabled_users:
+            self.enabled_users.remove(item)
+            self.save()
+
 
 def generate_toggle_id(slug):
     # use the slug to build the ID to avoid needing couch views
