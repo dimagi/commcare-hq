@@ -32,49 +32,27 @@
     <div class="row-fluid" ng-hide="loading">
         <div ng-repeat="caseType in caseTypes|filter:typeSearch">
             <div class="panel panel-default">
-                <div class="panel-heading"><h3>{{ caseType.name }}</h3>
-{#                    <div class="row">#}
-{#                      <div class="col-md-3"><h3>{{ caseType.name }}</h3></div>#}
-{#                      <div class="col-md-3">#}
-{#                          {% trans "Relationships:" %}#}
-{#                          <ul>#}
-{#                                <li ng-repeat="(relationship, case_type) in caseType.relationships">#}
-{#                                    <span class="label label-primary">{{ relationship }}</span> {{ case_type }}#}
-{#                                </li>#}
-{#                            </ul>#}
-{#                      </div>#}
-{#                      <div class="col-md-3">#}
-{#                          {% trans "Opened by:" %}#}
-{#                          <opener-closer forms="caseType.opened_by" lang="lang"></opener-closer>#}
-{#                      </div>#}
-{#                      <div class="col-md-3">#}
-{#                          {% trans "Closed by:" %}#}
-{#                          <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>#}
-{#                      </div>#}
-{#                    </div>#}
+                <div class="panel-heading">
+                    <div class="row">
+                      <div class="col-md-3"><h3>{{ caseType.name }}</h3></div>
+                      <div class="col-md-3">
+                          {% trans "Relationships:" %}
+                          <ul>
+                                <li ng-repeat="(relationship, case_type) in caseType.relationships">
+                                    <span class="label label-primary">{{ relationship }}</span> {{ case_type }}
+                                </li>
+                            </ul>
+                      </div>
+                      <div class="col-md-3">
+                          {% trans "Opened by:" %}
+                          <opener-closer forms="caseType.opened_by" lang="lang"></opener-closer>
+                      </div>
+                      <div class="col-md-3">
+                          {% trans "Closed by:" %}
+                          <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>
+                      </div>
+                    </div>
                 </div>
-                <table class="table">
-                    <thead>
-                        <th>{% trans "Relationships:" %}</th>
-                        <th>{% trans "Opened by:" %}</th>
-                        <th>{% trans "Closed by:" %}</th>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <ul>
-                                    <li ng-repeat="(relationship, case_type) in caseType.relationships">
-                                        <span class="label label-primary">{{ relationship }}</span> {{ case_type }}
-                                    </li>
-                                </ul>
-                            </td>
-                            <td><opener-closer forms="caseType.closed_by" lang="lang"></opener-closer></td>
-                            <td><opener-closer forms="caseType.opened_by" lang="lang"></opener-closer></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="panel-heading"><h4>{% trans "Properties" %}</h4></div>
                 <table class="table" ng-repeat-end>
                     <thead>
                         <th>{% trans "Case Property" %}</th>
