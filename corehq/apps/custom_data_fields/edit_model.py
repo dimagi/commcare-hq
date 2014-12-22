@@ -153,8 +153,8 @@ class CustomDataModelMixin(object):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
-            messages.success(request, _("{} fields saved successfully")
-                                      .format(self.entity_string))
+            msg = _(u"{} fields saved successfully").format(self.entity_string)
+            messages.success(request, msg)
             return self.get(request, success=True, *args, **kwargs)
         else:
             return self.get(request, *args, **kwargs)
