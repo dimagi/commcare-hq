@@ -96,6 +96,10 @@ class BaseSingleOptionFilter(BaseReportFilter):
     template = "reports/filters/single_option.html"
     default_text = ugettext_noop("Filter by...")
     placeholder = ''
+    is_paginated = False
+    pagination_source = None  # url for paginated data
+    async_handler = None
+    async_action = None
 
     @property
     def options(self):
@@ -112,22 +116,32 @@ class BaseSingleOptionFilter(BaseReportFilter):
 
     @property
     def filter_context(self):
-        options = self.options
-        if not isinstance(options, list) and not isinstance(options[0], tuple) and not len(options[0]) == 2:
-            raise ValueError("options must return a list of option tuples [('value','text')].")
-        options = [dict(val=o[0], text=o[1]) for o in self.options]
+        options = []
+        if not self.is_paginated:
+            options = self.options
+            if not isinstance(options, list) and not isinstance(options[0], tuple) and not len(options[0]) == 2:
+                raise ValueError("options must return a list of option tuples [('value','text')].")
+            options = [dict(val=o[0], text=o[1]) for o in self.options]
         return {
             'select': {
                 'options': options,
                 'default_text': self.default_text,
                 'selected': self.selected,
                 'placeholder': self.placeholder,
-            }
+            },
+            'pagination': {
+                'enabled': self.is_paginated,
+                'url': self.pagination_source,
+                'handler': self.async_handler.slug if self.async_handler else '',
+                'action': self.async_action,
+            },
         }
 
     @classmethod
     def get_value(cls, request, domain):
         value = super(BaseSingleOptionFilter, cls).get_value(request, domain)
+        if cls.is_paginated:
+            return value if value else None
         if isinstance(cls, cls):
             instance = cls
         else:
