@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - caching-speedups  # Danny 12/11
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -54,7 +53,8 @@ branches:
   - quickview # Simon 11/25
   - double-management # SK 12/1
   - logo-uploader # Nick P 12/2
-  - userreports-delete # Nick P 12/10
+  - cloudcare-speedup  # cz/sk 12/17
+  - logo-uploader-debug # Nick P 12/17
 submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:

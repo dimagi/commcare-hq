@@ -37,6 +37,12 @@ class IndicatorSqlAdapter(object):
                 insert = table.insert().values(**all_values)
                 connection.execute(insert)
 
+    def delete(self, doc):
+        table = self.get_table()
+        with self.engine.begin() as connection:
+            delete = table.delete(table.c.doc_id == doc['_id'])
+            connection.execute(delete)
+
 
 def get_indicator_table(indicator_config):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]

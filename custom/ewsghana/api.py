@@ -66,6 +66,7 @@ class Location(JsonObject):
     groups = ListProperty()
     supervised_by = IntegerProperty()
     supply_points = ListProperty(item_type=SupplyPoint)
+    is_active = BooleanProperty()
 
 
 class Program(JsonObject):

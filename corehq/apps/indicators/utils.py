@@ -1,11 +1,12 @@
 from couchdbkit import ResourceNotFound
-from dimagi.utils.couch.cache import cache_core
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
 
 
+@quickcache(timeout=60)
 def get_indicator_config():
     try:
-        doc = cache_core.cached_open_doc(get_db(), 'INDICATOR_CONFIGURATION')
+        doc = get_db().open_doc('INDICATOR_CONFIGURATION')
     except ResourceNotFound:
         return {}
     else:

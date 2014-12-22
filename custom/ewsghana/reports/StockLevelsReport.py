@@ -298,7 +298,18 @@ class InventoryManagementData(EWSData):
         return rows
 
 
-class FacilitySMSUsers(EWSData):
+class StockLevelsReportMixin(object):
+    @memoized
+    def get_users_by_location_id(self, domain, location_id):
+        rows = []
+        for user in CommCareUser.by_domain(domain):
+            user_number = user.phone_numbers[0] if user.phone_numbers else None
+            if user.get_domain_membership(domain).location_id == location_id and user_number:
+                rows.append([user.name, user_number])
+        return rows
+
+
+class FacilitySMSUsers(EWSData, StockLevelsReportMixin):
     title = 'SMS Users'
     slug = 'facility_sms_users'
     show_table = True
@@ -311,18 +322,11 @@ class FacilitySMSUsers(EWSData):
         ])
 
     @property
-    @memoized
     def rows(self):
-        rows = []
-        for user in CommCareUser.by_domain(self.config['domain']):
-            user_number = user.get_verified_number()
-            if user.get_domain_membership(self.config['domain']).location_id == self.config['location_id']\
-                    and user_number:
-                rows.append([user.name, user_number.phone_number])
-        return rows
+        return self.get_users_by_location_id(self.config['domain'], self.config['location_id'])
 
 
-class FacilityUsers(EWSData):
+class FacilityUsers(EWSData, StockLevelsReportMixin):
     title = 'Web Users'
     slug = 'facility_users'
     show_table = True
@@ -337,9 +341,10 @@ class FacilityUsers(EWSData):
     @property
     def rows(self):
         rows = []
-        sms_users = FacilitySMSUsers(self.config).rows
+        sms_users = [u[0] for u in self.get_users_by_location_id(self.config['domain'],
+                                                                 self.config['location_id'])]
         for user in CouchUser.by_domain(self.config['domain']):
-            if user.name not in [u[0] for u in sms_users]:
+            if user.name not in sms_users:
                 if hasattr(user, 'domain_membership') \
                         and user.domain_membership['location_id'] == self.config['location_id']:
                     rows.append([user.name, user.get_email()])

@@ -3,7 +3,8 @@ from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.factory import FilterFactory, IndicatorFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
 from corehq.apps.userreports.reports.specs import FilterSpec
@@ -11,6 +12,18 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
+
+
+DELETED_DOC_TYPES = {
+    'CommCareCase': [
+        'CommCareCase-Deleted',
+    ],
+    'XFormInstance': [
+        'XFormInstance-Deleted',
+        'XFormArchived',
+        'XFormDeprecated',
+    ],
+}
 
 
 class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCouchDocumentMixin, Document):
@@ -31,6 +44,13 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
 
     @property
     def filter(self):
+        return self._get_filter([self.referenced_doc_type])
+
+    @property
+    def deleted_filter(self):
+        return self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
+
+    def _get_filter(self, doc_types):
         extras = (
             [self.configured_filter]
             if self.configured_filter else []
@@ -42,9 +62,15 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
                 'property_value': self.domain,
             },
             {
-                'type': 'property_match',
-                'property_name': 'doc_type',
-                'property_value': self.referenced_doc_type,
+                'type': 'or',
+                'filters': [
+                    {
+                        'type': 'property_match',
+                        'property_name': 'doc_type',
+                        'property_value': doc_type,
+                    }
+                    for doc_type in doc_types
+                ],
             },
         ]
         return FilterFactory.from_spec(
@@ -104,8 +130,8 @@ class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCo
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.view('userreports/data_sources_by_domain',
-                                             reduce=False, include_docs=False)]
+        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_domain',
+                                                      reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
 

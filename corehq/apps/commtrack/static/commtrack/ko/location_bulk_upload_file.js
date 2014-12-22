@@ -18,7 +18,7 @@ $(function () {
         this.url = ko.computed(function() {
             // ternary prevents adding include_consumption=false to other
             // bulk pages
-            return self.base_url + (self.include_consumption() ? "?include_consumption=true" : "")
+            return self.base_url + (self.include_consumption() ? "?include_consumption=true" : "");
         });
     }
 

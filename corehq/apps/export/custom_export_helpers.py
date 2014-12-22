@@ -265,6 +265,7 @@ class FormCustomExportHelper(CustomExportHelper):
                     col["options"] = question_schema[question].options
                     col["allOptions"] = question_schema[question].options
                     col["doc_type"] = SplitColumn.__name__
+                    col["hasNewOptions"] = False
                 else:
                     current_options = set(col.get("options", []))
                     col["allOptions"] = list(set(question_schema[question].options) | current_options)
@@ -318,7 +319,10 @@ class FormCustomExportHelper(CustomExportHelper):
                     'selected': False,
                     'transform': None,
                     'tag': None,
-                    'display': ''
+                    'display': '',
+                    'doc_type': None,
+                    'allOptions': None,
+                    'options': []
                 })
 
         column_conf.extend(generate_additional_columns(requires_case))

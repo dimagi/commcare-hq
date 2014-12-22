@@ -45,6 +45,7 @@ class SMSUser(JsonObject):
     email = StringProperty()
     phone_numbers = ListProperty()
     backend = StringProperty()
+    date_updated = StringProperty()
 
 
 class Location(JsonObject):

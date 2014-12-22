@@ -184,10 +184,10 @@ INDICATOR_DATA = {
         "chart_name": "active_users_mobile",
         "chart_title": "Active Mobile Users (last 30 days)",
         "get_request_params": {
-            "user_type_mobile": True,
+            "include_forms": True,
         },
         "hide_cumulative_charts": True,
-        "histogram_type": "users_all",
+        "histogram_type": "active_mobile_users",
         "is_cumulative": False,
         "xaxis_label": "# users",
     },
