@@ -26,5 +26,5 @@ INCOMPLETE_SOH_TO_SUPER = 'Dear %(name)s, %(facility)s\'s SMS stock report was I
                           'Please report for: %(products)s'
 STOCKOUT_REPORT = 'Dear %(name)s, %(facility)s reported STOCKOUTS on %(date)s of %(products)s'
 RRIRV_REMINDER = "Dear %(name)s, have you submitted your RRIRV forms this month? Please reply 'yes' or 'no'"
-WEB_REMINDER = "Dear %(name)s, you have not visited ewsghana.com in a long time. " \
+WEB_REMINDER = "Dear %(name)s, you have not visited commcarehq.org in a long time. " \
                "Please log in to find up-to-date info about stock availability and bottlenecks in Ghana."

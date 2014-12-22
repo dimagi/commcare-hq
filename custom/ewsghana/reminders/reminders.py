@@ -28,7 +28,7 @@ def send_reminder(transactions, sp, user, message):
 def first_soh_reminder():
     sp_ids = set()
     for user in CommCareUser.by_domain(DOMAIN):
-        if user.location and user.location.location_type == 'FACILITY' \
+        if user.location and user.location.location_type == 'facility' \
                 and user.user_data.get('role') != 'In Charge':
             sp = SupplyPointCase.get_by_location(user.location)
             if sp and not StockTransaction.objects.filter(case_id=sp._id, type='stockonhand').exists() \
@@ -46,7 +46,7 @@ def second_soh_reminder():
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=5)
     for user in CommCareUser.by_domain(DOMAIN):
-        if user.location and user.location.location_type == 'FACILITY' \
+        if user.location and user.location.location_type == 'facility' \
                 and user.user_data.get('role') != 'In Charge':
             sp = SupplyPointCase.get_by_location(user.location)
             if sp and not StockTransaction.objects.filter(
@@ -70,13 +70,14 @@ def second_soh_reminder():
 @periodic_task(run_every=crontab(day_of_week=2, hour=13, minute=54),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def third_soh_to_super():
-    facilities = Location.filter_by_type(DOMAIN, 'FACILITY')
+    facilities = Location.filter_by_type(DOMAIN, 'facility')
+    users = CommCareUser.by_domain(DOMAIN)
     for facility in facilities:
         on_time_products = StockTransaction.objects.filter(case_id=facility._id, type='stockonhand')
         missing_products = StockTransaction.objects.filter(case_id=facility._id, type='stockedout')
 
         if not on_time_products:
-            for user in CommCareUser.by_domain(DOMAIN):
+            for user in users:
                 if user.location and user.location._id == facility._id \
                         and user.user_data.get('role') == 'In Charge' and user.get_verified_number():
                     send_sms_to_verified_number(user.get_verified_number(),
@@ -84,7 +85,7 @@ def third_soh_to_super():
                                                     'name': user.name,
                                                     'facility': facility.name})
         elif missing_products:
-            for user in CommCareUser.by_domain(DOMAIN):
+            for user in users:
                 if user.location and user.location._id == facility._id \
                         and user.user_data.get('role') == 'In Charge'and user.get_verified_number():
                     send_sms_to_verified_number(
@@ -100,9 +101,9 @@ def third_soh_to_super():
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def stockout_notification_to_web_supers():
     for user in CommCareUser.by_domain(DOMAIN):
-        if user.is_active and user.location and user.location.location_type == 'FACILITY':
+        if user.location and user.location.location_type == 'facility':
             sp = SupplyPointCase.get_by_location(user.location)
-            if sp and not StockTransaction.objects.filter(case_id=sp._id, type='stockout').exists() \
+            if sp and StockTransaction.objects.filter(case_id=sp._id, type='stockout').exists() \
                     and user.get_verified_number():
                 send_sms_to_verified_number(
                     user.get_verified_number(),
@@ -117,7 +118,7 @@ def stockout_notification_to_web_supers():
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def reminder_to_submit_rrirv():
     for user in CommCareUser.by_domain(DOMAIN):
-        if user.location and user.location.location_type == 'FACILITY' \
+        if user.location and user.location.location_type == 'facility' \
                 and user.user_data.get('role') != 'In Charge':
             sp = SupplyPointCase.get_by_location(user.location)
             if sp and not StockTransaction.objects.filter(case_id=sp._id, type='stockonhand').exists() \
