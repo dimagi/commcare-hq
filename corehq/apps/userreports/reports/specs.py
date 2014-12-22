@@ -7,6 +7,13 @@ from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListF
 from corehq.apps.userreports.specs import TypeProperty
 
 
+SQLAGG_COLUMN_MAP = {
+    'count_unique': CountUniqueColumn,
+    'sum': SumColumn,
+    'simple': SimpleColumn,
+}
+
+
 class ReportFilter(JsonObject):
     type = StringProperty(required=True)
     slug = StringProperty(required=True)
@@ -25,19 +32,16 @@ class ReportColumn(JsonObject):
     type = StringProperty(required=True)
     display = StringProperty()
     field = StringProperty(required=True)
-    aggregation = StringProperty(required=True)
+    aggregation = StringProperty(
+        choices=SQLAGG_COLUMN_MAP.keys(),
+        required=True,
+    )
     alias = StringProperty()
 
     def get_sql_column(self):
-        # todo: find a better home for this
-        sqlagg_column_map = {
-            'count_unique': CountUniqueColumn,
-            'sum': SumColumn,
-            'simple': SimpleColumn,
-        }
         return DatabaseColumn(
             self.display,
-            sqlagg_column_map[self.aggregation](self.field, alias=self.alias),
+            SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
             sortable=False,
             data_slug=self.field,
         )
