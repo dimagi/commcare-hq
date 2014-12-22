@@ -3,7 +3,6 @@ from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from corehq.apps.userreports.specs import TypeProperty
 
