@@ -338,7 +338,9 @@ class AccountFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
         if self.action == 'account_id':
             query = query.exclude(
-                salesforce_account_id=None).exclude(salesforce_account_id=''
+                salesforce_account_id=None
+            ).exclude(
+                salesforce_account_id=''
             ).order_by('salesforce_account_id')
             if self.search_string:
                 query = query.filter(
@@ -346,7 +348,9 @@ class AccountFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
         if self.action == 'dimagi_contact':
             query = query.exclude(
-                dimagi_contact=None).exclude(dimagi_contact=''
+                dimagi_contact=None
+            ).exclude(
+                dimagi_contact=''
             ).order_by('dimagi_contact')
             if self.search_string:
                 query = query.filter(
