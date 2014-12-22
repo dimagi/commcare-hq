@@ -37,7 +37,10 @@ class ReportColumn(JsonObject):
         required=True,
     )
     alias = StringProperty()
-    format = StringProperty(default='default')
+    format = StringProperty(default='default', choices=[
+        'default',
+        'percent_of_total'
+    ])
 
     def get_sql_column(self):
         return DatabaseColumn(
