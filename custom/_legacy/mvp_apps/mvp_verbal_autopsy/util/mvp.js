@@ -5,24 +5,22 @@ function hasIndicators(doc) {
 }
 
 function hasFormLabel(doc, label_name) {
-    return (hasIndicators(doc)
-        && label_name in doc.computed_.mvp_indicators
-        && doc.computed_.mvp_indicators[label_name].type === "FormLabelIndicatorDefinition")
+    return (hasIndicators(doc) && 
+        label_name in doc.computed_.mvp_indicators && 
+        doc.computed_.mvp_indicators[label_name].type === "FormLabelIndicatorDefinition");
 }
 
 function isVerbalAutopsyNeonateForm(doc) {
-    return (doc.doc_type === "XFormInstance"
-        && hasFormLabel(doc, "verbal_autopsy_neonate_form"));
+    return (doc.doc_type === "XFormInstance" && hasFormLabel(doc, "verbal_autopsy_neonate_form"));
 }
 
 function isVerbalAutopsyChildForm(doc) {
-    return (doc.doc_type === "XFormInstance"
-        && hasFormLabel(doc, "verbal_autopsy_child_form"));
+    return (doc.doc_type === "XFormInstance" && hasFormLabel(doc, "verbal_autopsy_child_form"));
 }
 
 function isVerbalAutopsyAdultForm(doc) {
-    return (doc.doc_type === "XFormInstance"
-        && hasFormLabel(doc, "verbal_autopsy_adult_form"));
+    return (doc.doc_type === "XFormInstance" && 
+        hasFormLabel(doc, "verbal_autopsy_adult_form"));
 }
 
 function get_indicators(doc) {

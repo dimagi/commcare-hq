@@ -19,8 +19,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
     hide_filters = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
-    emailable = False
-
+    emailable = True
 
     @property
     def timezone(self):
@@ -45,7 +44,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
     @memoized
     def template_report(self):
         if self.is_rendered_as_email:
-            self.report_template_path = "mvp/reports/health_coordinator_email.html"
+            self.report_template_path = "mvp/reports/verbal_autopsy_email.html"
         return super(VerbalAutopsyReport, self).template_report
 
     @property
@@ -77,7 +76,8 @@ class VerbalAutopsyReport(MVPIndicatorReport):
                     category_indicators.append(dict(
                         title=indicator.description,
                         table=table,
-                        load_url="%s?indicator=%s" % (self.get_url(self.domain, render_as='partial'), indicator.slug),
+                        load_url="%s?indicator=%s" % (self.get_url(self.domain,
+                                                      render_as='partial'), indicator.slug),
                         rowspan=indicator_rowspan
                     ))
                 except (AttributeError, ResourceNotFound):
@@ -95,7 +95,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
 
     @property
     def indicator_slugs(self):
-        return  [
+        return [
             {
                 'category_title': "Observed",
                 'category_slug': 'va_observed',
@@ -199,7 +199,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
         for i, result in enumerate(retrospective):
             month = result.get('date')
             month_text = month.strftime(month_fmt) if isinstance(month, datetime.datetime) else "Unknown"
-            month_desc = "(-%d)" % (num_months-(i+1)) if (num_months-i) > 1 else "(Current)"
+            month_desc = "(-%d)" % (num_months - (i + 1)) if (num_months - i) > 1 else "(Current)"
             headers.append(mark_safe("%s<br />%s" % (month_text, month_desc)))
         return headers
 
@@ -212,9 +212,9 @@ class VerbalAutopsyReport(MVPIndicatorReport):
         d_stats = []
         r_stats = []
         for i in range(len(retrospective)):
-	    n_stats.append(n_row[i])
+            n_stats.append(n_row[i])
             if r_row[i] is not None:
-                #n_stats.append(n_row[i])
+                n_stats.append(n_row[i])
                 d_stats.append(d_row[i])
                 r_stats.append(r_row[i])
 
@@ -233,13 +233,13 @@ class VerbalAutopsyReport(MVPIndicatorReport):
         num_cols = len(row)
         for i, val in enumerate(row):
             if val is not None and not numpy.isnan(val):
-                text = "%.f%%" % (val*100) if as_percent else "%d" % int(val)
+                text = "%.f%%" % (val * 100) if as_percent else "%d" % int(val)
             else:
                 text = "--"
 
-            if i == num_cols-4:
+            if i == num_cols - 4:
                 css = "current_month"
-            elif i > num_cols-4:
+            elif i > num_cols - 4:
                 css = "summary"
             else:
                 css = ""
@@ -254,7 +254,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
     def _get_statistics(self, nonzero_row):
         if nonzero_row:
             return [numpy.average(nonzero_row), numpy.median(nonzero_row), numpy.std(nonzero_row)]
-        return [None]*3
+        return [None] * 3
 
     def get_indicator_row(self, retrospective):
         row = [i.get('value', 0) for i in retrospective]
