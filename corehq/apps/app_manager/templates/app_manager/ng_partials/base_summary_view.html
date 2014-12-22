@@ -35,34 +35,4 @@
       </div>
   </div>
 </script>
-
-<script type="text/ng-template" id="/opener_closer.html">
-<div>
-    <h5>{{ title }}</h5>
-    <ul>
-        <li ng-repeat="(form_id, conditions) in forms">
-            {% verbatim %}{{ getFormName(form_id, lang) }}{% endverbatim %}
-            <ul ng-if="conditions.length">
-                <li ng-repeat="condition in conditions">
-                    If {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
-                </li>
-            </ul>
-        </li>
-    </ul>
-</div>
-</script>
-
-<script type="text/ng-template" id="/form_questions.html">
-<ul>
-    <li ng-repeat="question in questions">
-        {% verbatim %}<i class="fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
-        {{ question.question.value }}
-        <ul ng-if="question.condition">
-            <li>
-                If {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
-            </li>
-        </ul>
-    </li>
-</ul>
-</script>
 {% endangularjs %}

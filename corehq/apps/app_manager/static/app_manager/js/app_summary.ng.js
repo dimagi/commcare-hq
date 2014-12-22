@@ -90,7 +90,6 @@
             restrict: 'E',
             templateUrl: '/opener_closer.html',
             scope: {
-                title: '@',
                 forms: '=',
                 lang: '='
             },

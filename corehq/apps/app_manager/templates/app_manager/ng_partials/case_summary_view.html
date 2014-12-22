@@ -18,51 +18,109 @@
 
 {% block content %}
 {% angularjs %}
-    <div class="page-header" style="margin-top: 0;">
-        <h1 style="font-size: 1.8em;">{% trans "Case Summary" %}</h1>
-        <form class="form-inline" role="form" ng-hide="loading">
-          <div class="form-group">
-            <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
-            <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name">
-          </div>
-        </form>
-    </div>
-    <div>
-        <loading></loading>
-        <div class="row-fluid" ng-hide="loading">
-            <div ng-repeat="caseType in caseTypes|filter:typeSearch">
-                <h3>{{ caseType.name }}</h3>
-                <div>
-                    <h5>{% trans "Relationships:" %}</h5>
-                    <ul>
-                        <li ng-repeat="(relationship, case_type) in caseType.relationships">
-                            {{ relationship }}: {{ case_type }}
-                        </li>
-                    </ul>
-                    <opener-closer title="Opened by" forms="caseType.opened_by" lang="lang"></opener-closer>
-                    <opener-closer title="Closed by" forms="caseType.closed_by" lang="lang"></opener-closer>
+<div class="page-header" style="margin-top: 0;">
+    <h1 style="font-size: 1.8em;">{% trans "Case Summary" %}</h1>
+    <form class="form-inline" role="form" ng-hide="loading">
+      <div class="form-group">
+        <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
+        <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name">
+      </div>
+    </form>
+</div>
+<div>
+    <loading></loading>
+    <div class="row-fluid" ng-hide="loading">
+        <div ng-repeat="caseType in caseTypes|filter:typeSearch">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3>{{ caseType.name }}</h3>
+{#                    <div class="row">#}
+{#                      <div class="col-md-3"><h3>{{ caseType.name }}</h3></div>#}
+{#                      <div class="col-md-3">#}
+{#                          {% trans "Relationships:" %}#}
+{#                          <ul>#}
+{#                                <li ng-repeat="(relationship, case_type) in caseType.relationships">#}
+{#                                    <span class="label label-primary">{{ relationship }}</span> {{ case_type }}#}
+{#                                </li>#}
+{#                            </ul>#}
+{#                      </div>#}
+{#                      <div class="col-md-3">#}
+{#                          {% trans "Opened by:" %}#}
+{#                          <opener-closer forms="caseType.opened_by" lang="lang"></opener-closer>#}
+{#                      </div>#}
+{#                      <div class="col-md-3">#}
+{#                          {% trans "Closed by:" %}#}
+{#                          <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>#}
+{#                      </div>#}
+{#                    </div>#}
                 </div>
-                <div>
-                    <h5>{% trans "Properties" %}</h5>
-                    <table class="table" ng-repeat-end>
-                        <thead>
-                            <th>{% trans "Case Property" %}</th>
-                            <th>{% trans "Form" %}</th>
-                            <th>{% trans "Load questions" %}</th>
-                            <th>{% trans "Save questions" %}</th>
-                        </thead>
-                        <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
-                            <tr ng-repeat="form in property.forms">
-                                <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
-                                <td>{% verbatim %}{{ getFormName(form.form_id, lang) }}{% endverbatim %}</td>
-                                <td><form-questions questions="form.load_questions"></form-questions></td>
-                                <td><form-questions questions="form.save_questions"></form-questions></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <table class="table">
+                    <thead>
+                        <th>{% trans "Relationships:" %}</th>
+                        <th>{% trans "Opened by:" %}</th>
+                        <th>{% trans "Closed by:" %}</th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <ul>
+                                    <li ng-repeat="(relationship, case_type) in caseType.relationships">
+                                        <span class="label label-primary">{{ relationship }}</span> {{ case_type }}
+                                    </li>
+                                </ul>
+                            </td>
+                            <td><opener-closer forms="caseType.closed_by" lang="lang"></opener-closer></td>
+                            <td><opener-closer forms="caseType.opened_by" lang="lang"></opener-closer></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="panel-heading"><h4>{% trans "Properties" %}</h4></div>
+                <table class="table" ng-repeat-end>
+                    <thead>
+                        <th>{% trans "Case Property" %}</th>
+                        <th>{% trans "Form" %}</th>
+                        <th>{% trans "Load questions" %}</th>
+                        <th>{% trans "Save questions" %}</th>
+                    </thead>
+                    <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
+                        <tr ng-repeat="form in property.forms">
+                            <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
+                            <td>{% verbatim %}{{ getFormName(form.form_id, lang) }}{% endverbatim %}</td>
+                            <td><form-questions questions="form.load_questions"></form-questions></td>
+                            <td><form-questions questions="form.save_questions"></form-questions></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+</div>
+
+<script type="text/ng-template" id="/opener_closer.html">
+<ul>
+    <li ng-repeat="(form_id, conditions) in forms">
+        {% verbatim %}{{ getFormName(form_id, lang) }}{% endverbatim %}
+        <ul ng-if="conditions.length">
+            <li ng-repeat="condition in conditions">
+                If {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
+            </li>
+        </ul>
+    </li>
+</ul>
+</script>
+
+<script type="text/ng-template" id="/form_questions.html">
+<ul>
+    <li ng-repeat="question in questions">
+        {% verbatim %}<i class="fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
+        {{ question.question.value }}
+        <ul ng-if="question.condition">
+            <li>
+                If {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
+            </li>
+        </ul>
+    </li>
+</ul>
+</script>
 {% endangularjs %}
 {% endblock %}
