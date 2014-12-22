@@ -40,8 +40,14 @@
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
     <a data-toggle="modal" data-bind="
-        attr: {href: href},
-        click: triggerUpload
+        attr: {
+            'data-hqmediapath': path,
+            href: href
+        },
+        click: triggerUpload,
+        event: {
+            mediaUploadComplete: uploadComplete
+        }
     ">Upload</a>
     {% for uploader in uploaders %}
         <div data-bind="if: is_uploader('{{ uploader.slug }}')">

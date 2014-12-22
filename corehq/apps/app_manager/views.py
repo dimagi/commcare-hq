@@ -1018,7 +1018,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         ],
         "refs": {
             slug: ApplicationMediaReference(
-                app.logo_refs.get(slug, {}).get("path"),
+                app.logo_refs.get(slug, {}).get("path", slug),
                 media_class=CommCareImage,
                 module_id=app.logo_refs.get(slug, {}).get("m_id"),
             ).as_dict()

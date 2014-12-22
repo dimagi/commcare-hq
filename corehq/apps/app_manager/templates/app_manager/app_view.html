@@ -94,6 +94,14 @@
                 image_refs[slug].triggerUpload();
             }
         }
+        function uploadCompleteForLogo(slug, response) {
+            if(image_refs[slug]) {
+                image_refs[slug].uploadComplete(null, null, response);
+            }
+        }
+        function getPathFromSlug(slug) {
+            return image_refs[slug].path;
+        }
     </script>
     <script>
         $(function () {
