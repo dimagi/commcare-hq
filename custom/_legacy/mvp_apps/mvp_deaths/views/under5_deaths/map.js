@@ -44,14 +44,12 @@ function (doc) {
 
             }
         }
-        /*
+
         if (isPregnancyCloseForm(doc)
             && termination_reason === 'stillbirth') {
-            indicator_keys.push("neonatal_death");
-            indicator_keys.push("infant_death");
-            indicator_keys.push("under5_death");
+            indicator_keys.push("neonatal_stillbirth");
         }
-        */
+
         emit_standard(doc, report_date, indicator_keys, []);
     }
 }
