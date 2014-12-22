@@ -33,7 +33,10 @@ class ReportColumn(JsonObject):
     type = StringProperty(required=True)
     display = StringProperty()
     field = StringProperty(required=True)
-    aggregation = StringProperty(required=True)
+    aggregation = StringProperty(
+        choices=SQLAGG_COLUMN_MAP.keys(),
+        required=True,
+    )
     alias = StringProperty()
 
     def get_sql_column(self):
@@ -43,19 +46,6 @@ class ReportColumn(JsonObject):
             sortable=False,
             data_slug=self.field,
         )
-
-    @classmethod
-    def wrap(cls, obj):
-        if 'aggregation' in obj:
-            aggregation = obj.get('aggregation')
-            if aggregation not in SQLAGG_COLUMN_MAP:
-                raise BadSpecError(
-                    "'{0}' is not a valid aggregation. Choices are {1}.".format(
-                        aggregation,
-                        sorted(SQLAGG_COLUMN_MAP.keys()),
-                    )
-                )
-        return super(ReportColumn, cls).wrap(obj)
 
 
 class FilterChoice(JsonObject):
