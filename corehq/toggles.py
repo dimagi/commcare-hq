@@ -2,7 +2,7 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
-from toggle.shortcuts import toggle_enabled
+from toggle.shortcuts import toggle_enabled, set_toggle
 
 
 class StaticToggle(object):
@@ -16,6 +16,9 @@ class StaticToggle(object):
 
     def enabled(self, item, **kwargs):
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
+
+    def set(self, item, enabled, namespace=None):
+        set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
         """
