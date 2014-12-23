@@ -270,6 +270,36 @@ Below are some practical examples showing various filter types.
 }
 ```
 
+## Indicators
+
+Now that we know how to filter the data in our data source, we are still left with a very important problem: *how do we know what data to save*? This is where indicators come in. Indicators are the data outputs - what gets computed and put in a column in the database.
+
+A typical data source will include many indicators (data that will later be included in the report). This section will focus on defining a single indicator. Single indicators can then be combined in a list to fully define a data source.
+
+The overall set of possible indicators is theoretically any function that can take in a single document (form or case) and output a value. However the set of indicators that are configurable is more limited than that.
+
+### Indicator types
+
+The following primary indicator types are supported:
+
+Indicator Type | Description
+-------------- | -----------
+boolean        | Save `1` if a filter is true, otherwise `0`.
+expression     | Save the output of an expression.
+choice_list    | Save multiple columns, one for each of a predefined set of choices
+
+*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these two so they are left out of the current docs.*
+
+#### Boolean indicators
+
+Now we see again the power of our filter framework defined above! Boolean indicators take any arbitrarily complicated filter expression and save a `1` to the database if the expression is true, otherwise a `0`.
+
+### Practical notes for creating indicators
+'
+#### Fractions
+
+All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.
+
 # Practical Notes
 
 Some rough notes for working with user configurable reports.
