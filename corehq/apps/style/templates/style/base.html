@@ -166,7 +166,25 @@
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
         {% endcompress %}
+
+        <script type="text/javascript">
+            COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
+                SAVE: '{% trans "Save" %}',
+                SAVING: '{% trans "Saving..." %}',
+                SAVED: '{% trans "Saved" %}',
+                RETRY: '{% trans "Try Again" %}',
+                ERROR_SAVING: '{% trans "There was an error saving" %}'
+            }, 'btn btn-success');
+            COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
+                SAVE: '{% trans "Delete" %}',
+                SAVING: '{% trans "Deleting..." %}',
+                SAVED: '{% trans "Deleted" %}',
+                RETRY: '{% trans "Try Again" %}',
+                ERROR_SAVING: '{% trans "There was an error deleting" %}'
+            }, 'btn btn-danger');
+        </script>
 
         {# JavaScript Display Logic Libaries #}
 

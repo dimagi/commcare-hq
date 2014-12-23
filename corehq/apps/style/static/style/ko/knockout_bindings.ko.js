@@ -61,7 +61,7 @@ ko.bindingHandlers.staticChecked = {
         var value = ko.utils.unwrapObservable(valueAccessor());
         var span = $('span', element);
         var allBindings = allBindingsAccessor();
-        var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || 'icon-ok',
+        var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || 'fa fa-check',
             iconFalse = ko.utils.unwrapObservable(allBindings.iconFalse) || '';
 
         if (value) {
@@ -215,11 +215,12 @@ ko.bindingHandlers.saveButton2 = {
     init: function (element, valueAccessor, allBindingsAccessor) {
         var saveOptions = allBindingsAccessor().saveOptions,
             state = valueAccessor(),
-            saveButton = SaveButton.init({
+            saveButton = COMMCAREHQ.SaveButton.init({
                 save: function () {
                     saveButton.ajax(saveOptions());
                 }
             });
+        $(element).css('vertical-align', 'top').css('display', 'inline-block');
         saveButton.ui.appendTo(element);
         element.saveButton = saveButton;
         saveButton.on('state:change', function () {
@@ -236,11 +237,12 @@ ko.bindingHandlers.deleteButton = {
     init: function (element, valueAccessor, allBindingsAccessor) {
         var saveOptions = allBindingsAccessor().saveOptions,
             state = valueAccessor(),
-            deleteButton = DeleteButton.init({
+            deleteButton = COMMCAREHQ.DeleteButton.init({
                 save: function () {
                     deleteButton.ajax(saveOptions());
                 }
             });
+        $(element).css('vertical-align', 'top').css('display', 'inline-block');
         deleteButton.ui.appendTo(element);
         element.deleteButton = deleteButton;
         deleteButton.on('state:change', function () {
