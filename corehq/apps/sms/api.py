@@ -5,6 +5,8 @@ import math
 
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import clean_phone_number, format_message_list, clean_text
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
@@ -324,21 +326,22 @@ def process_incoming(msg, delay=True):
             )
 
     if v is not None and v.verified:
-        for h in settings.SMS_HANDLERS:
-            try:
-                handler = to_function(h)
-            except:
-                notify_exception(None, message=('error loading sms handler: %s' % h))
-                continue
+        if domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+            for h in settings.SMS_HANDLERS:
+                try:
+                    handler = to_function(h)
+                except:
+                    notify_exception(None, message=('error loading sms handler: %s' % h))
+                    continue
 
-            try:
-                was_handled = handler(v, msg.text, msg=msg)
-            except Exception, e:
-                log_sms_exception(msg)
-                was_handled = False
+                try:
+                    was_handled = handler(v, msg.text, msg=msg)
+                except Exception, e:
+                    log_sms_exception(msg)
+                    was_handled = False
 
-            if was_handled:
-                break
+                if was_handled:
+                    break
     else:
         if not process_sms_registration(msg):
             import verify
