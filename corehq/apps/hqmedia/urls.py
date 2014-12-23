@@ -1,16 +1,6 @@
 from django.conf.urls.defaults import *
-from corehq.apps.hqmedia.views import (
-    DownloadMultimediaZip,
-    BulkUploadMultimediaView,
-    ProcessBulkUploadView,
-    MultimediaUploadStatusView,
-    ViewMultimediaFile,
-    MultimediaReferencesView,
-    ProcessImageFileUploadView,
-    ProcessAudioFileUploadView,
-    ProcessVideoFileUploadView,
-    ProcessLogoFileUploadView,
-)
+from corehq.apps.hqmedia.views import (DownloadMultimediaZip, BulkUploadMultimediaView, ProcessBulkUploadView,
+                                       MultimediaUploadStatusView, ViewMultimediaFile, MultimediaReferencesView, ProcessImageFileUploadView, ProcessAudioFileUploadView, ProcessVideoFileUploadView)
 
 urlpatterns = patterns('corehq.apps.hqmedia.views',
     url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(.+)?$',
@@ -22,8 +12,6 @@ application_urls = patterns('corehq.apps.hqmedia.views',
     url(r'^upload/$', BulkUploadMultimediaView.as_view(), name=BulkUploadMultimediaView.name),
     url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.name),
     url(r'^uploaded/image/$', ProcessImageFileUploadView.as_view(), name=ProcessImageFileUploadView.name),
-    url(r'^uploaded/app_logo/(?P<logo_name>[\w\-]+)/$', ProcessLogoFileUploadView.as_view(),
-        name=ProcessLogoFileUploadView.name),
     url(r'^uploaded/audio/$', ProcessAudioFileUploadView.as_view(), name=ProcessAudioFileUploadView.name),
     url(r'^uploaded/video/$', ProcessVideoFileUploadView.as_view(), name=ProcessVideoFileUploadView.name),
     url(r'^map/$', MultimediaReferencesView.as_view(), name=MultimediaReferencesView.name),
