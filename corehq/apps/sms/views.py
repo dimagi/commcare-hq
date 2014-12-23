@@ -150,7 +150,6 @@ def post(request, domain):
     msg.save()
     return HttpResponse('OK')
 
-@requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 @require_api_user_permission(PERMISSION_POST_SMS)
 def sms_in(request):
     """
@@ -301,7 +300,6 @@ def send_to_recipients(request, domain):
     )
 
 @domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
