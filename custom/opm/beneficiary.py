@@ -228,6 +228,9 @@ class OPMCaseRow(object):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
 
+        if self.window > 14:
+            raise InvalidRow(_('Child is past window 14 (was {}'.format(self.window)))
+
         name = self.case_property('name', EMPTY_FIELD)
         if getattr(self.report,  'show_html', True):
             url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])

@@ -66,6 +66,14 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             self.assertEqual('mother', row.status)
             self.assertEqual(i, row.child_age)
 
+    def test_child_outside_window(self):
+        with self.assertRaises(InvalidRow):
+            case = OPMCase(
+                forms=[],
+                dod=self._offset_date(-50),
+            )
+            MockCaseRow(case, self.report)
+
 
 class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
 
