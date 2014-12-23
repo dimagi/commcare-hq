@@ -16,6 +16,7 @@ from django.utils.html import escape
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.products.models import SQLProduct
+from couchdbkit import ResourceNotFound
 
 register = template.Library()
 
@@ -291,7 +292,11 @@ def render_case_hierarchy(case, options):
         # has parent case(s)
         # todo: handle duplicates in ancestor path (bubbling up of parent-child
         # relationships)
-        parent_cases = [idx.referenced_case for idx in case.indices]
+        try:
+            parent_cases = [idx.referenced_case for idx in case.indices]
+        except ResourceNotFound:
+            return "<p class='alert fade in alert-block alert-error'>" +\
+                _("Unknown/Deleted parent case") + "</p>"
         for parent_case in parent_cases:
             parent_case.edit_data = {
                 'view_url': get_case_url(parent_case.case_id)
