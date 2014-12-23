@@ -1,6 +1,3 @@
-$(function () {
-    'use strict';
-});
 var COMMCAREHQ = {};
 
 COMMCAREHQ.icons = {
