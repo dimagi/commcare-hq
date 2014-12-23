@@ -303,10 +303,12 @@ def render_case_hierarchy(case, options):
                 parent_case.edit_data = {
                     'view_url': get_case_url(parent_case.case_id)
                 }
-        last_parent_id = case.indices[-1].referenced_id
+                last_parent_id = parent_case.case_id
+            else:
+                last_parent_id = None
 
         for c in case_list:
-            if not getattr(c, 'treetable_parent_node_id', None):
+            if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
                 c.treetable_parent_node_id = last_parent_id
 
         case_list = parent_cases + case_list
