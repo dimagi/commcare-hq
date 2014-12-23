@@ -2642,6 +2642,7 @@ RegExp.escape = function(s) {
     this.isOpen = options.isOpen;
     this.minuteStep = options.minuteStep;
     this.modalBackdrop = options.modalBackdrop;
+    this.orientation = options.orientation;
     this.secondStep = options.secondStep;
     this.showInputs = options.showInputs;
     this.showMeridian = options.showMeridian;
@@ -2690,7 +2691,7 @@ RegExp.escape = function(s) {
       }
 
       if (this.template !== false) {
-        this.$widget = $(this.getTemplate()).prependTo(this.$element.parents(this.appendWidgetTo)).on('click', $.proxy(this.widgetClick, this));
+        this.$widget = $(this.getTemplate()).on('click', $.proxy(this.widgetClick, this));
       } else {
         this.$widget = false;
       }
@@ -2939,7 +2940,7 @@ RegExp.escape = function(s) {
     },
 
     getTime: function() {
-      if (!this.hour && !this.minute && !this.second) {
+      if (this.hour === '') {
         return '';
       }
 
@@ -2971,6 +2972,8 @@ RegExp.escape = function(s) {
       $(document).off('mousedown.timepicker, touchend.timepicker');
 
       this.isOpen = false;
+      // show/hide approach taken by datepicker
+      this.$widget.detach();
     },
 
     highlightUnit: function() {
@@ -3224,6 +3227,62 @@ RegExp.escape = function(s) {
       return false;
     },
 
+    // This method was adapted from bootstrap-datepicker.
+    place : function() {
+      if (this.isInline) {
+        return;
+      }
+      var widgetWidth = this.$widget.outerWidth(), widgetHeight = this.$widget.outerHeight(), visualPadding = 10, windowWidth =
+        $(window).width(), windowHeight = $(window).height(), scrollTop = $(window).scrollTop();
+
+      var zIndex = parseInt(this.$element.parents().filter(function() {}).first().css('z-index'), 10) + 10;
+      var offset = this.component ? this.component.parent().offset() : this.$element.offset();
+      var height = this.component ? this.component.outerHeight(true) : this.$element.outerHeight(false);
+      var width = this.component ? this.component.outerWidth(true) : this.$element.outerWidth(false);
+      var left = offset.left, top = offset.top;
+
+      this.$widget.removeClass('timepicker-orient-top timepicker-orient-bottom timepicker-orient-right timepicker-orient-left');
+
+      if (this.orientation.x !== 'auto') {
+        this.picker.addClass('datepicker-orient-' + this.orientation.x);
+        if (this.orientation.x === 'right') {
+          left -= widgetWidth - width;
+        }
+      } else{
+        // auto x orientation is best-placement: if it crosses a window edge, fudge it sideways
+        // Default to left
+        this.$widget.addClass('timepicker-orient-left');
+        if (offset.left < 0) {
+          left -= offset.left - visualPadding;
+        } else if (offset.left + widgetWidth > windowWidth) {
+          left = windowWidth - widgetWidth - visualPadding;
+        }
+      }
+      // auto y orientation is best-situation: top or bottom, no fudging, decision based on which shows more of the widget
+      var yorient = this.orientation.y, topOverflow, bottomOverflow;
+      if (yorient === 'auto') {
+        topOverflow = -scrollTop + offset.top - widgetHeight;
+        bottomOverflow = scrollTop + windowHeight - (offset.top + height + widgetHeight);
+        if (Math.max(topOverflow, bottomOverflow) === bottomOverflow) {
+          yorient = 'top';
+        } else {
+          yorient = 'bottom';
+        }
+      }
+      this.$widget.addClass('timepicker-orient-' + yorient);
+      if (yorient === 'top'){
+        top += height;
+      } else{
+        top -= widgetHeight + parseInt(this.$widget.css('padding-top'), 10);
+      }
+
+      this.$widget.css({
+        top : top,
+        left : left,
+        zIndex : zIndex
+      });
+    },
+
     remove: function() {
       $('document').off('.timepicker');
       if (this.$widget) {
@@ -3415,10 +3474,15 @@ RegExp.escape = function(s) {
         return;
       }
 
+      // show/hide approach taken by datepicker
+      this.$widget.appendTo(this.appendWidgetTo);
       var self = this;
       $(document).on('mousedown.timepicker, touchend.timepicker', function (e) {
-        // Clicked outside the timepicker, hide it
-        if ($(e.target).closest('.bootstrap-timepicker-widget').length === 0) {
+        // This condition was inspired by bootstrap-datepicker.
+        // The element the timepicker is invoked on is the input but it has a sibling for addon/button.
+        if (!(self.$element.parent().find(e.target).length ||
+            self.$widget.is(e.target) ||
+            self.$widget.find(e.target).length)) {
           self.hideWidget();
         }
       });
@@ -3434,12 +3498,13 @@ RegExp.escape = function(s) {
         }
       });
 
+      this.place();
       if (this.disableFocus) {
         this.$element.blur();
       }
 
       // widget shouldn't be empty on open
-      if (!this.hour) {
+      if (this.hour === '') {
         if (this.defaultTime) {
           this.setDefaultTime(this.defaultTime);
         } else {
@@ -3606,7 +3671,7 @@ RegExp.escape = function(s) {
     },
 
     widgetKeyup: function(e) {
-      if ((e.keyCode === 65) || (e.keyCode === 77) || (e.keyCode === 80) || (e.keyCode === 46) || (e.keyCode === 8) || (e.keyCode >= 46 && e.keyCode <= 57)) {
+      if ((e.keyCode === 65) || (e.keyCode === 77) || (e.keyCode === 80) || (e.keyCode === 46) || (e.keyCode === 8) || (e.keyCode >= 46 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105)) {
         this.updateFromWidgetInputs();
       }
     }
@@ -3638,12 +3703,13 @@ RegExp.escape = function(s) {
     isOpen: false,
     minuteStep: 15,
     modalBackdrop: false,
+    orientation: { x: 'auto', y: 'auto'},
     secondStep: 15,
     showSeconds: false,
     showInputs: true,
     showMeridian: true,
     template: 'dropdown',
-    appendWidgetTo: '.bootstrap-timepicker',
+    appendWidgetTo: 'body',
     showWidgetOnAddonClick: true
   };
 
