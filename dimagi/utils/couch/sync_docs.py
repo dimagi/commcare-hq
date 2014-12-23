@@ -1,3 +1,4 @@
+from collections import namedtuple
 import os
 from couchdbkit import push, RequestFailed
 from couchdbkit.exceptions import ResourceNotFound
@@ -52,10 +53,38 @@ def copy_designs(db, design_name, temp='tmp', delete=True):
 
 def sync(app, verbosity=2, temp=None):
     """
-    All of this is copied from couchdbkit.ext.django.loading
+    This is copied and modified from couchdbkit.ext.django.loading.
 
-    but the actual syncing code is replaced with our improved version
+    The actual syncing code is replaced with our improved version
+    """
+    app_sync_info = get_app_sync_info(app)
 
+    for design_info in app_sync_info.designs:
+        if verbosity >=1:
+            print "sync `%s` in CouchDB" % app_sync_info.name
+
+        if design_info.design_path is None and settings.DEBUG:
+            print >>sys.stderr, "%s doesn't exist, no ddoc synchronized" % design_info.design_path
+            continue
+
+        # these lines differ from the original
+        # and simply pass on the responsibility of syncing to our
+        # improved method
+        sync_design_docs(
+            db=design_info.db,
+            design_dir=design_info.design_path,
+            design_name=design_info.app_label,
+            temp=temp,
+        )
+
+
+AppSyncInfo = namedtuple('AppSyncInfo', ['name', 'designs'])
+DesignInfo = namedtuple('DesignInfo', ['db', 'app_label', 'design_path'])
+
+
+def get_app_sync_info(app):
+    """
+    Expects a django app module and returns an AppSyncInfo object about it.
     """
     app_name = app.__name__.rsplit('.', 1)[0]
     app_labels = set()
@@ -65,26 +94,16 @@ def sync(app, verbosity=2, temp=None):
             app_module = schema.__module__.rsplit(".", 1)[0]
             if app_module == app_name and not schema._meta.app_label in app_labels:
                 app_labels.add(schema._meta.app_label)
+
+    designs = []
     for app_label in app_labels:
         if not app_label in couchdbkit_handler._databases:
             continue
-        if verbosity >=1:
-            print "sync `%s` in CouchDB" % app_name
         db = couchdbkit_handler.get_db(app_label)
-
         app_path = os.path.abspath(os.path.join(sys.modules[app.__name__].__file__, ".."))
         design_path = "%s/%s" % (app_path, "_design")
         if not os.path.isdir(design_path):
-            if settings.DEBUG:
-                print >>sys.stderr, "%s don't exists, no ddoc synchronized" % design_path
-            return
+            design_path = None
+        designs.append(DesignInfo(db=db, app_label=app_label, design_path=design_path))
 
-        # these lines differ from the original
-        # and simply pass on the responsibility of syncing to our
-        # improved method
-        sync_design_docs(
-            db=db,
-            design_dir=os.path.join(app_path, "_design"),
-            design_name=app_label,
-            temp=temp,
-        )
+    return AppSyncInfo(name=app_name, designs=designs)
