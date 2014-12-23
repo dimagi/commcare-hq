@@ -1,10 +1,140 @@
-User Configurable Reports
-=========================
+User Configurable Reporting
+===========================
+
+An overview of the design, API and data structures used here.
+
+---------------
+# Data Flow
+
+
+Reporting is handled in multiple stages. Here is the basic workflow.
+
+Raw data (form or case) → [Data source config] → Row in database table → [Report config] → Report in HQ
+
+Both the data source config and report config are JSON documents that live in the database. The data source config determines how raw data (forms and cases) gets mapped to rows in an intermediary table, while the report config(s) determine how that report table gets turned into an interactive report in the UI.
+
+# Data Sources
+
+Each data source configuration maps a filtered set of the raw data to indicators. A data source configuration consists of two primary sections:
+
+1. A filter that determines whether the data is relevant for the data source
+2. A list of indicators in that data source
+
+In addition to these properties there are a number of relatively self-explanatory fields on a data source such as the `table_id` and `display_name`.
+
+## Data Source Filtering
+
+When setting up a data source configuration, filtering defines what data applies to a given set of indicators. Some example uses of filtering on a data source include:
+
+- Restricting the data by document type (e.g. cases or forms). This is a built-in filter.
+- Limiting the data to a particular case or form type
+- Excluding demo user data
+- Excluding closed cases
+- Only showing data that meets a domain-specific condition (e.g. pregnancy cases opened for women over 30 years of age)
+
+### Filter types
+
+There are currently four supported filter types. However, these can be used together to produce arbitrarily complicated expressions.
+
+
+Filter Type        | Description
+------------------ | -----------
+boolean_expression | A expression / logic statement (more below)
+and                | An "and" of other filters - true if all are true
+or                 | An "or" of other filters - true if any are true
+not                | A "not" or inverse expression on a filter
+
+To understand the `boolean_expression` type, we must first explain expressions.
+
+### Expressions
+
+An *expression* is a way of representing a set of operations that should return a single value. Expressions can basically be thought of as functions that take in a document and return a value:
+
+*Expression*: `function(document) → value`
+
+In normal math/python notation, the following are all valid expressions on a `doc` (which is presumed to be a `dict` object:
+
+- `"hello"`
+- `7`
+- `doc["name"]`
+- `doc["child"]["age"]`
+- `doc["age"] < 21`
+- `"legal" if doc["age"] > 21 else "underage"`
+
+In user configurable reports the following expression types are currently supported (note that this can and likely will be extended in the future):
+
+Expression Type | Description  | Example
+--------------- | ------------ | ------
+constant        | A constant   | `"hello"`, `4`, `2014-12-20`
+property_name   | A reference to the property in a document |  `doc["name"]`
+property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
+conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
+
+### JSON snippets for expressions
+
+Here are JSON snippets for the four expression types. Hopefully they are self-explanatory.
+
+##### Constant Expression
+
+This expression returns the constant "hello":
+```
+{
+    "type": "constant",
+    "constant": "hello"
+}
+```
+##### Property Name Expression
+
+This expression returns `doc["age"]`:
+```
+{
+    "type": "property_name",
+    "property_name": "age"
+}
+```
+##### Property Path Expression
+
+This expression returns `doc["child"]["age"]`:
+```
+{
+    "type": "property_name",
+    "property_path": ["child", "age"]
+}
+```
+##### Conditional Expression
+
+This expression returns `"legal" if doc["age"] > 21 else "underage"`:
+```
+{
+    "test": {
+        "operator": "gt",
+        "expression": {
+            "type": "property_name",
+            "property_name": "age"
+        },
+        "type": "boolean_expression",
+        "property_value": 21
+    },
+    "expression_if_true": {
+        "type": "constant",
+        "property_name": "legal"
+    },
+    "type": "conditional",
+    "expression_if_false": {
+        "type": "constant",
+        "property_name": "underage"
+    }
+}
+```
+Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
+
+
+# Practical Notes
 
 Some rough notes for working with user configurable reports.
 
-Getting Started
----------------
+## Getting Started
+
 
 The easiest way to get started is to start with sample data and reports.
 
@@ -34,8 +164,8 @@ There is a second example based off the "gsid" domain as well using forms.
 The tests are also a good source of documentation for the various filter and indicator formats that are supported.
 
 
-Inspecting database tables
---------------------------
+## Inspecting database tables
+
 
 The easiest way to inspect the database tables is to use the sql command line utility.
 This can be done by runnning `./manage.py dbshell` or using `psql`.

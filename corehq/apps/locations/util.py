@@ -2,8 +2,10 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.excel import flatten_json, json_to_headers
 from couchdbkit import ResourceNotFound
-from django.utils.translation import ugettext as _
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
@@ -59,7 +61,8 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
 
 
 def location_hierarchy_config(domain):
-    return [(loc_type.name, [p or None for p in loc_type.allowed_parents]) for loc_type in Domain.get_by_name(domain).location_types]
+    return [(loc_type.name, [p or None for p in loc_type.allowed_parents])
+            for loc_type in Domain.get_by_name(domain).location_types]
 
 
 def defined_location_types(domain):
@@ -77,39 +80,6 @@ def parent_child(domain):
 def allowed_child_types(domain, parent):
     parent_type = parent.location_type if parent else None
     return parent_child(domain).get(parent_type, [])
-
-
-def location_custom_properties(domain, loc_type):
-    """
-    This was originally used to add custom properties to specific
-    location types based on domain or simply location type.
-
-    It is no longer used, and perhaps will be properly deleted
-    when there is a real way to deal with custom location properties.
-
-    But for now, an example of what you could return from here is below.
-
-    properties = [
-        CustomProperty(
-            name='village_size',
-            datatype='Integer',
-            label='Village Size',
-        ),
-        CustomProperty(
-            name='village_class',
-            datatype='Choice',
-            label='Village Class',
-            choices={'mode': 'static', 'args': _village_classes(domain)},
-        ),
-    ]
-    """
-
-    properties = []
-    return properties
-
-
-def get_loc_config(domain):
-    return dict((lt.name, lt) for lt in Domain.get_by_name(domain).location_types)
 
 
 def lookup_by_property(domain, prop_name, val, scope, root=None):
@@ -138,139 +108,143 @@ def lookup_by_property(domain, prop_name, val, scope, root=None):
     return set(row['id'] for row in Location.get_db().view(index_view, startkey=startkey, endkey=startkey + [{}]))
 
 
-def property_uniqueness(domain, loc, prop_name, val, scope='global'):
-    def normalize(val):
-        try:
-            return val.lower() # case-insensitive comparison
-        except AttributeError:
-            return val
-    val = normalize(val)
+@quickcache(['domain'], timeout=60)
+def get_location_data_model(domain):
+    from .views import LocationFieldsView
+    from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+    return CustomDataFieldsDefinition.get_or_create(
+        domain,
+        LocationFieldsView.field_type,
+    )
 
-    try:
-        if scope == 'siblings':
-            _scope = 'child'
-            root = loc.parent
+
+class LocationExporter(object):
+    def __init__(self, domain, include_consumption=False):
+        self.domain = domain
+        self.domain_obj = Domain.get_by_name(domain)
+        self.include_consumption_flag = include_consumption
+        self.data_model = get_location_data_model(domain)
+
+    @property
+    @memoized
+    def consumption_dict(self):
+        return build_consumption_dict(self.domain)
+
+    @property
+    @memoized
+    def include_consumption(self):
+        if bool(
+            self.include_consumption_flag and
+            self.domain_obj.commtrack_settings.individual_consumption_defaults
+        ):
+            # we'll be needing these, so init 'em:
+            self.products = Product.by_domain(self.domain)
+            self.product_codes = [p.code for p in self.products]
+            self.supply_point_map = SupplyPointCase.get_location_map_by_domain(self.domain)
+            self.administrative_types = {
+                lt.name for lt in self.domain_obj.location_types
+                if lt.administrative
+
+            }
+            return True
+        return False
+
+    def get_consumption(self, loc):
+        if (
+            not self.include_consumption or
+            loc.location_type in self.administrative_types or
+            not self.consumption_dict
+        ):
+            return {}
+        if loc._id in self.supply_point_map:
+            sp_id = self.supply_point_map[loc._id]
         else:
-            _scope = scope
-            root = None
-        return lookup_by_property(domain, prop_name, val, _scope, root) - set([loc._id])
-    except ResourceNotFound:
-        # property is not indexed
-        uniqueness_set = []
-        if scope == 'global':
-            uniqueness_set = [l for l in all_locations(loc.domain) if l._id != loc._id]
-        elif scope == 'siblings':
-            uniqueness_set = loc.siblings()
+            # this only happens if the supply point case did
+            # not already exist
+            sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
+        return {
+            p.code: get_loaded_default_monthly_consumption(
+                self.consumption_dict,
+                self.domain,
+                p._id,
+                loc.location_type,
+                sp_id
+            ) or ''
+            for p in self.products
+        }
 
-        return set(l._id for l in uniqueness_set if val == normalize(getattr(l, prop_name, None)))
+    def _loc_type_dict(self, loc_type):
+        uncategorized_keys = set()
+        tab_rows = []
+        for loc in Location.filter_by_type(self.domain, loc_type):
 
+            model_data, uncategorized_data = \
+                self.data_model.get_model_and_uncategorized(loc.metadata)
 
-def get_custom_property_names(domain, loc_type, common_types):
-    return [prop.name for prop in location_custom_properties(domain, loc_type) if prop.name not in common_types]
+            uncategorized_keys.update(uncategorized_data.keys())
 
+            loc_dict = {
+                'site_code': loc.site_code,
+                'name': loc.name,
+                'parent_site_code': loc.parent.site_code if loc.parent else '',
+                'latitude': loc.latitude or '',
+                'longitude': loc.longitude or '',
+                'data': model_data,
+                'uncategorized_data': uncategorized_data,
+                'consumption': self.get_consumption(loc),
+            }
 
-def get_default_column_data(domain, location_types):
-    data = {
-        'headers': {},
-        'values': {}
-    }
+            tab_rows.append(dict(flatten_json(loc_dict)))
 
-    if Domain.get_by_name(domain).commtrack_settings.individual_consumption_defaults:
-        products = Product.by_domain(domain)
+        tab_headers = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
+        def _extend_headers(prefix, headers):
+            tab_headers.extend(json_to_headers(
+                {prefix: {header: None for header in headers}}
+            ))
+        _extend_headers('data', (f.slug for f in self.data_model.fields))
+        _extend_headers('uncategorized_data', uncategorized_keys)
+        if self.include_consumption_flag and loc_type not in self.administrative_types:
+            _extend_headers('consumption', self.product_codes)
 
-        supply_point_map = SupplyPointCase.get_location_map_by_domain(domain)
+        return (loc_type, {
+            'headers': tab_headers,
+            'rows': tab_rows,
+        })
 
-        consumption_dict = build_consumption_dict(domain)
-
-        if not consumption_dict:
-            return data
-
-        for loc_type in location_types:
-            loc = get_loc_config(domain)[loc_type]
-            if not loc.administrative:
-                data['headers'][loc_type] = [
-                    'default_' +
-                    p.code for p in products
-                ]
-
-                locations = Location.filter_by_type(domain, loc_type)
-                for loc in locations:
-                    if loc._id in supply_point_map:
-                        sp_id = supply_point_map[loc._id]
-                    else:
-                        # this only happens if the supply point case did
-                        # not already exist
-                        sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
-
-                    data['values'][loc._id] = [
-                        get_loaded_default_monthly_consumption(
-                            consumption_dict,
-                            domain,
-                            p._id,
-                            loc_type,
-                            sp_id
-                        ) or '' for p in products
-                    ]
-            else:
-                data['headers'][loc_type] = []
-    return data
+    def get_export_dict(self):
+        return [self._loc_type_dict(loc_type.name)
+                for loc_type in self.domain_obj.location_types]
 
 
 def dump_locations(response, domain, include_consumption=False):
-    file = StringIO()
+    exporter = LocationExporter(domain, include_consumption=include_consumption)
+    result = write_to_file(exporter.get_export_dict())
+    response.write(result)
+
+
+def write_to_file(locations):
+    """
+    locations = [
+        ('loc_type1', {
+             'headers': ['header1', 'header2', ...]
+             'rows': [
+                 {
+                     'header1': val1
+                     'header2': val2
+                 },
+                 {...},
+             ]
+        })
+    ]
+    """
+    outfile = StringIO()
     writer = Excel2007ExportWriter()
-
-    location_types = defined_location_types(domain)
-
-    if include_consumption:
-        defaults = get_default_column_data(domain, location_types)
-    else:
-        defaults = {
-            'headers': {},
-            'values': {}
-        }
-
-    common_types = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
-    writer.open(
-        header_table=[
-            (loc_type, [
-                common_types +
-                get_custom_property_names(domain, loc_type, common_types) +
-                defaults['headers'].get(loc_type, [])
-            ])
-            for loc_type in location_types
-        ],
-        file=file,
-    )
-
-    for loc_type in location_types:
-        tab_rows = []
-        locations = Location.filter_by_type(domain, loc_type)
-        for loc in locations:
-            parent_site_code = loc.parent.site_code if loc.parent else ''
-
-            custom_prop_values = []
-            for prop in location_custom_properties(domain, loc.location_type):
-                if prop.name not in common_types:
-                    custom_prop_values.append(
-                        loc[prop.name] or ''
-                    )
-
-            if loc._id in defaults['values']:
-                default_column_values = defaults['values'][loc._id]
-            else:
-                default_column_values = []
-
-            tab_rows.append(
-                [
-                    loc.site_code,
-                    loc.name,
-                    parent_site_code,
-                    loc.latitude or '',
-                    loc.longitude or ''
-                ] + custom_prop_values + default_column_values
-            )
+    header_table = [(loc_type, [tab['headers']]) for loc_type, tab in locations]
+    writer.open(header_table=header_table, file=outfile)
+    for loc_type, tab in locations:
+        headers = tab['headers']
+        tab_rows = [[row.get(header, '') for header in headers]
+                    for row in tab['rows']]
         writer.write([(loc_type, tab_rows)])
-
     writer.close()
-    response.write(file.getvalue())
+    return outfile.getvalue()

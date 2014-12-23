@@ -7,7 +7,7 @@ from lxml import etree
 import os
 import re
 import json
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from xml.dom.minidom import parseString
 
 from diff_match_patch import diff_match_patch
@@ -33,7 +33,6 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.translations import (
     expected_bulk_app_sheet_headers,
-    get_translation,
     process_bulk_app_translation_upload
 )
 from corehq.apps.programs.models import Program
@@ -771,6 +770,11 @@ def get_module_view_context_and_template(app, module):
     if app.case_sharing:
         defaults += ('#owner_name',)
     builder = ParentCasePropertyBuilder(app, defaults=defaults)
+    child_case_types = set()
+    for m in app.get_modules():
+        if m.case_type == module.case_type:
+            child_case_types.update(m.get_child_case_types())
+    child_case_types = list(child_case_types)
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
@@ -805,7 +809,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.goal_details.short.sort_elements,
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
                 {
                     'label': _('Task List'),
@@ -816,7 +820,7 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.task_details.short.sort_elements,
                     'short': module.task_details.short,
                     'long': module.task_details.long,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
             ],
         }
@@ -832,7 +836,7 @@ def get_module_view_context_and_template(app, module):
                 'sort_elements': module.case_details.short.sort_elements,
                 'short': module.case_details.short,
                 'long': module.case_details.long,
-                'child_case_types': list(module.get_child_case_types()),
+                'child_case_types': child_case_types,
             }]
 
             if app.commtrack_enabled:
@@ -844,7 +848,7 @@ def get_module_view_context_and_template(app, module):
                     'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
                     'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 })
 
             return details
@@ -867,7 +871,7 @@ def get_module_view_context_and_template(app, module):
                     'short': module.case_details.short,
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
-                    'child_case_types': list(module.get_child_case_types()),
+                    'child_case_types': child_case_types,
                 },
             ],
         }
@@ -1449,6 +1453,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     long = params.get('long', None)
     tabs = params.get('tabs', None)
     filter = params.get('filter', ())
+    custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
 
@@ -1478,6 +1483,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
+    if custom_xml != None:
+        detail.short.custom_xml = custom_xml
     if sort_elements is not None:
         detail.short.sort_elements = []
         for sort_element in sort_elements:
@@ -2828,52 +2835,40 @@ def download_bulk_app_translations(request, domain, app_id):
                 tuple("" for lang in app.langs) +
                 (form.media_audio, form.media_image, form.unique_id)
             )
+
+            # Add form to the first street
             rows["Modules_and_forms"].append(first_sheet_row)
 
-            questions_by_lang = {lang: form.get_questions(
-                [lang], include_triggers=True, include_groups=True)
-                for lang in app.langs
-            }
+            # Populate form sheet
             rows[form_string] = []
 
-            for i, question in enumerate(
-                    form.get_questions(
-                        app.langs,
-                        include_triggers=True,
-                        include_groups=True)):
+            itext_items = OrderedDict()
+            for translation_node in xform.itext_node.findall("./{f}translation"):
+                lang = translation_node.attrib['lang']
+                for text_node in translation_node.findall("./{f}text"):
+                    text_id = text_node.attrib['id']
+                    itext_items[text_id] = itext_items.get(text_id, {})
 
-                # Skip hidden values
-                if question['type'] != 'DataBindOnly':
+                    for value_node in text_node.findall("./{f}value"):
+                        value_form = value_node.attrib.get("form", "default")
+                        value = value_node.text
+                        itext_items[text_id][(lang, value_form)] = value
 
-                    # Add row for this question
-                    id = "/".join(question['value'].split("/")[2:])
-                    labels = tuple(
-                        questions_by_lang[l][i]['label'] for l in app.langs
-                    )
-                    media_paths = []
-                    for media in ['audio', 'image', 'video']:
-                        for lang in app.langs:
-                            media_paths.append(get_translation(
-                                id, lang, xform, media=media))
-                    row = (id,) + labels + tuple(media_paths)
+            for text_id, values in itext_items.iteritems():
+                row = [text_id]
+                for value_form in ["default", "audio", "image", "video"]:
+                    # Get the fallback value for this form
+                    fallback = ""
+                    for lang in app.langs:
+                        fallback = values.get((lang, value_form), fallback)
+                        if fallback:
+                            break
+                    # Populate the row
+                    for lang in app.langs:
+                        row.append(values.get((lang, value_form), fallback))
+                # Don't add empty rows:
+                if any(row[1:]):
                     rows[form_string].append(row)
-
-                    # Add rows for this question's options
-                    if question['type'] in ("MSelect", "Select"):
-                        for j, select in enumerate(question['options']):
-                            select_id = row[0] + "-" + select['value']
-                            labels = tuple(
-                                questions_by_lang[l][i]['options'][j]['label']
-                                for l in app.langs
-                            )
-                            # TODO: Get rid of this repeated media logic
-                            media_paths = []
-                            for media in ['audio', 'image', 'video']:
-                                for lang in app.langs:
-                                    media_paths.append(get_translation(
-                                        id, lang, xform, media=media))
-                            select_row = (select_id,) + labels + tuple(media_paths)
-                            rows[form_string].append(select_row)
 
     temp = StringIO()
     data = [(k, v) for k, v in rows.iteritems()]

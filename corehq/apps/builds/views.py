@@ -64,12 +64,12 @@ class EditMenuView(TemplateView):
 
     @method_decorator(require_superuser)
     def dispatch(self, *args, **kwargs):
+        # different local caches on different workers
+        # but this at least makes it so your changes take effect immediately
+        # while you're editing the config
+        CommCareBuildConfig.clear_local_cache()
         self.doc = CommCareBuildConfig.fetch()
         return super(EditMenuView, self).dispatch(*args, **kwargs)
-
-    def get_doc(self):
-        db = get_db()
-        return db.get(self.doc_id)
 
     def save_doc(self):
         db = get_db()
