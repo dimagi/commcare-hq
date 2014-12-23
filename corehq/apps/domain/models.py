@@ -675,8 +675,7 @@ class Domain(Document, SnapshotMixin):
 
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
             if (copy_by_id and res['value']['_id'] not in copy_by_id and
-                res['value']['doc_type'] in ('Application', 'RemoteApp',
-                                             'FixtureDataType')):
+                res['value']['doc_type'] == 'FixtureDataType'):
                 continue
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()
