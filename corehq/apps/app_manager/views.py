@@ -1002,37 +1002,38 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
 
-    uploader_slugs = [
-        "hq_logo_android",
-        "hq_logo_java",
-    ]
-    from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
-    from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
-    context.update({
-        "sessionid": req.COOKIES.get('sessionid'),
-        'uploaders': [
-            MultimediaLogoUploadController(
-                slug,
-                reverse(
-                    ProcessLogoFileUploadView.name,
-                    args=[domain, app_id, slug],
+    if app:
+        uploader_slugs = [
+            "hq_logo_android",
+            "hq_logo_java",
+        ]
+        from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
+        from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+        context.update({
+            "sessionid": req.COOKIES.get('sessionid'),
+            'uploaders': [
+                MultimediaLogoUploadController(
+                    slug,
+                    reverse(
+                        ProcessLogoFileUploadView.name,
+                        args=[domain, app_id, slug],
+                    )
                 )
-            )
-            for slug in uploader_slugs
-        ],
-        "refs": {
-            slug: ApplicationMediaReference(
-                app.logo_refs.get(slug, {}).get("path", slug),
-                media_class=CommCareImage,
-                module_id=app.logo_refs.get(slug, {}).get("m_id"),
-            ).as_dict()
-            for slug in uploader_slugs
-        },
-        "media_info": {
-            slug: app.logo_refs.get(slug)
-            for slug in uploader_slugs if app.logo_refs.get(slug)
-        },
-    })
+                for slug in uploader_slugs
+            ],
+            "refs": {
+                slug: ApplicationMediaReference(
+                    app.logo_refs.get(slug, {}).get("path", slug),
+                    media_class=CommCareImage,
+                    module_id=app.logo_refs.get(slug, {}).get("m_id"),
+                ).as_dict()
+                for slug in uploader_slugs
+            },
+            "media_info": {
+                slug: app.logo_refs.get(slug)
+                for slug in uploader_slugs if app.logo_refs.get(slug)
+            },
+        })
 
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
