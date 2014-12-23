@@ -378,21 +378,6 @@ CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
     });
 };
 
-CommcareSettings.widgets.image_uploader = function (self) {
-    self.slug = "hq_" + self.id;
-    self.href = "#" + self.slug;
-    self.path = getPathFromSlug(self.slug);
-    self.is_uploader = function(slug) {
-        return slug == self.slug;
-    };
-    self.uploadComplete = function(widget, event, response) {
-        uploadCompleteForLogo(self.slug, response);
-    };
-    self.triggerUpload = function() {
-        triggerUploadForLogo(self.slug);
-    };
-};
-
 $(function () {
     ko.bindingHandlers.passwordSetter = {
         init: function (element, valueAccessor) {
