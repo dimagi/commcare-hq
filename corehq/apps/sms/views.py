@@ -300,6 +300,7 @@ def send_to_recipients(request, domain):
     )
 
 @domain_admin_required
+@requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
