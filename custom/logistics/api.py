@@ -10,7 +10,6 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
-from custom.logistics.commtrack import add_location
 
 
 class MigrationException(Exception):
@@ -155,17 +154,21 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def sms_users_sync(self, ilsgateway_smsuser):
+    def sms_users_sync(self, ilsgateway_smsuser, username_part=None, password=None,
+                       first_name='', last_name=''):
         domain_part = "%s.commcarehq.org" % self.domain
-        username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), ilsgateway_smsuser.id)
+        if not username_part:
+            username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(),
+                                      ilsgateway_smsuser.id)
         username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
         # sanity check
         assert len(username) <= 128
         user = CouchUser.get_by_username(username)
         splitted_value = ilsgateway_smsuser.name.split(' ', 1)
-        first_name = last_name = ''
-        if splitted_value:
-            first_name = splitted_value[0][:30]
+        if not first_name:
+            first_name = splitted_value[0][:30] if splitted_value else ''
+
+        if not last_name:
             last_name = splitted_value[1][:30] if len(splitted_value) > 1 else ''
 
         user_dict = {
@@ -183,18 +186,12 @@ class APISynchronization(object):
             user_dict['phone_numbers'] = [ilsgateway_smsuser.phone_numbers[0].replace('+', '')]
             user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
 
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(ilsgateway_smsuser.supply_point)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
-        location_id = sp.location_id if sp else None
-
         if user is None and username_part:
             try:
-                password = User.objects.make_random_password()
-                user = CommCareUser.create(domain=self.domain, username=username, password=password,
-                                           email=ilsgateway_smsuser.email, commit=False)
+                user_password = password or User.objects.make_random_password()
+                user = CommCareUser.create(domain=self.domain, username=username, password=user_password,
+                                           email=ilsgateway_smsuser.email, commit=False,
+                                           password_hashed=bool(password))
                 user.first_name = first_name
                 user.last_name = last_name
                 user.is_active = bool(ilsgateway_smsuser.is_active)
@@ -209,23 +206,9 @@ class APISynchronization(object):
                         v.delete()
                         user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True,
                                                   ilsgateway_smsuser.backend)
-                dm = user.get_domain_membership(self.domain)
-                dm.location_id = location_id
-                user.save()
-                add_location(user, location_id)
-
             except Exception as e:
                 logging.error(e)
         else:
-            dm = user.get_domain_membership(self.domain)
-            current_location_id = dm.location_id if dm else None
-            save = False
-
-            if current_location_id != location_id:
-                dm.location_id = location_id
-                add_location(user, location_id)
-                save = True
-
-            if apply_updates(user, user_dict) or save:
+            if apply_updates(user, user_dict):
                 user.save()
         return user
