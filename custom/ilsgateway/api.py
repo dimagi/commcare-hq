@@ -165,6 +165,7 @@ class ILSGatewayAPI(APISynchronization):
         dm.location_id = location_id
         sms_user.save()
         add_location(sms_user, location_id)
+        return sms_user
 
     def locations_sync(self, ilsgateway_location, fetch_groups=False):
         try:
