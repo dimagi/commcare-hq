@@ -926,14 +926,14 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
     }
 
 
-def _sql_to_json_data(domains, sql_data, datespan):
+def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
     """
     Helper function to transform sql queries into what the admin reports
     framework likes. Handles initial values and historical data
 
     sql_data needs {'timestamp': t, 'domain': d}
     """
-    all_domains = len(domains) > 5  # separate lines for few domains
+    all_domains = len(domains) > individual_domain_limit
     start = get_timestamp_millis(datespan.startdate)
 
     if all_domains:
@@ -964,7 +964,7 @@ def _sql_to_json_data(domains, sql_data, datespan):
 
 
 def get_unique_locations_data(domains, datespan, interval,
-        datefield='created_at'):
+        datefield='created_at', individual_domain_limit=16):
     locations = (SQLLocation.objects
                             .filter(domain__in=domains,
                                     created_at__lte=datespan.enddate)
@@ -975,7 +975,8 @@ def get_unique_locations_data(domains, datespan, interval,
 
     domains = {l["domain"] for l in locations}
 
-    init_ret, ret = _sql_to_json_data(domains, locations, datespan)
+    init_ret, ret = _sql_to_json_data(domains, locations, datespan,
+            individual_domain_limit=individual_domain_limit)
 
     return {
         'histo_data': ret,
@@ -986,7 +987,7 @@ def get_unique_locations_data(domains, datespan, interval,
 
 
 def get_location_type_data(domains, datespan, interval,
-        datefield='created_at'):
+        datefield='created_at', individual_domain_limit=16):
     locations = (SQLLocation.objects
                             .filter(domain__in=domains,
                                     created_at__lte=datespan.enddate)
@@ -999,7 +1000,8 @@ def get_location_type_data(domains, datespan, interval,
 
     domains = {l["domain"] for l in locations}
 
-    init_ret, ret = _sql_to_json_data(domains, locations, datespan)
+    init_ret, ret = _sql_to_json_data(domains, locations, datespan,
+            individual_domain_limit=individual_domain_limit)
 
     return {
         'histo_data': ret,
