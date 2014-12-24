@@ -3,9 +3,7 @@ User Configurable Reporting
 
 An overview of the design, API and data structures used here.
 
----------------
 # Data Flow
-
 
 Reporting is handled in multiple stages. Here is the basic workflow.
 
@@ -32,7 +30,7 @@ When setting up a data source configuration, filtering defines what data applies
 - Excluding closed cases
 - Only showing data that meets a domain-specific condition (e.g. pregnancy cases opened for women over 30 years of age)
 
-### Filter types
+### Filter type overview
 
 There are currently four supported filter types. However, these can be used together to produce arbitrarily complicated expressions.
 
@@ -128,6 +126,179 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
 
+### Boolean Expression Filters
+
+A `boolean_expression` filter combines an *expression*, an *operator*, and a *property value* (a constant), to produce a statement that is either `True` or `False`. *Note: in the future the constant value may be replaced with a second expression to be more general, however currently only constant property values are supported.*
+
+Here is a sample JSON format for simple `boolean_expression` filter:
+```
+{
+    "type": "boolean_expression",
+    "expression": {
+        "type": "property_name",
+        "property_name": "age",
+    },
+    "operator": "gt",
+    "property_value": 21
+}
+```
+This is equivalent to the python statement: `doc["age"] > 21`
+
+#### Operators
+
+The following operators are currently supported:
+Operator   | Description  | Value type | Example
+---------- | -----------  | ---------- | -------
+`eq`       | is equal     | constant   | `doc["age"] == 21`
+`not_eq`   | is not equal | constant   | `doc["age"] != 21`
+`in`       | single value is in a list | list | `doc["color"] in ["red", "blue"]`
+`in_multi` | multiselect value is in a list | list | `selected(doc["color"], ["red", "blue"])`
+`lt`       | is less than | number | `doc["age"] < 21`
+`lte`      | is less than or equal | number | `doc["age"] <= 21`
+`gt`       | is greater than | number | `doc["age"] > 21`
+`gte`      | is greater than or equal | number | `doc["age"] >= 21`
+
+### Compound filters
+
+Compound filters build on top of `boolean_expression` filters to create boolean logic. These can be combined to support arbitrarily complicated boolean logic on data. There are three types of filters, *and*, *or*, and *not* filters. The JSON representation of these is below. Hopefully these are self explanatory.
+
+#### "And" Filters
+
+The following filter represents the statement: `doc["age"] < 21 and doc["nationality"] == "american"`:
+```
+{
+    "type": "and",
+    "filters": [
+		{
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "age",
+            },
+            "operator": "lt",
+            "property_value": 21
+        },
+        {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "nationality",
+            },
+            "operator": "eq",
+            "property_value": "american"
+        }
+    ]
+}
+```
+#### "Or" Filters
+
+The following filter represents the statement: `doc["age"] > 21 or doc["nationality"] == "european"`:
+```
+{
+    "type": "or",
+    "filters": [
+		{
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "age",
+            },
+            "operator": "gt",
+            "property_value": 21
+        },
+		{
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "nationality",
+            },
+            "operator": "eq",
+            "property_value": "european"
+        }
+    ]
+}
+```
+#### "Not" Filters
+
+The following filter represents the statement: `!(doc["nationality"] == "european")`:
+```
+{
+    "type": "not",
+    "filter": [
+        {
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "nationality",
+            },
+            "operator": "eq",
+            "property_value": "european"
+        }
+    ]
+}
+```
+*Note that this could be represented more simply using a single filter with the `not_eq` operator, but "not" filters can represent more complex logic than operators generally, since the filter itself can be another compound filter.*
+
+### Practical Examples
+
+Below are some practical examples showing various filter types.
+
+#### Matching form submissions from a particular form type
+
+```
+{
+    "type": "boolean_expression",
+    "expression": {
+        "type": "property_name",
+        "property_name": "xmlns",
+    },
+    "operator": "eq",
+    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
+}
+```
+#### Matching cases of a specific type
+
+```
+{
+    "type": "boolean_expression",
+    "expression": {
+        "type": "property_name",
+        "property_name": "type",
+    },
+    "operator": "eq",
+    "property_value": "child"
+}
+```
+
+## Indicators
+
+Now that we know how to filter the data in our data source, we are still left with a very important problem: *how do we know what data to save*? This is where indicators come in. Indicators are the data outputs - what gets computed and put in a column in the database.
+
+A typical data source will include many indicators (data that will later be included in the report). This section will focus on defining a single indicator. Single indicators can then be combined in a list to fully define a data source.
+
+The overall set of possible indicators is theoretically any function that can take in a single document (form or case) and output a value. However the set of indicators that are configurable is more limited than that.
+
+### Indicator types
+
+The following primary indicator types are supported:
+
+Indicator Type | Description
+-------------- | -----------
+boolean        | Save `1` if a filter is true, otherwise `0`.
+expression     | Save the output of an expression.
+choice_list    | Save multiple columns, one for each of a predefined set of choices
+
+*Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these two so they are left out of the current docs.*
+
+#### Boolean indicators
+
+Now we see again the power of our filter framework defined above! Boolean indicators take any arbitrarily complicated filter expression and save a `1` to the database if the expression is true, otherwise a `0`.
+
+### Practical notes for creating indicators
+'
+#### Fractions
+
+All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.
 
 # Practical Notes
 
