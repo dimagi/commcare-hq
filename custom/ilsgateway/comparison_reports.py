@@ -4,6 +4,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.users.models import WebUser
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig
 
@@ -66,10 +67,10 @@ class LocationsCompareReport(BaseComparisonReport):
         rows = []
         locations = []
         offset = 1000
-        meta, chunk = self.endpoint.get_locations()
+        meta, chunk = self.endpoint.get_locations(limit=1000)
         locations.extend(chunk)
         while meta.get('next', False):
-            meta, chunk = self.endpoint.get_locations(offset=offset)
+            meta, chunk = self.endpoint.get_locations(limit=1000, offset=offset)
             offset += 1000
             locations.extend(chunk)
 
@@ -103,19 +104,24 @@ class WebUsersCompareReport(BaseComparisonReport):
         rows = []
         web_users = []
         offset = 1000
-        meta, chunk = self.endpoint.get_webusers()
+        meta, chunk = self.endpoint.get_webusers(limit=1000)
         web_users.extend(chunk)
         while meta.get('next', False):
-            meta, chunk = self.endpoint.get_webusers(offset=offset)
+            meta, chunk = self.endpoint.get_webusers(limit=1000, offset=offset)
             offset += 1000
             web_users.extend(chunk)
 
         for web_user in web_users:
             is_migrated = True
             try:
-                User.objects.get(username__in=[web_user.username, web_user.email.lower()])
+                user = User.objects.get(username__in=[web_user.username, web_user.email.lower()])
+                webuser = WebUser.get_by_username(user.username)
+                if webuser:
+                    is_migrated = self.domain in webuser.get_domains()
             except User.DoesNotExist:
                 is_migrated = False
+            except User.MultipleObjectsReturned:
+                pass
             finally:
                 rows.append([web_user.username, web_user.email,
                              web_user.date_joined, web_user.is_active, is_migrated])
@@ -141,10 +147,10 @@ class SMSUsersCompareReport(BaseComparisonReport):
         rows = []
         sms_users = []
         offset = 1000
-        meta, chunk = self.endpoint.get_smsusers()
+        meta, chunk = self.endpoint.get_smsusers(limit=1000)
         sms_users.extend(chunk)
         while meta.get('next', False):
-            meta, chunk = self.endpoint.get_smsusers(offset=offset)
+            meta, chunk = self.endpoint.get_smsusers(limit=1000, offset=offset)
             offset += 1000
             sms_users.extend(chunk)
 
