@@ -57,7 +57,7 @@ class OPMCaseRow(object):
         self.block = report.block.lower()
         self.month = explicit_month or report.month
         self.year = explicit_year or report.year
-
+        self.is_secondary = is_secondary
 
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s"></div>'
