@@ -7,10 +7,11 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
-from custom.ilsgateway import LOCATION_TYPES, ADMINS
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
 from custom.logistics.api import LogisticsEndpoint, APISynchronization
 from corehq.apps.locations.models import Location as Loc
+
+LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
 
 
 class Product(JsonObject):
@@ -145,12 +146,25 @@ class ILSGatewayAPI(APISynchronization):
         if not web_user:
             return None
         dm = web_user.get_domain_membership(self.domain)
-        if web_user.username in ADMINS:
-            dm.is_admin = True
-        else:
-            dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
+        dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         web_user.save()
         return web_user
+
+    def sms_users_sync(self, ilsgateway_smsuser, **kwargs):
+        from custom.logistics.commtrack import add_location
+        sms_user = super(ILSGatewayAPI, self).sms_users_sync(ilsgateway_smsuser, **kwargs)
+        if not sms_user:
+            return None
+        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                  key=[self.domain, str(ilsgateway_smsuser.supply_point)],
+                                  reduce=False,
+                                  include_docs=True,
+                                  limit=1).first()
+        location_id = sp.location_id if sp else None
+        dm = sms_user.get_domain_membership(self.domain)
+        dm.location_id = location_id
+        sms_user.save()
+        add_location(sms_user, location_id)
 
     def locations_sync(self, ilsgateway_location, fetch_groups=False):
         try:
