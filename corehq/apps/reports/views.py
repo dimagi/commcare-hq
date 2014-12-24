@@ -1270,18 +1270,18 @@ def form_multimedia_export(request, domain):
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
-
-    def filename(form, question_id, extension):
+    def filename(form_info, question_id, extension):
         fname = u"%s-%s-%s-%s%s"
-        if form['cases']:
-            fname = u'-'.join(form['cases']) + u'-' + fname
-        return fname % (form['name'],
+        if form_info['cases']:
+            fname = u'-'.join(form_info['cases']) + u'-' + fname
+        return fname % (form_info['name'],
                         unidecode(question_id),
-                        form['user'],
-                        form['id'], extension)
+                        form_info['user'],
+                        form_info['id'], extension)
 
     case_ids = set()
-    def extract_attachment_info(form, properties=None, case_ids=case_ids):
+
+    def extract_form_info(form, properties=None, case_ids=case_ids):
         unknown_number = 0
         meta = form['form'].get('meta', dict())
         # get case ids
@@ -1289,7 +1289,7 @@ def form_multimedia_export(request, domain):
         cases = {c['@case_id'] for c in case_blocks}
         case_ids |= cases
 
-        ret = {
+        form_info = {
             'form': form,
             'attachments': list(),
             'name': form['form'].get('@name', 'unknown form'),
@@ -1308,7 +1308,7 @@ def form_multimedia_export(request, domain):
 
             if not properties or question_id in properties:
                 extension = unicode(os.path.splitext(k)[1])
-                ret['attachments'].append({
+                form_info['attachments'].append({
                     'size': v['length'],
                     'name': k,
                     'question_id': question_id,
@@ -1316,7 +1316,7 @@ def form_multimedia_export(request, domain):
                     'timestamp': parse(form['received_on']).timetuple(),
                 })
 
-        return ret
+        return form_info
 
     key = [domain, app_id, xmlns]
     form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
@@ -1333,11 +1333,11 @@ def form_multimedia_export(request, domain):
 
     if not app_id:
         zip_name = 'Unrelated Form'
-    forms = list()
+    forms_info = list()
     for form in iter_docs(XFormInstance.get_db(), form_ids):
         if not zip_name:
             zip_name = unidecode(form['form'].get('@name', 'unknown form'))
-        forms.append(extract_attachment_info(form, properties))
+        forms_info.append(extract_form_info(form, properties))
 
     # get case names
     case_id_to_name = {c: c for c in case_ids}
@@ -1348,14 +1348,14 @@ def form_multimedia_export(request, domain):
     stream_file = cStringIO.StringIO()
     size = 22  # overhead for a zipfile
     zf = zipfile.ZipFile(stream_file, mode='w', compression=zipfile.ZIP_STORED)
-    for form in forms:
-        f = XFormInstance.wrap(form['form'])
-        form['cases'] = {case_id_to_name[case_id] for case_id in form['cases']}
-        for a in form['attachments']:
-            fname = filename(form, a['question_id'], a['extension'])
+    for form_info in forms_info:
+        f = XFormInstance.wrap(form_info['form'])
+        form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
+        for a in form_info['attachments']:
+            fname = filename(form_info, a['question_id'], a['extension'])
             zi = zipfile.ZipInfo(fname, a['timestamp'])
             zf.writestr(zi, f.fetch_attachment(a['name'], stream=True).read())
-            size += a['size'] + 88 + 2 * len(fname)
+            size += a['size'] + 88 + 2 * len(fname)  # zip file overhead
 
     zf.close()
 
