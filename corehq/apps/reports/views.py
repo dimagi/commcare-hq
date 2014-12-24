@@ -1272,9 +1272,9 @@ def form_multimedia_export(request, domain):
 
 
     def filename(form, question_id, extension):
-        fname = "%s-%s-%s-%s%s"
+        fname = u"%s-%s-%s-%s%s"
         if form['cases']:
-            fname = '-'.join(form['cases']) + '-' + fname
+            fname = u'-'.join(form['cases']) + u'-' + fname
         return fname % (form['name'],
                         unidecode(question_id),
                         form['user'],
@@ -1301,9 +1301,9 @@ def form_multimedia_export(request, domain):
             if v['content_type'] == 'text/xml':
                 continue
             try:
-                question_id = unicode('-'.join(find_question_id(form['form'], k)))
+                question_id = unicode(u'-'.join(find_question_id(form['form'], k)))
             except TypeError:
-                question_id = unicode('unknown' + str(unknown_number))
+                question_id = unicode(u'unknown' + unicode(unknown_number))
                 unknown_number += 1
 
             if not properties or question_id in properties:
