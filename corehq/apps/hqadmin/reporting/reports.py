@@ -28,7 +28,6 @@ Common Output:
         }
 """
 import datetime
-import time
 from dateutil.relativedelta import relativedelta
 from django.db.models import Q, Count, Sum
 from django.utils.translation import ugettext as _
@@ -935,7 +934,7 @@ def _sql_to_json_data(domains, sql_data, datespan):
     sql_data needs {'timestamp': t, 'domain': d}
     """
     all_domains = len(domains) > 5  # separate lines for few domains
-    start = int(time.mktime(datespan.startdate.timetuple())) * 1000
+    start = get_timestamp_millis(datespan.startdate)
 
     if all_domains:
         histo_data = {"All Domains": dict()}
@@ -945,7 +944,7 @@ def _sql_to_json_data(domains, sql_data, datespan):
         init_ret = {d: 0 for d in domains}
 
     for data in sql_data:
-        tstamp = int(time.mktime(data['timestamp'].timetuple())) * 1000
+        tstamp = get_timestamp_millis(data['timestamp'])
         domain = "All Domains" if all_domains else data['domain']
 
         if tstamp < start:
