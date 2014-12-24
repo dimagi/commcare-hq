@@ -129,7 +129,8 @@ class AWCHealthStatus(object):
          'mothers'),
         ('ifa_tablets',
          _("IFA Receipts"),
-         _("Women 6 months pregnant who have received IFA tablets.  Exempt if no VHND."),
+         _("Women 6 months pregnant who have received IFA tablets.  Exempt "
+           "if IFA tablets were not available."),
          'preg_6_months'),
         ('preg_weighed',
          _("Pregnancy Weight Monitoring"),
