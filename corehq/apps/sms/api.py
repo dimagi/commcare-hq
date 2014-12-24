@@ -245,7 +245,7 @@ def process_sms_registration(msg):
     keyword3 = text_words[2] if len(text_words) > 2 else ""
     if keyword1 in REGISTRATION_KEYWORDS and keyword2 != "":
         domain = Domain.get_by_name(keyword2, strict=True)
-        if domain is not None:
+        if domain is not None and domain_has_privilege(domain, privileges.INBOUND_SMS):
             if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
                 #TODO: Register a PendingMobileWorker object that must be approved by a domain admin
                 pass
