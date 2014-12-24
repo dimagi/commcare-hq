@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 import logging
 
@@ -15,8 +15,8 @@ from corehq.apps.consumption.const import DAYS_IN_MONTH
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
-from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data, default_start_date
-from dimagi.utils.dates import force_to_datetime, first_of_next_month
+from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
+from dimagi.utils.dates import force_to_datetime
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -260,17 +260,18 @@ def ils_clear_stock_data_task():
 @task
 def report_run(domain):
     last_run = ReportRun.last_success(domain)
-    start_date = (default_start_date() if not last_run else last_run.end)
-    end_date = min(datetime.now(), first_of_next_month(start_date) + timedelta(days=30))
+    start_date = (datetime.min if not last_run else last_run.end)
+    end_date = datetime.utcnow()
 
     running = ReportRun.objects.filter(complete=False, domain=domain)
     if running.count() > 0:
-        run = running[0]
-    else:
-        run = ReportRun.objects.create(start=start_date, end=end_date,
+        raise Exception("Warehouse already running, will do nothing...")
+
+    # start new run
+    new_run = ReportRun.objects.create(start=start_date, end=end_date,
                                        start_run=datetime.utcnow(), domain=domain)
     try:
-        populate_report_data(start_date, end_date, domain, run)
+        populate_report_data(start_date, end_date, domain)
     except Exception, e:
         # just in case something funky happened in the DB
         if isinstance(e, DatabaseError):
@@ -278,11 +279,11 @@ def report_run(domain):
                 transaction.rollback()
             except:
                 pass
-        run.has_error = True
+        new_run.has_error = True
         raise
     finally:
         # complete run
-        run.end_run = datetime.utcnow()
-        run.complete = True
-        run.save()
+        new_run.end_run = datetime.utcnow()
+        new_run.complete = True
+        new_run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.now())
