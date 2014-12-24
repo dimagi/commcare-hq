@@ -60,3 +60,11 @@ class CommCareFeatureSupportMixin(object):
     @property
     def enable_auto_gps(self):
         return self._require_minimum_version('2.14')
+
+    @property
+    def enable_group_in_field_list(self):
+        """
+        Groups and repeat groups inside of a field list supported by apps
+        version 2.16 or higher
+        """
+        return self._require_minimum_version('2.16')
