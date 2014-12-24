@@ -1,16 +1,51 @@
+import logging
+from django.core.validators import validate_email
+from custom.logistics.commtrack import add_location
+from dimagi.utils.dates import force_to_datetime
 from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.schema import LocationType
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import WebUser, UserRole, Permissions
 from custom.api.utils import apply_updates
-from custom.ewsghana.extensions import ews_smsuser_extension, ews_webuser_extension, ews_product_extension
+from custom.ewsghana.extensions import ews_product_extension, ews_webuser_extension
 from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from custom.ilsgateway.api import ProductStock, StockTransaction
 from jsonobject import JsonObject
 from custom.logistics.api import LogisticsEndpoint, APISynchronization
 from corehq.apps.locations.models import Location as Loc
-from custom.logistics.commtrack import add_location
+from django.core.exceptions import ValidationError
+
+
+class Group(JsonObject):
+    id = IntegerProperty()
+    name = StringProperty()
+
+
+class SupplyPoint(JsonObject):
+    id = IntegerProperty()
+    code = StringProperty()
+    groups = ListProperty()
+    last_reported = StringProperty()
+    name = StringProperty()
+    primary_reporter = IntegerProperty()
+    supervised_by = IntegerProperty()
+    supplied_by = IntegerProperty()
+    type = StringProperty()
+    location_id = IntegerProperty()
+
+
+class SMSUser(JsonObject):
+    id = IntegerProperty()
+    name = StringProperty()
+    role = StringProperty()
+    is_active = StringProperty()
+    supply_point = ObjectProperty(item_type=SupplyPoint)
+    email = StringProperty()
+    phone_numbers = ListProperty()
+    backend = StringProperty()
+    family_name = StringProperty()
+    to = StringProperty()
 
 
 class EWSUser(JsonObject):
@@ -28,31 +63,8 @@ class EWSUser(JsonObject):
     supply_point = IntegerProperty()
     sms_notifications = BooleanProperty()
     organization = StringProperty()
-
-
-class SMSUser(JsonObject):
-    id = IntegerProperty()
-    name = StringProperty()
-    role = StringProperty()
-    is_active = StringProperty()
-    supply_point = IntegerProperty()
-    email = StringProperty()
-    phone_numbers = ListProperty()
-    backend = StringProperty()
-    family_name = StringProperty()
-    to = StringProperty()
-
-
-class SupplyPoint(JsonObject):
-    id = IntegerProperty()
-    code = StringProperty()
-    groups = ListProperty()
-    last_reported = StringProperty()
-    name = StringProperty()
-    primary_reporter = IntegerProperty()
-    supervised_by = IntegerProperty()
-    supplied_by = IntegerProperty()
-    type = StringProperty()
+    groups = ListProperty(item_type=Group)
+    contact = ObjectProperty(item_type=SMSUser)
 
 
 class Location(JsonObject):
@@ -146,17 +158,8 @@ class EWSApi(APISynchronization):
                          administrative=False)
         ]
         domain.save()
-        try:
-            SQLLocation.objects.get(domain=self.domain, site_code='default_location')
-        except SQLLocation.DoesNotExist:
-            location = Loc(
-                name='Default location',
-                location_type='facility',
-                domain=self.domain,
-                site_code='default_location'
-            )
-            location.save()
-            SupplyPointCase.create_from_location(domain=self.domain, location=location)
+        role = UserRole(domain=self.domain, permissions=Permissions(), name='Facility manager')
+        role.save()
 
     def products_sync(self, ews_product):
         product = super(EWSApi, self).products_sync(ews_product)
@@ -214,6 +217,7 @@ class EWSApi(APISynchronization):
             elif supply_points:
                 supply_point = supply_points[0]
                 self._create_supply_point_from_location(supply_point, location)
+
         else:
             location_dict = {
                 'name': ews_location.name,
@@ -241,30 +245,120 @@ class EWSApi(APISynchronization):
                     location_from_sp.save()
         return location
 
+    def convert_web_user_to_sms_user(self, ews_webuser):
+        sms_user = SMSUser()
+        sms_user.username = ews_webuser.username
+        sms_user.email = ews_webuser.email
+        sms_user.role = 'facility_manager'
+
+        if ews_webuser.contact and ews_webuser.contact.supply_point:
+            sms_user.supply_point = ews_webuser.contact.supply_point
+        elif ews_webuser.location:
+            sms_user.supply_point = SupplyPoint(
+                location_id=ews_webuser.location
+            )
+
+        sms_user.is_active = str(ews_webuser.is_active)
+        sms_user.name = ews_webuser.first_name + " " + ews_webuser.last_name
+        if ews_webuser.contact:
+            sms_user.backend = ews_webuser.contact.backend
+            sms_user.to = ews_webuser.contact.to
+            sms_user.phone_numbers = ews_webuser.contact.phone_numbers
+        return self.sms_users_sync(
+            sms_user,
+            username_part=ews_webuser.username.lower() if ews_webuser.username else None,
+            password=ews_webuser.password,
+            first_name=ews_webuser.first_name,
+            last_name=ews_webuser.last_name
+        )
+
     def web_users_sync(self, ews_webuser):
-        web_user = super(EWSApi, self).web_users_sync(ews_webuser)
-        if not web_user:
-            return None
-        ews_webuser_extension(web_user, ews_webuser)
-        dm = web_user.get_domain_membership(self.domain)
+        if ews_webuser.groups:
+            group = ews_webuser.groups[0]
+            if group.name == 'facility_manager':
+                return self.convert_web_user_to_sms_user(ews_webuser)
+
+        username = ews_webuser.email.lower()
+        if not username:
+            try:
+                validate_email(ews_webuser.username)
+                username = ews_webuser.username
+            except ValidationError:
+                return None
+        user = WebUser.get_by_username(username)
+        user_dict = {
+            'first_name': ews_webuser.first_name,
+            'last_name': ews_webuser.last_name,
+            'is_active': ews_webuser.is_active,
+            'last_login': force_to_datetime(ews_webuser.last_login),
+            'date_joined': force_to_datetime(ews_webuser.date_joined),
+            'password_hashed': True,
+        }
+        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                  key=[self.domain, str(ews_webuser.location)],
+                                  reduce=False,
+                                  include_docs=True,
+                                  limit=1).first()
+        location_id = sp.location_id if sp else None
+
+        if user is None:
+            try:
+                user = WebUser.create(domain=None, username=username,
+                                      password=ews_webuser.password, email=ews_webuser.email,
+                                      **user_dict)
+                user.add_domain_membership(self.domain, location_id=location_id)
+            except Exception as e:
+                logging.error(e)
+        else:
+            if self.domain not in user.get_domains():
+                user.add_domain_membership(self.domain, location_id=location_id)
+        ews_webuser_extension(user, ews_webuser)
+        dm = user.get_domain_membership(self.domain)
         if ews_webuser.is_superuser:
             dm.is_admin = True
         else:
             dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
-        web_user.save()
-        return web_user
+        user.save()
+        return user
 
-    def sms_users_sync(self, ews_smsuser):
-        sms_user = super(EWSApi, self).sms_users_sync(ews_smsuser)
-        ews_smsuser_extension(sms_user, ews_smsuser)
-        dm = sms_user.get_domain_membership(self.domain)
-        if not dm.location_id:
-            try:
-                location = SQLLocation.objects.get(domain=self.domain, site_code='default_location')
-            except SQLLocation.DoesNotExist:
-                return sms_user
-            dm = sms_user.get_domain_membership(self.domain)
-            dm.location_id = location.location_id
-            sms_user.save()
-            add_location(sms_user, location.location_id)
+    def sms_users_sync(self, ews_smsuser, **kwargs):
+        sms_user = super(EWSApi, self).sms_users_sync(ews_smsuser, **kwargs)
+        if not sms_user:
+            return None
+        sms_user.user_data['to'] = ews_smsuser.to
+
+        if ews_smsuser.supply_point:
+            if ews_smsuser.supply_point.id:
+                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                          key=[self.domain, str(ews_smsuser.supply_point.id)],
+                                          reduce=False,
+                                          include_docs=True,
+                                          limit=1).first()
+            else:
+                sp = None
+
+            if sp:
+                couch_location_id = sp.location_id
+            elif ews_smsuser.supply_point.location_id:
+                try:
+                    location = SQLLocation.objects.get(domain=self.domain,
+                                                       external_id=ews_smsuser.supply_point.location_id)
+                    couch_location_id = location.location_id
+                except SQLLocation.DoesNotExist:
+                    couch_location_id = None
+            else:
+                couch_location_id = None
+            if couch_location_id:
+                dm = sms_user.get_domain_membership(self.domain)
+                dm.location_id = couch_location_id
+                sms_user.save()
+                add_location(sms_user, couch_location_id)
+
+        if ews_smsuser.role == 'facility_manager':
+            role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
+            if role:
+                dm = sms_user.get_domain_membership(self.domain)
+                dm.role_id = role[0].get_id
+
+        sms_user.save()
         return sms_user
