@@ -87,7 +87,7 @@ class AWCHealthStatus(object):
          'no_denom'),
         ('beneficiaries',
          _("Total Beneficiaries"),
-         _("Pregnant women and new mothers"),
+         _("Pregnant women and children"),
          'no_denom'),
         ('pregnancies',
          _("Pregnant Women"),
@@ -129,7 +129,8 @@ class AWCHealthStatus(object):
          'mothers'),
         ('ifa_tablets',
          _("IFA Receipts"),
-         _("Women 6 months pregnant who have received IFA tablets.  Exempt if no VHND."),
+         _("Women 6 months pregnant who have received IFA tablets.  Exempt "
+           "if IFA tablets were not available."),
          'preg_6_months'),
         ('preg_weighed',
          _("Pregnancy Weight Monitoring"),
@@ -187,7 +188,10 @@ class AWCHealthStatus(object):
     # our hearts' content.  This would allow us to override definitions of
     # indicators based on their meanings in THIS report.
     def __init__(self, cases):
-        self.cases = cases
+        # Some of the cases are second or third children of the same mother
+        # include that distinction here
+        self.all_cases = cases
+        self.primary_cases = [c for c in cases if not c.is_secondary]
         self.awc_name = cases[0].awc_name
 
     @property
@@ -197,104 +201,106 @@ class AWCHealthStatus(object):
     @property
     @memoized
     def beneficiaries(self):
-        return len(self.cases)
+        # if len(self.all_cases) != self.pregnancies + self.children:
+            # raise ValueError("Hey wait a sec, that doesn't make sense!")
+        return len(self.all_cases)
 
     @property
     @memoized
     def pregnancies(self):
-        return len([c for c in self.cases if c.status == 'pregnant'])
+        return len([c for c in self.all_cases if c.status == 'pregnant'])
 
     @property
     @memoized
     def mothers(self):
-        return len([c for c in self.cases if c.status == 'mother'])
+        return len([c for c in self.primary_cases if c.status == 'mother'])
 
     @property
     def children(self):
-        return sum([c.num_children for c in self.cases])
+        return sum([c.num_children for c in self.primary_cases])
 
     @property
     def eligible_by_fulfillment(self):
-        return len([c for c in self.cases
+        return len([c for c in self.all_cases
                     if c.vhnd_available and c.all_conditions_met])
 
     @property
     def eligible_by_default(self):
-        return len([c for c in self.cases
+        return len([c for c in self.all_cases
                     if not c.vhnd_available and c.all_conditions_met])
 
     @property
     def total_payment(self):
-        return sum([c.cash_amt for c in self.cases])
+        return sum([c.cash_amt for c in self.all_cases])
 
     @property
     def preg_vhnd(self):
-        return len([c for c in self.cases if c.preg_attended_vhnd])
+        return len([c for c in self.all_cases if c.preg_attended_vhnd])
 
     @property
     def child_vhnd(self):
-        return len([c for c in self.cases if c.child_attended_vhnd])
+        return len([c for c in self.all_cases if c.child_attended_vhnd])
 
     @property
     def ifa_tablets(self):
-        return len([c for c in self.cases if c.preg_received_ifa])
+        return len([c for c in self.all_cases if c.preg_received_ifa])
 
     @property
     def preg_6_months(self):
-        return len([c for c in self.cases if c.preg_month == 6])
+        return len([c for c in self.all_cases if c.preg_month == 6])
 
     @property
     def preg_6_or_9_months(self):
-        return len([c for c in self.cases if c.preg_month in (6, 9)])
+        return len([c for c in self.all_cases if c.preg_month in (6, 9)])
 
     @property
     def preg_weighed(self):
-        return len([c for c in self.cases if c.preg_weighed])
+        return len([c for c in self.all_cases if c.preg_weighed])
 
     @property
     def child_weighed(self):
-        return len([c for c in self.cases if c.child_weighed_once])
+        return len([c for c in self.all_cases if c.child_weighed_once])
 
     @property
     def child_3_months(self):
-        return len([c for c in self.cases if c.child_age == 3])
+        return len([c for c in self.all_cases if c.child_age == 3])
 
     @property
     def children_registered(self):
-        return len([c for c in self.cases if c.child_birth_registered])
+        return len([c for c in self.all_cases if c.child_birth_registered])
 
     @property
     def child_6_months(self):
-        return len([c for c in self.cases if c.child_age == 6])
+        return len([c for c in self.all_cases if c.child_age == 6])
 
     @property
     def child_growth_monitored(self):
-        return len([c for c in self.cases if c.child_growth_calculated])
+        return len([c for c in self.all_cases if c.child_growth_calculated])
 
     @property
     def child_mult_3_months(self):
         # number of children whose age is a multiple of 3 months
-        return len([c for c in self.cases
+        return len([c for c in self.all_cases
                     if c.child_age and c.child_age % 3 == 0])
 
     @property
     def child_breastfed(self):
-        return len([c for c in self.cases if c.child_breastfed])
+        return len([c for c in self.all_cases if c.child_breastfed])
 
     @property
     def measles_vaccine(self):
-        return len([c for c in self.cases if c.child_received_measles_vaccine])
+        return len([c for c in self.all_cases if c.child_received_measles_vaccine])
 
     @property
     def child_12_months(self):
-        return len([c for c in self.cases if c.child_age == 12])
+        return len([c for c in self.all_cases if c.child_age == 12])
 
     @property
     def vhnd_held(self):
-        return 1 if self.cases[0].vhnd_available else 0
+        return 1 if self.all_cases[0].vhnd_available else 0
 
     def service_available(self, service):
-        return 1 if self.cases[0].is_service_available(service, 1) else 0
+        return 1 if self.all_cases[0].is_service_available(service, 1) else 0
 
     @property
     def adult_scale(self):

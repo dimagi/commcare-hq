@@ -942,7 +942,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 
     @property
     def rows(self):
-        case_objects = self.row_objects
+        case_objects = self.row_objects + self.extra_row_objects
         # Consolidate rows with the same awc
         awcs = {}
         for case_object in case_objects:
