@@ -2,10 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
 {% endblock %}
 
@@ -43,14 +43,6 @@
             });
         });
 
-      function handleChange() {
-          var data = customDataEditor.val();
-          $("input#metadata-input").val(JSON.stringify(data));
-      }
-      customDataEditor = uiElement.map_list('{{ location.get_id}}', "{% trans 'Location Data' %}");
-      customDataEditor.val({{ metadata|JSON }});
-      customDataEditor.on('change', handleChange);
-      $("#loc_form .custom-data-controls").append(customDataEditor.ui);
 
       $("#loc_form :button[type='submit']").click(function(e) {
           if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
@@ -72,21 +64,7 @@
     {% bootstrap_form_errors form %}
     {% bootstrap_fieldset form "Location Information" %}
 
-    {% if form.sub_forms %}<hr />{% endif %}
-    {% for loc_type, subform in form.sub_forms.items %}
-    <div style="display: none;" class="custom_subform" loctype="{{ loc_type }}">
-      {% include 'hqstyle/forms/basic_fieldset.html' with form=subform %}
-    </div>
-    {% endfor %}
-    <input name="metadata" id="metadata-input" type="hidden"/>
-    <fieldset>
-        <legend>{% trans "Custom Location Data" %}</legend>
-        <div class="control-group">
-            <label class="control-label">{% trans 'Current Data' %}</label>
-
-            <div class="controls custom-data-controls"></div>
-        </div>
-    </fieldset>
+    {% crispy form.custom_data.form %}
 
     {% if consumption %}
       <legend>{% trans "Default monthly consumption values" %}</legend>
@@ -111,7 +89,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    
+
 <div id="reparenting" class="modal hide fade">
   <div class="modal-header">
     <a class="close" data-dismiss="modal">&times;</a>

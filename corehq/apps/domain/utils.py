@@ -1,11 +1,9 @@
-import json
 import re
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from dimagi.utils.couch.cache import cache_core
+from corehq.util.quickcache import quickcache
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import get_db
-
 
 DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
@@ -17,14 +15,17 @@ legacy_domain_re = r"[\w\.:-]+"
 commcare_public_domain_url = '/a/public/'
 website_re = '(http(s?)\:\/\/|~/|/)?([a-zA-Z]{1}([\w\-]+\.)+([\w]{2,5}))(:[\d]{1,5})?/?(\w+\.[\w]{3,4})?((\?\w+=\w+)?(&\w+=\w+)*)?'
 
+
 def normalize_domain_name(domain):
     normalized = domain.replace('_', '-').lower()
     if settings.DEBUG:
         assert(re.match('^%s$' % grandfathered_domain_re, normalized))
     return normalized
 
+
 def get_domained_url(domain, path):
     return '/a/%s/%s' % (domain, path)
+
 
 def get_domain_from_url(path):
     try:
@@ -34,10 +35,11 @@ def get_domain_from_url(path):
     return domain
 
 
+@quickcache(timeout=60)
 def get_domain_module_map():
     hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
     try:
-        dynamic = cache_core.cached_open_doc(get_db(), 'DOMAIN_MODULE_CONFIG').get('module_map', {})
+        dynamic = get_db().open_doc('DOMAIN_MODULE_CONFIG').get('module_map', {})
     except ResourceNotFound:
         dynamic = {}
 
@@ -45,9 +47,10 @@ def get_domain_module_map():
     return hardcoded
 
 
+@quickcache(timeout=60)
 def get_adm_enabled_domains():
     try:
-        domains = cache_core.cached_open_doc(get_db(), 'ADM_ENABLED_DOMAINS').get('domains', {})
+        domains = get_db().open_doc('ADM_ENABLED_DOMAINS').get('domains', {})
     except ResourceNotFound:
         domains = []
     return domains

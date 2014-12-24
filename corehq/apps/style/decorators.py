@@ -25,3 +25,15 @@ def use_select2():
             return fn(request, *args, **kwargs)
         return wrapped
     return decorate
+
+
+def use_knockout_js():
+    def decorate(fn):
+        """
+        Decorator to Toggle on the use of bootstrap 3.
+        """
+        def wrapped(request, *args, **kwargs):
+            request.use_knockout_js = True
+            return fn(request, *args, **kwargs)
+        return wrapped
+    return decorate

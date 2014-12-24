@@ -1,6 +1,6 @@
-#from django.conf.urls.defaults import patterns, url
-from django.conf.urls.defaults import *
-from corehq.apps.locations.views import (
+from django.conf.urls.defaults import patterns, url
+
+from .views import (
     LocationsListView,
     NewLocationView,
     EditLocationView,
@@ -8,6 +8,7 @@ from corehq.apps.locations.views import (
     LocationImportView,
     LocationImportStatusView,
     LocationSettingsView,
+    LocationFieldsView,
 )
 
 settings_urls = patterns('corehq.apps.locations.views',
@@ -23,6 +24,7 @@ settings_urls = patterns('corehq.apps.locations.views',
     url(r'^export_locations/$', 'location_export', name='location_export'),
     url(r'^sync_openlmis/$', 'sync_openlmis', name='sync_openlmis'),
     url(r'^new/$', NewLocationView.as_view(), name=NewLocationView.urlname),
+    url(r'^fields/$', LocationFieldsView.as_view(), name=LocationFieldsView.urlname),
     url(r'^(?P<loc_id>[\w-]+)/$', EditLocationView.as_view(), name=EditLocationView.urlname),
     url(r'^archive/(?P<loc_id>[\w-]+)/$', 'archive_location', name='archive_location'),
     url(r'^unarchive/(?P<loc_id>[\w-]+)/$', 'unarchive_location', name='unarchive_location'),

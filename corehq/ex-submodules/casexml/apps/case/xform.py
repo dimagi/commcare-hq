@@ -76,8 +76,7 @@ def process_cases_with_casedb(xform, case_db, config=None):
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
 
-        if config.reconcile:
-            relevant_log.reconcile_cases()
+        if config.reconcile and relevant_log.reconcile_cases():
             relevant_log.save()
 
     try:

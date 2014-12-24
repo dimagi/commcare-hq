@@ -35,7 +35,6 @@ class UserGenerationCache(GenerationCache):
         "domain/old_users",
         "domain/docs",
         "sms/phones_to_domains",
-        "migration/user_id_by_username",
         "eula_reports/non_eulized_users"
     ]
 

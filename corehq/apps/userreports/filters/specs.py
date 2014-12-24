@@ -11,7 +11,7 @@ class BaseFilterSpec(JsonObject):
 
 class BooleanExpressionFilterSpec(BaseFilterSpec):
     type = TypeProperty('boolean_expression')
-    operator = StringProperty(choices=OPERATORS.keys())
+    operator = StringProperty(choices=OPERATORS.keys(), required=True)
     property_value = DefaultProperty(required=True)
     expression = DictProperty(required=True)
 
