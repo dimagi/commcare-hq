@@ -1,4 +1,6 @@
 import logging
+from couchdbkit import ResourceNotFound
+from dimagi.utils.couch import sync_docs
 from dimagi.utils.couch.database import iter_docs
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -6,8 +8,9 @@ from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.xpath import dot_interpolate
+import corehq.apps.app_manager.models as app_models
 import sys
-from django.conf import settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -39,35 +42,44 @@ class AppFilterMigrationMixIn(object):
         ).all()}
 
     def forwards(self, orm):
-        if not settings.UNIT_TESTING:
-            errors = []
+        # if the view doesn't exist manually create it.
+        # typically for initial load or tests.
+        try:
+            Application.get_db().view(
+                'app_manager/applications',
+                limit=1,
+            ).all()
+        except ResourceNotFound:
+            sync_docs.sync(app_models, verbosity=2)
 
-            def _migrate_app_ids(app_ids):
-                to_save = []
-                count = len(app_ids)
-                logger.info('migrating {} apps'.format(count))
-                for i, app_doc in enumerate(iter_docs(Application.get_db(), app_ids)):
-                    try:
-                        if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
-                            application = Application.wrap(app_doc)
-                            should_save = self.migrate_app(application)
-                            if should_save:
-                                to_save.append(application)
-                                if len(to_save) > 25:
-                                    self.bulk_save(to_save)
-                                    logger.info('completed {}/{} apps'.format(i, count))
-                                    to_save = []
-                    except Exception:
-                        errors.append("App {id} not properly migrated because {error}".format(id=app_doc['_id'],
-                                                                                              error=sys.exc_info()[0]))
-                if to_save:
-                    self.bulk_save(to_save)
+        errors = []
 
-            logger.info('migrating applications')
-            _migrate_app_ids(self.get_app_ids())
+        def _migrate_app_ids(app_ids):
+            to_save = []
+            count = len(app_ids)
+            logger.info('migrating {} apps'.format(count))
+            for i, app_doc in enumerate(iter_docs(Application.get_db(), app_ids)):
+                try:
+                    if app_doc["doc_type"] in ["Application", "Application-Deleted"]:
+                        application = Application.wrap(app_doc)
+                        should_save = self.migrate_app(application)
+                        if should_save:
+                            to_save.append(application)
+                            if len(to_save) > 25:
+                                self.bulk_save(to_save)
+                                logger.info('completed {}/{} apps'.format(i, count))
+                                to_save = []
+                except Exception:
+                    errors.append("App {id} not properly migrated because {error}".format(id=app_doc['_id'],
+                                                                                          error=sys.exc_info()[0]))
+            if to_save:
+                self.bulk_save(to_save)
 
-            if errors:
-                logger.info('\n'.join(errors))
+        logger.info('migrating applications')
+        _migrate_app_ids(self.get_app_ids())
+
+        if errors:
+            logger.info('\n'.join(errors))
 
     @classmethod
     def bulk_save(cls, apps):

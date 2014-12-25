@@ -8,10 +8,13 @@ import pytz
 from django.utils.html import escape, escapejs
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
+from corehq import privileges
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
+from corehq.toggles import EDIT_SUBMISSIONS
 from couchforms.models import XFormInstance
 from dimagi.utils.timezones import utils as tz_utils
 from casexml.apps.case.xform import extract_case_blocks
@@ -20,6 +23,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_definition)
+from django_prbac.utils import has_privilege
 
 
 register = template.Library()
@@ -156,6 +160,14 @@ def render_form(form, domain, options):
     if len(case_blocks) == 1 and case_blocks[0].get(case_id_attr):
         edit_session_data["case_id"] = case_blocks[0].get(case_id_attr)
 
+    request = options.get('request', None)
+    show_edit_submission = (
+        request and user
+        and has_privilege(request, privileges.CLOUDCARE)
+        and request.domain
+        and (user.can_edit_data() or user.is_commcare_user())
+        and toggle_enabled(request, EDIT_SUBMISSIONS)
+    )
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
@@ -177,5 +189,5 @@ def render_form(form, domain, options):
         "side_pane": side_pane,
         "user": user,
         "edit_session_data": edit_session_data,
-        "request": options.get('request', None),  # needed for toggles
+        "show_edit_submission": show_edit_submission,
     })

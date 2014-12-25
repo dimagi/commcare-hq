@@ -17,6 +17,7 @@ from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from PIL import Image
 from casexml.apps.case.exceptions import MissingServerDate, ReconciliationError
 from corehq.util.couch_helpers import CouchAttachmentsBuilder
+from dimagi.utils.chunked import chunked
 from dimagi.utils.django.cached_object import CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
@@ -442,11 +443,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     @classmethod
     def bulk_get_lite(cls, ids, wrapper=None):
-        for res in cls.get_db().view("case/get_lite", keys=ids,
-                                 include_docs=False):
-            if wrapper is None:
-                wrapper = cls.get_wrap_class(res['value']).wrap(res['value'])
-            yield wrapper.wrap(res['value'])
+        for ids in chunked(ids, 100):
+            for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
+                if wrapper is None:
+                    wrapper = cls.get_wrap_class(row['value'])
+                yield wrapper.wrap(row['value'])
 
     def get_preloader_dict(self):
         """

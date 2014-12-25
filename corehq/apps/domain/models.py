@@ -637,7 +637,8 @@ class Domain(Document, SnapshotMixin):
         ignore = ignore if ignore is not None else []
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
-        db = get_db()
+
+        db = Domain.get_db()
 
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
@@ -674,8 +675,7 @@ class Domain(Document, SnapshotMixin):
 
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
             if (copy_by_id and res['value']['_id'] not in copy_by_id and
-                res['value']['doc_type'] in ('Application', 'RemoteApp',
-                                             'FixtureDataType')):
+                res['value']['doc_type'] == 'FixtureDataType'):
                 continue
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()

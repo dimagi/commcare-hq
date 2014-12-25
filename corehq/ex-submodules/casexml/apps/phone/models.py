@@ -1,7 +1,9 @@
+from collections import defaultdict
 from copy import copy
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.database import SafeSaveDocument
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
@@ -173,14 +175,10 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         Get the case state object associated with an id, or None if no such
         object is found
         """
-        # this is because we don't want to needlessly call wrap
-        # (which couchdbkit does not make any effort to cache on repeated calls)
-        # deterministically this change shaved off 10 seconds from an ota restore
-        # of about 300 cases.
-        filtered_list = [case for case in self._doc['cases_on_phone'] if case['case_id'] == case_id]
+        filtered_list = self._case_state_map()[case_id]
         if filtered_list:
-            self._assert(len(filtered_list) == 1, \
-                         "Should be exactly 0 or 1 cases on phone but were %s for %s" % \
+            self._assert(len(filtered_list) == 1,
+                         "Should be exactly 0 or 1 cases on phone but were %s for %s" %
                          (len(filtered_list), case_id))
             return CaseState.wrap(filtered_list[0])
         return None
@@ -197,13 +195,32 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         object is found
         """
         # see comment in get_case_state for reasoning
-        filtered_list = [case for case in self._doc['dependent_cases_on_phone'] if case['case_id'] == case_id]
+        filtered_list = self._dependent_case_state_map()[case_id]
         if filtered_list:
-            self._assert(len(filtered_list) == 1, \
-                         "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" % \
+            self._assert(len(filtered_list) == 1,
+                         "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" %
                          (len(filtered_list), case_id))
             return CaseState.wrap(filtered_list[0])
         return None
+
+    @memoized
+    def _dependent_case_state_map(self):
+        return self._build_state_map('dependent_cases_on_phone')
+
+    @memoized
+    def _case_state_map(self):
+        return self._build_state_map('cases_on_phone')
+
+    def _build_state_map(self, list_name):
+        state_map = defaultdict(list)
+        # referencing the property via self._doc is because we don't want to needlessly call wrap
+        # (which couchdbkit does not make any effort to cache on repeated calls)
+        # deterministically this change shaved off 10 seconds from an ota restore
+        # of about 300 cases.
+        for case in self._doc[list_name]:
+            state_map[case['case_id']].append(case)
+
+        return state_map
 
     def _get_case_state_from_anywhere(self, case_id):
         return self.get_case_state(case_id) or self.get_dependent_case_state(case_id)
@@ -211,17 +228,21 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
     def archive_case(self, case_id):
         state = self.get_case_state(case_id)
         self.cases_on_phone.remove(state)
+        self._case_state_map.reset_cache(self)
+
         # I'm not quite clear on when this can happen, but we've seen it
         # in wild, so safeguard against it.
         if not self.phone_has_dependent_case(case_id):
             self.dependent_cases_on_phone.append(state)
+            self._dependent_case_state_map.reset_cache(self)
 
     def _phone_owns(self, action):
         # whether the phone thinks it owns an action block.
         # the only way this can't be true is if the block assigns to an
         # owner id that's not associated with the user on the phone
-        if "owner_id" in action.updated_known_properties and action.updated_known_properties["owner_id"]:
-            return action.updated_known_properties["owner_id"] in self.owner_ids_on_phone
+        owner = action.updated_known_properties.get("owner_id")
+        if owner:
+            return owner in self.owner_ids_on_phone
         return True
 
     def update_phone_lists(self, xform, case_list):
@@ -238,6 +259,7 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
                     if self._phone_owns(action):
                         self.cases_on_phone.append(CaseState(case_id=case.get_id,
                                                              indices=[]))
+                        self._case_state_map.reset_cache(self)
                 elif action.action_type == const.CASE_ACTION_UPDATE:
                     self._assert(
                         self.phone_has_case(case._id),
@@ -280,11 +302,11 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         owned or not owned but relevant.
         """
         def children(case_state):
-            return [self._get_case_state_from_anywhere(index.referenced_id) \
+            return [self._get_case_state_from_anywhere(index.referenced_id)
                     for index in case_state.indices]
 
         relevant_cases = set()
-        queue = list(case_state for case_state in self.cases_on_phone)
+        queue = list(self.cases_on_phone)
         while queue:
             case_state = queue.pop()
             # I don't actually understand why something is coming back None
@@ -314,9 +336,22 @@ class SyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         Goes through the cases expected to be on the phone and reconciles
         any duplicate records.
+
+        Return True if any duplicates were found.
         """
+        num_cases_on_phone_before = len(self.cases_on_phone)
+        num_dependent_cases_before = len(self.dependent_cases_on_phone)
+
         self.cases_on_phone = list(set(self.cases_on_phone))
         self.dependent_cases_on_phone = list(set(self.dependent_cases_on_phone))
+
+        if num_cases_on_phone_before != len(self.cases_on_phone) \
+                or num_dependent_cases_before != len(self.dependent_cases_on_phone):
+            self._case_state_map.reset_cache(self)
+            self._dependent_case_state_map.reset_cache(self)
+            return True
+
+        return False
 
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)

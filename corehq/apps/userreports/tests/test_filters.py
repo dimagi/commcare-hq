@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.factory import FilterFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
 from fluff.filters import ANDFilter, ORFilter, NOTFilter
 
 

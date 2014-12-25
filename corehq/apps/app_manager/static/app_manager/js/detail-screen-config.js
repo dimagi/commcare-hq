@@ -574,6 +574,7 @@ var DetailScreenConfig = (function () {
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
+            this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
 
             this.fireChange = function() {
@@ -738,6 +739,9 @@ var DetailScreenConfig = (function () {
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
                 }
+                if (this.containsCustomXMLConfiguration){
+                    data.custom_xml = this.config.customXMLViewModel.xml();
+                }
                 return data;
             },
             addItem: function (columnConfiguration, index) {
@@ -817,6 +821,7 @@ var DetailScreenConfig = (function () {
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
+                        containsCustomXMLConfiguration: columnType == "short",
                         allowsTabs: columnType == 'long'
                     }
                 );
@@ -840,6 +845,13 @@ var DetailScreenConfig = (function () {
                         );
                     }
                 }
+                this.customXMLViewModel = {
+                    enabled: window.toggles.CASE_LIST_CUSTOM_XML,
+                    xml: ko.observable(spec.state.short.custom_xml || "")
+                };
+                this.customXMLViewModel.xml.subscribe(function(v){
+                    that.shortScreen.saveButton.fire("change");
+                });
             }
             if (spec.state.long !== undefined) {
                 this.longScreen = addScreen(spec.state, "long");

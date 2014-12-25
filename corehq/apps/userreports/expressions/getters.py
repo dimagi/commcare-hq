@@ -73,3 +73,13 @@ def recursive_lookup(dict_object, keys):
 def transform_date(item):
     # postgres crashes on empty strings, but is happy to take null dates
     return item or None
+
+
+def getter_from_property_reference(spec):
+    if spec.property_name:
+        assert not spec.property_path, \
+            'indicator {} has both a name and path specified! you must only pick one.'.format(spec.property_name)
+        return DictGetter(property_name=spec.property_name)
+    else:
+        assert spec.property_path, spec.property_name
+        return NestedDictGetter(property_path=spec.property_path)

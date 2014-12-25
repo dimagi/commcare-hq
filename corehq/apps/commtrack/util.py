@@ -19,6 +19,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
+from corehq.feature_previews import enable_commtrack_previews
 from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 import re
@@ -178,6 +179,10 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
     # is a little tricky, but it happens after the config is
     # created so should not cause problems
     domain.save()
+
+    # Enable feature flags if necessary - this is required by exchange
+    # and should have no effect on changing the project settings directly
+    enable_commtrack_previews(domain)
 
     return config
 

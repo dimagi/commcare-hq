@@ -4,10 +4,8 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from . import privileges
 from .toggles import StaticToggle, NAMESPACE_DOMAIN
 
 
@@ -38,11 +36,7 @@ class FeaturePreview(StaticToggle):
         if not self.privilege:
             return True
 
-        try:
-            ensure_request_has_privilege(request, self.privilege)
-            return True
-        except PermissionDenied:
-            return False
+        return prbac_has_privilege(request, self.privilege)
 
 
 SUBMIT_HISTORY_FILTERS = FeaturePreview(
@@ -75,39 +69,19 @@ ENUM_IMAGE = FeaturePreview(
 )
 
 
-def _force_update_location_toggle(domain, checked):
-    """
-    Toggling CommTrack should also toggle locations to
-    the new CommTrack state.
-    """
-    from corehq.toggles import NAMESPACE_DOMAIN
-    from toggle.shortcuts import update_toggle_cache, namespaced_item
-    from toggle.models import Toggle
-
-    toggle = Toggle.get(LOCATIONS.slug)
-    toggle_user_key = namespaced_item(domain.name, NAMESPACE_DOMAIN)
-
-    # add it if needed
-    if checked and toggle_user_key not in toggle.enabled_users:
-        toggle.enabled_users.append(toggle_user_key)
-        toggle.save()
-        update_toggle_cache(LOCATIONS.slug, toggle_user_key, checked)
-
-    # remove it if needed
-    if not checked and toggle_user_key in toggle.enabled_users:
-        toggle.enabled_users.remove(toggle_user_key)
-        toggle.save()
-        update_toggle_cache(LOCATIONS.slug, toggle_user_key, checked)
-
-    domain.locations_enabled = checked
+def enable_commtrack_previews(domain):
+    for toggle_class in [COMMTRACK, LOCATIONS]:
+        toggle_class.set(domain.name, True, NAMESPACE_DOMAIN)
 
 
 def commtrackify(domain_name, checked):
     from corehq.apps.domain.models import Domain
     domain = Domain.get_by_name(domain_name)
     domain.commtrack_enabled = checked
-
-    _force_update_location_toggle(domain, checked)
+    if checked:
+        # turning on commtrack should turn on locations, but not the other way around
+        domain.locations_enabled = True
+        enable_commtrack_previews(domain)
 
     domain.save()
 

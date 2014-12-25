@@ -46,6 +46,7 @@ class Location(JsonObject):
     historical_groups = ListProperty()
     created_at = StringProperty()
     supervised_by = IntegerProperty()
+    is_active = BooleanProperty()
 
 
 class Program(JsonObject):

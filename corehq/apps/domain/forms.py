@@ -884,7 +884,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 StrictButton(
                     _("Subscribe to Plan"),
                     type="submit",
-                    css_class='btn btn-success',
+                    css_class='btn btn-success disable-on-submit-no-spinner add-spinner-on-click',
                 ),
             ),
         )

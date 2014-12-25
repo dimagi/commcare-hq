@@ -568,9 +568,18 @@ class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
 
     @property
     def filters(self):
-        filter = super(TauxDeRuptures, self).filters
-        filter.append("total_stock_total = 1")
-        return filter
+        return super(TauxDeRuptures, self).filters
+
+    @property
+    def columns(self):
+        columns = []
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(_("Stock total"), SumColumn('total_stock_total')))
+        return columns
 
 
 class DureeData(BaseSqlData):

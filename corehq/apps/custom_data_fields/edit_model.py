@@ -1,5 +1,6 @@
 import json
 
+from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.utils.translation import ugettext as _
@@ -152,6 +153,8 @@ class CustomDataModelMixin(object):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
+            msg = _(u"{} fields saved successfully").format(self.entity_string)
+            messages.success(request, msg)
             return self.get(request, success=True, *args, **kwargs)
         else:
             return self.get(request, *args, **kwargs)
