@@ -448,8 +448,8 @@ class RepeatRecord(Document, LockableMixIn):
                         if 200 <= resp.status < 300:
                             self.update_success()
                             break
-                    except Exception, e:
-                        pass # some other connection issue probably
+                    except Exception:
+                        pass  # some other connection issue probably
                 if not self.succeeded:
                     # mark it failed for later and give up
                     self.update_failure()
