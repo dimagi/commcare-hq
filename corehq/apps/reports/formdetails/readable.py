@@ -123,6 +123,7 @@ class CaseTypeMeta(JsonObject):
 
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
+    type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
 
     def get_property(self, root_case_type, name):
         type_ = self.get_type(root_case_type)
