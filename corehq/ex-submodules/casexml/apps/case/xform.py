@@ -1,10 +1,11 @@
 import copy
 import logging
 
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 import datetime
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import (
@@ -66,8 +67,14 @@ def process_cases_with_casedb(xform, case_db, config=None):
     cases = [attach_extras(case) for case in cases]
 
     # handle updating the sync records for apps that use sync mode
+    try:
+        relevant_log = xform.get_sync_token()
+    except ResourceNotFound:
+        if LOOSE_SYNC_TOKEN_VALIDATION.enabled(xform.domain):
+            relevant_log = None
+        else:
+            raise
 
-    relevant_log = xform.get_sync_token()
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
