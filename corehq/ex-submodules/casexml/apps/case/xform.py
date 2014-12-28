@@ -53,18 +53,17 @@ def process_cases_with_casedb(xform, case_db, config=None):
         for c in cases:
             c.reconcile_actions(rebuild=True)
 
-    # attach domain and export tag if domain is there
-    if hasattr(xform, "domain"):
-        domain = xform.domain
+    # attach domain and export tag
+    domain = xform.domain
 
-        def attach_extras(case):
-            case.domain = domain
-            if domain:
-                assert hasattr(case, 'type')
-                case['#export_tag'] = ["domain", "type"]
-            return case
+    def attach_extras(case):
+        case.domain = domain
+        if domain:
+            assert hasattr(case, 'type')
+            case['#export_tag'] = ["domain", "type"]
+        return case
 
-        cases = [attach_extras(case) for case in cases]
+    cases = [attach_extras(case) for case in cases]
 
     # handle updating the sync records for apps that use sync mode
 
