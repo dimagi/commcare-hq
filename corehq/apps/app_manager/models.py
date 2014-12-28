@@ -1030,12 +1030,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 type_meta.add_closer(self.unique_id, action.condition)
             if type_ == 'update_case':
                 for name, question_path in FormAction.get_action_properties(action):
-                    prop = app_case_meta.get_property(module_case_type, name)
-                    prop.add_save(self.unique_id, questions[question_path])
+                    app_case_meta.add_property_save(
+                        module_case_type,
+                        name,
+                        self.unique_id,
+                        questions[question_path]
+                    )
             if type_ == 'case_preload':
                 for name, question_path in FormAction.get_action_properties(action):
-                    prop = app_case_meta.get_property(module_case_type, name)
-                    prop.add_load(self.unique_id, questions[question_path])
+                    app_case_meta.add_property_load(
+                        module_case_type,
+                        name,
+                        self.unique_id,
+                        questions[question_path]
+                    )
             if type_ == 'subcases':
                 for act in action:
                     if act.is_active():
@@ -1044,8 +1052,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         if act.close_condition.is_active():
                             sub_type_meta.add_closer(self.unique_id, act.close_condition)
                         for name, question_path in FormAction.get_action_properties(act):
-                            prop = app_case_meta.get_property(act.case_type, name)
-                            prop.add_save(self.unique_id, questions[question_path])
+                            app_case_meta.add_property_save(
+                                act.case_type,
+                                name,
+                                self.unique_id,
+                                questions[question_path]
+                            )
 
 
 class UserRegistrationForm(FormBase):
@@ -1763,23 +1775,39 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
-                prop = app_case_meta.get_property(action.case_type, name)
-                prop.add_save(self.unique_id, questions[question_path])
+                app_case_meta.add_property_save(
+                    action.case_type,
+                    name,
+                    self.unique_id,
+                    questions[question_path]
+                )
             for name, question_path in action.preload.items():
-                prop = app_case_meta.get_property(action.case_type, name)
-                prop.add_load(self.unique_id, questions[question_path])
-
+                app_case_meta.add_property_load(
+                    action.case_type,
+                    name,
+                    self.unique_id,
+                    questions[question_path]
+                )
             if action.close_condition.is_active():
                 meta = app_case_meta.get_type(action.case_type)
                 meta.add_closer(self.unique_id, action.close_condition)
 
         for action in self.actions.open_cases:
-            prop = app_case_meta.get_property(action.case_type, 'name')
-            prop.add_save(self.unique_id, questions[action.name_path], action.open_condition)
+            app_case_meta.add_property_save(
+                action.case_type,
+                'name',
+                self.unique_id,
+                questions.get(action.name_path),
+                action.open_condition
+            )
             for name, question_path in action.case_properties.items():
-                prop = app_case_meta.get_property(action.case_type, name)
-                prop.add_save(self.unique_id, questions[question_path], action.open_condition)
-
+                app_case_meta.add_property_save(
+                    action.case_type,
+                    name,
+                    self.unique_id,
+                    questions[question_path],
+                    action.open_condition
+                )
             meta = app_case_meta.get_type(action.case_type)
             meta.add_opener(self.unique_id, action.open_condition)
             if action.close_condition.is_active():
@@ -2033,12 +2061,19 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
         questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
         meta = app_case_meta.get_type(self.case_type)
         for name, question_path in self.case_updates().items():
-            prop = app_case_meta.get_property(self.case_type, name)
-            prop.add_save(self.unique_id, questions[question_path])
+            app_case_meta.add_property_save(
+                self.case_type,
+                name,
+                self.unique_id,
+                questions[question_path],
+            )
         for name, question_path in self.case_preload.items():
-            prop = app_case_meta.get_property(self.case_type, name)
-            prop.add_load(self.unique_id, questions[question_path])
-
+            app_case_meta.add_property_load(
+                self.case_type,
+                name,
+                self.unique_id,
+                questions[question_path],
+            )
         meta.add_opener(self.unique_id, FormActionCondition(
             type='always',
         ))

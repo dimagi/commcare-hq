@@ -124,8 +124,8 @@ class CaseTypeMeta(JsonObject):
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
 
-    def get_property(self, case_type, name):
-        type_ = self.get_type(case_type)
+    def get_property(self, root_case_type, name):
+        type_ = self.get_type(root_case_type)
         if '/' in name:
             # find the case property from the correct case type
             parent_rel, name = name.split('/', 1)
@@ -133,6 +133,14 @@ class AppCaseMetadata(JsonObject):
             return self.get_property(parent_case_type, name)
 
         return type_.get_property(name)
+
+    def add_property_load(self, root_case_type, name, form_id, question):
+        prop = self.get_property(root_case_type, name)
+        prop.add_load(form_id, question)
+
+    def add_property_save(self, root_case_type, name, form_id, question, condition=None):
+        prop = self.get_property(root_case_type, name)
+        prop.add_save(form_id, question, condition)
 
     def get_type(self, name):
         if not name:
