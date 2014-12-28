@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+import logging
 import urllib
 import urlparse
 
@@ -361,7 +362,6 @@ class RepeatRecord(Document, LockableMixIn):
             try:
                 dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%SZ')
                 data[attr] = dt.isoformat() + '.000000Z'
-                print data[attr]
             except ValueError:
                 pass
         return super(RepeatRecord, cls).wrap(data)
@@ -426,23 +426,33 @@ class RepeatRecord(Document, LockableMixIn):
         return self.repeater.get_payload(self)
 
     def fire(self, max_tries=3, post_fn=None):
-        payload = self.get_payload()
-        post_fn = post_fn or simple_post_with_cached_timeout
-        headers = self.repeater.get_headers(self)
-        if self.try_now():
-            # we don't use celery's version of retry because
-            # we want to override the success/fail each try
-            for i in range(max_tries):
-                try:
-                    resp = post_fn(payload, self.url, headers=headers)
-                    if 200 <= resp.status < 300:
-                        self.update_success()
-                        break
-                except Exception, e:
-                    pass # some other connection issue probably
-            if not self.succeeded:
-                # mark it failed for later and give up
-                self.update_failure()
+        try:
+            payload = self.get_payload()
+        except ResourceNotFound:
+            # this repeater is pointing at a missing document
+            # quarantine it and tell it to stop trying.
+            logging.exception('Repeater {} in domain {} references a missing or deleted document!'.format(
+                self._id, self.domain,
+            ))
+            self.doc_type = self.doc_type + '-Failed'
+            self.save()
+        else:
+            post_fn = post_fn or simple_post_with_cached_timeout
+            headers = self.repeater.get_headers(self)
+            if self.try_now():
+                # we don't use celery's version of retry because
+                # we want to override the success/fail each try
+                for i in range(max_tries):
+                    try:
+                        resp = post_fn(payload, self.url, headers=headers)
+                        if 200 <= resp.status < 300:
+                            self.update_success()
+                            break
+                    except Exception, e:
+                        pass # some other connection issue probably
+                if not self.succeeded:
+                    # mark it failed for later and give up
+                    self.update_failure()
 
 # import signals
 from corehq.apps.receiverwrapper import signals
