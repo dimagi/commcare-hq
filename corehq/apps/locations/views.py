@@ -181,7 +181,7 @@ class NewLocationView(BaseLocationView):
         return {
             'form': self.location_form,
             'location': self.location,
-            'consumption': self.consumption,
+            'consumption': consumption,
         }
 
     def post(self, request, *args, **kwargs):
