@@ -352,13 +352,12 @@
                         };
 
                         // If the button had said "Create"
-                        if (!self.custom_export._id || !self.custom_export._id()){
-
+                        if (!self.custom_export._id || !self.custom_export._id()) {
                             var event_category = null;
-                            if (self.custom_export.type() == "form"){
+                            if (self.custom_export.type() == "form") {
                                 event_category = 'Form Exports';
-                            } else if (self.custom_export.type() == "case"){
-                                event_category = 'Case Exports'
+                            } else if (self.custom_export.type() == "case") {
+                                event_category = 'Case Exports';
                             }
 
                             if (event_category) {
