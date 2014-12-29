@@ -1632,7 +1632,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 if k.endswith("-publish"):
                     doc_id = k[:-len("-publish")]
                     if doc_id in latest_apps:
-                        doc_id = latest_apps[doc_id].get("copy_of", doc_id)
+                        doc_id = latest_apps[doc_id].copy_of or doc_id
                     copy_by_id.add(doc_id)
 
 
