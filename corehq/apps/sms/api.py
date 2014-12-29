@@ -245,24 +245,25 @@ def process_sms_registration(msg):
     keyword3 = text_words[2] if len(text_words) > 2 else ""
     if keyword1 in REGISTRATION_KEYWORDS and keyword2 != "":
         domain = Domain.get_by_name(keyword2, strict=True)
-        if domain is not None and domain_has_privilege(domain, privileges.INBOUND_SMS):
-            if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
-                #TODO: Register a PendingMobileWorker object that must be approved by a domain admin
-                pass
-            elif domain.sms_case_registration_enabled:
-                register_sms_contact(
-                    domain=domain.name,
-                    case_type=domain.sms_case_registration_type,
-                    case_name="unknown",
-                    user_id=domain.sms_case_registration_user_id,
-                    contact_phone_number=strip_plus(msg.phone_number),
-                    contact_phone_number_is_verified="1",
-                    owner_id=domain.sms_case_registration_owner_id,
-                )
-                msg.domain = domain.name
-                msg.save()
-                registration_processed = True
-    
+        if domain is not None:
+            if domain_has_privilege(domain, privileges.INBOUND_SMS):
+                if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
+                    #TODO: Register a PendingMobileWorker object that must be approved by a domain admin
+                    pass
+                elif domain.sms_case_registration_enabled:
+                    register_sms_contact(
+                        domain=domain.name,
+                        case_type=domain.sms_case_registration_type,
+                        case_name="unknown",
+                        user_id=domain.sms_case_registration_user_id,
+                        contact_phone_number=strip_plus(msg.phone_number),
+                        contact_phone_number_is_verified="1",
+                        owner_id=domain.sms_case_registration_owner_id,
+                    )
+                    registration_processed = True
+            msg.domain = domain.name
+            msg.save()
+
     return registration_processed
 
 def incoming(phone_number, text, backend_api, timestamp=None, 
