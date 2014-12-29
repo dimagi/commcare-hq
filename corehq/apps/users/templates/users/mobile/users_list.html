@@ -241,7 +241,11 @@
                         <td data-bind="visible: !archive_action_complete">
                             <a href="#" data-toggle="modal"
                                 class="btn {% if not show_inactive %}btn-inverse{% endif %}"
-                                data-bind="text: archive_action_text, attr: {href: '#'+user_id}"></a>
+                                data-bind="
+                                    attr: {href: '#'+user_id},
+                                    click: function() { ga_track_event('Manage Mobile Workers', archive_action_text, user_id); },
+                                    text: archive_action_text
+                                "></a>
                         
                             <div class="modal hide fade" data-bind="attr: {id: user_id}">
                                 <div class="modal-header">
