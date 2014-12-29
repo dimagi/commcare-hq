@@ -135,7 +135,8 @@
             restrict: "E",
             replace: true,
             scope: {
-                hierarchy: '='
+                hierarchy: '=',
+                filterCaseTypes: '&'
             },
             templateUrl: '/hierarchy.html'
         }
@@ -147,11 +148,15 @@
             replace: true,
             scope: {
                 casetype: '=',
-                hierarchy: '='
+                hierarchy: '=',
+                filterCaseTypes: '&'
             },
             templateUrl: '/hierarchy_member.html',
             link: function (scope, element, attrs) {
-                var hierarchySt = '<hierarchy hierarchy="hierarchy"></hierarchy>';
+                var hierarchySt = '<hierarchy ' +
+                    'hierarchy="hierarchy" ' +
+                    'filter-case-types="filterCaseTypes({casetype: casetype})"' +
+                    '></hierarchy>';
                 if (angular.isObject(scope.hierarchy)) {
                     $compile(hierarchySt)(scope, function(cloned, scope)   {
                         element.append(cloned);
