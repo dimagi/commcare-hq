@@ -55,6 +55,7 @@ class SMSUser(JsonObject):
     email = StringProperty()
     phone_numbers = ListProperty()
     backend = StringProperty()
+    date_updated = StringProperty()
 
     @classmethod
     def from_json(cls, json_rep):

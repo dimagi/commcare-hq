@@ -52,12 +52,12 @@ branches:
   - custom-case-list-pane # Noah 11/24
   - quickview # Simon 11/25
   - double-management # SK 12/1
-  - logo-uploader # Nick P 12/2
+  - cloudcare-speedup  # cz/sk 12/17
+  - test-invoice-speed # Nick P 12/24
 submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
       - debug-yui # Nick P 11/4
-      - logos # Nick P 12/2
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
     # just so we always get latest master

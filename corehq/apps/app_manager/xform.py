@@ -1107,9 +1107,9 @@ class XForm(WrappedNode):
             return 'true()'
         elif condition.type == 'if':
             if condition.operator == 'selected':
-                template = "selected({path}, '{answer}')"
+                template = u"selected({path}, '{answer}')"
             else:
-                template = "{path} = '{answer}'"
+                template = u"{path} = '{answer}'"
             return template.format(
                 path=self.resolve_path(condition.question),
                 answer=condition.answer

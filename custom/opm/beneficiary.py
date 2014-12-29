@@ -49,7 +49,7 @@ VHND_NO = 'VHND_no.png'
 
 class OPMCaseRow(object):
 
-    def __init__(self, case, report, child_index=1, explicit_month=None, explicit_year=None):
+    def __init__(self, case, report, child_index=1, is_secondary=False, explicit_month=None, explicit_year=None):
         self.child_index = child_index
         self.case = case
         self.report = report
@@ -57,6 +57,7 @@ class OPMCaseRow(object):
         self.block = report.block.lower()
         self.month = explicit_month or report.month
         self.year = explicit_year or report.year
+        self.is_secondary = is_secondary
 
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s"></div>'
@@ -64,14 +65,16 @@ class OPMCaseRow(object):
             self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
 
         self.set_case_properties()
-        self.add_extra_children()
-        if explicit_month is None and child_index == 1:
+        self.last_month_row = None
+        if not is_secondary:
+            self.add_extra_children()
             # if we were called directly, set the last month's row on this
             last_year, last_month = add_months(self.year, self.month, -1)
             try:
-                self.last_month_row = OPMCaseRow(case, report, 1, last_month, last_year)
+                self.last_month_row = OPMCaseRow(case, report, 1, is_secondary=True,
+                                                 explicit_month=last_month, explicit_year=last_year)
             except InvalidRow:
-                self.last_month_row = None
+                pass
 
     @property
     def readable_status(self):
@@ -225,6 +228,9 @@ class OPMCaseRow(object):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
 
+        if self.window > 14:
+            raise InvalidRow(_('Child is past window 14 (was {}'.format(self.window)))
+
         name = self.case_property('name', EMPTY_FIELD)
         if getattr(self.report,  'show_html', True):
             url = reverse("case_details", args=[DOMAIN, self.case_property('_id', '')])
@@ -371,7 +377,7 @@ class OPMCaseRow(object):
 
     @property
     def child_growth_calculated(self):
-        if self.child_age % 3 == 0:
+        if self.child_age and self.child_age % 3 == 0:
             if not self.is_service_available('vhnd_child_scale_available', months=3):
                 return True
 
@@ -539,12 +545,21 @@ class OPMCaseRow(object):
             prop=prop,
         ))
 
+    @property
+    def num_children(self):
+        if self.status == 'pregnant':
+            return 0
+        return int(self.case_property("live_birth_amount", 0))
+
     def add_extra_children(self):
         if self.child_index == 1:
             # app supports up to three children only
-            num_children = min(int(self.case_property("live_birth_amount", 1)), 3)
+            num_children = min(self.num_children, 3)
             if num_children > 1:
-                extra_child_objects = [(self.__class__(self.case, self.report, child_index=num + 2)) for num in range(num_children - 1)]
+                extra_child_objects = [
+                    self.__class__(self.case, self.report, child_index=num + 2, is_secondary=True)
+                    for num in range(num_children - 1)
+                ]
                 self.report.set_extra_row_objects(extra_child_objects)
 
     @property
@@ -671,8 +686,8 @@ class ConditionsMet(OPMCaseRow):
         ('closed_date', _("Closed On"), True),
     ]
 
-    def __init__(self, case, report, child_index=1):
-        super(ConditionsMet, self).__init__(case, report, child_index=child_index)
+    def __init__(self, case, report, child_index=1, **kwargs):
+        super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
@@ -736,8 +751,8 @@ class Beneficiary(OPMCaseRow):
         ('payment_last_month', _('Payment last month'), True),
     ]
 
-    def __init__(self, case, report, child_index=1):
-        super(Beneficiary, self).__init__(case, report, child_index=child_index)
+    def __init__(self, case, report, child_index=1, **kwargs):
+        super(Beneficiary, self).__init__(case, report, child_index=child_index, **kwargs)
         self.child_count = 0 if self.status == "pregnant" else 1
 
         # Show only cases that require payment
