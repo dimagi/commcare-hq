@@ -15,7 +15,7 @@ from corehq.apps.es import CaseES, FormES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
-from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
+from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
 
 
 # TODO: Move to init
@@ -185,7 +185,7 @@ def pull_child_entities(domain, dhis2_children):
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     for dhis2_child in dhis2_children:
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
-        case = get_case_by_external_id(domain, dhis2_child['Instance'])  # `Instance` is DHIS2's friendly name for `id`
+        case = get_case_by_external_id(domain, dhis2_child['Instance'])  # Instance is DHIS2's friendly name for id
         if case:
             case_id = case['case_id']
         else:

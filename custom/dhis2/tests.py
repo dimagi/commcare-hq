@@ -8,8 +8,8 @@ from contextlib import contextmanager
 from unittest import skip
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from couchdbkit import ResourceNotFound
-from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, JsonApiRequest, JsonApiError
-from custom.dhis2.tasks import push_child_entities, gen_children_only_ours, sync_child_entities, DOMAIN, sync_org_units
+from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError
+from custom.dhis2.tasks import sync_child_entities, DOMAIN, sync_org_units
 
 from django.test import TestCase
 from mock import patch, Mock

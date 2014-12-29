@@ -114,8 +114,8 @@ class Dhis2Api(object):
             data['Org unit'] = ou_id
         # Convert data keys to tracked entity attribute IDs
         if any(key not in self._tracked_entity_attributes for key in data):
-            # We are going to have to fetch at least one tracked entity attribute ID. Fetch them all to avoid multiple
-            # API requests.
+            # We are going to have to fetch at least one tracked entity attribute ID. Fetch them all to avoid
+            # multiple API requests.
             self._fetch_tracked_entity_attributes()
         # Set instance data keys to attribute IDs
         inst = {}
