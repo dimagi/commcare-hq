@@ -2,6 +2,12 @@ import os
 import json
 from django.test import LiveServerTestCase
 from django.conf import settings
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    SoftwarePlanEdition,
+    SoftwarePlanVersion,
+    Subscription,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
@@ -49,6 +55,18 @@ class TouchformsTestCase(LiveServerTestCase):
         domain_obj.use_default_sms_response = True
         domain_obj.default_sms_response = "Default SMS Response"
         domain_obj.save()
+
+        self.account = BillingAccount.get_or_create_account_by_domain(domain_obj.name)
+        self.subscription = Subscription.new_domain_subscription(
+            self.account,
+            domain_obj.name,
+            SoftwarePlanVersion.objects.filter(
+                plan__edition=SoftwarePlanEdition.ENTERPRISE
+            )[0]
+        )
+        self.subscription.is_active = True
+        self.subscription.save()
+
         return domain_obj
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):
@@ -304,4 +322,5 @@ class TouchformsTestCase(LiveServerTestCase):
         self.site.delete()
         self.backend.delete()
         self.backend_mapping.delete()
-
+        self.subscription.delete()
+        self.account.delete()
