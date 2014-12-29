@@ -7,7 +7,7 @@
     {% angularjs %}
     <li role="presentation">
         <a ng-click="filterCaseTypes()">{% trans "All Case Types" %}</a>
-        <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"></hierarchy>
+        <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"></hierarchy>
     </li>
     {% endangularjs %}
 {% endblock %}
@@ -74,7 +74,7 @@
 <script type="text/ng-template" id="/hierarchy.html">
 <ul>
     <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"
-            filter-case-types="filterCaseTypes({casetype: casetype})"></member>
+             type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"></member>
 </ul>
 </script>
 
