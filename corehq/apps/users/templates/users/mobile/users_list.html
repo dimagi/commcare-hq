@@ -45,6 +45,7 @@
     <script>
         $(document).ready(function() {
             gaTrackLink($('#add_new_mobile_worker'), 'Manage Mobile Worker', 'New Mobile Worker');
+            gaTrackLink($('#bulk_upload'), 'Manage Mobile Worker', 'Bulk Upload');
         });
     </script>
 {% endblock %}
@@ -146,7 +147,7 @@
                 {% endif %}
                 {% if can_bulk_edit_users %}
                     {% trans "or" %}
-                    <a class="btn" href="{% url "upload_commcare_users" domain %}">
+                    <a id="bulk_upload" class="btn" href="{% url "upload_commcare_users" domain %}">
                         {% trans "Bulk Upload" %}
                     </a>
                 {% endif %}
