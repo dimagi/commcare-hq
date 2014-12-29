@@ -42,6 +42,11 @@
             });
         });
     </script>
+    <script>
+        $(document).ready(function() {
+            gaTrackLink($('#add_new_mobile_worker'), 'Manage Mobile Worker', 'New Mobile Worker');
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -135,7 +140,7 @@
             {% endif %}
             <div class="btn-toolbar">
                 {% if can_add_extra_users %}
-                <a class="btn btn-success" href="{% url "add_commcare_account" domain %}">
+                <a id="add_new_mobile_worker" class="btn btn-success" href="{% url "add_commcare_account" domain %}">
                     <i class="icon icon-white icon-plus"></i> {% trans "New Mobile Worker" %}
                 </a>
                 {% endif %}
