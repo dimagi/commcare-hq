@@ -363,7 +363,7 @@
 
                             if (event_category) {
                                 // Record an event
-                                ga_track_event('Form Exports', 'Custom export creation', "", {
+                                ga_track_event(event_category, 'Custom export creation', "", {
                                     'hitCallback': function () {
                                         redirect();
                                     }
