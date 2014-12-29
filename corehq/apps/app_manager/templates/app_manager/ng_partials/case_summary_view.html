@@ -7,11 +7,7 @@
     {% angularjs %}
     <li role="presentation">
         <a ng-click="filterCaseTypes()">{% trans "All Case Types" %}</a>
-        <ul>
-            <li role="presentation" ng-repeat="caseType in caseTypes" ng-class="typeSearch.name === caseType.name ? 'active' : ''">
-                <a ng-click="filterCaseTypes(caseType.name)">{{ caseType.name }}</a>
-            </li>
-        </ul>
+        <hierarchy hierarchy="hierarchy"></hierarchy>
     </li>
     {% endangularjs %}
 {% endblock %}
@@ -74,6 +70,21 @@
     </div>
 </div>
 
+<!-- template for rendering case type hierarchy in navigation -->
+<script type="text/ng-template" id="/hierarchy.html">
+<ul>
+    <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"></member>
+</ul>
+</script>
+
+<!-- sub-template for member of case type hierarchy -->
+<script type="text/ng-template" id="/hierarchy_member.html">
+<li role="presentation" ng-class="typeSearch.name === casetype ? 'active' : ''">
+    <a ng-click="filterCaseTypes(casetype)">{{ casetype }}</a>
+</li>
+</script>
+
+<!-- template for forms that open / close a case type -->
 <script type="text/ng-template" id="/opener_closer.html">
 <ul>
     <li ng-repeat="(form_id, conditions) in forms">
@@ -87,6 +98,7 @@
 </ul>
 </script>
 
+<!-- template for rendering form questions -->
 <script type="text/ng-template" id="/form_questions.html">
 <ul>
     <li ng-repeat="question in questions">

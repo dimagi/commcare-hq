@@ -49,6 +49,7 @@
         var self = this;
 
         $scope.caseTypes = [];
+        $scope.hierarchy = {};
         $scope.loading = true;
         $scope.lang = 'en';
         $scope.typeSearch = {name: ''};
@@ -78,6 +79,7 @@
             if (data.success) {
                 var response = data.response;
                 $scope.caseTypes = response.case_types;
+                $scope.hierarchy = response.type_hierarchy;
             }
         };
 
@@ -128,4 +130,34 @@
         }
     });
 
+    summaryModule.directive('hierarchy', function () {
+        return {
+            restrict: "E",
+            replace: true,
+            scope: {
+                hierarchy: '='
+            },
+            templateUrl: '/hierarchy.html'
+        }
+    });
+
+    summaryModule.directive('member', function ($compile) {
+        return {
+            restrict: "E",
+            replace: true,
+            scope: {
+                casetype: '=',
+                hierarchy: '='
+            },
+            templateUrl: '/hierarchy_member.html',
+            link: function (scope, element, attrs) {
+                var hierarchySt = '<hierarchy hierarchy="hierarchy"></hierarchy>';
+                if (angular.isObject(scope.hierarchy)) {
+                    $compile(hierarchySt)(scope, function(cloned, scope)   {
+                        element.append(cloned);
+                    });
+                }
+            }
+        }
+    });
 }(window.angular));
