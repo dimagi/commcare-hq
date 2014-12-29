@@ -375,6 +375,7 @@ var DetailScreenConfig = (function () {
 
             this.graph_extra = new uiElement.GraphConfiguration({
                 childCaseTypes: this.screen.childCaseTypes,
+                fixtures: this.screen.fixtures,
                 lang: this.lang,
                 langs: this.screen.langs,
                 name: this.header.val()
@@ -562,6 +563,7 @@ var DetailScreenConfig = (function () {
             this.langs = options.langs || [];
             this.properties = options.properties;
             this.childCaseTypes = options.childCaseTypes;
+            this.fixtures = options.fixtures;
             // The column key is used to retreive the columns from the spec and
             // as the name of the key in the data object that is sent to the
             // server on save.
@@ -818,6 +820,7 @@ var DetailScreenConfig = (function () {
                         saveUrl: that.saveUrl,
                         columnKey: columnType,
                         childCaseTypes: spec.childCaseTypes,
+                        fixtures: spec.fixtures,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
