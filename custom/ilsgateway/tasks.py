@@ -10,8 +10,10 @@ from couchforms.models import XFormInstance
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, SupplyPointCase
+from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
+from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
@@ -66,11 +68,19 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
     has_next = True
     next_url = ""
     while has_next:
+        supply_point = facility
+        ews_config = EWSGhanaConfig.for_domain(domain)
+        if ews_config is not None:
+            sp = Location.get(SQLLocation.objects.get(external_id=facility).location_id).linked_supply_point()
+            if sp:
+                supply_point = sp.external_id
+            else:
+                break
         meta, product_stocks = endpoint.get_productstocks(
             next_url_params=next_url,
             limit=limit,
             offset=offset,
-            filters=dict(supply_point=facility, last_modified__gte=date)
+            filters=dict(supply_point=supply_point, last_modified__gte=date)
         )
         save_stock_data_checkpoint(checkpoint,
                                    'product_stock',
@@ -109,15 +119,24 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
             next_url = meta['next'].split('?')[1]
 
 
-def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, date, limit=100, offset=0):
+def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
+                           date, limit=100, offset=0):
     has_next = True
     next_url = ""
 
     while has_next:
+        supply_point = facility
+        ews_config = EWSGhanaConfig.for_domain(domain)
+        if ews_config is not None:
+            sp = Location.get(SQLLocation.objects.get(external_id=facility).location_id).linked_supply_point()
+            if sp:
+                supply_point = sp.external_id
+            else:
+                break
         meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
                                                                  limit=limit,
                                                                  offset=offset,
-                                                                 filters=(dict(supply_point=facility,
+                                                                 filters=(dict(supply_point=supply_point,
                                                                                date__gte=date,
                                                                                order_by='date')))
         save_stock_data_checkpoint(checkpoint,

@@ -47,7 +47,7 @@ def stock_data_task(domain, endpoint, apis, api_object, test_facilities=None):
             domain=domain,
             location_type__iexact='FACILITY'
         ).order_by('created_at').values_list('external_id', flat=True)
-
+    logging.info('test')
     apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != api, apis)
     facilities_copy = list(facilities)
     if location:
@@ -67,7 +67,7 @@ def stock_data_task(domain, endpoint, apis, api_object, test_facilities=None):
         offset = 0
         if idx == 0:
             facilities = facilities_copy
-
+    logging.info('test2')
     save_stock_data_checkpoint(checkpoint, 'product_stock', 100, 0, start_date, None, False)
     checkpoint.start_date = None
     checkpoint.save()
