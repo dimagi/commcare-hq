@@ -55,7 +55,7 @@ class ApisTest(TestCase):
         self.assertEqual(smsuser.id, 2342)
         self.assertEqual(smsuser.name, "Test1")
         self.assertEqual(smsuser.role, "Other")
-        self.assertEqual(smsuser.supply_point, 324)
+        self.assertEqual(smsuser.supply_point, None)
         self.assertEqual(smsuser.email, None)
         self.assertEqual(smsuser.is_active, "True")
         self.assertEqual(smsuser.phone_numbers, ["+2222222222"])
