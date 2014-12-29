@@ -598,8 +598,7 @@ class SupplyPointCase(CommCareCase):
         # a supply point is currently just a case with a special type
         id = uuid.uuid4().hex
         user_id = const.get_commtrack_user_id(domain)
-        # TODO abstract the below id generating
-        owner_id = 'locationgroup-' + location._id
+        owner_id = location.group_id
         kwargs = {'external_id': location.external_id} if location.external_id else {}
         caseblock = CaseBlock(
             case_id=id,

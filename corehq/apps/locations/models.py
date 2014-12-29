@@ -377,6 +377,13 @@ class Location(CachedCouchDocumentMixin, Document):
         return SupplyPointCase.get_by_location(self)
 
     def get_group_object(self, user):
+        """
+        Returns a fake group object that SHOULD NOT be saved.
+
+        This is used for giving users access via case
+        sharing groups, without having a real group
+        for every location that we have to manage/hide.
+        """
         from corehq.apps.groups.models import Group
         g = Group()
         g.domain = self.domain
@@ -384,10 +391,20 @@ class Location(CachedCouchDocumentMixin, Document):
         g.users = [user.user_id]
         g.case_sharing = True
         g.last_modified = datetime.now()
-        # TODO make this a constant
-        g._id = 'locationgroup-' + self._id
+        g._id = self.group_id
 
         return g
+
+    @property
+    def group_id(self):
+        """
+        Returns the id with a prefix because this is
+        the magic id we are force setting the locations
+        case sharing group to be.
+
+        This is also the id that owns supply point cases.
+        """
+        return 'locationgroup-' + self._id
 
 
 def root_locations(domain):
