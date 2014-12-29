@@ -58,7 +58,8 @@ def location_fixture_generator(user, version, last_sync=None):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         location_db = _location_footprint(Location.by_domain(user.domain))
     else:
-        location_db = _location_footprint(user.locations)
+        # TODO this needs to do more work
+        location_db = _location_footprint([user.location])
 
     if not should_sync_locations(last_sync, location_db):
         return []

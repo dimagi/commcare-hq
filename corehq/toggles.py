@@ -262,3 +262,9 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     "Don't fail hard on missing or deleted sync tokens.",
     [NAMESPACE_DOMAIN]
 )
+
+MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
+    'multiple_locations',
+    "Enable multiple locations per user on domain.",
+    [NAMESPACE_DOMAIN]
+)

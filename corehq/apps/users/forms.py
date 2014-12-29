@@ -410,12 +410,13 @@ class CommtrackUserForm(forms.Form):
             self.fields['program_id'].widget = forms.HiddenInput()
 
     def save(self, user):
+        # TODO does this need to do anything special for multiple
+        # location flag domains?
         location_id = self.cleaned_data['supply_point']
         if location_id:
             loc = Location.get(location_id)
 
-            user.clear_locations()
-            user.add_location(loc, create_sp_if_missing=True)
+            user.set_location(loc)
 
             # add the supply point case id to user data fields
             # so that the phone can auto select

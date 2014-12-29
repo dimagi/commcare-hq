@@ -776,6 +776,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     announcements_seen = ListProperty()
     keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
     user_data = DictProperty()
+    location_id = StringProperty()
 
     _user = None
     _user_checked = False
@@ -1306,28 +1307,30 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
 
 class LocationUserMixin(DocumentSchema):
-    def get_location_map_case(self):
-        # TODO this is only used for special
-        # domains that enable multiple locations per user
-        # it should eventually be abstracted out or properly hidden
-        try:
-            from corehq.apps.commtrack.util import location_map_case_id
-            return CommCareCase.get(location_map_case_id(self))
-        except ResourceNotFound:
-            return None
-
     @property
     def location(self):
-        """ Legacy method. To be removed when the site supports multiple locations """
-        if self.locations:
-            return self.locations[0]
+        from corehq.apps.locations.models import Location
+        if self.location_id:
+            return Location.get(self.location_id)
         else:
             return None
 
+    def set_location(self, location):
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        # TODO remove this when the form doesn't require
+        # stock tracking locations
+        # we just call this because right now it's a problem
+        # if a location doesnt't have a SP
+        SupplyPointCase.get_or_create_by_location(location)
+
+        self.location_id = location._id
+        self.save()
+
+
     @property
     def locations(self):
-        # TODO hide this method, as it is only used for feature
-        # flagged domains
+        # TODO legacy method to be removed/refactored
         from corehq.apps.locations.models import Location
         from corehq.apps.commtrack.models import SupplyPointCase
 
@@ -1352,6 +1355,7 @@ class LocationUserMixin(DocumentSchema):
         return list(_gen())
 
     def supply_point_index_mapping(self, supply_point, clear=False):
+        # TODO legacy method to be removed/refactored
         from corehq.apps.commtrack.exceptions import (
             LinkedSupplyPointNotFoundError
         )
@@ -1370,6 +1374,7 @@ class LocationUserMixin(DocumentSchema):
             )
 
     def add_location(self, location, create_sp_if_missing=False):
+        # TODO legacy method to be removed/refactored
         from corehq.apps.commtrack.models import SupplyPointCase
 
         sp = SupplyPointCase.get_or_create_by_location(location)
@@ -1378,6 +1383,7 @@ class LocationUserMixin(DocumentSchema):
         submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
 
     def submit_location_block(self, caseblock):
+        # TODO legacy method to be removed/refactored
         from corehq.apps.hqcase.utils import submit_case_blocks
 
         submit_case_blocks(
@@ -1390,6 +1396,7 @@ class LocationUserMixin(DocumentSchema):
         )
 
     def remove_location(self, location):
+        # TODO legacy method to be removed/refactored
         from corehq.apps.commtrack.models import SupplyPointCase
 
         sp = SupplyPointCase.get_by_location(location)
@@ -1407,11 +1414,13 @@ class LocationUserMixin(DocumentSchema):
             self.submit_location_block(caseblock)
 
     def clear_locations(self):
+        # TODO legacy method to be removed/refactored
         mapping = self.get_location_map_case()
         if mapping:
             mapping.delete()
 
     def set_locations(self, locations):
+        # TODO legacy method to be removed/refactored
         from corehq.apps.commtrack.models import SupplyPointCase
 
         new_locs_set = set([loc._id for loc in locations])
@@ -1444,6 +1453,16 @@ class LocationUserMixin(DocumentSchema):
         )
 
         self.submit_location_block(caseblock)
+
+    def get_location_map_case(self):
+        # TODO this is only used for special
+        # domains that enable multiple locations per user
+        # it should eventually be abstracted out or properly hidden
+        try:
+            from corehq.apps.commtrack.util import location_map_case_id
+            return CommCareCase.get(location_map_case_id(self))
+        except ResourceNotFound:
+            return None
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin, LocationUserMixin):
@@ -1960,7 +1979,6 @@ class OrgMembershipMixin(DocumentSchema):
 class WebUser(CouchUser, MultiMembershipMixin, OrgMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
 
-    location_id = StringProperty()
     program_id = StringProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
