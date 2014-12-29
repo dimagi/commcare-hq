@@ -1307,23 +1307,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
 class LocationUserMixin(DocumentSchema):
     def get_location_map_case(self):
+        # TODO this is only used for special
+        # domains that enable multiple locations per user
+        # it should eventually be abstracted out or properly hidden
         try:
             from corehq.apps.commtrack.util import location_map_case_id
             return CommCareCase.get(location_map_case_id(self))
         except ResourceNotFound:
             return None
-
-    def get_linked_supply_point_ids(self):
-        mapping = self.get_location_map_case()
-        if mapping:
-            return [index.referenced_id for index in mapping.indices]
-        return []
-
-    def get_linked_supply_points(self):
-        from corehq.apps.commtrack.models import SupplyPointCase
-
-        for doc in iter_docs(CommCareCase.get_db(), self.get_linked_supply_point_ids()):
-            yield SupplyPointCase.wrap(doc)
 
     @property
     def location(self):
@@ -1335,17 +1326,35 @@ class LocationUserMixin(DocumentSchema):
 
     @property
     def locations(self):
+        # TODO hide this method, as it is only used for feature
+        # flagged domains
         from corehq.apps.locations.models import Location
+        from corehq.apps.commtrack.models import SupplyPointCase
+
+        def _get_linked_supply_point_ids():
+            mapping = self.get_location_map_case()
+            if mapping:
+                return [index.referenced_id for index in mapping.indices]
+            return []
+
+        def _get_linked_supply_points():
+            for doc in iter_docs(
+                CommCareCase.get_db(),
+                _get_linked_supply_point_ids()
+            ):
+                yield SupplyPointCase.wrap(doc)
 
         def _gen():
-            location_ids = [sp.location_id for sp in self.get_linked_supply_points()]
+            location_ids = [sp.location_id for sp in _get_linked_supply_points()]
             for doc in iter_docs(Location.get_db(), location_ids):
                 yield Location.wrap(doc)
 
         return list(_gen())
 
     def supply_point_index_mapping(self, supply_point, clear=False):
-        from corehq.apps.commtrack.exceptions import LinkedSupplyPointNotFoundError
+        from corehq.apps.commtrack.exceptions import (
+            LinkedSupplyPointNotFoundError
+        )
 
         if supply_point:
             return {
@@ -1372,7 +1381,9 @@ class LocationUserMixin(DocumentSchema):
         from corehq.apps.hqcase.utils import submit_case_blocks
 
         submit_case_blocks(
-            ElementTree.tostring(caseblock.as_xml(format_datetime=json_format_datetime)),
+            ElementTree.tostring(
+                caseblock.as_xml(format_datetime=json_format_datetime)
+            ),
             self.domain,
             self.username,
             self._id
@@ -1403,7 +1414,10 @@ class LocationUserMixin(DocumentSchema):
     def set_locations(self, locations):
         from corehq.apps.commtrack.models import SupplyPointCase
 
-        if set([loc._id for loc in locations]) == set([loc._id for loc in self.locations]):
+        new_locs_set = set([loc._id for loc in locations])
+        old_locs_set = set([loc._id for loc in self.locations])
+
+        if new_locs_set == old_locs_set:
             # don't do anything if the list passed is the same
             # as the users current locations. the check is a little messy
             # as we can't compare the location objects themself
