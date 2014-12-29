@@ -448,28 +448,18 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, users, user_data_fields):
+def parse_users(group_memoizer, users, user_data_model):
+
     def _get_group_names(user):
         return sorted(map(
             lambda id: group_memoizer.get(id).name,
             Group.by_user(user, wrap=False)
         ), key=alphanumeric_sort_key)
 
-    def _parse_custom_data(user):
-        if not user.user_data:
-            return {}, {}
-        model_data = {}
-        uncategorized_data = {}
-        for k, v in user.user_data.items():
-            if k in user_data_fields:
-                model_data[k] = v
-            else:
-                uncategorized_data[k] = v
-
-        return model_data, uncategorized_data
-
     def _make_user_dict(user, group_names):
-        model_data, uncategorized_data = _parse_custom_data(user)
+        model_data, uncategorized_data = (
+            user_data_model.get_model_and_uncategorized(user.user_data)
+        )
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -486,7 +476,6 @@ def parse_users(group_memoizer, users, user_data_fields):
     user_data_keys = set()
     user_groups_length = 0
     user_dicts = []
-
     for user in users:
         group_names = _get_group_names(user)
         user_dicts.append(_make_user_dict(user, group_names))
@@ -497,6 +486,7 @@ def parse_users(group_memoizer, users, user_data_fields):
         'username', 'password', 'name', 'phone-number', 'email',
         'language', 'user_id'
     ]
+    user_data_fields = [f.slug for f in user_data_model.fields]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
         user_data_keys.difference(set(user_data_fields)),
@@ -566,11 +556,10 @@ def dump_users_and_groups(response, domain):
         domain,
         UserFieldsView.field_type
     )
-    user_data_fields = [f.slug for f in user_data_model.fields]
 
     user_headers, user_rows = parse_users(group_memoizer,
                                           CommCareUser.by_domain(domain),
-                                          user_data_fields)
+                                          user_data_model)
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
     headers = [

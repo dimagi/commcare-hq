@@ -6,7 +6,7 @@
         <meta name="application-name" content="{{ SITE_NAME }}">
         <meta http-equiv="content-language" content="en">
         <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
-        <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
+        <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
 
         {% compress css %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
@@ -104,12 +104,22 @@
                         <a href="https://www.google.com/chrome">Chrome</a> or <a href="http://www.mozilla.org/">Firefox</a>.
                     </p>
                 </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                            <a class="close" data-dismiss="alert" href="#">&times;</a>
+                            {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
                 <div id="message-alerts" data-bind="foreach: alerts">
                     <div data-bind="attr: {'class': alert_class}">
                         <a class="close" data-dismiss="alert" href="#">&times;</a>
                         <span data-bind="text: message"></span>
                     </div>
                 </div>
+
                 <h1 class="page-header">
                     {% block page-title %}
                     {% endblock %}
@@ -591,20 +601,12 @@
                 message_alerts.push(message_alert(message, "alert-" + emphasis));
             }
 
+            var message_element = $("#message-alerts").get(0);
+            ko.cleanNode(message_element);
             ko.applyBindings(
                 {alerts: message_alerts},
-                $("#message-alerts").get(0)
+                message_element
             );
-
-            // Add in the Django messages
-            {% if messages %}
-                {% for message in messages %}
-                    message_alerts.push(message_alert(
-                        "{% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}",
-                        "{{ message.tags }}"
-                    ));
-                {% endfor %}
-            {% endif %}
 
         </script>
     </body>

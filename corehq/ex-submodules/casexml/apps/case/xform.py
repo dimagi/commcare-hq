@@ -1,10 +1,11 @@
 import copy
 import logging
 
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 import datetime
 import redis
 from casexml.apps.case.signals import cases_received, case_post_save
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.exceptions import (
@@ -53,22 +54,27 @@ def process_cases_with_casedb(xform, case_db, config=None):
         for c in cases:
             c.reconcile_actions(rebuild=True)
 
-    # attach domain and export tag if domain is there
-    if hasattr(xform, "domain"):
-        domain = xform.domain
+    # attach domain and export tag
+    domain = xform.domain
 
-        def attach_extras(case):
-            case.domain = domain
-            if domain:
-                assert hasattr(case, 'type')
-                case['#export_tag'] = ["domain", "type"]
-            return case
+    def attach_extras(case):
+        case.domain = domain
+        if domain:
+            assert hasattr(case, 'type')
+            case['#export_tag'] = ["domain", "type"]
+        return case
 
-        cases = [attach_extras(case) for case in cases]
+    cases = [attach_extras(case) for case in cases]
 
     # handle updating the sync records for apps that use sync mode
+    try:
+        relevant_log = xform.get_sync_token()
+    except ResourceNotFound:
+        if LOOSE_SYNC_TOKEN_VALIDATION.enabled(xform.domain):
+            relevant_log = None
+        else:
+            raise
 
-    relevant_log = xform.get_sync_token()
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
@@ -76,8 +82,7 @@ def process_cases_with_casedb(xform, case_db, config=None):
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
 
-        if config.reconcile:
-            relevant_log.reconcile_cases()
+        if config.reconcile and relevant_log.reconcile_cases():
             relevant_log.save()
 
     try:
@@ -122,8 +127,11 @@ class CaseDbCache(object):
     to the database. Also provides some type checking safety.
     """
     def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False):
-        self.cache = {}
+                 lock=False, initial=None):
+        if initial:
+            self.cache = {case['_id']: case for case in initial}
+        else:
+            self.cache = {}
         self.domain = domain
         self.strip_history = strip_history
         self.deleted_ok = deleted_ok
@@ -178,7 +186,7 @@ class CaseDbCache(object):
         self.validate_doc(case_doc)
         self.cache[case_id] = case_doc
         return case_doc
-        
+
     def set(self, case_id, case):
         self.cache[case_id] = case
         
@@ -189,7 +197,12 @@ class CaseDbCache(object):
         return case_id in self.cache
 
     def populate(self, case_ids):
-
+        """
+        Populates a set of IDs in the cache in bulk.
+        Use this if you know you are going to need to access these later for performance gains.
+        Does NOT overwrite what is already in the cache if there is already something there.
+        """
+        case_ids = set(case_ids) - set(self.cache.keys())
         def _iter_raw_cases(case_ids):
             if self.strip_history:
                 for ids in chunked(case_ids, 100):

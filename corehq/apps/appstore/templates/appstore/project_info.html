@@ -282,6 +282,7 @@
         {% endif %}
     </div>
     <div>
+    {% if applications %}
         <form id="new-project-form" method="post" class="form-inline" action="{% url "domain_copy_snapshot" project %}">
             <fieldset>
                 <legend>{% trans "Download" %}</legend>
@@ -335,7 +336,9 @@
                 <a class="btn btn-primary" id="import-into-button" data-form="import-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">Import into</a>
             </div>
         </form>
-
+    {% else %}
+        <p>{% trans "No applications available." %}</p>
+    {% endif %}
     </div>
 
     <hr/>

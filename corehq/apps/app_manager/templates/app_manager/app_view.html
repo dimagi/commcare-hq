@@ -11,6 +11,7 @@
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
@@ -77,6 +78,30 @@
             });
         });
 
+    </script>
+    {% include 'hqmedia/partials/multimedia_init.html' %}
+    <script type="text/javascript">
+        var refs = {{ refs|JSON }};
+        var media_info = {{ media_info|JSON }};
+        var image_refs = {};
+        for (var slug in refs) {
+            image_refs[slug] = new ImageReference(refs[slug]);
+            image_refs[slug].upload_controller = HQMediaUploaders[slug];
+            image_refs[slug].setObjReference(media_info[slug]);
+        }
+        function triggerUploadForLogo(slug) {
+            if(image_refs[slug]) {
+                image_refs[slug].triggerUpload();
+            }
+        }
+        function uploadCompleteForLogo(slug, response) {
+            if(image_refs[slug]) {
+                image_refs[slug].uploadComplete(null, null, response);
+            }
+        }
+        function getPathFromSlug(slug) {
+            return image_refs[slug].path;
+        }
     </script>
     <script>
         $(function () {

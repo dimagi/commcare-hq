@@ -222,7 +222,7 @@ requires imports/proptable.html to be included in the main template
             {% trans "Raw XML" %}
         </a>
     </li>
-{% if request|toggle_enabled:"EDIT_SUBMISSIONS" %}
+{% if show_edit_submission %}
     <li>
         <a href="#edit-submission" data-toggle="tab">
             {% trans "Edit Submission" %}
@@ -378,7 +378,7 @@ requires imports/proptable.html to be included in the main template
         <p>{% trans "Double-click code below to select all:" %}</p>
         {% render_form_xml instance %}
     </div>
-{% if request|toggle_enabled:"EDIT_SUBMISSIONS" %}
+{% if show_edit_submission %}
     <div class="tab-pane" id="edit-submission">
         <p>
             <a href="#" class="btn btn-primary touchforms-link"

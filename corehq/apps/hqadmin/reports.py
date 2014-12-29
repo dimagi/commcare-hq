@@ -184,10 +184,10 @@ INDICATOR_DATA = {
         "chart_name": "active_users_mobile",
         "chart_title": "Active Mobile Users (last 30 days)",
         "get_request_params": {
-            "user_type_mobile": True,
+            "include_forms": True,
         },
         "hide_cumulative_charts": True,
-        "histogram_type": "users_all",
+        "histogram_type": "active_mobile_users",
         "is_cumulative": False,
         "xaxis_label": "# users",
     },
@@ -419,6 +419,20 @@ INDICATOR_DATA = {
         "chart_title": "Total Stock Transactions",
         "histogram_type": "stock_transactions",
         "xaxis_label": "# stock transactions",
+    },
+    "unique_locations": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "unique_locations",
+        "chart_title": "Unique Locations",
+        "histogram_type": "unique_locations",
+        "xaxis_label": "# unique locations",
+    },
+    "location_types": {
+        "ajax_view": "admin_reports_stats_data",
+        "chart_name": "location_types",
+        "chart_title": "Types of Locations",
+        "histogram_type": "location_types",
+        "xaxis_label": "# location types",
     },
 }
 
@@ -1007,4 +1021,6 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
         'active_supply_points',
         'total_products',
         'stock_transactions',
+        'unique_locations',
+        'location_types',
     ]
