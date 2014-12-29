@@ -1,5 +1,5 @@
 from custom.ewsghana.comparison_report import ProductsCompareReport, LocationsCompareReport,\
-    SMSUsersCompareReport, WebUsersCompareReport
+    SMSUsersCompareReport, WebUsersCompareReport, SupplyPointsCompareReport
 
 from custom.ewsghana.reports.StockLevelsReport import StockLevelsReport
 
@@ -11,6 +11,7 @@ CUSTOM_REPORTS = (
         StockLevelsReport,
         ProductsCompareReport,
         LocationsCompareReport,
+        SupplyPointsCompareReport,
         WebUsersCompareReport,
         SMSUsersCompareReport
     )),

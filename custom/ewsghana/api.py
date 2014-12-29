@@ -24,6 +24,7 @@ class Group(JsonObject):
 
 class SupplyPoint(JsonObject):
     id = IntegerProperty()
+    active = BooleanProperty()
     code = StringProperty()
     groups = ListProperty()
     last_reported = StringProperty()
@@ -104,6 +105,14 @@ class GhanaEndpoint(LogisticsEndpoint):
         'product_stock': ProductStock,
         'stock_transaction': StockTransaction
     }
+
+    def __init__(self, base_uri, username, password):
+        super(GhanaEndpoint, self).__init__(base_uri, username, password)
+        self.supply_point_url = self._urlcombine(self.base_uri, '/supplypoints/')
+
+    def get_supply_points(self, **kwargs):
+        meta, supply_points = self.get_objects(self.supply_point_url, **kwargs)
+        return meta, [SupplyPoint(supply_point) for supply_point in supply_points]
 
 
 class EWSApi(APISynchronization):
