@@ -262,3 +262,9 @@ COMMCARE_LOGO_UPLOADER = StaticToggle(
     'commcare_logo_uploader',
     'CommCare logo uploader',
 )
+
+LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
+    'loose_sync_token_validation',
+    "Don't fail hard on missing or deleted sync tokens.",
+    [NAMESPACE_DOMAIN]
+)

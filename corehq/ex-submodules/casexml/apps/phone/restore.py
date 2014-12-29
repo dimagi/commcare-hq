@@ -1,11 +1,11 @@
 from StringIO import StringIO
 from collections import defaultdict
 import hashlib
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.caselogic import BatchedCaseSyncOperation
 from casexml.apps.stock.consumption import compute_consumption_or_default
 from casexml.apps.stock.utils import get_current_ledger_transactions_multi
-from corehq.toggles import BATCHED_RESTORE
+from corehq.toggles import BATCHED_RESTORE, LOOSE_SYNC_TOKEN_VALIDATION
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.exceptions import BadStateException, RestoreException
@@ -139,7 +139,16 @@ class RestoreConfig(object):
     @memoized
     def sync_log(self):
         if self.restore_id:
-            sync_log = SyncLog.get(self.restore_id)
+            try:
+                sync_log = SyncLog.get(self.restore_id)
+            except ResourceNotFound:
+                # if we are in loose mode, return an HTTP 412 so that the phone will
+                # just force a fresh sync
+                if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
+                    raise HttpException(412)
+                else:
+                    raise
+
             if sync_log.user_id == self.user.user_id \
                     and sync_log.doc_type == 'SyncLog':
                 return sync_log
