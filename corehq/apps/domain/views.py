@@ -1625,10 +1625,16 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 
+            latest_apps = [app.get_latest_saved() or app for app in self.domain_object.applications()]
+            latest_apps = {app.id: app for app in latest_apps}
             copy_by_id = set()
             for k in request.POST.keys():
                 if k.endswith("-publish"):
-                    copy_by_id.add(k[:-len("-publish")])
+                    doc_id = k[:-len("-publish")]
+                    if doc_id in latest_apps:
+                        doc_id = latest_apps[doc_id].copy_of or doc_id
+                    copy_by_id.add(doc_id)
+
 
             old = self.domain_object.published_snapshot()
             new_domain = self.domain_object.save_snapshot(ignore=ignore,
