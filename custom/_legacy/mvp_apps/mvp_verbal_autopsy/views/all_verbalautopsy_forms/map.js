@@ -141,7 +141,7 @@ function (doc) {
                 indicator_keys.push("va_adult_pleural_sepsis");
             }
             else {
-                indicator_keys.push("va_child_unknown");
+                indicator_keys.push("va_adult_unknown");
             }
         }
 
