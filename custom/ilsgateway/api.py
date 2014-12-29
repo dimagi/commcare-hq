@@ -1,6 +1,8 @@
+import logging
 from jsonobject import JsonObject
 from jsonobject.properties import StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
+from requests.exceptions import ConnectionError
 from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation
@@ -230,12 +232,20 @@ class ILSGatewayAPI(APISynchronization):
         if ilsgateway_location.historical_groups:
             historical_groups = ilsgateway_location.historical_groups
         else:
-            location_object = self.endpoint.get_location(
-                ilsgateway_location.id,
-                params=dict(with_historical_groups=1)
-            )
+            counter = 0
+            historical_groups = {}
+            while counter != 5:
+                try:
+                    location_object = self.endpoint.get_location(
+                        ilsgateway_location.id,
+                        params=dict(with_historical_groups=1)
+                    )
+                    historical_groups = Location(**location_object).historical_groups
+                    break
+                except ConnectionError as e:
+                    logging.error(e)
+                    counter += 1
 
-            historical_groups = Location(**location_object).historical_groups
         for date, groups in historical_groups.iteritems():
             for group in groups:
                 HistoricalLocationGroup.objects.get_or_create(date=date, group=group,
