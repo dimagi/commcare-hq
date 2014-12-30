@@ -1,3 +1,4 @@
+import logging
 from __future__ import absolute_import
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
@@ -60,6 +61,14 @@ def rebuild_case(case_id):
             delattr(case, k)
         except KeyError:
             pass
+        except AttributeError as e:
+            logging.error(
+                'AttributeError: %(error)s, case_id: %(case_id)s, attribute: %(attribute)s' % {
+                    'error': e.message,
+                    'case_id': case_id,
+                    'attribute': k,
+                }
+            )
 
     # already deleted means it was explicitly set to "deleted",
     # as opposed to getting set to that because it has no actions
