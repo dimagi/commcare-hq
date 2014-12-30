@@ -166,6 +166,7 @@ def get_bulk_upload_form(context, context_key="bulk_upload"):
         context_key + "_form"
     )
 
+
 def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
     """
     Formats sidebar_items as dropdown items
@@ -327,5 +328,3 @@ def format_second_level_context(title, url, menu):
 def divider_and_more_menu(url):
     return [format_submenu_context('placeholder', is_divider=True),
             format_submenu_context(_('More'), url=url)]
-
-
