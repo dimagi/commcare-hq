@@ -1,5 +1,5 @@
-import logging
 from __future__ import absolute_import
+import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
