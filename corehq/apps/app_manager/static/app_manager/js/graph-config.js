@@ -91,7 +91,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         ret.series = _.map(graphViewModelAsPOJS.series, function(s){
             var series = {};
             // Only take the keys from the series that we care about
-            series.additional_data_stouces = s.additionalDataSources;
             series.data_path = s.dataPath;
             series.x_function = s.xFunction;
             series.y_function = s.yFunction;
@@ -146,7 +145,6 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         ret.series = _.map(serverGraphObject.series, function(s){
             var series = {};
 
-            series.additionalDataSources = s.additional_data_sources; //TODO: Is it bad if this will be null for preexisting graph configs?
             series.selectedSource = {'text':'custom', 'value':'custom'};
             series.dataPath = s.data_path;
             series.xFunction = s.x_function;
@@ -450,8 +448,6 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
         }
     };
 
-    self.additionalDataSources = ko.observableArray(origOrDefault('additionalDataSources', []));
-
     self.sourceOptions = ko.observableArray(origOrDefault(
         'sourceOptions',
         _.map(childCaseTypes, function(s){
@@ -500,18 +496,6 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     self.selectedSource.subscribe(function(newValue) {
         if (newValue.value == "custom") {
             self.showDataPath(true);
-        }
-        // TODO: Generalize this such that it would be possible for the user to also modify the additionalDataSources.
-        if (newValue.value.type == "fixture"){
-            // TODO: compute the proper values here
-            self.additionalDataSources([
-                {
-                    id: self.getFixtureInstanceId(newValue.value.name),
-                    uri: "jr://fixture/item-list:" + newValue.value.name
-                }
-            ]);
-        } else {
-            self.additionalDataSources([]);
         }
         self.dataPath(self.getDefaultDataPath(newValue.value));
     });
