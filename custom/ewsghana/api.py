@@ -137,18 +137,17 @@ class EWSApi(APISynchronization):
         if supply_point.supervised_by:
             new_location.metadata['supervised_by'] = supply_point.supervised_by
         new_location.save()
-
-        new_location.external_id = str(supply_point.id)
-        SupplyPointCase.create_from_location(self.domain, new_location)
+        return new_location
 
     def _create_supply_point_from_location(self, supply_point, location):
         if not SupplyPointCase.get_by_location(location):
             if supply_point.supervised_by:
                 location.metadata['supervised_by'] = supply_point.supervised_by
                 location.save()
-            sp = SupplyPointCase.create_from_location(self.domain, location)
-            sp.external_id = str(supply_point.id)
-            sp.save()
+            SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
+                                                          name=supply_point.name,
+                                                          external_id=str(supply_point.id),
+                                                          domain=self.domain))
 
     def prepare_commtrack_config(self):
         domain = Domain.get_by_name(self.domain)
@@ -223,9 +222,22 @@ class EWSApi(APISynchronization):
             if len(supply_points) > 1:
                 for supply_point in supply_points:
                     self._create_location_from_supply_point(supply_point, location)
+                    fake_location = Loc(
+                        _id=location._id,
+                        name=supply_point.name,
+                        external_id=str(supply_point.id),
+                        domain=self.domain
+                    )
+                    SupplyPointCase.get_or_create_by_location(fake_location)
             elif supply_points:
                 supply_point = supply_points[0]
                 self._create_supply_point_from_location(supply_point, location)
+            else:
+                SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
+                                                              name=location.name,
+                                                              external_id=None,
+                                                              domain=self.domain))
+            location.save()
 
         else:
             location_dict = {
@@ -282,7 +294,7 @@ class EWSApi(APISynchronization):
         )
 
     def web_users_sync(self, ews_webuser):
-        if ews_webuser.groups:
+        if not ews_webuser.is_superuser and ews_webuser.groups:
             group = ews_webuser.groups[0]
             if group.name == 'facility_manager':
                 return self.convert_web_user_to_sms_user(ews_webuser)
