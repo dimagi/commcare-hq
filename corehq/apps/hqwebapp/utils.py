@@ -165,3 +165,167 @@ def get_bulk_upload_form(context, context_key="bulk_upload"):
         context[context_key].get('action'),
         context_key + "_form"
     )
+
+def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
+    """
+    Formats sidebar_items as dropdown items
+    Sample input:
+        [(u'Application Users',
+          [{'description': u'Create and manage users for CommCare and CloudCare.',
+            'show_in_dropdown': True,
+            'subpages': [{'title': <function commcare_username at 0x109869488>,
+                          'urlname': 'edit_commcare_user'},
+                         {'show_in_dropdown': True,
+                          'show_in_first_level': True,
+                          'title': u'New Mobile Worker',
+                          'urlname': 'add_commcare_account'},
+                         {'title': u'Bulk Upload',
+                          'urlname': 'upload_commcare_users'},
+                         {'title': 'Confirm Billing Information',],
+            'title': u'Mobile Workers',
+            'url': '/a/sravan-test/settings/users/commcare/'},
+         (u'Project Users',
+          [{'description': u'Grant other CommCare HQ users access
+                            to your project and manage user roles.',
+            'show_in_dropdown': True,
+            'subpages': [{'title': u'Invite Web User',
+                          'urlname': 'invite_web_user'},
+                         {'title': <function web_username at 0x10982a9b0>,
+                          'urlname': 'user_account'},
+                         {'title': u'My Information',
+                          'urlname': 'domain_my_account'}],
+            'title': <django.utils.functional.__proxy__ object at 0x106a5c790>,
+            'url': '/a/sravan-test/settings/users/web/'}])]
+    Sample output:
+        [{'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': True,
+          'title': u'Application Users',
+          'url': None},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': False,
+          'title': u'Mobile Workers',
+          'url': '/a/sravan-test/settings/users/commcare/'},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': False,
+          'title': u'New Mobile Worker',
+          'url': '/a/sravan-test/settings/users/commcare/add_commcare_account/'},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': False,
+          'title': u'Groups',
+          'url': '/a/sravan-test/settings/users/groups/'},
+         {'data_id': None,
+          'html': None,
+          'is_divider': False,
+          'is_header': True,
+          'title': u'Project Users',
+          'url': None},]
+    """
+    dropdown_items = []
+    more_items_in_sidebar = False
+    for side_header, side_list in sidebar_items:
+        dropdown_header = format_submenu_context(side_header, is_header=True)
+        current_dropdown_items = []
+        for side_item in side_list:
+            show_in_dropdown = side_item.get("show_in_dropdown", False)
+            if show_in_dropdown:
+                second_level_dropdowns = get_second_level_dropdowns(
+                    side_item.get('subpages', []), domain=domain)
+                dropdown_item = format_submenu_context(
+                    side_item['title'],
+                    url=side_item['url'],
+                    second_level_dropdowns=second_level_dropdowns,
+                )
+                current_dropdown_items.append(dropdown_item)
+                first_level_dropdowns = get_first_level_dropdowns(
+                    side_item.get('subpages', []), domain=domain
+                )
+                current_dropdown_items = current_dropdown_items + first_level_dropdowns
+            else:
+                more_items_in_sidebar = True
+        if current_dropdown_items:
+            dropdown_items.extend([dropdown_header] + current_dropdown_items)
+
+    if more_items_in_sidebar and current_url_name:
+        return dropdown_items + divider_and_more_menu(current_url_name)
+    else:
+        return dropdown_items
+
+
+def get_second_level_dropdowns(subpages, domain=None):
+    """
+        formats subpages of a sidebar_item as second level dropdown items
+    """
+    second_level_dropdowns = []
+    for subpage in subpages:
+        if (subpage.get('show_in_dropdown', False) and
+           not subpage.get('show_in_first_level', False)):
+            second_level_dropdowns.append(format_submenu_context(
+                subpage['title'],
+                url=reverse(subpage['urlname'], args=[domain])),
+            )
+    return second_level_dropdowns
+
+
+def get_first_level_dropdowns(subpages, domain=None):
+    """
+        formats subpages of a side_item as first leve dropdown items
+    """
+    first_level_dropdowns = []
+    for subpage in subpages:
+        if (subpage.get('show_in_dropdown', False) and
+           subpage.get('show_in_first_level', False)):
+            first_level_dropdowns.append(format_submenu_context(
+                subpage['title'],
+                url=reverse(subpage['urlname'],
+                            args=[domain])),
+            )
+    return first_level_dropdowns
+
+
+def format_submenu_context(title, url=None, html=None,
+                           is_header=False, is_divider=False, data_id=None,
+                           second_level_dropdowns=[]):
+    if second_level_dropdowns:
+        return format_second_level_context(title, url, second_level_dropdowns)
+    else:
+        return format_first_level_context(title, url=url, html=html,
+                                          is_header=is_header,
+                                          is_divider=is_divider,
+                                          data_id=data_id,)
+
+
+def format_first_level_context(title, url=None, html=None,
+                               is_header=False, is_divider=False, data_id=None,
+                               second_level_dropdowns=[]):
+    return {
+        'title': title,
+        'url': url,
+        'html': html,
+        'is_header': is_header,
+        'is_divider': is_divider,
+        'data_id': data_id,
+    }
+
+
+def format_second_level_context(title, url, menu):
+    return {
+        'title': title,
+        'url': url,
+        'is_second_level': True,
+        'submenu': menu,
+    }
+
+
+def divider_and_more_menu(url):
+    return [format_submenu_context('placeholder', is_divider=True),
+            format_submenu_context(_('More'), url=url)]
+
+
