@@ -91,6 +91,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         ret.series = _.map(graphViewModelAsPOJS.series, function(s){
             var series = {};
             // Only take the keys from the series that we care about
+            series.additional_data_stouces = s.additionalDataSources;
             series.data_path = s.dataPath;
             series.x_function = s.xFunction;
             series.y_function = s.yFunction;
@@ -145,6 +146,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         ret.series = _.map(serverGraphObject.series, function(s){
             var series = {};
 
+            series.additionalDataSources = s.additional_data_sources; //TODO: Is it bad if this will be null for preexisting graph configs?
             series.selectedSource = {'text':'custom', 'value':'custom'};
             series.dataPath = s.data_path;
             series.xFunction = s.x_function;
@@ -426,6 +428,11 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     function origOrDefault(prop, fallback){
         return original[prop] === undefined ? fallback : original[prop];
     }
+
+    self.getFixtureInstanceId = function(fixtureName){
+        return "table-" + fixtureName;
+    };
+
     /**
      * Return the default value for the data path field based on the given source.
      * This is used to change the data path field when a new source type is selected.
@@ -433,31 +440,31 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
      * @returns {string}
      */
     self.getDefaultDataPath = function(source){
-        if (source == "custom"){
+        if (source.type == "custom"){
              return "instance('name')/root/path-to-point/point";
-        } else {
-            return "instance('casedb')/casedb/case[@case_type='"+source+"'][index/parent=current()/@case_id][@status='open']";
+        } else if (source.type == 'case') {
+            return "instance('casedb')/casedb/case[@case_type='"+source.name+"'][index/parent=current()/@case_id][@status='open']";
+        } else if (source.type == 'fixture') {
+            // TODO: Does the table name need to be escaped? I imagine spaces would be an issue.
+            return "instance('" + self.getFixtureInstanceId(source.name) + "')/tablename_list/" + source.name;
         }
-        // TODO: Add a case for fixtures
     };
 
-    // TODO: Add an observable called additionalDataSources or something like that.
-    //       Also populate it with the appropriate thing when the selectSource is a fixture
+    self.additionalDataSources = ko.observableArray(origOrDefault('additionalDataSources', []));
 
     self.sourceOptions = ko.observableArray(origOrDefault(
         'sourceOptions',
         _.map(childCaseTypes, function(s){
             return {
                 'text': "Child case: " + s,
-                'value': s
+                'value': {'type': 'case', 'name': s}
             };
         }).concat(_.map(fixtures, function(s){
             return {
                 'text': "Lookup table: " + s,
-                'value': s
+                'value': {type: 'fixture', name: s}
             };
-            // TODO: Distinguish child cases types from fixtures
-        })).concat([{'text':'custom', 'value':'custom'}])
+        })).concat([{'text':'custom', 'value': 'custom'}])
     ));
 
     self.selectedSource = ko.observable(origOrDefault('selectedSource', self.sourceOptions()[0]));
@@ -468,7 +475,7 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     if (!_.contains(self.sourceOptions(), self.selectedSource())){
         var curSource = self.selectedSource();
         var source = _.find(self.sourceOptions(), function(opt){
-            return opt.text == curSource.text && opt.value == curSource.value;
+            return _.isEqual(opt, curSource);
         });
         self.selectedSource(source);
     }
@@ -493,6 +500,18 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     self.selectedSource.subscribe(function(newValue) {
         if (newValue.value == "custom") {
             self.showDataPath(true);
+        }
+        // TODO: Generalize this such that it would be possible for the user to also modify the additionalDataSources.
+        if (newValue.value.type == "fixture"){
+            // TODO: compute the proper values here
+            self.additionalDataSources([
+                {
+                    id: self.getFixtureInstanceId(newValue.value.name),
+                    uri: "jr://fixture/item-list:" + newValue.value.name
+                }
+            ]);
+        } else {
+            self.additionalDataSources([]);
         }
         self.dataPath(self.getDefaultDataPath(newValue.value));
     });
