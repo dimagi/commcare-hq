@@ -11,7 +11,7 @@ class CaseAttachmentAPI(View):
     @method_decorator(login_or_digest_ex(allow_cc_users=True))
     def get(self, *args, **kwargs):
         """
-        https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
+        https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
         max_size	The largest size (in bytes) for the attachment
         max_image_width	The largest width in pixels for an an image attachment
         max_image_height	The largest width in pixels for an an image attachment
