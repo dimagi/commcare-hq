@@ -69,6 +69,7 @@ def rebuild_case(case_id):
                     'attribute': k,
                 }
             )
+            raise e
 
     # already deleted means it was explicitly set to "deleted",
     # as opposed to getting set to that because it has no actions
