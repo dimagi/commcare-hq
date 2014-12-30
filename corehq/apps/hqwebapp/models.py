@@ -4,8 +4,10 @@ from urllib import urlencode
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, get_language
 from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.core.cache import cache
+
 from corehq import toggles, privileges, Domain
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccountAdmin, Invoice
@@ -25,6 +27,7 @@ from django_prbac.utils import ensure_request_has_privilege, has_privilege
 
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.cache import make_template_fragment_key
 
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
                                             CustomProjectReportDispatcher)
@@ -363,6 +366,24 @@ class UITab(object):
 
         return names
 
+    @classmethod
+    def clear_dropdown_cache(cls, request, domain):
+        for is_active in True, False:
+            if hasattr(cls, 'get_view'):
+                view = cls.get_view(domain)
+            else:
+                view = cls.view
+            key = make_template_fragment_key('header_tab', [
+                domain,
+                None, # tab.org should be None for any non org page
+                view,
+                is_active,
+                request.couch_user.get_id,
+                get_language(),
+            ])
+            cache.delete(key)
+
+
     @property
     def css_id(self):
         return self.__class__.__name__
@@ -476,7 +497,11 @@ class ReportsTab(UITab):
 
     @property
     def view(self):
-        module = Domain.get_module_by_name(self.domain)
+        return self.get_view(self.domain)
+
+    @staticmethod
+    def get_view(domain):
+        module = Domain.get_module_by_name(domain)
         if hasattr(module, 'DEFAULT_REPORT_CLASS'):
             return "corehq.apps.reports.views.default"
         return "corehq.apps.reports.views.saved_reports"
