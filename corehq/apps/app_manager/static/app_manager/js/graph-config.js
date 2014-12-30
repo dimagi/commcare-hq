@@ -430,7 +430,7 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     }
 
     self.getFixtureInstanceId = function(fixtureName){
-        return "table-" + fixtureName;
+        return "item-list:" + fixtureName;
     };
 
     /**
