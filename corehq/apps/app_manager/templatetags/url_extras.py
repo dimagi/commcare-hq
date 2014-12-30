@@ -45,7 +45,8 @@ class URLEncodeNode(template.Node):
         path = self.path_var.resolve(context)
         params = {}
         for key, val in self.params_var.resolve(context).lists():
-            params[key] = [v.encode('utf-8') for v in val]
+            params[key] = [v.encode('utf-8') if isinstance(v, unicode) else v
+                           for v in val]
 
         for key,val in self.extra_params.items():
             key = template.Variable(key).resolve(context)
