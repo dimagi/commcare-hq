@@ -39,7 +39,7 @@ from corehq.apps.announcements.dispatcher import (
 from corehq.toggles import IS_DEVELOPER
 
 
-def sidebar_to_dropdown(sidebar_items, domain=None):
+def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
     """
     Formats sidebar_items as dropdown items
     Sample input:
@@ -102,6 +102,7 @@ def sidebar_to_dropdown(sidebar_items, domain=None):
           'url': None},]
     """
     dropdown_items = []
+    more_items_in_sidebar = False
     for side_header, side_list in sidebar_items:
         dropdown_header = format_submenu_context(side_header, is_header=True)
         current_dropdown_items = []
@@ -120,9 +121,15 @@ def sidebar_to_dropdown(sidebar_items, domain=None):
                     side_item.get('subpages', []), domain=domain
                 )
                 current_dropdown_items = current_dropdown_items + first_level_dropdowns
+            else:
+                more_items_in_sidebar = True
         if current_dropdown_items:
             dropdown_items.extend([dropdown_header] + current_dropdown_items)
-    return dropdown_items
+
+    if more_items_in_sidebar and current_url_name:
+        return dropdown_items + divider_and_more_menu(current_url_name)
+    else:
+        return dropdown_items
 
 
 def get_second_level_dropdowns(subpages, domain=None):
@@ -239,12 +246,8 @@ class UITab(object):
         # todo: add default implementation which looks at sidebar_items and
         # sees which ones have is_dropdown_visible or something like that.
         # Also make it work for tabs with subtabs.
-        dropdown_menu = sidebar_to_dropdown(sidebar_items=self.sidebar_items,
-                                            domain=self.domain)
-        if self.url and dropdown_menu:
-            return dropdown_menu + divider_and_more_menu(self.url)
-        else:
-            dropdown_menu
+        return sidebar_to_dropdown(sidebar_items=self.sidebar_items,
+                                            domain=self.domain, current_url_name=self.url)
 
     @property
     @memoized
@@ -525,8 +528,9 @@ class ReportsTab(UITab):
             'domain': self.domain,
         }
         reports = sidebar_to_dropdown(
-            ProjectReportDispatcher.navigation_sections(context))
-        return saved_reports_dropdown + reports + divider_and_more_menu(self.url)
+            ProjectReportDispatcher.navigation_sections(context),
+            current_url_name=self.url)
+        return saved_reports_dropdown + reports
 
 
 class ProjectInfoTab(UITab):
