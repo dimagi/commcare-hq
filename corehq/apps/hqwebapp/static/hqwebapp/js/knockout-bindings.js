@@ -135,10 +135,20 @@ ko.bindingHandlers.sortable = {
             }
         });
     },
+    getList: function (valueAccessor) {
+        /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
+        var modelValue = valueAccessor(),
+            unwrappedValue = ko.utils.peekObservable(modelValue);
+            if ((!unwrappedValue) || typeof unwrappedValue.length == "number") {
+                return modelValue;
+            } else {
+                return unwrappedValue['data'];
+            }
+    },
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         // based on http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
         // note: although by this point we've deviated from that solution quite a bit
-        var list = valueAccessor();
+        var list = ko.bindingHandlers.sortable.getList(valueAccessor);
         var forceUpdate = function () {
             ko.bindingHandlers.sortable.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         };
@@ -189,7 +199,7 @@ ko.bindingHandlers.sortable = {
         return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var list = valueAccessor();
+        var list = ko.bindingHandlers.sortable.getList(valueAccessor);
         ko.bindingHandlers.sortable.updateSortableList(list);
         return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     }
@@ -613,5 +623,73 @@ ko.bindingHandlers.jqueryElement = {
     update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         $(element).empty();
         $(element).append(ko.unwrap(valueAccessor()));
+    }
+};
+
+ko.bindingHandlers.__copyPasteSharedInit = function () {
+    var offScreen = {top: -10000, left: -10000};
+    var hiddenTextarea = $('<textarea></textarea>').css({
+        position: 'absolute',
+        width: 0,
+        height: 0
+    }).css(offScreen).appendTo('body');
+    var focusTextarea = function ($element, value) {
+        hiddenTextarea.css({top: $element.offset().top});
+        hiddenTextarea.val(value);
+        hiddenTextarea.focus();
+        hiddenTextarea.select();
+    };
+    var unfocusTextarea = function ($element) {
+        $element.focus();
+        return hiddenTextarea.val();
+    };
+    // Firefox only fires copy/paste when it thinks it's appropriate
+    // Chrome doesn't fire copy/paste after key down has changed the focus
+    // So we need implement both copy/paste as catching keystrokes Ctrl+C/V
+    $(document).on('copy paste keydown', function (e) {
+        var $element, callback;
+        if (e.type === 'copy' || e.metaKey && String.fromCharCode(e.keyCode) === 'C') {
+            $element = $(':focus');
+            callback = $element.data('copyCallback');
+            if (callback) {
+                focusTextarea($element, callback());
+                setTimeout(function () {
+                    unfocusTextarea($element);
+                }, 0);
+            }
+        } else if (e.type === 'paste' || e.metaKey && String.fromCharCode(e.keyCode) === 'V') {
+            $element = $(':focus');
+            callback = $element.data('pasteCallback');
+            if (callback) {
+                focusTextarea($element);
+                setTimeout(function () {
+                    var pasteValue = unfocusTextarea($element);
+                    // part of the above hack
+                    // on chrome this gets called twice,
+                    // the first time with a blank value
+                    if (pasteValue) {
+                        callback(pasteValue);
+                    }
+                }, 0);
+            }
+        }
+    });
+
+    // only ever call this function once
+    ko.bindingHandlers.__copyPasteSharedInit = function () {};
+};
+
+ko.bindingHandlers.copy = {
+    init: function (element, valueAccessor) {
+        ko.bindingHandlers.__copyPasteSharedInit();
+        $(element).data('copyCallback', valueAccessor());
+    }
+};
+
+ko.bindingHandlers.paste = {
+    init: function (element, valueAccessor) {
+        ko.bindingHandlers.__copyPasteSharedInit();
+        var callback = valueAccessor();
+        $(element).data('pasteCallback', valueAccessor());
     }
 };

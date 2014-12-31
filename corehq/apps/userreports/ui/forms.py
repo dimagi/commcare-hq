@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from bootstrap3_crispy.helper import FormHelper
@@ -101,6 +102,8 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             config = self.populate_instance(self.instance, cleaned_data)
             config.validate()
         except Exception, e:
+            if settings.DEBUG:
+                raise
             raise ValidationError(_(u'Problem with data source spec: {}').format(e))
         return cleaned_data
 

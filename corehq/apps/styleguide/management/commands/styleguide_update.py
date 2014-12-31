@@ -10,9 +10,12 @@ DOCS_TEMPLATE_PATH = 'corehq/apps/styleguide/templates/styleguide/docs'
 PYTHON_TO_PYCCO = [
     'simple_crispy_form/forms.py',
     'simple_crispy_form/views.py',
+    'controls_demo/forms.py',
+    'controls_demo/views.py',
 ]
 DJ_TEMPLATES_TO_PYCCO = [
     'simple_crispy_form/base.html',
+    'controls_demo/base.html',
 ]
 
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Untitled Form</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/5A6041E3-E092-4983-867B-7FEEA797A07A" uiVersion="1" version="1" name="Untitled Form">
+					<question1 />
+					<question2 />
+					<question3 />
+				</data>
+			</instance>
+			<bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question2" type="xsd:string" />
+			<bind nodeset="/data/question3" type="xsd:string" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1-label">
+						<value>french</value>
+						<value form="image">jr://file/commcare/image/data/question1.png</value>
+					</text>
+					<text id="question2-label">
+						<value>english</value>
+						<value form="image">jr://file/commcare/image/data/question2.png</value>
+					</text>
+				</translation>
+				<translation lang="fra">
+					<text id="question1-label">
+						<value>french</value>
+						<value form="image">jr://file/commcare/image/data/question1.png</value>
+					</text>
+					<text id="question2-label">
+						<value>english</value>
+						<value form="image">jr://file/commcare/image/data/question2.png</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1-label')" />
+		</input>
+		<input ref="/data/question2">
+			<label ref="jr:itext('question2-label')" />
+		</input>
+		<input ref="/data/question3" />
+	</h:body>
+</h:html>

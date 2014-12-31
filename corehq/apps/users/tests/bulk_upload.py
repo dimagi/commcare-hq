@@ -2,7 +2,6 @@ from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.bulkupload import UserLocMapping, LocationCache
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.commtrack.models import CommTrackUser
 from mock import patch
 
 
@@ -19,7 +18,6 @@ class UserLocMapTest(CommTrackTest):
             first_name='test',
             last_name='user'
         )
-        self.ct_user = CommTrackUser.wrap(self.user.to_json())
 
         self.loc = make_loc('secondloc')
         self.sp = make_supply_point(self.domain.name, self.loc)
@@ -29,23 +27,23 @@ class UserLocMapTest(CommTrackTest):
     def test_adding_a_location(self):
         self.mapping.to_add.add(self.loc.site_code)
 
-        self.assertEqual(len(self.ct_user.locations), 0)
+        self.assertEqual(len(self.user.locations), 0)
         self.mapping.save()
-        self.assertEqual(len(self.ct_user.locations), 1)
+        self.assertEqual(len(self.user.locations), 1)
 
     def test_removing_a_location(self):
         # first make sure there is one to remove
-        self.ct_user.add_location(self.loc)
-        self.assertEqual(len(self.ct_user.locations), 1)
+        self.user.add_location(self.loc)
+        self.assertEqual(len(self.user.locations), 1)
 
         self.mapping.to_remove.add(self.loc.site_code)
         ret = self.mapping.save()
-        self.assertEqual(len(self.ct_user.locations), 0)
+        self.assertEqual(len(self.user.locations), 0)
 
     def test_should_not_add_what_is_already_there(self):
         self.mapping.to_add.add(self.loc.site_code)
 
-        self.ct_user.add_location(self.loc)
+        self.user.add_location(self.loc)
 
         with patch('corehq.apps.hqcase.utils.submit_case_blocks') as submit_blocks:
             self.mapping.save()

@@ -188,7 +188,8 @@ class DomainInvoiceFactory(object):
             )
 
         self.generate_line_items(invoice, subscription)
-        invoice.calculate_credit_adjustments()
+        if not subscription.do_not_invoice:
+            invoice.calculate_credit_adjustments()
         invoice.update_balance()
         invoice.save()
 

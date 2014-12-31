@@ -61,7 +61,7 @@ sqlagg==0.2.2
 django-redis==3.3
 redis==2.8.0
 unittest2
-fakecouch==0.0.5
+fakecouch==0.0.8
 # WeasyPrint==0.20.2
 twilio==3.6.4
 django-countries==1.5

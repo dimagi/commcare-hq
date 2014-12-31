@@ -1,4 +1,3 @@
-
 $(function() {
     var model = new CommtrackSettingsViewModel();
     $('#settings').submit(function() {
@@ -6,7 +5,7 @@ $(function() {
     });
 
     model.load(settings);
-    ko.applyBindings(model);
+    ko.applyBindings(model, $("#settings").get(0));
 });
 
 function CommtrackSettingsViewModel() {

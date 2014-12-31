@@ -77,6 +77,12 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         app.get_module(1).get_form(1).actions.load_update_cases[0].details_module = other_module_id
         self.assertXmlEqual(self.get_xml('suite-advanced-details'), app.create_suite())
 
+    def test_advanced_suite_parent_child_custom_ref(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        form = app.get_module(1).get_form(2)
+        form.actions.load_update_cases[1].parent_reference_id = 'custom-parent-ref'
+        self.assertXmlPartialEqual(self.get_xml('custom-parent-ref'), app.create_suite(), "./entry[4]")
+
     def test_advanced_suite_case_list_filter(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         clinic_module = app.get_module(0)

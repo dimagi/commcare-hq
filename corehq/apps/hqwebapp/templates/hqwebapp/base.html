@@ -6,7 +6,7 @@
         <meta name="application-name" content="{{ SITE_NAME }}">
         <meta http-equiv="content-language" content="en">
         <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
-        <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
+        <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
 
         {% compress css %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
@@ -104,7 +104,7 @@
                         <a href="https://www.google.com/chrome">Chrome</a> or <a href="http://www.mozilla.org/">Firefox</a>.
                     </p>
                 </div>
-                {% block messages %}
+
                 {% if messages %}
                     {% for message in messages %}
                         <div class="alert fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
@@ -113,8 +113,13 @@
                         </div>
                     {% endfor %}
                 {% endif %}
+                <div id="message-alerts" data-bind="foreach: alerts">
+                    <div data-bind="attr: {'class': alert_class}">
+                        <a class="close" data-dismiss="alert" href="#">&times;</a>
+                        <span data-bind="text: message"></span>
+                    </div>
+                </div>
 
-                {% endblock %}
                 <h1 class="page-header">
                     {% block page-title %}
                     {% endblock %}
@@ -568,6 +573,41 @@
                     $('#unsupported-browser').show();
                 }
             });
+        </script>
+
+        <script>
+            {% comment %}
+            This is the javascript analog of messages in Django
+
+            Use the function `alert_user` to make a message appear on the page.
+            This accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
+            styling, and can be "success", "error", "info", or "warning"
+
+                alert_user("Awesome job!", "success");
+            {% endcomment %}
+            function message_alert (message, tags) {
+                var alert_obj = {
+                    "message": message,
+                    "alert_class": "alert fade in alert-block alert-full page-level-alert"
+                }
+                if (tags) {
+                    alert_obj.alert_class += " " + tags;
+                };
+                return alert_obj;
+            }
+            var message_alerts = ko.observableArray();
+
+            function alert_user (message, emphasis) {
+                message_alerts.push(message_alert(message, "alert-" + emphasis));
+            }
+
+            var message_element = $("#message-alerts").get(0);
+            ko.cleanNode(message_element);
+            ko.applyBindings(
+                {alerts: message_alerts},
+                message_element
+            );
+
         </script>
     </body>
 </html>

@@ -1,6 +1,7 @@
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
+from couchexport.models import Format
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
 from dimagi.utils.decorators.memoized import memoized
@@ -110,6 +111,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
     flush_layout = True
     with_tabs = False
     use_datatables = False
+    exportable = False
+    base_template = 'ilsgateway/base_template.html'
 
     @property
     @memoized
@@ -200,10 +203,38 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
         )
         return context
 
+    @property
+    def export_table(self):
+        self.export_format_override = self.request.GET.get('format', Format.XLS)
+        reports = [r['report_table'] for r in self.report_context['reports']]
+        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row'])
+                for r in reports if r['headers']]
+
+    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        replace = ''
+
+        # make headers and subheaders consistent
+        for k, v in enumerate(table[0]):
+            if v != ' ':
+                replace = v
+            else:
+                table[0][k] = replace
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]
+
 
 class DetailsReport(MultiReport):
     with_tabs = True
     flush_layout = True
+    exportable = True
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

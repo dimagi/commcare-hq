@@ -101,7 +101,7 @@ class CaseBlock(dict):
 #            </referral>
         </case>
 
-        https://bitbucket.org/commcare/commcare/wiki/casexml20
+        https://github.com/dimagi/commcare/wiki/casexml20
 
         <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="" >
             <!-- user_id - At Most One: the GUID of the user responsible for this transaction -->

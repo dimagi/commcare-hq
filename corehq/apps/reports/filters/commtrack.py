@@ -1,5 +1,5 @@
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from django.utils.translation import ugettext_noop
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, CheckboxFilter
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 
 class SelectReportingType(BaseSingleOptionFilter):
@@ -12,3 +12,8 @@ class SelectReportingType(BaseSingleOptionFilter):
         return [
             ("facilities", "Show facility level data"),
         ]
+
+
+class AdvancedColumns(CheckboxFilter):
+    label = ugettext_lazy("Show advanced columns")
+    slug = "advanced_columns"

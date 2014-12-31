@@ -243,7 +243,6 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.migration',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.facilities',
@@ -336,6 +335,7 @@ HQ_APPS = (
     'custom.intrahealth',
     'custom.world_vision',
     'custom.tdh',
+    'custom.up_nrhm',
 
     'custom.care_pathways',
     'bootstrap3_crispy',
@@ -383,6 +383,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'fluff_filter',
     'freddy',
     'pillowtop',
+    'pillow_retry',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
@@ -460,6 +461,7 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
@@ -639,6 +641,10 @@ PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
 PILLOW_RETRY_BACKOFF_FACTOR = 2
 
+# After an error's total attempts exceeds this number it will only be re-attempted
+# once after being reset. This is to prevent numerous retries of errors that aren't
+# getting fixed
+PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -920,7 +926,7 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings, make_couchdb_tuples
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuples, get_extra_couchdbs
 
 _dynamic_db_settings = get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
@@ -968,7 +974,6 @@ COUCHDB_APPS = [
     'importer',
     'indicators',
     'locations',
-    'migration',
     'mobile_auth',
     'phone',
     'pillowtop',
@@ -1024,12 +1029,14 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('wvindia2', 'wvindia2'),
+    ('export', 'meta'),
     'tdhtesting'
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
+EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -1193,6 +1200,8 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
+        'custom.up_nrhm.models.UpNRHMLocationHierarchyFluffPillow',
+        'custom.up_nrhm.models.ASHAFacilitatorsFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1289,6 +1298,7 @@ DOMAIN_MODULE_MAP = {
 
     'ipm-senegal': 'custom.intrahealth',
     'testing-ipm-senegal': 'custom.intrahealth',
+    'up-nrhm': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -1296,6 +1306,7 @@ DOMAIN_MODULE_MAP = {
     'succeed': 'custom.succeed',
     'ilsgateway-test-1': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
+    'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',

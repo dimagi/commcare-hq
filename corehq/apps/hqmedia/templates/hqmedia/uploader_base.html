@@ -1,38 +1,9 @@
 {% extends "hqwebapp/centered.html" %}
-{% load hq_shared_tags %}
-{% load i18n %}
 
 {% block js %} {{ block.super }}
     {% include 'hqmedia/partials/multimedia_js.html' %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-<script type="text/javascript">
-    var HQMediaUploaders = {};  // This will be referenced by the media references
-    (function () {
-        var sessionid = {{ sessionid|JSON }};
-        {% for uploader in uploaders  %}
-            HQMediaUploaders['{{ uploader.slug }}'] = new HQMediaUploaderTypes['{{ uploader.uploader_type }}'] (
-                '{{ uploader.slug }}',
-                '{{ uploader.media_type }}',
-                {
-                    allowCloseDuringUpload: true,
-                    fileFilters: {{ uploader.supported_files|JSON }},
-                    uploadURL: '{{ uploader.destination }}',
-                    processingURL: '{{ uploader.processing_url }}',
-                    swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
-                    isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
-                    {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
-                    {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}
-                    {% if uploader.details_template %}detailsTemplate: '{% filter escapejs %}{% include uploader.details_template %}{% endfilter %}',{% endif %}
-                    {% if uploader.errors_template %}errorsTemplate: '{% filter escapejs %}{% include uploader.errors_template %}{% endfilter %}',{% endif %}
-                    {% if uploader.existing_file_template %}existingFileTemplate: '{% filter escapejs %}{% include uploader.existing_file_template %}{% endfilter %}',{% endif %}
-                    uploadParams: {{ uploader.upload_params|JSON }},
-                    sessionid: sessionid,
-                    licensingParams: {{ uploader.licensing_params|JSON }}
-                });
-            HQMediaUploaders['{{ uploader.slug }}'].init();
-        {% endfor %}
-    }());
-</script>
+    {% include 'hqmedia/partials/multimedia_init.html' %}
 {% endblock %}

@@ -10,7 +10,7 @@
         {# todo invesitage other meta tags to put here #}
 
         {# link tags #}
-        <link rel="shortcut icon" href="{% new_static 'hqwebapp/img/favicon2.png' %}" />
+        <link rel="shortcut icon" href="{% new_static 'style/img/favicon.png' %}" />
         <link type="application/opensearchdescription+xml"
               rel="search"
               href="{% url 'osdd' %}"
@@ -42,9 +42,20 @@
                   href="{% new_static 'style/less/b3-migration.less' %}" />
         {% endcompress %}
 
-        {% compress css %}
         {% block stylesheets %}{% endblock stylesheets %}
+
+        {% if request.use_select2 %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/lib/select2/select2.css' %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="all"
+                  href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
         {% endcompress %}
+        {% endif %}
 
         {# Core Libraries #}
         {% compress js %}
@@ -52,7 +63,7 @@
         <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/jquery/plugins/jquery.form-3.51.0.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/underscore/underscore-1.6.0.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'hqwebapp/js/lib/jquery.cookie.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
         {% endcompress %}
 
         {% block head %}
@@ -149,30 +160,58 @@
 
         {# javascript below this line #}
 
-        {# JavaScript Display Logic Libaries, default is angular.js #}
-        {% ifequal js_display_logic 'knockout' %}
-            {% compress js %}
-            <script type="text/javascript" src="{% new_static 'style/lib/knockout/knockout-3.1.0.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'hqwebapp/ko/global.handlers.js' %}"></script>
-            {% endcompress %}
-        {% endifequal %}
-
-        {% if not js_display_logic %}
-            {% compress js %}
-            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-route.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-resource.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>
-            {% endcompress %}
-        {% endif %}
-
         {# HQ Specific Libraries #}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/commcarehq.js' %}"></script>
         {% endcompress %}
+
+        <script type="text/javascript">
+            COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
+                SAVE: '{% trans "Save" %}',
+                SAVING: '{% trans "Saving..." %}',
+                SAVED: '{% trans "Saved" %}',
+                RETRY: '{% trans "Try Again" %}',
+                ERROR_SAVING: '{% trans "There was an error saving" %}'
+            }, 'btn btn-success');
+            COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
+                SAVE: '{% trans "Delete" %}',
+                SAVING: '{% trans "Deleting..." %}',
+                SAVED: '{% trans "Deleted" %}',
+                RETRY: '{% trans "Try Again" %}',
+                ERROR_SAVING: '{% trans "There was an error deleting" %}'
+            }, 'btn btn-danger');
+        </script>
+
+        {# JavaScript Display Logic Libaries #}
+
+        {# Use knockout explicitly, opt to move to angular js when possible. #}
+        {% if use_knockout_js %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/knockout/knockout-3.1.0.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {# always use angular js by default, as this will be our core library #}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-route.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-resource.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>
+        {% endcompress %}
+
+        {% if request.use_select2 %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
 
         {% compress js %}
         {% block js %}{% endblock js %}

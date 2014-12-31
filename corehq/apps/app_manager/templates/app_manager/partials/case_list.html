@@ -14,11 +14,19 @@
 </div>
 {% endif %}
 <div data-bind="saveButton: shortScreen.saveButton, visible: $root.edit"></div>
+<div data-bind="with: customXMLViewModel">
+    <div data-bind="visible: enabled">
+        <legend>{% trans "Custom Case List XML" %}</legend>
+        <textarea class="span6" data-bind="value: xml"></textarea>
+    </div>
+</div>
 <legend>
     {% trans "Display Properties" %}
 </legend>
 
-<div data-bind="jqueryElement: $listHome"></div>
+<div data-bind="with: shortScreen">
+    {% include 'app_manager/partials/case_list_properties.html' %}
+</div>
 
 <legend>
     {% trans "Filtering and Sorting" %}

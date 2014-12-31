@@ -7,6 +7,7 @@ import itertools
 import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
+from casexml.apps.case.util import reverse_indices
 from casexml.apps.case.xform import CaseDbCache
 from casexml.apps.phone.models import CaseState
 from dimagi.utils.decorators.memoized import memoized
@@ -14,43 +15,55 @@ from dimagi.utils.decorators.memoized import memoized
 logger = logging.getLogger(__name__)
 
 
-def get_related_cases(initial_case_list, domain, strip_history=False, search_up=True):
+def get_related_cases(initial_cases, domain, strip_history=False, search_up=True):
     """
     Gets the flat list of related cases based on a starting list.
     Walks all the referenced indexes recursively.
     If search_up is True, all cases and their parent cases are returned.
     If search_up is False, all cases and their child cases are returned.
     """
-    if not initial_case_list:
+    if not initial_cases:
         return {}
+
+    # infer whether to wrap or not based on whether the initial list is wrapped or not
+    # initial_cases may be a list or a set
+    wrap = isinstance(next(iter(initial_cases)), CommCareCase)
 
     # todo: should assert that domain exists here but this breaks tests
     case_db = CaseDbCache(domain=domain,
                           strip_history=strip_history,
-                          deleted_ok=True)
+                          deleted_ok=True,
+                          wrap=wrap,
+                          initial=initial_cases)
+
+    def indices(case):
+        return case['indices'] if search_up else reverse_indices(CommCareCase.get_db(), case, wrap=False)
 
     def related(case_db, case):
-        return [case_db.get(index.referenced_id) for index in (case.indices if search_up else case.reverse_indices)]
+        return [case_db.get(index['referenced_id']) for index in indices(case)]
 
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
-    queue = list(case for case in initial_case_list)
-    directly_referenced_indices = itertools.chain(*[[index.referenced_id for index in (case.indices if search_up else case.reverse_indices)]
-                                                    for case in initial_case_list])
+    queue = list(case for case in initial_cases)
+    directly_referenced_indices = itertools.chain(
+        *[[index['referenced_id'] for index in indices(case)]
+          for case in initial_cases]
+    )
     case_db.populate(directly_referenced_indices)
     while queue:
         case = queue.pop()
-        if case and case.case_id not in relevant_cases:
-            relevant_cases[case.case_id] = case
-            if case.doc_type == 'CommCareCase-Deleted':
-                relevant_deleted_case_ids.append(case.case_id)
+        if case and case['_id'] not in relevant_cases:
+            relevant_cases[case['_id']] = case
+            if case['doc_type'] == 'CommCareCase-Deleted':
+                relevant_deleted_case_ids.append(case['_id'])
             queue.extend(related(case_db, case))
 
     if relevant_deleted_case_ids:
         logging.info('deleted cases included in footprint (restore): %s' % (
             ', '.join(relevant_deleted_case_ids)
         ))
+
     return relevant_cases
 
 
@@ -447,8 +460,8 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
             group=True,
         )
         # we'll build a structure that looks like this for efficiency:
-        # { case_id: [{'token': '[token value', 'date': '[date value]'}, ...]}
-        all_case_updates_by_sync_token = defaultdict(lambda: [])
+        # { case_id: [{'token': 'token value', 'date': 'date value'}, ...]}
+        all_case_updates_by_sync_token = defaultdict(list)
         for row in modification_dates:
             # incoming format is a list of objects that look like this:
             # {

@@ -37,7 +37,7 @@ class CasePillow(HQPillow):
         doc_dict, lock = lock_manager(
             super(CasePillow, self).change_trigger(changes_dict)
         )
-        if doc_dict['doc_type'] == 'CommCareCase-Deleted':
+        if doc_dict and doc_dict['doc_type'] == 'CommCareCase-Deleted':
             if self.doc_exists(doc_dict):
                 self.get_es().delete(path=self.get_doc_path_typed(doc_dict))
             return None

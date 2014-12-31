@@ -4,10 +4,8 @@ a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
 from django.utils.translation import ugettext_lazy as _
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege as prbac_has_privilege
 
-from . import privileges
 from .toggles import StaticToggle, NAMESPACE_DOMAIN
 
 
@@ -38,11 +36,7 @@ class FeaturePreview(StaticToggle):
         if not self.privilege:
             return True
 
-        try:
-            ensure_request_has_privilege(request, self.privilege)
-            return True
-        except PermissionDenied:
-            return False
+        return prbac_has_privilege(request, self.privilege)
 
 
 SUBMIT_HISTORY_FILTERS = FeaturePreview(
@@ -75,10 +69,20 @@ ENUM_IMAGE = FeaturePreview(
 )
 
 
+def enable_commtrack_previews(domain):
+    for toggle_class in [COMMTRACK, LOCATIONS]:
+        toggle_class.set(domain.name, True, NAMESPACE_DOMAIN)
+
+
 def commtrackify(domain_name, checked):
     from corehq.apps.domain.models import Domain
     domain = Domain.get_by_name(domain_name)
     domain.commtrack_enabled = checked
+    if checked:
+        # turning on commtrack should turn on locations, but not the other way around
+        domain.locations_enabled = True
+        enable_commtrack_previews(domain)
+
     domain.save()
 
 COMMTRACK = FeaturePreview(
@@ -117,3 +121,20 @@ CALLCENTER = FeaturePreview(
     save_fn=enable_callcenter,
 )
 
+
+def enable_locations(domain_name, checked):
+    from corehq.apps.domain.models import Domain
+    domain = Domain.get_by_name(domain_name)
+    domain.locations_enabled = checked
+    domain.save()
+
+
+LOCATIONS = FeaturePreview(
+    slug='locations',
+    label=_("Locations"),
+    description=_(
+        'Enable locations for this project. This must be enabled for CommTrack to work properly'
+    ),
+    help_link='http://help.commcarehq.org/',
+    save_fn=enable_locations,
+)

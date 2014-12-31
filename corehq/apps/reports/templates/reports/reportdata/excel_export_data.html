@@ -1,4 +1,4 @@
-{% extends eport_base|default:"reports/async/default.html" %}
+{% extends report_base|default:"reports/async/default.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -183,9 +183,7 @@
             <th>{% trans "Form" %}</th>
             <th>{% trans "Custom Export" %}</th>
             <th>{% trans "Download" %}</th>
-            {% if is_multimedia_previewer%}
-                <th>{% trans "Download Multimedia" %}</th>
-            {% endif %}
+            <th>{% trans "Download Multimedia" %}</th>
             <th>{% trans "Total Submissions" %}</th>
             <th>
                 {% trans "Add to Bulk Export" %} <i class="bulk-export-info icon-white icon-info-sign"></i>
@@ -300,17 +298,21 @@
                         {% trans "No Forms" %}
                     {% endif %}
                 </td>
-                {% if is_multimedia_previewer %}
-                    <td class="cell-vertical-centered">
-                        {% if form.size and form.app.id %}
-                            <a href="{% url "form_multimedia_export" domain form.app.id %}?xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
-                               class="btn btn-primary dl-export" ><i
-                               class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
+                <td class="cell-vertical-centered">
+                    {% if form.size %}
+                        {% if form.app.id %}
+                        <a href="{% url "form_multimedia_export" domain %}?app_id={{form.app.id}}&amp;xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
+                            class="btn btn-primary dl-export" ><i
+                            class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
                         {% else %}
-                            <span class="label">{% trans "No Multimedia" %}</span>
+                        <a href="{% url "form_multimedia_export" domain %}?xmlns={{form.xmlns}}&amp;{{ get_filter_params.urlencode|safe }}"
+                            class="btn btn-primary dl-export" ><i
+                            class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
                         {% endif %}
-                    </td>
-                {% endif %}
+                    {% else %}
+                        <span class="label">{% trans "No Multimedia" %}</span>
+                    {% endif %}
+                </td>
                 <td>
                     {{ form.submissions }} {% if form.submissions %}
                     <i class="icon-info-sign all-users-all-time">

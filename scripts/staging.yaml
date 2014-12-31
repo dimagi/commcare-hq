@@ -43,49 +43,22 @@
 trunk: master
 name: autostaging
 branches:
-  - refactor-case-list
-  - historical-forms  # Danny 12/1
-#  - add-build-ui
-#  - subscription-no-contact-info # bb 8/4
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  #- help-text # j$  10/8  removed 11/3 by Daniel
-  - masterlist-workflow # j$  10/8
-  - bulk-app-translate # Noah 9/18
-#  - share-fixtures # j$ 10/29
-  - hq-dropdown+locations-for-everyone # tw 11/18
   - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
-  - custom_location_data+locations-for-everyone  # tw & Ethan 11/18 this has more than just the obvious merge conflict resolution, please merge in when ready.
-  - custom_location_data+system-custom-data+locations-for-everyone  # Ethan 11/24 (yo dawg i herd u like conflict resolution branches...)
-  - custom_location_data+system-custom-data  # Ethan 11/24
   - custom_location_data  # Ethan & tw 11/17
-  - locations-for-everyone # tw 11/18
-  - custom-case-list-pane # Noah 11/24
-  - system-custom-data  # Ethan 11/24
   - quickview # Simon 11/25
   - double-management # SK 12/1
-  - logo-uploader # Nick P 12/2
+  - cloudcare-speedup  # cz/sk 12/17
+  - test-invoice-speed # Nick P 12/24
+  - lwyszomi:migration-optimization
 submodules:
-  submodules/couchlog-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/django-soil-src:
-    branches:
-      - static-tags # Nick P 5/20
-  submodules/formtranslate-src:
-    branches:
-      - static-tags # Nick P 5/20
-      - update-jar # J$ 11/10
-  submodules/touchforms-src:
-    branches:
-      - static-tags # Nick P 5/20
-      - update-jars # J$ 11/10
-#  submodules/dimagi-utils-src:
-#    branches:
-#      - json_response-status
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
       - debug-yui # Nick P 11/4
-      - logos # Nick P 12/2
+  submodules/dimagi-utils-src:
+    # let's leave this here even when empty
+    # just so we always get latest master
+    branches: []

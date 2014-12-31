@@ -46,8 +46,16 @@
         loading : "{% trans "Loading..." %}",
         saving : "{% trans "Saving..." %}",
         errSaving : "{% trans "Error saving!" %}",
-        saveAll : "{% trans "All changes saved!" %}"
-    }
+        errSavingDetail : "{% trans "Save failed. Details: " %}",
+        unknownError: "{% trans "Unknown error: " %}",
+        unknownErrorDetail: "{% trans "This can happen if you loaded CloudCare from a different address than the server address" %}",
+        saveAll : "{% trans "All changes saved!" %}",
+        newWindow: "{% trans "open in new window" %}",
+        deleteSaved: "{% trans "Permanently delete this form? You will not be able to return to it later." %}",
+        deleteSuccess: "{% trans "Form was deleted." %}",
+        caseListError: "{% trans "Unable to load the case list. If you are using a filter expression please double check the syntax and try again. Please report an issue if this problem persists." %}",
+        dirty: "{% trans "You have not submitted this form. Click 'Cancel' to continue working on this form. If you click 'OK' you can resume work on this form later." %}"
+    };
 
     $(function () {
         var urlRoot = "{% url "cloudcare_main" domain '' %}";
@@ -95,7 +103,7 @@
         $(function() {
            window.onbeforeunload = function() {
                if (window.mainView.router.view.dirty) {
-                   return "You have not submitted this form. Click 'Cancel' to continue working on this form. If you click 'OK' you can resume work on this form later.";
+                   return translatedStrings.dirty;
                }
            }
         }())
