@@ -53,7 +53,6 @@ branches:
   - master+double-management # Nick P 12/31
   - double-management # SK 12/1
   - lwyszomi:migration-optimization
-  - app-icon-upload # Nick P 12/31
 submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches:
