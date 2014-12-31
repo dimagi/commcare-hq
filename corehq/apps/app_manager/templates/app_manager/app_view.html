@@ -339,3 +339,9 @@
         </div>
     </div>
 {% endblock %}
+
+{% block modals %}{{ block.super }}
+{% for uploader in uploaders %}
+{% include 'hqmedia/partials/multimedia_uploader.html' %}
+{% endfor %}
+{% endblock %}
