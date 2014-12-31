@@ -54,9 +54,6 @@ branches:
   - double-management # SK 12/1
   - lwyszomi:migration-optimization
 submodules:
-  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
-    branches:
-      - debug-yui # Nick P 11/4
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
     # just so we always get latest master
