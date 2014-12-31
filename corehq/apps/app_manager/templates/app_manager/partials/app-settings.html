@@ -49,11 +49,6 @@
             mediaUploadComplete: uploadComplete
         }
     ">{% trans "Upload" %}</a>
-    {% for uploader in uploaders %}
-        <div data-bind="if: is_uploader('{{ uploader.slug }}')">
-            {% include 'hqmedia/partials/multimedia_uploader.html' %}
-        </div>
-    {% endfor %}
 </script>
 
 {% include 'hqmedia/partials/multimedia_js.html' %}
