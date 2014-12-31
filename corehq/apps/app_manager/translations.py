@@ -314,7 +314,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             new_trans_el.set('lang', lang)
             if lang != app.langs[0]:
                 # If the language isn't the default language
-                new_trans_el.attrib.pop('default')
+                new_trans_el.attrib.pop('default', None)
             else:
                 new_trans_el.set('default', '')
             itext.xml.append(new_trans_el)
