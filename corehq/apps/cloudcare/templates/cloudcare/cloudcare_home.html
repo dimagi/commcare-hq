@@ -187,26 +187,45 @@
 
     <script type="text/html" id="template-crumbs">
         <% if (childCase || parentCase ){ %>
-        <ul class='breadcrumb'>
-            <li>Selected Case:</li>
-                <% if (parentCase){ %>
-                <li <% if (childCase == null){ %> class="active" <% } %>>
-                    <% if (parentCase.href){ %>
-                    <a href="<%= parentCase.href %>">
-                        <%= parentCase.text %>
-                    </a>
-                    <% } else { %>
-                        <%= parentCase.text %>
+        <div class="accordion-group">
+            <div class="accordion-heading accordion-toggle" data-toggle="collapse" href="#details-list">
+                <ul class='breadcrumb'>
+                    <li>Selected Case:</li>
+                        <% if (parentCase){ %>
+                        <li <% if (childCase == null){ %> class="active" <% } %>>
+                            <% if (parentCase.href){ %>
+                            <a href="<%= parentCase.href %>">
+                                <%= parentCase.text %>
+                            </a>
+                            <% } else { %>
+                                <%= parentCase.text %>
+                            <% } %>
+                            <% if (parentCase && childCase) { %>
+                            <span class="divider">/</span>
+                            <% } %>
+                        </li>
+                        <% } %>
+                    <% if (childCase) { %>
+                    <li class="active"><%= childCase.text %></li>
                     <% } %>
-                    <% if (parentCase && childCase) { %>
-                    <span class="divider">/</span>
-                    <% } %>
-                </li>
-                <% } %>
-            <% if (childCase) { %>
-            <li class="active"><%= childCase.text %></li>
-            <% } %>
-        </ul>
+                </ul>
+            </div>
+            <div id="details-list" class="accordion-body collapse">
+                <table class="table table-striped datatable">
+                    <thead>
+                        <tr><th colspan="2">Case Details for: <%= childCase.text %></th></tr>
+                    </thead>
+                    <tbody>
+                        <% _.each(childCase.properties,function(field){ %>
+                            <tr>
+                                <th><%= field.key %></th>
+                                <td><%= field.value %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <% } %>
     </script>
 

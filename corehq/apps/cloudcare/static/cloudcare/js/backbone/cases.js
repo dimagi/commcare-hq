@@ -45,6 +45,16 @@ cloudCare.Case = Backbone.Model.extend({
     
     status: function () {
         return this.get("closed") ? "closed" : "open";
+    },
+
+    caseProperties: function(language) {
+        var raw_columns = this.get("module").get("case_details").long.columns;
+        return _.map(raw_columns, function(col){
+            return {
+                key: localize(col.header, language),
+                value: this.getProperty(col.field) ? this.getProperty(col.field) : cloudCare.EMPTY
+            }
+        }, this);
     }
 });
 
@@ -388,7 +398,8 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
                 caseLabel = "";
             }
             var caseName = childCase.get("properties").case_name;
-            data.childCase.text = caseLabel + caseName
+            data.childCase.text = caseLabel + caseName;
+            data.childCase.properties = childCase.caseProperties(self.language);
         }
         self.$el.html(self.template(data));
         return self;
