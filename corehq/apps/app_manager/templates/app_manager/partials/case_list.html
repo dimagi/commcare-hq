@@ -33,10 +33,14 @@
 </legend>
 
 <div data-bind="with: filter">
-    <a href="#" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
-        <i class="icon-plus"></i>
-        Add a filter...
-    </a>
+
+    <div class="control-group">
+        <button class="btn btn-small" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+            <i class="icon icon-plus"></i>
+            Add filter
+        </button>
+    </div>
+
     <div data-bind="visible: showing">
     <form class="form-inline filter-form">
         <label>
@@ -72,10 +76,14 @@
 
 <div data-bind="with: sortRows">
 {% if app.enable_multi_sort %}
-    <a href="#" data-bind="visible: !showing(), click: function(data){data.addButtonClicked(true);}">
-        <i class="icon-plus"></i>
-        Add a sort property...
-    </a>
+
+    <div class="control-group">
+        <button class="btn btn-small" data-bind="visible: !showing(), click: function(data){data.addButtonClicked(true);}">
+            <i class="icon icon-plus"></i>
+            Add sort property
+        </button>
+    </div>
+
     <div class="ui-sortable">
         <table class="table table-condensed detail-screen-table" data-bind="visible: showing">
             <thead>
