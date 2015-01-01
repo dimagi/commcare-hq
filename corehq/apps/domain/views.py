@@ -1509,7 +1509,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     def app_forms(self):
         app_forms = []
         for app in self.domain_object.applications():
-            app = app.get_latest_saved() or app
             if self.request.method == 'POST':
                 app_forms.append((app, SnapshotApplicationForm(self.request.POST, prefix=app.id)))
             elif self.published_snapshot and app.copy_of in self.published_apps:
@@ -1584,7 +1583,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def has_published_apps(self):
         for app in self.domain_object.applications():
-            app = app.get_latest_saved() or app
             if self.request.POST.get("%s-publish" % app.id, False):
                 return True
         messages.error(self.request, _("Cannot publish a project without applications to CommCare Exchange"))
@@ -1625,16 +1623,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 
-            latest_apps = [app.get_latest_saved() or app for app in self.domain_object.applications()]
-            latest_apps = {app.id: app for app in latest_apps}
             copy_by_id = set()
             for k in request.POST.keys():
                 if k.endswith("-publish"):
-                    doc_id = k[:-len("-publish")]
-                    if doc_id in latest_apps:
-                        doc_id = latest_apps[doc_id].copy_of or doc_id
-                    copy_by_id.add(doc_id)
-
+                    copy_by_id.add(k[:-len("-publish")])
 
             old = self.domain_object.published_snapshot()
             new_domain = self.domain_object.save_snapshot(ignore=ignore,
