@@ -61,15 +61,13 @@ def rebuild_case(case_id):
             delattr(case, k)
         except KeyError:
             pass
-        except AttributeError as e:
+        except AttributeError:
             logging.error(
-                'AttributeError: %(error)s, case_id: %(case_id)s, attribute: %(attribute)s' % {
-                    'error': e.message,
+                "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
                     'case_id': case_id,
                     'attribute': k,
                 }
             )
-            raise e
 
     # already deleted means it was explicitly set to "deleted",
     # as opposed to getting set to that because it has no actions
