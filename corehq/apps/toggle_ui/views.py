@@ -87,7 +87,7 @@ class ToggleEditView(ToggleBaseView):
         item_list = request.POST.get('item_list', [])
         if item_list:
             item_list = json.loads(item_list)
-            item_list = [u for u in item_list if u]
+            item_list = [u.strip() for u in item_list if u.strip()]
 
         affected_users = set(toggle.enabled_users) | set(item_list)
         toggle.enabled_users = item_list

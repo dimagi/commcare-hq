@@ -1180,6 +1180,7 @@ class Detail(IndexedSchema):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
+    custom_xml = StringProperty()
 
     def get_tab_spans(self):
         '''
@@ -2896,6 +2897,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    logo_refs = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -3707,7 +3709,6 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
     return app
 
 EXAMPLE_DOMAIN = 'example'
-BUG_REPORTS_DOMAIN = 'bug-reports'
 
 
 def _get_or_create_app(app_id):

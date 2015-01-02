@@ -2,12 +2,11 @@ from django.core.management.base import BaseCommand
 from corehq.apps.custom_data_fields import models as cdm
 from corehq.apps.locations.models import Location
 from corehq.apps.domain.models import Domain
-from dimagi.utils.couch.database import iter_docs
 
 
 class Command(BaseCommand):
     """
-    Create a CustomDataFieldsDefinition based on existing custom user
+    Create a CustomDataFieldsDefinition based on existing custom location
     information on each domain
     """
 
@@ -21,11 +20,9 @@ class Command(BaseCommand):
             )
             had_fields = bool(fields_definition.fields)
 
-            location_ids = Location.by_domain(domain)
-
             existing_field_slugs = set([field.slug for field in fields_definition.fields])
-            for location in iter_docs(Location.get_db(), location_ids):
-                location_data = location.get('metadata', {})
+            for location in Location.by_domain(domain):
+                location_data = location.metadata
                 for key in location_data.keys():
                     if (key and key not in existing_field_slugs
                         and not cdm.is_system_key(key)):

@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from corehq import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.views import *
 
@@ -7,6 +7,8 @@ urlpatterns = patterns('corehq.apps.accounting.views',
     url(r'^$', 'accounting_default', name='accounting_default'),
     url(r'^trigger_invoice/$', TriggerInvoiceView.as_view(),
         name=TriggerInvoiceView.urlname),
+    url(r'^single_option_filter/$', AccountingSingleOptionResponseView.as_view(),
+        name=AccountingSingleOptionResponseView.urlname),
     url(r'^trigger_email/$', TriggerBookkeeperEmailView.as_view(),
         name=TriggerBookkeeperEmailView.urlname),
     url(r'^test_reminders/$', TestRenewalEmailView.as_view(),

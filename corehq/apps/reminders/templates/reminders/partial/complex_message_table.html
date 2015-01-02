@@ -7,8 +7,8 @@
                 <i class="icon-question-sign"
                    data-title="{% trans 'Day' %}"
                    data-content="{% blocktrans %}
-                       The day to which to send each event in the reminder.
-                       Day 1 indicates the day that the reminder was triggered.
+                       The day on which each event in the reminder comes due.
+                       Day 0 indicates the day that the reminder was triggered.
                        {% endblocktrans %}"
                    data-trigger="hover"></i>
             </a>
@@ -38,6 +38,7 @@
         </th>
         <th class="span5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
         <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
+        <th class="span5" data-bind="visible: $parent.areTimeoutsVisible()">{% trans 'Timeout Intervals' %}</th>
         <th class="span1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
     </thead>
     <tbody data-bind="foreach: { data: eventObjects, afterAdd: refreshEventsListUI }">
@@ -70,6 +71,13 @@
                 <hr data-bind="visible: $parent.messageTranslations().length > 1
                                && $index() + 1 !== $parent.messageTranslations().length" />
             </div>
+        </td>
+        <td data-bind="visible: $parent.areTimeoutsVisible()">
+            <input type="text"
+                   name="callback_timeout_intervals"
+                   class="input-small"
+                   placeholder="{% trans 'e.g. 30,60,180' %}"
+                   data-bind="value: callback_timeout_intervals" />
         </td>
         <td data-bind="visible: $parent.isEventDeleteButtonVisible">
             <button type="button"

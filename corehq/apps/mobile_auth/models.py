@@ -8,7 +8,7 @@ class MobileAuthKeyRecord(Document):
     """
 
     Data model for generating the XML for mobile auth
-    (from https://bitbucket.org/commcare/commcare/wiki/CentralAuthAPI)
+    (from https://github.com/dimagi/commcare/wiki/CentralAuthAPI)
 
     """
 

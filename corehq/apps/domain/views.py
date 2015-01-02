@@ -1625,10 +1625,16 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 
+            latest_apps = [app.get_latest_saved() or app for app in self.domain_object.applications()]
+            latest_apps = {app.id: app for app in latest_apps}
             copy_by_id = set()
             for k in request.POST.keys():
                 if k.endswith("-publish"):
-                    copy_by_id.add(k[:-len("-publish")])
+                    doc_id = k[:-len("-publish")]
+                    if doc_id in latest_apps:
+                        doc_id = latest_apps[doc_id].copy_of or doc_id
+                    copy_by_id.add(doc_id)
+
 
             old = self.domain_object.published_snapshot()
             new_domain = self.domain_object.save_snapshot(ignore=ignore,
@@ -2195,17 +2201,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            slug = feature.slug
-            toggle = self.get_toggle(slug)
-            item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
-            if new_state:
-                if not item in toggle.enabled_users:
-                    toggle.enabled_users.append(item)
-            else:
-                toggle.enabled_users.remove(item)
-            toggle.save()
-            update_toggle_cache(slug, item, new_state)
-
+            feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
 

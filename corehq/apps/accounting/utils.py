@@ -147,10 +147,12 @@ def get_address_from_invoice(invoice):
                  contact_info.last_name
                  if contact_info.last_name is not None else "")
             ),
+            company_name=contact_info.company_name,
             first_line=contact_info.first_line,
             second_line=contact_info.second_line,
             city=contact_info.city,
             region=contact_info.state_province_region,
+            postal_code=contact_info.postal_code,
             country=contact_info.country,
         )
     except BillingContactInfo.DoesNotExist:

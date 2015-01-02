@@ -31,7 +31,8 @@
             "type": "field",
             "display": "Starred",
             "field": "is_starred",
-            "aggregation": "sum"
+            "aggregation": "sum",
+            "format": "percent_of_total"
         }
     ]
 }

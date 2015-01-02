@@ -45,6 +45,7 @@ from corehq.apps.hqadmin.reporting.exceptions import (
     HistoTypeNotFoundException,
     IntervalNotFoundException,
 )
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.elastic import (
     ADD_TO_ES_FILTER,
@@ -67,7 +68,8 @@ USER_COUNT_UPPER_BOUND = 1000 * 1000 * 10
 def add_params_to_query(query, params):
     if params:
         for k in params:
-            query = query.filter({"terms": {k: params[k]}})
+            if k != 'search':
+                query = query.filter({"terms": {k: params[k]}})
     return query
 
 
@@ -142,7 +144,10 @@ def get_project_spaces(facets=None):
     if facets:
         real_domain_query = add_params_to_query(real_domain_query, facets)
     real_domain_query_results = real_domain_query.run().raw_hits
-    return [_['fields']['name'] for _ in real_domain_query_results]
+    domain_names = [_['fields']['name'] for _ in real_domain_query_results]
+    if 'search' in facets:
+        return list(set(domain_names) & set(facets['search']))
+    return domain_names
 
 
 def get_sms_query(begin, end, facet_name, facet_terms, domains, size):
@@ -281,15 +286,22 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
         users = {u['term'] for u in sms_query.run().facet('users', "terms")}
-
         if include_forms:
-            users |= {u['term'] for u in FormES()
-                      .user_facet(size=USER_COUNT_UPPER_BOUND)
-                      .submitted(gte=f, lte=t)
-                      .size(0)
-                      .run()
-                      .facets.user.result}
-
+            users |= {
+                u['term'] for u in FormES()
+                .user_facet(size=USER_COUNT_UPPER_BOUND)
+                .submitted(gte=f, lte=t)
+                .size(0)
+                .run()
+                .facets.user.result
+                if u['term'] in (
+                    UserES()
+                    .show_inactive()
+                    .mobile_users()
+                    .domain(domains)
+                    .run().doc_ids
+                )
+            }
         c = len(users)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
@@ -934,6 +946,91 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
     }
 
 
+def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
+    """
+    Helper function to transform sql queries into what the admin reports
+    framework likes. Handles initial values and historical data
+
+    sql_data needs {'timestamp': t, 'domain': d}
+    """
+    all_domains = len(domains) > individual_domain_limit
+    start = get_timestamp_millis(datespan.startdate)
+
+    if all_domains:
+        histo_data = {"All Domains": dict()}
+        init_ret = {"All Domains": 0}
+    else:
+        histo_data = {d: dict() for d in domains}
+        init_ret = {d: 0 for d in domains}
+
+    for data in sql_data:
+        tstamp = get_timestamp_millis(data['timestamp'])
+        domain = "All Domains" if all_domains else data['domain']
+
+        if tstamp < start:
+            init_ret[domain] += 1
+        else:
+            if tstamp not in histo_data[domain]:
+                histo_data[domain][tstamp] = 1
+            else:
+                histo_data[domain][tstamp] += 1
+
+    ret = {d: list() for d in domains}
+    for k, v in histo_data.iteritems():
+        for l, w in v.iteritems():
+            ret[k].append({'count': w, 'time': l})
+
+    return init_ret, ret
+
+
+def get_unique_locations_data(domains, datespan, interval,
+        datefield='created_at', individual_domain_limit=16):
+    locations = (SQLLocation.objects
+                            .filter(domain__in=domains,
+                                    created_at__lte=datespan.enddate)
+                            .extra({"timestamp":
+                                    "date_trunc('%s', %s)" %
+                                    (interval, datefield)})
+                            .values("timestamp", "domain"))
+
+    domains = {l["domain"] for l in locations}
+
+    init_ret, ret = _sql_to_json_data(domains, locations, datespan,
+            individual_domain_limit=individual_domain_limit)
+
+    return {
+        'histo_data': ret,
+        'initial_values': init_ret,
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
+def get_location_type_data(domains, datespan, interval,
+        datefield='created_at', individual_domain_limit=16):
+    locations = (SQLLocation.objects
+                            .filter(domain__in=domains,
+                                    created_at__lte=datespan.enddate)
+                            .extra({"timestamp":
+                                    "date_trunc('%s', %s)" %
+                                    (interval, datefield)})
+                            .values("timestamp", "domain", "location_type")
+                            .order_by("location_type", "created_at")
+                            .distinct("location_type"))
+
+    domains = {l["domain"] for l in locations}
+
+    init_ret, ret = _sql_to_json_data(domains, locations, datespan,
+            individual_domain_limit=individual_domain_limit)
+
+    return {
+        'histo_data': ret,
+        'initial_values': init_ret,
+        'startdate': datespan.startdate_key_utc,
+        'enddate': datespan.enddate_key_utc,
+    }
+
+
 HISTO_TYPE_TO_FUNC = {
     "active_cases": get_active_cases_stats,
     "active_countries": get_active_countries_stats_data,
@@ -945,6 +1042,7 @@ HISTO_TYPE_TO_FUNC = {
     "countries": get_countries_stats_data,
     "domains": get_domain_stats_data,
     "forms": get_form_stats,
+    "location_types": get_location_type_data,
     "mobile_clients": get_total_clients_data,
     "mobile_workers": get_mobile_workers_data,
     "real_sms_messages": get_real_sms_messages_data,
@@ -953,6 +1051,7 @@ HISTO_TYPE_TO_FUNC = {
     "stock_transactions": get_stock_transaction_stats_data,
     "subscriptions": get_all_subscriptions_stats_data,
     "total_products": get_products_stats_data,
+    "unique_locations": get_unique_locations_data,
     "users": get_user_stats,
     "users_all": get_users_all_stats,
 }
