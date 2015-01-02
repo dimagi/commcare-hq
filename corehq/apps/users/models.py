@@ -1752,7 +1752,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         owner_ids = [self.user_id]
         owner_ids.extend(Group.by_user(self, wrap=False))
 
-        if self.project.locations_enabled:
+        if self.project.locations_enabled and self.location:
             owner_ids.extend(self.location_group_ids())
 
         return owner_ids
