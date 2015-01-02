@@ -24,7 +24,7 @@ class SupplyPointTest(TestCase):
         self.assertEqual(const.SUPPLY_POINT_CASE_TYPE, sp.type)
         self.assertEqual(self.loc._id, sp.location_id)
         self.assertEqual(const.get_commtrack_user_id(TEST_DOMAIN), sp.user_id)
-        self.assertEqual(sp.user_id, sp.owner_id)
+        self.assertEqual(self.loc.group_id, sp.owner_id)
         self.assertFalse(sp.closed)
         self.assertTrue(len(sp.actions) > 0)
         for dateprop in ('opened_on', 'modified_on', 'server_modified_on'):
@@ -32,6 +32,8 @@ class SupplyPointTest(TestCase):
             self.assertTrue(isinstance(getattr(sp, dateprop), datetime))
 
     def testMakeOwnedSupplyPoint(self):
-        sp = make_supply_point(TEST_DOMAIN, self.loc, 'some-other-owner')
+        sp = make_supply_point(TEST_DOMAIN, self.loc)
+        sp.owner_id = 'some-other-owner'
+        sp.save()
         self.assertEqual(const.get_commtrack_user_id(TEST_DOMAIN), sp.user_id)
         self.assertEqual('some-other-owner', sp.owner_id)

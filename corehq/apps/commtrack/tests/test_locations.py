@@ -16,6 +16,8 @@ class LocationsTest(CommTrackTest):
     def setUp(self):
         super(LocationsTest, self).setUp()
         self.user = self.users[0]
+        # add the users location for delgate access as well
+        self.user.add_location(self.user.location)
 
     def check_supply_point(self, user, sp, should_have=True):
         caseblock = CaseBlock(
@@ -32,7 +34,7 @@ class LocationsTest(CommTrackTest):
             version=V2
         )
 
-    def test_location_assignment(self):
+    def test_default_location_settings(self):
         user = self.user
 
         self.assertEqual(len(user.locations), 1)
@@ -160,13 +162,13 @@ class LocationsTest(CommTrackTest):
         test_state = make_loc(
             'teststate',
             type='state',
-            parent=self.user.locations[0]
+            parent=self.user.location
         )
         test_state.save()
 
         original_count = len(list(Location.by_domain(self.domain.name)))
 
-        loc = self.user.locations[0]
+        loc = self.user.location
         loc.archive()
 
         # it should also archive children

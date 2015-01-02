@@ -97,7 +97,8 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         if not SupplyPointCase.get_by_location(setup.loc):
             make_supply_point(domain, setup.loc)
 
-        user.add_location(setup.loc)
+        # user.add_location(setup.loc)
+        user.location_id = setup.loc._id
         user.save()
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)

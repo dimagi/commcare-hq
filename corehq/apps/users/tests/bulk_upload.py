@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
-from corehq.apps.users.bulkupload import UserLocMapping, LocationCache
+from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
 from corehq.apps.users.models import CommCareUser
 from mock import patch
 
@@ -21,7 +21,7 @@ class UserLocMapTest(CommTrackTest):
 
         self.loc = make_loc('secondloc')
         self.sp = make_supply_point(self.domain.name, self.loc)
-        self.cache = LocationCache()
+        self.cache = SiteCodeToSupplyPointCache(self.domain.name)
         self.mapping = UserLocMapping(self.user.username, self.user.domain, self.cache)
 
     def test_adding_a_location(self):
