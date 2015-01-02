@@ -286,15 +286,22 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
         users = {u['term'] for u in sms_query.run().facet('users', "terms")}
-
         if include_forms:
-            users |= {u['term'] for u in FormES()
-                      .user_facet(size=USER_COUNT_UPPER_BOUND)
-                      .submitted(gte=f, lte=t)
-                      .size(0)
-                      .run()
-                      .facets.user.result}
-
+            users |= {
+                u['term'] for u in FormES()
+                .user_facet(size=USER_COUNT_UPPER_BOUND)
+                .submitted(gte=f, lte=t)
+                .size(0)
+                .run()
+                .facets.user.result
+                if u['term'] in (
+                    UserES()
+                    .show_inactive()
+                    .mobile_users()
+                    .domain(domains)
+                    .run().doc_ids
+                )
+            }
         c = len(users)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
