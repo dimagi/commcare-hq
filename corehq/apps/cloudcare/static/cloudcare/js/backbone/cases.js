@@ -59,7 +59,35 @@ cloudCare.Case = Backbone.Model.extend({
                 value: this.getProperty(col.field) ? this.getProperty(col.field) : cloudCare.EMPTY
             }
         }, this);
-    }
+    },
+
+    caseDetailsLabel: function(language) {
+        var caseLabel = (this.get("module") ?
+                         this.get("module").get("case_label")[language] :
+                         this.get("appConfig").module.get("case_label")[language]) + 
+                        ": ";
+        if (caseLabel === "Cases: "){
+            caseLabel = "";
+        }
+        var caseName = this.get("properties").case_name;
+        return caseLabel + caseName;
+
+    },
+
+    childCaseUrl: function() {
+        var parentConfig = this.get("appConfig");
+        if (!parentConfig) {
+            throw "not a parent case";
+        }
+        var root = window.location.href.replace(Backbone.history.getFragment(), '');
+        return getChildSelectUrl(
+            root,
+            parentConfig.app_id,
+            parentConfig.module_index,
+            parentConfig.form_index,
+            this.id
+        );
+    },
 });
 
 cloudCare.Details = Backbone.Model.extend({
@@ -381,29 +409,13 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
 
         if (parentCase){
             data.parentCase = {};
-            var caseLabel = parentCase.get("appConfig").module.get("case_label")[self.language] + ": ";
-            if (caseLabel === "Cases: "){
-                caseLabel = "";
-            }
-            var caseName = parentCase.get("properties").case_name;
-            data.parentCase.text = caseLabel + caseName;
-
-            // This is hacky and I hate it
-            var root = window.location.href.replace(Backbone.history.getFragment(), '');
-            data.parentCase.href = root + "view/" + parentCase.get("appConfig").app_id
-                        + "/" + parentCase.get("appConfig").module_index
-                        + "/" + parentCase.get("appConfig").form_index
-                 + "/parent/" + parentCase.id;
+            data.parentCase.text = parentCase.caseDetailsLabel(self.language);
+            data.parentCase.href = parentCase.childCaseUrl();
             data.parentCase.properties = parentCase.caseProperties(self.language);
         }
         if (childCase){
             data.childCase = {};
-            var caseLabel = childCase.get("module").get("case_label")[self.language] + ": ";
-            if (caseLabel === "Cases: "){
-                caseLabel = "";
-            }
-            var caseName = childCase.get("properties").case_name;
-            data.childCase.text = caseLabel + caseName;
+            data.childCase.text = childCase.caseDetailsLabel(self.language);
             data.childCase.properties = childCase.caseProperties(self.language);
         }
         self.$el.html(self.template(data));
