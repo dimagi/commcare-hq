@@ -1,3 +1,9 @@
+try {
+    USE_BOOTSTRAP_3;
+} catch (e) {
+    var USE_BOOTSTRAP_3 = false;
+}
+
 var generateEditableHandler = function (spec) {
     return {
         init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
@@ -61,7 +67,8 @@ ko.bindingHandlers.staticChecked = {
         var value = ko.utils.unwrapObservable(valueAccessor());
         var span = $('span', element);
         var allBindings = allBindingsAccessor();
-        var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || 'fa fa-check',
+        var DEFAULT_ICON = (USE_BOOTSTRAP_3) ? 'fa fa-check' : 'icon-ok';
+        var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || DEFAULT_ICON,
             iconFalse = ko.utils.unwrapObservable(allBindings.iconFalse) || '';
 
         if (value) {
@@ -215,12 +222,23 @@ ko.bindingHandlers.saveButton2 = {
     init: function (element, valueAccessor, allBindingsAccessor) {
         var saveOptions = allBindingsAccessor().saveOptions,
             state = valueAccessor(),
+            saveButton;
+
+        if (USE_BOOTSTRAP_3) {
             saveButton = COMMCAREHQ.SaveButton.init({
                 save: function () {
                     saveButton.ajax(saveOptions());
                 }
             });
-        $(element).css('vertical-align', 'top').css('display', 'inline-block');
+            $(element).css('vertical-align', 'top').css('display', 'inline-block');
+        } else {
+            saveButton = SaveButton.init({
+                save: function () {
+                    saveButton.ajax(saveOptions());
+                }
+            });
+        }
+
         saveButton.ui.appendTo(element);
         element.saveButton = saveButton;
         saveButton.on('state:change', function () {
@@ -237,12 +255,22 @@ ko.bindingHandlers.deleteButton = {
     init: function (element, valueAccessor, allBindingsAccessor) {
         var saveOptions = allBindingsAccessor().saveOptions,
             state = valueAccessor(),
+            deleteButton;
+
+        if (USE_BOOTSTRAP_3) {
             deleteButton = COMMCAREHQ.DeleteButton.init({
                 save: function () {
                     deleteButton.ajax(saveOptions());
                 }
             });
-        $(element).css('vertical-align', 'top').css('display', 'inline-block');
+            $(element).css('vertical-align', 'top').css('display', 'inline-block');
+        } else {
+            deleteButton = DeleteButton.init({
+                save: function () {
+                    deleteButton.ajax(saveOptions());
+                }
+            });
+        }
         deleteButton.ui.appendTo(element);
         element.deleteButton = deleteButton;
         deleteButton.on('state:change', function () {
