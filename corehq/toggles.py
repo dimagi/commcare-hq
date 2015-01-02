@@ -262,3 +262,10 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     "Don't fail hard on missing or deleted sync tokens.",
     [NAMESPACE_DOMAIN]
 )
+
+PRODUCTS_PER_LOCATION = StaticToggle(
+    'products_per_location',
+    "Products Per Location: Specify products stocked at individual locations.  "
+    "This doesn't actually do anything yet.",
+    [NAMESPACE_DOMAIN]
+)

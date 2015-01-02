@@ -16,6 +16,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from soil.util import expose_download, get_download_context
 
+from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
@@ -499,6 +500,11 @@ class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
     urlname = 'products_per_location'
     page_title = ugettext_noop("Products Per Location")
     template_name = 'locations/manage/products_per_location.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.PRODUCTS_PER_LOCATION.enabled(request.domain):
+            raise Http404
+        return super(ProductsPerLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     # @memoized
