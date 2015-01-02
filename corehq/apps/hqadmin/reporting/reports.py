@@ -68,7 +68,8 @@ USER_COUNT_UPPER_BOUND = 1000 * 1000 * 10
 def add_params_to_query(query, params):
     if params:
         for k in params:
-            query = query.filter({"terms": {k: params[k]}})
+            if k != 'search':
+                query = query.filter({"terms": {k: params[k]}})
     return query
 
 
@@ -143,7 +144,10 @@ def get_project_spaces(facets=None):
     if facets:
         real_domain_query = add_params_to_query(real_domain_query, facets)
     real_domain_query_results = real_domain_query.run().raw_hits
-    return [_['fields']['name'] for _ in real_domain_query_results]
+    domain_names = [_['fields']['name'] for _ in real_domain_query_results]
+    if 'search' in facets:
+        return list(set(domain_names) & set(facets['search']))
+    return domain_names
 
 
 def get_sms_query(begin, end, facet_name, facet_terms, domains, size):
@@ -282,15 +286,22 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
         users = {u['term'] for u in sms_query.run().facet('users', "terms")}
-
         if include_forms:
-            users |= {u['term'] for u in FormES()
-                      .user_facet(size=USER_COUNT_UPPER_BOUND)
-                      .submitted(gte=f, lte=t)
-                      .size(0)
-                      .run()
-                      .facets.user.result}
-
+            users |= {
+                u['term'] for u in FormES()
+                .user_facet(size=USER_COUNT_UPPER_BOUND)
+                .submitted(gte=f, lte=t)
+                .size(0)
+                .run()
+                .facets.user.result
+                if u['term'] in (
+                    UserES()
+                    .show_inactive()
+                    .mobile_users()
+                    .domain(domains)
+                    .run().doc_ids
+                )
+            }
         c = len(users)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
