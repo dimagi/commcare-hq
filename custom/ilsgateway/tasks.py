@@ -75,7 +75,7 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                 external_id=facility,
                 domain=domain
             ).location_id).linked_supply_point()
-            if sp:
+            if sp and sp.external_id:
                 supply_point = sp.external_id
             else:
                 break
@@ -131,8 +131,9 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
         supply_point = facility
         ews_config = EWSGhanaConfig.for_domain(domain)
         if ews_config is not None:
-            sp = Location.get(SQLLocation.objects.get(external_id=facility).location_id).linked_supply_point()
-            if sp:
+            sp = Location.get(SQLLocation.objects.get(domain=domain,
+                                                      external_id=facility).location_id).linked_supply_point()
+            if sp and sp.external_id:
                 supply_point = sp.external_id
             else:
                 break
