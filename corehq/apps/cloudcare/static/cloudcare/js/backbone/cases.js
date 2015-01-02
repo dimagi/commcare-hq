@@ -57,7 +57,7 @@ cloudCare.Case = Backbone.Model.extend({
             return {
                 key: localize(col.header, language),
                 value: this.getProperty(col.field) ? this.getProperty(col.field) : cloudCare.EMPTY
-            }
+            };
         }, this);
     },
 
