@@ -118,7 +118,7 @@ class WebUsersCompareReport(BaseComparisonReport):
         for web_user in web_users:
             is_migrated = True
             try:
-                if web_user.groups and web_user.groups[0].name == 'facility_manager':
+                if not web_user.is_superuser and web_user.groups and web_user.groups[0].name == 'facility_manager':
                     User.objects.get(username="%s@%s.commcarehq.org" % (web_user.username.lower(),
                                                                         self.domain))
                 else:

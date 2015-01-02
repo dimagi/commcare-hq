@@ -128,16 +128,20 @@ class EWSApi(APISynchronization):
             domain.save()
 
     def _create_location_from_supply_point(self, supply_point, location):
-        self._create_location_type_if_not_exists(supply_point, location)
-        new_location = Loc(parent=location)
-        new_location.domain = self.domain
-        new_location.location_type = supply_point.type
-        new_location.name = supply_point.name
-        new_location.site_code = supply_point.code
-        if supply_point.supervised_by:
-            new_location.metadata['supervised_by'] = supply_point.supervised_by
-        new_location.save()
-        return new_location
+        try:
+            sql_location = SQLLocation.objects.get(domain=self.domain, site_code=supply_point.code)
+            return Loc.get(sql_location.location_id)
+        except SQLLocation.DoesNotExist:
+            self._create_location_type_if_not_exists(supply_point, location)
+            new_location = Loc(parent=location)
+            new_location.domain = self.domain
+            new_location.location_type = supply_point.type
+            new_location.name = supply_point.name
+            new_location.site_code = supply_point.code
+            if supply_point.supervised_by:
+                new_location.metadata['supervised_by'] = supply_point.supervised_by
+            new_location.save()
+            return new_location
 
     def _create_supply_point_from_location(self, supply_point, location):
         if not SupplyPointCase.get_by_location(location):
@@ -217,20 +221,23 @@ class EWSApi(APISynchronization):
             location.site_code = ews_location.code
             location.external_id = str(ews_location.id)
             location.save()
+            supply_point_with_stock_data = filter(lambda x: x.last_reported, ews_location.supply_points)
 
-            supply_points = filter(lambda x: x.last_reported, ews_location.supply_points)
-            if len(supply_points) > 1:
-                for supply_point in supply_points:
-                    self._create_location_from_supply_point(supply_point, location)
+            if len(supply_point_with_stock_data) > 1:
+                for supply_point in supply_point_with_stock_data:
+                    created_location = self._create_location_from_supply_point(supply_point, location)
                     fake_location = Loc(
-                        _id=location._id,
+                        _id=created_location._id,
                         name=supply_point.name,
                         external_id=str(supply_point.id),
                         domain=self.domain
                     )
                     SupplyPointCase.get_or_create_by_location(fake_location)
-            elif supply_points:
-                supply_point = supply_points[0]
+            elif supply_point_with_stock_data:
+                supply_point = supply_point_with_stock_data[0]
+                self._create_supply_point_from_location(supply_point, location)
+            elif ews_location.supply_points:
+                supply_point = ews_location.supply_points[0]
                 self._create_supply_point_from_location(supply_point, location)
             else:
                 SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
