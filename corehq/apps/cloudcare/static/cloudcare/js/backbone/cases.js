@@ -48,7 +48,11 @@ cloudCare.Case = Backbone.Model.extend({
     },
 
     caseProperties: function(language) {
-        var raw_columns = this.get("module").get("case_details").long.columns;
+        // Returns case-details as key-value pairs
+        // there should be a better way to access language var, than passing here
+        var raw_columns = this.get("module") ?
+                          this.get("module").get("case_details").long.columns :
+                          this.get("appConfig").module.get("case_details").long.columns ; // If Parent-child selection is on
         return _.map(raw_columns, function(col){
             return {
                 key: localize(col.header, language),
@@ -390,6 +394,7 @@ cloudCare.CaseSelectionView = Backbone.View.extend({
                         + "/" + parentCase.get("appConfig").module_index
                         + "/" + parentCase.get("appConfig").form_index
                  + "/parent/" + parentCase.id;
+            data.parentCase.properties = parentCase.caseProperties(self.language);
         }
         if (childCase){
             data.childCase = {};

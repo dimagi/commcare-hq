@@ -154,7 +154,7 @@
             (It may take a moment to start up once it has downloaded)
         {% endblocktrans %}
     </div>
-    <div id="cloudcare-main" style="position:relative; width: 800px">
+    <div id="cloudcare-main" style="position:relative;">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
             {% blocktrans %}
@@ -180,7 +180,7 @@
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
             {% trans "Loading" %}...
         </div>
-        <section id="case-crumbs"></section>
+        <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" style="min-width: 800px;"></section>
     </div>
@@ -188,8 +188,9 @@
     <script type="text/html" id="template-crumbs">
         <% if (childCase || parentCase ){ %>
         <div class="accordion-group">
-            <div class="accordion-heading accordion-toggle" data-toggle="collapse" href="#details-list">
+            <div class="accordion-heading accordion-toggle collapsed" data-toggle="collapse" href="#details-list">
                 <ul class='breadcrumb'>
+                    <i class="icon-double-angle-down"></i>
                     <li>Selected Case:</li>
                         <% if (parentCase){ %>
                         <li <% if (childCase == null){ %> class="active" <% } %>>
@@ -211,6 +212,25 @@
                 </ul>
             </div>
             <div id="details-list" class="accordion-body collapse">
+                <% if (parentCase) { %>
+                <table class="table table-striped datatable">
+                    <thead>
+                        <tr><th colspan="2">Case Details for parent: <%= parentCase.text %></th></tr>
+                    </thead>
+                    <tbody>
+                        <% _.each(parentCase.properties,function(field){ %>
+                            <tr>
+                                <th><%= field.key %></th>
+                                <td><%= field.value %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+                <% if (parentCase && childCase) { %>
+                            <br class="divider"></br>
+                            <% } %>
+                <% } %>
+                <% if (childCase) { %>
                 <table class="table table-striped datatable">
                     <thead>
                         <tr><th colspan="2">Case Details for: <%= childCase.text %></th></tr>
@@ -224,6 +244,7 @@
                         <% }); %>
                     </tbody>
                 </table>
+                <% } %>
             </div>
         </div>
         <% } %>
