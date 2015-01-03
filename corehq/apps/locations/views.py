@@ -504,21 +504,19 @@ class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
     def dispatch(self, request, *args, **kwargs):
         if not toggles.PRODUCTS_PER_LOCATION.enabled(request.domain):
             raise Http404
+        # TODO verify that this location stocks products
         return super(ProductsPerLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
-    # @memoized
     def products_at_location(self):
         return [p.product_id for p in self.sql_location.products.all()]
 
     @property
-    # @memoized
     def all_products(self):
         return [(p.product_id, p.name)
                 for p in SQLProduct.by_domain(self.domain)]
 
     @property
-    # @memoized
     def products_form(self):
         form = MultipleSelectionForm(initial={
             'selected_ids': self.products_at_location
