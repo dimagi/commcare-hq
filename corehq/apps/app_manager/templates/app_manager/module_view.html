@@ -50,6 +50,7 @@
             var edit = {{ edit|JSON }};
             var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
             var parentModules = {{ parent_modules|JSON }};
+            var fixtures = {{ fixtures|JSON }};
 
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
@@ -68,7 +69,7 @@
                     saveUrl: saveUrl,
                     parentModules: parentModules,
                     childCaseTypes: detail.child_case_types,
-                    fixtures: detail.fixtures,
+                    fixtures: fixtures,
                     parentSelect: detail.parent_select,
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });

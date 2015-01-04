@@ -780,7 +780,6 @@ def get_module_view_context_and_template(app, module):
         if m.case_type == module.case_type:
             child_case_types.update(m.get_child_case_types())
     child_case_types = list(child_case_types)
-    # Is this the "right" way to get fixtures?
     fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
     def ensure_unique_ids():
@@ -803,10 +802,10 @@ def get_module_view_context_and_template(app, module):
         } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
     ensure_unique_ids()
-    # TODO: Remove repeated `details` map logic
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
+            'fixtures': fixtures,
             'details': [
                 {
                     'label': _('Goal List'),
@@ -818,8 +817,6 @@ def get_module_view_context_and_template(app, module):
                     'short': module.goal_details.short,
                     'long': module.goal_details.long,
                     'child_case_types': child_case_types,
-                    # TODO: decide if it makes sense to nest fixtures under details, because it's not really a detail level thing.
-                    'fixtures': fixtures
                 },
                 {
                     'label': _('Task List'),
@@ -831,7 +828,6 @@ def get_module_view_context_and_template(app, module):
                     'short': module.task_details.short,
                     'long': module.task_details.long,
                     'child_case_types': child_case_types,
-                    'fixtures': fixtures
                 },
             ],
         }
@@ -848,7 +844,6 @@ def get_module_view_context_and_template(app, module):
                 'short': module.case_details.short,
                 'long': module.case_details.long,
                 'child_case_types': child_case_types,
-                'fixtures': fixtures,
             }]
 
             if app.commtrack_enabled:
@@ -861,18 +856,19 @@ def get_module_view_context_and_template(app, module):
                     'sort_elements': module.product_details.short.sort_elements,
                     'short': module.product_details.short,
                     'child_case_types': child_case_types,
-                    'fixtures': fixtures
                 })
 
             return details
 
         return "app_manager/module_view_advanced.html", {
+            'fixtures': fixtures,
             'details': get_details(),
         }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
+            'fixtures': fixtures,
             'details': [
                 {
                     'label': _('Case List'),
@@ -885,7 +881,6 @@ def get_module_view_context_and_template(app, module):
                     'long': module.case_details.long,
                     'parent_select': module.parent_select,
                     'child_case_types': child_case_types,
-                    'fixtures': fixtures
                 },
             ],
         }
