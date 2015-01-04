@@ -1,6 +1,7 @@
 import json
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponseRedirect
+import itertools
 from corehq.apps.commtrack.models import CommtrackConfig, StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView
@@ -28,6 +29,7 @@ class GlobalStats(BaseDomainView):
     section_url = ""
     template_name = "ilsgateway/global_stats.html"
     show_supply_point_types = False
+    root_name = 'MOHSW'
 
     @property
     def main_context(self):
@@ -45,14 +47,22 @@ class GlobalStats(BaseDomainView):
 
         main_context = super(GlobalStats, self).main_context
         location_types = Domain.get_by_name(self.domain).location_types
-        entities_reported_stock = sum([SQLLocation.objects.filter(
-            domain=self.domain, location_type=location_type.name).count() for location_type in location_types
-            if not location_type.administrative])
+        administrative_types = [
+            location_type.name
+            for location_type in location_types
+            if not location_type.administrative
+        ]
+        entities_reported_stock = SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__in=administrative_types
+        ).count()
 
         context = {
-            'country': SQLLocation.objects.filter(domain=self.domain, location_type='country').count(),
-            'region': SQLLocation.objects.filter(domain=self.domain, location_type='region').count(),
-            'district': SQLLocation.objects.filter(domain=self.domain, location_type='district').count(),
+            'root_name': self.root_name,
+            'country': SQLLocation.objects.filter(domain=self.domain,
+                                                  location_type__iexact=self.root_name).count(),
+            'region': SQLLocation.objects.filter(domain=self.domain, location_type__iexact='region').count(),
+            'district': SQLLocation.objects.filter(domain=self.domain, location_type__iexact='district').count(),
             'entities_reported_stock': entities_reported_stock,
             'facilities': len(facilities),
             'contacts': contacts[0]['value'] if contacts else 0,
@@ -71,7 +81,7 @@ class GlobalStats(BaseDomainView):
                               'psychiatric hospital', 'regional medical store', 'regional hospital', 'polyclinic',
                               'teaching hospital', 'central medical store', '']
             supply_point_types_map = {supply_point_type: 0 for supply_point_type in supply_point_types}
-            facility_ids = [facility.location_id for facility in facilities]
+            facility_ids = [location.location_id for location in SQLLocation.objects.all()]
             for facility in iter_docs(Location.get_db(), facility_ids):
                 supply_point_type = facility.get('metadata', {}).get('supply_point_type', "").lower()
                 supply_point_types_map[supply_point_type] += 1
