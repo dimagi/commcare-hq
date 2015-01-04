@@ -633,10 +633,11 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
+                var i;
                 //Only save if property names are valid
                 var containsTab = false;
                 var columns = this.columns();
-                for (var i = 0; i < columns.length; i++){
+                for (i = 0; i < columns.length; i++){
                     var column = columns[i];
                     if (!column.isTab) {
                         if (!DetailScreenConfig.field_val_re.test(column.field.val())) {
@@ -658,7 +659,7 @@ var DetailScreenConfig = (function () {
 
                 if (this.containsSortConfiguration) {
                     var sortRows = this.config.sortRows.sortRows();
-                    for (var i = 0; i < sortRows.length; i++) {
+                    for (i = 0; i < sortRows.length; i++) {
                         var row = sortRows[i];
                         if (!row.hasValidPropertyName()) {
                             row.showWarning(true);
@@ -721,7 +722,7 @@ var DetailScreenConfig = (function () {
                             field: row.textField.val(),
                             type: row.type(),
                             direction: row.direction()
-                        }
+                        };
                     }));
                 }
                 if (this.containsFilterConfiguration) {
