@@ -466,7 +466,13 @@ class Detail(IdNode):
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
             except AttributeError:
-                pass  # Its a Graph detail
+                # Its a Graph detail
+                # convert Template to GraphTemplate
+                s = etree.tostring(field.template.node)
+                template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
+                for series in template.graph.series:
+                    result.add(series.nodeset)
+
         result.discard(None)
         return result
 
