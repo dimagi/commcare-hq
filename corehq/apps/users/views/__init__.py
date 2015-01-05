@@ -389,8 +389,10 @@ class NewListWebUsersView(BaseUserSettingsView):
     @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
-        user_roles.extend(sorted(UserRole.by_domain(self.domain),
-                                 key=lambda role: role.name if role.name else u'\uFFFF'))
+        user_roles.extend(sorted(
+            UserRole.by_domain(self.domain),
+            key=lambda role: role.name if role.name else u'\uFFFF'
+        ))
 
         #  indicate if a role has assigned users, skip admin role
         for i in range(1, len(user_roles)):
