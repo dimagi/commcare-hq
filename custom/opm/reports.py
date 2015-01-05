@@ -940,26 +940,60 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
-    @property
-    def rows(self):
+    def awc_data(self):
+        # TODO use all awcs, not just ones with data
         case_objects = self.row_objects + self.extra_row_objects
         # Consolidate rows with the same awc
         awcs = {}
         for case_object in case_objects:
             awc = case_object.awc_name
             awcs[awc] = awcs.get(awc, []) + [case_object]
-        # Use the AWCHealthStatus model to handle the aggregation
-        # TODO use all awcs, not just ones with data
-        for awc in map(AWCHealthStatus, awcs.values()):
+        return awcs
+
+    @property
+    def rows(self):
+        for awc in map(AWCHealthStatus, self.awc_data().values()):
             yield [self.format_cell(getattr(awc, method),
-                                    getattr(awc, count_method))
-                   for method, _, _, count_method in self.model.method_map]
+                                    getattr(awc, denom))
+                   for method, _, _, denom in self.model.method_map]
 
     def format_cell(self, val, denom):
         if denom is None:
             return val
         pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
         return "{} / {}{}".format(val, denom, pct)
+
+    @property
+    def export_table(self):
+        """
+        Split the cells up into 3 for excel
+        """
+        def headers():
+            headers = []
+            for __, title, __, denom in self.model.method_map:
+                if denom == 'no_denom':
+                    headers.append(DataTablesColumn(name=title))
+                else:
+                    for template in [u"{}", u"{} - denominator", u"{} - percent"]:
+                        headers.append(DataTablesColumn(name=template.format(title)))
+            return DataTablesHeader(*headers)
+
+        def rows():
+            for awc in map(AWCHealthStatus, self.awc_data().values()):
+                row = []
+                for method, __, __, denom in self.model.method_map:
+                    value = getattr(awc, method)
+                    row.append(value)
+                    if denom != 'no_denom':
+                        denom = getattr(awc, denom)
+                        row.append(denom)
+                        row.append(float(value) / denom if denom != 0 else "")
+                yield row
+
+        self.pagination.count = 1000000
+        table = headers().as_export_table
+        table.extend(rows())
+        return [[self.export_sheet_name, table]]
 
 
 class UsersIdsData(SqlData):
