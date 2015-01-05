@@ -257,6 +257,11 @@ COMMCARE_LOGO_UPLOADER = StaticToggle(
     'CommCare logo uploader',
 )
 
+PAGINATE_WEB_USERS = StaticToggle(
+    'paginate_web_users',
+    'Paginate Web Users',
+)
+
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
