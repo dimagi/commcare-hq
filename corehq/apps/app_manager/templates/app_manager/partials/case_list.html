@@ -37,14 +37,14 @@
     <div class="control-group">
         <button class="btn btn-small" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
             <i class="icon icon-plus"></i>
-            Add filter
+            {% trans "Add filter" %}
         </button>
     </div>
 
     <div data-bind="visible: showing">
     <form class="form-inline filter-form">
         <label>
-            Filter
+            {% trans "Filter" %}
         </label>
         <span class="hq-help-template"
             data-title="{% trans "Filter" %}"
@@ -162,7 +162,7 @@
             click: function(data){data.addSortRow('', '', '', true);}"
         >
             <i class="icon icon-plus"></i>
-            Add sort property
+            {% trans "Add sort property" %}
         </button>
     </div>
 
