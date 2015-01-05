@@ -1325,6 +1325,20 @@ class LocationUserMixin(DocumentSchema):
         # if a location doesnt't have a SP
         SupplyPointCase.get_or_create_by_location(location)
 
+        if self.project.supports_multiple_locations_per_user:
+            # TODO is it possible to only remove this
+            # access if it was not previously granted by
+            # the bulk upload?
+
+            # we only add the new one because we don't know
+            # if we can actually remove the old..
+            self.add_location(location)
+        else:
+            # the sane way: for normal domain we just override
+            # the whole case
+            print 'set'
+            self.set_locations([location])
+
         self.location_id = location._id
         self.save()
 
@@ -1428,14 +1442,15 @@ class LocationUserMixin(DocumentSchema):
         # TODO legacy method to be removed/refactored
         from corehq.apps.commtrack.models import SupplyPointCase
 
-        new_locs_set = set([loc._id for loc in locations])
-        old_locs_set = set([loc._id for loc in self.locations])
+        if self.project.supports_multiple_locations_per_user:
+            new_locs_set = set([loc._id for loc in locations])
+            old_locs_set = set([loc._id for loc in self.locations])
 
-        if new_locs_set == old_locs_set:
-            # don't do anything if the list passed is the same
-            # as the users current locations. the check is a little messy
-            # as we can't compare the location objects themself
-            return
+            if new_locs_set == old_locs_set:
+                # don't do anything if the list passed is the same
+                # as the users current locations. the check is a little messy
+                # as we can't compare the location objects themself
+                return
 
         self.clear_locations()
 
@@ -1749,7 +1764,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         groups used to send location data in the restore
         payload.
         """
-        return [self.location.get_group_object(self)._id]
+        if self.location.location_type_object.shares_cases:
+            return [self.location.get_group_object(self)._id]
+        else:
+            return []
 
     def get_owner_ids(self):
         from corehq.apps.groups.models import Group
@@ -1827,7 +1845,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         from corehq.apps.groups.models import Group
         # get faked location group object
         groups = []
-        if self.location:
+        if self.location and self.location.location_type_object.shares_cases:
             groups.append(self.location.get_group_object(self))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]

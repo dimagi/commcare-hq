@@ -9,6 +9,7 @@ import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from mptt.models import MPTTModel, TreeForeignKey
+from corehq.apps.domain.models import Domain
 
 
 class SQLLocation(MPTTModel):
@@ -405,6 +406,13 @@ class Location(CachedCouchDocumentMixin, Document):
         This is also the id that owns supply point cases.
         """
         return 'locationgroup-' + self._id
+
+    @property
+    def location_type_object(self):
+        # TODO i hate couch ok
+        for loc_type in Domain.get_by_name(self.domain).location_types:
+            if loc_type.name == self.location_type:
+                return loc_type
 
 
 def root_locations(domain):

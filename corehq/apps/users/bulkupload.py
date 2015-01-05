@@ -420,6 +420,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         user.email = email
                     if location_code:
                         user.location_id = location_cache.get(location_code)
+                        # TODO set delgate case here
                     user.save()
                     if is_password(password):
                         # Without this line, digest auth doesn't work.

@@ -8,6 +8,7 @@ class LocationType(DocumentSchema):
     code = StringProperty()
     allowed_parents = StringListProperty()
     administrative = BooleanProperty()
+    shares_cases = BooleanProperty()
 
     @classmethod
     def wrap(cls, obj):

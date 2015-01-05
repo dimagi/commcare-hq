@@ -55,9 +55,8 @@
                                 <th>{% trans "Allowed Parent Type" %}</th>
                                 {% if commtrack_enabled %}
                                 <th>{% trans "Tracks Stock" %}</th>
-                                {% else %}
-                                <th>{% trans "Create Cases" %}</th>
                                 {% endif %}
+                                <th>{% trans "Shares Cases" %}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -76,8 +75,13 @@
                                     </select>
                                     <div class="help-inline" data-bind="text: allowed_parents_error"></div>
                                 </td>
+                                {% if commtrack_enabled %}
                                 <td>
                                     <input data-bind="checked: tracks_stock" type="checkbox" />
+                                </td>
+                                {% endif %}
+                                <td>
+                                    <input data-bind="checked: shares_cases" type="checkbox" />
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
