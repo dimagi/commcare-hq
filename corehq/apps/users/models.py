@@ -34,6 +34,7 @@ from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.users.tasks import tag_docs_as_deleted
+from corehq.apps.users.exceptions import InvalidLocationConfig
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
 from corehq.elastic import es_wrapper
 from couchforms.models import XFormInstance
@@ -1327,9 +1328,13 @@ class LocationUserMixin(DocumentSchema):
         self.location_id = location._id
         self.save()
 
-
     @property
     def locations(self):
+        if not self.project.supports_multiple_locations_per_user:
+            raise InvalidLocationConfig(
+                "Attempting to access multiple locations for a user in a domain that does not support this."
+            )
+
         # TODO legacy method to be removed/refactored
         from corehq.apps.locations.models import Location
         from corehq.apps.commtrack.models import SupplyPointCase

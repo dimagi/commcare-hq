@@ -3,6 +3,7 @@ from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
 from corehq.apps.users.models import CommCareUser
 from mock import patch
+from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 
 
 class UserLocMapTest(CommTrackTest):
@@ -18,6 +19,8 @@ class UserLocMapTest(CommTrackTest):
             first_name='test',
             last_name='user'
         )
+
+        MULTIPLE_LOCATIONS_PER_USER.set(self.user.domain, True, NAMESPACE_DOMAIN)
 
         self.loc = make_loc('secondloc')
         self.sp = make_supply_point(self.domain.name, self.loc)
