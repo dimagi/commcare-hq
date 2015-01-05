@@ -59,6 +59,7 @@ class CommTrackSettingsForm(forms.Form):
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
+        from .views import StockLevelsView
         domain = kwargs.pop('domain')
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
@@ -72,8 +73,7 @@ class CommTrackSettingsForm(forms.Form):
                 _('Stock Levels'),
                 ButtonHolder(
                     HTML('<a href="{}" class="btn btn-primary">{}</a>'.format(
-                        # TODO change this to the actual view
-                        reverse('location_import', args=[domain]),
+                        reverse(StockLevelsView.urlname, args=[domain]),
                         _('Configure Stock Levels')))),
             ),
             Fieldset(
@@ -137,3 +137,15 @@ class ConsumptionForm(forms.Form):
                 product._id,
                 val,
             )
+
+
+class StockLevelsForm(forms.Form):
+    """
+    Form for specifying stock levels per location type
+    """
+
+
+class LocationTypeStockLevels(forms.Form):
+    """
+    Sub form for configuring stock levels for a specific location type
+    """

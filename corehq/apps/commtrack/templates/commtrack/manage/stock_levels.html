@@ -1,0 +1,18 @@
+{% extends "settings/base_template.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% block main_column %}
+    <form class="form-horizontal" method="post">
+        <fieldset>
+            <legend>{% trans "Configure Stock Levels Per Location Type" %}</legend>
+            {% crispy stock_levels_form %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    {% trans "Submit" %}
+                </button>
+            </div>
+        </fieldset>
+    </form>
+{% endblock %}

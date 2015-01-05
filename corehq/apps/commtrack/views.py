@@ -264,3 +264,20 @@ class SMSSettingsView(BaseCommTrackManageView):
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)
+
+
+class StockLevelsView(BaseCommTrackManageView):
+    urlname = 'stock_levels'
+    page_title = ugettext_noop("Stock Levels")
+    template_name = 'commtrack/manage/stock_levels.html'
+
+    @property
+    def page_context(self):
+        return {
+            'stock_levels_form': self.stock_levels_form
+        }
+
+    @property
+    @memoized
+    def stock_levels_form(self):
+        return
