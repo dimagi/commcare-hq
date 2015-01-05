@@ -6,7 +6,7 @@
         <div class="accordion-heading accordion-toggle collapsed" data-toggle="collapse" href="#details-list">
             <ul class='breadcrumb'>
                 <i class="icon-double-angle-down"></i>
-                <li>Selected Case:</li>
+                <li>{% trans "Selected Case:" %}</li>
                     <% if (parentCase){ %>
                     <li <% if (childCase == null){ %> class="active" <% } %>>
                         <% if (parentCase.href){ %>
@@ -30,7 +30,7 @@
             <% if (parentCase) { %>
             <table class="table table-striped datatable">
                 <thead>
-                    <tr><th colspan="2">Case Details for parent: <%= parentCase.text %></th></tr>
+                    <tr><th colspan="2">{% trans "Case Details for parent: " %}<%= parentCase.text %></th></tr>
                 </thead>
                 <tbody>
                     <% _.each(parentCase.properties,function(field){ %>
@@ -48,7 +48,7 @@
             <% if (childCase) { %>
             <table class="table table-striped datatable">
                 <thead>
-                    <tr><th colspan="2">Case Details for: <%= childCase.text %></th></tr>
+                    <tr><th colspan="2">{% trans "Case Details for: " %}<%= childCase.text %></th></tr>
                 </thead>
                 <tbody>
                     <% _.each(childCase.properties,function(field){ %>
