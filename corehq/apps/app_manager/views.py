@@ -1146,6 +1146,12 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         ))
         return back_to_main(req, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
+
+    vellum_features = toggles.toggles_dict(username=req.user.username,
+                                           domain=domain)
+    vellum_features.update({
+        'group_in_field_list': app.enable_group_in_field_list
+    })
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
@@ -1156,8 +1162,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': req.COOKIES.get('sessionid'),
-        'features': toggles.toggles_dict(username=req.user.username,
-                                         domain=domain)
+        'features': vellum_features
     })
     return render(req, 'app_manager/form_designer.html', context)
 
