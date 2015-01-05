@@ -137,3 +137,19 @@ def can_add_extra_mobile_workers(request):
         if account is None or account.date_confirmed_extra_charges is None:
             return False
     return True
+
+
+def smart_query_string(query):
+    """
+    If query does not use the ES query string syntax,
+    default to doing an infix search for each term.
+    returns (is_simple, query)
+    """
+    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
+                     '~', '*', '?', ':', '\\', '/']
+    for char in special_chars:
+        if char in query:
+            return False, query
+    r = re.compile(r'\w+')
+    tokens = r.findall(query)
+    return True, "*{}*".format("* *".join(tokens))
