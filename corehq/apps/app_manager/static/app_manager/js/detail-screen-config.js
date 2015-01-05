@@ -333,7 +333,7 @@ var DetailScreenConfig = (function () {
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
 
             // Make it possible to observe changes to this.field :
-            this.field.observableVal = ko.observable("");
+            this.field.observableVal = ko.observable(this.field.val());
             this.field.on("change", function(){
                 that.field.observableVal(that.field.val());
             });
