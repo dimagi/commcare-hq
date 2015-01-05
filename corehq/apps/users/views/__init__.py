@@ -4,7 +4,8 @@ import re
 import urllib
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq import Domain, privileges
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from corehq import Domain, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import BadSMSConfigException
@@ -13,6 +14,8 @@ from corehq.apps.style.decorators import (
     use_knockout_js,
 )
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
+from corehq.apps.users.util import smart_query_string
+from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
@@ -359,7 +362,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
-class NewListWebUsersView(BaseUserSettingsView):
+class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.b3.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users_b3'
@@ -370,6 +373,30 @@ class NewListWebUsersView(BaseUserSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(NewListWebUsersView, self).dispatch(request, *args, **kwargs)
 
+    def query_es(self, limit, skip, query=None):
+        is_simple, query = smart_query_string(query or '')
+
+        web_user_filter = [
+            {"term": {"user.domain_memberships.domain": self.domain}},
+        ]
+        web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
+
+        default_fields = ["username", "last_name", "first_name"]
+        q = {
+            "query": {"query_string": {
+                "query": query,
+                "default_operator": "AND",
+                "fields": default_fields if is_simple else None
+            }},
+            "filter": {"and": web_user_filter},
+            "sort": {'username.exact': 'asc'},
+        }
+        return es_query(
+            params={}, q=q, es_url=ES_URLS["users"],
+            size=limit, start_at=skip,
+        )
+
+    def apply_teams_to_users(self, web_users):
         teams = Team.get_by_domain(self.domain)
         for team in teams:
             for user in team.get_members():
@@ -378,6 +405,57 @@ class NewListWebUsersView(BaseUserSettingsView):
                     web_users.append(user)
         for user in web_users:
             user.current_domain = self.domain
+
+    @allow_remote_invocation
+    def get_users(self, in_data):
+        if not isinstance(in_data, dict):
+            return {
+                'success': False,
+                'error': _("Please provide pagination info."),
+            }
+        try:
+            limit = in_data.get('limit', 10)
+            page = in_data.get('page', 1)
+            skip = limit * (page - 1)
+            query = in_data.get('query')
+
+            web_users_query = self.query_es(limit, skip, query=query)
+            total = web_users_query.get('hits', {}).get('total', 0)
+            results = web_users_query.get('hits', {}).get('hits', [])
+
+            web_users = [WebUser.wrap(w['_source']) for w in results]
+            self.apply_teams_to_users(web_users)  # for roles
+
+            def _fmt_result(domain, u):
+                return {
+                    'email': u.email,
+                    'domain': domain,
+                    'name': u.full_name,
+                    'role': u.role_label(),
+                    'phoneNumbers': u.phone_numbers,
+                    'id': u.get_id,
+                    'editUrl': reverse('user_account', args=[domain, u.get_id]),
+                    'removeUrl': (
+                        reverse('remove_web_user', args=[domain, u.user_id])
+                        if self.request.user.username != u.username else None
+                    ),
+                }
+            web_users_fmt = [_fmt_result(self.domain, u) for u in web_users]
+
+            return {
+                'response': {
+                    'users': web_users_fmt,
+                    'total': total,
+                    'page': page,
+                    'query': query,
+                },
+                'success': True,
+            }
+        except Exception as e:
+            return {
+                'error': e.message,
+                'success': False,
+            }
 
     @property
     @memoized
