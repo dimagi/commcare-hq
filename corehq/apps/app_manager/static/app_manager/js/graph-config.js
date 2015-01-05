@@ -370,7 +370,7 @@ var GraphViewModel = function(moduleOptions){
         }));
 
         self.childCaseTypes = obj.childCaseTypes.slice(0);
-        self.fixtures = obj.fixtures.slice(0)
+        self.fixtures = obj.fixtures.slice(0);
     };
 
     self.removeSeries = function (series){
