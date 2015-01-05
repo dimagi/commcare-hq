@@ -147,7 +147,12 @@ class OPMCaseRow(object):
             if not self.edd:
                 raise InvalidRow('No edd found for pregnant mother.')
             base_window_start = add_months_to_date(self.edd, -9)
-            non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+            try:
+                non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+            except AssertionError:
+                raise InvalidRow('Mother LMP ({}) was after the reporting window date ({})'.format(
+                    base_window_start, self.reporting_window_start
+                ))
 
             # the date to check one month after they first become eligible,
             # aka the end of their fourth month of pregnancy
