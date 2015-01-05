@@ -131,8 +131,10 @@
             using the CommCare Application.
         {% endblocktrans %}
         <div class="btn-toolbar">
-            <a class="btn btn-success" href="{% url "invite_web_user" domain %}">
-                <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}</a>
+            <a class="btn btn-success"
+               href="{% url "invite_web_user" domain %}">
+                <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
+            </a>
         </div>
     </p>
     <div ng-app="usersApp">
