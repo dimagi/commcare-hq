@@ -9,10 +9,11 @@ from unittest import skip
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from couchdbkit import ResourceNotFound
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError
-from custom.dhis2.tasks import sync_child_entities, DOMAIN, sync_org_units
-
+from custom.dhis2.tasks import sync_child_entities, DOMAIN, sync_org_units, mark_as_processed, \
+    gen_unprocessed_growth_monitoring_forms, is_at_risk
 from django.test import TestCase
 from mock import patch, Mock
+from couchforms.models import XFormInstance
 
 
 @contextmanager
@@ -49,6 +50,13 @@ def response_context():
     response_mock.status_code = 200
     response_mock.json.return_value = {'spam': True}
     yield response_mock
+
+
+@contextmanager
+def form_context():
+    # TODO: Do stuff here
+    form = XFormInstance()
+    yield form
 
 
 class JsonApiRequestTest(TestCase):
@@ -274,20 +282,6 @@ class TaskTest(TestCase):
 
             delete_mock.assert_called()
 
-    @skip('Finish writing this test')
-    def test_push_child_entities(self):
-        """
-        push_child_entities should call the DHIS2 API for applicable child entities
-        """
-        pass
-
-    @skip('Finish writing this test')
-    def test_pull_child_entities(self):
-        """
-        pull_child_entities should fetch applicable child entities from the DHIS2 API
-        """
-        pass
-
     def test_sync_child_entities(self):
         with patch('custom.dhis2.tasks.get_children_only_theirs') as only_theirs_mock, \
                 patch('custom.dhis2.tasks.pull_child_entities') as pull_mock, \
@@ -311,3 +305,90 @@ class TaskTest(TestCase):
         send_nutrition_data should update DHIS2 with received nutrition data
         """
         pass
+
+
+class UtilTest(TestCase):
+
+    @skip('Finish writing this test')
+    def test_push_child_entities(self):
+        """
+        push_child_entities should call the DHIS2 API for applicable child entities
+        """
+        pass
+
+    @skip('Finish writing this test')
+    def test_pull_child_entities(self):
+        """
+        pull_child_entities should fetch applicable child entities from the DHIS2 API
+        """
+        pass
+
+    @skip('Finish writing this test')
+    def test_is_at_risk(self):
+        """
+        (For now) is_at_risk should just return True
+        """
+        self.assertTrue(is_at_risk(None))
+
+    @skip('Finish writing this test')
+    def test_get_user_by_org_unit(self):
+        pass
+
+    @skip('Finish writing this test')
+    def test_get_case_by_external_id(self):
+        pass
+
+    @skip('Finish writing this test')
+    def test_gen_children_only_ours(self):
+        pass
+
+    @skip('Finish writing this test')
+    def test_gen_unprocessed_growth_monitoring_forms(self):
+
+        # def get_unprocessed_growth_monitoring_forms():
+        #     query = FormES().filter({
+        #         # dhis2_te_inst_id indicates that the case has been enrolled in both
+        #         # programs by push_child_entities()
+        #         'not': {'dhis2_te_inst_id': None}
+        #     }).filter({
+        #         # and it must not have been processed before
+        #         'dhis2_processed': None
+        #     })
+        #     result = query.run()
+        #     if result.total:
+        #         for doc in result.hits:
+        #             yield XFormInstance.wrap(doc)
+
+        prepopulated = [{'foo': True}]
+        # TODO: Prepopulate
+        forms = gen_unprocessed_growth_monitoring_forms()
+        assert forms == prepopulated
+
+    def test_mark_as_processed(self):
+        """
+        mark_as_processed should set form field dhis2_processed as True and save
+        """
+        class Form(object):
+            def __init__(self):
+                self.form = {}
+                self.save = Mock()
+        forms = [Form(), Form(), Form()]
+
+        mark_as_processed(forms)
+
+        for form in forms:
+            self.assertTrue(form.form['dhis2_processed'])
+            form.save.assert_called()
+
+    @skip('Finish writing this test')
+    def test_get_unprocessed_and_mark(self):
+        """
+        test_get_unprocessed_growth_monitoring_forms should not return marked forms
+        """
+        # TODO: Prepopulate
+        forms1 = [f for f in gen_unprocessed_growth_monitoring_forms()]
+        mark_as_processed([forms1[0]])
+        forms2 = [f for f in gen_unprocessed_growth_monitoring_forms()]
+        # TODO: assert forms1[0] not in forms2
+        # For now:
+        self.assertEqual(len(forms1), len(forms2) + 1)
