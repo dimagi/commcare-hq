@@ -204,7 +204,7 @@ def get_stock_transaction(domain, endpoint, facilities, **kwargs):
         sync_stock_transaction(domain, endpoint, facility, xform, **kwargs)
 
 
-def sync_supply_point_status(domain, endpoint, facility, checkpoint, start_date, date, limit=100, offset=0):
+def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
     has_next = True
     next_url = ""
 
@@ -220,8 +220,7 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, start_date,
         save_stock_data_checkpoint(checkpoint,
                                    'supply_point_status',
                                    meta.get('limit') or limit,
-                                   meta.get('offset') or offset,
-                                   start_date, facility, True)
+                                   meta.get('offset') or offset, date, facility, True)
         for sps in supply_point_statuses:
             try:
                 SupplyPointStatus.objects.get(external_id=sps.external_id)
@@ -239,7 +238,7 @@ def get_supply_point_statuses(domain, endpoint, facilities, **kwargs):
         sync_supply_point_status(domain, endpoint, facility, **kwargs)
 
 
-def sync_delivery_group_report(domain, endpoint, facility, checkpoint, start_date, date, limit=100, offset=0):
+def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
     has_next = True
     next_url = ""
     while has_next:
@@ -252,7 +251,7 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, start_dat
                                    'delivery_group',
                                    meta.get('limit') or limit,
                                    meta.get('offset') or offset,
-                                   start_date, facility, True)
+                                   date, facility, True)
         for dgr in delivery_group_reports:
             try:
                 DeliveryGroupReport.objects.get(external_id=dgr.external_id)
