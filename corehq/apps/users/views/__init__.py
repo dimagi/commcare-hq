@@ -435,7 +435,7 @@ class NewListWebUsersView(BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
-            'domain_object': self.domain_object
+            'domain_object': self.domain_object,
         }
 
 
