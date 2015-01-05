@@ -370,10 +370,6 @@ class NewListWebUsersView(BaseUserSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(NewListWebUsersView, self).dispatch(request, *args, **kwargs)
 
-    @property
-    @memoized
-    def web_users(self):
-        web_users = WebUser.by_domain(self.domain)
         teams = Team.get_by_domain(self.domain)
         for team in teams:
             for user in team.get_members():
@@ -382,8 +378,6 @@ class NewListWebUsersView(BaseUserSettingsView):
                     web_users.append(user)
         for user in web_users:
             user.current_domain = self.domain
-        web_users.sort(key=lambda x: (x.role_label(), x.email))
-        return web_users
 
     @property
     @memoized
@@ -429,7 +423,6 @@ class NewListWebUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'web_users': self.web_users,
             'user_roles': self.user_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
