@@ -20,12 +20,38 @@ from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
 
 # TODO: Move to init
 DOMAIN = 'wv-lanka'
-DATA_ELEMENT_NAMES = {   # CCHQ form field names : DHIS2 project data element names
-    # We could map to IDs, which would save an API request, but would reduce readability.
-    'height': 'Height',
-    'weight': 'Weight',
-    'age': 'Age at time of visit',
-    'bmi': 'Body-mass index',
+TOP_ORG_UNIT = 'Fermathe Clinic'
+DATA_ELEMENT_NAMES = {
+    # CCHQ field names : DHIS2 data element names
+
+    # DHIS2 Program: Paediatric Nutrition Assessment
+    # CCHQ Case Type: child_gmp
+    'child_first_name': 'First Name',
+    'child_hh_name': 'Last Name',
+    'dob': 'Date of Birth',
+    'child_gender': 'Gender',
+    # '?': 'CHDR Number',
+    'mother_first_name': 'Name of Mother/Guardian',
+    'mother_phone_number': 'Mobile Number of Mother',
+    'street_name': 'Address',
+
+    # DHIS2 Event: Nutrition Assessment
+    # CCHQ Form: Growth Monitoring
+    'date_of_visit': 'Event Date',
+    'child_age_months': 'Age at Follow Up Visit (months)',
+    'child_height_rounded': 'Height (cm)',
+    'child_weight': 'Weight (kg)',
+    'bmi': 'Body Mass Index',
+
+    # DHIS2 Program: Underlying Risk Assessment
+    # CCHQ Case Type: child_gmp
+    'mother_id': 'Household Number',
+    # 'mother_first_name': 'Name of Mother/Guardian',
+    # '?': 'GN Division of Household',
+
+    # DHIS2 Event: Underlying Risk Assessment
+    # CCHQ Form: ?
+    # '': '',
 }
 
 
@@ -288,7 +314,7 @@ def send_nutrition_data():
     nutrition_id = dhis2_api.get_program_id('Pediatric Nutrition Assessment')
     forms = []
     events = {'eventList': []}
-    for form in get_unprocessed_growth_monitoring_forms():
+    for form in gen_unprocessed_growth_monitoring_forms():
         forms.append(form)
         event = dhis2_api.form_to_event(nutrition_id, form.form, DATA_ELEMENT_NAMES)
         events['eventList'].append(event)
@@ -296,14 +322,14 @@ def send_nutrition_data():
     mark_as_processed(forms)
 
 
-def get_unprocessed_growth_monitoring_forms():
+def gen_unprocessed_growth_monitoring_forms():
     query = FormES().filter({
         # dhis2_te_inst_id indicates that the case has been enrolled in both
         # programs by push_child_entities()
-        'not': {'dhis2_te_inst_id': None}
+        'not': {'term': {'dhis2_te_inst_id': ''}}
     }).filter({
         # and it must not have been processed before
-        'dhis2_processed': None
+        'term': {'dhis2_processed': ''}
     })
     result = query.run()
     if result.total:
