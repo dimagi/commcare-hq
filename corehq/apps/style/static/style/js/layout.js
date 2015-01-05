@@ -97,5 +97,6 @@ $(window).resize(function () {
 });
 
 $(window).scroll(function () {
+    hqLayout.actions.balanceSidebar();
     hqLayout.actions.recheckFooterStatus();
 });
