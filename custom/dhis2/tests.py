@@ -53,10 +53,31 @@ def response_context():
 
 
 @contextmanager
-def form_context():
-    # TODO: Do stuff here
-    form = XFormInstance()
-    yield form
+def growth_monitoring_forms_context():
+    forms_data = [
+        {
+            'child_first_name': 'Foo',
+            'dhis2_te_inst_id': '',  # Not enrolled
+            'dhis2_processed': ''  # Not processed
+        },
+        {
+            'child_first_name': 'Bar',
+            'dhis2_te_inst_id': '123',  # Enrolled
+            'dhis2_processed': ''  # Not processed
+
+        },
+        {
+            'child_first_name': 'Baz',
+            'dhis2_te_inst_id': '456',  # Enrolled
+            'dhis2_processed': ''  # Not processed
+        }
+    ]
+    forms = []
+    for data in forms_data:
+        form = XFormInstance(domain=DOMAIN, form=data)
+        form.save()
+        forms.append(form)
+    yield forms
 
 
 class JsonApiRequestTest(TestCase):
@@ -342,27 +363,23 @@ class UtilTest(TestCase):
     def test_gen_children_only_ours(self):
         pass
 
-    @skip('Finish writing this test')
     def test_gen_unprocessed_growth_monitoring_forms(self):
+        """
+        gen_unprocessed_growth_monitoring_forms should return unprocessed forms
+        """
+        is_unprocessed = lambda f: f.form['dhis2_te_inst_id'] and not f.form['dhis2_processed']
 
-        # def get_unprocessed_growth_monitoring_forms():
-        #     query = FormES().filter({
-        #         # dhis2_te_inst_id indicates that the case has been enrolled in both
-        #         # programs by push_child_entities()
-        #         'not': {'dhis2_te_inst_id': None}
-        #     }).filter({
-        #         # and it must not have been processed before
-        #         'dhis2_processed': None
-        #     })
-        #     result = query.run()
-        #     if result.total:
-        #         for doc in result.hits:
-        #             yield XFormInstance.wrap(doc)
-
-        prepopulated = [{'foo': True}]
-        # TODO: Prepopulate
-        forms = gen_unprocessed_growth_monitoring_forms()
-        assert forms == prepopulated
+        with growth_monitoring_forms_context() as prepopulated:
+            i = 0
+            forms = gen_unprocessed_growth_monitoring_forms()
+            for form in forms:
+                i += 1
+                # Assert that all returned forms are unprocessed
+                self.assertTrue(is_unprocessed(form))
+                # Assert that all returned forms are among the prepopulated context
+                self.assertTrue(any(p.form['child_first_name'] == form.form['child_first_name']
+                                    for p in prepopulated))
+            self.assertTrue(i > 0, 'gen_unprocessed_growth_monitoring_forms did not return unprocessed forms')
 
     def test_mark_as_processed(self):
         """
@@ -380,15 +397,15 @@ class UtilTest(TestCase):
             self.assertTrue(form.form['dhis2_processed'])
             form.save.assert_called()
 
-    @skip('Finish writing this test')
     def test_get_unprocessed_and_mark(self):
         """
         test_get_unprocessed_growth_monitoring_forms should not return marked forms
         """
-        # TODO: Prepopulate
-        forms1 = [f for f in gen_unprocessed_growth_monitoring_forms()]
-        mark_as_processed([forms1[0]])
-        forms2 = [f for f in gen_unprocessed_growth_monitoring_forms()]
-        # TODO: assert forms1[0] not in forms2
-        # For now:
-        self.assertEqual(len(forms1), len(forms2) + 1)
+        with growth_monitoring_forms_context():
+            forms1 = [f for f in gen_unprocessed_growth_monitoring_forms()]
+            self.assertTrue(len(forms1), 'gen_unprocessed_growth_monitoring_forms returned no forms')
+            forms1_1 = forms1[0]
+            mark_as_processed([forms1_1])
+            forms2 = [f for f in gen_unprocessed_growth_monitoring_forms()]
+            # Assert forms1_1 not in forms2
+            self.assertFalse(any(f.form['child_first_name'] == forms1_1.form['child_first_name'] for f in forms2))
