@@ -33,7 +33,7 @@
         $scope.query = '';
 
         $scope.error = null;
-        $scope.initialLoad = false;
+        $scope.notLoaded = true;
 
         self.retries = 0;
 
@@ -45,8 +45,8 @@
                 $scope.total = data.response.total;
                 $scope.currentPage = data.response.page;
                 $scope.query = data.response.query;
-                if (!$scope.initialLoad) {
-                    $scope.initialLoad = true;
+                if ($scope.notLoaded) {
+                    $scope.notLoaded = false;
                 }
             }
         };

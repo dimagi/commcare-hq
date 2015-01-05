@@ -167,8 +167,6 @@
                     <thead>
                         <tr>
                             <th>{% trans "E-mail" %}</th>
-                            {% block extra_headers %}
-                            {% endblock %}
                             <th>{% trans "Role" %}</th>
                             <th>{% trans "Name" %}</th>
                             <th>{% trans "Phone Numbers" %}</th>
@@ -176,6 +174,9 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <tr ng-show="notLoaded">
+                            <td colspan="5">{% trans "Loading Users..." %}</td>
+                        </tr>
                         <tr ng-repeat="user in paginatedItems">
                             {% angularjs %}
                             <td><a href="{{ user.editUrl }}">{{ user.email }}</a></td>
