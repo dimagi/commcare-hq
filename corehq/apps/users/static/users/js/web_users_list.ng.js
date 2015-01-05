@@ -9,10 +9,6 @@
         'ng.django.rmi'
     ]);
 
-    users.constant('webUsersConfig', {
-
-    });
-
     var WebUser = function (data) {
         var self = {};
         self.email = data.email;

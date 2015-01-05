@@ -22,9 +22,6 @@
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
-    usersApp.constant('dashboardConfig', {
-        staticRoot: '{{ STATIC_URL }}'
-    });
 }(window.angular));
 </script>
 <script>
