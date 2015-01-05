@@ -51,14 +51,27 @@
 </script>
 <script>
     $(function () {
-        $('#save_restrict_option').click(function() {
+        $('#restrict_users').on('change', function () {
+            var $saveButton = $('#save_restrict_option');
+            $saveButton
+                    .removeAttr('disabled')
+                    .removeClass('disabled btn-default')
+                    .addClass('btn-success')
+                    .text('{% trans "Save" %}');
+        });
+        $('#save_restrict_option').click(function(e) {
             var post_url = '{% url "location_restriction_for_users" domain %}';
             $(this).text('Saving ...');
             $.post(post_url,
                 {restrict_users: $('#restrict_users')[0].checked},
                 function(data, status) {
-                    $('#save_restrict_option').text('Saved');
-            })
+                    $('#save_restrict_option')
+                            .text('{% trans "Saved" %}')
+                            .removeClass('btn-success')
+                            .attr('disabled', 'disabled')
+                            .addClass('disabled btn-default');
+            });
+            e.preventDefault();
         });
 
         $('.resend-invite').click(function (e) {
@@ -159,23 +172,25 @@
                         max-size="maxSize"
                         ng-model="currentPage"
                         ng-change="pageChanged()"></pagination>
+                {% if domain_object.commtrack_enabled %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox"
+                                   id="restrict_users"
+                                   name="restrict_users"
+                                   value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}/>
+                            {% trans "Restrict Web User access based on location" %}
+                        </label>
+                        <button type="button"
+                                class="btn btn-sm btn-default disabled"
+                                id="save_restrict_option">
+                            {% trans "Saved" %}
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
-
-    {% if domain_object.commtrack_enabled %}
-        <label class="checkbox">
-            <input id="restrict_users"
-                   type="checkbox"
-                   name="restrict_users"
-                   value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}>
-            {% trans "Restrict Web User access based on location" %}
-            <button type="button"
-                    class="btn btn-success"
-                    id="save_restrict_option">
-                {% trans "Save" %}
-            </button>
-        </label>
-    {% endif %}
 
     {% if invitations %}
         <div class="panel panel-info">
