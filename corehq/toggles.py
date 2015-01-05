@@ -262,3 +262,9 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     "Don't fail hard on missing or deleted sync tokens.",
     [NAMESPACE_DOMAIN]
 )
+
+CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
+    'case_details_in_cloudcare_forms',
+    'Shows case-details of the selected case if a form uses Case Management',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
