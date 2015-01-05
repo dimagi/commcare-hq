@@ -63,7 +63,8 @@ def months_between(start, end):
     the year and month of the start date, and the last one being
     the year and month of the end date.
     """
-    assert datetime.date(start.year, start.month, 1) <= datetime.date(end.year, end.month, 1)
+    assert datetime.date(start.year, start.month, 1) <= datetime.date(end.year, end.month, 1), \
+        'start date {} was later than end date {}!'.format(start, end)
     months = []
     date_type = type(start)
     while start <= end:
