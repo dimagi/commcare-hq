@@ -962,7 +962,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     # update multimedia context for forms and modules.
     menu_host = form or module
-    if menu_host and toggles.MENU_MULTIMEDIA_UPLOAD.enabled(req.user.username):
+    if menu_host:
 
         default_file_name = 'module%s' % module_id
         if form_id:
@@ -1002,7 +1002,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
 
-    if app:
+    if app and app.doc_type == 'Application':
         uploader_slugs = [
             "hq_logo_android",
             "hq_logo_java",

@@ -39,7 +39,9 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
-    <a data-toggle="modal" data-bind="
+    <a data-toggle="modal"
+       class="btn btn-default"
+       data-bind="
         attr: {
             'data-hqmediapath': path,
             href: href
@@ -48,12 +50,7 @@
         event: {
             mediaUploadComplete: uploadComplete
         }
-    ">{% trans "Upload" %}</a>
-    {% for uploader in uploaders %}
-        <div data-bind="if: is_uploader('{{ uploader.slug }}')">
-            {% include 'hqmedia/partials/multimedia_uploader.html' %}
-        </div>
-    {% endfor %}
+    "><i class="icon-plus"></i> {% trans "Add Logo" %}</a>
 </script>
 
 {% include 'hqmedia/partials/multimedia_js.html' %}

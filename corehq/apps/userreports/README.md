@@ -147,6 +147,7 @@ This is equivalent to the python statement: `doc["age"] > 21`
 #### Operators
 
 The following operators are currently supported:
+
 Operator   | Description  | Value type | Example
 ---------- | -----------  | ---------- | -------
 `eq`       | is equal     | constant   | `doc["age"] == 21`
@@ -278,6 +279,18 @@ A typical data source will include many indicators (data that will later be incl
 
 The overall set of possible indicators is theoretically any function that can take in a single document (form or case) and output a value. However the set of indicators that are configurable is more limited than that.
 
+### Indicator Properties
+
+All indicator definitions have the following properties:
+
+Property        | Description
+--------------- | -----------
+type            | A specified type for the indicator. It must be one of the types listed below.
+column_id       | The database column where the indicator will be saved.
+display_name    | A display name for the indicator (not widely used, currently).
+
+Additionally, specific indicator types have other type-specific properties. These are covered below.
+
 ### Indicator types
 
 The following primary indicator types are supported:
@@ -292,10 +305,40 @@ choice_list    | Save multiple columns, one for each of a predefined set of choi
 
 #### Boolean indicators
 
-Now we see again the power of our filter framework defined above! Boolean indicators take any arbitrarily complicated filter expression and save a `1` to the database if the expression is true, otherwise a `0`.
+Now we see again the power of our filter framework defined above! Boolean indicators take any arbitrarily complicated filter expression and save a `1` to the database if the expression is true, otherwise a `0`.  Here is an example boolean indicator which will save `1` if a form has a question with ID `is_pregnant` with a value of `"yes"`:
+
+```
+{
+    "type": "boolean",
+    "column_id": "col",
+    "filter": {
+	    "type": "boolean_expression",
+	    "expression": {
+	        "type": "property_path",
+	        "property_path": ["form", "is_pregnant"],
+	    },
+	    "operator": "eq",
+	    "property_value": "yes"
+	}
+}
+```
+
+#### Expression indicators
+
+Similar to the boolean indicators - expression indicators leverage the expression structure defined above to create arbitrarily complex indicators. Expressions can store arbitrary values from documents (as opposed to boolean indicators which just store `0`'s and `1`'s). Because of this they require a few additional properties in the definition:
+
+Property        | Description
+--------------- | -----------
+datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", and "integer".
+is_nullable     | todo
+is_primary_key  | todo
+expression      | todo
+
 
 ### Practical notes for creating indicators
-'
+
+These are some practical notes for how to choose what indicators to create.
+
 #### Fractions
 
 All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.

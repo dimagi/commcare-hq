@@ -8,7 +8,7 @@
     {% if app.get_doc_type == "Application" %}
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -338,4 +338,10 @@
             </form>
         </div>
     </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+{% for uploader in uploaders %}
+{% include 'hqmedia/partials/multimedia_uploader.html' %}
+{% endfor %}
 {% endblock %}

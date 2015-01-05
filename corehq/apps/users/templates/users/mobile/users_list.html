@@ -42,6 +42,12 @@
             });
         });
     </script>
+    <script>
+        $(document).ready(function() {
+            gaTrackLink($('#add_new_mobile_worker'), 'Manage Mobile Worker', 'New Mobile Worker');
+            gaTrackLink($('#bulk_upload'), 'Manage Mobile Worker', 'Bulk Upload');
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
@@ -135,13 +141,13 @@
             {% endif %}
             <div class="btn-toolbar">
                 {% if can_add_extra_users %}
-                <a class="btn btn-success" href="{% url "add_commcare_account" domain %}">
+                <a id="add_new_mobile_worker" class="btn btn-success" href="{% url "add_commcare_account" domain %}">
                     <i class="icon icon-white icon-plus"></i> {% trans "New Mobile Worker" %}
                 </a>
                 {% endif %}
                 {% if can_bulk_edit_users %}
                     {% trans "or" %}
-                    <a class="btn" href="{% url "upload_commcare_users" domain %}">
+                    <a id="bulk_upload" class="btn" href="{% url "upload_commcare_users" domain %}">
                         {% trans "Bulk Upload" %}
                     </a>
                 {% endif %}
@@ -241,7 +247,11 @@
                         <td data-bind="visible: !archive_action_complete">
                             <a href="#" data-toggle="modal"
                                 class="btn {% if not show_inactive %}btn-inverse{% endif %}"
-                                data-bind="text: archive_action_text, attr: {href: '#'+user_id}"></a>
+                                data-bind="
+                                    attr: {href: '#'+user_id},
+                                    click: function() { ga_track_event('Manage Mobile Workers', archive_action_text, user_id); },
+                                    text: archive_action_text
+                                "></a>
                         
                             <div class="modal hide fade" data-bind="attr: {id: user_id}">
                                 <div class="modal-header">

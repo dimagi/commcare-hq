@@ -317,7 +317,7 @@ class CaseUpdate(object):
     def from_v2(cls, case_block):
         """
         Gets a case update from a version 2 case. 
-        Spec: https://bitbucket.org/commcare/commcare/wiki/casexml20
+        Spec: https://github.com/dimagi/commcare/wiki/casexml20
         """
         
         def _to_attr(val):
