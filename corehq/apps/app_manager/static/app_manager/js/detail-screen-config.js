@@ -331,6 +331,13 @@ var DetailScreenConfig = (function () {
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
+
+            // Make it possible to observe changes to this.field :
+            this.field.observableVal = ko.observable("");
+            this.field.on("change", function(){
+                that.field.observableVal(that.field.val());
+            });
+
             this.format_warning = DetailScreenConfig.field_format_warning.clone().hide();
 
             (function () {
