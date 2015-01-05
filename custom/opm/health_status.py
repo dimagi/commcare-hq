@@ -111,6 +111,10 @@ class AWCHealthStatus(object):
         _("Number of beneficiaries eligilble for monthly cash payment on "
           "absence of services at VHND in the last month."),
          'beneficiaries'),
+        ('eligible',
+         _("Total Eligible For Payment"),
+        _("Number of beneficiaries eligilble for monthly cash payment."),
+         'beneficiaries'),
         ('total_payment',
          _("Total Payment"),
         _("Total Monthly cash payment made to beneficiaries"),
@@ -220,14 +224,20 @@ class AWCHealthStatus(object):
         return sum([c.num_children for c in self.primary_cases])
 
     @property
+    @memoized
     def eligible_by_fulfillment(self):
         return len([c for c in self.all_cases
                     if c.vhnd_available and c.all_conditions_met])
 
     @property
+    @memoized
     def eligible_by_default(self):
         return len([c for c in self.all_cases
                     if not c.vhnd_available and c.all_conditions_met])
+
+    @property
+    def eligible(self):
+        return self.eligible_by_default + self.eligible_by_fulfillment
 
     @property
     def total_payment(self):
