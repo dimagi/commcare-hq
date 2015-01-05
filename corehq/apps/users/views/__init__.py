@@ -110,7 +110,10 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
                 if user.has_permission(self.domain, 'edit_commcare_users'):
                     redirect = reverse("commcare_users", args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
-                    redirect = reverse(ListWebUsersView.urlname, args=[self.domain])
+                    redirect = reverse(
+                        get_web_user_list_view(self.request).urlname,
+                        args=[self.domain]
+                    )
         return redirect
 
     def get(self, request, *args, **kwargs):
@@ -130,9 +133,10 @@ class BaseEditUserView(BaseUserSettingsView):
 
     @property
     def parent_pages(self):
+        list_view = get_web_user_list_view(self.request)
         return [{
-            'title': ListWebUsersView.page_title,
-            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'title': list_view.page_title,
+            'url': reverse(list_view.urlname, args=[self.domain]),
         }]
 
     @property
@@ -605,7 +609,9 @@ def remove_web_user(request, domain, couch_user_id):
             username=user.username,
             url=reverse('undo_remove_web_user', args=[domain, record.get_id])
         ), extra_tags="html")
-    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
+
+    return HttpResponseRedirect(
+        reverse(get_web_user_list_view(request).urlname, args=[domain]))
 
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
@@ -614,7 +620,9 @@ def undo_remove_web_user(request, domain, record_id):
     messages.success(request, 'You have successfully restored {username}.'.format(
         username=WebUser.get_by_user_id(record.user_id).username
     ))
-    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
+
+    return HttpResponseRedirect(
+        reverse(get_web_user_list_view(request).urlname, args=[domain]))
 
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
@@ -725,9 +733,10 @@ class BaseManageWebUserView(BaseUserSettingsView):
 
     @property
     def parent_pages(self):
+        list_view = get_web_user_list_view(self.request)
         return [{
-            'title': ListWebUsersView.page_title,
-            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'title': list_view.page_title,
+            'url': reverse(list_view.urlname, args=[self.domain]),
         }]
 
 
@@ -768,7 +777,10 @@ class InviteWebUserView(BaseManageWebUserView):
             invite.save()
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)
-            return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[self.domain]))
+            return HttpResponseRedirect(reverse(
+                get_web_user_list_view(self.request).urlname,
+                args=[self.domain]
+            ))
         return self.get(request, *args, **kwargs)
 
 
