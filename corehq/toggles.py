@@ -281,3 +281,9 @@ CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
     'Display details of the selected case on top in CloudCare if a form uses Case Management',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+LOCATION_TYPE_STOCK_RATES = StaticToggle(
+    'location_type_stock_rates',
+    "Specify stock rates per location type.",
+    [NAMESPACE_DOMAIN]
+)
