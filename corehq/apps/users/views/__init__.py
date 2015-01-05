@@ -515,6 +515,12 @@ class ListWebUsersView(BaseUserSettingsView):
         }
 
 
+def get_web_user_list_view(request):
+    if toggles.PAGINATE_WEB_USERS.enabled(request.couch_user.username):
+        return NewListWebUsersView
+    return ListWebUsersView
+
+
 @require_can_edit_web_users
 @require_POST
 def remove_web_user(request, domain, couch_user_id):
