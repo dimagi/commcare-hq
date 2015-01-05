@@ -302,7 +302,20 @@ var DetailScreenConfig = (function () {
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
+
+            // Make it possible to observe changes to this.field
+            // note that observableVal is read only!
+            // Writing to it will not update the value of the this.field text input
+            this.field.observableVal = ko.observable(this.field.val());
+            this.field.on("change", function(){
+                that.field.observableVal(that.field.val());
+            });
+
             this.format_warning = DetailScreenConfig.field_format_warning.clone().hide();
+            this.showWarning = ko.computed(function() {
+                // True if an invalid property name warning should be displayed.
+                return this.field.observableVal() && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
+            }, this);
 
             (function () {
                 var i, lang, visibleVal = "", invisibleVal = "";
