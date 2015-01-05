@@ -443,7 +443,6 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
         } else if (source.type == 'case') {
             return "instance('casedb')/casedb/case[@case_type='"+source.name+"'][index/parent=current()/@case_id][@status='open']";
         } else if (source.type == 'fixture') {
-            // TODO: Does the table name need to be escaped? I imagine spaces would be an issue.
             return "instance('" + self.getFixtureInstanceId(source.name) + "')/tablename_list/" + source.name;
         }
     };
