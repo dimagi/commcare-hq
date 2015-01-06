@@ -35,11 +35,15 @@ var ExportManager = function (o) {
             else
                 $title.attr('style', '');
         },
+        /**
+         * params should have two keys: data, and xmlns.
+         * @param params
+         */
         updateModal = function(params) {
             var autoRefresh = '';
             var pollDownloader = function () {
-                if ($('#ready_'+params.response.download_id).length == 0) {
-                    $.get(params.response.download_url, function(data) {
+                if ($('#ready_'+params.data.download_id).length == 0) {
+                    $.get(params.data.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
@@ -106,9 +110,9 @@ var ExportManager = function (o) {
         $.ajax({
             dataType: 'json',
             url: params.downloadUrl,
-            success: function(response){
+            success: function(data){
                 updateModal({
-                    response: response,
+                    data: data,
                     xmlns: params.xmlns
                 });
             },
@@ -128,7 +132,12 @@ var ExportManager = function (o) {
             url: downloadUrl,
             type: 'POST',
             data: data,
-            success: updateModal,
+            success: function(respData){
+                updateModal({
+                    data: respData,
+                    xmlns: null
+                });
+            },
             error: displayDownloadError
         });
     };
