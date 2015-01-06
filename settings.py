@@ -712,6 +712,7 @@ ELASTICSEARCH_PORT = 9200
 DHIS2_HOST = 'http://dhis2.changeme.com:8123/dhis'
 DHIS2_USERNAME = 'changeme'
 DHIS2_PASSWORD = 'changeme'
+DHIS2_ORG_UNIT = None  # Top org unit for CommCareHQ integration
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance

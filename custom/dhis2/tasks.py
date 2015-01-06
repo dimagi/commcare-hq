@@ -20,7 +20,6 @@ from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
 
 # TODO: Move to init
 DOMAIN = 'wv-lanka'
-TOP_ORG_UNIT = 'Fermathe Clinic'
 DATA_ELEMENT_NAMES = {
     # CCHQ field names : DHIS2 data element names
 

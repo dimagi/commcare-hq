@@ -1,6 +1,7 @@
 # from django.db import models
 from datetime import date
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
+from django.conf import settings
 import requests
 
 
@@ -146,12 +147,16 @@ class Dhis2Api(object):
     def get_top_org_unit(self):
         """
         Return the top-most organisation unit.
-
-        We expect this to be a country.
         """
+        if settings.DHIS2_ORG_UNIT:
+            # A top organisation unit has been specified in the settings. Use that
+            __, json = self._request.get('organisationUnits',
+                                         params={'links': 'false', 'query': settings.DHIS2_ORG_UNIT})
+            return json['organisationUnits'][0]
+        # Traverse up the tree of organisation units
         __, org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
         org_unit = org_units_json['organisationUnits'][0]
-        # The List response doesn't include parent (even if you ask for it :-| ).Request org_unit details:.
+        # The List response doesn't include parent (even if you ask for it :-| ). Request org_unit details.
         __, org_unit = self._request.get('organisationUnits/' + org_unit['id'])
         while True:
             if not org_unit.get('parent'):
