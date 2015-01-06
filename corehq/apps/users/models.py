@@ -1336,7 +1336,6 @@ class LocationUserMixin(DocumentSchema):
         else:
             # the sane way: for normal domain we just override
             # the whole case
-            print 'set'
             self.set_locations([location])
 
         self.location_id = location._id

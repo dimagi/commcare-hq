@@ -20,6 +20,7 @@ class LocationsTest(TestCase):
             first_name='Bob',
             last_name='Builder'
         )
+        self.user.set_location(self.loc)
         self.user.save()
 
         self.user.add_location(self.loc)
@@ -28,12 +29,12 @@ class LocationsTest(TestCase):
         test_state1 = make_loc(
             'teststate1',
             type='state',
-            parent=self.user.locations[0]
+            parent=self.user.location
         )
         test_state2 = make_loc(
             'teststate2',
             type='state',
-            parent=self.user.locations[0]
+            parent=self.user.location
         )
         test_village1 = make_loc(
             'testvillage1',
@@ -57,13 +58,13 @@ class LocationsTest(TestCase):
         # descendants
         compare(
             [test_state1, test_state2, test_village1, test_village2],
-            self.user.locations[0].descendants
+            self.user.location.descendants
         )
 
         # children
         compare(
             [test_state1, test_state2],
-            self.user.locations[0].children
+            self.user.location.children
         )
 
         # siblings
@@ -74,22 +75,22 @@ class LocationsTest(TestCase):
 
         # parent and parent_id
         self.assertEqual(
-            self.user.locations[0]._id,
+            self.user.location._id,
             test_state1.parent_id
         )
         self.assertEqual(
-            self.user.locations[0]._id,
+            self.user.location._id,
             test_state1.parent._id
         )
 
 
         # is_root
-        self.assertTrue(self.user.locations[0].is_root)
+        self.assertTrue(self.user.location.is_root)
         self.assertFalse(test_state1.is_root)
 
         # Location.root_locations
         compare(
-            [self.user.locations[0]],
+            [self.user.location],
             Location.root_locations(self.domain.name)
         )
 
@@ -129,7 +130,7 @@ class LocationsTest(TestCase):
 
         # Location.all_locations
         compare(
-            [self.user.locations[0], test_state1, test_state2, test_village1],
+            [self.user.location, test_state1, test_state2, test_village1],
             Location.all_locations(self.domain.name)
         )
 
@@ -145,6 +146,6 @@ class LocationsTest(TestCase):
 
         # Location.by_domain
         compare(
-            [self.user.locations[0], test_state1, test_state2, test_village1],
+            [self.user.location, test_state1, test_state2, test_village1],
             Location.by_domain(self.domain.name)
         )
