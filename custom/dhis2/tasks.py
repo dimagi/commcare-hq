@@ -54,7 +54,7 @@ DATA_ELEMENT_NAMES = {
 }
 
 
-# @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
+@periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
 def sync_org_units():
     """
     Synchronize DHIS2 Organization Units with local data.
@@ -286,7 +286,7 @@ def gen_children_only_ours(domain):
             yield CommCareCase.wrap(doc)
 
 
-# @periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04
+@periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04
 def sync_child_entities():
     """
     Create new child cases for nutrition tracking in CommCare or associate
@@ -299,6 +299,7 @@ def sync_child_entities():
     push_child_entities(children)
 
 
+@periodic_task(run_every=crontab(minute=5, hour=5))  # Run daily at 05h05
 def send_nutrition_data():
     """
     Send received nutrition data to DHIS2.
