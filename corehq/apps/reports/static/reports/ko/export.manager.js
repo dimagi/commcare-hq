@@ -35,11 +35,11 @@ var ExportManager = function (o) {
             else
                 $title.attr('style', '');
         },
-        updateModal = function(d) {
+        updateModal = function(params) {
             var autoRefresh = '';
             var pollDownloader = function () {
-                if ($('#ready_'+d.download_id).length == 0) {
-                    $.get(d.download_url, function(data) {
+                if ($('#ready_'+params.response.download_id).length == 0) {
+                    $.get(params.response.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
@@ -54,6 +54,14 @@ var ExportManager = function (o) {
             $(self.exportModal).on('hide', function () {
                 clearInterval(autoRefresh);
             });
+            if (params.xmlns == "http://code.javarosa.org/devicereport"){
+                gaTrackLink(
+                    $(".download-button", self.exportModal),
+                    "Form Exports",
+                    "Download Mobile Device Log",
+                    "Export Mobile Device Log"
+                );
+            }
             autoRefresh = setInterval(pollDownloader, 2000);
         },
         displayModalError = function(error_text) {
@@ -88,7 +96,7 @@ var ExportManager = function (o) {
         }
     };
 
-    self.downloadExport = function(downloadUrl) {
+    self.downloadExport = function(params) {
         var displayDownloadError = function (response) {
             displayModalError('Sorry, something unexpected went wrong and your download ' +
                 'could not be completed. Please try again and report an issue if the problem ' +
@@ -97,8 +105,13 @@ var ExportManager = function (o) {
         };
         $.ajax({
             dataType: 'json',
-            url: downloadUrl,
-            success: updateModal,
+            url: params.downloadUrl,
+            success: function(response){
+                updateModal({
+                    response: response,
+                    xmlns: params.xmlns
+                });
+            },
             error: displayDownloadError
         });
     };
@@ -191,6 +204,7 @@ var ExportManager = function (o) {
     self._requestDownload = function(event, options) {
         var $button = $(event.srcElement || event.currentTarget);
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
+        var xmlns = $button.data('xmlns');
         resetModal("'" + options.modalTitle + "'", true);
         var format = self.format;
         var fileName = encodeURIComponent($.trim($button.data('formname')));
@@ -200,7 +214,7 @@ var ExportManager = function (o) {
         downloadUrl = downloadUrl +
             "?" + self.exportFilters +
             '&async=true' +
-            '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","' + fileName +'"]' +
+            '&export_tag=["'+self.domain+'","'+xmlns+'","' + fileName +'"]' +
             '&format=' + format +
             '&filename=' + fileName;
 
@@ -210,7 +224,7 @@ var ExportManager = function (o) {
                 downloadUrl += '&' + k + '=' + v;
             }
         }
-        self.downloadExport(downloadUrl);
+        self.downloadExport({downloadUrl: downloadUrl, xmlns: xmlns});
     };
 
     self.requestDownload = function(data, event) {
