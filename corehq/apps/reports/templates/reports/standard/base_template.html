@@ -55,6 +55,12 @@
             trigger: 'hover'
         });
     </script>
+
+    <script>
+        $('#apply-btn').on('click', function() {
+            $('.hq-generic-report').trigger('apply-click');
+        });
+    </script>
 {% endblock %}
 {% endblock %}
 
@@ -100,7 +106,8 @@
                             {% block report_filter_actions %}
                             <button type="submit" class="btn disabled"
                                     data-loading-text="{% trans "Generating Report..." %}"
-                                    data-standard-text="{% trans "Apply" %}">
+                                    data-standard-text="{% trans "Apply" %}"
+                                    id="apply-btn">
                                 {% trans "Apply" %}
                             </button>
                             {% endblock %}
