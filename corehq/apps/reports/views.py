@@ -864,6 +864,7 @@ def case_details(request, domain, case_id):
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
     })
 
+
 @login_and_domain_required
 @require_GET
 def case_attachments(request, domain, case_id):
