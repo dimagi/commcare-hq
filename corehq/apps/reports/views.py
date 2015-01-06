@@ -115,6 +115,18 @@ require_case_view_permission = require_permission(Permissions.view_report, 'core
 
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
+
+def can_view_attachments(request):
+    return (
+        request.couch_user.has_permission(
+            request.domain, 'view_report',
+            data='corehq.apps.reports.standard.cases.basic.CaseListReport'
+        )
+        or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.user.username)
+        or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.domain)
+    )
+
+
 @login_and_domain_required
 def default(request, domain):
     module = Domain.get_module_by_name(domain)
@@ -851,6 +863,17 @@ def case_details(request, domain, case_id):
         },
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
     })
+
+@login_and_domain_required
+@require_GET
+def case_attachments(request, domain, case_id):
+    if not can_view_attachments(request):
+        return HttpResponseForbidden(_("You don't have permission to access this page."))
+
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    return render(request, 'reports/reportdata/case_attachments.html',
+                  {'domain': domain, 'case': case})
+
 
 @require_case_view_permission
 @login_and_domain_required

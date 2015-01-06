@@ -262,3 +262,9 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     "Don't fail hard on missing or deleted sync tokens.",
     [NAMESPACE_DOMAIN]
 )
+
+ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
+    'allow_case_attachments_view',
+    "Explicitly allow user to access case attachments, even if they can't view the case list report.",
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
