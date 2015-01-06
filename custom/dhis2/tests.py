@@ -5,12 +5,13 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 from contextlib import contextmanager
-from unittest import skip
+from unittest import skip, SkipTest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from couchdbkit import ResourceNotFound
-from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError
+from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError
 from custom.dhis2.tasks import sync_child_entities, DOMAIN, sync_org_units, mark_as_processed, \
     gen_unprocessed_growth_monitoring_forms, is_at_risk
+from django.conf import settings
 from django.test import TestCase
 from mock import patch, Mock
 from couchforms.models import XFormInstance
@@ -177,7 +178,101 @@ class JsonApiRequestTest(TestCase):
 
 
 class Dhis2ApiTest(TestCase):
-    pass
+
+    def test__fetch_tracked_entity_attributes(self):
+        """
+        _fetch_tracked_entity_attributes should extend _tracked_entity_attributes
+        """
+        te_attrs = {'trackedEntityAttributes': [
+            {'name': 'ham', 'id': 'deadbeef'},
+            {'name': 'spam', 'id': 'c0ffee'},
+        ]}
+        dhis2_api = Dhis2Api('http://example.com/dhis', 'user', 'p4ssw0rd')
+        dhis2_api._request.get = Mock(return_value=('foo', te_attrs))
+        keys_before = set(dhis2_api._tracked_entity_attributes.keys())
+        dhis2_api._fetch_tracked_entity_attributes()
+        keys_after = set(dhis2_api._tracked_entity_attributes.keys())
+        fetched = keys_after - keys_before
+        self.assertIn('ham', fetched)
+        self.assertIn('spam', fetched)
+
+    @skip('Finish writing this test')
+    def test_add_te_inst(self):
+        pass
+
+    @skip('Finish writing this test')
+    def test_update_te_inst(self):
+        pass
+
+    def test_get_top_org_unit_settings(self):
+        """
+        get_top_org_unit should return the name and ID of the org unit specified in settings
+        """
+        if not settings.DHIS2_ORG_UNIT:
+            raise SkipTest('An org unit is not set in settings.py')
+        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        org_unit = dhis2_api.get_top_org_unit()
+        self.assertEqual(org_unit['name'], settings.DHIS2_ORG_UNIT)
+        self.assertTrue(bool(org_unit['id']))
+
+    def test_get_top_org_unit(self):
+        """
+        get_top_org_unit should return the name and ID of the top org unit
+        """
+        self.settings(DHIS2_ORG_UNIT=None)  # Make sure get_top_org_unit navigates up tree of org units
+        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        org_unit = dhis2_api.get_top_org_unit()
+        self.assertTrue(bool(org_unit['name']))
+        self.assertTrue(bool(org_unit['id']))
+
+    def test_get_resource_id(self):
+        """
+        get_resource_id should query the API for the details of a named resource, and return the ID
+        """
+        resources = {'Knights': [
+            {'name': 'Michael Palin', 'id': 'c0ffee'},
+        ]}
+        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        dhis2_api._request.get = Mock(return_value=('foo', resources))
+
+        result = dhis2_api.get_resource_id('Knights', 'Who Say "Ni!"')
+
+        dhis2_api._request.get.assert_called_with('Knights', params={'links': 'false', 'query': 'Who Say "Ni!"'})
+        self.assertEqual(result, 'c0ffee')
+
+    def test_get_resource_id_none(self):
+        """
+        get_resource_id should return None if none found
+        """
+        resources = {'Knights': []}
+        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        dhis2_api._request.get = Mock(return_value=('foo', resources))
+
+        result = dhis2_api.get_resource_id('Knights', 'Who Say "Ni!"')
+
+        self.assertIsNone(result)
+
+    def test_get_resource_id_raises(self):
+        """
+        get_resource_id should raise Dhis2ApiQueryError if multiple found
+        """
+        resources = {'Knights': [
+            {'name': 'Michael Palin', 'id': 'c0ffee'},
+            {'name': 'John Cleese', 'id': 'deadbeef'}
+        ]}
+        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        dhis2_api._request.get = Mock(return_value=('foo', resources))
+
+        with self.assertRaises(Dhis2ApiQueryError):
+            dhis2_api.get_resource_id('Knights', 'Who Say "Ni!"')
+
+    @skip('Finish writing this test')
+    def test_form_to_event(self):
+        pass
+
+    @skip('Finish writing this test')
+    def test_entities_to_dicts(self):
+        pass
 
 
 class FixtureManagerTest(TestCase):
