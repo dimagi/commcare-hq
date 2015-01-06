@@ -20,7 +20,7 @@ from casexml.apps.phone.restore import generate_restore_payload
 from lxml import etree
 
 TEST_DOMAIN = 'commtrack-test'
-TEST_LOCATION_TYPE = 'location'
+TEST_LOCATION_TYPE = 'outlet'
 TEST_USER = 'commtrack-user'
 TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
