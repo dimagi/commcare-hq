@@ -36,7 +36,11 @@ var ExportManager = function (o) {
                 $title.attr('style', '');
         },
         /**
-         * params should have two keys: data, and xmlns.
+         * Expected params keys:
+         *  - data (required)
+         *  - isBulkDownload
+         *  - xmlns
+         * the two optional keys are used for google analytics.
          * @param params
          */
         updateModal = function(params) {
