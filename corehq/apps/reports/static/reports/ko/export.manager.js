@@ -45,7 +45,10 @@ var ExportManager = function (o) {
                 if ($('#ready_'+params.data.download_id).length == 0) {
                     $.get(params.data.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
-                        self.setUpEventTracking({xmlns: params.xmlns});
+                        self.setUpEventTracking({
+                            xmlns: params.xmlns,
+                            isBulkDownload: params.isBulkDownload
+                        });
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
                         self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
@@ -84,9 +87,24 @@ var ExportManager = function (o) {
         params = params || {};
         var downloadButton = self.$modal.find(self.exportModalLoadedData).find("a.btn.btn-primary").first();
         if (downloadButton.length) {
+            // General form Exports event
+            if (self.export_type == "form") {
+                var label = "raw";
+                if (self.is_custom) {
+                    label = "custom";
+                } else if (params.isBulkDownload) {
+                    // Note: Bulk downloads of custom reports will be logged as "custom"
+                    label = "bulk";
+                }
+                gaTrackLink(downloadButton, "Form Exports", "Download (any) Form Export", label);
+            }
             // Device reports event
-            if (params.xmlns == "http://code.javarosa.org/devicereport"){
+            if (params.xmlns == "http://code.javarosa.org/devicereport") {
                 gaTrackLink(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
+            }
+            // Case Exports event
+            if (self.export_type == "case") {
+                gaTrackLink(downloadButton, "Case Exports", "Download any Case Export", "bulk");
             }
         }
     };
@@ -117,7 +135,8 @@ var ExportManager = function (o) {
             success: function(data){
                 updateModal({
                     data: data,
-                    xmlns: params.xmlns
+                    xmlns: params.xmlns,
+                    isBulkDownload: false
                 });
             },
             error: displayDownloadError
@@ -139,7 +158,8 @@ var ExportManager = function (o) {
             success: function(respData){
                 updateModal({
                     data: respData,
-                    xmlns: null
+                    xmlns: null,
+                    isBulkDownload: true
                 });
             },
             error: displayDownloadError

@@ -20,6 +20,7 @@ var HQExportDownloader = function (options) {
                         {
                             $.get(d.download_url, function(data) {
                                 $modal.find(self.loadedData).html(data);
+                                self.setUpEventTracking();
                             });
                         } else {
                             $modal.find(self.loadingIndicator).addClass('hide');
@@ -35,5 +36,15 @@ var HQExportDownloader = function (options) {
 
             });
         });
+    };
+    /**
+     * Attach a click event handler to the download modal "download" button that
+     * notifies google of the download event.
+     */
+    self.setUpEventTracking = function(){
+        var downloadButton = $(self.modal).find(self.loadedData).find("a.btn.btn-primary").first();
+        if (downloadButton.length) {
+            gaTrackLink(downloadButton, "Case Exports", "Download any Case Export", "custom");
+        }
     };
 };
