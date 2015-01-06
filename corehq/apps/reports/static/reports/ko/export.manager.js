@@ -45,6 +45,7 @@ var ExportManager = function (o) {
                 if ($('#ready_'+params.data.download_id).length == 0) {
                     $.get(params.data.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
+                        self.setUpEventTracking({xmlns: params.xmlns});
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
                         self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
@@ -58,14 +59,6 @@ var ExportManager = function (o) {
             $(self.exportModal).on('hide', function () {
                 clearInterval(autoRefresh);
             });
-            if (params.xmlns == "http://code.javarosa.org/devicereport"){
-                gaTrackLink(
-                    $(".download-button", self.exportModal),
-                    "Form Exports",
-                    "Download Mobile Device Log",
-                    "Export Mobile Device Log"
-                );
-            }
             autoRefresh = setInterval(pollDownloader, 2000);
         },
         displayModalError = function(error_text) {
@@ -86,6 +79,17 @@ var ExportManager = function (o) {
             }
             return getFormattedSheetName(a,b);
         };
+
+    self.setUpEventTracking = function(params) {
+        params = params || {};
+        var downloadButton = self.$modal.find(self.exportModalLoadedData).find("a.btn.btn-primary").first();
+        if (downloadButton.length) {
+            // Device reports event
+            if (params.xmlns == "http://code.javarosa.org/devicereport"){
+                gaTrackLink(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
+            }
+        }
+    };
 
     self.updateSelectedExports = function (data, event) {
         var $checkbox = $(event.srcElement || event.currentTarget);
