@@ -37,6 +37,10 @@ var HQExportDownloader = function (options) {
             });
         });
     };
+    /**
+     * Attach a click event handler to the download modal "download" button that
+     * notifies google of the download event.
+     */
     self.setUpEventTracking = function(){
         var downloadButton = $(self.modal).find(self.loadedData).find("a.btn.btn-primary").first();
         if (downloadButton.length) {
