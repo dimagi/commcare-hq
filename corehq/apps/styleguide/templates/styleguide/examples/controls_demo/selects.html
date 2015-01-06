@@ -1,0 +1,10 @@
+{% extends 'styleguide/examples/controls_demo/base.html' %}
+
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    $(function () {
+        $('#id_language').select2();
+        $('#id_genres').select2();
+    });
+</script>
+{% endblock js-inline %}

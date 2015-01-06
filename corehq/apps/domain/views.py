@@ -1,9 +1,11 @@
+import copy
 import datetime
 from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
@@ -27,7 +29,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -36,10 +38,9 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import toggles, privileges, feature_previews
+from corehq import privileges, feature_previews
 from django_prbac.decorators import requires_privilege_raise404
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 from corehq.apps.accounting.models import (
     Subscription, CreditLine, SoftwareProductType,
@@ -49,7 +50,7 @@ from corehq.apps.accounting.models import (
     PaymentMethod,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
-from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION, PricingTableFeatures
+from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
@@ -85,10 +86,9 @@ import json
 from dimagi.utils.post import simple_post
 import cStringIO
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from django.core.cache import cache
-from toggle.models import Toggle, generate_toggle_id
-from toggle.shortcuts import get_toggle_cache_key, update_toggle_cache, namespaced_item
+from django.utils.translation import ugettext as _, ugettext_noop
+from toggle.models import Toggle
+from toggle.shortcuts import update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -111,6 +111,20 @@ def select(request, domain_select_template='domain/select.html'):
         'open_invitations': open_invitations,
     }
     return render(request, domain_select_template, additional_context)
+
+
+@require_superuser
+def incomplete_email(request,
+                     incomplete_email_template='domain/incomplete_email.html'):
+    from corehq.apps.domain.tasks import (
+        incomplete_self_started_domains,
+        incomplete_domains_to_email
+    )
+    context = {
+        'self_started': incomplete_self_started_domains,
+        'dimagi_owned': incomplete_domains_to_email,
+    }
+    return render(request, incomplete_email_template, context)
 
 
 class DomainViewMixin(object):
@@ -302,13 +316,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @property
     def can_use_custom_logo(self):
-        try:
-            ensure_request_has_privilege(
-                self.request, privileges.CUSTOM_BRANDING
-            )
-        except PermissionDenied:
-            return False
-        return True
+        return has_privilege(self.request, privileges.CUSTOM_BRANDING)
 
     @property
     @memoized
@@ -1110,12 +1118,7 @@ class SelectPlanView(DomainAccountingSettings):
     def is_non_ops_superuser(self):
         if not self.request.couch_user.is_superuser:
             return False
-        try:
-            ensure_request_has_privilege(
-                self.request, privileges.ACCOUNTING_ADMIN)
-            return False
-        except PermissionDenied:
-            return True
+        return not has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
 
     @property
     def parent_pages(self):
@@ -1622,10 +1625,16 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             if not request.POST.get('share_reminders', False):
                 ignore.append('CaseReminderHandler')
 
+            latest_apps = [app.get_latest_saved() or app for app in self.domain_object.applications()]
+            latest_apps = {app.id: app for app in latest_apps}
             copy_by_id = set()
             for k in request.POST.keys():
                 if k.endswith("-publish"):
-                    copy_by_id.add(k[:-len("-publish")])
+                    doc_id = k[:-len("-publish")]
+                    if doc_id in latest_apps:
+                        doc_id = latest_apps[doc_id].copy_of or doc_id
+                    copy_by_id.add(doc_id)
+
 
             old = self.domain_object.published_snapshot()
             new_domain = self.domain_object.save_snapshot(ignore=ignore,
@@ -1929,8 +1938,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @property
     @memoized
     def internal_settings_form(self):
+        can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(self.request.POST)
+            return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {}
         internal_attrs = [
             'sf_contract_id',
@@ -1948,21 +1958,23 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'self_started',
             'using_adm',
             'using_call_center',
-            'custom_eula',
-            'can_use_data',
             'project_manager',
             'phone_model',
             'goal_time_period',
             'goal_followup_rate',
-            'commconnect_domain',
             'commtrack_domain',
         ]
+        if can_edit_eula:
+            internal_attrs += [
+                'custom_eula',
+                'can_use_data',
+            ]
         for attr in internal_attrs:
             val = getattr(self.domain_object.internal, attr)
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        return DomainInternalForm(initial=initial)
+        return DomainInternalForm(can_edit_eula, initial=initial)
 
     @property
     def page_context(self):
@@ -1974,7 +1986,29 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
+            old_attrs = copy.copy(self.domain_object.internal)
             self.internal_settings_form.save(self.domain_object)
+            eula_props_changed = (bool(old_attrs.custom_eula) != bool(self.domain_object.internal.custom_eula) or
+                                  bool(old_attrs.can_use_data) != bool(self.domain_object.internal.can_use_data))
+
+            if eula_props_changed and settings.EULA_CHANGE_EMAIL:
+                message = '\n'.join([
+                    '{user} changed either the EULA or data sharing properties for domain {domain}.',
+                    '',
+                    'The properties changed were:',
+                    '- Custom eula: {eula_old} --> {eula_new}',
+                    '- Can use data: {can_use_data_old} --> {can_use_data_new}'
+                ]).format(
+                    user=self.request.couch_user.username,
+                    domain=self.domain,
+                    eula_old=old_attrs.custom_eula,
+                    eula_new=self.domain_object.internal.custom_eula,
+                    can_use_data_old=old_attrs.can_use_data,
+                    can_use_data_new=self.domain_object.internal.can_use_data,
+                )
+                send_mail('Custom EULA or data use flags changed for {}'.format(self.domain),
+                          message, settings.DEFAULT_FROM_EMAIL, [settings.EULA_CHANGE_EMAIL])
+
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
         else:
@@ -2167,17 +2201,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            slug = feature.slug
-            toggle = self.get_toggle(slug)
-            item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
-            if new_state:
-                if not item in toggle.enabled_users:
-                    toggle.enabled_users.append(item)
-            else:
-                toggle.enabled_users.remove(item)
-            toggle.save()
-            update_toggle_cache(slug, item, new_state)
-
+            feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
 

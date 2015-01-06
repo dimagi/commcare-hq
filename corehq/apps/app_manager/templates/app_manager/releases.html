@@ -6,8 +6,8 @@
 {% load timezone_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
@@ -63,14 +63,9 @@
     function track_deploy_type(type) {
         ga_track_event('App Manager', 'Deploy Type', type);
     }
-
-    function track_deploy_type_and_redirect(type, href) {
-        return ! ga_track_event('App Manager', 'Deploy Type', type, {
-            'hitCallback': function () {
-                document.location = href;
-            }
-        });
-    }
+    $(function () {
+        gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
+    });
 </script>
 {% endblock %}
 
@@ -114,6 +109,8 @@
     }
     .build .edit-comment-pencil {
         display: none;
+        margin-left: 5px;
+        position: absolute;
     }
     .build:hover .edit-comment-pencil {
         display: inline;
@@ -509,9 +506,8 @@
                     {% if request.user.is_superuser %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" data-bind="
+                                <a class="accordion-toggle view-source-files-link" data-bind="
                                     attr: {href: $root.url('source', id)},
-                                    click: function() { track_deploy_type_and_redirect('View Source Files', $root.url('source', id)); },
                                 ">
                                     {% trans "View Source Files" %}
                                 </a>

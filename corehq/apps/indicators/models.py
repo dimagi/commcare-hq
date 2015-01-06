@@ -381,15 +381,12 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days,
                                                                            microseconds=-1)
             if self.fixed_datespan_months:
-                start_year, start_month = add_months(datespan.enddate.year, datespan.enddate.month,
-                    -self.fixed_datespan_months)
-                try:
-                    datespan.startdate = datetime.datetime(start_year, start_month, datespan.enddate.day,
-                        datespan.enddate.hour, datespan.enddate.minute, datespan.enddate.second,
-                        datespan.enddate.microsecond) + datetime.timedelta(microseconds=1)
-                except ValueError:
-                    # day is out of range for month
-                    datespan.startdate = self.get_last_day_of_month(start_year, start_month)
+                # By making the assumption that the end date is always the end of the month
+                # the first months adjustment is accomplished by moving the start date to
+                # the beginning of the month. Any additional months are subtracted in the usual way
+                start = self.get_first_day_of_month(datespan.enddate.year, datespan.enddate.month)
+                start_year, start_month = add_months(start.year, start.month, -(self.fixed_datespan_months - 1))
+                datespan.startdate = start.replace(year=start_year, month=start_month)
 
             if self.startdate_shift:
                 datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)

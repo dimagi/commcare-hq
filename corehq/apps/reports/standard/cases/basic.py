@@ -129,7 +129,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             user_type_filters.append(user_es.mobile_users())
 
         if len(user_type_filters) > 0:
-            special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters)
+            special_q = user_es.UserES().domain(self.domain).OR(*user_type_filters).show_inactive()
             special_user_ids = special_q.run().doc_ids
         else:
             special_user_ids = []

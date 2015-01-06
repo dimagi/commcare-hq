@@ -9,5 +9,6 @@ urlpatterns = patterns('custom.ewsghana.views',
 
     url(r'^ews_sync_stock_data/$', 'ews_sync_stock_data', name='ews_sync_stock_data'),
     url(r'^ews_clear_stock_data/$', 'ews_clear_stock_data', name='ews_clear_stock_data'),
+    url(r'^ews_resync_passwords/$', 'ews_resync_passwords', name='ews_resync_passwords'),
 
 )

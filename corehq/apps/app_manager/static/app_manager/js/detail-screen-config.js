@@ -526,7 +526,8 @@ var DetailScreenConfig = (function () {
                     // Note: starting_index is added by Screen.serialize
                     return {
                         starting_index: this.starting_index,
-                        header: column.header
+                        header: column.header,
+                        isTab: true
                     };
                 }
                 return column;
@@ -544,6 +545,14 @@ var DetailScreenConfig = (function () {
                         this.$grip = $('<span class="sort-disabled"></span>');
                     }
                 }
+            },
+            copyCallback: function () {
+                var column = this.serialize();
+                // add a marker that this is copied for this purpose
+                return JSON.stringify({
+                    type: 'detail-screen-config:Column',
+                    contents: column
+                });
             }
         };
         return Column;
@@ -586,6 +595,7 @@ var DetailScreenConfig = (function () {
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
+            this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
 
             this.fireChange = function() {
@@ -675,9 +685,10 @@ var DetailScreenConfig = (function () {
             save: function () {
                 //Only save if property names are valid
                 var containsTab = false;
-                for (var i = 0; i < this.columns().length; i++){
-                    var column = this.columns()[i];
-                    if (! column.isTab) {
+                var columns = this.columns();
+                for (var i = 0; i < columns.length; i++){
+                    var column = columns[i];
+                    if (!column.isTab) {
                         if (!DetailScreenConfig.field_val_re.test(column.field.val())) {
                             // column won't have format_warning showing if it's empty
                             column.format_warning.show().parent().addClass('error');
@@ -689,7 +700,7 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 if (containsTab){
-                    if (! this.columns()[0].isTab){
+                    if (!columns[0].isTab) {
                         alert("All properties must be below a tab");
                         return;
                     }
@@ -705,21 +716,22 @@ var DetailScreenConfig = (function () {
                 });
             },
             serialize: function () {
+                var columns = this.columns();
                 var data = {
                     type: JSON.stringify(this.type)
                 };
 
                 // Add columns
                 data[this.columnKey] = JSON.stringify(_.map(
-                    _.filter(this.columns(), function(c){return ! c.isTab;}),
+                    _.filter(columns, function(c){return ! c.isTab;}),
                     function(c){return c.serialize();}
                 ));
 
                 // Add tabs
                 // calculate the starting index for each Tab
                 var acc = 0;
-                for (var j=0; j < this.columns().length; j++){
-                    var c = this.columns()[j];
+                for (var j = 0; j < columns.length; j++) {
+                    var c = columns[j];
                     if (c.isTab){
                         c.starting_index = acc;
                     } else {
@@ -727,7 +739,7 @@ var DetailScreenConfig = (function () {
                     }
                 }
                 data.tabs = JSON.stringify(_.map(
-                    _.filter(this.columns(), function(c){return c.isTab;}),
+                    _.filter(columns, function(c){return c.isTab;}),
                     function(c){return c.serialize();}
                 ));
 
@@ -748,14 +760,31 @@ var DetailScreenConfig = (function () {
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
                 }
+                if (this.containsCustomXMLConfiguration){
+                    data.custom_xml = this.config.customXMLViewModel.xml();
+                }
                 return data;
             },
-            addItem: function (columnConfiguration) {
-                this.columns.push(
-                    this.initColumnAsColumn(
-                        Column.init(columnConfiguration, this)
-                    )
+            addItem: function (columnConfiguration, index) {
+                var column = this.initColumnAsColumn(
+                    Column.init(columnConfiguration, this)
                 );
+                if (index === undefined) {
+                    this.columns.push(column);
+                } else {
+                    this.columns.splice(index, 0, column);
+                }
+            },
+            pasteCallback: function (data, index) {
+                try {
+                     data = JSON.parse(data);
+                } catch (e) {
+                    // just ignore pasting non-json
+                    return;
+                }
+                if (data.type === 'detail-screen-config:Column' && data.contents) {
+                    this.addItem(data.contents, index);
+                }
             },
             addProperty: function () {
                 this.addItem({hasAutocomplete: true});
@@ -813,6 +842,7 @@ var DetailScreenConfig = (function () {
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
+                        containsCustomXMLConfiguration: columnType == "short",
                         allowsTabs: columnType == 'long'
                     }
                 );
@@ -836,6 +866,13 @@ var DetailScreenConfig = (function () {
                         );
                     }
                 }
+                this.customXMLViewModel = {
+                    enabled: window.toggles.CASE_LIST_CUSTOM_XML,
+                    xml: ko.observable(spec.state.short.custom_xml || "")
+                };
+                this.customXMLViewModel.xml.subscribe(function(v){
+                    that.shortScreen.saveButton.fire("change");
+                });
             }
             if (spec.state.long !== undefined) {
                 this.longScreen = addScreen(spec.state, "long");

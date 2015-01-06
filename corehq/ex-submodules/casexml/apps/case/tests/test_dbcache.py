@@ -1,5 +1,5 @@
 import uuid
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -124,9 +124,24 @@ class CaseDbCacheTest(TestCase):
             self.assertEqual(str(i), case.my_index)
             self.assertTrue(len(case.actions) == 0)
 
+    def test_nowrap(self):
+        case_ids = _make_some_cases(1)
+        cache = CaseDbCache(wrap=False)
+        case = cache.get(case_ids[0])
+        self.assertTrue(isinstance(case, dict))
+        self.assertFalse(isinstance(case, CommCareCase))
 
 
+class CaseDbCacheNoDbTest(SimpleTestCase):
 
+    def test_wrap_lock_dependency(self):
+        # valid combinations
+        CaseDbCache(domain='some-domain', lock=False, wrap=True)
+        CaseDbCache(domain='some-domain', lock=False, wrap=False)
+        CaseDbCache(domain='some-domain', lock=True, wrap=True)
+        with self.assertRaises(ValueError):
+            # invalid
+            CaseDbCache(domain='some-domain', lock=True, wrap=False)
 
 
 def _make_some_cases(howmany, domain='dbcache-test'):

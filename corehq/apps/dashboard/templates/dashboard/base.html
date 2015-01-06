@@ -1,11 +1,14 @@
 {% extends 'style/base.html' %}
 {% load hq_shared_tags %}
+{% load compress %}
 
 {% block stylesheets %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% new_static 'dashboard/less/dashboard.less' %}" />
+{% compress css %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% new_static 'dashboard/less/dashboard.less' %}" />
+{% endcompress %}
 {% endblock stylesheets %}
 
 {% block content %}

@@ -25,6 +25,7 @@ requires imports/proptable.html to be included in the main template
 }
 .form-data-table, .form-data-group-table {
     overflow: scroll;
+    width: 800px;
 }
 </style>
 <script src="{% static 'cloudcare/js/util.js' %}"></script>
@@ -96,6 +97,8 @@ requires imports/proptable.html to be included in the main template
         showSkipped(false);
 
         {% if form_meta %}
+        GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
+
         // unfortunately since cloudcare doesn't have reversible urls, this has to be done in javascript
         // todo: this probably needs better error handling
         var cloudCareUrl = getCloudCareUrl(
@@ -110,20 +113,22 @@ requires imports/proptable.html to be included in the main template
         $("#archive-form").submit(function() {
             document.getElementById('archive-form-btn').disabled=true;
             document.getElementById('archive-spinner').style.display='inline-block';
-            return ! ga_track_event('Reports', 'Case History', 'Archive this form', {
+            ga_track_event('Reports', 'Case History', 'Archive this form', {
                 'hitCallback': function () {
                     document.getElementById('archive-form').submit();
                 }
             });
+            return false;
         });
         $("#unarchive-form").submit(function() {
             document.getElementById('unarchive-form-btn').disabled=true;
             document.getElementById('unarchive-spinner').style.display='inline-block';
-            return ! ga_track_event('Reports', 'Case History', 'Restore this form', {
+            ga_track_event('Reports', 'Case History', 'Restore this form', {
                 'hitCallback': function () {
                     document.getElementById('unarchive-form').submit();
                 }
             });
+            return false;
         });
     });
 </script>
@@ -217,7 +222,7 @@ requires imports/proptable.html to be included in the main template
             {% trans "Raw XML" %}
         </a>
     </li>
-{% if request|toggle_enabled:"EDIT_SUBMISSIONS" %}
+{% if show_edit_submission %}
     <li>
         <a href="#edit-submission" data-toggle="tab">
             {% trans "Edit Submission" %}
@@ -290,18 +295,16 @@ requires imports/proptable.html to be included in the main template
             </a>
         </label>
         {% endif %}
-        <div{% if not side_pane %} class="row-fluid"{% endif %}>
-            <table class="table table-bordered form-data-table {% if not side_pane %}span6{% endif %}">
-                <tr>
-                    <th class="span6">
-                        <span class="form-data-readable">{% trans "Question" %}</span>
-                        <span class="form-data-raw">{% trans "Question ID" %}</span>
-                    </th>
-                    <th class="span6">{% trans "Response" %}</th>
-                </tr>
-                {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
-            </table>
-        </div>
+        <table class="table table-bordered form-data-table">
+            <tr>
+                <th class="span6">
+                    <span class="form-data-readable">{% trans "Question" %}</span>
+                    <span class="form-data-raw">{% trans "Question ID" %}</span>
+                </th>
+                <th class="span6">{% trans "Response" %}</th>
+            </tr>
+            {% include 'reports/form/partials/single_form_tree.html' with questions=form_data %}
+        </table>
     </div>
 
     {% if cases %}
@@ -375,7 +378,7 @@ requires imports/proptable.html to be included in the main template
         <p>{% trans "Double-click code below to select all:" %}</p>
         {% render_form_xml instance %}
     </div>
-{% if request|toggle_enabled:"EDIT_SUBMISSIONS" %}
+{% if show_edit_submission %}
     <div class="tab-pane" id="edit-submission">
         <p>
             <a href="#" class="btn btn-primary touchforms-link"

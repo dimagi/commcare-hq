@@ -1,13 +1,12 @@
 from datetime import datetime, time
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.app_manager.models import get_app, ApplicationBase, Form
 from couchdbkit.resource import ResourceNotFound
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 
 class DotExpandedDict(dict):
@@ -203,8 +202,4 @@ def create_immediate_reminder(contact, content_type, reminder_type=None, message
 
 
 def can_use_survey_reminders(request):
-    try:
-        ensure_request_has_privilege(request, privileges.INBOUND_SMS)
-    except PermissionDenied:
-        return False
-    return True
+    return has_privilege(request, privileges.INBOUND_SMS)

@@ -30,11 +30,12 @@
     </script>
     <script>
         function view_on_exchange(version_name) {
-            return ! ga_track_event('Exchange', 'View on exchange', version_name, {
+            ga_track_event('Exchange', 'View on exchange', version_name, {
                 'hitCallback': function () {
                     document.location = $('#view-on-exchange').attr('href');
                 }
             });
+            return false;
         }
 
         $(document).ready(function() {

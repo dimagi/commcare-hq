@@ -8,6 +8,10 @@ from corehq import Domain, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.style.decorators import (
+    check_preview_bootstrap3,
+    use_knockout_js,
+)
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.exceptions import PermissionDenied
@@ -198,7 +202,8 @@ class BaseEditUserView(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
             self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['supply_point']
-            self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
+            if self.request.project.commtrack_enabled:
+                self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
@@ -352,6 +357,85 @@ class EditMyAccountDomainView(BaseFullEditUserView):
             from corehq.apps.users.views.mobile import EditCommCareUserView
             return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
+
+
+class NewListWebUsersView(BaseUserSettingsView):
+    template_name = 'users/web_users.b3.html'
+    page_title = ugettext_lazy("Web Users & Roles")
+    urlname = 'web_users_b3'
+
+    @method_decorator(check_preview_bootstrap3())
+    @method_decorator(use_knockout_js())
+    @method_decorator(require_can_edit_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewListWebUsersView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def web_users(self):
+        web_users = WebUser.by_domain(self.domain)
+        teams = Team.get_by_domain(self.domain)
+        for team in teams:
+            for user in team.get_members():
+                if user.get_id not in [web_user.get_id for web_user in web_users]:
+                    user.from_team = True
+                    web_users.append(user)
+        for user in web_users:
+            user.current_domain = self.domain
+        web_users.sort(key=lambda x: (x.role_label(), x.email))
+        return web_users
+
+    @property
+    @memoized
+    def user_roles(self):
+        user_roles = [AdminUserRole(domain=self.domain)]
+        user_roles.extend(sorted(UserRole.by_domain(self.domain),
+                                 key=lambda role: role.name if role.name else u'\uFFFF'))
+
+        #  indicate if a role has assigned users, skip admin role
+        for i in range(1, len(user_roles)):
+            role = user_roles[i]
+            role.__setattr__('hasUsersAssigned',
+                             True if len(role.ids_of_assigned_users) > 0 else False)
+        return user_roles
+
+    @property
+    def can_edit_roles(self):
+        try:
+            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
+        except PermissionDenied:
+            return False
+        return self.couch_user.is_domain_admin
+
+    @property
+    @memoized
+    def role_labels(self):
+        role_labels = {}
+        for r in self.user_roles:
+            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
+            role_labels[key] = r.name
+        return role_labels
+
+    @property
+    @memoized
+    def invitations(self):
+        invitations = DomainInvitation.by_domain(self.domain)
+        for invitation in invitations:
+            invitation.role_label = self.role_labels.get(invitation.role, "")
+        return invitations
+
+    @property
+    def page_context(self):
+        return {
+            'web_users': self.web_users,
+            'user_roles': self.user_roles,
+            'can_edit_roles': self.can_edit_roles,
+            'default_role': UserRole.get_default(),
+            'report_list': get_possible_reports(self.domain),
+            'invitations': self.invitations,
+            'domain_object': self.domain_object
+        }
+
 
 class ListWebUsersView(BaseUserSettingsView):
     template_name = 'users/web_users.html'

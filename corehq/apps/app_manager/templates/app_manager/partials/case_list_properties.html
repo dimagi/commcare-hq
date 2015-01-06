@@ -5,7 +5,7 @@
     <p data-bind="text: DetailScreenConfig.message.EMPTY_SCREEN, visible: !$root.edit && _.isEmpty(columns)"></p>
     <table class="table table-condensed detail-screen-table">
         <thead>
-            <tr>
+            <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th class="detail-screen-icon"></th>
                 <th class="detail-screen-field" data-bind="text: DetailScreenConfig.message.FIELD"></th>
                 <th class="detail-screen-header" data-bind="text: DetailScreenConfig.message.HEADER"></th>
@@ -13,8 +13,14 @@
                 <th class="detail-screen-icon"></th>
             </tr>
         </thead>
-        <tbody class="detail-screen-columns" data-bind="sortable: columns">
-            <tr data-bind="css: {info: isTab}, attr: {'data-order': _sortableOrder}">
+        <tbody class="detail-screen-columns" data-bind="sortable: {
+            data: columns,
+            afterAdd: function (elem) { $(elem).hide().fadeIn() },
+            beforeRemove: function (elem) { $(elem).fadeOut() }
+        }">
+            <tr data-bind="css: {info: isTab}, attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
+                           copy: function () { return copyCallback(); },
+                           paste: function (data) { $parent.pasteCallback(data, $index() + 1); }">
                 <td class="detail-screen-icon" data-bind="jqueryElement: $grip, visible: $root.edit"></td>
                 <!--ko if: !isTab -->
                     <td class="detail-screen-field control-group"
@@ -48,7 +54,12 @@
                             <li data-bind="click: addCalculation"><a>Calculation</a></li>
                             {% endif %}
                             {% if request|toggle_enabled:'GRAPH_CREATION' %}
+                            <!-- ko if: COMMCAREHQ.app_manager.checkCommcareVersion("2.17") -->
                             <li data-bind="click: addGraph"><a>Graph</a></li>
+                            <!-- /ko -->
+                            <!-- ko ifnot: COMMCAREHQ.app_manager.checkCommcareVersion("2.17") -->
+                            <li class="disabled"><a>Graph <small>(upgrade to 2.17 or greater)</small></a></li>
+                            <!-- /ko -->
                             {% endif %}
                         </ul>
                         {% endif %}

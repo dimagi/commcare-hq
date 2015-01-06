@@ -1,5 +1,5 @@
-from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty
-from custom.ilsgateway.api import Product, ProductStock, StockTransaction
+from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, DictProperty
+from custom.ilsgateway.api import ProductStock, StockTransaction
 from jsonobject import JsonObject
 from custom.logistics.api import LogisticsEndpoint
 
@@ -46,6 +46,21 @@ class Location(JsonObject):
     historical_groups = ListProperty()
     created_at = StringProperty()
     supervised_by = IntegerProperty()
+    is_active = BooleanProperty()
+
+
+class Program(JsonObject):
+    code = IntegerProperty()
+    name = StringProperty()
+
+
+class Product(JsonObject):
+    name = StringProperty()
+    units = StringProperty()
+    sms_code = StringProperty()
+    description = StringProperty()
+    is_active = BooleanProperty()
+    program = DictProperty()
 
 
 class GhanaEndpoint(LogisticsEndpoint):

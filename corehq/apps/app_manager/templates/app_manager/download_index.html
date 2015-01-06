@@ -1,8 +1,9 @@
-{% extends "hqwebapp/centered.html" %}
+{% extends base_template %}
 {% block head %}{{ block.super }}
     {% include "imports/bootstrap.google-prettify.html" %}
 {% endblock %}
-{% block centered-content %}
+{% block content %}
+<div class="container-fluid">
     <h1>Build #{{ app.version }}: {{ app.name }}</h1>
     <p>See <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">original app</a> for the lastest work in progress.</p>
     <h2>Downloads</h2>
@@ -21,11 +22,11 @@
     <table class="table table-condensed">
         {% for path, source in files %}
             <tr>
-                <td>
-                    <a href="{{ path }}" target="_blank">{{ path }}</a>
+                <td class="span3">
+                    <a class="toggle-next" href="#">{{ path }}</a>
                 </td>
-                <td>
-                    <a class="toggle-next" href="#">preview</a>
+                <td class="span9">
+                    <a href="{{ path }}" target="_blank"><i class="icon icon-external-link"></i></a>
                 </td>
             </tr>
             <tr>
@@ -54,4 +55,5 @@
             prettyPrint();
         });
     </script>
+</div>
 {% endblock %}

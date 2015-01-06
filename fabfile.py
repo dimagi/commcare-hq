@@ -818,6 +818,15 @@ def _deploy_without_asking():
 
 
 @task
+def force_update_static():
+    _require_target()
+    execute(_do_collectstatic)
+    execute(_do_compress)
+    execute(update_manifest)
+    execute(services_restart)
+
+
+@task
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
     _require_target()
@@ -1160,6 +1169,8 @@ def set_celery_supervisorconf():
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_rule_queue.conf')
     if env.reminder_case_update_queue_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_reminder_case_update_queue.conf')
+    if env.pillow_retry_queue_enabled:
+        _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_pillow_retry_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_doc_deletion_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_saved_exports_queue.conf')
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_flower.conf')

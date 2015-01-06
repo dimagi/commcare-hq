@@ -188,7 +188,8 @@ class DomainInvoiceFactory(object):
             )
 
         self.generate_line_items(invoice, subscription)
-        invoice.calculate_credit_adjustments()
+        if not subscription.do_not_invoice:
+            invoice.calculate_credit_adjustments()
         invoice.update_balance()
         invoice.save()
 
@@ -406,17 +407,17 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def unit_description(self):
-        if self.is_within_monthly_limit:
-            return _(
-                "%(num_sms)d of %(monthly_limit)d included SMS  messages"
-            ) % {
-                'num_sms': self.num_sms,
-                'monthly_limit': self.rate.monthly_limit,
-            }
-        elif self.rate.monthly_limit == 0:
+        if self.rate.monthly_limit == -1:
             return _("%(num_sms)d SMS Message%(plural)s") % {
                 'num_sms': self.num_sms,
                 'plural': '' if self.num_sms == 1 else 's',
+            }
+        elif self.is_within_monthly_limit:
+            return _(
+                "%(num_sms)d of %(monthly_limit)d included SMS messages"
+            ) % {
+                'num_sms': self.num_sms,
+                'monthly_limit': self.rate.monthly_limit,
             }
         else:
             assert self.rate.monthly_limit != -1

@@ -1,6 +1,8 @@
 import json
+from django.db.models import Q
 from corehq import Domain, toggles
-from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion
+from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion, \
+    Subscription, Subscriber, BillingContactInfo, SoftwarePlan
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -227,3 +229,189 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
         if self.search_string:
             domain_names = filter(lambda x: x.lower().startswith(self.search_string.lower()), domain_names)
         return [(d, d) for d in domain_names]
+
+
+class BaseSingleOptionFilterAsyncHandler(BaseAsyncHandler):
+
+    @property
+    def query(self):
+        raise NotImplementedError("must return a queryset")
+
+    @property
+    def search_string(self):
+        return self.data.get('q', None)
+
+    @property
+    def page(self):
+        return int(self.data.get('page', 1))
+
+    @property
+    def paginated_data(self):
+        start = (self.page - 1) * self.limit
+        end = self.page * self.limit
+        return self.query.all()[start:end]
+
+    @property
+    def limit(self):
+        return self.data.get('limit', 10)
+
+    @property
+    def total(self):
+        return self.query.count()
+
+    @staticmethod
+    def _fmt_select2_data(data_id, data_text):
+        return {
+            'id': data_id,
+            'text': data_text,
+        }
+
+    def _fmt_success(self, data):
+        return json.dumps({
+            'success': True,
+            'limit': self.limit,
+            'page': self.page,
+            'total': self.total,
+            'items': data,
+        })
+
+
+class SubscriberFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'subscriber_filter'
+    allowed_actions = [
+        'subscriber',
+    ]
+
+    @property
+    def query(self):
+        query = Subscriber.objects.exclude(domain=None).order_by('domain')
+        if self.search_string:
+            query = query.filter(domain__istartswith=self.search_string)
+        return query
+
+    @property
+    def subscriber_response(self):
+        return [self._fmt_select2_data(s.domain, s.domain)
+                for s in self.paginated_data]
+
+
+class SubscriptionFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'subscription_filter'
+    allowed_actions = [
+        'contract_id',
+    ]
+
+    @property
+    def query(self):
+        query = Subscription.objects
+        if self.action == 'contract_id':
+            query = query.exclude(
+                salesforce_contract_id=None
+            ).exclude(salesforce_contract_id='').order_by('salesforce_contract_id')
+            if self.search_string:
+                query = query.filter(
+                    salesforce_contract_id__istartswith=self.search_string
+                )
+        return query
+
+    @property
+    def contract_id_response(self):
+        return [self._fmt_select2_data(
+                s.salesforce_contract_id, s.salesforce_contract_id)
+                for s in self.paginated_data]
+
+
+class AccountFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'account_filter'
+    allowed_actions = [
+        'account_name',
+        'account_id',
+        'dimagi_contact',
+    ]
+
+    @property
+    def query(self):
+        query = BillingAccount.objects.order_by('name')
+
+        if self.action == 'account_name' and self.search_string:
+            query = query.filter(name__icontains=self.search_string)
+
+        if self.action == 'account_id':
+            query = query.exclude(
+                salesforce_account_id=None
+            ).exclude(
+                salesforce_account_id=''
+            ).order_by('salesforce_account_id')
+            if self.search_string:
+                query = query.filter(
+                    salesforce_account_id__istartswith=self.search_string)
+
+        if self.action == 'dimagi_contact':
+            query = query.exclude(
+                dimagi_contact=None
+            ).exclude(
+                dimagi_contact=''
+            ).order_by('dimagi_contact')
+            if self.search_string:
+                query = query.filter(
+                    dimagi_contact__icontains=self.search_string)
+
+        return query
+
+    @property
+    def account_name_response(self):
+        return [self._fmt_select2_data(a.name, a.name)
+                for a in self.paginated_data]
+
+    @property
+    def account_id_response(self):
+        return [self._fmt_select2_data(a.salesforce_account_id,
+                                       a.salesforce_account_id)
+                for a in self.paginated_data]
+
+    @property
+    def dimagi_contact_response(self):
+        return [self._fmt_select2_data(a.dimagi_contact, a.dimagi_contact)
+                for a in self.paginated_data]
+
+
+class BillingContactInfoAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'billing_contact_filter'
+    allowed_actions = [
+        'contact_name'
+    ]
+
+    @property
+    def query(self):
+        query = BillingContactInfo.objects.exclude(
+            first_name='', last_name='').order_by('first_name', 'last_name')
+        if self.search_string:
+            query = query.filter(
+                Q(first_name__istartswith=self.search_string) |
+                Q(last_name__istartswith=self.search_string)
+            )
+        return query
+
+    @property
+    def contact_name_response(self):
+        return [self._fmt_select2_data(c.full_name, c.full_name)
+                for c in self.paginated_data]
+
+
+class SoftwarePlanAsyncHandler(BaseSingleOptionFilterAsyncHandler):
+    slug = 'software_plan_filter'
+    allowed_actions = [
+        'name',
+    ]
+
+    @property
+    def query(self):
+        query = SoftwarePlan.objects.order_by('name')
+        if self.search_string:
+            query = query.filter(name__icontains=self.search_string)
+        return query
+
+    @property
+    def name_response(self):
+        return [self._fmt_select2_data(p.name, p.name)
+                for p in self.paginated_data]
