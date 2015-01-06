@@ -35,12 +35,13 @@ var ExportManager = function (o) {
             else
                 $title.attr('style', '');
         },
-        updateModal = function(d) {
+        updateModal = function(d, isBulkDownload) {
             var autoRefresh = '';
             var pollDownloader = function () {
                 if ($('#ready_'+d.download_id).length == 0) {
                     $.get(d.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
+                        self.setUpEventTracking(isBulkDownload);
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
                         self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
@@ -75,6 +76,32 @@ var ExportManager = function (o) {
             return getFormattedSheetName(a,b);
         };
 
+    /**
+     * Add a google analytics event handler to the "download" button in the
+     * download modal.
+     * @param isBulkDownload
+     */
+    self.setUpEventTracking = function(isBulkDownload) {
+        var downloadButton = self.$modal.find(self.exportModalLoadedData).find("a.btn.btn-primary").first();
+        if (downloadButton.length) {
+
+            if (self.export_type == "form") {
+                // Add the event handler:
+                var label = "raw";
+                // Note: Bulk downloads of custom reports will be logged as "custom"
+                if (self.is_custom) {
+                    label = "custom";
+                } else if (isBulkDownload) {
+                    label = "bulk";
+                }
+                gaTrackLink(downloadButton, "Form Exports", "Download (any) Form Export", label);
+            }
+            else if (self.export_type == "case") {
+                gaTrackLink(downloadButton, "Case Exports", "Download any Case Export", "bulk");
+            }
+        }
+    };
+
     self.updateSelectedExports = function (data, event) {
         var $checkbox = $(event.srcElement || event.currentTarget);
         var add_to_list = ($checkbox.attr('checked') === 'checked'),
@@ -98,7 +125,7 @@ var ExportManager = function (o) {
         $.ajax({
             dataType: 'json',
             url: downloadUrl,
-            success: updateModal,
+            success: function(data){updateModal(data, false)},
             error: displayDownloadError
         });
     };
@@ -115,7 +142,7 @@ var ExportManager = function (o) {
             url: downloadUrl,
             type: 'POST',
             data: data,
-            success: updateModal,
+            success: function(data){updateModal(data, true);},
             error: displayDownloadError
         });
     };
