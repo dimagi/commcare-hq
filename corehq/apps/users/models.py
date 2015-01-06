@@ -1861,8 +1861,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
                 sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 for loc_id in sql_loc.get_descendants().values_list('location_id', flat=True):
                     groups.append(make_group_object(loc_id, self))
-            else:
-                groups.append(self.location.get_group_object(self))
+
+            groups.append(self.location.get_group_object(self))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
 
