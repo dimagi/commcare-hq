@@ -483,6 +483,8 @@ def development():
     couchdb = servers['couchdb']
     redis = servers['redis']
     memcached = servers['memcached']
+    # if no server specified, just don't run pillowtop
+    pillowtop = servers.get('pillowtop', [])
 
     proxy = ['10.210.101.189']
 
@@ -496,7 +498,7 @@ def development():
         'reminder_queue': postgresql,
         'pillow_retry_queue': postgresql,
         'django_app': webworkers,
-        'django_pillowtop': postgresql,
+        'django_pillowtop': pillowtop,
         'formsplayer': postgresql,
         'staticfiles': proxy,
         'lb': [],
@@ -1223,7 +1225,7 @@ def set_celery_supervisorconf():
 def set_pillowtop_supervisorconf():
     # in reality this also should be another machine
     # if the number of listeners gets too high
-    if env.environment not in ['preview', 'dev']:
+    if env.environment not in ['preview']:
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
