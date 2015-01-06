@@ -108,7 +108,8 @@ class LocationSettingsView(BaseCommTrackManageView):
             'code': loctype.code,
             'allowed_parents': [p or None for p in loctype.allowed_parents],
             'administrative': loctype.administrative,
-            'shares_cases': loctype.shares_cases
+            'shares_cases': loctype.shares_cases,
+            'view_descendants': loctype.view_descendants
         }
 
     def post(self, request, *args, **kwargs):

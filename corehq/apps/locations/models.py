@@ -11,6 +11,7 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from mptt.models import MPTTModel, TreeForeignKey
 from corehq.apps.domain.models import Domain
 
+LOCATION_GROUP_PREFIX = 'locationgroup-'
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
@@ -72,6 +73,17 @@ def _filter_for_archived(locations, include_archive_ancestors):
         ]
     else:
         return locations.filter(is_archived=False)
+
+    @property
+    def group_id(self):
+        """
+        Returns the id with a prefix because this is
+        the magic id we are force setting the locations
+        case sharing group to be.
+
+        This is also the id that owns supply point cases.
+        """
+        return LOCATION_GROUP_PREFIX + self.location_id
 
 
 class Location(CachedCouchDocumentMixin, Document):
@@ -378,23 +390,10 @@ class Location(CachedCouchDocumentMixin, Document):
         return SupplyPointCase.get_by_location(self)
 
     def get_group_object(self, user):
-        """
-        Returns a fake group object that SHOULD NOT be saved.
-
-        This is used for giving users access via case
-        sharing groups, without having a real group
-        for every location that we have to manage/hide.
-        """
-        from corehq.apps.groups.models import Group
-        g = Group()
-        g.domain = self.domain
-        g.name = 'TODO-give-me-a-real-name'  # TODO
-        g.users = [user.user_id]
-        g.case_sharing = True
-        g.last_modified = datetime.now()
-        g._id = self.group_id
-
-        return g
+        return make_group_object(
+            self._id,
+            user
+        )
 
     @property
     def group_id(self):
@@ -405,7 +404,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
         This is also the id that owns supply point cases.
         """
-        return 'locationgroup-' + self._id
+        return LOCATION_GROUP_PREFIX + self._id
 
     @property
     def location_type_object(self):
@@ -428,3 +427,23 @@ def root_locations(domain):
 def all_locations(domain):
     return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
                          reduce=False, include_docs=True).all()
+
+
+def make_group_object(loc_id, user):
+    """
+    Returns a fake group object that SHOULD NOT be saved.
+
+    This is used for giving users access via case
+    sharing groups, without having a real group
+    for every location that we have to manage/hide.
+    """
+    from corehq.apps.groups.models import Group
+    g = Group()
+    g.domain = user.domain
+    g.name = 'Location ' + loc_id  # TODO
+    g.users = [user.user_id]
+    g.case_sharing = True
+    g.last_modified = datetime.now()
+    g._id = LOCATION_GROUP_PREFIX + loc_id
+
+    return g

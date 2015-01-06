@@ -57,6 +57,7 @@
                                 <th>{% trans "Tracks Stock" %}</th>
                                 {% endif %}
                                 <th>{% trans "Shares Cases" %}</th>
+                                <th>{% trans "View Child Cases" %}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -82,6 +83,9 @@
                                 {% endif %}
                                 <td>
                                     <input data-bind="checked: shares_cases" type="checkbox" />
+                                </td>
+                                <td>
+                                    <input data-bind="checked: view_descendants" type="checkbox" />
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">

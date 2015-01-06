@@ -1764,8 +1764,18 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         groups used to send location data in the restore
         payload.
         """
-        if self.location.location_type_object.shares_cases:
-            return [self.location.get_group_object(self)._id]
+        location_type = self.location.location_type_object
+        if location_type.shares_cases:
+            if location_type.view_descendants:
+                from corehq.apps.locations.models import SQLLocation, make_group_object
+                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
+                return [
+                    make_group_object(loc_id, self)._id
+                    for loc_id in sql_loc.get_descendants().values_list('location_id', flat=True)
+                ]
+            else:
+                return [self.location.get_group_object(self)._id]
+
         else:
             return []
 
@@ -1846,7 +1856,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         # get faked location group object
         groups = []
         if self.location and self.location.location_type_object.shares_cases:
-            groups.append(self.location.get_group_object(self))
+            if self.location.location_type_object.view_descendants:
+                from corehq.apps.locations.models import SQLLocation, make_group_object
+                sql_loc = SQLLocation.objects.get(location_id=self.location._id)
+                for loc_id in sql_loc.get_descendants().values_list('location_id', flat=True):
+                    groups.append(make_group_object(loc_id, self))
+            else:
+                groups.append(self.location.get_group_object(self))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
 
