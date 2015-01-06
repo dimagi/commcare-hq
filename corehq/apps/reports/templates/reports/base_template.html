@@ -78,7 +78,8 @@
             </ul>
         </div>
 
-        <button class="btn" data-bind="click: setConfigBeingEdited">
+        <button class="btn" data-bind="click: setConfigBeingEdited"
+                onclick="ga_track_event('Scheduled Reports', 'Configure a saved report', '-');">
             {% trans "Save" %}...
         </button>
 
