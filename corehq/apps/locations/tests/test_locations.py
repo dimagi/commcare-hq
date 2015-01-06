@@ -18,12 +18,9 @@ class LocationsTest(TestCase):
             'username',
             'password',
             first_name='Bob',
-            last_name='Builder'
+            last_name='Builder',
         )
         self.user.set_location(self.loc)
-        self.user.save()
-
-        self.user.add_location(self.loc)
 
     def test_location_queries(self):
         test_state1 = make_loc(

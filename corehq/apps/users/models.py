@@ -1334,6 +1334,7 @@ class LocationUserMixin(DocumentSchema):
             # if we can actually remove the old..
             self.add_location(location)
         else:
+            # TODO should rename this, it's confusing
             # the sane way: for normal domain we just override
             # the whole case
             self.set_locations([location])

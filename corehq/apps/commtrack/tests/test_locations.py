@@ -16,8 +16,6 @@ class LocationsTest(CommTrackTest):
     def setUp(self):
         super(LocationsTest, self).setUp()
         self.user = self.users[0]
-        # add the users location for delgate access as well
-        self.user.add_location(self.user.location)
 
     def test_sync(self):
         test_state = make_loc(
