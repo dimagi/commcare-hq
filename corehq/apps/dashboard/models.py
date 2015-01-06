@@ -12,6 +12,7 @@ class TileConfigurationError(Exception):
 class TileType(object):
     ICON = 'icon'
     PAGINATE = 'paginate'
+    APPS_PAGINATE = 'apps-paginate'
 
 
 class Tile(object):
@@ -286,6 +287,8 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     """Generates the Paginated context for the Applications Tile.
     """
 
+    tile_type = TileType.APPS_PAGINATE
+
     @property
     def total(self):
         # todo: optimize this at some point. unfortunately applications_brief
@@ -307,13 +310,23 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     def paginated_items(self):
         def _get_app_url(app):
             return (
-                reverse('view_app', args=[self.request.domain, app['id']])
+                _get_view_app_url(app)
                 if self.request.couch_user.can_edit_apps()
-                else reverse('release_manager', args=[self.request.domain, app['id']])
+                else _get_release_manager_url(app)
             )
+
+        def _get_view_app_url(app):
+            return reverse('view_app', args=[self.request.domain, app['id']])
+
+        def _get_release_manager_url(app):
+            return reverse('release_manager', args=[self.request.domain, app['id']])
+
+        def _get_app_name(app):
+            return app['key'][1]
 
         apps = self.applications[self.skip:self.skip + self.limit]
         return [{
-            'name': a['key'][1],
+            'name': _get_app_name(a),
             'url': _get_app_url(a),
+            'release_manager_url': _get_release_manager_url(a)
         } for a in apps]
