@@ -1,7 +1,8 @@
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, StreamingHttpResponse
+from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
+from corehq.apps.reports.views import can_view_attachments
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest_ex
@@ -16,7 +17,8 @@ class CaseAttachmentAPI(View):
         max_image_width	The largest width in pixels for an an image attachment
         max_image_height	The largest width in pixels for an an image attachment
         """
-
+        if self.request.couch_user.is_web_user and not can_view_attachments(self.request):
+            return HttpResponseForbidden()
         max_filesize = int(self.request.GET.get('max_size', 0)) #todo
 
         img = self.request.GET.get('img', None)
