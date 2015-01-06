@@ -280,7 +280,6 @@ class ExcelExportReport(FormExportReportBase):
                 if group.form_exports],
             report_slug=self.slug,
             property_hash=self.properties(size_hash),
-            has_media=self.request.project.has_media(),
         )
         return context
 
