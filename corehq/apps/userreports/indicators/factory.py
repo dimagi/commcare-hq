@@ -44,7 +44,7 @@ def _build_expression_indicator(spec, context):
     return RawIndicator(
         wrapped.display_name,
         column,
-        getter=wrapped.parsed_expression,
+        getter=wrapped.parsed_expression(context),
     )
 
 
