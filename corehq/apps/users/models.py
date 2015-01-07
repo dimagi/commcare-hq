@@ -1766,14 +1766,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         location_type = self.location.location_type_object
         if location_type.shares_cases:
             if location_type.view_descendants:
-                from corehq.apps.locations.models import SQLLocation, make_group_object
+                from corehq.apps.locations.models import SQLLocation
                 sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 return [
-                    make_group_object(loc_id, self._id, self.domain)._id
-                    for loc_id in sql_loc.get_descendants().values_list('location_id', flat=True)
+                    loc.get_group_object(self._id)._id
+                    for loc in sql_loc.get_descendants()
                 ]
             else:
-                return [self.location.get_group_object(self)._id]
+                return [self.location.sql_location.get_group_object(self)._id]
 
         else:
             return []

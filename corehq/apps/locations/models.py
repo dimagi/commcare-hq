@@ -57,19 +57,39 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
-    def get_group_object(self, user=None):
+    def get_group_object(self, user_id=None):
+        """
+        Returns a fake group object that SHOULD NOT be saved.
+
+        This is used for giving users access via case
+        sharing groups, without having a real group
+        for every location that we have to manage/hide.
+        """
+
+        from corehq.apps.groups.models import Group
+
         def group_name():
             return '/'.join(
                 list(self.get_ancestors().values_list('name', flat=True)) +
                 [self.name]
             )
 
-        return make_group_object(
-            self.location_id,
-            user,
-            self.domain,
-            group_name()
-        )
+        g = Group()
+        g.domain = self.domain
+        g.name = group_name()
+        g.users = [user_id] if user_id else []
+        g.case_sharing = True
+        g.reporting = False
+        g.last_modified = datetime.now()
+        g._id = LOCATION_GROUP_PREFIX + self.location_id
+        g.metadata = {
+            'cc_location_type': self.location_type,
+            'cc_location_name': self.name,
+        }
+        for key, val in self.metadata.items():
+            g.metadata['cc_location_' + key] = val
+
+        return g
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -436,25 +456,3 @@ def root_locations(domain):
 def all_locations(domain):
     return Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}],
                          reduce=False, include_docs=True).all()
-
-
-def make_group_object(loc_id, user_id, domain, name=None):
-    """
-    Returns a fake group object that SHOULD NOT be saved.
-
-    This is used for giving users access via case
-    sharing groups, without having a real group
-    for every location that we have to manage/hide.
-    """
-    from corehq.apps.groups.models import Group
-    name = name or 'Location ' + loc_id
-
-    g = Group()
-    g.domain = domain
-    g.name = name
-    g.users = [user_id] if user_id else []
-    g.case_sharing = True
-    g.last_modified = datetime.now()
-    g._id = LOCATION_GROUP_PREFIX + loc_id
-
-    return g
