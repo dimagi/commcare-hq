@@ -58,10 +58,17 @@ class SQLLocation(MPTTModel):
         return _filter_for_archived(roots, include_archive_ancestors)
 
     def get_group_object(self, user=None):
+        def group_name():
+            return '/'.join(
+                list(self.get_ancestors().values_list('name', flat=True)) +
+                [self.name]
+            )
+
         return make_group_object(
             self.location_id,
             user,
-            self.domain
+            self.domain,
+            group_name()
         )
 
 
@@ -396,13 +403,6 @@ class Location(CachedCouchDocumentMixin, Document):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
 
-    def get_group_object(self, user=None):
-        return make_group_object(
-            self._id,
-            user,
-            self.domain
-        )
-
     @property
     def group_id(self):
         """
@@ -437,7 +437,7 @@ def all_locations(domain):
                          reduce=False, include_docs=True).all()
 
 
-def make_group_object(loc_id, user_id, domain):
+def make_group_object(loc_id, user_id, domain, name=None):
     """
     Returns a fake group object that SHOULD NOT be saved.
 
@@ -446,9 +446,11 @@ def make_group_object(loc_id, user_id, domain):
     for every location that we have to manage/hide.
     """
     from corehq.apps.groups.models import Group
+    name = name or 'Location ' + loc_id
+
     g = Group()
     g.domain = domain
-    g.name = 'Location ' + loc_id  # TODO
+    g.name = name
     g.users = [user_id] if user_id else []
     g.case_sharing = True
     g.last_modified = datetime.now()
