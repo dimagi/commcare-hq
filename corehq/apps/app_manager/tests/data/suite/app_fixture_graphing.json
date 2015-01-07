@@ -498,7 +498,7 @@
                            {
                               "doc_type":"GraphSeries",
                               "y_function":"bar",
-                              "data_path":"instance('item-list:table1')/tablename_list/table1",
+                              "data_path":"instance('item-list:table1')/table1_list/table1",
                               "radius_function":null,
                               "x_function":"foo",
                               "config":{
