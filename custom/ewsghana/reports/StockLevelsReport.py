@@ -8,6 +8,7 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.graph_models import LineChart, Axis
 from corehq.apps.users.models import CommCareUser, CouchUser
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport
@@ -296,6 +297,16 @@ class InventoryManagementData(EWSData):
                 rows[product_name].append({'x': i, 'y': calculate_weeks_remaining(state, self.config['startdate'] +
                                                                                   timedelta(weeks=i))})
         return rows
+
+    @property
+    def charts(self):
+        if self.show_chart:
+            chart = LineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
+                              y_axis=Axis(self.chart_y_label, '.1f'))
+            for product, value in self.chart_data.iteritems():
+                chart.add_dataset(product, value)
+            return [chart]
+        return []
 
 
 class StockLevelsReportMixin(object):
