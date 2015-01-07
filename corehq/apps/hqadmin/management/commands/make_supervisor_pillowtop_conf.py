@@ -8,7 +8,6 @@ class Command(SupervisorConfCommand):
     help = "Make pillowtop supervisord conf - multiple configs per the PILLOWTOPS setting"
     args = ""
 
-
     @staticmethod
     def get_pillows_from_settings(pillowtops, yml=None):
         """
@@ -27,7 +26,7 @@ class Command(SupervisorConfCommand):
         Check if a file exists for this environment, then load the rejected pillow types from that file
         Return: None or []
         """
-        fpath = os.path.join(code_root, "scripts", "%s_pillows.yaml" % environment)
+        fpath = os.path.join(code_root, 'fab', 'pillows', "%s.yml" % environment)
         if os.path.isfile(fpath):
             with open(fpath, 'r') as f:
                 yml = yaml.load(f)
