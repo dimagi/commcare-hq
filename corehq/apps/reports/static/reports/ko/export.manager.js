@@ -102,7 +102,7 @@ var ExportManager = function (o) {
             var category, action;
             if (self.export_type == "form"){
                 category = "Form Exports";
-                action = "Download (any) Form Export"
+                action = "Download (any) Form Export";
             } else if (self.export_type == "case"){
                 category = "Case Exports";
                 action = "Download any Case Export";
