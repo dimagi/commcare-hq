@@ -14,8 +14,6 @@ from django.http import (
     HttpResponseForbidden,
 )
 from redis import ConnectionError
-from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import uid, LockManager, ReleaseOnError
@@ -123,6 +121,8 @@ def create_xform(xml_string, attachments=None, _id=None, process=None):
       - raise couchforms.XMLSyntaxError
 
     """
+    from corehq.util.couch_helpers import CouchAttachmentsBuilder
+
     assert attachments is not None
     json_form = convert_xform_to_json(xml_string)
 
@@ -417,6 +417,7 @@ class SubmissionPost(object):
             from casexml.apps.case.models import CommCareCase
             from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache
             from casexml.apps.case.signals import case_post_save
+            from casexml.apps.case.exceptions import IllegalCaseId
             from corehq.apps.commtrack.processing import process_stock
 
             cases = []
