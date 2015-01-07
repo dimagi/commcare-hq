@@ -506,7 +506,7 @@ def development():
 
         'django_monolith': []
     }
-    env.roles = ['django_monolith']
+    env.roles = ['deploy']
     env.es_endpoint = 'localhost'
     env.flower_port = 5555
     env.hosts = env.roledefs['deploy']
@@ -1223,9 +1223,12 @@ def set_celery_supervisorconf():
 
 @roles(ROLES_PILLOWTOP)
 def set_pillowtop_supervisorconf():
-    # in reality this also should be another machine
-    # if the number of listeners gets too high
-    if env.environment not in ['preview']:
+    # Don't run for preview,
+    # and also don't run if there are no hosts for the 'django_pillowtop' role.
+    # If there are no matching roles, it's still run once
+    # on the 'deploy' machine, db!
+    # So you need to explicitly test to see if all_hosts is empty.
+    if env.environment not in ['preview'] and env.all_hosts:
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
