@@ -77,11 +77,13 @@ class GlobalStats(BaseDomainView):
         }
 
         if self.show_supply_point_types:
-            supply_point_types = ['clinic', 'chps facility', 'district hospital', 'health centre', 'hospital',
-                              'psychiatric hospital', 'regional medical store', 'regional hospital', 'polyclinic',
-                              'teaching hospital', 'central medical store', '']
+            supply_point_types = [
+                'clinic', 'chps facility', 'district hospital', 'health centre', 'hospital',
+                'psychiatric hospital', 'regional medical store', 'regional hospital', 'polyclinic',
+                'teaching hospital', 'central medical store', ''
+            ]
             supply_point_types_map = {supply_point_type: 0 for supply_point_type in supply_point_types}
-            facility_ids = [location.location_id for location in SQLLocation.objects.all()]
+            facility_ids = [location.location_id for location in SQLLocation.objects.filter(domain=self.domain)]
             for facility in iter_docs(Location.get_db(), facility_ids):
                 supply_point_type = facility.get('metadata', {}).get('supply_point_type', "").lower()
                 supply_point_types_map[supply_point_type] += 1
