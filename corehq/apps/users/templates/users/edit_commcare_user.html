@@ -82,6 +82,18 @@
              if ($('#delete_user_{{ couch_user.user_id }}').get(0)) {
                  ko.applyBindings(new DeleteUserButtonModel(), $('#delete_user_{{ couch_user.user_id }}').get(0));
              }
+
+            // Event tracking
+            var $deleteModalForm = $("#delete_user_{{ couch_user.user_id }} form");
+            $("button:submit", $deleteModalForm).on("click", function(){
+                ga_track_event("Edit Mobile Worker", "Deleted User", "{{couch_user.user_id|escapejs}}", {
+                    'hitCallback': function() {
+                        $deleteModalForm.submit();
+                    }
+                });
+                return false;
+            });
+
         });
         {% endif %}
 
