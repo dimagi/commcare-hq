@@ -53,6 +53,7 @@
                                 .text("{% trans 'Password changed successfully' %}");
                         form.find('.reset-password-body').prepend($alert);
                         form.find('input').val('');
+                        ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
                     }
                 },
                 error: function (response) {
