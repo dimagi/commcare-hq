@@ -54,7 +54,7 @@ branches:
   - double-management # SK 12/1
   - lwyszomi:migration-optimization
   - caseDetailsInCC # sravan 2/1/15
-  - track-user-type # Nick P 1/6
+  - logo-to-android # Nick P 1/7
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
