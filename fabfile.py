@@ -459,7 +459,7 @@ def development():
     Example command:
 
         fab development awesome_deploy \
-        --set inventory=/path/to/ansible/inventories/development
+        --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development
 
     """
     env.sudo_user = 'cchq'
