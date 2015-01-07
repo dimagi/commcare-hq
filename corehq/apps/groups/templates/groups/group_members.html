@@ -47,6 +47,17 @@
                 unsavedChanges["Group data"] = true;
             });
 
+            // Delete group event
+            var $deleteGroupModalForm = $("#delete_group_modal form");
+            $("button:submit", $deleteGroupModalForm).click(function(){
+                ga_track_event("Editing Group", "Deleted Group", "{{group.get_id|escapejs}}", {
+                    'hitCallback': function() {
+                        $deleteGroupModalForm.submit();
+                    }
+                });
+                return false;
+            });
+
             $(window).bind('beforeunload', function () {
                 var someUnsavedChanges = false;
                 var ret = "{% trans "The following changes will not be saved: " %}";
