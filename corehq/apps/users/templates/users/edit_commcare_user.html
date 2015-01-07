@@ -53,6 +53,7 @@
                                 .text("{% trans 'Password changed successfully' %}");
                         form.find('.reset-password-body').prepend($alert);
                         form.find('input').val('');
+                        ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
                     }
                 },
                 error: function (response) {
@@ -81,6 +82,18 @@
              if ($('#delete_user_{{ couch_user.user_id }}').get(0)) {
                  ko.applyBindings(new DeleteUserButtonModel(), $('#delete_user_{{ couch_user.user_id }}').get(0));
              }
+
+            // Event tracking
+            var $deleteModalForm = $("#delete_user_{{ couch_user.user_id }} form");
+            $("button:submit", $deleteModalForm).on("click", function(){
+                ga_track_event("Edit Mobile Worker", "Deleted User", "{{couch_user.user_id|escapejs}}", {
+                    'hitCallback': function() {
+                        $deleteModalForm.submit();
+                    }
+                });
+                return false;
+            });
+
         });
         {% endif %}
 
@@ -121,7 +134,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            {% include 'users/partial/basic_info_form.html' %}
+            {% include 'users/partial/basic_info_form.html' with user_type="mobile"%}
         </div>
 
         <div class="tab-pane" id="groups">
