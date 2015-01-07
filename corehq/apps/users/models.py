@@ -1746,7 +1746,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
         for doc in iter_docs(db, case_ids):
             yield CommCareCase.wrap(doc) if wrap else doc
 
-
     @property
     def case_count(self):
         result = CommCareCase.view('case/by_user',
@@ -1770,7 +1769,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
                 from corehq.apps.locations.models import SQLLocation, make_group_object
                 sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 return [
-                    make_group_object(loc_id, self)._id
+                    make_group_object(loc_id, self._id, self.domain)._id
                     for loc_id in sql_loc.get_descendants().values_list('location_id', flat=True)
                 ]
             else:
@@ -1860,7 +1859,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin,
                 from corehq.apps.locations.models import SQLLocation, make_group_object
                 sql_loc = SQLLocation.objects.get(location_id=self.location._id)
                 for loc_id in sql_loc.get_descendants().values_list('location_id', flat=True):
-                    groups.append(make_group_object(loc_id, self))
+                    groups.append(make_group_object(loc_id, self._id, self.domain))
 
             groups.append(self.location.get_group_object(self))
 

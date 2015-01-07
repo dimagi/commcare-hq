@@ -6,6 +6,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
+from corehq.apps.locations.models import SQLLocation
 
 
 class Group(UndoableDocument):
@@ -176,7 +177,13 @@ class Group(UndoableDocument):
     def get_case_sharing_groups(cls, domain, wrap=True):
         all_groups = cls.by_domain(domain)
         if wrap:
-            return [group for group in all_groups if group.case_sharing]
+            groups = [group for group in all_groups if group.case_sharing]
+            groups.extend([
+                location.get_group_object() for location in
+                SQLLocation.objects.filter(domain=domain)
+                # TODO if locations type is sharing cases
+            ])
+            return groups
         else:
             return [group._id for group in all_groups if group.case_sharing]
 
