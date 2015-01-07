@@ -49,7 +49,7 @@ def _build_property_match_filter(spec, context):
 def _build_boolean_expression_filter(spec, context):
     wrapped = BooleanExpressionFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
-        expression=ExpressionFactory.from_spec(wrapped.expression),
+        expression=ExpressionFactory.from_spec(wrapped.expression, context),
         operator=get_operator(wrapped.operator),
         reference_value=wrapped.property_value,
     )
