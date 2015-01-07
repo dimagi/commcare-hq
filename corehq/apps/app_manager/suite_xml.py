@@ -442,6 +442,17 @@ class Detail(IdNode):
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
 
+    def get_all_fields(self):
+        '''
+        Return all fields under this Detail instance and all fields under
+        any details that may be under this instance.
+        :return:
+        '''
+        all_fields = []
+        for detail in [self] + list(self.details):
+            all_fields.extend(list(detail.fields))
+        return all_fields
+
     def _init_variables(self):
         if self._variables is None:
             self._variables = DetailVariableList()
@@ -461,7 +472,7 @@ class Detail(IdNode):
         if self._variables:
             for variable in self.variables:
                 result.add(variable.function)
-        for field in self.fields:
+        for field in self.get_all_fields():
             try:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
