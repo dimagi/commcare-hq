@@ -152,10 +152,23 @@
         return false;
     });
 
-    $('form[name="user_information"]').on("change", null, null, function() {
+    var $userInformationForm = $('form[name="user_information"]');
+    $userInformationForm.on("change", null, null, function() {
         $(":submit").prop("disabled", false);
     }).on("input", null, null, function() {
         $(":submit").prop("disabled", false);
-    })
+    });
+
+    {% if user_type == "mobile" %}
+    $("button:submit", $userInformationForm).on("click", function(){
+        ga_track_event("Edit Mobile Worker", "Updated user info", "{{couch_user_id|escapejs}}", {
+            'hitCallback': function() {
+                $userInformationForm.submit();
+            }
+        });
+        return false;
+    });
+    {% endif %}
+
 </script>
 {% endblock %}
