@@ -40,11 +40,7 @@
                     ga_track_event('Exchange', 'Publish Previous Version', '{{ snapshot.name }}');
                 });
                 $('#view_{{ snapshot.name }}').click(function() {
-                    ga_track_event('Exchange', 'View', '{{ snapshot.name }}', {
-                        'hitCallback': function () {
-                            document.location = $('#view_{{ snapshot.name }}').attr('href');
-                        }
-                    });
+                    gaTrackLink($('#view_{{ snapshot.name }}'), 'Exchange', 'View', '{{ snapshot.name }}');
                 });
             {% endfor %}
         });
