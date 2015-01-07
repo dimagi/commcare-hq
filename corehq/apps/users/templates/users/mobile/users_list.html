@@ -46,6 +46,7 @@
         $(document).ready(function() {
             gaTrackLink($('#add_new_mobile_worker'), 'Manage Mobile Worker', 'New Mobile Worker');
             gaTrackLink($('#bulk_upload'), 'Manage Mobile Worker', 'Bulk Upload');
+            gaTrackLink($('#btn-edit_user_fields'), 'Manage Mobile Worker', 'Edit User Fields', '{{ domain }}');
         });
     </script>
 {% endblock %}
@@ -152,7 +153,7 @@
                     </a>
                 {% endif %}
                 {% if can_add_extra_users %}
-                    <a class="btn" href="{% url "user_fields_view" domain %}">
+                    <a class="btn" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
                         {% trans "Edit User Fields" %}
                     </a>
                 {% endif %}
