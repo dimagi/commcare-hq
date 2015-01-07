@@ -20,7 +20,8 @@
             exportFilters: filterParams,
             jsonExportFilters: jsonFilterParams,
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
-            is_custom: true
+            is_custom: true,
+            is_deid_form_report: {{ is_deid_form_report|JSON }}
         } );
         ko.applyBindings(customExportManager, $('#custom-form-export')[0]);
 

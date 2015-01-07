@@ -3,6 +3,7 @@ var ExportManager = function (o) {
     self.selected_exports = ko.observableArray();
     self.export_type = o.export_type || "form";
     self.is_custom = o.is_custom || false;
+    self.is_deid_form_report = o.is_deid_form_report || false;
 
     self.format = o.format || "csv";
     self.domain = o.domain;
@@ -91,24 +92,42 @@ var ExportManager = function (o) {
         params = params || {};
         var downloadButton = self.$modal.find(self.exportModalLoadedData).find("a.btn.btn-primary").first();
         if (downloadButton.length) {
-            // General form Exports event
-            if (self.export_type == "form") {
-                var label = "raw";
-                if (self.is_custom) {
-                    label = "custom";
-                } else if (params.isBulkDownload) {
-                    // Note: Bulk downloads of custom reports will be logged as "custom"
-                    label = "bulk";
-                }
-                gaTrackLink(downloadButton, "Form Exports", "Download (any) Form Export", label);
-            }
+
             // Device reports event
+            // (This is a bit of a special case due to its unique "action" and "label"
             if (params.xmlns == "http://code.javarosa.org/devicereport") {
                 gaTrackLink(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
             }
-            // Case Exports event
-            if (self.export_type == "case") {
-                gaTrackLink(downloadButton, "Case Exports", "Download any Case Export", "bulk");
+
+            var category, action;
+            if (self.export_type == "form"){
+                category = "Form Exports";
+                action = "Download (any) Form Export"
+            } else if (self.export_type == "case"){
+                category = "Case Exports";
+                action = "Download any Case Export";
+            }
+
+            // Note that sometimes a download will trigger multiple events.
+
+            if (params.isBulkDownload){
+                gaTrackLink(downloadButton, category, action, "bulk");
+            }
+
+            if (self.is_deid_form_report){
+                gaTrackLink(downloadButton, category, action, "deidentified");
+            }
+
+            if (self.is_custom && !self.is_deid_form_report){
+                if (params.isBulkDownload){
+                    gaTrackLink(downloadButton, category, action, "custom");
+                } else {
+                    gaTrackLink(downloadButton, category, action, "saved");
+                }
+            }
+
+            if (!self.is_custom){
+                gaTrackLink(downloadButton, category, action, "raw");
             }
         }
     };
@@ -140,7 +159,7 @@ var ExportManager = function (o) {
                 updateModal({
                     data: data,
                     xmlns: params.xmlns,
-                    isBulkDownload: false
+                    isBulkDownload: params.isBulkDownload
                 });
             },
             error: displayDownloadError
@@ -261,7 +280,11 @@ var ExportManager = function (o) {
                 downloadUrl += '&' + k + '=' + v;
             }
         }
-        self.downloadExport({downloadUrl: downloadUrl, xmlns: xmlns});
+        self.downloadExport({
+            downloadUrl: downloadUrl,
+            xmlns: xmlns,
+            isBulkDownload: options.isBulkDownload
+        });
     };
 
     self.requestDownload = function(data, event) {
@@ -276,7 +299,8 @@ var ExportManager = function (o) {
         }
         return self._requestDownload(event, {
             modalTitle: modalTitle,
-            downloadParams: downloadParams
+            downloadParams: downloadParams,
+            isBulkDownload: false
         });
     };
 
@@ -285,7 +309,8 @@ var ExportManager = function (o) {
             modalTitle: "Case List",
             downloadParams: {
                 include_closed: $('#include-closed-select').val()
-            }
+            },
+            isBulkDownload: true
         });
     };
 

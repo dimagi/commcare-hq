@@ -44,7 +44,7 @@ var HQExportDownloader = function (options) {
     self.setUpEventTracking = function(){
         var downloadButton = $(self.modal).find(self.loadedData).find("a.btn.btn-primary").first();
         if (downloadButton.length) {
-            gaTrackLink(downloadButton, "Case Exports", "Download any Case Export", "custom");
+            gaTrackLink(downloadButton, "Case Exports", "Download any Case Export", "saved");
         }
     };
 };
