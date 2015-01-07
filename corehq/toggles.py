@@ -269,3 +269,9 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     "This doesn't actually do anything yet.",
     [NAMESPACE_DOMAIN]
 )
+
+ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
+    'allow_case_attachments_view',
+    "Explicitly allow user to access case attachments, even if they can't view the case list report.",
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)

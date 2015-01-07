@@ -32,7 +32,7 @@
         {% endif %}
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/ko/global_handlers.ko.js' %}"></script>
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
@@ -376,8 +376,8 @@
 
         {% block js %}
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
-        <script src="{% static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery.cookie.js' %}"></script>
+        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+        <script src="{% static 'style/lib/jquery-cookie/src/jquery.cookie.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
 
         <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>

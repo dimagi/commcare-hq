@@ -56,7 +56,7 @@ def inverse_dict(d):
 
 
 def can_view_app(req, dom):
-    if not dom or not dom.is_snapshot:
+    if not dom or not dom.is_snapshot or not dom.published:
         return False
     if not dom.is_approved and (
         not getattr(req, "couch_user", "") or not req.couch_user.is_domain_admin(dom.copied_from.name)

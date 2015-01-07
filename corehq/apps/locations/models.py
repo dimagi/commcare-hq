@@ -134,6 +134,7 @@ class Location(CachedCouchDocumentMixin, Document):
             'latitude',
             'longitude',
             'is_archived',
+            'metadata'
         ]
 
         sql_location, _ = SQLLocation.objects.get_or_create(

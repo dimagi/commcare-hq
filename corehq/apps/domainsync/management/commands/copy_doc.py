@@ -14,11 +14,11 @@ class Command(LabelCommand):
             raise CommandError('Usage is copy_doc %s' % self.args)
 
         sourcedb = Database(args[0])
-        app_id = args[1]
+        doc_id = args[1]
         domain = args[2] if len(args) == 3 else None
 
-        app_json = sourcedb.get(app_id)
+        doc_json = sourcedb.get(doc_id)
         if domain:
-            app_json['domain'] = domain
-        dt = DocumentTransform(app_json, sourcedb)
+            doc_json['domain'] = domain
+        dt = DocumentTransform(doc_json, sourcedb)
         save(dt, get_db())

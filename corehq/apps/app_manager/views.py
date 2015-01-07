@@ -109,6 +109,7 @@ from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
@@ -779,6 +780,7 @@ def get_module_view_context_and_template(app, module):
         if m.case_type == module.case_type:
             child_case_types.update(m.get_child_case_types())
     child_case_types = list(child_case_types)
+    fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
@@ -803,6 +805,7 @@ def get_module_view_context_and_template(app, module):
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
+            'fixtures': fixtures,
             'details': [
                 {
                     'label': _('Goal List'),
@@ -858,12 +861,14 @@ def get_module_view_context_and_template(app, module):
             return details
 
         return "app_manager/module_view_advanced.html", {
+            'fixtures': fixtures,
             'details': get_details(),
         }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
+            'fixtures': fixtures,
             'details': [
                 {
                     'label': _('Case List'),
@@ -1141,6 +1146,12 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         ))
         return back_to_main(req, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
+
+    vellum_features = toggles.toggles_dict(username=req.user.username,
+                                           domain=domain)
+    vellum_features.update({
+        'group_in_field_list': app.enable_group_in_field_list
+    })
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
@@ -1151,8 +1162,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': req.COOKIES.get('sessionid'),
-        'features': toggles.toggles_dict(username=req.user.username,
-                                         domain=domain)
+        'features': vellum_features
     })
     return render(req, 'app_manager/form_designer.html', context)
 
