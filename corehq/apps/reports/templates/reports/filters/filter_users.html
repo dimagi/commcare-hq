@@ -7,9 +7,10 @@
 {% if show_user_filter %}
     <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
 	    {% for user in toggle_users %}
-        <button class="btn{% if user.show %} btn-success{% else %} active{% endif %}"
+        <button class="btn{% if user.show %} btn-success{% else %} active{% endif %} user-type-btn"
                 data-checkfilter="user-filter-{{ user.type }}"
-                data-ufilter="{{ user.type }}">
+                data-ufilter="{{ user.type }}"
+                id="btn-user-filter-{{ user.type }}">
 			    {{ user.name }}
 		</button>
 		{% endfor %}
@@ -28,5 +29,15 @@
     $(function() {
         linkButtonGroup("{{ css_id }}");
     });
+</script>
+
+<script type="text/javascript">
+    {% for user in toggle_users %}
+    $("#btn-user-filter-{{ user.type }}").on('applied-click', function(data) {
+        if(document.getElementById("user-filter-{{ user.type }}").checked ) {
+            ga_track_event(data.event_category, 'Select "user type"', '{{ user.name }}');
+        }
+    });
+    {% endfor %}
 </script>
 {% endblock %}

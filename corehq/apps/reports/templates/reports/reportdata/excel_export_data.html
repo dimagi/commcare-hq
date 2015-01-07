@@ -152,6 +152,15 @@
 
 
     </script>
+
+    <script type="text/javascript">
+        $('.hq-generic-report').on('apply-click', function() {
+            $('.user-type-btn').trigger({
+                type: 'applied-click',
+                event_category: 'Form Exports'
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block reportcontent %}
