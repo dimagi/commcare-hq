@@ -436,37 +436,81 @@ def preview():
     _setup_path()
 
 
+def read_inventory_file(filename):
+    """
+    filename is a path to an ansible inventory file
+
+    returns a mapping of group names ("webworker", "proxy", etc.)
+    to lists of hosts (ip addresses)
+
+    """
+    from ansible.inventory import InventoryParser
+
+    return {name: [host.name for host in group.get_hosts()]
+            for name, group in InventoryParser(filename).groups.items()}
+
+
 @task
 def development():
-    """A development monolith target - must specify a host either by command line or prompt"""
+    """
+    Must pass in the 'inventory' env variable, which the path to an
+    ansible inventory file
+
+    Example command:
+
+        fab development awesome_deploy \
+        --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development
+
+    """
     env.sudo_user = 'cchq'
-    env.environment = 'development'
     env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
 
+    require('inventory')
+
+    # use inventory filename as environment name
+    # i.e. if the inventory is called my-crazy-setup
+    # then things on the server will be stored in
+    # /home/cchq/www/my-crazy-setup/code_root, etc.
+    env.environment = os.path.basename(env.inventory)
+    servers = read_inventory_file(env.inventory)
+
     _setup_path()
 
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': [],
-        'django_celery': [],
-        'sms_queue': [],
-        'reminder_queue': [],
-        'pillow_retry_queue': [],
-        'django_app': [],
-        'django_pillowtop': [],
-        'formsplayer': [],
-        'staticfiles': [],
-        'lb': [],
-        'deploy': [],
+    webworkers = servers['webworkers']
+    postgresql = servers['postgresql']
+    couchdb = servers['couchdb']
+    redis = servers['redis']
+    memcached = servers['memcached']
+    # if no server specified, just don't run pillowtop
+    pillowtop = servers.get('pillowtop', [])
 
-        'django_monolith': env.hosts
+    proxy = ['10.210.101.189']
+
+
+    env.roledefs = {
+        'couch': couchdb,
+        'pg': postgresql,
+        'rabbitmq': postgresql,
+        'django_celery': postgresql,
+        'sms_queue': postgresql,
+        'reminder_queue': postgresql,
+        'pillow_retry_queue': postgresql,
+        'django_app': webworkers,
+        'django_pillowtop': pillowtop,
+        'formsplayer': postgresql,
+        'staticfiles': proxy,
+        'lb': [],
+        'deploy': postgresql,
+
+        'django_monolith': []
     }
-    env.roles = ['django_monolith']
+    env.roles = ['deploy']
     env.es_endpoint = 'localhost'
     env.flower_port = 5555
+    env.hosts = env.roledefs['deploy']
+
 
 @task
 @roles(ROLES_ALL_SRC)
@@ -1179,9 +1223,12 @@ def set_celery_supervisorconf():
 
 @roles(ROLES_PILLOWTOP)
 def set_pillowtop_supervisorconf():
-    # in reality this also should be another machine
-    # if the number of listeners gets too high
-    if env.environment not in ['preview']:
+    # Don't run for preview,
+    # and also don't run if there are no hosts for the 'django_pillowtop' role.
+    # If there are no matching roles, it's still run once
+    # on the 'deploy' machine, db!
+    # So you need to explicitly test to see if all_hosts is empty.
+    if env.environment not in ['preview'] and env.all_hosts:
         # preview environment should not run pillowtop and index stuff
         # just rely on what's on staging
         _rebuild_supervisor_conf_file('make_supervisor_pillowtop_conf', 'supervisor_pillowtop.conf')
