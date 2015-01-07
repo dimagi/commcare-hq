@@ -53,6 +53,7 @@ branches:
   - master+double-management # Nick P 12/31
   - double-management # SK 12/1
   - lwyszomi:migration-optimization
+  - master+caseDetailsInCC  # Nick P 1/7
   - caseDetailsInCC # sravan 2/1/15
   - logo-to-android # Nick P 1/7
 submodules:
