@@ -76,20 +76,23 @@
                 return;
             });
 
-            function success(name, id) {
+            function success(name, id, gaEventLabel) {
                 return function() {
                     unsavedChanges[name] = false;
                     $('.alert').removeClass('alert-error alert-info').addClass('alert-success');
                     $('.alert')[0].innerHTML = name + " was successfully saved";
                     $('.alert').show();
                     $(id).find(':button').enableButton();
-                    $('#editGroupSettings').modal('hide')
+                    $('#editGroupSettings').modal('hide');
+                    if (gaEventLabel){
+                        ga_track_event("Editing Group", gaEventLabel, "{{group.get_id|escapejs}}");
+                    }
                 }
             }
 
-            var edit_membership_succ = success("Group membership", "#edit_membership");
-            var edit_settings_succ = success("Group settings", "#edit-group-settings");
-            var edit_data_succ = success("Group data", "#group-data-form");
+            var edit_membership_succ = success("Group membership", "#edit_membership", "Edit Group Membership");
+            var edit_settings_succ = success("Group settings", "#edit-group-settings", "Edit Settings");
+            var edit_data_succ = success("Group data", "#group-data-form", "Edit Group Data");
 
             function failure(name, id) {
                 return function() {
@@ -128,7 +131,7 @@
                     } else {
                         $('#group-case-sharing-warning').attr('hidden', 'hidden')
                     }
-                })
+                });
                 $('#group-data-form').submit(function() {
                     $(this).find(':button').attr('disabled', 'disabled');
                     $(this).ajaxSubmit({
