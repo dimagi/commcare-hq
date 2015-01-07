@@ -642,6 +642,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
         next_subscription = {
             'exists': False,
             'can_renew': False,
+            'name': None,
+            'price': None,
         }
         cards = None
         general_credits = None
@@ -655,7 +657,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime("%d %B %Y"),
+                        'name': subscription.next_subscription.plan_version.plan.name,
+                        'price': self.get_product_summary(subscription.next_subscription.plan_version,
+                                                          self.account,
+                                                          subscription)[0]['monthly_fee'],
                     })
+
                 else:
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
