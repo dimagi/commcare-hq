@@ -1,0 +1,153 @@
+#! /usr/bin/env python
+"""
+Update Vellum in HQ
+
+It is a good idea to build Vellum and test locally before pushing
+changes made by this script. It is extremely important to have your
+Vellum development environment configured correctly, including having
+correct dependency versions installed (see Vellum's README.md for
+instructions), before using this script to push changes to master.
+
+This script assumes that the vellum-staging branch is in staging.yaml.
+"""
+from __future__ import print_function
+import os
+import subprocess
+import sys
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from os.path import abspath, dirname, exists, join
+
+import sh
+from gitutils import get_git
+
+VELLUM_TAR = "vellum.tar.gz"
+
+
+def main():
+    parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
+    parser.add_argument("mode", choices=["staging", "master"],
+        help="Update vellum-staging or master.")
+    parser.add_argument("--vellum-dir", default=os.environ.get("VELLUM_DIR"),
+        help="Path to Vellum git repo on your local machine. Defaults to the "
+             "value of the VELLUM_DIR environment variable.")
+    parser.add_argument("--hq-base", metavar="BRANCH", default="master",
+        help="Reset to BRANCH before updating HQ (default: master). "
+             "This does nothing when mode is 'master'.")
+    parser.add_argument("--no-make", action="store_true",
+        help="Skip Vellum build (mutually exclusive with --no-test).")
+    parser.add_argument("--no-test", action="store_true",
+        help="Build Vellum, but do not run tests (mutually exclusive with --no-make).")
+    parser.add_argument("--push", action="store_true",
+        help="Push the result to HQ if everything else succeeds.")
+    args = parser.parse_args()
+
+    vellum_dir = args.vellum_dir
+    vellum_branch = args.mode
+    hq_dir = dirname(dirname(abspath(__file__)))
+    hq_branch = "vellum-staging" if args.mode == "staging" else args.mode
+
+    # validation
+    if not vellum_dir:
+        sys.exit("Please use --vellum-dir=... or set VELLUM_DIR in your environment")
+    if args.no_make and args.no_test:
+        sys.exit("--no-make and --no-test options are mutually exclusive. Pick one.")
+
+    try:
+        if args.no_make:
+            print("Skipping Vellum build")
+            vellum_tar = join(vellum_dir, VELLUM_TAR)
+            if not exists(vellum_tar):
+                sys.exit("{} not found".format(vellum_tar))
+            elif args.mode == "master":
+                print("Using {}".format(vellum_tar))
+                ok = raw_input("Type 'ok' to continue: ")
+                if ok != "ok":
+                    sys.exit("Aborted.")
+            vellum_rev = ""
+        else:
+            vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test)
+
+        update_hq(hq_dir, hq_branch, args.hq_base, vellum_dir, vellum_rev, args.push)
+    except sh.ErrorReturnCode as err:
+        print("Aborted due to error: {}".format(err))
+
+
+def build_vellum(path, branch, test=True):
+    git = get_git(path)
+    require_clean_working_tree(git, path)
+    print("Checkout and fetch {} {}".format(path, branch))
+    git.checkout(branch)
+    git.fetch()
+    require_branch_up_to_date(git, branch, context=path)
+
+    print("Building Vellum...")
+    make_args = ("test",) if test else ()
+    sh.make(_cwd=path, _out=sys.stdout, _err=sys.stderr, *make_args)
+
+    return str(git("rev-parse", "HEAD"))
+
+
+def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
+    git = get_git(path)
+    require_clean_working_tree(git, path)
+
+    print("Checkout and fetch HQ {}".format(branch))
+    git.checkout(branch)
+    git.fetch()
+
+    hq_vellum = join(path, "corehq/apps/app_manager/static/app_manager/js/vellum")
+    if branch != "master":
+        print("git reset --hard origin/" + base_branch)
+        git.reset("--hard", "origin/" + base_branch)
+        assert hq_vellum.startswith(path), (path, hq_vellum)
+    else:
+        require_branch_up_to_date(git, "master", context=path)
+
+    print("Overwriting HQ Vellum with new build")
+    sh.rm("-rf", hq_vellum)
+    sh.mkdir(hq_vellum)
+    vellum_tar = join(vellum_dir, VELLUM_TAR)
+    sh.tar("xf", vellum_tar, "-C", hq_vellum)
+    git.add("--all", hq_vellum)
+
+    code = subprocess.call([
+        "git", "commit", "--edit", "--message=vellum:" + vellum_rev
+    ], cwd=path)
+    if code != 0:
+        sys.exit(code)
+
+    if push:
+        print("Pushing HQ origin/{}".format(branch))
+        opts = () if branch == "master" else ["-f"]
+        git.push("origin", branch, *opts)
+
+
+def require_branch_up_to_date(git, branch, remote="origin", context="Your local", abort=sys.exit):
+    local_rev = git("rev-parse", branch).strip()
+    remote_rev = git("rev-parse", remote + "/" + branch).strip()
+    if local_rev != remote_rev:
+        abort("{context} '{branch}' and '{remote}/{branch}' have diverged"
+              .format(**locals()))
+
+
+def require_clean_working_tree(git, context="", abort=sys.exit):
+    # http://stackoverflow.com/a/3879077/10840
+    git("update-index", "-q", "--ignore-submodules", "--refresh")
+    if context:
+        context = " in " + context
+
+    # Disallow unstaged changes in the working tree
+    try:
+        git("diff-files", "--quiet", "--ignore-submodules", "--")
+    except sh.ErrorReturnCode:
+        abort("Aborting. You have unstaged changes{}.".format(context))
+
+    # Disallow uncommitted changes in the index
+    try:
+        git("diff-index", "--cached", "--quiet", "HEAD", "--ignore-submodules", "--")
+    except sh.ErrorReturnCode:
+        abort("Aborting. You have uncommitted changes{}.".format(context))
+
+
+if __name__ == '__main__':
+    main()
