@@ -30,11 +30,7 @@
     </script>
     <script>
         function view_on_exchange(version_name) {
-            ga_track_event('Exchange', 'View on exchange', version_name, {
-                'hitCallback': function () {
-                    document.location = $('#view-on-exchange').attr('href');
-                }
-            });
+            gaTrackLink($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
             return false;
         }
 
@@ -44,11 +40,7 @@
                     ga_track_event('Exchange', 'Publish Previous Version', '{{ snapshot.name }}');
                 });
                 $('#view_{{ snapshot.name }}').click(function() {
-                    ga_track_event('Exchange', 'View', '{{ snapshot.name }}', {
-                        'hitCallback': function () {
-                            document.location = $('#view_{{ snapshot.name }}').attr('href');
-                        }
-                    });
+                    gaTrackLink($('#view_{{ snapshot.name }}'), 'Exchange', 'View', '{{ snapshot.name }}');
                 });
             {% endfor %}
         });
