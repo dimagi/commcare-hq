@@ -301,3 +301,7 @@ class SQLProduct(models.Model):
             self.domain,
             self.name
         )
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(domain=domain).all()
