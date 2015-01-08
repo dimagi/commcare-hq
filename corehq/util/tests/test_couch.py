@@ -66,7 +66,6 @@ class GetDocMockTestCase(TestCase):
         """
         get_document_or_404 should raise 404 on WrappingAttributeError
         """
-        import ipdb; ipdb.set_trace()
         with mock_wrap_context():
             with self.assertRaises(Http404):
                 get_document_or_404(MockModel, 'ham', '123')
@@ -75,6 +74,5 @@ class GetDocMockTestCase(TestCase):
         """
         get_document_or_404 should return a wrapped model on success
         """
-        import ipdb; ipdb.set_trace()
         doc = get_document_or_404(MockModel, 'ham', '123')
         self.assertEqual(doc, {'wrapped': {'_id': '123', 'domain': 'ham', 'doc_type': 'MockModel'}})
