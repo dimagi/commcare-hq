@@ -1,31 +1,7 @@
-# This file can be used to include and exclude pillows from the _india_ environment
-# The base list of pillows is the setting for PILLOWTOPS
-# During a deploy the blacklisted pillows will not have .conf files written for them
-
-# Uncomment and add to this to prevent groups of pillows from running
-# pillowtop_blacklist:
-
-# Add to this to prevent certain pillows from being run
-pillow_blacklist:
-  - custom.m4change.models.AllHmisCaseFluffPillow
-  - custom.m4change.models.AncHmisCaseFluffPillow
-  - custom.reports.care_sa.models.CareSAFluffPillow
-  - custom.intrahealth.models.CouvertureFluffPillow
-  - custom.care_pathways.models.FarmerRecordFluffPillow
-  - custom.care_pathways.models.GeographyFluffPillow
-  - custom.m4change.models.ImmunizationHmisCaseFluffPillow
-  - custom.intrahealth.models.IntraHealthFluffPillow
-  - custom.m4change.models.LdHmisCaseFluffPillow
-  - custom.intrahealth.models.LivraisonFluffPillow
-  - custom.reports.mc.models.MalariaConsortiumFluffPillow
-  - custom.m4change.models.McctMonthlyAggregateFormFluffPillow
-  - custom.opm.models.OPMHierarchyFluffPillow
-  - custom.opm.models.OpmCaseFluffPillow
-  - custom.opm.models.OpmFormFluffPillow
-  - custom.opm.models.OpmHealthStatusAllInfoFluffPillow
-  - custom.opm.models.OpmUserFluffPillow
-  - custom.intrahealth.models.RecapPassagePillow
-  - custom.intrahealth.models.TauxDeRuptureFluffPillow
-  - custom.intrahealth.models.TauxDeSatisfactionFluffPillow
-  - custom.apps.cvsu.models.UnicefMalawiFluffPillow
-  - custom.opm.models.VhndAvailabilityFluffPillow
+# fab/pillows/india.yml
+---
+include_pillows:
+  - custom.bihar.models.CareBiharFluffPillow
+  - custom.world_vision.models.WorldVisionMotherFluffPillow
+  - custom.world_vision.models.WorldVisionChildFluffPillow
+  - custom.world_vision.models.WorldVisionHierarchyFluffPillow
