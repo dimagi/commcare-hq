@@ -41,6 +41,7 @@ var ExportManager = function (o) {
          *  - data (required)
          *  - isBulkDownload
          *  - xmlns
+         *  - exportName
          * the two optional keys are used for google analytics.
          * @param params
          */
@@ -52,7 +53,8 @@ var ExportManager = function (o) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                         self.setUpEventTracking({
                             xmlns: params.xmlns,
-                            isBulkDownload: params.isBulkDownload
+                            isBulkDownload: params.isBulkDownload,
+                            exportName: params.exportName
                         });
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
@@ -115,10 +117,10 @@ var ExportManager = function (o) {
                 label = params.isBulkDownload ? "bulk" : params.xmlns;
                 if (self.is_deid_form_report){
                     action = "Download Deidentified Form Export";
-                    label = params.isBulkDownload ? label : params.xmlns;
+                    label = params.isBulkDownload ? label : params.exportName;
                 } else if (self.is_custom){
                     action = "Download Custom Form Export";
-                    label = params.isBulkDownload ? label : params.xmlns;
+                    label = params.isBulkDownload ? label : params.exportName;
                 }
 
                 gaTrackLink(downloadButton, category, action, label);
@@ -154,7 +156,8 @@ var ExportManager = function (o) {
                 updateModal({
                     data: data,
                     xmlns: params.xmlns,
-                    isBulkDownload: params.isBulkDownload
+                    isBulkDownload: params.isBulkDownload,
+                    exportName: params.exportName
                 });
             },
             error: displayDownloadError
@@ -279,7 +282,8 @@ var ExportManager = function (o) {
         self.downloadExport({
             downloadUrl: downloadUrl,
             xmlns: xmlns,
-            isBulkDownload: options.isBulkDownload
+            isBulkDownload: options.isBulkDownload,
+            exportName: formName || xmlns
         });
     };
 

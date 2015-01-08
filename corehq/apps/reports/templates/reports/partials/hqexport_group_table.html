@@ -21,6 +21,7 @@
                 {% if component.saved_version.has_file %}
                 <a href="{% url "hq_download_saved_export" domain component.saved_version.get_id %}"
                    class="btn btn-primary daily-saved-download"
+                   data-exportName="{{ component.config.name }}"
                    data-typeIdentifier="{{ component.config.index.1}}"
                 >
                     <i class="icon-download-alt icon-white"></i> {% trans "Download" %}

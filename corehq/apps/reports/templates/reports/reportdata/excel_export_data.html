@@ -51,8 +51,8 @@
         });
 
         $('.daily-saved-download').click(function(){
-            var xmlns = $(this).attr("data-typeIdentifier");
-            ga_track_event("Download Form Export", "Download Saved Form Export", xmlns);
+            var exportName = $(this).attr("data-exportName");
+            ga_track_event("Download Form Export", "Download Saved Form Export", exportName);
         });
 
         $(function () {
