@@ -396,7 +396,10 @@
                                                 </p>
                                                 <p>
                                                     {% trans "Or" %}
-                                                    <a href="#" data-bind="openJqm: get_odk_install_url">
+                                                    <a href="#" data-bind="
+                                                        openJqm: get_odk_install_url,
+                                                        click: function() { ga_track_event('App Manager', 'Show Bar Code', '-'); }
+                                                    ">
                                                     {% trans "scan the bar code" %}
                                                     </a>
                                                 </p>

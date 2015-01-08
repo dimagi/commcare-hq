@@ -937,7 +937,7 @@ def update_virtualenv(preindex=False):
         # but only the ones that are actually installed (checks pip freeze)
         sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
              user=env.sudo_user)
-        sudo('%s pip install --requirement %s --requirement %s' % (
+        sudo('%s pip install --timeout 60 --requirement %s --requirement %s' % (
             cmd_prefix,
             posixpath.join(requirements, 'prod-requirements.txt'),
             posixpath.join(requirements, 'requirements.txt'),

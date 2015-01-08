@@ -16,6 +16,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from soil.util import expose_download, get_download_context
 
+from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
@@ -26,7 +27,8 @@ from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.users.forms import MultipleSelectionForm
 from custom.openlmis.tasks import bootstrap_domain_task
 
 from .models import Location
@@ -79,9 +81,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
     entity_string = _("Location")
-
-    def get(self, *args, **kwargs):
-        return super(LocationFieldsView, self).get(*args, **kwargs)
 
 
 class LocationSettingsView(BaseCommTrackManageView):
@@ -221,17 +220,7 @@ def unarchive_location(request, domain, loc_id):
     })
 
 
-class EditLocationView(NewLocationView):
-    urlname = 'edit_location'
-    page_title = ugettext_noop("Edit Location")
-
-    @property
-    @memoized
-    def location_form(self):
-        if self.request.method == 'POST':
-            return LocationForm(self.location, self.request.POST)
-        return LocationForm(self.location)
-
+class IndividualLocationMixin(object):
     @property
     def location_id(self):
         return self.kwargs['loc_id']
@@ -245,6 +234,10 @@ class EditLocationView(NewLocationView):
             raise Http404()
 
     @property
+    def sql_location(self):
+        return self.location.sql_location
+
+    @property
     @memoized
     def supply_point(self):
         try:
@@ -252,6 +245,22 @@ class EditLocationView(NewLocationView):
         except MultipleResultsFound:
             raise MultipleSupplyPointException
 
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.location_id])
+
+
+class EditLocationView(IndividualLocationMixin, NewLocationView):
+    urlname = 'edit_location'
+    page_title = ugettext_noop("Edit Location")
+
+    @property
+    @memoized
+    def location_form(self):
+        if self.request.method == 'POST':
+            return LocationForm(self.location, self.request.POST)
+        return LocationForm(self.location)
 
     @property
     def consumption(self):
@@ -272,10 +281,6 @@ class EditLocationView(NewLocationView):
         return mark_safe(_("Edit {name} <small>{type}</small>").format(
             name=self.location.name, type=self.location.location_type
         ))
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.location_id])
 
 
 class BaseSyncView(BaseLocationView):
@@ -486,3 +491,51 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
+
+
+class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
+    """
+    Manage products stocked at each location
+    """
+    urlname = 'products_per_location'
+    page_title = ugettext_noop("Products Per Location")
+    template_name = 'locations/manage/products_per_location.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.PRODUCTS_PER_LOCATION.enabled(request.domain):
+            raise Http404
+        # TODO verify that this location stocks products
+        return super(ProductsPerLocationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def products_at_location(self):
+        return [p.product_id for p in self.sql_location.products.all()]
+
+    @property
+    def all_products(self):
+        return [(p.product_id, p.name)
+                for p in SQLProduct.by_domain(self.domain)]
+
+    @property
+    def products_form(self):
+        form = MultipleSelectionForm(initial={
+            'selected_ids': self.products_at_location
+        })
+        form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
+    def page_context(self):
+        return {
+            'products_per_location_form': self.products_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        products = SQLProduct.objects.filter(
+            product_id__in=request.POST.getlist('selected_ids', [])
+        )
+        self.sql_location.products = products
+        self.sql_location.save()
+        msg = _("Products updated for {}").format(self.location.name)
+        messages.success(request, msg)
+        return self.get(request, *args, **kwargs)

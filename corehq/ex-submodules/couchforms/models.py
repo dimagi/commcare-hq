@@ -14,7 +14,6 @@ from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
 from lxml.etree import XMLSyntaxError
-from casexml.apps.phone.models import SyncLog
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.decorators.memoized import memoized
@@ -248,6 +247,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
 
     @memoized
     def get_sync_token(self):
+        from casexml.apps.phone.models import SyncLog
         if self.last_sync_token:
             return SyncLog.get(self.last_sync_token)
         return None
