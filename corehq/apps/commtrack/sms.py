@@ -295,7 +295,7 @@ class StockAndReceiptParser(StockReportParser):
 
     They send messages of the format:
 
-        'soh nets 100.22'
+        'nets 100.22'
 
     In this example, the data reflects:
 
@@ -307,6 +307,9 @@ class StockAndReceiptParser(StockReportParser):
     add duplication instead of complexity. The goal is to
     override only the couple methods that required modifications.
     """
+
+    ALLOWED_KEYWORDS = ['join', 'help']
+
     def looks_like_prod_code(self, code):
         """
         Special for EWS, this version doesn't consider "10.20"
@@ -317,6 +320,40 @@ class StockAndReceiptParser(StockReportParser):
             return False
         except ValueError:
             return True
+
+    def parse(self, text):
+        args = text.split()
+
+        if len(args) == 0:
+            return None
+
+        if args[0].lower() in self.ALLOWED_KEYWORDS:
+            return None
+
+        if not self.location:
+            self.location = self.location_from_code(args[0])
+            args = args[1:]
+
+        if not self.location.get('case'):
+            raise NoDefaultLocationException(
+                _("You have not been registered with a default location yet."
+                  "  Please register a default location for this user.")
+            )
+        self.case_id = self.location['case']._id
+        action = self.C.action_by_keyword('soh')
+        _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
+
+        tx = list(_tx)
+        if not tx:
+            raise SMSError("stock report doesn't have any transactions")
+
+        return {
+            'timestamp': datetime.utcnow(),
+            'user': self.v.owner,
+            'phone': self.v.phone_number,
+            'location': self.location['location'],
+            'transactions': tx,
+        }
 
     def single_action_transactions(self, action, args, make_tx):
         products = []
