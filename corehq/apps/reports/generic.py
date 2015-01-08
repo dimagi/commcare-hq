@@ -943,10 +943,11 @@ class GenericTabularReport(GenericReportView):
             context.update(provider_function(self))
         return context
 
-    def table_cell(self, value, html=None):
+    def table_cell(self, value, html=None, zerostyle=False):
+        styled_value = '<span class="gray-zero">0</span>' if zerostyle and value == 0 else value
         return dict(
             sort_key=value,
-            html="%s" % value if html is None else html
+            html="%s" % styled_value if html is None else html
         )
 
 
