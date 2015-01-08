@@ -22,6 +22,12 @@
             ko.applyBindings(exportManager, this);
         });
 
+        // Daily Saved Exports event tracking
+        $(".daily-saved-download").click(function(){
+            var caseType = $(this).attr("data-typeIdentifier");
+            ga_track_event("Download Case Export","Download Saved Case Export", caseType);
+        });
+
     </script>
 {% endblock %}
 
