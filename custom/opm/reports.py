@@ -109,7 +109,7 @@ class OpmCaseSqlData(SqlData):
         filters = [
             "domain = :domain",
             "user_id = :user_id",
-            "(opened_on <= :enddate AND (closed_on >= :enddate OR closed_on = '')) OR (opened_on <= :enddate AND (closed_on >= :startdate or closed_on <= :enddate))"
+            DATE_FILTER_EXTENDED_OPENED,
         ]
 
         return filters
