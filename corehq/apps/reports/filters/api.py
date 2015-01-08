@@ -8,6 +8,7 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.elastic import es_wrapper, ESError
 from dimagi.utils.decorators.memoized import memoized
@@ -81,6 +82,24 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         self.user_start = self.group_start + groups
         self.total_results = self.user_start + users
 
+    def get_location_groups(self):
+        def case_share_types():
+            return [
+                loc_type for loc_type in Domain.get_by_name(self.domain).location_types
+                if loc_type.shares_cases
+            ]
+
+        if self.include_share_groups:
+            from corehq.apps.commtrack.models import SQLLocation
+            locations = SQLLocation.objects.filter(
+                name__icontains=self.q.lower(),
+                domain=self.domain,
+                location_type__in=[t.name for t in case_share_types()]
+            )
+            for loc in locations:
+                group = loc.get_group_object()
+                yield (group._id, group.name + ' [case sharing]')
+
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
         limit = int(self.request.GET.get('page_limit', 10))
@@ -88,6 +107,8 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         stop = start + limit
 
         options = self.user_types[start:stop]
+
+        options += list(self.get_location_groups())
 
         g_start = max(0, start - self.group_start)
         g_size = limit - len(options) if start < self.user_start else 0
