@@ -273,3 +273,9 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
+    'case_details_in_cloudcare_forms',
+    'Display details of the selected case on top in CloudCare if a form uses Case Management',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
