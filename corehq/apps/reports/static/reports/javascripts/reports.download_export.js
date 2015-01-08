@@ -9,6 +9,7 @@ var HQExportDownloader = function (options) {
         $(function () {
             $(self.downloadLink).click(function () {
                 var $modal = $(self.modal);
+                var caseType = $(this).attr("data-caseType");
                 $modal.find(self.loadingIndicator).removeClass('hide');
                 $modal.find(self.loadedData).empty();
                 $modal.find('.modal-header h3 span').text($(this).data("formname"));
@@ -20,7 +21,7 @@ var HQExportDownloader = function (options) {
                         {
                             $.get(d.download_url, function(data) {
                                 $modal.find(self.loadedData).html(data);
-                                self.setUpEventTracking();
+                                self.setUpEventTracking(caseType);
                             });
                         } else {
                             $modal.find(self.loadingIndicator).addClass('hide');
@@ -41,10 +42,10 @@ var HQExportDownloader = function (options) {
      * Attach a click event handler to the download modal "download" button that
      * notifies google of the download event.
      */
-    self.setUpEventTracking = function(){
+    self.setUpEventTracking = function(caseType){
         var downloadButton = $(self.modal).find(self.loadedData).find("a.btn.btn-primary").first();
         if (downloadButton.length) {
-            gaTrackLink(downloadButton, "Case Exports", "Download any Case Export", "saved");
+            gaTrackLink(downloadButton, "Download Case Export", "Download Custom Case Export", caseType);
         }
     };
 };
