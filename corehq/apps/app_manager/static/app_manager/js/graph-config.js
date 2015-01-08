@@ -325,8 +325,8 @@ var GraphViewModel = function(moduleOptions){
         'secondary-y-min': 'ex: 0',
         'secondary-y-max': 'ex: 100',
         // Axis labels:
-        'x-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
-        'y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        'x-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
+        'y-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
         'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
         'show-grid': 'true or false',
