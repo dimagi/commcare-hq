@@ -52,8 +52,7 @@ var ExportManager = function (o) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                         self.setUpEventTracking({
                             xmlns: params.xmlns,
-                            isBulkDownload: params.isBulkDownload,
-                            formName: params.formName
+                            isBulkDownload: params.isBulkDownload
                         });
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
@@ -113,7 +112,7 @@ var ExportManager = function (o) {
 
 
                 var action = "Download Raw Form Export";
-                label = params.isBulkDownload ? "bulk" : params.formName;
+                label = params.isBulkDownload ? "bulk" : params.xmlns;
                 if (self.is_deid_form_report){
                     action = "Download Deidentified Form Export";
                     label = params.isBulkDownload ? label : params.xmlns;
@@ -155,8 +154,7 @@ var ExportManager = function (o) {
                 updateModal({
                     data: data,
                     xmlns: params.xmlns,
-                    isBulkDownload: params.isBulkDownload,
-                    formName: params.formName
+                    isBulkDownload: params.isBulkDownload
                 });
             },
             error: displayDownloadError
@@ -179,8 +177,7 @@ var ExportManager = function (o) {
                 updateModal({
                     data: respData,
                     xmlns: null,
-                    isBulkDownload: true,
-                    formName: null
+                    isBulkDownload: true
                 });
             },
             error: displayDownloadError
@@ -282,8 +279,7 @@ var ExportManager = function (o) {
         self.downloadExport({
             downloadUrl: downloadUrl,
             xmlns: xmlns,
-            isBulkDownload: options.isBulkDownload,
-            formName: formName || xmlns
+            isBulkDownload: options.isBulkDownload
         });
     };
 
