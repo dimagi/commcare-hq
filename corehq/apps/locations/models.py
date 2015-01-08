@@ -57,7 +57,7 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
-    def get_group_object(self, user_id=None):
+    def case_sharing_group_object(self, user_id=None):
         """
         Returns a fake group object that SHOULD NOT be saved.
 
@@ -80,6 +80,39 @@ class SQLLocation(MPTTModel):
         g.users = [user_id] if user_id else []
         g.case_sharing = True
         g.reporting = False
+        g.last_modified = datetime.now()
+        g._id = LOCATION_GROUP_PREFIX + self.location_id
+        g.metadata = {
+            'cc_location_type': self.location_type,
+            'cc_location_name': self.name,
+        }
+        for key, val in self.metadata.items():
+            g.metadata['cc_location_' + key] = val
+
+        return g
+
+    def reporting_group_object(self, user_id=None):
+        """
+        Returns a fake group object that SHOULD NOT be saved.
+
+        Similar to case_sharing_group_object method, but for
+        reporting groups.
+        """
+
+        from corehq.apps.groups.models import Group
+
+        def group_name():
+            return '/'.join(
+                list(self.get_ancestors().values_list('name', flat=True)) +
+                [self.name]
+            )
+
+        g = Group()
+        g.domain = self.domain
+        g.name = group_name()
+        g.users = [user_id] if user_id else []
+        g.case_sharing = False
+        g.reporting = True
         g.last_modified = datetime.now()
         g._id = LOCATION_GROUP_PREFIX + self.location_id
         g.metadata = {

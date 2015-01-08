@@ -179,7 +179,7 @@ class Group(UndoableDocument):
         if wrap:
             groups = [group for group in all_groups if group.case_sharing]
             groups.extend([
-                location.get_group_object() for location in
+                location.case_sharing_group_object() for location in
                 SQLLocation.objects.filter(domain=domain)
                 # TODO if locations type is sharing cases
             ])
