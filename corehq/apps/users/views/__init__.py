@@ -4,7 +4,8 @@ import re
 import urllib
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq import Domain, privileges
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from corehq import Domain, privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import BadSMSConfigException
@@ -13,6 +14,8 @@ from corehq.apps.style.decorators import (
     use_knockout_js,
 )
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
+from corehq.apps.users.util import smart_query_string
+from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
@@ -107,7 +110,10 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
                 if user.has_permission(self.domain, 'edit_commcare_users'):
                     redirect = reverse("commcare_users", args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
-                    redirect = reverse(ListWebUsersView.urlname, args=[self.domain])
+                    redirect = reverse(
+                        get_web_user_list_view(self.request).urlname,
+                        args=[self.domain]
+                    )
         return redirect
 
     def get(self, request, *args, **kwargs):
@@ -127,9 +133,10 @@ class BaseEditUserView(BaseUserSettingsView):
 
     @property
     def parent_pages(self):
+        list_view = get_web_user_list_view(self.request)
         return [{
-            'title': ListWebUsersView.page_title,
-            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'title': list_view.page_title,
+            'url': reverse(list_view.urlname, args=[self.domain]),
         }]
 
     @property
@@ -359,7 +366,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
-class NewListWebUsersView(BaseUserSettingsView):
+class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.b3.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users_b3'
@@ -370,10 +377,30 @@ class NewListWebUsersView(BaseUserSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(NewListWebUsersView, self).dispatch(request, *args, **kwargs)
 
-    @property
-    @memoized
-    def web_users(self):
-        web_users = WebUser.by_domain(self.domain)
+    def query_es(self, limit, skip, query=None):
+        is_simple, query = smart_query_string(query or '')
+
+        web_user_filter = [
+            {"term": {"user.domain_memberships.domain": self.domain}},
+        ]
+        web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
+
+        default_fields = ["username", "last_name", "first_name"]
+        q = {
+            "query": {"query_string": {
+                "query": query,
+                "default_operator": "AND",
+                "fields": default_fields if is_simple else None
+            }},
+            "filter": {"and": web_user_filter},
+            "sort": {'username.exact': 'asc'},
+        }
+        return es_query(
+            params={}, q=q, es_url=ES_URLS["users"],
+            size=limit, start_at=skip,
+        )
+
+    def apply_teams_to_users(self, web_users):
         teams = Team.get_by_domain(self.domain)
         for team in teams:
             for user in team.get_members():
@@ -382,15 +409,66 @@ class NewListWebUsersView(BaseUserSettingsView):
                     web_users.append(user)
         for user in web_users:
             user.current_domain = self.domain
-        web_users.sort(key=lambda x: (x.role_label(), x.email))
-        return web_users
+
+    @allow_remote_invocation
+    def get_users(self, in_data):
+        if not isinstance(in_data, dict):
+            return {
+                'success': False,
+                'error': _("Please provide pagination info."),
+            }
+        try:
+            limit = in_data.get('limit', 10)
+            page = in_data.get('page', 1)
+            skip = limit * (page - 1)
+            query = in_data.get('query')
+
+            web_users_query = self.query_es(limit, skip, query=query)
+            total = web_users_query.get('hits', {}).get('total', 0)
+            results = web_users_query.get('hits', {}).get('hits', [])
+
+            web_users = [WebUser.wrap(w['_source']) for w in results]
+            self.apply_teams_to_users(web_users)  # for roles
+
+            def _fmt_result(domain, u):
+                return {
+                    'email': u.email,
+                    'domain': domain,
+                    'name': u.full_name,
+                    'role': u.role_label(),
+                    'phoneNumbers': u.phone_numbers,
+                    'id': u.get_id,
+                    'editUrl': reverse('user_account', args=[domain, u.get_id]),
+                    'removeUrl': (
+                        reverse('remove_web_user', args=[domain, u.user_id])
+                        if self.request.user.username != u.username else None
+                    ),
+                }
+            web_users_fmt = [_fmt_result(self.domain, u) for u in web_users]
+
+            return {
+                'response': {
+                    'users': web_users_fmt,
+                    'total': total,
+                    'page': page,
+                    'query': query,
+                },
+                'success': True,
+            }
+        except Exception as e:
+            return {
+                'error': e.message,
+                'success': False,
+            }
 
     @property
     @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
-        user_roles.extend(sorted(UserRole.by_domain(self.domain),
-                                 key=lambda role: role.name if role.name else u'\uFFFF'))
+        user_roles.extend(sorted(
+            UserRole.by_domain(self.domain),
+            key=lambda role: role.name if role.name else u'\uFFFF'
+        ))
 
         #  indicate if a role has assigned users, skip admin role
         for i in range(1, len(user_roles)):
@@ -427,13 +505,12 @@ class NewListWebUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'web_users': self.web_users,
             'user_roles': self.user_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
-            'domain_object': self.domain_object
+            'domain_object': self.domain_object,
         }
 
 
@@ -513,6 +590,12 @@ class ListWebUsersView(BaseUserSettingsView):
         }
 
 
+def get_web_user_list_view(request):
+    if toggles.PAGINATE_WEB_USERS.enabled(request.couch_user.username):
+        return NewListWebUsersView
+    return ListWebUsersView
+
+
 @require_can_edit_web_users
 @require_POST
 def remove_web_user(request, domain, couch_user_id):
@@ -526,7 +609,9 @@ def remove_web_user(request, domain, couch_user_id):
             username=user.username,
             url=reverse('undo_remove_web_user', args=[domain, record.get_id])
         ), extra_tags="html")
-    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
+
+    return HttpResponseRedirect(
+        reverse(get_web_user_list_view(request).urlname, args=[domain]))
 
 @require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
@@ -535,7 +620,9 @@ def undo_remove_web_user(request, domain, record_id):
     messages.success(request, 'You have successfully restored {username}.'.format(
         username=WebUser.get_by_user_id(record.user_id).username
     ))
-    return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[domain]))
+
+    return HttpResponseRedirect(
+        reverse(get_web_user_list_view(request).urlname, args=[domain]))
 
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
 # to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
@@ -646,9 +733,10 @@ class BaseManageWebUserView(BaseUserSettingsView):
 
     @property
     def parent_pages(self):
+        list_view = get_web_user_list_view(self.request)
         return [{
-            'title': ListWebUsersView.page_title,
-            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+            'title': list_view.page_title,
+            'url': reverse(list_view.urlname, args=[self.domain]),
         }]
 
 
@@ -689,7 +777,10 @@ class InviteWebUserView(BaseManageWebUserView):
             invite.save()
             invite.send_activation_email()
             messages.success(request, "Invitation sent to %s" % invite.email)
-            return HttpResponseRedirect(reverse(ListWebUsersView.urlname, args=[self.domain]))
+            return HttpResponseRedirect(reverse(
+                get_web_user_list_view(self.request).urlname,
+                args=[self.domain]
+            ))
         return self.get(request, *args, **kwargs)
 
 
