@@ -50,6 +50,11 @@
             ko.applyBindings(metadataExportManager, this);
         });
 
+        $('.daily-saved-download').click(function(){
+            var xmlns = $(this).attr("data-typeIdentifier");
+            ga_track_event("Download Form Export", "Download Saved Form Export", xmlns);
+        });
+
         $(function () {
             // postGo is copied from main.js since that's now not being included, ever since the redesign
             function postGo (url, params) {

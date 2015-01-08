@@ -52,7 +52,8 @@ var ExportManager = function (o) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                         self.setUpEventTracking({
                             xmlns: params.xmlns,
-                            isBulkDownload: params.isBulkDownload
+                            isBulkDownload: params.isBulkDownload,
+                            formName: params.formName
                         });
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
@@ -99,35 +100,29 @@ var ExportManager = function (o) {
                 gaTrackLink(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
             }
 
-            var category, action;
-            if (self.export_type == "form"){
-                category = "Form Exports";
-                action = "Download (any) Form Export";
-            } else if (self.export_type == "case"){
-                category = "Case Exports";
-                action = "Download any Case Export";
-            }
+            if (self.export_type == "case"){
 
-            // Note that sometimes a download will trigger multiple events.
-
-            if (params.isBulkDownload){
-                gaTrackLink(downloadButton, category, action, "bulk");
-            }
-
-            if (self.is_deid_form_report){
-                gaTrackLink(downloadButton, category, action, "deidentified");
-            }
-
-            if (self.is_custom && !self.is_deid_form_report){
                 if (params.isBulkDownload){
-                    gaTrackLink(downloadButton, category, action, "custom");
-                } else {
-                    gaTrackLink(downloadButton, category, action, "saved");
+                    var label = $('#include-closed-select').val() == "true" ? "all" : "all open";
+                    gaTrackLink(downloadButton, "Download Case Export", "Download Raw Case Export", label);
                 }
-            }
 
-            if (!self.is_custom){
-                gaTrackLink(downloadButton, category, action, "raw");
+            } else if (self.export_type == "form"){
+                var category = "Download Form Export";
+
+
+                var action = "Download Raw Form Export";
+                var label = params.isBulkDownload ? "bulk" : params.formName;
+                if (self.is_deid_form_report){
+                    action = "Download Deidentified Form Export";
+                    label = params.isBulkDownload ? label : params.xmlns;
+                } else if (self.is_custom){
+                    action = "Download Custom Form Export";
+                    label = params.isBulkDownload ? label : params.xmlns;
+                }
+
+                gaTrackLink(downloadButton, category, action, label);
+
             }
         }
     };
@@ -159,7 +154,8 @@ var ExportManager = function (o) {
                 updateModal({
                     data: data,
                     xmlns: params.xmlns,
-                    isBulkDownload: params.isBulkDownload
+                    isBulkDownload: params.isBulkDownload,
+                    formName: params.formName
                 });
             },
             error: displayDownloadError
@@ -182,7 +178,8 @@ var ExportManager = function (o) {
                 updateModal({
                     data: respData,
                     xmlns: null,
-                    isBulkDownload: true
+                    isBulkDownload: true,
+                    formName: null
                 });
             },
             error: displayDownloadError
@@ -263,7 +260,8 @@ var ExportManager = function (o) {
         var xmlns = $button.data('xmlns');
         resetModal("'" + options.modalTitle + "'", true);
         var format = self.format;
-        var fileName = encodeURIComponent($.trim($button.data('formname')));
+        var formName = $.trim($button.data('formname'));
+        var fileName = encodeURIComponent(formName);
         if ($button.data('format')) {
             format = $button.data('format');
         }
@@ -283,13 +281,15 @@ var ExportManager = function (o) {
         self.downloadExport({
             downloadUrl: downloadUrl,
             xmlns: xmlns,
-            isBulkDownload: options.isBulkDownload
+            isBulkDownload: options.isBulkDownload,
+            formName: formName || xmlns
         });
     };
 
     self.requestDownload = function(data, event) {
         var $button = $(event.srcElement || event.currentTarget);
-        var modalTitle = $button.data('formname') || $button.data('xmlns');
+        var formNameOrXmlns = $button.data('formname') || $button.data('xmlns');
+        var modalTitle = formNameOrXmlns;
         if ($button.data('modulename')) {
             modalTitle  = $button.data('modulename') + " > " + modalTitle;
         }
