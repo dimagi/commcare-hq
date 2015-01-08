@@ -100,10 +100,11 @@ var ExportManager = function (o) {
                 gaTrackLink(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
             }
 
+            var label;
             if (self.export_type == "case"){
 
                 if (params.isBulkDownload){
-                    var label = $('#include-closed-select').val() == "true" ? "all" : "all open";
+                    label = $('#include-closed-select').val() == "true" ? "all" : "all open";
                     gaTrackLink(downloadButton, "Download Case Export", "Download Raw Case Export", label);
                 }
 
@@ -112,7 +113,7 @@ var ExportManager = function (o) {
 
 
                 var action = "Download Raw Form Export";
-                var label = params.isBulkDownload ? "bulk" : params.formName;
+                label = params.isBulkDownload ? "bulk" : params.formName;
                 if (self.is_deid_form_report){
                     action = "Download Deidentified Form Export";
                     label = params.isBulkDownload ? label : params.xmlns;
