@@ -43,8 +43,8 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 from .utils import BaseMixin, normal_format, format_percent
-from .beneficiary import Beneficiary, ConditionsMet
-from .health_status import HealthStatus
+from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
+from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
@@ -913,6 +913,89 @@ class MetReport(CaseReportMixin, BaseReport):
         else:
             return rows
 
+
+class NewHealthStatusReport(CaseReportMixin, BaseReport):
+    """
+    This is a reimagining of the Health Status report as a simple aggregator
+    of the data source for the MetReport and BeneficiaryPaymentReport.
+    If it is accepted, we should rename this to HealthStatusReport and delete
+    the old HSR.
+
+    It uses the base OPMCaseRow as the row model, then does some after-the-fact
+    aggregation based on the AWCHealthStatus model.
+    """
+    name = "New Health Status Report"
+    slug = 'health_status_report'
+    report_template_path = "opm/beneficiary_report.html"
+    # report_template_path = "opm/hsr_report.html"
+    model = AWCHealthStatus
+
+    def get_row_data(self, row):
+        return OPMCaseRow(row, self)
+
+    @property
+    def headers(self):
+        headers = []
+        for __, title, text, __ in self.model.method_map:
+            headers.append(DataTablesColumn(name=title, help_text=text))
+        return DataTablesHeader(*headers)
+
+    def awc_data(self):
+        # TODO use all awcs, not just ones with data
+        case_objects = self.row_objects + self.extra_row_objects
+        # Consolidate rows with the same awc
+        awcs = {}
+        for case_object in case_objects:
+            awc = case_object.awc_name
+            awcs[awc] = awcs.get(awc, []) + [case_object]
+        return awcs
+
+    @property
+    def rows(self):
+        for awc in map(AWCHealthStatus, self.awc_data().values()):
+            yield [self.format_cell(getattr(awc, method),
+                                    getattr(awc, denom))
+                   for method, _, _, denom in self.model.method_map]
+
+    def format_cell(self, val, denom):
+        if denom is None:
+            return val
+        pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        return "{} / {}{}".format(val, denom, pct)
+
+    @property
+    def export_table(self):
+        """
+        Split the cells up into 3 for excel
+        """
+        def headers():
+            headers = []
+            for __, title, __, denom in self.model.method_map:
+                if denom == 'no_denom':
+                    headers.append(DataTablesColumn(name=title))
+                else:
+                    for template in [u"{}", u"{} - denominator", u"{} - percent"]:
+                        headers.append(DataTablesColumn(name=template.format(title)))
+            return DataTablesHeader(*headers)
+
+        def rows():
+            for awc in map(AWCHealthStatus, self.awc_data().values()):
+                row = []
+                for method, __, __, denom in self.model.method_map:
+                    value = getattr(awc, method)
+                    row.append(value)
+                    if denom != 'no_denom':
+                        denom = getattr(awc, denom)
+                        row.append(denom)
+                        row.append(float(value) / denom if denom != 0 else "")
+                yield row
+
+        self.pagination.count = 1000000
+        table = headers().as_export_table
+        table.extend(rows())
+        return [[self.export_sheet_name, table]]
+
+
 class UsersIdsData(SqlData):
     table_name = "fluff_OpmUserFluff"
     group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
@@ -942,6 +1025,7 @@ class UsersIdsData(SqlData):
             DatabaseColumn('block', SimpleColumn('block')),
             DatabaseColumn('village', SimpleColumn('village'))
         ]
+
 
 class IncentivePaymentReport(BaseReport):
     name = "AWW Payment Report"
@@ -976,6 +1060,7 @@ class IncentivePaymentReport(BaseReport):
         case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
         form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
+
 
 def this_month_if_none(month, year):
     if month is not None:
@@ -1199,6 +1284,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
 
         return [[self.export_sheet_name, table]]
 
+
 def calculate_total_row(rows):
     regexp = re.compile('(.*?)>([0-9]+)<.*')
     total_row = []
@@ -1229,6 +1315,7 @@ def _unformat_row(row):
         else:
             formatted_row.append(col)
     return formatted_row
+
 
 class HealthMapSource(HealthStatusReport):
 

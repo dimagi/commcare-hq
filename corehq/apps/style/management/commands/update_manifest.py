@@ -22,25 +22,29 @@ class Command(LabelCommand):
 
     root_dir = settings.FILEPATH
 
+    @property
+    def manifest_file(self):
+        return os.path.join(self.root_dir, MANIFEST_FILE)
+
     def output_manifest(self, manifest_str, is_soft_update=False):
         print "saving manifest.json to disk"
         if not os.path.exists(CACHE_DIR):
             os.makedirs(CACHE_DIR)
-        if is_soft_update:
-            with open(os.path.join(self.root_dir, MANIFEST_FILE), 'r') as fin:
+        if is_soft_update and os.path.exists(self.manifest_file):
+            with open(self.manifest_file, 'r') as fin:
                 print "soft update of manifest.json"
                 existing_manifest = fin.read()
                 new_manifest_dict = json.loads(manifest_str)
                 existing_manifest_dict = json.loads(existing_manifest)
                 existing_manifest_dict.update(new_manifest_dict)
                 manifest_str = json.dumps(existing_manifest_dict)
-        with open(os.path.join(self.root_dir, MANIFEST_FILE), 'w') as fout:
+        with open(self.manifest_file, 'w') as fout:
             print manifest_str
             fout.write(manifest_str)
 
     def save_manifest(self):
         print "saving manifest.json to redis"
-        with open(os.path.join(self.root_dir, MANIFEST_FILE), 'r') as fin:
+        with open(self.manifest_file, 'r') as fin:
             manifest_data = fin.read()
             print manifest_data
             rcache.set(COMPRESS_PREFIX % self.current_sha, manifest_data, 86400)

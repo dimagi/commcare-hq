@@ -13,10 +13,11 @@ from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import (get_case_properties,
     get_correct_app_class)
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reminders.forms import (
     CaseReminderForm,
@@ -52,6 +53,7 @@ from corehq.apps.reminders.models import (
     QUESTION_RETRY_CHOICES,
     REMINDER_TYPE_ONE_TIME,
     REMINDER_TYPE_DEFAULT,
+    REMINDER_TYPE_SURVEY_MANAGEMENT,
     SEND_NOW, SEND_LATER,
     METHOD_SMS,
     METHOD_SMS_SURVEY,
@@ -76,6 +78,10 @@ from corehq.apps.sms.util import close_task
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.reports import util as report_utils
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
+
+ACTION_ACTIVATE = 'activate'
+ACTION_DEACTIVATE = 'deactivate'
+ACTION_DELETE = 'delete'
 
 reminders_framework_permission = lambda *args, **kwargs: (
     require_permission(Permissions.edit_data)(
@@ -559,14 +565,14 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def available_languages(self):
-        default_langs = ['en']
-        try:
-            translation_doc = StandaloneTranslationDoc.get_obj(self.domain, "sms")
-            return (translation_doc.langs or default_langs
-                    if translation_doc is not None else default_langs)
-        except ResourceNotFound:
-            pass
-        return default_langs
+        """
+        Returns a the list of language codes available for the domain, or
+        [] if no languages are specified.
+        """
+        translation_doc = StandaloneTranslationDoc.get_obj(self.domain, "sms")
+        if translation_doc and translation_doc.langs:
+            return translation_doc.langs
+        return []
 
     @property
     def is_previewer(self):
@@ -643,6 +649,22 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         for key in dict_list:
             result[key] = list(set(dict_list[key]))
         return result
+
+    @property
+    def search_form_by_id_response(self):
+        """
+        Returns a dict of {"id": [form unique id], "text": [full form path]}
+        """
+        form_unique_id = self.search_term
+        try:
+            form = Form.get_form(form_unique_id)
+            assert form.get_app().domain == self.domain
+            return {
+                'text': form.full_path_name,
+                'id': form_unique_id,
+            }
+        except:
+            return {}
 
     @property
     def search_case_property_response(self):
@@ -730,6 +752,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
             'search_case_property',
             'search_subcase_property',
             'search_forms',
+            'search_form_by_id',
         ]:
             return HttpResponse(json.dumps(getattr(self, '%s_response' % self.action)))
         if self.schedule_form.is_valid():
@@ -765,6 +788,26 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         return self.page_title
 
     @property
+    def available_languages(self):
+        """
+        When editing a reminder, add in any languages that are used by the
+        reminder but that are not in the result from
+        CreateScheduledReminderView's available_languages property.
+
+        This is needed to be backwards-compatible with reminders created
+        with the old ui that would let you specify any language, regardless
+        of whether it was in the domain's list of languages or not.
+        """
+        result = super(EditScheduledReminderView, self).available_languages
+        handler = self.reminder_handler
+        for event in handler.events:
+            if event.message:
+                for (lang, text) in event.message.items():
+                    if lang not in result:
+                        result.append(lang)
+        return result
+
+    @property
     @memoized
     def schedule_form(self):
         initial = self.reminder_form_class.compute_initial(
@@ -797,8 +840,11 @@ class EditScheduledReminderView(CreateScheduledReminderView):
     @memoized
     def reminder_handler(self):
         try:
-            return CaseReminderHandler.get(self.handler_id)
-        except ResourceNotFound:
+            handler = CaseReminderHandler.get(self.handler_id)
+            assert handler.domain == self.domain
+            assert handler.doc_type == "CaseReminderHandler"
+            return handler
+        except (ResourceNotFound, AssertionError):
             raise Http404()
 
     @property
@@ -819,6 +865,23 @@ class EditScheduledReminderView(CreateScheduledReminderView):
 
     def process_schedule_form(self):
         self.schedule_form.save(self.reminder_handler)
+
+    def rule_in_progress(self):
+        messages.error(self.request, _("Please wait until the rule finishes "
+            "processing before making further changes."))
+        return HttpResponseRedirect(reverse(RemindersListView.urlname, args=[self.domain]))
+
+    def get(self, *args, **kwargs):
+        if self.reminder_handler.locked:
+            return self.rule_in_progress()
+        else:
+            return super(EditScheduledReminderView, self).get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        if self.reminder_handler.locked:
+            return self.rule_in_progress()
+        else:
+            return super(EditScheduledReminderView, self).post(*args, **kwargs)
 
 
 class AddStructuredKeywordView(BaseMessagingSectionView):
@@ -1224,6 +1287,7 @@ def add_survey(request, domain, survey_id=None):
                                     sample_id = sample["sample_id"],
                                     survey_incentive = sample["incentive"],
                                     submit_partial_forms = True,
+                                    reminder_type=REMINDER_TYPE_SURVEY_MANAGEMENT,
                                 )
                                 handler.save()
                                 wave.reminder_definitions[sample["sample_id"]] = handler._id
@@ -1326,6 +1390,7 @@ def add_survey(request, domain, survey_id=None):
                                 sample_id = sample_id,
                                 survey_incentive = sample_data[sample_id]["incentive"],
                                 submit_partial_forms = True,
+                                reminder_type=REMINDER_TYPE_SURVEY_MANAGEMENT,
                             )
                             handler.save()
                             wave.reminder_definitions[sample_id] = handler._id
@@ -1641,27 +1706,40 @@ class RemindersListView(BaseMessagingSectionView):
             'url': reverse(EditScheduledReminderView.urlname, args=[self.domain, reminder._id]),
         }
 
-    def get_action_response(self, active):
+    def get_action_response(self, action):
         try:
-            self.reminder.active = active
-            self.reminder.save()
+            assert self.reminder.domain == self.domain
+            assert self.reminder.doc_type == "CaseReminderHandler"
+            if self.reminder.locked:
+                return {
+                    'success': False,
+                    'locked': True,
+                }
+
+            if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE]:
+                self.reminder.active = (action == ACTION_ACTIVATE)
+                self.reminder.save()
+            elif action == ACTION_DELETE:
+                self.reminder.retire()
             return {
                 'success': True,
-                'reminder': self._fmt_reminder_data(self.reminder),
             }
         except Exception as e:
+            msg = ("Couldn't process action '%s' for reminder definition"
+                % action)
+            notify_exception(None, message=msg, details={
+                'domain': self.domain,
+                'handler_id': self.reminder_id,
+            })
             return {
                 'success': False,
-                'error': e,
             }
 
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
-        if action in ['activate', 'deactivate']:
-            return HttpResponse(json.dumps(self.get_action_response(action == 'activate')))
-        raise {
-            'success': False,
-        }
+        if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
+            return HttpResponse(json.dumps(self.get_action_response(action)))
+        return HttpResponse(status=400)
 
 
 class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):

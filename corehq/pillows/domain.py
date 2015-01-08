@@ -54,7 +54,8 @@ class DomainPillow(HQPillow):
         sub =  Subscription.objects.filter(
                 subscriber__domain=doc_dict['name'],
                 is_active=True)
-        countries = doc_dict['deployment']['countries']
+        doc_dict['deployment'] = doc_dict.get('deployment', None) or {}
+        countries = doc_dict['deployment'].get('countries', [])
         doc_ret['deployment']['countries'] = []
         if sub:
             doc_ret['subscription'] = sub[0].plan_version.plan.edition

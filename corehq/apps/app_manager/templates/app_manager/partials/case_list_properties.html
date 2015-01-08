@@ -24,11 +24,10 @@
                 <td class="detail-screen-icon" data-bind="jqueryElement: $grip, visible: $root.edit"></td>
                 <!--ko if: !isTab -->
                     <td class="detail-screen-field control-group"
-                        data-bind="css: {error: field.value && !DetailScreenConfig.field_val_re.test(field.value)}">
+                        data-bind="css: {error: showWarning}">
                         <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
-                        <div data-bind="jqueryElement: format_warning,
-                                        visible: field.value && !DetailScreenConfig.field_val_re.test(field.value)"></div>
+                        <div data-bind="jqueryElement: format_warning, visible: showWarning"></div>
                     </td>
                     <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
                     <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>

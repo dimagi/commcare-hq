@@ -165,11 +165,11 @@ class BulkExportHelper(object):
         self.generate_bulk_files(export_tags, export_filter)
 
         download = DownloadBase()
-        couchexport.tasks.bulk_export_async.delay(
+        download.set_task(couchexport.tasks.bulk_export_async.delay(
             self,
             download.download_id,
             domain=self.domain
-        )
+        ))
         return download.get_start_response()
 
     def generate_bulk_files(self, export_tags, export_filter):

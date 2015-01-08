@@ -2,7 +2,7 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
-from toggle.shortcuts import toggle_enabled
+from toggle.shortcuts import toggle_enabled, set_toggle
 
 
 class StaticToggle(object):
@@ -16,6 +16,9 @@ class StaticToggle(object):
 
     def enabled(self, item, **kwargs):
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
+
+    def set(self, item, enabled, namespace=None):
+        set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
         """
@@ -128,22 +131,22 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
     [NAMESPACE_USER]
 )
 
+CASE_LIST_CUSTOM_XML = StaticToggle(
+    'case_list_custom_xml',
+    'Show text area for entering custom case list xml',
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+
 )
 
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-INVOICE_TRIGGER = StaticToggle(
-    'invoice_trigger',
-    'Accounting Trigger Invoices',
-    [NAMESPACE_USER]
 )
 
 OFFLINE_CLOUDCARE = StaticToggle(
@@ -192,12 +195,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-MENU_MULTIMEDIA_UPLOAD = StaticToggle(
-    'menu_multimedia_upload',
-    'Menu Multimedia Upload (Module & Form)',
-    [NAMESPACE_USER]
 )
 
 
@@ -253,4 +250,26 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     "Enable the stock report handler to accept both stock and receipt values "
     "in the format 'soh abc 100.20'",
     [NAMESPACE_DOMAIN]
+)
+
+COMMCARE_LOGO_UPLOADER = StaticToggle(
+    'commcare_logo_uploader',
+    'CommCare logo uploader',
+)
+
+PAGINATE_WEB_USERS = StaticToggle(
+    'paginate_web_users',
+    'Paginate Web Users',
+)
+
+LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
+    'loose_sync_token_validation',
+    "Don't fail hard on missing or deleted sync tokens.",
+    [NAMESPACE_DOMAIN]
+)
+
+ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
+    'allow_case_attachments_view',
+    "Explicitly allow user to access case attachments, even if they can't view the case list report.",
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

@@ -16,10 +16,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from corehq.feature_previews import LOCATIONS, COMMTRACK
-from corehq.toggles import NAMESPACE_DOMAIN
-from toggle.shortcuts import update_toggle_cache, namespaced_item
-from toggle.models import Toggle
+from corehq.feature_previews import enable_commtrack_previews
+
 
 DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
 
@@ -192,20 +190,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
     )
 
     if commtrack_enabled:
-        toggle_user_key = namespaced_item(new_domain.name, NAMESPACE_DOMAIN)
-
-        # enable commtrack toggle
-        toggle = Toggle.get(COMMTRACK.slug)
-        toggle.enabled_users.append(toggle_user_key)
-        toggle.save()
-        update_toggle_cache(COMMTRACK.slug, toggle_user_key, True)
-
-        # enable location toggle
-        toggle = Toggle.get(LOCATIONS.slug)
-        toggle.enabled_users.append(toggle_user_key)
-        toggle.save()
-        update_toggle_cache(LOCATIONS.slug, toggle_user_key, True)
-
+        enable_commtrack_previews(new_domain)
 
     if form.cleaned_data.get('domain_timezone'):
         new_domain.default_timezone = form.cleaned_data['domain_timezone']
@@ -407,15 +392,6 @@ You can view the %s here: %s""" % (
 
 
 def create_30_day_trial(domain_obj):
-    from corehq.apps.accounting.models import (
-        DefaultProductPlan,
-        SoftwarePlanEdition,
-        BillingAccount,
-        Currency,
-        BillingAccountType,
-        Subscription,
-        SubscriptionAdjustmentMethod,
-    )
     # Create a 30 Day Trial subscription to the Advanced Plan
     advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
         domain_obj, edition=SoftwarePlanEdition.ADVANCED, is_trial=True

@@ -111,6 +111,10 @@ class CaseAPITest(TestCase):
     def expectedClosed(self):
         return self.expectedClosedByUser * len(self.user_ids)
 
+    @property
+    def expectedAll(self):
+        return len(self.user_ids) * len(self.case_types) * 3
+
     def testGetAllOpen(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_OPEN)
         self.assertEqual(self.expectedOpen, len(list))
@@ -159,6 +163,29 @@ class CaseAPITest(TestCase):
         list = get_filtered_cases(self.domain, user_id=self.test_user_id, status=CASE_STATUS_ALL, footprint=True)
         self.assertEqual(self.expectedOpenByUserWithFootprint + self.expectedClosedByUserWithFootprint, len(list))
         # I don't think we can say anything super useful about this base set
+
+    def testGetAllStripHistory(self):
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True, include_children=True,
+                                  strip_history=True)
+        self.assertEqual(self.expectedAll, len(list))
+        self.assertListMatches(list, lambda c: len(c._couch_doc.actions) == 0)
+        self.assertListMatches(list, lambda c: len(c._couch_doc.xform_ids) == 0)
+
+    def testGetAllIdsOnly(self):
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True, include_children=True,
+                                  ids_only=True)
+        self.assertEqual(self.expectedAll, len(list))
+        self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
+        self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
+
+    def testGetAllIdsOnlyStripHistory(self):
+        list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL, footprint=True, include_children=True,
+                                  ids_only=True, strip_history=True)
+        self.assertEqual(self.expectedAll, len(list))
+        self.assertListMatches(list, lambda c: isinstance(c._couch_doc, dict))
+        self.assertListMatches(list, lambda c: 'actions' not in c._couch_doc)
+        self.assertListMatches(list, lambda c: 'xform_ids' not in c._couch_doc)
+        self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
 
     def testFiltersOnAll(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL,

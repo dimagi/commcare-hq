@@ -32,10 +32,22 @@ class PdfLineItem(object):
 
 
 class Address(object):
-    def __init__(self, name='', first_line='', second_line='', city='',
-                 region='', postal_code='', country='', phone_number='',
-                 email='', website=''):
+    def __init__(
+        self,
+        name='',
+        company_name='',
+        first_line='',
+        second_line='',
+        city='',
+        region='',
+        postal_code='',
+        country='',
+        phone_number='',
+        email='',
+        website=''
+    ):
         self.name = name
+        self.company_name = company_name
         self.first_line = first_line
         self.second_line = second_line
         self.city = city
@@ -47,12 +59,13 @@ class Address(object):
         self.website = website
 
     def __str__(self):
-        return '''%(name)s
+        return ('''%(name)s%(company_name)s
 %(first_line)s%(second_line)s
 %(city)s%(region)s %(postal_code)s
 %(country)s%(phone_number)s%(email_address)s%(website)s
         ''' % {
             'name': self.name,
+            'company_name': prepend_newline_if_not_empty(self.company_name),
             'first_line': self.first_line,
             'second_line': prepend_newline_if_not_empty(self.second_line),
             'city': "%s, " % self.city if self.city else "",
@@ -62,7 +75,7 @@ class Address(object):
             'phone_number': prepend_newline_if_not_empty(self.phone_number),
             'email_address': prepend_newline_if_not_empty(self.email),
             'website': prepend_newline_if_not_empty(self.website),
-        }
+        }).lstrip()
 
 
 LIGHT_GRAY = (0.7, 0.7, 0.7)

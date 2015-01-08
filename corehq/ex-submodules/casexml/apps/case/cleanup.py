@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
@@ -60,6 +61,13 @@ def rebuild_case(case_id):
             delattr(case, k)
         except KeyError:
             pass
+        except AttributeError:
+            logging.error(
+                "Cannot delete attribute '%(attribute)s' from case '%(case_id)s'" % {
+                    'case_id': case_id,
+                    'attribute': k,
+                }
+            )
 
     # already deleted means it was explicitly set to "deleted",
     # as opposed to getting set to that because it has no actions

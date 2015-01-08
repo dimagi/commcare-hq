@@ -1,4 +1,4 @@
-DOMAIN_INDEX = "hqdomains_61829de44b0546258dac75db25e6c91a"
+DOMAIN_INDEX = "hqdomains_a0223b1c4bc44ec788b322d373b6fa0c"
 DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
            'created': None},
  'date_detection': False,

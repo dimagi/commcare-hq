@@ -43,4 +43,4 @@ class Command(BaseCommand):
             # Only save a definition for domains which use custom user data
             if fields_definition.fields or had_fields:
                 fields_definition.save()
-            print 'finished domain "{}"'.format(domain.name)
+            print 'finished domain "{}"'.format(domain)

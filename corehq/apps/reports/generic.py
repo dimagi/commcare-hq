@@ -356,8 +356,8 @@ class GenericReportView(CacheableRequestMixIn):
                 'table_or_sheet_name',
                 [
                     ['header'],
-                    ['row 1']
-                    ['row 2']
+                    ['row 1'],
+                    ['row 2'],
                 ]
             ]
         ]

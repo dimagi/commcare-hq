@@ -54,7 +54,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
-from dimagi.utils.parsing import json_format_datetime, string_to_boolean
+from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
 from dimagi.utils.web import json_request, json_response
 from soil import DownloadBase
 from soil.tasks import prepare_download
@@ -115,6 +115,18 @@ require_form_view_permission = require_permission(Permissions.view_report, 'core
 require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
 
 require_can_view_all_reports = require_permission(Permissions.view_reports)
+
+
+def can_view_attachments(request):
+    return (
+        request.couch_user.has_permission(
+            request.domain, 'view_report',
+            data='corehq.apps.reports.standard.cases.basic.CaseListReport'
+        )
+        or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.user.username)
+        or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.domain)
+    )
+
 
 @login_and_domain_required
 def default(request, domain):
@@ -855,6 +867,18 @@ def case_details(request, domain, case_id):
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
     })
 
+
+@login_and_domain_required
+@require_GET
+def case_attachments(request, domain, case_id):
+    if not can_view_attachments(request):
+        return HttpResponseForbidden(_("You don't have permission to access this page."))
+
+    case = get_document_or_404(CommCareCase, domain, case_id)
+    return render(request, 'reports/reportdata/case_attachments.html',
+                  {'domain': domain, 'case': case})
+
+
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
@@ -1265,10 +1289,11 @@ def form_multimedia_export(request, domain):
         xmlns = request.GET["xmlns"]
         startdate = request.GET["startdate"]
         enddate = request.GET["enddate"]
+        enddate = json_format_date(string_to_datetime(enddate) + timedelta(days=1))
         app_id = request.GET.get("app_id", None)
         export_id = request.GET.get("export_id", None)
         zip_name = request.GET.get("name", None)
-    except KeyError:
+    except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
     def filename(form, question_id, extension):

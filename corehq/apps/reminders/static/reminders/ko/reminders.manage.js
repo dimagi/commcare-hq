@@ -34,10 +34,23 @@ var ManageRemindersViewModel = function (
 
     self.start_property_offset_type = ko.observable(initial.start_property_offset_type);
     self.start_property_offset_type.subscribe(function(val) {
+        var initial_timing = $.parseJSON(initial.event_timing);
+        var allow_offset_timing_with_date = (
+            initial.start_property_offset_type === self.choices.START_REMINDER_ON_CASE_DATE &&
+            initial_timing.event_interpretation === "OFFSET"
+        );
         $("#id_event_timing").children("option").each(function(i) {
             var j = $.parseJSON($(this).val());
-            if(val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
-               val === self.choices.START_PROPERTY_OFFSET_DELAY) {
+            if(allow_offset_timing_with_date && val === self.choices.START_REMINDER_ON_CASE_DATE &&
+               j.event_interpretation === "OFFSET") {
+                //This is here to allow editing of any old reminders that started on a date but
+                //had offset-based event interpretation. This use case is discouraged and is not
+                //supported by the new ui, but in order to allow editing of any old reminders
+                //that may use it, we have to show the offset-based event timing options when we
+                //find a reminder like this.
+                $(this).show();
+            } else if(val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
+                      val === self.choices.START_PROPERTY_OFFSET_DELAY) {
                 $(this).show();
             } else {
                 if(j.event_interpretation === "OFFSET") {
@@ -114,10 +127,15 @@ var ManageRemindersViewModel = function (
     });
 
     self.global_timeouts = ko.observable();
-    self.isGlobalTimeoutsVisible = ko.computed(function () {
+
+    self.areTimeoutsVisible = ko.computed(function () {
         return (self.method() === self.choices.METHOD_SMS_CALLBACK ||
                 self.method() === self.choices.METHOD_IVR_SURVEY ||
                 self.method() === self.choices.METHOD_SMS_SURVEY);
+    });
+
+    self.isGlobalTimeoutsVisible = ko.computed(function () {
+        return self.areTimeoutsVisible() && self.ui_type === self.choices.UI_SIMPLE_FIXED;
     });
 
     self.submit_partial_forms = ko.observable(initial.submit_partial_forms);
@@ -263,8 +281,18 @@ var ManageRemindersViewModel = function (
             initSelection : function (element, callback) {
                 if (element.val()) {
                     try {
-                        var data = $.parseJSON(element.val());
-                        callback(data);
+                        $.ajax({
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                action: "search_form_by_id",
+                                term: element.val()
+                            }
+                        }).done(function(data, textStatus, jqXHR) {
+                            if(data.id && data.text) {
+                                callback(data);
+                            }
+                        });
                     } catch (e) {
                         // pass
                     }
@@ -331,6 +359,8 @@ var ReminderEvent = function (
         return new ReminderMessage(message, langcode, self.available_languages);
     }));
 
+    self.callback_timeout_intervals = ko.observable(eventData.callback_timeout_intervals);
+
     // To make sure we don't lose any user-entered text by surprise
     self.removedMessageTranslations = ko.observableArray();
 
@@ -363,6 +393,7 @@ var ReminderEvent = function (
             fire_time: self.fire_time(),
             form_unique_id: self.form_unique_id(),
             message: self.message_data(),
+            callback_timeout_intervals: self.callback_timeout_intervals(),
             time_window_length: self.time_window_length()
         }
     });
