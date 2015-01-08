@@ -361,7 +361,8 @@ class DeidExportReport(FormExportReportBase):
     def report_context(self):
         context = super(DeidExportReport, self).report_context
         context.update(
-            ExcelExportReport_name=ExcelExportReport.name
+            ExcelExportReport_name=ExcelExportReport.name,
+            is_deid_form_report=True
         )
         return context
 
