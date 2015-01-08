@@ -15,10 +15,17 @@
         var exportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
-            downloadUrl: '{% url "download_cases" domain %}'
+            downloadUrl: '{% url "download_cases" domain %}',
+            export_type: "case"
         } );
         $('#full-case-export').one().each(function () {
             ko.applyBindings(exportManager, this);
+        });
+
+        // Daily Saved Exports event tracking
+        $(".daily-saved-download").click(function(){
+            var caseType = $(this).attr("data-typeIdentifier");
+            ga_track_event("Download Case Export","Download Saved Case Export", caseType);
         });
 
     </script>
@@ -88,7 +95,12 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a data-toggle="modal" href="#export-download-status" data-backdrop="static" data-formname="{{ export.name }}" data-dlocation='{% url "export_custom_data" domain export.get_id %}?type=case&{{ get_filter_params.urlencode|safe }}&async=true'
+                        <a data-toggle="modal"
+                           href="#export-download-status"
+                           data-backdrop="static"
+                           data-formname="{{ export.name }}"
+                           data-dlocation='{% url "export_custom_data" domain export.get_id %}?type=case&{{ get_filter_params.urlencode|safe }}&async=true'
+                           data-caseType="{{ export.index.1|escapejs}}"
                            class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
                     </td>
                     <td class="cell-vertical-centered">

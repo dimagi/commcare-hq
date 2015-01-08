@@ -22,9 +22,6 @@
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
-    usersApp.constant('dashboardConfig', {
-        staticRoot: '{{ STATIC_URL }}'
-    });
 }(window.angular));
 </script>
 <script>
@@ -54,14 +51,27 @@
 </script>
 <script>
     $(function () {
-        $('#save_restrict_option').click(function() {
+        $('#restrict_users').on('change', function () {
+            var $saveButton = $('#save_restrict_option');
+            $saveButton
+                    .removeAttr('disabled')
+                    .removeClass('disabled btn-default')
+                    .addClass('btn-success')
+                    .text('{% trans "Save" %}');
+        });
+        $('#save_restrict_option').click(function(e) {
             var post_url = '{% url "location_restriction_for_users" domain %}';
             $(this).text('Saving ...');
             $.post(post_url,
                 {restrict_users: $('#restrict_users')[0].checked},
                 function(data, status) {
-                    $('#save_restrict_option').text('Saved');
-            })
+                    $('#save_restrict_option')
+                            .text('{% trans "Saved" %}')
+                            .removeClass('btn-success')
+                            .attr('disabled', 'disabled')
+                            .addClass('disabled btn-default');
+            });
+            e.preventDefault();
         });
 
         $('.resend-invite').click(function (e) {
@@ -121,64 +131,144 @@
             using the CommCare Application.
         {% endblocktrans %}
         <div class="btn-toolbar">
-            <a class="btn btn-success" href="{% url "invite_web_user" domain %}">
-                <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}</a>
+            <a class="btn btn-success"
+               href="{% url "invite_web_user" domain %}">
+                <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
+            </a>
         </div>
     </p>
+    <div ng-app="usersApp">
+        <div class="panel panel-default" ng-controller="paginatedListController">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <input type="text"
+                                   class="form-control"
+                                   ng-model="query"
+                                   placeholder="{% trans "Filter Users..." %}">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default"
+                                        ng-click="filterUsers()"
+                                        type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div><!-- /input-group -->
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped table-responsive"
+                       style="margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th>{% trans "E-mail" %}</th>
+                            <th>{% trans "Role" %}</th>
+                            <th>{% trans "Name" %}</th>
+                            <th>{% trans "Phone Numbers" %}</th>
+                            <th>{% trans "Remove" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-show="notLoaded">
+                            <td colspan="5">{% trans "Loading Users..." %}</td>
+                        </tr>
+                        <tr ng-repeat="user in paginatedItems">
+                            {% angularjs %}
+                            <td><a href="{{ user.editUrl }}">{{ user.email }}</a></td>
+                            <td>{{ user.role }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>
+                                <ul>
+                                    <li ng-repeat="number in user.phoneNumbers">{{ number }}</li>
+                                </ul>
+                            </td>
+                            <td>
+                                <div ng-show="user.removeUrl">
+                                    <button type="button"
+                                            class="btn btn-danger"
+                                            data-toggle="modal"
+                                            data-target="#remove_membership_{{ user.id }}">
+                                        <i class="fa fa-remove"></i> {% trans "Remove Membership" %}
+                                    </button>
+                                    <div id="remove_membership_{{ user.id }}"
+                                         class="modal fade">
+                                        <div class="modal-dialog">
+                                            <form class="modal-content"
+                                                  action="{{ user.removeUrl }}"
+                                                  method="post">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                        <span class="sr-only">{% trans "Close" %}</span>
+                                                    </button>
+                                                    <h4 class="modal-title">{% trans "Remove User Membership" %}: {{ user.name }}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
+                                                    <ul class="dl-horizontal">
+                                                        <dt>{% trans "E-mail" %}</dt>
+                                                        <dd>{{ user.email }}</dd>
+                                                        <dt>{% trans "Name" %}</dt>
+                                                        <dd>{{ user.name }}</dd>
+                                                        <dt>{% trans "Membership" %}</dt>
+                                                        <dd>{{ user.domain }}</dd>
+                                                        <dt>{% trans "Role" %}</dt>
+                                                        <dd>{{ user.role }}</dd>
+                                                    </ul>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button"
+                                                            class="btn btn-default"
+                                                            data-dismiss="modal">
+                                                        {% trans "Cancel" %}
+                                                    </button>
+                                                    <button type="submit"
+                                                            class="btn btn-danger">
+                                                        {% trans "Remove Membership" %}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endangularjs %}
+                        </tr>
+                    </tbody>
+                </table>
+                <pagination direction-links="true"
+                            total-items="total"
+                            items-per-page="limit"
+                            previous-text="&laquo;"
+                            next-text="&raquo;"
+                            max-size="maxSize"
+                            ng-model="currentPage"
+                            ng-change="pageChanged()"></pagination>
 
-    <div ng-app="usersApp" class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">{% trans 'Current Users' %}</h3>
-        </div>
-        <div ng-controller="paginatedListController" class="panel-body">
-            <table class="table table-striped table-responsive"
-                   style="margin-bottom: 0;">
-                <thead>
-                    <tr>
-                        <th>{% trans "E-mail" %}</th>
-                        {% block extra_headers %}
-                        {% endblock %}
-                        <th>{% trans "Role" %}</th>
-                        <th>{% trans "Name" %}</th>
-                        <th>{% trans "Phone Numbers" %}</th>
-                        {% if remove_included %}<th>{% trans "Remove" %}</th>{% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr ng-repeat="user in paginatedItems">
-                        <td>email</td>
-                        <td>role</td>
-                        <td>name</td>
-                        <td>numbers</td>
-                        {% if remove_included %}<td>Remove</td>{% endif %}
-                    </tr>
-                </tbody>
-            </table>
-            <pagination direction-links="true"
-                        total-items="total"
-                        items-per-page="limit"
-                        previous-text="&laquo;"
-                        next-text="&raquo;"
-                        max-size="maxSize"
-                        ng-model="currentPage"
-                        ng-change="pageChanged()"></pagination>
+                {% if domain_object.commtrack_enabled %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox"
+                                   id="restrict_users"
+                                   name="restrict_users"
+                                   value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}/>
+                            {% trans "Restrict Web User access based on location" %}
+                        </label>
+                        <button type="button"
+                                class="btn btn-sm btn-default disabled"
+                                id="save_restrict_option">
+                            {% trans "Saved" %}
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
-
-    {% if domain_object.commtrack_enabled %}
-        <label class="checkbox">
-            <input id="restrict_users"
-                   type="checkbox"
-                   name="restrict_users"
-                   value="True" {% if domain_object.location_restriction_for_users %}checked{% endif %}>
-            {% trans "Restrict Web User access based on location" %}
-            <button type="button"
-                    class="btn btn-success"
-                    id="save_restrict_option">
-                {% trans "Save" %}
-            </button>
-        </label>
-    {% endif %}
 
     {% if invitations %}
         <div class="panel panel-info">
@@ -250,7 +340,7 @@
                         <h4 class="modal-title">{% trans "Delete invitation" %}</h4>
                     </div>
                     <div class="modal-body">
-                        <h4> {% trans "Are you sure you want to delete this invitation?" %}</h4>
+                        <p>{% trans "Are you sure you want to delete this invitation?" %}</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>

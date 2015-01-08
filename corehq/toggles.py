@@ -257,6 +257,11 @@ COMMCARE_LOGO_UPLOADER = StaticToggle(
     'CommCare logo uploader',
 )
 
+PAGINATE_WEB_USERS = StaticToggle(
+    'paginate_web_users',
+    'Paginate Web Users',
+)
+
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
@@ -273,5 +278,11 @@ PRODUCTS_PER_LOCATION = StaticToggle(
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
+    'case_details_in_cloudcare_forms',
+    'Display details of the selected case on top in CloudCare if a form uses Case Management',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

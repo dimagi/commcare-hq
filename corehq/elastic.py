@@ -65,6 +65,11 @@ ADD_TO_ES_FILTER = {
         {"term": {"base_doc": "couchuser"}},
         {"term": {"is_active": True}},
     ],
+    "web_users": [
+        {"term": {"doc_type": "WebUser"}},
+        {"term": {"base_doc": "couchuser"}},
+        {"term": {"is_active": True}},
+    ],
     "users_all": [
         {"term": {"base_doc": "couchuser"}},
     ],

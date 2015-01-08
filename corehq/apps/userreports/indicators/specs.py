@@ -74,10 +74,9 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     is_primary_key = BooleanProperty(default=False)
     expression = DictProperty(required=True)
 
-    @property
-    def parsed_expression(self):
+    def parsed_expression(self, context):
         transform = _transform_from_datatype(self.datatype)
-        expression = ExpressionFactory.from_spec(self.expression)
+        expression = ExpressionFactory.from_spec(self.expression, context)
         return TransformedGetter(expression, transform)
 
 

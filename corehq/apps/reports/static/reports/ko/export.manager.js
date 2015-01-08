@@ -3,6 +3,7 @@ var ExportManager = function (o) {
     self.selected_exports = ko.observableArray();
     self.export_type = o.export_type || "form";
     self.is_custom = o.is_custom || false;
+    self.is_deid_form_report = o.is_deid_form_report || false;
 
     self.format = o.format || "csv";
     self.domain = o.domain;
@@ -35,12 +36,26 @@ var ExportManager = function (o) {
             else
                 $title.attr('style', '');
         },
+        /**
+         * Expected params keys:
+         *  - data (required)
+         *  - isBulkDownload
+         *  - xmlns
+         *  - exportName
+         * the two optional keys are used for google analytics.
+         * @param params
+         */
         updateModal = function(params) {
             var autoRefresh = '';
             var pollDownloader = function () {
-                if ($('#ready_'+params.response.download_id).length == 0) {
-                    $.get(params.response.download_url, function(data) {
+                if ($('#ready_'+params.data.download_id).length == 0) {
+                    $.get(params.data.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
+                        self.setUpEventTracking({
+                            xmlns: params.xmlns,
+                            isBulkDownload: params.isBulkDownload,
+                            exportName: params.exportName
+                        });
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
                         self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
@@ -54,14 +69,6 @@ var ExportManager = function (o) {
             $(self.exportModal).on('hide', function () {
                 clearInterval(autoRefresh);
             });
-            if (params.xmlns == "http://code.javarosa.org/devicereport"){
-                gaTrackLink(
-                    $(".download-button", self.exportModal),
-                    "Form Exports",
-                    "Download Mobile Device Log",
-                    "Export Mobile Device Log"
-                );
-            }
             autoRefresh = setInterval(pollDownloader, 2000);
         },
         displayModalError = function(error_text) {
@@ -82,6 +89,45 @@ var ExportManager = function (o) {
             }
             return getFormattedSheetName(a,b);
         };
+
+    self.setUpEventTracking = function(params) {
+        params = params || {};
+        var downloadButton = self.$modal.find(self.exportModalLoadedData).find("a.btn.btn-primary").first();
+        if (downloadButton.length) {
+
+            // Device reports event
+            // (This is a bit of a special case due to its unique "action" and "label"
+            if (params.xmlns == "http://code.javarosa.org/devicereport") {
+                gaTrackLink(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
+            }
+
+            var label;
+            if (self.export_type == "case"){
+
+                if (params.isBulkDownload){
+                    label = $('#include-closed-select').val() == "true" ? "all" : "all open";
+                    gaTrackLink(downloadButton, "Download Case Export", "Download Raw Case Export", label);
+                }
+
+            } else if (self.export_type == "form"){
+                var category = "Download Form Export";
+
+
+                var action = "Download Raw Form Export";
+                label = params.isBulkDownload ? "bulk" : params.xmlns;
+                if (self.is_deid_form_report){
+                    action = "Download Deidentified Form Export";
+                    label = params.isBulkDownload ? label : params.exportName;
+                } else if (self.is_custom){
+                    action = "Download Custom Form Export";
+                    label = params.isBulkDownload ? label : params.exportName;
+                }
+
+                gaTrackLink(downloadButton, category, action, label);
+
+            }
+        }
+    };
 
     self.updateSelectedExports = function (data, event) {
         var $checkbox = $(event.srcElement || event.currentTarget);
@@ -106,10 +152,12 @@ var ExportManager = function (o) {
         $.ajax({
             dataType: 'json',
             url: params.downloadUrl,
-            success: function(response){
+            success: function(data){
                 updateModal({
-                    response: response,
-                    xmlns: params.xmlns
+                    data: data,
+                    xmlns: params.xmlns,
+                    isBulkDownload: params.isBulkDownload,
+                    exportName: params.exportName
                 });
             },
             error: displayDownloadError
@@ -128,7 +176,13 @@ var ExportManager = function (o) {
             url: downloadUrl,
             type: 'POST',
             data: data,
-            success: updateModal,
+            success: function(respData){
+                updateModal({
+                    data: respData,
+                    xmlns: null,
+                    isBulkDownload: true
+                });
+            },
             error: displayDownloadError
         });
     };
@@ -207,7 +261,8 @@ var ExportManager = function (o) {
         var xmlns = $button.data('xmlns');
         resetModal("'" + options.modalTitle + "'", true);
         var format = self.format;
-        var fileName = encodeURIComponent($.trim($button.data('formname')));
+        var formName = $.trim($button.data('formname'));
+        var fileName = encodeURIComponent(formName);
         if ($button.data('format')) {
             format = $button.data('format');
         }
@@ -224,12 +279,18 @@ var ExportManager = function (o) {
                 downloadUrl += '&' + k + '=' + v;
             }
         }
-        self.downloadExport({downloadUrl: downloadUrl, xmlns: xmlns});
+        self.downloadExport({
+            downloadUrl: downloadUrl,
+            xmlns: xmlns,
+            isBulkDownload: options.isBulkDownload,
+            exportName: formName || xmlns
+        });
     };
 
     self.requestDownload = function(data, event) {
         var $button = $(event.srcElement || event.currentTarget);
-        var modalTitle = $button.data('formname') || $button.data('xmlns');
+        var formNameOrXmlns = $button.data('formname') || $button.data('xmlns');
+        var modalTitle = formNameOrXmlns;
         if ($button.data('modulename')) {
             modalTitle  = $button.data('modulename') + " > " + modalTitle;
         }
@@ -239,7 +300,8 @@ var ExportManager = function (o) {
         }
         return self._requestDownload(event, {
             modalTitle: modalTitle,
-            downloadParams: downloadParams
+            downloadParams: downloadParams,
+            isBulkDownload: false
         });
     };
 
@@ -248,7 +310,8 @@ var ExportManager = function (o) {
             modalTitle: "Case List",
             downloadParams: {
                 include_closed: $('#include-closed-select').val()
-            }
+            },
+            isBulkDownload: true
         });
     };
 
