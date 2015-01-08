@@ -21,7 +21,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         '<div>' +
             '<button class="btn" data-bind="click: openModal, visible: $data.edit">' +
                 '<i class="icon-pencil"></i>' +
-                'Edit Graph' +
+                ' Edit Graph' +
             '</button>' +
         '</div>'
     );
