@@ -1,5 +1,6 @@
 import json
 from django.core.urlresolvers import reverse
+from django.db.models import Count
 from django.http.response import HttpResponseRedirect
 from corehq.apps.commtrack.models import CommtrackConfig, StockState
 from corehq.apps.products.models import SQLProduct
@@ -72,27 +73,10 @@ class GlobalStats(BaseDomainView):
         }
 
         if self.show_supply_point_types:
-            supply_point_types = ['clinic', 'chps facility', 'district hospital', 'health centre', 'hospital',
-                              'psychiatric hospital', 'regional medical store', 'regional hospital', 'polyclinic',
-                              'teaching hospital', 'central medical store', '']
-            supply_point_types_map = {supply_point_type: 0 for supply_point_type in supply_point_types}
-            facility_ids = [facility.location_id for facility in facilities]
-            for facility in iter_docs(Location.get_db(), facility_ids):
-                supply_point_type = facility.get('metadata', {}).get('supply_point_type', "").lower()
-                supply_point_types_map[supply_point_type] += 1
-
-            context.update({
-                'clinic': supply_point_types_map['clinic'],
-                'chps_facility': supply_point_types_map['chps facility'],
-                'district_hospital': supply_point_types_map['district hospital'],
-                'health_centre': supply_point_types_map['health centre'],
-                'hospital': supply_point_types_map['hospital'],
-                'psychiatric_hospital': supply_point_types_map['psychiatric hospital'],
-                'regional_medical_store': supply_point_types_map['regional medical store'],
-                'regional_hospital': supply_point_types_map['regional hospital'],
-                'polyclinic': supply_point_types_map['polyclinic'],
-                'teaching_hospital': supply_point_types_map['teaching hospital'],
-                'central_medical_store': supply_point_types_map['central medical store']})
+            counts = SQLLocation.objects.values('location_type').filter(domain=self.domain).annotate(
+                Count('location_type')
+            ).order_by('location_type')
+            context['location_types'] = counts
 
         main_context.update(context)
         return main_context

@@ -158,15 +158,33 @@ class EWSApi(APISynchronization):
         domain.location_types = [
             LocationType(name="country", allowed_parents=[""],
                          administrative=True),
+            LocationType(name="Central Medical Store", allowed_parents=["country"],
+                         administrative=False),
+            LocationType(name="Teaching Hospital", allowed_parents=["country"],
+                         administrative=False),
             LocationType(name="region", allowed_parents=["country"],
                          administrative=True),
+            LocationType(name="Regional Medical Store", allowed_parents=["region"],
+                         administrative=False),
+            LocationType(name="Regional Hospital", allowed_parents=["region"],
+                         administrative=False),
             LocationType(name="district", allowed_parents=["region"],
                          administrative=True),
+            LocationType(name="Clinic", allowed_parents=["district"],
+                         administrative=False),
+            LocationType(name="District Hospital", allowed_parents=["district"],
+                         administrative=False),
+            LocationType(name="Health Centre", allowed_parents=["district"],
+                         administrative=False),
+            LocationType(name="CHPS Facility", allowed_parents=["district"],
+                         administrative=False),
+            LocationType(name="Hospital", allowed_parents=["district"],
+                         administrative=False),
+            LocationType(name="Psychiatric Hospital", allowed_parents=["district"],
+                         administrative=False),
+            LocationType(name="Polyclinic", allowed_parents=["district"],
+                         administrative=False),
             LocationType(name="facility", allowed_parents=["district"],
-                         administrative=False),
-            LocationType(name='regional warehouse', allowed_parents=['region'],
-                         administrative=False),
-            LocationType(name='national warehouse', allowed_parents=['country'],
                          administrative=False)
         ]
         domain.save()
@@ -202,11 +220,6 @@ class EWSApi(APISynchronization):
                     loc_parent_id = loc_parent._id
 
                 location = Loc(parent=loc_parent_id)
-                if ews_location.type == 'facility':
-                    if loc_parent.location_type == 'region':
-                        ews_location.type = 'regional warehouse'
-                    elif loc_parent.location_type == 'country':
-                        ews_location.type = 'national warehouse'
             else:
                 location = Loc()
                 location.lineage = []
@@ -222,8 +235,7 @@ class EWSApi(APISynchronization):
             location.external_id = str(ews_location.id)
             location.save()
             supply_point_with_stock_data = filter(lambda x: x.last_reported, ews_location.supply_points)
-
-            if len(supply_point_with_stock_data) > 1:
+            if location.location_type in ['country', 'region', 'district']:
                 for supply_point in supply_point_with_stock_data:
                     created_location = self._create_location_from_supply_point(supply_point, location)
                     fake_location = Loc(
@@ -233,19 +245,11 @@ class EWSApi(APISynchronization):
                         domain=self.domain
                     )
                     SupplyPointCase.get_or_create_by_location(fake_location)
-            elif supply_point_with_stock_data:
-                supply_point = supply_point_with_stock_data[0]
-                self._create_supply_point_from_location(supply_point, location)
             elif ews_location.supply_points:
                 supply_point = ews_location.supply_points[0]
+                location.location_type = supply_point.type
+                location.save()
                 self._create_supply_point_from_location(supply_point, location)
-            else:
-                SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
-                                                              name=location.name,
-                                                              external_id=None,
-                                                              domain=self.domain))
-            location.save()
-
         else:
             location_dict = {
                 'name': ews_location.name,
@@ -257,20 +261,6 @@ class EWSApi(APISynchronization):
 
             if apply_updates(location, location_dict):
                 location.save()
-
-        for supply_point in ews_location.supply_points:
-                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                          key=[self.domain, str(supply_point.id)],
-                                          reduce=False,
-                                          include_docs=True,
-                                          limit=1).first()
-                if sp:
-                    if location._id == sp.location_id:
-                        location_from_sp = location
-                    else:
-                        location_from_sp = sp.location
-                    location_from_sp.metadata['supply_point_type'] = supply_point.type
-                    location_from_sp.save()
         return location
 
     def convert_web_user_to_sms_user(self, ews_webuser):
