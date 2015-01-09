@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - fab-directory
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -53,7 +54,9 @@ branches:
   - master+double-management # Nick P 12/31
   - double-management # SK 12/1
   - lwyszomi:migration-optimization
+  - master+caseDetailsInCC  # Nick P 1/7
   - caseDetailsInCC # sravan 2/1/15
+  - logo-to-android # Nick P 1/7
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty

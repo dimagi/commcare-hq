@@ -2,26 +2,30 @@
 <table class="table table-bordered">
     <thead data-bind="with: eventObjects()[0]">
         <th class="span2">
-            {% trans 'Day' %}
+            <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Day' %}</span>
+            <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Days to Delay' %}</span>
             <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
                 <i class="icon-question-sign"
                    data-title="{% trans 'Day' %}"
                    data-content="{% blocktrans %}
                        The day on which each event in the reminder comes due.
                        Day 0 indicates the day that the reminder was triggered.
+                       If Delay After Start is chosen, this is the number of days
+                       to wait after the previous event.
                        {% endblocktrans %}"
                    data-trigger="hover"></i>
             </a>
         </th>
         <th class="span2">
-            {% trans 'Time' %}
+            <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Time' %}</span>
+            <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Time to Delay' %}</span>
             <a href="#" class="hq-help no-click event-help-text" style="font-weight: normal;">
                 <i class="icon-question-sign"
                    data-title="{% trans 'Time' %}"
                    data-content="{% blocktrans %}
-                       Specify the time at which the specific message will be sent out.
+                       Specify the time at which the reminder will be sent out.
                        If Delay After Start is chosen, this is the number of
-                       minutes after which the reminder will go out.
+                       hours and minutes to wait after the previous event.
                        {% endblocktrans %}"
                    data-trigger="hover"></i>
             </a>

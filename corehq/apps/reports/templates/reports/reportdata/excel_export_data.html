@@ -20,7 +20,8 @@
             exportFilters: filterParams,
             jsonExportFilters: jsonFilterParams,
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
-            is_custom: true
+            is_custom: true,
+            is_deid_form_report: {{ is_deid_form_report|JSON }}
         } );
         ko.applyBindings(customExportManager, $('#custom-form-export')[0]);
 
@@ -47,6 +48,11 @@
 
         $('#all-forms-metadata').one().each(function () {
             ko.applyBindings(metadataExportManager, this);
+        });
+
+        $('.daily-saved-download').click(function(){
+            var exportName = $(this).attr("data-exportName");
+            ga_track_event("Download Form Export", "Download Saved Form Export", exportName);
         });
 
         $(function () {
@@ -152,6 +158,15 @@
 
 
     </script>
+
+    <script type="text/javascript">
+        $('.hq-generic-report').on('apply-click', function() {
+            $('.user-type-btn').trigger({
+                type: 'applied-click',
+                event_category: 'Form Exports'
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block reportcontent %}
@@ -183,9 +198,7 @@
             <th>{% trans "Form" %}</th>
             <th>{% trans "Custom Export" %}</th>
             <th>{% trans "Download" %}</th>
-            {% if has_media %}
             <th>{% trans "Download Multimedia" %}</th>
-            {% endif %}
             <th>{% trans "Total Submissions" %}</th>
             <th>
                 {% trans "Add to Bulk Export" %} <i class="bulk-export-info icon-white icon-info-sign"></i>
@@ -300,7 +313,6 @@
                         {% trans "No Forms" %}
                     {% endif %}
                 </td>
-                {% if has_media %}
                 <td class="cell-vertical-centered">
                     {% if form.size %}
                         {% if form.app.id %}
@@ -316,7 +328,6 @@
                         <span class="label">{% trans "No Multimedia" %}</span>
                     {% endif %}
                 </td>
-                {% endif %}
                 <td>
                     {{ form.submissions }} {% if form.submissions %}
                     <i class="icon-info-sign all-users-all-time">

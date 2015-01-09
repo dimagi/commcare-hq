@@ -49,6 +49,17 @@
         });
     });
     </script>
+
+    <script type="text/javascript">
+    $('#close_case').submit(function() {
+        ga_track_event('Edit Data', 'Close Case', '-', {
+            'hitCallback': function () {
+                document.getElementById('close_case').submit();
+            }
+        });
+        return false;
+    });
+    </script>
 {% endblock %}
 
 {% block page-title %}
@@ -75,7 +86,7 @@
         </form>
     {% endif %}
     {% if not case.closed %}
-        <form action="{% url 'close_case' domain case_id %}" method="post" >
+        <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case">
              <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
         </form>
     {% endif %}

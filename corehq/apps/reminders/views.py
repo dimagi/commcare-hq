@@ -53,6 +53,7 @@ from corehq.apps.reminders.models import (
     QUESTION_RETRY_CHOICES,
     REMINDER_TYPE_ONE_TIME,
     REMINDER_TYPE_DEFAULT,
+    REMINDER_TYPE_SURVEY_MANAGEMENT,
     SEND_NOW, SEND_LATER,
     METHOD_SMS,
     METHOD_SMS_SURVEY,
@@ -1286,6 +1287,7 @@ def add_survey(request, domain, survey_id=None):
                                     sample_id = sample["sample_id"],
                                     survey_incentive = sample["incentive"],
                                     submit_partial_forms = True,
+                                    reminder_type=REMINDER_TYPE_SURVEY_MANAGEMENT,
                                 )
                                 handler.save()
                                 wave.reminder_definitions[sample["sample_id"]] = handler._id
@@ -1388,6 +1390,7 @@ def add_survey(request, domain, survey_id=None):
                                 sample_id = sample_id,
                                 survey_incentive = sample_data[sample_id]["incentive"],
                                 submit_partial_forms = True,
+                                reminder_type=REMINDER_TYPE_SURVEY_MANAGEMENT,
                             )
                             handler.save()
                             wave.reminder_definitions[sample_id] = handler._id

@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block main_column %}
-{% include 'users/partial/basic_info_form.html' %}
+{% include 'users/partial/basic_info_form.html' with user_type="web"%}
 {% endblock %}
 
 {% block modals %}{{ block.super }}

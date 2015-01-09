@@ -278,6 +278,13 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
     30 days before each timestamp
     """
     histo_data = []
+    mobile_users = set(
+        UserES()
+        .show_inactive()
+        .mobile_users()
+        .domain(domains)
+        .run().doc_ids
+    )
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
@@ -294,13 +301,7 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
                 .size(0)
                 .run()
                 .facets.user.result
-                if u['term'] in (
-                    UserES()
-                    .show_inactive()
-                    .mobile_users()
-                    .domain(domains)
-                    .run().doc_ids
-                )
+                if u['term'] in mobile_users
             }
         c = len(users)
         if c > 0:

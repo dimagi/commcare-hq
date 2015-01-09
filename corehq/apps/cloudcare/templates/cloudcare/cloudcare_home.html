@@ -41,6 +41,12 @@
 
     GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
 
+    if (window.toggles === undefined) {
+        window.toggles = {};
+    }
+
+    window.toggles.CASEDETAILS_IN_CLOUDCARE_FORMS =  {{ request|toggle_enabled:"CASEDETAILS_IN_CLOUDCARE_FORMS"|BOOL }};
+
     var translatedStrings = {
         saved : "{% trans "Form successfully saved" %}",
         loading : "{% trans "Loading..." %}",
@@ -180,11 +186,14 @@
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
             {% trans "Loading" %}...
         </div>
-        <section id="case-crumbs"></section>
+        <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" style="min-width: 800px;"></section>
     </div>
 
+    {% if request|toggle_enabled:'CASEDETAILS_IN_CLOUDCARE_FORMS' %}
+    {% include 'cloudcare/includes/case_details.html' %}
+    {% else %}
     <script type="text/html" id="template-crumbs">
         <% if (childCase || parentCase ){ %>
         <ul class='breadcrumb'>
@@ -209,5 +218,6 @@
         </ul>
         <% } %>
     </script>
+    {% endif %}
 
 {% endblock %}

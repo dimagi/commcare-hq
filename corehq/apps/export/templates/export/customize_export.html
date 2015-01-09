@@ -308,7 +308,7 @@
                                         transform: column.transform() || null, // it doesn't save '' well
                                         is_sensitive: Boolean(is_sensitive)
                                 };
-                                if (column.doc_type() === 'SplitColumn'){
+                                if (column.doc_type === 'SplitColumn'){
                                     col.doc_type = column.doc_type;
                                     col.options = column.options();
                                 }
@@ -346,7 +346,31 @@
                 self.save = function () {
                     self.save.state('saving');
                     $.post(self.urls.save(), self.output()).done(function (data) {
-                        window.location.href = data.redirect;
+
+                        var redirect = function(){
+                            window.location.href = data.redirect;
+                        };
+
+                        // If the button had said "Create"
+                        if (!self.custom_export._id || !self.custom_export._id()) {
+                            var event_category = null;
+                            if (self.custom_export.type() == "form") {
+                                event_category = 'Form Exports';
+                            } else if (self.custom_export.type() == "case") {
+                                event_category = 'Case Exports';
+                            }
+
+                            if (event_category) {
+                                // Record an event
+                                ga_track_event(event_category, 'Custom export creation', "", {
+                                    'hitCallback': function () {
+                                        redirect();
+                                    }
+                                });
+                                return;
+                            }
+                        }
+                        redirect();
                     }).fail(function (response) {
                         var data = $.parseJSON(response.responseText);
                         self.save.state('error');
