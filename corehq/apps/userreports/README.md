@@ -343,6 +343,66 @@ These are some practical notes for how to choose what indicators to create.
 
 All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.
 
+
+# Report Configurations
+
+A report configuration takes data from a data source and renders it in the UI. A report configuration consists of a few different sections:
+
+1. A list of filter fields. These map to filters that show up in the UI, and should translate to queries that can be made to limit the returned data.
+2. A list of aggregation fields. These defines how indicator data will be aggregated into rows in the report. The complete list of aggregations fields forms the *primary key* of each row in the report.
+3. A list of columns. Columns define the report columns that show up from the data source, as well as any aggregation information needed.
+
+## Report filters
+
+TODO: Report filters docs will go here.
+
+**A note about report filters versus data source filters**
+
+Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
+
+## Report Columns
+
+TODO: Report column docs will go here.
+
+Here's an example report column that shows the owner name from an associated `owner_id`:
+
+```
+{
+    "type": "field",
+    "field": "owner_id",
+    "display": "Owner Name"
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple",
+}
+```
+
+### Transforms
+
+Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are only two supported transform types. These are shown below:
+
+#### Displaying username instead of user ID
+
+```
+{
+    "type": "custom",
+    "custom_type": "user_display"
+}
+```
+
+#### Displaying owner name instead of owner ID
+
+```
+{
+    "type": "custom",
+    "custom_type": "owner_display"
+}
+```
+
+
 # Practical Notes
 
 Some rough notes for working with user configurable reports.
