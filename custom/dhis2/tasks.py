@@ -312,14 +312,14 @@ def send_nutrition_data():
     """
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     nutrition_id = dhis2_api.get_program_id('Pediatric Nutrition Assessment')
-    forms = []
+    xforms = []
     events = {'eventList': []}
-    for form in gen_unprocessed_growth_monitoring_forms():
-        forms.append(form)
-        event = dhis2_api.form_to_event(nutrition_id, form.form, DATA_ELEMENT_NAMES)
+    for xform in gen_unprocessed_growth_monitoring_forms():
+        xforms.append(xform)
+        event = dhis2_api.form_to_event(nutrition_id, xform, DATA_ELEMENT_NAMES)
         events['eventList'].append(event)
     dhis2_api.send_events(events)
-    mark_as_processed(forms)
+    mark_as_processed(xforms)
 
 
 def gen_unprocessed_growth_monitoring_forms():

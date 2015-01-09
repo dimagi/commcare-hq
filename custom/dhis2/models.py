@@ -43,7 +43,7 @@ class JsonApiRequest(object):
         """
         Return HTTP status, JSON
 
-        :raises JsonApiError if HTTP status is not in the 200 (OK) range
+        :raises JsonApiError: if HTTP status is not in the 200 (OK) range
         """
         if 200 <= response.status_code < 300:
             return response.status_code, response.json()
@@ -314,12 +314,12 @@ class Dhis2Api(object):
         __, json = self._request.post('enrollments', request_data)
         return json
 
-    def form_to_event(self, program_id, form, data_element_names):
+    def form_to_event(self, program_id, xform, data_element_names):
         """
         Builds a dict representing a DHIS2 event
 
         :param program_id: The program can't be determined from form data.
-        :param form: Form data
+        :param xform: An XFormInstance
         :param data_element_names: A dictionary mapping CCHQ form field names
                                    to DHIS2 tracked entity attribute names
 
@@ -348,31 +348,28 @@ class Dhis2Api(object):
         .. _Events documentation: https://www.dhis2.org/doc/snapshot/en/user/html/ch28s09.html
 
         """
-        #
-        # 3. The event will contain the program ID associated with case, the tracked
-        #    entity ID and the program stage (Nutrition Assessment). It will also
-        #    contain the recorded height and weight as well as mobile-calculated BMI
-        #    and Age at time of visit.
-        #
+        # For more information on the data to be sent from CCHQ to DHIS2, see
+        # README.rst. Required data is given in 4.3 of the Specification
         if not any(a not in self._tracked_entity_attributes for a in data_element_names.values()):
             self._fetch_tracked_entity_attributes()
         event = {
             'program': program_id,
-            'orgUnit': form.dhis2_org_unit_id,  # hidden value populated by case  # TODO: Syntax?
-            'eventDate': form.submit_date,  # TODO: submit_date?
+            'orgUnit': xform.form['dhis2_org_unit_id'],
+            'eventDate': xform.received_on,
             'status': 'COMPLETED',
             'storedBy': self._username,
-            # 'coordinate': {
-            #     'latitude': form.location.latitude,  # TODO: Really?
-            #     'longitude': form.location.logitude
-            # },
             'dataValues': [
                 {
                     'dataElement': self._tracked_entity_attributes[te_attr_name],
-                    'value': getattr(form, field_name),
+                    'value': xform.form[field_name],
                 } for field_name, te_attr_name in data_element_names.iteritems()
             ]
         }
+        if xform.metadata.location:
+            event['coordinate'] = {
+                'latitude': xform.metadata.location.latitude,
+                'longitude': xform.metadata.location.longitude,
+            }
         return event
 
     def send_events(self, events):
