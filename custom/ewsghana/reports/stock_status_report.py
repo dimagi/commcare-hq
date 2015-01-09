@@ -263,8 +263,8 @@ class StockStatus(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            program=program if program != '' else None,
-            product=products if products[0] != '' else [],
+            program=program if program != '0' else None,
+            product=products if products and products[0] != '0' else [],
         )
 
     @property

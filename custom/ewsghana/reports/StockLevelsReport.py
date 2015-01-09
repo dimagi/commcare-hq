@@ -392,14 +392,15 @@ class StockLevelsReport(MultiReport):
 
     @property
     def report_config(self):
-
+        program = self.request.GET.get('filter_by_program')
+        products = self.request.GET.getlist('filter_by_product')
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            program=self.request.GET.get('filter_by_program'),
-            product=self.request.GET.get('filter_by_product'),
+            program=program if program != '0' else None,
+            product=products if products and products[0] != '0' else [],
         )
 
     @property
