@@ -323,13 +323,15 @@ def send_nutrition_data():
 
 
 def gen_unprocessed_growth_monitoring_forms():
-    query = FormES().filter({
+    query = FormES().domain(DOMAIN).filter({
         # dhis2_te_inst_id indicates that the case has been enrolled in both
         # programs by push_child_entities()
-        'not': {'term': {'dhis2_te_inst_id': ''}}
+        'not': {'or': [{'missing': {'field': 'form.dhis2_te_inst_id'}},
+                       {'term': {'form.dhis2_te_inst_id': ''}}]}
     }).filter({
         # and it must not have been processed before
-        'term': {'dhis2_processed': ''}
+        'or': [{'missing': {'field': 'form.dhis2_processed'}},
+               {'term': {'form.dhis2_processed': ''}}]
     })
     result = query.run()
     if result.total:
