@@ -182,8 +182,8 @@ class DispDesProducts(BaseSqlData):
         commandes = ['Comanndes']
         raux = ['Recu']
         taux = ['Taux']
-        products = Product.by_domain(self.config['domain'])
-        for product in products:
+        products = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False)
+        for _ in products:
             commandes.append(0)
             raux.append(0)
             taux.append(0)
@@ -203,7 +203,7 @@ class DispDesProducts(BaseSqlData):
     @property
     def headers(self):
         headers = DataTablesHeader(*[DataTablesColumn('Quantity')])
-        for product in Product.by_domain(self.config['domain']):
+        for product in SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False):
             headers.add_column(DataTablesColumn(product.name))
         return headers
 
@@ -211,7 +211,11 @@ class DispDesProducts(BaseSqlData):
     def columns(self):
         return [
             DatabaseColumn('Product Name', SimpleColumn('product_code'),
-                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
+                           format_fn=lambda code: SQLProduct.objects.get(
+                               code=code,
+                               domain=self.config['domain'],
+                               is_archived=False
+                           ).name),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
         ]
@@ -394,7 +398,11 @@ class RecapPassageData(BaseSqlData):
         diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_code'),
-                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
+                           format_fn=lambda code: SQLProduct.objects.get(
+                               code=code,
+                               domain=self.config['domain'],
+                               is_archived=False
+                           ).name),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
