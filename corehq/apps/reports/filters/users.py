@@ -326,16 +326,14 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
     def selected_location_sharing_group_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
         return [
-            g.strip('locationgroup-') for g in emws
-            if g.startswith('locationgroup-')
+            g for g in emws if g.startswith('locationgroup-')
         ]
 
     @classmethod
     def selected_location_reporting_group_ids(cls, request):
         emws = request.GET.getlist(cls.slug)
         return [
-            g.strip('locationreportinggroup-') for g in emws
-            if g.startswith('locationreportinggroup-')
+            g for g in emws if g.startswith('locationreportinggroup-')
         ]
 
     @property
@@ -380,16 +378,20 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
 
         if location_sharing_ids:
             from corehq.apps.commtrack.models import SQLLocation
-            for loc_id in location_sharing_ids:
-                loc = SQLLocation.objects.get(location_id=loc_id)
+            for loc_group_id in location_sharing_ids:
+                loc = SQLLocation.objects.get(
+                    location_id=loc_group_id.replace('locationgroup-', '')
+                )
                 loc_group = loc.case_sharing_group_object()
                 selected.append((loc_group._id, loc_group.name))
 
         if location_reporting_ids:
             from corehq.apps.commtrack.models import SQLLocation
-            for loc_id in location_reporting_ids:
-                loc = SQLLocation.objects.get(location_id=loc_id)
-                loc_group = loc.case_reporting_group_object()
+            for loc_group_id in location_reporting_ids:
+                loc = SQLLocation.objects.get(
+                    location_id=loc_group_id.replace('locationreportinggroup-', '')
+                )
+                loc_group = loc.reporting_group_object()
                 selected.append((loc_group._id, loc_group.name))
 
         if user_ids:

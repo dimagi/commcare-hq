@@ -126,6 +126,9 @@ class SQLLocation(MPTTModel):
 
         return g
 
+    def couch_location(self):
+        return Location.get(self.location_id)
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -152,7 +155,7 @@ def _filter_for_archived(locations, include_archive_ancestors):
 
         This is also the id that owns supply point cases.
         """
-        return LOCATION_GROUP_PREFIX + self.location_id
+        return LOCATION_SHARING_PREFIX + self.location_id
 
 
 class Location(CachedCouchDocumentMixin, Document):
@@ -468,7 +471,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
         This is also the id that owns supply point cases.
         """
-        return LOCATION_GROUP_PREFIX + self._id
+        return LOCATION_SHARING_PREFIX + self._id
 
     @property
     def location_type_object(self):
