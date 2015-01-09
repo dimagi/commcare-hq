@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 # Django imports
-import os
 from django.test import TestCase, SimpleTestCase
 
 # External imports
@@ -10,7 +9,8 @@ from django_prbac.models import Grant, Role
 
 # CCHQ imports
 from corehq.apps.hqadmin.management.commands import cchq_prbac_bootstrap
-from corehq.apps.hqadmin.management.commands.make_supervisor_pillowtop_conf import Command
+from fab.pillow_settings import apply_pillow_actions_to_pillows, \
+    get_pillows_for_env, get_single_pillow_action
 
 
 class TestCchqPrbacBootstrap(TestCase):
@@ -80,10 +80,8 @@ class TestPillowTopFiltering(SimpleTestCase):
             ],
         }
 
-        self.here = os.path.dirname(os.path.realpath(__file__))
-
     def test_no_blacklist_items(self):
-        expected_pillows = [u'corehq.pillows.case.CasePillow',
+        expected_pillows = {u'corehq.pillows.case.CasePillow',
                             u'corehq.pillows.xform.XFormPillow',
                             u'corehq.pillows.domain.DomainPillow',
                             u'corehq.pillows.user.UserPillow',
@@ -94,12 +92,13 @@ class TestPillowTopFiltering(SimpleTestCase):
                             u'corehq.pillows.user.UnknownUsersPillow',
                             u'corehq.pillows.sofabed.FormDataPillow',
                             u'corehq.pillows.sofabed.CaseDataPillow',
-                            u'corehq.pillows.log.PhoneLogPillow', ]
+                            u'corehq.pillows.log.PhoneLogPillow'}
 
-        self.assertEqual(expected_pillows, Command.get_pillows_from_settings(self.pillowtops))
+        self.assertEqual(expected_pillows, apply_pillow_actions_to_pillows(
+            [], self.pillowtops))
 
     def test_with_blacklist_items(self):
-        expected_pillows = [u'corehq.pillows.case.CasePillow',
+        expected_pillows = {u'corehq.pillows.case.CasePillow',
                             u'corehq.pillows.xform.XFormPillow',
                             u'corehq.pillows.domain.DomainPillow',
                             u'corehq.pillows.user.UserPillow',
@@ -109,22 +108,21 @@ class TestPillowTopFiltering(SimpleTestCase):
                             u'corehq.pillows.user.GroupToUserPillow',
                             u'corehq.pillows.user.UnknownUsersPillow',
                             u'corehq.pillows.sofabed.FormDataPillow',
-                            u'corehq.pillows.sofabed.CaseDataPillow', ]
+                            u'corehq.pillows.sofabed.CaseDataPillow'}
 
-        self.assertEqual(expected_pillows, Command.get_pillows_from_settings(self.pillowtops,
-                                                                             {'pillowtop_blacklist': ['phonelog']}))
+        self.assertEqual(expected_pillows, apply_pillow_actions_to_pillows(
+            [{'exclude_groups': ['phonelog']}], self.pillowtops))
 
     def test_loading_existing_conf_file(self):
-        expected_reject = {'pillowtop_blacklist': ['fluff']}
 
-        reject = Command.get_rejected_pillow_types(os.path.join(self.here, '..', '..', '..'), 'staging')
-        self.assertEqual(reject, expected_reject)
+        expected_action = {'include_groups': ['mvp']}
+
+        action = get_single_pillow_action('staging')
+        self.assertEqual(action.to_json(), expected_action)
 
     def test_loading_no_existing_conf_file(self):
-        expected_reject = {}
-
-        reject = Command.get_rejected_pillow_types(os.path.join(self.here, '..', '..', '..'), 'production')
-        self.assertEqual(reject, expected_reject)
+        action = get_single_pillow_action('foo')
+        self.assertIsNone(action)
 
     def test_india_server_exclusions(self):
         self.pillowtops['fluff'] = [
@@ -133,11 +131,7 @@ class TestPillowTopFiltering(SimpleTestCase):
             'custom.opm.models.OpmUserFluffPillow',
         ]
 
-        reject = Command.get_rejected_pillow_types(os.path.join(self.here, '..', '..', '..'), 'india')
-        pillows = Command.get_pillows_from_settings(self.pillowtops, reject)
-        has_bihar_pillow = False
-        for pillow in pillows:
-            assert pillow != 'custom.opm.models.OpmCaseFluffPillow'
-            if pillow == 'custom.bihar.models.CareBiharFluffPillow':
-                has_bihar_pillow = True
-        assert has_bihar_pillow
+        pillows = get_pillows_for_env('india', self.pillowtops)
+        self.assertNotIn('custom.opm.models.OpmCaseFluffPillow', pillows)
+        self.assertNotIn('custom.opm.models.OpmUserFluffPillow', pillows)
+        self.assertIn('custom.bihar.models.CareBiharFluffPillow', pillows)
