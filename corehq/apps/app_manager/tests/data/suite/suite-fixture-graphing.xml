@@ -1,0 +1,137 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite descriptor="Suite File">
+  <xform>
+    <resource id="6ad3844a39379e48b4cb50d2666bc4d3eabc235a" descriptor="Form: (Module Untitled Module) - Register">
+      <location authority="local">./modules-0/forms-0.xml</location>
+      <location authority="remote">./modules-0/forms-0.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="a0d317afed4ad3d1c24c4c1dc7284442c4815ae3" descriptor="Form: (Module Untitled Module) - Update">
+      <location authority="local">./modules-0/forms-1.xml</location>
+      <location authority="remote">./modules-0/forms-1.xml</location>
+    </resource>
+  </xform>
+  <locale language="default">
+    <resource id="app_default_strings" descriptor="Translations: Default Language">
+      <location authority="local">./default/app_strings.txt</location>
+      <location authority="remote">./default/app_strings.txt</location>
+    </resource>
+  </locale>
+  <locale language="en">
+    <resource id="app_en_strings" descriptor="Translations: English">
+      <location authority="local">./en/app_strings.txt</location>
+      <location authority="remote">./en/app_strings.txt</location>
+    </resource>
+  </locale>
+  <detail id="m0_case_short">
+    <title>
+      <text>
+        <locale id="m0.case_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="ascending">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
+    </field>
+  </detail>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="m0.case_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_my_awesome_graph_2.header"/>
+        </text>
+      </header>
+      <template form="graph">
+        <graph type="xy">
+          <series nodeset="instance('item-list:table1')/tablename_list/table1">
+            <configuration/>
+            <x function="foo"/>
+            <y function="bar"/>
+          </series>
+          <configuration>
+            <text id="x-max">
+              <xpath function="10"/>
+            </text>
+            <text id="y-max">
+              <xpath function="10"/>
+            </text>
+            <text id="x-min">
+              <xpath function="0"/>
+            </text>
+            <text id="y-min">
+              <xpath function="0"/>
+            </text>
+            <text id="secondary-y-title">
+              <locale id="m0.case_long.case_my_awesome_graph_2.graph.key.secondary-y-title"/>
+            </text>
+            <text id="x-title">
+              <locale id="m0.case_long.case_my_awesome_graph_2.graph.key.x-title"/>
+            </text>
+            <text id="y-title">
+              <locale id="m0.case_long.case_my_awesome_graph_2.graph.key.y-title"/>
+            </text>
+          </configuration>
+        </graph>
+      </template>
+    </field>
+  </detail>
+  <entry>
+    <form>http://openrosa.org/formdesigner/C3B637D9-4FF6-4180-B409-9BD15BA9AFF6</form>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/57ACCA75-E670-45AB-ADA2-15BB0DE9484C</form>
+    <command id="m0-f1">
+      <text>
+        <locale id="forms.m0f1"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="item-list:table1" src="jr://fixture/item-list:table1"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='my_awesome_case_type'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+    </session>
+  </entry>
+  <menu id="m0">
+    <text>
+      <locale id="modules.m0"/>
+    </text>
+    <command id="m0-f0"/>
+    <command id="m0-f1"/>
+  </menu>
+</suite>

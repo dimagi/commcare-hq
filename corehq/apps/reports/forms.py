@@ -43,7 +43,8 @@ class ScheduledReportForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
-        self.helper.add_input(Submit('submit', 'Submit'))
+        self.helper.form_id = 'id-scheduledReportForm'
+        self.helper.add_input(Submit('submit_btn', 'Submit'))
 
         super(ScheduledReportForm, self).__init__(*args, **kwargs)
 

@@ -115,8 +115,8 @@ class UnknownUsersPillow(BulkPillow):
 
     def get_fields_from_emitted_dict(self, emitted_dict):
         domain = emitted_dict['key'][1]
-        user_id = emitted_dict['value']['user_id']
-        username = emitted_dict['value']['username']
+        user_id = emitted_dict['value'].get('user_id')
+        username = emitted_dict['value'].get('username')
         xform_id = emitted_dict['id']
         return user_id, username, domain, xform_id
 

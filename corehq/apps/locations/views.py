@@ -1,5 +1,6 @@
 import json
 import urllib
+import logging
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -9,12 +10,13 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, MultipleResultsFound
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from soil.util import expose_download, get_download_context
 
+from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.commtrack.util import unicode_slug
@@ -166,10 +168,20 @@ class NewLocationView(BaseLocationView):
 
     @property
     def page_context(self):
+        try:
+            consumption = self.consumption
+        except MultipleSupplyPointException:
+            consumption = []
+            logging.error("Invalid setup: Multiple supply point cases found for the location",
+                          exc_info=True, extra={'request': self.request})
+            messages.error(self.request, _(
+                "There was a problem with the setup for your project. " +
+                "Please contact support at commcarehq-support@dimagi.com."
+            ))
         return {
             'form': self.location_form,
             'location': self.location,
-            'consumption': self.consumption,
+            'consumption': consumption,
         }
 
     def post(self, request, *args, **kwargs):
@@ -235,7 +247,11 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def supply_point(self):
-        return SupplyPointCase.get_by_location(self.location)
+        try:
+            return SupplyPointCase.get_by_location(self.location)
+        except MultipleResultsFound:
+            raise MultipleSupplyPointException
+
 
     @property
     def consumption(self):

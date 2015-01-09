@@ -6,8 +6,8 @@
 {% load timezone_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}

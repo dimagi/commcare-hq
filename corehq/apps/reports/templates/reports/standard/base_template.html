@@ -8,8 +8,8 @@
     <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
@@ -53,6 +53,12 @@
         $('.report-description-popover').popover({
             placement: 'right',
             trigger: 'hover'
+        });
+    </script>
+
+    <script>
+        $('#apply-btn').on('click', function() {
+            $('.hq-generic-report').trigger('apply-click');
         });
     </script>
 {% endblock %}
@@ -100,7 +106,8 @@
                             {% block report_filter_actions %}
                             <button type="submit" class="btn disabled"
                                     data-loading-text="{% trans "Generating Report..." %}"
-                                    data-standard-text="{% trans "Apply" %}">
+                                    data-standard-text="{% trans "Apply" %}"
+                                    id="apply-btn">
                                 {% trans "Apply" %}
                             </button>
                             {% endblock %}

@@ -78,28 +78,36 @@ var CC_DETAIL_SCREEN = {
 var SortRow = function(params){
     var self = this;
     params = params || {};
-    self.notifyButtonOfChanges =
-            typeof params.notifyButtonOfChanges !== 'undefined' ? params.notifyButtonOfChanges : true;
-    self.field = ko.observable(typeof params.field !== 'undefined' ? params.field : "");
-    self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
-    self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
 
-    if (self.notifyButtonOfChanges) {
-        self.type.subscribe(function () {
+    self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
+    CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
+
+    self.showWarning = ko.observable(false);
+    self.warningElement = DetailScreenConfig.field_format_warning.clone().show();
+    self.hasValidPropertyName = function(){
+        return DetailScreenConfig.field_val_re.test(self.textField.val());
+    };
+    this.textField.on('change', function(){
+        if (!self.hasValidPropertyName()){
+            self.showWarning(true);
+        } else {
+            self.showWarning(false);
             self.notifyButton();
-        });
-        self.direction.subscribe(function () {
-            self.notifyButton();
-        });
-    }
+        }
+    });
+
+    self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
+    self.type.subscribe(function () {
+        self.notifyButton();
+    });
+    self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
+    self.direction.subscribe(function () {
+        self.notifyButton();
+    });
 
     self.notifyButton = function(){
         params.saveButton.fire('change');
     };
-
-    self.fieldHtml = ko.computed(function () {
-        return CC_DETAIL_SCREEN.getFieldHtml(self.field());
-    });
 
     self.ascendText = ko.computed(function () {
         var type = self.type();
@@ -127,26 +135,6 @@ var SortRow = function(params){
         }
     });
 };
-var SortRowTemplate = function(params){
-    var self = this;
-    params = params || {};
-    self.textField = uiElement.input().val("");
-    CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
-
-    self.showWarning = ko.observable(false);
-    self.warningElement = DetailScreenConfig.field_format_warning.clone().show();
-    self.hasValidPropertyName = function(){
-        return DetailScreenConfig.field_val_re.test(self.textField.val());
-    };
-    this.textField.on('change', function(){
-        if (!self.hasValidPropertyName()){
-            self.showWarning(true);
-        } else {
-            self.showWarning(false);
-        }
-    });
-};
-SortRowTemplate.prototype = new SortRow({notifyButtonOfChanges: false});
 
 /**
  *
@@ -158,36 +146,19 @@ SortRowTemplate.prototype = new SortRow({notifyButtonOfChanges: false});
  */
 var SortRows = function (properties, edit, saveButton) {
     var self = this;
-    self.addButtonClicked = ko.observable(false);
     self.sortRows = ko.observableArray([]);
-    if (edit) {
-        self.templateRow = new SortRowTemplate({properties: properties});
-    } else {
-        self.templateRow = []; // Empty list because sortRows.concat([]) == sortRows
-    }
 
-    self.addSortRow = function (field, type, direction) {
+    self.addSortRow = function (field, type, direction, notify) {
         self.sortRows.push(new SortRow({
             field: field,
             type: type,
             direction: direction,
-            saveButton: saveButton
+            saveButton: saveButton,
+            properties: properties
         }));
-    };
-    self.addSortRowFromTemplateRow = function(row) {
-        if (! row.hasValidPropertyName()){
-            // row won't have format_warning showing if it's empty
-            row.showWarning(true);
-            return;
+        if (notify) {
+            saveButton.fire('change');
         }
-        self.sortRows.push(new SortRow({
-            field: row.textField.val(),
-            type: row.type(),
-            direction: row.direction(),
-            saveButton: saveButton
-        }));
-        row.textField.val("");
-        saveButton.fire('change');
     };
     self.removeSortRow = function (row) {
         self.sortRows.remove(row);
@@ -199,7 +170,7 @@ var SortRows = function (properties, edit, saveButton) {
     });
 
     self.showing = ko.computed(function(){
-        return self.addButtonClicked() || self.rowCount() > 0;
+        return self.rowCount() > 0;
     });
 };
 
@@ -331,7 +302,20 @@ var DetailScreenConfig = (function () {
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
+
+            // Make it possible to observe changes to this.field
+            // note that observableVal is read only!
+            // Writing to it will not update the value of the this.field text input
+            this.field.observableVal = ko.observable(this.field.val());
+            this.field.on("change", function(){
+                that.field.observableVal(that.field.val());
+            });
+
             this.format_warning = DetailScreenConfig.field_format_warning.clone().hide();
+            this.showWarning = ko.computed(function() {
+                // True if an invalid property name warning should be displayed.
+                return this.field.observableVal() && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
+            }, this);
 
             (function () {
                 var i, lang, visibleVal = "", invisibleVal = "";
@@ -375,6 +359,7 @@ var DetailScreenConfig = (function () {
 
             this.graph_extra = new uiElement.GraphConfiguration({
                 childCaseTypes: this.screen.childCaseTypes,
+                fixtures: this.screen.fixtures,
                 lang: this.lang,
                 langs: this.screen.langs,
                 name: this.header.val()
@@ -562,6 +547,7 @@ var DetailScreenConfig = (function () {
             this.langs = options.langs || [];
             this.properties = options.properties;
             this.childCaseTypes = options.childCaseTypes;
+            this.fixtures = options.fixtures;
             // The column key is used to retreive the columns from the spec and
             // as the name of the key in the data object that is sent to the
             // server on save.
@@ -662,10 +648,11 @@ var DetailScreenConfig = (function () {
         };
         Screen.prototype = {
             save: function () {
+                var i;
                 //Only save if property names are valid
                 var containsTab = false;
                 var columns = this.columns();
-                for (var i = 0; i < columns.length; i++){
+                for (i = 0; i < columns.length; i++){
                     var column = columns[i];
                     if (!column.isTab) {
                         if (!DetailScreenConfig.field_val_re.test(column.field.val())) {
@@ -684,6 +671,17 @@ var DetailScreenConfig = (function () {
                         return;
                     }
                 }
+
+                if (this.containsSortConfiguration) {
+                    var sortRows = this.config.sortRows.sortRows();
+                    for (i = 0; i < sortRows.length; i++) {
+                        var row = sortRows[i];
+                        if (!row.hasValidPropertyName()) {
+                            row.showWarning(true);
+                        }
+                    }
+                }
+
                 this.saveButton.ajax({
                     url: this.saveUrl,
                     type: "POST",
@@ -734,7 +732,13 @@ var DetailScreenConfig = (function () {
                     data.parent_select = JSON.stringify(parentSelect);
                 }
                 if (this.containsSortConfiguration) {
-                    data.sort_elements = JSON.stringify(ko.toJS(this.config.sortRows.sortRows));
+                    data.sort_elements = JSON.stringify(_.map(this.config.sortRows.sortRows(), function(row){
+                        return {
+                            field: row.textField.val(),
+                            type: row.type(),
+                            direction: row.direction()
+                        };
+                    }));
                 }
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
@@ -818,6 +822,7 @@ var DetailScreenConfig = (function () {
                         saveUrl: that.saveUrl,
                         columnKey: columnType,
                         childCaseTypes: spec.childCaseTypes,
+                        fixtures: spec.fixtures,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
@@ -841,7 +846,8 @@ var DetailScreenConfig = (function () {
                         this.sortRows.addSortRow(
                             spec.sortRows[j].field,
                             spec.sortRows[j].type,
-                            spec.sortRows[j].direction
+                            spec.sortRows[j].direction,
+                            false
                         );
                     }
                 }

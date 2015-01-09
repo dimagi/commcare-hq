@@ -2,7 +2,7 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
-from toggle.shortcuts import toggle_enabled
+from toggle.shortcuts import toggle_enabled, set_toggle
 
 
 class StaticToggle(object):
@@ -16,6 +16,9 @@ class StaticToggle(object):
 
     def enabled(self, item, **kwargs):
         return any([toggle_enabled(self.slug, item, namespace=n, **kwargs) for n in self.namespaces])
+
+    def set(self, item, enabled, namespace=None):
+        set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
         """
@@ -194,12 +197,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-MENU_MULTIMEDIA_UPLOAD = StaticToggle(
-    'menu_multimedia_upload',
-    'Menu Multimedia Upload (Module & Form)',
-    [NAMESPACE_USER]
-)
-
 
 VIEW_SYNC_HISTORY = StaticToggle(
     'sync_history_report',
@@ -253,4 +250,21 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     "Enable the stock report handler to accept both stock and receipt values "
     "in the format 'soh abc 100.20'",
     [NAMESPACE_DOMAIN]
+)
+
+COMMCARE_LOGO_UPLOADER = StaticToggle(
+    'commcare_logo_uploader',
+    'CommCare logo uploader',
+)
+
+LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
+    'loose_sync_token_validation',
+    "Don't fail hard on missing or deleted sync tokens.",
+    [NAMESPACE_DOMAIN]
+)
+
+ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
+    'allow_case_attachments_view',
+    "Explicitly allow user to access case attachments, even if they can't view the case list report.",
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

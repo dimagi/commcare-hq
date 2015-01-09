@@ -1,7 +1,7 @@
 # See https://github.com/markstory/lint-review
 [files]
 ignore = */migrations/*
-ignore = *.min.js
+         *.min.js
 
 [tools]
 linters = flake8, jshint
