@@ -23,6 +23,10 @@ from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 
+
+class IllegalModelStateException(Exception):
+    pass
+
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
 METHOD_SMS_SURVEY = "survey"
@@ -115,7 +119,9 @@ FORM_TYPE_CHOICES = [FORM_TYPE_ONE_BY_ONE, FORM_TYPE_ALL_AT_ONCE]
 REMINDER_TYPE_ONE_TIME = "ONE_TIME"
 REMINDER_TYPE_KEYWORD_INITIATED = "KEYWORD_INITIATED"
 REMINDER_TYPE_DEFAULT = "DEFAULT"
-REMINDER_TYPE_CHOICES = [REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_KEYWORD_INITIATED]
+REMINDER_TYPE_SURVEY_MANAGEMENT = "SURVEY_MANAGEMENT"
+REMINDER_TYPE_CHOICES = [REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME,
+    REMINDER_TYPE_KEYWORD_INITIATED, REMINDER_TYPE_SURVEY_MANAGEMENT]
 
 SEND_NOW = "NOW"
 SEND_LATER = "LATER"
@@ -1028,8 +1034,111 @@ class CaseReminderHandler(Document):
                     self.set_next_fire(reminder, now)
                 reminder.save()
 
+    def check_state(self):
+        """
+        Double-checks the model for any inconsistencies and raises an
+        IllegalModelStateException if any exist.
+        """
+        def check_attr(name, obj=self):
+            # don't allow None or empty string, but allow 0
+            if getattr(obj, name) in [None, ""]:
+                raise IllegalModelStateException("%s is required" % name)
+
+        if self.start_condition_type == CASE_CRITERIA:
+            check_attr("case_type")
+            check_attr("start_property")
+            check_attr("start_match_type")
+            if self.start_match_type != MATCH_ANY_VALUE:
+                check_attr("start_value")
+
+        if self.start_condition_type == ON_DATETIME:
+            check_attr("start_datetime")
+
+        if self.method == METHOD_SMS:
+            check_attr("default_lang")
+
+        check_attr("schedule_length")
+        check_attr("max_iteration_count")
+        check_attr("start_offset")
+
+        if len(self.events) == 0:
+            raise IllegalModelStateException("len(events) must be > 0")
+
+        last_day = 0
+        for event in self.events:
+            check_attr("day_num", obj=event)
+            if event.day_num < 0:
+                raise IllegalModelStateException("event.day_num must be "
+                    "non-negative")
+
+            if event.fire_time_type in [FIRE_TIME_DEFAULT, FIRE_TIME_RANDOM]:
+                check_attr("fire_time", obj=event)
+            if event.fire_time_type == FIRE_TIME_RANDOM:
+                check_attr("time_window_length", obj=event)
+            if event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
+                check_attr("fire_time_aux", obj=event)
+
+            if self.method == METHOD_SMS and not self.custom_content_handler:
+                if not isinstance(event.message, dict):
+                    raise IllegalModelStateException("event.message expected "
+                        "to be a dictionary")
+                if self.default_lang not in event.message:
+                    raise IllegalModelStateException("default_lang missing "
+                        "from event.message")
+            if self.method in [METHOD_SMS_SURVEY, METHOD_IVR_SURVEY]:
+                check_attr("form_unique_id", obj=event)
+
+            if not isinstance(event.callback_timeout_intervals, list):
+                raise IllegalModelStateException("event."
+                    "callback_timeout_intervals expected to be a list")
+
+            last_day = event.day_num
+
+        if self.event_interpretation == EVENT_AS_SCHEDULE:
+            if self.schedule_length <= last_day:
+                raise IllegalModelStateException("schedule_length must be "
+                    "greater than last event's day_num")
+        else:
+            if self.schedule_length < 0:
+                raise IllegalModelStateException("schedule_length must be"
+                    "non-negative")
+
+        if self.recipient == RECIPIENT_SUBCASE:
+            check_attr("recipient_case_match_property")
+            check_attr("recipient_case_match_type")
+            if self.recipient_case_match_type != MATCH_ANY_VALUE:
+                check_attr("recipient_case_match_value")
+
+        if (self.custom_content_handler and self.custom_content_handler not in
+            settings.ALLOWED_CUSTOM_CONTENT_HANDLERS):
+            raise IllegalModelStateException("unknown custom_content_handler")
+
+        self.check_min_tick()
+
+    def check_min_tick(self, minutes=60):
+        """
+        For offset-based schedules that are repeated multiple times
+        intraday, makes sure that the events are separated by at least
+        the given number of minutes.
+        """
+        if (self.event_interpretation == EVENT_AS_OFFSET and
+            self.max_iteration_count != 1 and self.schedule_length == 0):
+            minimum_tick = None
+            for e in self.events:
+                this_tick = timedelta(days=e.day_num, hours=e.fire_time.hour,
+                    minutes=e.fire_time.minute)
+                if minimum_tick is None:
+                    minimum_tick = this_tick
+                elif this_tick < minimum_tick:
+                    minimum_tick = this_tick
+            if minimum_tick < timedelta(minutes=minutes):
+                raise IllegalModelStateException("Minimum tick for a schedule "
+                    "repeated multiple times intraday is %s minutes." % minutes)
+
+
     def save(self, **params):
         from corehq.apps.reminders.tasks import process_reminder_rule
+        self.check_state()
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
         send_immediately = params.pop("send_immediately", False)

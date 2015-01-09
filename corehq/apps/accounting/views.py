@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.generic import View
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.util.translation import localize
@@ -33,9 +34,16 @@ from corehq.apps.accounting.interface import (
     InvoiceInterface
 )
 from corehq.apps.accounting.async_handlers import (
-    FeatureRateAsyncHandler, Select2RateAsyncHandler,
-    SoftwareProductRateAsyncHandler, Select2BillingInfoHandler,
+    FeatureRateAsyncHandler,
+    Select2RateAsyncHandler,
+    SoftwareProductRateAsyncHandler,
+    Select2BillingInfoHandler,
     Select2InvoiceTriggerHandler,
+    SubscriberFilterAsyncHandler,
+    SubscriptionFilterAsyncHandler,
+    AccountFilterAsyncHandler,
+    BillingContactInfoAsyncHandler,
+    SoftwarePlanAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     SoftwareProductType, Invoice, BillingAccount, CreditLine, Subscription,
@@ -786,4 +794,22 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
+class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
+    urlname = 'accounting_subscriber_response'
+    http_method_names = ['post']
+    async_handlers = [
+        SubscriberFilterAsyncHandler,
+        SubscriptionFilterAsyncHandler,
+        AccountFilterAsyncHandler,
+        BillingContactInfoAsyncHandler,
+        SoftwarePlanAsyncHandler,
+    ]
 
+    @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
+    def dispatch(self, request, *args, **kwargs):
+        return super(AccountingSingleOptionResponseView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response:
+            return self.async_response
+        return HttpResponseBadRequest("Please check your query.")

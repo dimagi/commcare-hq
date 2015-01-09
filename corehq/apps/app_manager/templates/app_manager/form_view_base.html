@@ -86,8 +86,8 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
 
     {% if app.application_version == '2.0' %}
@@ -106,11 +106,7 @@
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
     {% if not is_user_registration %}
-        {% if multimedia %}
-            {% include "app_manager/partials/nav_menu_media_js.html" %}
-        {% else %}
-            {% include "app_manager/partials/nav_menu_media_js.old.html" with item=form image_default="jr://file/commcare/image/form_name.png" audio_default="jr://file/commcare/audio/form_name.mp3" %}
-        {% endif %}
+        {% include "app_manager/partials/nav_menu_media_js.html" %}
     {% endif %}
     <script>
         $(function(){
@@ -365,7 +361,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% if multimedia %}
-    {% include "app_manager/partials/nav_menu_media_modals.html" %}
-{% endif %}
+{% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}

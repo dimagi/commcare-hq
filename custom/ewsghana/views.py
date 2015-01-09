@@ -13,6 +13,7 @@ from custom.logistics.tasks import resync_webusers_passwords_task
 class EWSGlobalStats(GlobalStats):
     template_name = "ewsghana/global_stats.html"
     show_supply_point_types = True
+    root_name = 'Country'
 
 
 class EWSConfigView(BaseConfigView):

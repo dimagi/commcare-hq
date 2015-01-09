@@ -8,7 +8,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec
 
 
-def _simple_expression_generator(wrapper_class, spec):
+def _simple_expression_generator(wrapper_class, spec, context):
     return wrapper_class.wrap(spec).expression
 
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
@@ -16,14 +16,14 @@ _property_name_expression = functools.partial(_simple_expression_generator, Prop
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
 
 
-def _conditional_expression(spec):
+def _conditional_expression(spec, context):
     # no way around this since the two factories inherently depend on each other
     from corehq.apps.userreports.filters.factory import FilterFactory
     wrapped = ConditionalExpressionSpec.wrap(spec)
     return ConditionalExpression(
-        FilterFactory.from_spec(wrapped.test),
-        ExpressionFactory.from_spec(wrapped.expression_if_true),
-        ExpressionFactory.from_spec(wrapped.expression_if_false),
+        FilterFactory.from_spec(wrapped.test, context),
+        ExpressionFactory.from_spec(wrapped.expression_if_true, context),
+        ExpressionFactory.from_spec(wrapped.expression_if_false, context),
     )
 
 
@@ -36,9 +36,9 @@ class ExpressionFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec):
+    def from_spec(cls, spec, context=None):
         try:
-            return cls.spec_map[spec['type']](spec)
+            return cls.spec_map[spec['type']](spec, context)
         except KeyError:
             raise BadSpecError(_('Invalid getter type: {}. Valid options are: {}').format(
                 spec['type'],

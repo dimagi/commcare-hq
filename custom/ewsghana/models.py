@@ -54,13 +54,6 @@ class EWSGhanaConfig(Document):
         """
         This turns on the special stock handler when EWS is enabled.
         """
-        toggle = Toggle.get(STOCK_AND_RECEIPT_SMS_HANDLER.slug)
-        toggle_user_key = namespaced_item(self.domain, NAMESPACE_DOMAIN)
 
-        if self.enabled and toggle_user_key not in toggle.enabled_users:
-            toggle.enabled_users.append(toggle_user_key)
-            toggle.save()
-            update_toggle_cache(
-                STOCK_AND_RECEIPT_SMS_HANDLER.slug,
-                toggle_user_key, True
-            )
+        if self.enabled:
+            STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)

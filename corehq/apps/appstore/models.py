@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.decorators.memoized import memoized
 
+
 class SnapshotMixin(DocumentSchema):
     copy_history = StringListProperty()
 

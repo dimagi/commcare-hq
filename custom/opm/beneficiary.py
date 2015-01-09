@@ -57,7 +57,7 @@ class OPMCaseRow(object):
         self.block = report.block.lower()
         self.month = explicit_month or report.month
         self.year = explicit_year or report.year
-
+        self.is_secondary = is_secondary
 
         if not report.is_rendered_as_email:
             self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s"></div>'
@@ -147,7 +147,12 @@ class OPMCaseRow(object):
             if not self.edd:
                 raise InvalidRow('No edd found for pregnant mother.')
             base_window_start = add_months_to_date(self.edd, -9)
-            non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+            try:
+                non_adjusted_month = len(months_between(base_window_start, self.reporting_window_start)) - 1
+            except AssertionError:
+                raise InvalidRow('Mother LMP ({}) was after the reporting window date ({})'.format(
+                    base_window_start, self.reporting_window_start
+                ))
 
             # the date to check one month after they first become eligible,
             # aka the end of their fourth month of pregnancy
@@ -227,6 +232,9 @@ class OPMCaseRow(object):
     def set_case_properties(self):
         if self.child_age is None and self.preg_month is None:
             raise InvalidRow
+
+        if self.window > 14:
+            raise InvalidRow(_('Child is past window 14 (was {}'.format(self.window)))
 
         name = self.case_property('name', EMPTY_FIELD)
         if getattr(self.report,  'show_html', True):

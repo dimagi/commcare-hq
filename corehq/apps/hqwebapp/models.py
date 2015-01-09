@@ -423,6 +423,7 @@ class SetupTab(UITab):
             LocationImportStatusView,
             LocationSettingsView,
             LocationFieldsView,
+            ProductsPerLocationView,
         )
 
         locations_config = {
@@ -448,6 +449,10 @@ class SetupTab(UITab):
                 {
                     'title': LocationFieldsView.page_name(),
                     'urlname': LocationFieldsView.urlname,
+                },
+                {
+                    'title': ProductsPerLocationView.page_title,
+                    'urlname': ProductsPerLocationView.urlname,
                 },
             ]
         }
@@ -1028,10 +1033,14 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views import (EditWebUserView, EditMyAccountDomainView, ListWebUsersView)
+            from corehq.apps.users.views import (
+                EditWebUserView,
+                EditMyAccountDomainView,
+                get_web_user_list_view,
+            )
             items.append((_('Project Users'), [
-                {'title': ListWebUsersView.page_title,
-                 'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+                {'title': get_web_user_list_view(self._request).page_title,
+                 'url': reverse(get_web_user_list_view(self._request).urlname, args=[self.domain]),
                  'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                  'subpages': [
                      {

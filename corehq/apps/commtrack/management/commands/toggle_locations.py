@@ -12,14 +12,7 @@ class Command(BaseCommand):
 
         for domain in domains:
             if domain.commtrack_enabled:
-                toggle = Toggle.get(LOCATIONS.slug)
-                toggle_user_key = namespaced_item(domain.name, NAMESPACE_DOMAIN)
-
-                if toggle_user_key not in toggle.enabled_users:
-                    toggle.enabled_users.append(toggle_user_key)
-                    toggle.save()
-                    update_toggle_cache(LOCATIONS.slug, toggle_user_key, True)
-
+                LOCATIONS.set(domain.name, True, NAMESPACE_DOMAIN)
                 if not domain.locations_enabled:
                     domain.locations_enabled = True
                     domain.save()

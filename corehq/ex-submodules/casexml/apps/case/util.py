@@ -8,6 +8,7 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLogAssertionError, SyncLog
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
 
 
 def couchable_property(prop):
@@ -115,14 +116,28 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
 
 
-def reverse_indices(db, case):
-    return db.view("case/related",
-        key=[case.domain, case._id, "reverse_index"],
+def reverse_indices(db, case, wrap=True):
+    kwargs = {
+        'wrapper': lambda r: CommCareCaseIndex.wrap(r['value']) if wrap else r['value']
+    }
+    return db.view(
+        "case/related",
+        key=[case['domain'], case['_id'], "reverse_index"],
         reduce=False,
-        wrapper=lambda r: CommCareCaseIndex.wrap(r['value'])
+        **kwargs
     ).all()
 
 
 def primary_actions(case):
     return filter(lambda a: a.action_type != const.CASE_ACTION_REBUILD,
                   case.actions)
+
+
+def iter_cases(case_ids, strip_history=False, wrap=True):
+    from casexml.apps.case.models import CommCareCase
+    if not strip_history:
+        for doc in iter_docs(CommCareCase.get_db(), case_ids):
+            yield CommCareCase.wrap(doc) if wrap else doc
+    else:
+        for case in CommCareCase.bulk_get_lite(case_ids, wrap=wrap):
+            yield case

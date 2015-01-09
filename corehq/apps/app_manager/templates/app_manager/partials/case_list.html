@@ -33,14 +33,18 @@
 </legend>
 
 <div data-bind="with: filter">
-    <a href="#" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
-        <i class="icon-plus"></i>
-        Add a filter...
-    </a>
+
+    <div class="control-group">
+        <button class="btn btn-small" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+            <i class="icon icon-plus"></i>
+            {% trans "Add filter" %}
+        </button>
+    </div>
+
     <div data-bind="visible: showing">
     <form class="form-inline filter-form">
         <label>
-            Filter
+            {% trans "Filter" %}
         </label>
         <span class="hq-help-template"
             data-title="{% trans "Filter" %}"
@@ -72,10 +76,7 @@
 
 <div data-bind="with: sortRows">
 {% if app.enable_multi_sort %}
-    <a href="#" data-bind="visible: !showing(), click: function(data){data.addButtonClicked(true);}">
-        <i class="icon-plus"></i>
-        Add a sort property...
-    </a>
+
     <div class="ui-sortable">
         <table class="table table-condensed detail-screen-table" data-bind="visible: showing">
             <thead>
@@ -104,27 +105,19 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody data-bind="foreach: sortRows().concat(templateRow), sortableList: sortRows">
+            <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
                 <tr>
                     <td class="detail-screen-icon">
-                        <span data-bind="ifnot: $data instanceof SortRowTemplate">
                         <i class="grip
                                 icon-resize-vertical
                                 icon-blue"
                            style="cursor: move"></i>
-                        </span>
                     </td>
 
-                    <!-- ko ifnot: $data instanceof SortRowTemplate -->
-                    <td data-bind="html: fieldHtml"></td>
-                    <!-- /ko -->
-                    <!-- ko if: $data instanceof SortRowTemplate -->
                     <td class="detail-screen-field control-group" data-bind="css: {error: showWarning}">
                         <div data-bind="jqueryElement: textField.ui"></div>
                         <div data-bind="jqueryElement: warningElement, visible: showWarning"></div>
                     </td>
-                    <!-- /ko -->
-
 
                     <td>
                         <select data-bind="value: direction">
@@ -155,21 +148,24 @@
                     </td>
 
                     <td>
-                        <span data-bind="ifnot: $data instanceof SortRowTemplate">
-                            <a data-bind="click: $root.sortRows.removeSortRow">
-                                <i class="icon-remove icon-blue"></i>
-                            </a>
-                        </span>
-                        <span data-bind="if: $data instanceof SortRowTemplate">
-                            <a data-bind="click: $root.sortRows.addSortRowFromTemplateRow">
-                                <i data-bind="css: COMMCAREHQ.icons.ADD"></i>
-                            </a>
-                        </span>
+                        <a data-bind="click: $root.sortRows.removeSortRow">
+                            <i class="icon-remove icon-blue"></i>
+                        </a>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
+
+    <div class="control-group">
+        <button class="btn btn-small" data-bind="
+            click: function(data){data.addSortRow('', '', '', true);}"
+        >
+            <i class="icon icon-plus"></i>
+            {% trans "Add sort property" %}
+        </button>
+    </div>
+
 {% endif %}
 </div>
 
