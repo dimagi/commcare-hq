@@ -11,7 +11,9 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from mptt.models import MPTTModel, TreeForeignKey
 from corehq.apps.domain.models import Domain
 
-LOCATION_GROUP_PREFIX = 'locationgroup-'
+LOCATION_SHARING_PREFIX = 'locationgroup-'
+LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
@@ -81,7 +83,7 @@ class SQLLocation(MPTTModel):
         g.case_sharing = True
         g.reporting = False
         g.last_modified = datetime.now()
-        g._id = LOCATION_GROUP_PREFIX + self.location_id
+        g._id = LOCATION_SHARING_PREFIX + self.location_id
         g.metadata = {
             'cc_location_type': self.location_type,
             'cc_location_name': self.name,
@@ -114,7 +116,7 @@ class SQLLocation(MPTTModel):
         g.case_sharing = False
         g.reporting = True
         g.last_modified = datetime.now()
-        g._id = LOCATION_GROUP_PREFIX + self.location_id
+        g._id = LOCATION_REPORTING_PREFIX + self.location_id
         g.metadata = {
             'cc_location_type': self.location_type,
             'cc_location_name': self.name,

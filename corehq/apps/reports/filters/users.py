@@ -241,6 +241,32 @@ class EmwfMixin(object):
             user_type_tuples = [("all_data", "[All Data]")] + user_type_tuples
         return user_type_tuples
 
+    def get_location_groups(self):
+        def case_share_types():
+            return [
+                loc_type for loc_type in Domain.get_by_name(self.domain).location_types
+                if loc_type.shares_cases
+            ]
+
+        from corehq.apps.commtrack.models import SQLLocation
+
+        locations = SQLLocation.objects.filter(
+            name__icontains=self.q.lower(),
+            domain=self.domain,
+        )
+        for loc in locations:
+            group = loc.reporting_group_object()
+            yield (group._id, group.name + ' [group]')
+
+        if self.include_share_groups:
+            # filter out any non case share type locations for this part
+            locations = locations.filter(
+                location_type__in=[t.name for t in case_share_types()]
+            )
+            for loc in locations:
+                group = loc.case_sharing_group_object()
+                yield (group._id, group.name + ' [case sharing]')
+
 
 _UserData = namedtupledict('_UserData', (
     'users',
@@ -296,6 +322,22 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         emws = request.GET.getlist(cls.slug)
         return [g[4:] for g in emws if g.startswith("sg__")]
 
+    @classmethod
+    def selected_location_sharing_group_ids(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return [
+            g.strip('locationgroup-') for g in emws
+            if g.startswith('locationgroup-')
+        ]
+
+    @classmethod
+    def selected_location_reporting_group_ids(cls, request):
+        emws = request.GET.getlist(cls.slug)
+        return [
+            g.strip('locationreportinggroup-') for g in emws
+            if g.startswith('locationreportinggroup-')
+        ]
+
     @property
     @memoized
     def selected(self):
@@ -316,6 +358,8 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
         user_ids = self.selected_user_ids(self.request)
         user_types = self.selected_user_types(self.request)
         group_ids = self.selected_group_ids(self.request)
+        location_sharing_ids = self.selected_location_sharing_group_ids(self.request)
+        location_reporting_ids = self.selected_location_reporting_group_ids(self.request)
 
         selected = [t for t in self.user_types
                     if t[0][3:].isdigit() and int(t[0][3:]) in user_types]
@@ -333,6 +377,21 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                     selected.append(self.reporting_group_tuple(group['fields']))
                 if group['fields'].get("case_sharing", False):
                     selected.append(self.sharing_group_tuple(group['fields']))
+
+        if location_sharing_ids:
+            from corehq.apps.commtrack.models import SQLLocation
+            for loc_id in location_sharing_ids:
+                loc = SQLLocation.objects.get(location_id=loc_id)
+                loc_group = loc.case_sharing_group_object()
+                selected.append((loc_group._id, loc_group.name))
+
+        if location_reporting_ids:
+            from corehq.apps.commtrack.models import SQLLocation
+            for loc_id in location_reporting_ids:
+                loc = SQLLocation.objects.get(location_id=loc_id)
+                loc_group = loc.case_reporting_group_object()
+                selected.append((loc_group._id, loc_group.name))
+
         if user_ids:
             q = {"query": {"filtered": {"filter": {
                 "ids": {"values": user_ids}
@@ -340,12 +399,13 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
             res = es_query(
                 es_url=ES_URLS["users"],
                 q=q,
-                fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type'],
+                fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
             )
             selected += [self.user_tuple(hit['fields']) for hit in res['hits']['hits']]
 
         known_ids = dict(selected)
-        return [{'id': id, 'text': known_ids[id]}
+        return [
+            {'id': id, 'text': known_ids[id]}
             for id in selected_ids
             if id in known_ids
         ]

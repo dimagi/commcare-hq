@@ -84,32 +84,6 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
         self.user_start = self.location_start + len(list(self.get_location_groups()))
         self.total_results = self.user_start + users
 
-    def get_location_groups(self):
-        def case_share_types():
-            return [
-                loc_type for loc_type in Domain.get_by_name(self.domain).location_types
-                if loc_type.shares_cases
-            ]
-
-        from corehq.apps.commtrack.models import SQLLocation
-
-        locations = SQLLocation.objects.filter(
-            name__icontains=self.q.lower(),
-            domain=self.domain,
-        )
-        for loc in locations:
-            group = loc.reporting_group_object()
-            yield (group._id, group.name + ' [group]')
-
-        if self.include_share_groups:
-            # filter out any non case share type locations for this part
-            locations = locations.filter(
-                location_type__in=[t.name for t in case_share_types()]
-            )
-            for loc in locations:
-                group = loc.case_sharing_group_object()
-                yield (group._id, group.name + ' [case sharing]')
-
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
         limit = int(self.request.GET.get('page_limit', 10))
