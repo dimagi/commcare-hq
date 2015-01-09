@@ -560,6 +560,9 @@ class HQMediaMixin(Document):
 
     def get_menu_media(self, module, module_index, form=None, form_index=None,
                        as_json=False):
+        if not module:
+            # user_registration isn't a real module, for instance
+            return {}
         media_kwargs = self.get_media_ref_kwargs(
             module, module_index, form=form, form_index=form_index,
             is_menu_media=True)
