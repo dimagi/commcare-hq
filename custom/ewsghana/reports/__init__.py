@@ -45,6 +45,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
+    split = True
 
     @property
     @memoized
@@ -69,7 +70,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title
+            'title': self.title,
+            'split': self.split
         }
         return context
 

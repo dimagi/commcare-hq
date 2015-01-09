@@ -22,4 +22,15 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
     def get_labels(cls):
         return [('Program', 'All', 'program'), ('Product', 'All', 'product')]
 
-# class ViewReportFilter(BaseSingleOptionFilter):
+
+class ViewReportFilter(BaseSingleOptionFilter):
+    default_text = ugettext_noop("All Stock Information")
+    slug = 'report_type'
+    label = 'View'
+
+    @property
+    def options(self):
+        return [
+            ('stockouts', 'Stockouts'),
+            ('pa', 'Product Availability')
+        ]
