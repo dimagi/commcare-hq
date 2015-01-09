@@ -329,9 +329,9 @@ var GraphViewModel = function(moduleOptions){
         'y-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
         'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
-        'show-grid': 'true or false',
-        'show-axes': 'true or false',
-        'zoom': 'true or false'
+        'show-grid': 'true() or false()',
+        'show-axes': 'true() or false()',
+        'zoom': 'true() or false()'
     };
     self.childCaseTypes = moduleOptions.childCaseTypes || [];
     self.fixtures = moduleOptions.fixtures || [];
@@ -507,7 +507,7 @@ var XYGraphSeries = function(original, childCaseTypes, fixtures){
     var self = this;
     self.configPropertyOptions = self.configPropertyOptions.concat(['point-style', 'secondary-y']);
     self.configPropertyHints['point-style'] = "'none', 'circle', 'x', 'diamond', ..."; //triangle and square are also options
-    self.configPropertyHints['secondary-y'] = 'ex: false';
+    self.configPropertyHints['secondary-y'] = 'true() or false()';
 
 };
 XYGraphSeries.prototype = new GraphSeries();
