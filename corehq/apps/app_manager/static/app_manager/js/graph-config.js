@@ -21,7 +21,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         '<div>' +
             '<button class="btn" data-bind="click: openModal, visible: $data.edit">' +
                 '<i class="icon-pencil"></i>' +
-                'Edit Graph' +
+                ' Edit Graph' +
             '</button>' +
         '</div>'
     );
@@ -325,8 +325,8 @@ var GraphViewModel = function(moduleOptions){
         'secondary-y-min': 'ex: 0',
         'secondary-y-max': 'ex: 100',
         // Axis labels:
-        'x-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
-        'y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
+        'x-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
+        'y-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
         'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
         'show-grid': 'true or false',
@@ -443,7 +443,7 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
         } else if (source.type == 'case') {
             return "instance('casedb')/casedb/case[@case_type='"+source.name+"'][index/parent=current()/@case_id][@status='open']";
         } else if (source.type == 'fixture') {
-            return "instance('" + self.getFixtureInstanceId(source.name) + "')/tablename_list/" + source.name;
+            return "instance('" + self.getFixtureInstanceId(source.name) + "')/" + source.name + "_list/" + source.name;
         }
     };
 

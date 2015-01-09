@@ -16,7 +16,19 @@
             content: "Case sharing groups allow their members to share a case list in a case-sharing app. You can change this " +
                     "by editing this group's settings."
         });
-    })
+
+        var $createGroupForm = $("#create_group_form");
+        $("button:submit", $createGroupForm).click(function(){
+            ga_track_event("Groups", "Create Group", {
+               'hitCallback': function () {
+                   $createGroupForm.submit();
+               }
+            });
+            return false;
+        });
+    });
+
+
 </script>
 {% endblock %}
 
@@ -53,7 +65,7 @@
         </div>
         {% endif %}
     </div>
-    <form class="well form-inline" method="post" action="{% url "add_group" domain %}">
+    <form class="well form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
         <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" />
         <button class="btn btn-success" type="submit">{% trans "Create Group" %}</button>
     </form>

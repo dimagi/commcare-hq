@@ -24,7 +24,10 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback, 
 from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.users.util import can_add_extra_mobile_workers
+from corehq.apps.users.util import (
+    can_add_extra_mobile_workers,
+    smart_query_string,
+)
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 
@@ -321,20 +324,6 @@ class ListCommCareUsersView(BaseUserSettingsView):
         }
 
 
-def smart_query_string(query):
-    """
-    If query does not use the ES query string syntax,
-    default to doing an infix search for each term.
-    returns (is_simple, query)
-    """
-    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
-                     '~', '*', '?', ':', '\\', '/']
-    for char in special_chars:
-        if char in query:
-            return False, query
-    r = re.compile(r'\w+')
-    tokens = r.findall(query)
-    return True, "*{}*".format("* *".join(tokens))
 
 
 class AsyncListCommCareUsersView(ListCommCareUsersView):

@@ -34,10 +34,23 @@ var ManageRemindersViewModel = function (
 
     self.start_property_offset_type = ko.observable(initial.start_property_offset_type);
     self.start_property_offset_type.subscribe(function(val) {
+        var initial_timing = $.parseJSON(initial.event_timing);
+        var allow_offset_timing_with_date = (
+            initial.start_property_offset_type === self.choices.START_REMINDER_ON_CASE_DATE &&
+            initial_timing.event_interpretation === "OFFSET"
+        );
         $("#id_event_timing").children("option").each(function(i) {
             var j = $.parseJSON($(this).val());
-            if(val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
-               val === self.choices.START_PROPERTY_OFFSET_DELAY) {
+            if(allow_offset_timing_with_date && val === self.choices.START_REMINDER_ON_CASE_DATE &&
+               j.event_interpretation === "OFFSET") {
+                //This is here to allow editing of any old reminders that started on a date but
+                //had offset-based event interpretation. This use case is discouraged and is not
+                //supported by the new ui, but in order to allow editing of any old reminders
+                //that may use it, we have to show the offset-based event timing options when we
+                //find a reminder like this.
+                $(this).show();
+            } else if(val === self.choices.START_PROPERTY_OFFSET_IMMEDIATE ||
+                      val === self.choices.START_PROPERTY_OFFSET_DELAY) {
                 $(this).show();
             } else {
                 if(j.event_interpretation === "OFFSET") {
@@ -123,6 +136,11 @@ var ManageRemindersViewModel = function (
 
     self.isGlobalTimeoutsVisible = ko.computed(function () {
         return self.areTimeoutsVisible() && self.ui_type === self.choices.UI_SIMPLE_FIXED;
+    });
+
+    self.isOffsetTimingUsed = ko.computed(function () {
+        var timing = $.parseJSON(self.event_timing());
+        return timing.event_interpretation === "OFFSET";
     });
 
     self.submit_partial_forms = ko.observable(initial.submit_partial_forms);

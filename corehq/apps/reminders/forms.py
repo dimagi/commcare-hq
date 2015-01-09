@@ -93,24 +93,24 @@ NOW_OR_LATER = (
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS Message")),
-    (METHOD_SMS_SURVEY, _("SMS Form Interaction")),
+    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS_SURVEY, _("SMS Survey")),
 )
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS Message")),
-    (METHOD_SMS_SURVEY, _("SMS Interactive Survey")),
+    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS_SURVEY, _("SMS Survey")),
 )
 
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
     (RECIPIENT_OWNER, _("The case's owner")),
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
     ("", _("---choose---")),
     (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
-    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
 )
 
 METHOD_CHOICES = (
@@ -1282,7 +1282,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def section_advanced(self):
         fields = [
             BootstrapMultiField(
-                _("Stop Condition"),
+                _("Additional Stop Condition"),
                 InlineField(
                     'stop_condition',
                     data_bind="value: stop_condition",
@@ -1299,8 +1299,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 ),
                 help_bubble_text=_("Reminders can be stopped after a date set in the case, or if a particular "
                                    "case property is set to OK.  Choose either a case property that is a date or "
-                                   "a case property that is going to be set to Ok.  Reminders will always stop if "
-                                   "the start condition is no longer true."),
+                                   "a case property that is going to be set to OK.  Reminders will always stop if "
+                                   "the start condition is no longer true or if the case that triggered the "
+                                   "reminder is closed."),
                 css_id="stop-condition-group",
             ),
             crispy.Div(

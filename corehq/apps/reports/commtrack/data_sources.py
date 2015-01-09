@@ -397,6 +397,20 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
         location_id: ID of location to get data for. Omit for all locations.
     """
 
+    @property
+    def converted_start_datetime(self):
+        start_date = self.start_date
+        if isinstance(start_date, unicode):
+            start_date = parser.parse(start_date)
+        return start_date
+
+    @property
+    def converted_end_datetime(self):
+        end_date = self.end_date
+        if isinstance(end_date, unicode):
+            end_date = parser.parse(end_date)
+        return end_date
+
     def get_data(self):
         # todo: this will probably have to paginate eventually
         if self.all_relevant_forms:
@@ -418,26 +432,30 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
             for spoint_id, loc_id in spoint_loc_map.items():
                 loc = locations[loc_id]
 
-                form_ids = StockReport.objects.filter(
+                results = StockReport.objects.filter(
                     stocktransaction__case_id=spoint_id
-                ).exclude(
-                    date__lte=self.start_date
-                ).exclude(
-                    date__gte=self.end_date
                 ).values_list(
-                    'form_id', flat=True
+                    'form_id',
+                    'date'
                 ).order_by('-date').distinct()  # not truly distinct due to ordering
+
                 matched = False
-                for form_id in form_ids:
+                for form_id, date in results:
+                    if self.converted_start_datetime > date:
+                        break
+
                     try:
-                        if XFormInstance.get(form_id).xmlns in form_xmlnses:
+                        if self.converted_end_datetime >= date and \
+                           XFormInstance.get(form_id).xmlns in form_xmlnses:
                             yield {
+                                'loc': loc,
                                 'loc_id': loc._id,
                                 'loc_path': loc.path,
                                 'name': loc.name,
                                 'type': loc.location_type,
                                 'reporting_status': 'reporting',
                                 'geo': loc._geopoint,
+                                'last_reporting_date': date,
                             }
                             matched = True
                             break
@@ -445,12 +463,15 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         logging.error('Stock report for location {} in {} references non-existent form {}'.format(
                             loc._id, loc.domain, form_id
                         ))
+
                 if not matched:
                     yield {
+                        'loc': loc,
                         'loc_id': loc._id,
                         'loc_path': loc.path,
                         'name': loc.name,
                         'type': loc.location_type,
                         'reporting_status': 'nonreporting',
                         'geo': loc._geopoint,
+                        'last_reporting_date': results[0][1] if results else ''
                     }

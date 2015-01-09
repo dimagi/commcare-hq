@@ -24,6 +24,7 @@
             features: {{ features|JSON }},
             core: {
                 form: {{ form.source|to_javascript_string }},
+                formId: '{{ form.get_unique_id }}',
                 formName: "{{ form.name|trans:app.langs|escapejs }}",
                 saveType: 'patch',
                 saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',

@@ -74,7 +74,7 @@
       </header>
       <template form="graph">
         <graph type="xy">
-          <series nodeset="instance('item-list:table1')/tablename_list/table1">
+          <series nodeset="instance('item-list:table1')/table1_list/table1">
             <configuration/>
             <x function="foo"/>
             <y function="bar"/>

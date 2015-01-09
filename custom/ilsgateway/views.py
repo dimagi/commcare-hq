@@ -2,7 +2,6 @@ import json
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http.response import HttpResponseRedirect
-import itertools
 from corehq.apps.commtrack.models import CommtrackConfig, StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView

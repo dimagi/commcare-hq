@@ -345,6 +345,7 @@ var DetailScreenConfig = (function () {
             if (this.original.format === "graph"){
                 menuOptions = menuOptions.concat([{value: "graph", label: ""}]);
             }
+
             this.format = uiElement.select(menuOptions).val(this.original.format || null);
 
             (function () {
@@ -464,6 +465,13 @@ var DetailScreenConfig = (function () {
                     }
                 }
             }).fire('change');
+            // Note that bind to the $edit_view for this google analytics event
+            // (as opposed to the format object itself)
+            // because this way the events are not fired during the initialization
+            // of the page.
+            this.format.$edit_view.on("change", function(event){
+                ga_track_event('Case List Config', 'Display Format', event.target.value);
+            });
 
             this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                 that.screen.columns.remove(that);
