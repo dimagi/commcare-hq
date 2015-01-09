@@ -500,27 +500,30 @@ def development():
 
     _setup_path()
 
+    proxy = servers['proxy']
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
     couchdb = servers['couchdb']
     redis = servers['redis']
     memcached = servers['memcached']
+    touchforms = servers['touchforms']
+    elasticsearch = servers['elasticsearch']
+    celery = servers['celery']
+    rabbitmq = servers['rabbitmq']
     # if no server specified, just don't run pillowtop
     pillowtop = servers.get('pillowtop', [])
-
-    proxy = servers['proxy']
 
     env.roledefs = {
         'couch': couchdb,
         'pg': postgresql,
-        'rabbitmq': postgresql,
-        'django_celery': postgresql,
-        'sms_queue': postgresql,
-        'reminder_queue': postgresql,
-        'pillow_retry_queue': postgresql,
+        'rabbitmq': rabbitmq,
+        'django_celery': celery,
+        'sms_queue': celery,
+        'reminder_queue': celery,
+        'pillow_retry_queue': celery,
         'django_app': webworkers,
         'django_pillowtop': pillowtop,
-        'formsplayer': postgresql,
+        'formsplayer': touchforms,
         'staticfiles': proxy,
         'lb': [],
         'deploy': postgresql,
