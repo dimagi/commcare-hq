@@ -9,8 +9,10 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, LineChart
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
+from custom.ewsghana.reports.stock_levels_report import StockLevelsReport
 from custom.ewsghana.reports import MultiReport, EWSData
 from casexml.apps.stock.models import StockTransaction
+from django.utils import html
 
 
 def get_supply_points(location_id, domain):
@@ -20,6 +22,8 @@ def get_supply_points(location_id, domain):
         locations = SQLLocation.objects.filter(parent=loc)
     elif loc.location_type == 'region':
         locations = SQLLocation.objects.filter(parent__parent=loc)
+    elif loc.location_type == 'facility':
+        locations = SQLLocation.objects.filter(id=loc.id)
     else:
         locations = SQLLocation.objects.filter(domain=domain, location_type='facility')
     return locations.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
@@ -43,6 +47,21 @@ def get_products(program_id, products_id, domain):
         return SQLProduct.objects.filter(is_archived=False, domain=domain)
 
 
+def make_url(report_class, domain, string_params, args):
+    try:
+        return html.escape(
+            report_class.get_url(
+                domain=domain
+            ) + string_params % args
+        )
+    except KeyError:
+        return None
+
+
+def link_format(text, url):
+    return '<a href=%s>%s</a>' % (url, text)
+
+
 class ProductAvailabilityData(EWSData):
     show_chart = True
     show_table = False
@@ -56,7 +75,7 @@ class ProductAvailabilityData(EWSData):
     @property
     def rows(self):
         products = get_products(self.config['program'],
-                                self.config['product'],
+                                self.config['products'],
                                 self.config['domain']).order_by('code')
         rows = []
         if self.config['location_id']:
@@ -126,13 +145,14 @@ class MonthOfStockProduct(EWSData):
     title = 'Current MOS by Product'
     show_chart = False
     show_table = True
+    use_datatables = True
 
     @property
     def headers(self):
         headers = DataTablesHeader(*[DataTablesColumn('Location')])
 
         for product in get_products(self.config['program'],
-                                    self.config['product'],
+                                    self.config['products'],
                                     self.config['domain']).order_by('code'):
             headers.add_column(DataTablesColumn(product.code))
 
@@ -141,14 +161,27 @@ class MonthOfStockProduct(EWSData):
     @property
     def rows(self):
         products = get_products(self.config['program'],
-                                self.config['product'],
+                                self.config['products'],
                                 self.config['domain']).order_by('code')
         rows = []
         if self.config['location_id']:
             supply_points = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])\
                 .order_by('name').exclude(supply_point_id__isnull=True)
             for sp in supply_points:
-                row = [sp.name]
+                if sp.location_type == 'facility':
+                    cls = StockLevelsReport
+                else:
+                    cls = StockStatus
+                url = make_url(
+                    cls,
+                    self.config['domain'],
+                    '?location_id=%s&filter_by_program=%s&startdate=%s'
+                    '&enddate=%s&report_type=%s&filter_by_product=%s',
+                    (sp.location_id, self.config['program'], self.config['startdate'],
+                    self.config['enddate'], self.config['report_type'],
+                    '&filter_by_product='.join(self.config['products'])))
+
+                row = [link_format(sp.name, url)]
                 for p in products:
                     stock = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
                         .order_by('-last_modified_date')
@@ -183,7 +216,7 @@ class StockoutsProduct(EWSData):
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
             products = get_products(self.config['program'],
-                                    self.config['product'],
+                                    self.config['products'],
                                     self.config['domain']).order_by('code')
 
             for product in products:
@@ -221,6 +254,7 @@ class StockoutTable(EWSData):
     title = 'Stockouts'
     show_chart = False
     show_table = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -264,7 +298,8 @@ class StockStatus(MultiReport):
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
             program=program if program != '0' else None,
-            product=products if products and products[0] != '0' else [],
+            products=products if products and products[0] != '0' else [],
+            report_type=self.request.GET.get('report_type', None)
         )
 
     @property

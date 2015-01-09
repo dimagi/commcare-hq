@@ -1,5 +1,4 @@
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
-from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
@@ -13,6 +12,7 @@ class EWSData(object):
     show_chart = False
     title = ''
     slug = ''
+    use_datatables = False
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -92,6 +92,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
                 rows=rows,
                 total_row=total_row,
                 start_at_row=0,
+                use_datatables=data_provider.use_datatables,
             ),
             show_table=data_provider.show_table,
             show_chart=data_provider.show_chart,
