@@ -23,34 +23,34 @@ ko.bindingHandlers.select2 = {
                 return value; };
             if ("optionsText" in allBindings) {
                 textAccessor = function(value) {
-                    var valueAccessor = function (item) { return item; }
+                    var valueAccessor = function (item) { return item; };
                     if ("optionsValue" in allBindings) {
-                        valueAccessor = function (item) { return item[allBindings.optionsValue]; }
+                        valueAccessor = function (item) { return item[allBindings.optionsValue]; };
                     }
-                    var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value});
-                    if (items.length == 0 || items.length > 1) {
-                        return ''
+                    var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value;});
+                    if (items.length === 0 || items.length > 1) {
+                        return '';
                     } else {
                         return items[0][allBindings.optionsText];
                     }
-                }
+                };
             }
             $.each(allBindings.selectedOptions(), function (key, value) {
                 if (textAccessor(value) !== '') {
                     converted.push({id: value, text: textAccessor(value)});
                 }
             });
-            converted = _.uniq(converted, function(obj) {return obj.id});
+            converted = _.uniq(converted, function(obj) {return obj.id;});
             var data = $(el).select2('data');
             if (data.length === _.uniq(allBindings.selectedOptions()).length) {
                 if (_.indexOf(_.pluck(data, 'id'), '0') === 0 && data.length > 1) {
-                    converted.splice(0, 1)
+                    converted.splice(0, 1);
                 } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === data.length && converted.length > 1) {
                     converted = converted[_.indexOf(_.pluck(converted, 'id'), '0')];
                     var tmplist = allBindings.selectedOptions().slice();
                     $.each(tmplist, function (key, value) {
                         if (textAccessor(value) !== '' && value !== '0') {
-                            allBindings.selectedOptions().pop()
+                            allBindings.selectedOptions().pop();
                         }
                     });
                 }
@@ -88,20 +88,24 @@ var EWSDrilldownOptionFilterControl = function (options) {
         }
         self.notification.changeMessage('');
 
-        if (current_selection.length == 0) {
+        if (current_selection.length === 0) {
             self.controls()[trigger_level + 1].selected.removeAll();
             self.controls()[trigger_level + 1].control_options([]);
             self.updateNextDrilldown(self.controls()[trigger_level + 1].level);
         }
         else {
+            var obj_get_value = function(obj) {
+                return obj.val;
+            };
+
             var next_options = [];
-            for(var i=0; i < current_selection.length; i++) {
-                var current_index = _.indexOf(_.pluck(current_options, 'val'), current_selection[i]);
+            for(var j=0; j < current_selection.length; j++) {
+                var current_index = _.indexOf(_.pluck(current_options, 'val'), current_selection[j]);
 
                 for (var l = trigger_level+1; l < self.controls().length; l++) {
                     if (current_index >= 0 && l === trigger_level+1) {
                         next_options.push.apply(next_options, current_options[current_index].next);
-                        self.controls()[trigger_level+1].control_options(_.uniq(next_options, function(obj) {return obj.val}));
+                        self.controls()[trigger_level+1].control_options(_.uniq(next_options, obj_get_value));
                     } else {
                         self.controls()[l].control_options([]);
                     }

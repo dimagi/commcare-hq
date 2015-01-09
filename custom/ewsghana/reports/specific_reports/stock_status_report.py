@@ -234,7 +234,6 @@ class StockoutsProduct(EWSData):
                     rows[product.code].append({'x': d['start_date'], 'y': st})
         return rows
 
-
     @property
     def charts(self):
         rows = self.rows
