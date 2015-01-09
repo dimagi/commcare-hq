@@ -486,8 +486,7 @@ def development():
     # if no server specified, just don't run pillowtop
     pillowtop = servers.get('pillowtop', [])
 
-    proxy = ['10.210.101.189']
-
+    proxy = servers['proxy']
 
     env.roledefs = {
         'couch': couchdb,
