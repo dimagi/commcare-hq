@@ -95,6 +95,11 @@ FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
+ANDROID_LOGO_PROPERTY_MAPPING = {
+    'hq_logo_android_home': 'brand-banner-home',
+    'hq_logo_android_login': 'brand-banner-login',
+}
+
 def _rename_key(dct, old, new):
     if old in dct:
         if new in dct and dct[new]:

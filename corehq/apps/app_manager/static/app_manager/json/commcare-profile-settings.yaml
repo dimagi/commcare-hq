@@ -77,9 +77,15 @@
   widget: "image_uploader"
   toggle: "COMMCARE_LOGO_UPLOADER"
 
-- name: "Logo"
-  description: "Upload a file to serve as a logo on Android phones"
-  id: "logo_android"
+- name: "Home Screen Logo"
+  description: "Upload a file to serve as a home screen logo on Android phones"
+  id: "logo_android_home"
+  widget: "image_uploader"
+  toggle: "COMMCARE_LOGO_UPLOADER"
+
+- name: "Login Logo"
+  description: "Upload a file to serve as a login logo on Android phones"
+  id: "logo_android_login"
   widget: "image_uploader"
   toggle: "COMMCARE_LOGO_UPLOADER"
 
