@@ -2706,15 +2706,15 @@ class NewKeywordForm(Form):
         label=ugettext_noop("Notify Another Person"),
         initial=NO_RESPONSE,
     )
-    other_recipient_id = ChoiceField(
-        required=False,
-        label=ugettext_noop("Group Name"),
-    )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
         label=ugettext_noop("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
+    )
+    other_recipient_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Group Name"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
