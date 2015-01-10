@@ -35,6 +35,7 @@ from corehq.apps.reminders.forms import (
     KEYWORD_RECIPIENT_CHOICES,
     ComplexScheduleCaseReminderForm,
     NewKeywordForm,
+    NO_RESPONSE,
 )
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
@@ -944,7 +945,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                 self.keyword.initiator_doc_type_filter.append('CommCareCase')
 
             self.keyword.actions = []
-            if self.keyword_form.cleaned_data['sender_content_type'] != 'none':
+            if self.keyword_form.cleaned_data['sender_content_type'] != NO_RESPONSE:
                 self.keyword.actions.append(
                     SurveyKeywordAction(
                         recipient=RECIPIENT_SENDER,
@@ -964,7 +965,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                         named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
                     )
                 )
-            if self.keyword_form.cleaned_data['other_recipient_content_type'] != 'none':
+            if self.keyword_form.cleaned_data['other_recipient_content_type'] != NO_RESPONSE:
                 self.keyword.actions.append(
                     SurveyKeywordAction(
                         recipient=self.keyword_form.cleaned_data['other_recipient_type'],
