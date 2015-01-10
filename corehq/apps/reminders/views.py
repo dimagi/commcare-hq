@@ -1031,6 +1031,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             'description': self.keyword.description,
             'delimiter': self.keyword.delimiter,
             'override_open_sessions': self.keyword.override_open_sessions,
+            'sender_content_type': NO_RESPONSE,
         }
         is_case_filter = "CommCareCase" in self.keyword.initiator_doc_type_filter
         is_user_filter = "CommCareUser" in self.keyword.initiator_doc_type_filter
