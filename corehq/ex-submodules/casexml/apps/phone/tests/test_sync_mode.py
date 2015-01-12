@@ -363,6 +363,29 @@ class SyncTokenUpdateTest(SyncBaseTest):
         form.archive()
         assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id, purge_restore_cache=True)
 
+    def testUserLoggedIntoMultipleDevices(self):
+        # test that a child case created by the same user from a different device
+        # gets included in the sync
+
+        parent_id = "parent"
+        child_id = "child"
+        self._createCaseStubs([parent_id])
+
+        # create child case using a different sync log ID
+        other_sync_log = synclog_from_restore_payload(generate_restore_payload(self.user, version="2.0"))
+        child = CaseBlock(
+            create=True,
+            case_id=child_id,
+            user_id=USER_ID,
+            owner_id=USER_ID,
+            version=V2,
+            index={'mother': ('mother', parent_id)}
+        ).as_xml()
+        self._postFakeWithSyncToken(child, other_sync_log.get_id)
+
+        # ensure child case is included in sync using original sync log ID
+        assert_user_has_case(self, self.user, child_id, restore_id=self.sync_log.get_id)
+
 
 class SyncTokenCachingTest(SyncBaseTest):
 

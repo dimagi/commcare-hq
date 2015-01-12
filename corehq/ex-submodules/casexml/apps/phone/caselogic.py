@@ -378,6 +378,13 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
     Batch of updates representing all cases that are on the phone
     but aren't part of the 'owned' cases of the user.
     """
+    def __init__(self, global_state, domain, last_sync, chunksize, case_sharing=False):
+        super(CaseSyncPhoneBatch, self).__init__(global_state, domain, last_sync, chunksize, case_sharing)
+
+        # case sharing is in use so we need to fetch the cases from the DB in case
+        # they were modified by another user or reference cases owned by another user
+        self.use_minimal_cases = not self.case_sharing
+
     def case_updates_to_sync(self):
         other_case_ids_on_phone = set([
             case_id
@@ -389,13 +396,10 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
         if not other_case_ids_on_phone:
             return []
 
-        if self.case_sharing:
-            # case sharing is in use so we need to fetch the cases from the DB in case
-            # they were modified by another user or reference cases owned by another user
-            other_cases_on_phone = CommCareCase.bulk_get_lite(other_case_ids_on_phone, wrap=False, chunksize=len(other_case_ids_on_phone))
-        else:
+        if self.use_minimal_cases:
             other_cases_on_phone = [self.global_state.minimal_cases[case_id] for case_id in other_case_ids_on_phone]
-
+        else:
+            other_cases_on_phone = CommCareCase.bulk_get_lite(other_case_ids_on_phone, wrap=False, chunksize=len(other_case_ids_on_phone))
 
         potential_to_sync = self._get_potential_cases(other_cases_on_phone)
         cases_to_sync = self._fetch_missing_cases_and_wrap(potential_to_sync)
@@ -405,7 +409,9 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
         return case_sync_updates
 
     def __repr__(self):
-        return "CaseSyncPhoneBatch()"
+        return "CaseSyncPhoneBatch(use_minimal_cases={})".format(
+            self.use_minimal_cases
+        )
 
 
 class CaseSyncCouchBatch(CaseSyncBatch):
