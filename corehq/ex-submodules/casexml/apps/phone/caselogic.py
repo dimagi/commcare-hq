@@ -397,9 +397,15 @@ class CaseSyncPhoneBatch(CaseSyncBatch):
             return []
 
         if self.use_minimal_cases:
-            other_cases_on_phone = [self.global_state.minimal_cases[case_id] for case_id in other_case_ids_on_phone]
+            other_cases_on_phone = [
+                self.global_state.minimal_cases[case_id] for case_id in other_case_ids_on_phone
+            ]
         else:
-            other_cases_on_phone = CommCareCase.bulk_get_lite(other_case_ids_on_phone, wrap=False, chunksize=len(other_case_ids_on_phone))
+            other_cases_on_phone = CommCareCase.bulk_get_lite(
+                other_case_ids_on_phone,
+                wrap=False,
+                chunksize=len(other_case_ids_on_phone)
+            )
 
         potential_to_sync = self._get_potential_cases(other_cases_on_phone)
         cases_to_sync = self._fetch_missing_cases_and_wrap(potential_to_sync)
@@ -418,7 +424,8 @@ class CaseSyncCouchBatch(CaseSyncBatch):
     """
     Batch of case updates for cases 'owned' by the user.
     """
-    def __init__(self, global_state, domain, last_sync, chunksize, startkey, case_sharing=False, startkey_docid=None):
+    def __init__(self, global_state, domain, last_sync, chunksize,
+                 startkey, case_sharing=False, startkey_docid=None):
         super(CaseSyncCouchBatch, self).__init__(global_state, domain, last_sync, chunksize, case_sharing)
         self.startkey = startkey
         self.startkey_docid = startkey_docid

@@ -41,7 +41,7 @@ class SyncBaseTest(TestCase):
         delete_all_sync_logs()
 
         self.user = User(user_id=USER_ID, username=USERNAME,
-                         password="changeme", date_joined=datetime(2011, 6, 9)) 
+                         password="changeme", date_joined=datetime(2011, 6, 9))
         # this creates the initial blank sync token in the database
         restore_config = RestoreConfig(self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload())
