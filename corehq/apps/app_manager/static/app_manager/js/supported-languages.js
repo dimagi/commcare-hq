@@ -170,9 +170,9 @@ var SupportedLanguages = (function () {
                 self.languages()[i].originalLangcode();
                 if (message || language == self.languages()[i]) {
                     continue;
-                } else if (language === self.languages()[i].langcode()) {
+                } else if (language.langcode() === self.languages()[i].langcode()) {
                     message = "Language appears twice";
-                } else if (language === self.languages()[i].originalLangcode()) {
+                } else if (language.originalLangcode() === self.languages()[i].originalLangcode()) {
                     message = "This conflicts with a current language";
                 }
             }
