@@ -157,7 +157,7 @@ def _get_configurable_reports(project):
 
             return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
                 'name': config.title,
-                'description': config.description,
+                'description': config.description or None,
                 'get_url': get_url,
             })
 
