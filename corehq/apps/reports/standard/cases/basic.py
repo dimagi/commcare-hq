@@ -182,6 +182,9 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         return EMWF.selected_location_sharing_group_ids(self.request)
 
     def location_reporting_owner_ids(self):
+        """
+        Include all users that are assigned to the selected reporting groups.
+        """
         from corehq.apps.locations.models import SQLLocation
         results = []
         selected_location_group_ids = EMWF.selected_location_reporting_group_ids(self.request)
