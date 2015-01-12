@@ -21,6 +21,16 @@
     });
     scheduled_report_form_helper.init();
 </script>
+<script type="text/javascript">
+    $('#id-scheduledReportForm').submit(function() {
+        ga_track_event('Scheduled Reports', 'Create a scheduled report', '-', {
+            'hitCallback': function () {
+                document.getElementById('id-scheduledReportForm').submit();
+            }
+        });
+        return false;
+    });
+</script>
 {% endblock %}
 
 {% block reports-css %}

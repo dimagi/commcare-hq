@@ -120,7 +120,7 @@ class BaseCaseMultimediaTest(TestCase):
 class CaseMultimediaTest(BaseCaseMultimediaTest):
     """
     Tests new attachments for cases and case properties
-    Spec: https://bitbucket.org/commcare/commcare/wiki/CaseAttachmentAPI
+    Spec: https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
     """
     def tearDown(self):
         deprecated_xforms = XFormDeprecated.view(

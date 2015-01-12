@@ -142,7 +142,6 @@ class PricingTableCategories(object):
             cls.SUPPORT: (
                 f.COMMUNITY_SUPPORT,
                 f.EMAIL_SUPPORT,
-                f.PHONE_SUPPORT,
                 f.APP_TROUBLESHOOTING,
                 f.DEDICATED_SUPPORT_STAFF,
                 f.DEDICATED_ACCOUNT_MANAGEMENT,
@@ -188,7 +187,6 @@ class PricingTableFeatures(object):
 
     COMMUNITY_SUPPORT = 'community_support'
     EMAIL_SUPPORT = 'email_support'
-    PHONE_SUPPORT = 'phone_support'
     APP_TROUBLESHOOTING = 'app_troubleshooting'
     DEDICATED_SUPPORT_STAFF = 'dedicated_support_staff'
     DEDICATED_ACCOUNT_MANAGEMENT = 'dedicated_account_management'
@@ -245,7 +243,6 @@ class PricingTableFeatures(object):
                 Product.COMMTRACK: _('Community Support (<a href="https://groups.google.com/forum/?fromgroups#!forum/commtrack-users">visit commtrack-users</a>)'),
             }[product],
             cls.EMAIL_SUPPORT: _("Direct Email Support"),
-            cls.PHONE_SUPPORT: _("Phone Support"),
             cls.APP_TROUBLESHOOTING: _("Application Troubleshooting"),
             cls.DEDICATED_SUPPORT_STAFF: _("Dedicated Support Staff"),
             cls.DEDICATED_ACCOUNT_MANAGEMENT: _("Dedicated Enterprise Account Management"),
@@ -286,7 +283,6 @@ class PricingTableFeatures(object):
             cls.DE_ID_DATA: (False, False, True, True, True),
             cls.COMMUNITY_SUPPORT: (True, True, True, True, True),
             cls.EMAIL_SUPPORT: (False, True, True, True, True),
-            cls.PHONE_SUPPORT: (False, False, True, True, True),
             cls.APP_TROUBLESHOOTING: (False, False, True, True, True),
             cls.DEDICATED_SUPPORT_STAFF: (False, False, False, True, True),
             cls.DEDICATED_ACCOUNT_MANAGEMENT: (False, False, False, False, True),

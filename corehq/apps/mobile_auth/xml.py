@@ -1,6 +1,6 @@
 """
     This file contains the spec for the XML for mobile auth
-    (from https://bitbucket.org/commcare/commcare/wiki/CentralAuthAPI)
+    (from https://github.com/dimagi/commcare/wiki/CentralAuthAPI)
 
     <!-- Exactly one. The block of auth key records.-->
     <!-- @domain: Exactly one. The client should only accept keys from domains that match the request -->

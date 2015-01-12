@@ -1,4 +1,5 @@
 import logging
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.loading import get_db
 from django.http import (
     HttpResponseBadRequest,
@@ -62,10 +63,15 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 @csrf_exempt
 @require_POST
 def post(request, domain, app_id=None):
-    if domain_requires_auth(domain):
-        # "redirect" to the secure version
-        # an actual redirect doesn't work because it becomes a GET
-        return secure_post(request, domain, app_id)
+    try:
+        if domain_requires_auth(domain):
+            # "redirect" to the secure version
+            # an actual redirect doesn't work because it becomes a GET
+            return secure_post(request, domain, app_id)
+    except ResourceNotFound:
+        return HttpResponseBadRequest(
+            'No domain with name %s' % domain
+        )
     return _process_form(
         request=request,
         domain=domain,

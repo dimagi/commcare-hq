@@ -43,6 +43,10 @@ from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
 )
+from corehq.apps.hqmedia.models import (
+    ApplicationMediaReference,
+    CommCareImage,
+)
 from corehq.apps.hqmedia.views import (
     DownloadMultimediaZip,
     ProcessImageFileUploadView,
@@ -108,6 +112,7 @@ from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.reports import util as report_utils
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
@@ -778,6 +783,7 @@ def get_module_view_context_and_template(app, module):
         if m.case_type == module.case_type:
             child_case_types.update(m.get_child_case_types())
     child_case_types = list(child_case_types)
+    fixtures = [f.tag for f in FixtureDataType.by_domain(app.domain)]
 
     def ensure_unique_ids():
         # make sure all modules have unique ids
@@ -802,6 +808,7 @@ def get_module_view_context_and_template(app, module):
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
             'parent_modules': get_parent_modules(CAREPLAN_GOAL),
+            'fixtures': fixtures,
             'details': [
                 {
                     'label': _('Goal List'),
@@ -857,12 +864,14 @@ def get_module_view_context_and_template(app, module):
             return details
 
         return "app_manager/module_view_advanced.html", {
+            'fixtures': fixtures,
             'details': get_details(),
         }
     else:
         case_type = module.case_type
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
+            'fixtures': fixtures,
             'details': [
                 {
                     'label': _('Case List'),
@@ -961,7 +970,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     # update multimedia context for forms and modules.
     menu_host = form or module
-    if menu_host and toggles.MENU_MULTIMEDIA_UPLOAD.enabled(req.user.username):
+    if menu_host:
 
         default_file_name = 'module%s' % module_id
         if form_id:
@@ -1000,6 +1009,39 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update({
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
+
+    if app and app.doc_type == 'Application':
+        uploader_slugs = [
+            "hq_logo_android",
+            "hq_logo_java",
+        ]
+        from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
+        from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+        context.update({
+            "sessionid": req.COOKIES.get('sessionid'),
+            'uploaders': [
+                MultimediaLogoUploadController(
+                    slug,
+                    reverse(
+                        ProcessLogoFileUploadView.name,
+                        args=[domain, app_id, slug],
+                    )
+                )
+                for slug in uploader_slugs
+            ],
+            "refs": {
+                slug: ApplicationMediaReference(
+                    app.logo_refs.get(slug, {}).get("path", slug),
+                    media_class=CommCareImage,
+                    module_id=app.logo_refs.get(slug, {}).get("m_id"),
+                ).as_dict()
+                for slug in uploader_slugs
+            },
+            "media_info": {
+                slug: app.logo_refs.get(slug)
+                for slug in uploader_slugs if app.logo_refs.get(slug)
+            },
+        })
 
     response = render(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
@@ -1107,6 +1149,12 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         ))
         return back_to_main(req, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
+
+    vellum_features = toggles.toggles_dict(username=req.user.username,
+                                           domain=domain)
+    vellum_features.update({
+        'group_in_field_list': app.enable_group_in_field_list
+    })
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
     context.update({
@@ -1117,8 +1165,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': req.COOKIES.get('sessionid'),
-        'features': toggles.toggles_dict(username=req.user.username,
-                                         domain=domain)
+        'features': vellum_features
     })
     return render(req, 'app_manager/form_designer.html', context)
 

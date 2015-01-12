@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
@@ -29,11 +29,7 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
-    {% if multimedia %}
-        {% include "app_manager/partials/nav_menu_media_js.html" %}
-    {% else %}
-        {% include "app_manager/partials/nav_menu_media_js.old.html" with item=module image_default="jr://file/commcare/image/module_name.png" audio_default="jr://file/commcare/audio/module_name.mp3" %}
-    {% endif %}
+    {% include "app_manager/partials/nav_menu_media_js.html" %}
     {% include 'hqwebapp/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
@@ -50,6 +46,7 @@
             var edit = {{ edit|JSON }};
             var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
             var parentModules = {{ parent_modules|JSON }};
+            var fixtures = {{ fixtures|JSON }};
 
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
@@ -68,6 +65,7 @@
                     saveUrl: saveUrl,
                     parentModules: parentModules,
                     childCaseTypes: detail.child_case_types,
+                    fixtures: fixtures,
                     parentSelect: detail.parent_select,
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
@@ -173,11 +171,7 @@
                         {% endif %}
                     </div>
                 </div>
-                {% if multimedia %}
-                    {% include "app_manager/partials/nav_menu_media.html" %}
-                {% else %}
-                    {% include "app_manager/partials/nav_menu_media.old.html" with item=module %}
-                {% endif %}
+                {% include "app_manager/partials/nav_menu_media.html" %}
                 {% endblock %}
             </fieldset>
         </form>

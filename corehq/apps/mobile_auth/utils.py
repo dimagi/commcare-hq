@@ -45,7 +45,7 @@ def bump_expiry(record, now=None):
 def get_mobile_auth_payload(key_records, domain, issued=None, now=None):
     """
     formats a list of key record documents in the xml format outlined in
-    https://bitbucket.org/commcare/commcare/wiki/CentralAuthAPI
+    https://github.com/dimagi/commcare/wiki/CentralAuthAPI
 
     makes sure to set xml object properties in a standard order
     for ease of testing

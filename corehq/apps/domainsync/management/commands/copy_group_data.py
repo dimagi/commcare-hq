@@ -6,6 +6,7 @@ import itertools
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.models import Domain
+from corehq.apps.domainsync.config import DocumentTransform, save
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, UserRole
 from couchforms.models import XFormInstance
@@ -54,7 +55,8 @@ class Command(LabelCommand):
             sourcedb.view('domain/domains', key=group.domain, include_docs=True,
                           reduce=False, limit=1).one()['doc']
         )
-        domain.save(force_update=True)
+        dt = DocumentTransform(domain._obj, sourcedb)
+        save(dt, Domain.get_db())
 
         owners = [group_id]
         if include_user_owned:

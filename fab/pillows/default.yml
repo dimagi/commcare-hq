@@ -1,0 +1,25 @@
+# To customize a particular deployment environment
+# include another <env>.yml file in this directory
+# you may use any of the following directives:
+# - exclude_groups
+# - include_groups
+# - exclude_pillows
+# - include_pillows
+# those directives will be applied ON TOP of this default, _not_ instead of it
+# Thus to include all pillows you'd have to have the file say
+#
+#   include_groups:
+#     - mvp
+#     - fluff
+#
+# *_pillows are applied before *_groups, so if your file just has
+#
+#   include_pillows:
+#     - path.to.my.custom.fluff.pillow
+#
+# then that fluff pillow will be included, while all other fluff pillows
+# are still excluded (because that's the default given in this file).
+---
+exclude_groups:
+  - mvp
+  - fluff
