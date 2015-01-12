@@ -32,6 +32,7 @@ class ReportFilter(JsonObject):
 class ReportColumn(JsonObject):
     type = StringProperty(required=True)
     display = StringProperty()
+    description = StringProperty()
     field = StringProperty(required=True)
     aggregation = StringProperty(
         choices=SQLAGG_COLUMN_MAP.keys(),
@@ -55,7 +56,8 @@ class ReportColumn(JsonObject):
             SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
             sortable=False,
             data_slug=self.field,
-            format_fn=self.get_format_fn()
+            format_fn=self.get_format_fn(),
+            help_text=self.description
         )
 
 
