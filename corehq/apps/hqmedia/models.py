@@ -606,7 +606,7 @@ class HQMediaMixin(Document):
             'is_menu_media': is_menu_media,
         }
 
-    def remove_unused_mappings(self, additional_permitted_paths=[]):
+    def remove_unused_mappings(self, additional_permitted_paths=()):
         """
             This checks to see if the paths specified in the multimedia map still exist in the Application.
             If not, then that item is removed from the multimedia map.
