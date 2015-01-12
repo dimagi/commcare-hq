@@ -10,6 +10,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from corehq.apps.locations.models import SQLLocation
 
 
 def get_case_properties(domain, case_type=None):
@@ -346,15 +347,37 @@ def get_spreadsheet(download_ref, column_headers=True):
         return None
     return ExcelFile(download_ref.get_filename(), column_headers)
 
+
+def is_location_group(owner_id, domain):
+    """
+    Return yes if the specified owner_id is one of the
+    faked location groups.
+    """
+    group_ids = [
+        loc.case_sharing_group_object()._id
+        for loc in SQLLocation.objects.filter(domain=domain)
+    ]
+    return owner_id in group_ids
+
+
 def is_user_or_case_sharing_group(owner):
     return not isinstance(owner, Group) or owner.case_sharing
+
 
 def is_valid_id(uploaded_id, domain, cache):
     if uploaded_id in cache:
         return cache[uploaded_id]
 
     owner = get_wrapped_owner(uploaded_id)
-    return owner and is_user_or_case_sharing_group(owner) and owner.is_member_of(domain)
+    return (
+        (
+            owner and
+            is_user_or_case_sharing_group(owner) and
+            owner.is_member_of(domain)
+        ) or
+        is_location_group(uploaded_id, domain)
+    )
+
 
 def get_id_from_name(uploaded_name, domain, cache):
     '''
