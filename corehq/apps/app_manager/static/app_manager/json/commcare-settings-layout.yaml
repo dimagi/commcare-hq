@@ -61,7 +61,8 @@
     - properties.cc-show-incomplete
     - properties.cc-resize-images
     - properties.cc-fuzzy-search-enabled
-    - properties.logo_android  # Logo
+    - properties.logo_android_home
+    - properties.logo_android_login
     - hq.auto_gps_capture
 
 - title: 'Advanced'
