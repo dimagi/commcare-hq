@@ -93,24 +93,26 @@ NOW_OR_LATER = (
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS Message")),
-    (METHOD_SMS_SURVEY, _("SMS Form Interaction")),
+    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS_SURVEY, _("SMS Survey")),
 )
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS Message")),
-    (METHOD_SMS_SURVEY, _("SMS Interactive Survey")),
+    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS_SURVEY, _("SMS Survey")),
 )
 
+NO_RESPONSE = "none"
+
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
     (RECIPIENT_OWNER, _("The case's owner")),
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
     ("", _("---choose---")),
     (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
-    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
 )
 
 METHOD_CHOICES = (
@@ -1282,7 +1284,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def section_advanced(self):
         fields = [
             BootstrapMultiField(
-                _("Stop Condition"),
+                _("Additional Stop Condition"),
                 InlineField(
                     'stop_condition',
                     data_bind="value: stop_condition",
@@ -1299,8 +1301,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 ),
                 help_bubble_text=_("Reminders can be stopped after a date set in the case, or if a particular "
                                    "case property is set to OK.  Choose either a case property that is a date or "
-                                   "a case property that is going to be set to Ok.  Reminders will always stop if "
-                                   "the start condition is no longer true."),
+                                   "a case property that is going to be set to OK.  Reminders will always stop if "
+                                   "the start condition is no longer true or if the case that triggered the "
+                                   "reminder is closed."),
                 css_id="stop-condition-group",
             ),
             crispy.Div(
@@ -2701,17 +2704,17 @@ class NewKeywordForm(Form):
     other_recipient_content_type = ChoiceField(
         required=False,
         label=ugettext_noop("Notify Another Person"),
-        initial='none',
-    )
-    other_recipient_id = ChoiceField(
-        required=False,
-        label=ugettext_noop("Group Name"),
+        initial=NO_RESPONSE,
     )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
         label=ugettext_noop("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
+    )
+    other_recipient_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Group Name"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
@@ -2950,7 +2953,7 @@ class NewKeywordForm(Form):
     def content_type_choices(self):
         choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
         choices.append(
-            ('none', _("No Response"))
+            (NO_RESPONSE, _("No Response"))
         )
         return choices
 
@@ -3105,7 +3108,7 @@ class NewKeywordForm(Form):
             return None
 
     def clean_other_recipient_type(self):
-        if self.cleaned_data['other_recipient_content_type'] == 'none':
+        if self.cleaned_data['other_recipient_content_type'] == NO_RESPONSE:
             return None
         value = self.cleaned_data["other_recipient_type"]
         if value == RECIPIENT_OWNER:
@@ -3117,7 +3120,7 @@ class NewKeywordForm(Form):
         return value
 
     def clean_other_recipient_id(self):
-        if self.cleaned_data['other_recipient_content_type'] == 'none':
+        if self.cleaned_data['other_recipient_content_type'] == NO_RESPONSE:
             return None
         value = self.cleaned_data["other_recipient_id"]
         recipient_type = self.cleaned_data.get("other_recipient_type", None)

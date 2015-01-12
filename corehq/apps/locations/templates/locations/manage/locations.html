@@ -35,6 +35,11 @@ function loc_unarchive_url(loc_id) {
     return template.replace('-locid-', loc_id);
 }
 
+function loc_products_url(loc_id) {
+    var template = '{% url "products_per_location" domain "-locid-" %}';
+    return template.replace('-locid-', loc_id);
+}
+
 archive_loc = function(button, name, loc_id) {
     $(button).button('loading');
     alert_user("You have successfully archived the location " + name, "success");
@@ -124,15 +129,22 @@ $(function() {
                 {% if show_inactive %}
                 <a class="loc_edit btn btn-primary"
                     data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }">
-                    Unarchive
+                    {% trans "Unarchive" %}
                 </a>
                 {% else %}
                 <a class="loc_edit btn btn-primary"
                     data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }">
-                    Archive
+                    {% trans "Archive" %}
                 </a>
                 {% endif %}
             </span>
+
+            {% if request|toggle_enabled:"PRODUCTS_PER_LOCATION" %}
+              <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_products_url(uuid()) }">
+                {% trans "Products" %}
+              </a>
+            {% endif %}
+
             {% if not show_inactive %}
             <a class="loc_edit btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
                 Edit

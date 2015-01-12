@@ -143,6 +143,11 @@ class IndicatorNamedFilterTest(SimpleTestCase):
                     'type': 'property_match',
                     'property_name': 'mother_state',
                     'property_value': 'pregnant',
+                },
+                'evil': {
+                    'type': 'property_match',
+                    'property_name': 'evil',
+                    'property_value': 'yes',
                 }
             },
             'configured_filter': {
@@ -158,7 +163,37 @@ class IndicatorNamedFilterTest(SimpleTestCase):
                         'name': 'pregnant',
                     }
                 ]
-            }
+            },
+            'configured_indicators': [
+                {
+                    "type": "boolean",
+                    "column_id": "is_evil",
+                    "filter": {
+                        "type": "named",
+                        "name": "evil"
+                    }
+                },
+                {
+                    "type": "expression",
+                    "column_id": "laugh_sound",
+                    "datatype": "string",
+                    "expression": {
+                        'type': 'conditional',
+                        'test': {
+                            "type": "named",
+                            "name": "evil"
+                        },
+                        'expression_if_true': {
+                            'type': 'constant',
+                            'constant': 'mwa-ha-ha',
+                        },
+                        'expression_if_false': {
+                            'type': 'constant',
+                            'constant': 'hehe',
+                        },
+                    }
+                }
+            ]
         })
 
     def test_match(self):
@@ -176,3 +211,43 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'type': 'ttc_mother',
             'mother_state': 'not pregnant'
         }))
+
+    def test_simple_indicator_match(self):
+        values = self.indicator_configuration.indicators.get_values({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'pregnant',
+            'evil': 'yes'
+        })
+        self.assertEqual(1, values[1].value)
+
+    def test_simple_indicator_nomatch(self):
+        values = self.indicator_configuration.indicators.get_values({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'pregnant',
+            'evil': 'no'
+        })
+        self.assertEqual(0, values[1].value)
+
+    def test_expression_match(self):
+        values = self.indicator_configuration.indicators.get_values({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'pregnant',
+            'evil': 'yes'
+        })
+        self.assertEqual('mwa-ha-ha', values[2].value)
+
+    def test_expression_nomatch(self):
+        values = self.indicator_configuration.indicators.get_values({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'pregnant',
+            'evil': 'no'
+        })
+        self.assertEqual('hehe', values[2].value)

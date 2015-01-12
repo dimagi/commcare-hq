@@ -135,7 +135,9 @@ from corehq.apps.app_manager.models import (
     get_app,
     load_case_reserved_words,
     str_to_cls,
-    DetailTab)
+    DetailTab,
+    ANDROID_LOGO_PROPERTY_MAPPING,
+)
 from corehq.apps.app_manager.models import import_app as import_app_util, SortElement
 from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import safe_download, no_conflict_require_POST, \
@@ -1009,9 +1011,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     if app and app.doc_type == 'Application':
         uploader_slugs = [
-            "hq_logo_android",
             "hq_logo_java",
-        ]
+        ] + ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         context.update({

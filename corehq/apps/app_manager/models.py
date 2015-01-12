@@ -95,6 +95,11 @@ FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
+ANDROID_LOGO_PROPERTY_MAPPING = {
+    'hq_logo_android_home': 'brand-banner-home',
+    'hq_logo_android_login': 'brand-banner-login',
+}
+
 def _rename_key(dct, old, new):
     if old in dct:
         if new in dct and dct[new]:
@@ -3083,6 +3088,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'force': True,
                 'value': 'sync',
             }
+
+        for logo_name in self.logo_refs:
+            if logo_name in ANDROID_LOGO_PROPERTY_MAPPING:
+                app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
+                    'value': self.logo_refs[logo_name]['path'],
+                }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
