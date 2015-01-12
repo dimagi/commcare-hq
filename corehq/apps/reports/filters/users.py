@@ -383,7 +383,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                     location_id=loc_group_id.replace('locationgroup-', '')
                 )
                 loc_group = loc.case_sharing_group_object()
-                selected.append((loc_group._id, loc_group.name))
+                selected.append((loc_group._id, loc_group.name + ' [case sharing]'))
 
         if location_reporting_ids:
             from corehq.apps.commtrack.models import SQLLocation
@@ -392,7 +392,7 @@ class ExpandedMobileWorkerFilter(EmwfMixin, BaseMultipleOptionFilter):
                     location_id=loc_group_id.replace('locationreportinggroup-', '')
                 )
                 loc_group = loc.reporting_group_object()
-                selected.append((loc_group._id, loc_group.name))
+                selected.append((loc_group._id, loc_group.name + ' [group]'))
 
         if user_ids:
             q = {"query": {"filtered": {"filter": {
