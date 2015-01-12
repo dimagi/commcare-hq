@@ -1,7 +1,11 @@
 from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
-from sqlagg.columns import SimpleColumn
+from sqlagg.columns import (
+    MonthColumn,
+    SimpleColumn,
+    YearColumn,
+)
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from corehq.apps.userreports.specs import TypeProperty
@@ -10,8 +14,10 @@ from corehq.apps.userreports.transforms.factory import TransformFactory
 
 SQLAGG_COLUMN_MAP = {
     'count_unique': CountUniqueColumn,
+    'month': MonthColumn,
     'sum': SumColumn,
     'simple': SimpleColumn,
+    'year': YearColumn,
 }
 
 
