@@ -960,9 +960,11 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
     if all_domains:
         histo_data = {"All Domains": dict()}
         init_ret = {"All Domains": 0}
+        ret = {"All Domains": list()}
     else:
         histo_data = {d: dict() for d in domains}
         init_ret = {d: 0 for d in domains}
+        ret = {d: list() for d in domains}
 
     for data in sql_data:
         tstamp = get_timestamp_millis(data['timestamp'])
@@ -976,7 +978,6 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
             else:
                 histo_data[domain][tstamp] += 1
 
-    ret = {d: list() for d in domains}
     for k, v in histo_data.iteritems():
         for l, w in v.iteritems():
             ret[k].append({'count': w, 'time': l})
