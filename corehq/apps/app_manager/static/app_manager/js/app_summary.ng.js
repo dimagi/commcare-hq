@@ -43,6 +43,36 @@
 
         $scope.loading = true;
         $scope.isActive = utils.isActive;
+        $scope.modules = [];
+        $scope.formSearch = {name: ''};
+        $scope.moduleSearch = {name: ''};
+
+        self.init = function (attrs) {
+            $scope.loading = true;
+            djangoRMI.get_form_data({
+            }).success(function (data) {
+                $scope.loading = false;
+                self.updateView(data);
+            }).error(function () {
+                $scope.loading = false;
+            });
+        };
+
+        self.updateView = function (data) {
+            if (data.success) {
+                var response = data.response;
+                $scope.modules = response;
+            }
+        };
+
+        $scope.filterList = function (module, form) {
+            $scope.moduleSearch.name = module;
+            $scope.formSearch.name = form;
+        };
+
+        $scope.getIcon = utils.getIcon;
+
+        self.init();
     };
 
     controllers.CaseController = function ($scope, djangoRMI, summaryConfig, utils) {
@@ -61,10 +91,6 @@
         };
 
         self.init = function (attrs) {
-            self.refreshData();
-        };
-
-        self.refreshData = function () {
             $scope.loading = true;
             djangoRMI.get_case_data({
             }).success(function (data) {

@@ -2672,11 +2672,6 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         for module in self.app.get_modules():
             forms = []
             for form in module.get_forms():
-                questions, messages = _questions_for_form(self.request, form, langs)
-                forms.append({'name': _find_name(form.name, langs),
-                              'questions': [FormQuestionResponse(q) for q in questions],
-                              'messages': dict(messages)})
-
                 form_name_map[form.unique_id] = {
                     'module_name': module.name,
                     'form_name': form.name
@@ -2712,6 +2707,24 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
     def get_case_data(self, in_data):
         return {
             'response': self.app.get_case_metadata().to_json(),
+            'success': True,
+        }
+
+    @allow_remote_invocation
+    def get_form_data(self, in_data):
+        modules = []
+        for module in self.app.get_modules():
+            forms = []
+            for form in module.get_forms():
+                questions = form.get_questions(self.app.langs, include_triggers=True, include_groups=True)
+                forms.append({
+                    'name': _find_name(form.name, self.app.langs),
+                    'questions': [FormQuestionResponse(q).to_json() for q in questions],
+                })
+
+            modules.append({'name': _find_name(module.name, self.app.langs), 'forms': forms})
+        return {
+            'response': modules,
             'success': True,
         }
 
