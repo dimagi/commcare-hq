@@ -8,7 +8,6 @@ from django.views.generic import View
 
 from braces.views import JSONResponseMixin
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.elastic import es_wrapper, ESError
 from dimagi.utils.decorators.memoized import memoized
