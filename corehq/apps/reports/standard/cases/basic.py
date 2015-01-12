@@ -183,9 +183,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
     def location_reporting_owner_ids(self):
         """
-        Include all users that are assigned to the selected reporting groups.
+        Include all users that are assigned to the selected
+        locations or those locations descendants.
         """
         from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.users.models import CommCareUser
         results = []
         selected_location_group_ids = EMWF.selected_location_reporting_group_ids(self.request)
 
@@ -194,18 +196,16 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 location_id=group_id.replace('locationreportinggroup-', '')
             )
 
-            from corehq.apps.users.models import CommCareUser
-
-            users = CommCareUser.get_db().view(
-                'locations/users_by_location_id',
-                startkey=[loc.location_id],
-                endkey=[loc.location_id, {}],
-                include_docs=True
-            ).all()
-            results += [u['id'] for u in users]
+            for l in [loc] + list(loc.get_descendants()):
+                users = CommCareUser.get_db().view(
+                    'locations/users_by_location_id',
+                    startkey=[l.location_id],
+                    endkey=[l.location_id, {}],
+                    include_docs=True
+                ).all()
+                results += [u['id'] for u in users]
 
         return results
-
 
     def get_case(self, row):
         if '_source' in row:
