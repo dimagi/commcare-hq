@@ -24,6 +24,7 @@
         {
             "type": "field",
             "display": "Tickets",
+            "description": "Number of tickets",
             "field": "count",
             "aggregation": "sum"
         },
