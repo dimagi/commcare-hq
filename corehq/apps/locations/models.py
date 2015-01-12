@@ -85,11 +85,11 @@ class SQLLocation(MPTTModel):
         g.last_modified = datetime.now()
         g._id = LOCATION_SHARING_PREFIX + self.location_id
         g.metadata = {
-            'cc_location_type': self.location_type,
-            'cc_location_name': self.name,
+            'commcare_location_type': self.location_type,
+            'commcare_location_name': self.name,
         }
         for key, val in self.metadata.items():
-            g.metadata['cc_location_' + key] = val
+            g.metadata['commcare_location_' + key] = val
 
         return g
 
@@ -118,11 +118,11 @@ class SQLLocation(MPTTModel):
         g.last_modified = datetime.now()
         g._id = LOCATION_REPORTING_PREFIX + self.location_id
         g.metadata = {
-            'cc_location_type': self.location_type,
-            'cc_location_name': self.name,
+            'commcare_location_type': self.location_type,
+            'commcare_location_name': self.name,
         }
         for key, val in self.metadata.items():
-            g.metadata['cc_location_' + key] = val
+            g.metadata['commcare_location_' + key] = val
 
         return g
 
