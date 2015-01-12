@@ -179,8 +179,7 @@ def ils_sync_stock_data(request, domain):
         ('supply_point_status', get_supply_point_statuses),
         ('delivery_group', get_delivery_group_reports)
     )
-    api_object = ILSGatewayAPI(domain, endpoint)
-    stock_data_task.delay(domain, endpoint, apis, api_object, ILS_FACILITIES)
+    stock_data_task.delay(domain, endpoint, apis, ILS_FACILITIES)
     return HttpResponse('OK')
 
 

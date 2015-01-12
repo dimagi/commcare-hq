@@ -1,6 +1,8 @@
 from datetime import datetime
 import itertools
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
+from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway import TEST
 from custom.ilsgateway.tasks import get_locations
 from custom.logistics.commtrack import save_stock_data_checkpoint
@@ -11,7 +13,7 @@ from custom.logistics.commtrack import resync_password
 
 
 @task
-def stock_data_task(domain, endpoint, apis, api_object, test_facilities=None):
+def stock_data_task(domain, endpoint, apis, test_facilities=None):
     start_date = datetime.today()
     try:
         checkpoint = StockDataCheckpoint.objects.get(domain=domain)
@@ -37,11 +39,6 @@ def stock_data_task(domain, endpoint, apis, api_object, test_facilities=None):
 
     if TEST:
         facilities = test_facilities
-        if StockDataCheckpoint.objects.filter(domain=domain).count() == 0:
-            api_object.prepare_commtrack_config()
-            get_locations(api_object, facilities)
-            for product in endpoint.get_products()[1]:
-                api_object.products_sync(product)
     else:
         facilities = SQLLocation.objects.filter(
             domain=domain,
@@ -50,7 +47,15 @@ def stock_data_task(domain, endpoint, apis, api_object, test_facilities=None):
     apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != api, apis)
     facilities_copy = list(facilities)
     if location:
-        facilities = itertools.dropwhile(lambda x: int(x) != int(location.external_id), facilities)
+        supply_point = SupplyPointCase.view(
+            'commtrack/supply_point_by_loc',
+            key=[location.domain, location.location_id],
+            include_docs=True,
+            classes={'CommCareCase': SupplyPointCase},
+        ).one()
+        external_id = supply_point.external_id if supply_point else None
+        if external_id:
+            facilities = itertools.dropwhile(lambda x: int(x) != int(external_id), facilities)
 
     for idx, api in enumerate(apis_from_checkpoint):
         api[1](

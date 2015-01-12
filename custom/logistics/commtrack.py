@@ -2,6 +2,7 @@ import itertools
 from functools import partial
 import logging
 import traceback
+from corehq.apps.commtrack.models import SupplyPointCase
 
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.users.models import WebUser
@@ -62,11 +63,13 @@ def save_checkpoint(checkpoint, api, limit, offset, date, commit=True):
 def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id, commit=True):
     save_checkpoint(checkpoint, api, limit, offset, date, False)
     if external_id:
-        try:
-            location = SQLLocation.objects.get(domain=checkpoint.domain, external_id=int(external_id))
-        except SQLLocation.DoesNotExist:
+        supply_point = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                            key=[checkpoint.domain, str(external_id)],
+                                            reduce=False,
+                                            include_docs=True).first()
+        if not supply_point:
             return
-        checkpoint.location = location
+        checkpoint.location = supply_point.location.sql_location
     if commit:
         checkpoint.save()
 

@@ -69,16 +69,11 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
     next_url = ""
     while has_next:
         supply_point = facility
-        ews_config = EWSGhanaConfig.for_domain(domain)
-        if ews_config is not None:
-            sp = Location.get(SQLLocation.objects.get(
-                external_id=facility,
-                domain=domain
-            ).location_id).linked_supply_point()
-            if sp and sp.external_id:
-                supply_point = sp.external_id
-            else:
-                break
+        case = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                    key=[domain, str(supply_point)],
+                                    reduce=False,
+                                    include_docs=True,
+                                    limit=1).first()
         meta, product_stocks = endpoint.get_productstocks(
             next_url_params=next_url,
             limit=limit,
@@ -91,11 +86,6 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                                    meta.get('offset') or offset,
                                    date, facility, True)
         for product_stock in product_stocks:
-            case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                        key=[domain, str(product_stock.supply_point)],
-                                        reduce=False,
-                                        include_docs=True,
-                                        limit=1).first()
             if case:
                 product = Product.get_by_code(domain, product_stock.product)
                 try:
@@ -126,17 +116,15 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                            date, limit=100, offset=0):
     has_next = True
     next_url = ""
-
     while has_next:
         supply_point = facility
-        ews_config = EWSGhanaConfig.for_domain(domain)
-        if ews_config is not None:
-            sp = Location.get(SQLLocation.objects.get(domain=domain,
-                                                      external_id=facility).location_id).linked_supply_point()
-            if sp and sp.external_id:
-                supply_point = sp.external_id
-            else:
-                break
+        case = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                    key=[domain, str(supply_point)],
+                                    reduce=False,
+                                    include_docs=True,
+                                    limit=1).first()
+        if not case:
+            break
         meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
                                                                  limit=limit,
                                                                  offset=offset,
@@ -151,11 +139,6 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
         transactions_to_add = []
         with transaction.commit_on_success():
             for stocktransaction in stocktransactions:
-                case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(stocktransaction.supply_point)],
-                                            reduce=False,
-                                            include_docs=True,
-                                            limit=1).first()
                 if case:
                     product = Product.get_by_code(domain, stocktransaction.product)
                     report = StockReport(
@@ -187,21 +170,22 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
             next_url = meta['next'].split('?')[1]
 
 
-def get_product_stock(domain, endpoint, facilities, **kwargs):
+def get_product_stock(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     for facility in facilities:
-        sync_product_stock(domain, endpoint, facility, **kwargs)
+        sync_product_stock(domain, endpoint, facility, checkpoint, date, limit, offset)
+        offset = 0
 
 
-def get_stock_transaction(domain, endpoint, facilities, **kwargs):
+def get_stock_transaction(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     # Faking xform
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
     except ResourceNotFound:
         xform = XFormInstance(_id='ilsgateway-xform')
         xform.save()
-
     for facility in facilities:
-        sync_stock_transaction(domain, endpoint, facility, xform, **kwargs)
+        sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, date, limit, offset)
+        offset = 0
 
 
 def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
@@ -233,9 +217,10 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
             next_url = meta['next'].split('?')[1]
 
 
-def get_supply_point_statuses(domain, endpoint, facilities, **kwargs):
+def get_supply_point_statuses(domain, endpoint, facilities, limit=100, offset=0, **kwargs):
     for facility in facilities:
-        sync_supply_point_status(domain, endpoint, facility, **kwargs)
+        sync_supply_point_status(domain, endpoint, facility, limit, offset, **kwargs)
+        offset = 0
 
 
 def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
@@ -264,9 +249,10 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
             next_url = meta['next'].split('?')[1]
 
 
-def get_delivery_group_reports(domain, endpoint, facilities, **kwargs):
+def get_delivery_group_reports(domain, endpoint, facilities, limit=100, offset=0, **kwargs):
     for facility in facilities:
-        sync_delivery_group_report(domain, endpoint, facility, **kwargs)
+        sync_delivery_group_report(domain, endpoint, facility, limit, offset, **kwargs)
+        offset = 0
 
 
 # Temporary for staging
