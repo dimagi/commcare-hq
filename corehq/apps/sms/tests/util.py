@@ -2,11 +2,14 @@ import os
 import json
 from django.test import LiveServerTestCase
 from django.conf import settings
+from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
+    DefaultProductPlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     Subscription,
+    SubscriptionAdjustment,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.test_backend import TestSMSBackend
@@ -56,13 +59,18 @@ class TouchformsTestCase(LiveServerTestCase):
         domain_obj.default_sms_response = "Default SMS Response"
         domain_obj.save()
 
-        self.account = BillingAccount.get_or_create_account_by_domain(domain_obj.name)
+        generator.instantiate_accounting_for_tests()
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            domain_obj.name,
+            created_by="automated-test",
+        )[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(
+            domain_obj, edition=SoftwarePlanEdition.ADVANCED
+        )
         self.subscription = Subscription.new_domain_subscription(
             self.account,
             domain_obj.name,
-            SoftwarePlanVersion.objects.filter(
-                plan__edition=SoftwarePlanEdition.ENTERPRISE
-            )[0]
+            plan
         )
         self.subscription.is_active = True
         self.subscription.save()
@@ -322,5 +330,6 @@ class TouchformsTestCase(LiveServerTestCase):
         self.site.delete()
         self.backend.delete()
         self.backend_mapping.delete()
+        SubscriptionAdjustment.objects.all().delete()
         self.subscription.delete()
         self.account.delete()
