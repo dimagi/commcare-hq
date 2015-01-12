@@ -82,7 +82,7 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format

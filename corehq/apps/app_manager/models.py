@@ -187,11 +187,10 @@ class FormAction(DocumentSchema):
 
     @classmethod
     def get_action_paths(cls, action):
-        action_properties = action.properties()
         if action.condition.type == 'if':
             yield action.condition.question
 
-        for _, path in cls.get_action_properties(action):
+        for __, path in cls.get_action_properties(action):
             yield path
 
     @classmethod

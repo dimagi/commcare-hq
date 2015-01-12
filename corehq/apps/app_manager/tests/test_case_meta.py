@@ -1,7 +1,7 @@
 from django.test.testcases import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
-    AdvancedModule, AdvancedForm, LoadUpdateAction, AdvancedOpenCaseAction
+    AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction
 
 
 class CaseMetaTest(SimpleTestCase):

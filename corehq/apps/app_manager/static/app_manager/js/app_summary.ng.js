@@ -11,8 +11,8 @@
         formNameMap: {}
     });
 
-    summaryModule.factory('utils', ['$location', 'summaryConfig', function utilsFactory($location, config) {
-        var utils = {
+    summaryModule.factory('utils', ['$location', 'summaryConfig', function ($location, config) {
+        return {
             getTemplate: function (filename) {
                 return config.staticRoot + 'app_manager/ng_partials/' + filename;
             },
@@ -21,7 +21,7 @@
                 if (vtype) {
                     return vtype.icon_bs3;
                 }
-                return ''
+                return '';
             },
             getFormName: function (formId, lang) {
                 var name = config.formNameMap[formId];
@@ -34,7 +34,6 @@
                 return $location.path().substr(0, path.length) == path;
             }
         };
-        return utils;
     }]);
 
     var controllers = {};
@@ -47,7 +46,7 @@
         $scope.formSearch = {name: ''};
         $scope.moduleSearch = {name: ''};
 
-        self.init = function (attrs) {
+        self.init = function () {
             $scope.loading = true;
             djangoRMI.get_form_data({
             }).success(function (data) {
@@ -60,8 +59,7 @@
 
         self.updateView = function (data) {
             if (data.success) {
-                var response = data.response;
-                $scope.modules = response;
+                $scope.modules = data.response;
             }
         };
 
@@ -90,7 +88,7 @@
             $scope.typeSearch.name = caseType;
         };
 
-        self.init = function (attrs) {
+        self.init = function () {
             $scope.loading = true;
             djangoRMI.get_case_data({
             }).success(function (data) {
@@ -124,7 +122,7 @@
             controller: function ($scope) {
                 $scope.getFormName = utils.getFormName;
             }
-        }
+        };
     }]);
 
     summaryModule.directive('formQuestions', ['utils', function (utils) {
@@ -153,7 +151,7 @@
                     }
                 });
             }
-        }
+        };
     });
 
     summaryModule.directive('hierarchy', function () {
@@ -166,7 +164,7 @@
                 typeSearch: '='
             },
             templateUrl: '/hierarchy.html'
-        }
+        };
     });
 
     summaryModule.directive('member', function ($compile) {
@@ -192,6 +190,6 @@
                     });
                 }
             }
-        }
+        };
     });
 }(window.angular));
