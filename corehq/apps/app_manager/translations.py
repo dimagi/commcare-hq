@@ -95,7 +95,7 @@ def process_bulk_app_translation_upload(app, f):
             if expected_columns[0] not in sheet.headers:
                 msgs.append((
                     messages.error,
-                    'Skipping sheet "%s", could not find label columns' %
+                    'Skipping sheet "%s", could not find label column' %
                     sheet.worksheet.title
                 ))
                 continue
@@ -314,20 +314,26 @@ def update_form_translations(sheet, rows, missing_cols, app):
             new_trans_el.set('lang', lang)
             if lang != app.langs[0]:
                 # If the language isn't the default language
-                new_trans_el.attrib.pop('default')
+                new_trans_el.attrib.pop('default', None)
             else:
                 new_trans_el.set('default', '')
             itext.xml.append(new_trans_el)
 
+    # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
         assert(translation_node.exists())
 
         for row in rows:
-            question_id = row['label']
-            text_node = translation_node.find(
-                "./{f}text[@id='%s-label']" % question_id)
-            assert(text_node.exists())
+            label_id = row['label']
+            text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
+            if not text_node.exists():
+                msgs.append((
+                    messages.warning,
+                    "Unrecognized translation label {0} in sheet {1}. That row"
+                    " has been skipped". format(label_id, sheet.worksheet.title)
+                ))
+                continue
 
             # Add or remove translations
             for trans_type in ['default', 'audio', 'image', 'video']:
@@ -532,34 +538,3 @@ def get_col_key(translation_type, language):
     :return:
     '''
     return "%s_%s" % (translation_type, language)
-
-
-def get_translation(id, lang, form, media=None):
-    '''
-    Returns the label (or media path) for the given question in the given language
-    :param id: The identifier for the question, i.e. "question1" or
-    "my_multiselect-item6"
-    :param lang:
-    :param form: XForm object
-    :param media: "audio", "video", "image", or None. Returns the appropriate
-    media path if provided.
-    :return: The label, media path, or "" if no translation is found
-    '''
-    node_id = "%s-label" % id
-    xpath = "./{f}translation[@lang='%s']/{f}text[@id='%s']/{f}value" % \
-            (lang, node_id)
-
-    if media:
-        xpath += "[@form='%s']" % media
-        value_node = form.itext_node.find(xpath)
-        trans = value_node.xml.text if value_node.exists() else ""
-        return trans if trans is not None else ""
-    else:
-        try:
-            value_node = next(
-                n for n in form.itext.findall(xpath) if 'form' not in n.attrib
-            )
-            trans = value_node.xml.text
-            return trans if trans is not None else ""
-        except StopIteration:
-            return ""

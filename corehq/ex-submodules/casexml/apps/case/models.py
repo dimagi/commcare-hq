@@ -422,11 +422,14 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             return case
 
     @classmethod
-    def get_lite(cls, id):
+    def get_lite(cls, id, wrap=True):
         results = cls.get_db().view("case/get_lite", key=id, include_docs=False).one()
         if results is None:
             raise ResourceNotFound('no case with id %s exists' % id)
-        return cls.wrap(results['value'])
+        if wrap:
+            return cls.wrap(results['value'])
+        else:
+            return results['value']
 
     @classmethod
     def get_wrap_class(cls, data):
@@ -442,12 +445,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return cls
 
     @classmethod
-    def bulk_get_lite(cls, ids, wrapper=None, chunksize=100):
+    def bulk_get_lite(cls, ids, wrap=True, chunksize=100):
+        wrapper = lambda doc: cls.get_wrap_class(doc).wrap(doc) if wrap else doc
         for ids in chunked(ids, chunksize):
             for row in cls.get_db().view("case/get_lite", keys=ids, include_docs=False):
-                if wrapper is None:
-                    wrapper = cls.get_wrap_class(row['value'])
-                yield wrapper.wrap(row['value'])
+                yield wrapper(row['value'])
 
     def get_preloader_dict(self):
         """

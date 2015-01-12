@@ -8,7 +8,7 @@ function RuleProgressBar(handler_id, ajaxURL) {
 
     self.progress_pct = ko.computed(function() {
         if(self.total() > 0) {
-            return (self.current() / self.total()) * 100 + "%";
+            return Math.round((self.current() / self.total()) * 100) + "%";
         } else {
             return "0%";
         }

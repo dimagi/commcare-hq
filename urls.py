@@ -34,7 +34,6 @@ domain_specific = patterns('',
     # the receiver needs to accept posts at an endpoint that might
     # not have a slash, so don't include it at the root urlconf
     (r'^receiver', include('corehq.apps.receiverwrapper.urls')),
-    (r'^migration/', include('corehq.apps.migration.urls')),
     (r'^settings/', include(settings_domain_specific)),
     (r'^users/', include(users_redirect)),
     (r'^domain/', include(domain_redirect)),

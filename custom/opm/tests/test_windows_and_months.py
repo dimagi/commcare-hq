@@ -41,6 +41,14 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         )
         self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
 
+    def test_not_yet_in_range_by_a_lot(self):
+        # 12 or more months in the future you also don't count
+        case = OPMCase(
+            forms=[],
+            edd=self._offset_date(12),
+        )
+        self.assertRaises(InvalidRow, MockCaseRow, case, self.report)
+
     def test_past_range(self):
         # anytime after the period you don't count
         case = OPMCase(
@@ -65,6 +73,14 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
             row = MockCaseRow(case, self.report)
             self.assertEqual('mother', row.status)
             self.assertEqual(i, row.child_age)
+
+    def test_child_outside_window(self):
+        with self.assertRaises(InvalidRow):
+            case = OPMCase(
+                forms=[],
+                dod=self._offset_date(-50),
+            )
+            MockCaseRow(case, self.report)
 
 
 class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):

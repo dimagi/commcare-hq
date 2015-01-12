@@ -422,6 +422,8 @@ class SetupTab(UITab):
             LocationImportView,
             LocationImportStatusView,
             LocationSettingsView,
+            LocationFieldsView,
+            ProductsPerLocationView,
         )
 
         locations_config = {
@@ -443,6 +445,14 @@ class SetupTab(UITab):
                 {
                     'title': LocationImportStatusView.page_title,
                     'urlname': LocationImportStatusView.urlname,
+                },
+                {
+                    'title': LocationFieldsView.page_name(),
+                    'urlname': LocationFieldsView.urlname,
+                },
+                {
+                    'title': ProductsPerLocationView.page_title,
+                    'urlname': ProductsPerLocationView.urlname,
                 },
             ]
         }
@@ -516,7 +526,6 @@ class SetupTab(UITab):
                 locations_config,
                 advanced_locations_config,
             ]]]
-
 
 
 class ProjectDataTab(UITab):
@@ -1024,10 +1033,14 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views import (EditWebUserView, EditMyAccountDomainView, ListWebUsersView)
+            from corehq.apps.users.views import (
+                EditWebUserView,
+                EditMyAccountDomainView,
+                get_web_user_list_view,
+            )
             items.append((_('Project Users'), [
-                {'title': ListWebUsersView.page_title,
-                 'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
+                {'title': get_web_user_list_view(self._request).page_title,
+                 'url': reverse(get_web_user_list_view(self._request).urlname, args=[self.domain]),
                  'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
                  'subpages': [
                      {
@@ -1339,25 +1352,24 @@ class AccountingTab(UITab):
             },
         )))
 
-        if toggles.INVOICE_TRIGGER.enabled(self.couch_user.username):
-            from corehq.apps.accounting.views import (
-                TriggerInvoiceView, TriggerBookkeeperEmailView,
-                TestRenewalEmailView,
-            )
-            items.append(('Other Actions', (
-                {
-                    'title': TriggerInvoiceView.page_title,
-                    'url': reverse(TriggerInvoiceView.urlname),
-                },
-                {
-                    'title': TriggerBookkeeperEmailView.page_title,
-                    'url': reverse(TriggerBookkeeperEmailView.urlname),
-                },
-                {
-                    'title': TestRenewalEmailView.page_title,
-                    'url': reverse(TestRenewalEmailView.urlname),
-                }
-            )))
+        from corehq.apps.accounting.views import (
+            TriggerInvoiceView, TriggerBookkeeperEmailView,
+            TestRenewalEmailView,
+        )
+        items.append(('Other Actions', (
+            {
+                'title': TriggerInvoiceView.page_title,
+                'url': reverse(TriggerInvoiceView.urlname),
+            },
+            {
+                'title': TriggerBookkeeperEmailView.page_title,
+                'url': reverse(TriggerBookkeeperEmailView.urlname),
+            },
+            {
+                'title': TestRenewalEmailView.page_title,
+                'url': reverse(TestRenewalEmailView.urlname),
+            }
+        )))
         return items
 
 

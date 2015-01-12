@@ -6,7 +6,7 @@ from corehq.apps.app_manager import id_strings
 import urllib
 from django.core.urlresolvers import reverse
 from lxml import etree
-from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField
+from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, load_xmlobject_from_string
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
@@ -377,14 +377,29 @@ class Sort(AbstractTemplate):
     direction = StringField('@direction')
 
 
+class Style(XmlObject):
+    ROOT_NAME = 'style'
+
+    horz_align = StringField("@horz-align")
+    vert_align = StringField("@vert-align")
+    font_size = StringField("@font-size")
+    css_id = StringField("@css-id")
+    grid_height = StringField("grid/@grid-height")
+    grid_width = StringField("grid/@grid-width")
+    grid_x = StringField("grid/@grid-x")
+    grid_y = StringField("grid/@grid-y")
+
+
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
     ORDER = ('header', 'template', 'sort_node')
 
     sort = StringField('@sort')
+    style = NodeField('style', Style)
     header = NodeField('header', Header)
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
+    background = NodeField('background/text', Text)
 
 
 class DetailVariable(XmlObject):
@@ -427,6 +442,17 @@ class Detail(IdNode):
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
 
+    def get_all_fields(self):
+        '''
+        Return all fields under this Detail instance and all fields under
+        any details that may be under this instance.
+        :return:
+        '''
+        all_fields = []
+        for detail in [self] + list(self.details):
+            all_fields.extend(list(detail.fields))
+        return all_fields
+
     def _init_variables(self):
         if self._variables is None:
             self._variables = DetailVariableList()
@@ -446,12 +472,18 @@ class Detail(IdNode):
         if self._variables:
             for variable in self.variables:
                 result.add(variable.function)
-        for field in self.fields:
+        for field in self.get_all_fields():
             try:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
             except AttributeError:
-                pass  # Its a Graph detail
+                # Its a Graph detail
+                # convert Template to GraphTemplate
+                s = etree.tostring(field.template.node)
+                template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
+                for series in template.graph.series:
+                    result.add(series.nodeset)
+
         result.discard(None)
         return result
 
@@ -885,22 +917,25 @@ class SuiteGenerator(SuiteGeneratorBase):
                         )
 
                         if detail_column_infos:
-
-                            d = self.build_detail(
-                                module,
-                                detail_type,
-                                detail,
-                                detail_column_infos,
-                                list(detail.get_tabs()),
-                                self.id_strings.detail(module, detail_type),
-                                Text(locale_id=self.id_strings.detail_title_locale(
-                                    module, detail_type
-                                )),
-                                0,
-                                len(detail_column_infos)
-                            )
-                            if d:
+                            if detail.custom_xml:
+                                d = load_xmlobject_from_string(detail.custom_xml, xmlclass=Detail)
                                 r.append(d)
+                            else:
+                                d = self.build_detail(
+                                    module,
+                                    detail_type,
+                                    detail,
+                                    detail_column_infos,
+                                    list(detail.get_tabs()),
+                                    self.id_strings.detail(module, detail_type),
+                                    Text(locale_id=self.id_strings.detail_title_locale(
+                                        module, detail_type
+                                    )),
+                                    0,
+                                    len(detail_column_infos)
+                                )
+                                if d:
+                                    r.append(d)
         return r
 
     def detail_variables(self, module, detail, detail_column_infos):

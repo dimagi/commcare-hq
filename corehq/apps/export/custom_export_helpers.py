@@ -217,6 +217,8 @@ class FormCustomExportHelper(CustomExportHelper):
         e.include_errors = p['include_errors']
         e.app_id = p['app_id']
 
+        super(FormCustomExportHelper, self).update_custom_params()
+
     @property
     @memoized
     def default_order(self):

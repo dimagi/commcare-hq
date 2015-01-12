@@ -1509,7 +1509,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     def app_forms(self):
         app_forms = []
         for app in self.domain_object.applications():
-            app = app.get_latest_saved() or app
             if self.request.method == 'POST':
                 app_forms.append((app, SnapshotApplicationForm(self.request.POST, prefix=app.id)))
             elif self.published_snapshot and app.copy_of in self.published_apps:
@@ -1584,7 +1583,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def has_published_apps(self):
         for app in self.domain_object.applications():
-            app = app.get_latest_saved() or app
             if self.request.POST.get("%s-publish" % app.id, False):
                 return True
         messages.error(self.request, _("Cannot publish a project without applications to CommCare Exchange"))
@@ -2195,17 +2193,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     def update_feature(self, feature, current_state, new_state):
         if current_state != new_state:
-            slug = feature.slug
-            toggle = self.get_toggle(slug)
-            item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
-            if new_state:
-                if not item in toggle.enabled_users:
-                    toggle.enabled_users.append(item)
-            else:
-                toggle.enabled_users.remove(item)
-            toggle.save()
-            update_toggle_cache(slug, item, new_state)
-
+            feature.set(self.domain, new_state, NAMESPACE_DOMAIN)
             if feature.save_fn is not None:
                 feature.save_fn(self.domain, new_state)
 
