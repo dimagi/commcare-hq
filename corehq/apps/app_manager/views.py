@@ -2711,27 +2711,19 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
         if self.app.doc_type == 'RemoteApp':
             raise Http404()
 
-        context = get_apps_base_context(self.request, self.domain, self.app)
-        langs = context['langs']
-
-        modules = []
         form_name_map = {}
         for module in self.app.get_modules():
-            forms = []
             for form in module.get_forms():
                 form_name_map[form.unique_id] = {
                     'module_name': module.name,
                     'form_name': form.name
                 }
 
-            modules.append({'name': _find_name(module.name, langs), 'forms': forms})
-
-        context['modules'] = modules
-        context['summary'] = True
-        context['VELLUM_TYPES'] = VELLUM_TYPES
-        context['form_name_map'] = form_name_map
-
-        return context
+        return {
+            'VELLUM_TYPES': VELLUM_TYPES,
+            'form_name_map': form_name_map,
+            'langs': self.app.langs,
+        }
 
     @property
     def parent_pages(self):
