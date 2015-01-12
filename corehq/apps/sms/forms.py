@@ -741,6 +741,10 @@ class SettingsForm(Form):
         return (self.cleaned_data.get("sms_case_registration_enabled")
             == ENABLED)
 
+    def clean_sms_case_registration_type(self):
+        return self._clean_dependent_field("sms_case_registration_enabled",
+            "sms_case_registration_type")
+
     def _clean_registration_id_field(self, field_name):
         if self.cleaned_data.get("sms_case_registration_enabled"):
             value = self.cleaned_data.get(field_name)
