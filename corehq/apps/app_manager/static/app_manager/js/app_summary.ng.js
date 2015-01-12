@@ -135,7 +135,7 @@
             controller: function ($scope) {
                 $scope.getIcon = utils.getIcon;
             }
-        }
+        };
     }]);
     summaryModule.directive('loading', function () {
         return {
