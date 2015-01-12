@@ -78,7 +78,7 @@ class SQLLocation(MPTTModel):
 
         g = Group()
         g.domain = self.domain
-        g.name = group_name()
+        g.name = group_name() + '-Cases'
         g.users = [user_id] if user_id else []
         g.case_sharing = True
         g.reporting = False

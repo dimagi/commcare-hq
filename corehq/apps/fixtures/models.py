@@ -9,6 +9,7 @@ from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.locations.models import SQLLocation
 
 
 class FixtureTypeField(DocumentSchema):
@@ -288,14 +289,37 @@ class FixtureDataItem(Document):
 
     def get_groups(self, wrap=True):
         group_ids = set(
-            get_db().view('fixtures/ownership',
+            get_db().view(
+                'fixtures/ownership',
                 key=[self.domain, 'group by data_item', self.get_id],
                 reduce=False,
                 wrapper=lambda r: r['value']
             )
         )
+
         if wrap:
-            return set(Group.view('_all_docs', keys=list(group_ids), include_docs=True))
+            location_group_ids = set([
+                gid for gid in group_ids
+                if gid.startswith('locationgroup-') or gid.startswith('locationreportinggroup-')
+            ])
+            groups = []
+            for group_id in location_group_ids:
+                loc = SQLLocation.objects.get(
+                    location_id=group_id[group_id.index('-') + 1:]
+                )
+                if group_id.startswith('locationgroup-'):
+                    groups.append(loc.case_sharing_group_object())
+                elif group_id.startswith('locationreportinggroup-'):
+                    groups.append(loc.reporting_group_object())
+
+            return set(
+                list(Group.view(
+                    '_all_docs',
+                    keys=list(group_ids.difference(location_group_ids)),
+                    include_docs=True
+                )) +
+                groups
+            )
         else:
             return group_ids
 
