@@ -7,7 +7,6 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
     SoftwarePlanEdition,
-    SoftwarePlanVersion,
     Subscription,
     SubscriptionAdjustment,
 )
