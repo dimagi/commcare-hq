@@ -245,11 +245,12 @@ class EWSApi(APISynchronization):
                         domain=self.domain
                     )
                     SupplyPointCase.get_or_create_by_location(fake_location)
+                    created_location.save()
             elif ews_location.supply_points:
                 supply_point = ews_location.supply_points[0]
                 location.location_type = supply_point.type
-                location.save()
                 self._create_supply_point_from_location(supply_point, location)
+                location.save()
         else:
             location_dict = {
                 'name': ews_location.name,
