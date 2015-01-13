@@ -2,7 +2,6 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required
-from custom.ewsghana.api import EWSApi
 from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \

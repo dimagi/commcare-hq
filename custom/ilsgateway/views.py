@@ -5,7 +5,7 @@ from django.http.response import HttpResponseRedirect
 from corehq.apps.commtrack.models import CommtrackConfig, StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.http import HttpResponse
@@ -20,13 +20,12 @@ from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, ge
 from custom.logistics.models import StockDataCheckpoint
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import stock_data_task
-from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
+from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.models import MigrationCheckpoint
 from custom.logistics.tasks import resync_webusers_passwords_task
-from dimagi.utils.couch.database import iter_docs
 
 
 class GlobalStats(BaseDomainView):

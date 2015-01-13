@@ -4,7 +4,7 @@ import logging
 import traceback
 from corehq.apps.commtrack.models import SupplyPointCase
 
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location
 from corehq.apps.users.models import WebUser
 from custom.logistics.models import MigrationCheckpoint
 from dimagi.utils.dates import force_to_datetime

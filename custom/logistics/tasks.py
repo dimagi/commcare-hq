@@ -2,9 +2,7 @@ from datetime import datetime
 import itertools
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
-from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway import TEST
-from custom.ilsgateway.tasks import get_locations
 from custom.logistics.commtrack import save_stock_data_checkpoint
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
