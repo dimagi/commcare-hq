@@ -908,6 +908,9 @@ class MetReport(CaseReportMixin, BaseReport):
             rows.sort(key=lambda x: x[col_id], reverse=True)
         self._store_rows_in_redis(rows)
 
+        for i, row in enumerate(rows):
+            row[-1] = i + 1
+
         if not self.is_rendered_as_email:
             return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
         else:
