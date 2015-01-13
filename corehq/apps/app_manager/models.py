@@ -1383,7 +1383,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 needs_case_detail=True
             ))
         if self.case_list_form.form_id:
-            form = self.get_form_by_unique_id(self.case_list_form.form_id)
+            form = self.get_app().get_form(self.case_list_form.form_id)
             if not form:
                 errors.append({
                     'type': 'case list form missing',

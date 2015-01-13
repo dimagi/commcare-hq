@@ -28,3 +28,5 @@ SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'
 ATTACHMENT_PREFIX = 'attachment:'
 
 CASE_ID_AUTOGEN = 'case_id_autogen'
+
+RETURN_TO = 'return_to'

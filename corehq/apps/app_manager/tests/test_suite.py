@@ -289,26 +289,33 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_fixtures_in_graph(self):
         self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
 
-    def test_case_list_registration_form(self):
+    def _prep_case_list_form_app(self):
         app = Application.wrap(self.get_json('app'))
-        module = app.get_module(0)
-        form = module.get_form(0)
-        module.case_list_form.form_id = form.get_unique_id()
-        module.case_list_form.media_image = 'jr://file/commcare/image/new_case.png'
-        module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
-        module.case_list_form.label = {
+        case_module = app.get_module(0)
+        form = case_module.get_form(0)
+
+        register_module = app.add_module(Module.new_module('register', None))
+        register_module.unique_id = 'register_case_module'
+        register_module.case_type = case_module.case_type
+        register_form = app.new_form(1, 'Register Case Form', lang='en')
+        register_form.unique_id = 'register_case_form'
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
             'en': 'New Case'
         }
+        return app
+
+    def test_case_list_registration_form(self):
+        app = self._prep_case_list_form_app()
+        case_module = app.get_module(0)
+        case_module.case_list_form.media_image = 'jr://file/commcare/image/new_case.png'
+        case_module.case_list_form.media_audio = 'jr://file/commcare/audio/new_case.mp3'
+
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
     def test_case_list_registration_form_no_media(self):
-        app = Application.wrap(self.get_json('app'))
-        module = app.get_module(0)
-        form = module.get_form(0)
-        module.case_list_form.form_id = form.get_unique_id()
-        module.case_list_form.label = {
-            'en': 'New Case'
-        }
+        app = self._prep_case_list_form_app()
         self.assertXmlPartialEqual(
             self.get_xml('case-list-form-suite-no-media-partial'),
             app.create_suite(),

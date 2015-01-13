@@ -805,7 +805,11 @@ def get_module_view_context_and_template(app, module):
 
     def case_list_form_options(case_type):
         options = OrderedDict()
-        forms = [form for form in module.get_forms() if form.is_registration_form(case_type)]
+        forms = [
+            form
+            for mod in app.get_modules() if module.unique_id != mod.unique_id
+            for form in mod.get_forms() if form.is_registration_form(case_type)
+        ]
         if forms or module.case_list_form.form_id:
             options['disabled'] = _("Don't show")
             options.update({f.unique_id: trans(f.name, app.langs) for f in forms})

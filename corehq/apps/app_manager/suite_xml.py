@@ -10,7 +10,7 @@ from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, N
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID_AUTOGEN
+    CASE_ID_AUTOGEN, RETURN_TO
 from corehq.apps.app_manager.xpath import ProductInstanceXpath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
@@ -907,7 +907,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             if module.module_type == 'basic' and not module.parent_select.active and \
                     module.case_list_form.form_id and detail_type.endswith('short'):
                 # add form action to detail
-                form = module.get_form_by_unique_id(module.case_list_form.form_id)
+                form = self.app.get_form(module.case_list_form.form_id)
                 d.action = Action(
                     display=Display(
                         text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
@@ -919,6 +919,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 frame = PushFrame()
                 frame.add_command(self.id_strings.form_command(form))
                 frame.add_datum(StackDatum(id=CASE_ID_AUTOGEN, value='uuid()'))
+                frame.add_datum(StackDatum(id=RETURN_TO, value=self.id_strings.menu(module)))
                 d.action.stack.add_frame(frame)
 
             try:
@@ -1267,18 +1268,19 @@ class SuiteGenerator(SuiteGeneratorBase):
             'case_autoload.{0}.case_missing'.format(mode),
         )
 
-    def configure_entry_as_case_list_form(self, module, form, entry):
+    def configure_entry_as_case_list_form(self, entry):
         entry.datums.append(SessionDatum(id=CASE_ID_AUTOGEN, function='uuid()'))
         entry.stack = Stack()
         case_id = session_var(CASE_ID_AUTOGEN)
         case_count = CaseIDXPath(case_id).case().count()
-        frame_case_created = CreateFrame(if_clause='{} > 0'.format(case_count))
-        frame_case_created.add_command(self.id_strings.menu(module))
+        return_to = session_var(RETURN_TO)
+        frame_case_created = CreateFrame(if_clause='{} and {} > 0'.format(return_to, case_count))
+        frame_case_created.add_command(return_to)
         frame_case_created.add_datum(StackDatum(id='case_id', value=case_id))
         entry.stack.add_frame(frame_case_created)
 
-        frame_case_not_created = CreateFrame(if_clause='{} = 0'.format(case_count))
-        frame_case_not_created.add_command(self.id_strings.menu(module))
+        frame_case_not_created = CreateFrame(if_clause='{} and {} = 0'.format(return_to, case_count))
+        frame_case_not_created.add_command(return_to)
         entry.stack.add_frame(frame_case_not_created)
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
@@ -1294,8 +1296,12 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if not form or form.requires == 'case':
             self.configure_entry_module(module, e, use_filter=True)
-        elif form and module.case_list_form.form_id and module.case_list_form.form_id == form.get_unique_id():
-            self.configure_entry_as_case_list_form(module, form, e)
+        elif form:
+            case_list_modules = (
+                mod for mod in self.app.get_modules() if mod.case_list_form.form_id == form.get_unique_id()
+            )
+            if any(case_list_modules):
+                self.configure_entry_as_case_list_form(e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)

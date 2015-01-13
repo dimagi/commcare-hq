@@ -5,8 +5,9 @@
         </display>
         <stack>
             <push>
-                <command>m0-f0</command>
+                <command>m1-f0</command>
                 <datum id="case_id_autogen" value="uuid()"/>
+                <datum id="return_to" value="m0"/>
             </push>
         </stack>
     </action>
