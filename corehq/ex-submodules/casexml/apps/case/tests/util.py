@@ -85,7 +85,7 @@ def check_xml_line_by_line(test_case, expected, actual):
 
 
 def assert_user_has_case(testcase, user, case_id, **kwargs):
-    return assert_user_has_cases(testcase, user, [case_id], **kwargs)
+    return assert_user_has_cases(testcase, user, [case_id], return_single=True, **kwargs)
 
 
 def assert_user_has_cases(testcase, user, case_ids, **kwargs):
@@ -95,7 +95,7 @@ def assert_user_has_cases(testcase, user, case_ids, **kwargs):
 
 
 def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
-    return assert_user_doesnt_have_cases(testcase, user, [case_id], **kwargs)
+    return assert_user_doesnt_have_cases(testcase, user, [case_id], return_single=True, **kwargs)
 
 
 def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
@@ -106,9 +106,8 @@ def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
 
 def check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V1,
-                        purge_restore_cache=False):
+                        purge_restore_cache=False, return_single=False):
 
-    return_single = False
     if not isinstance(case_blocks, list):
         case_blocks = [case_blocks]
         return_single = True
