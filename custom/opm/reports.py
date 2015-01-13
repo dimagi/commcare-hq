@@ -909,7 +909,7 @@ class MetReport(CaseReportMixin, BaseReport):
         self._store_rows_in_redis(rows)
 
         for i, row in enumerate(rows):
-            row[-1] = i + 1
+            row[self.column_index('serial_number')] = i + 1
 
         if not self.is_rendered_as_email:
             return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
