@@ -1,6 +1,7 @@
 from datetime import timedelta
 from dateutil import rrule
 from dateutil.rrule import MO
+from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
@@ -13,19 +14,23 @@ from custom.ewsghana.reports.stock_levels_report import StockLevelsReport
 from custom.ewsghana.reports import MultiReport, EWSData
 from casexml.apps.stock.models import StockTransaction
 from django.utils import html
+from django.db.models import Q
 
 
 def get_supply_points(location_id, domain):
     loc = SQLLocation.objects.get(location_id=location_id)
-
+    location_types = [loc_type.name for loc_type in filter(
+        lambda loc_type: not loc_type.administrative,
+        Domain.get_by_name(domain).location_types
+    )]
     if loc.location_type == 'district':
         locations = SQLLocation.objects.filter(parent=loc)
     elif loc.location_type == 'region':
         locations = SQLLocation.objects.filter(parent__parent=loc)
-    elif loc.location_type == 'facility':
+    elif loc.location_type in location_types:
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type='facility')
+        locations = SQLLocation.objects.filter(domain=domain, location_type__in=location_types)
     return locations.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
 
 
@@ -165,10 +170,26 @@ class MonthOfStockProduct(EWSData):
                                 self.config['domain']).order_by('code')
         rows = []
         if self.config['location_id']:
-            supply_points = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])\
-                .order_by('name').exclude(supply_point_id__isnull=True)
+            location = SQLLocation.objects.get(
+                domain=self.config['domain'],
+                location_id=self.config['location_id']
+            )
+            if location.location_type == 'country':
+                supply_points = SQLLocation.objects.filter(
+                    Q(parent__location_id=self.config['location_id']) |
+                    Q(location_type='Regional Medical Store', domain=self.config['domain'])
+                ).order_by('name').exclude(supply_point_id__isnull=True)
+            else:
+                supply_points = SQLLocation.objects.filter(
+                    parent__location_id=self.config['location_id']
+                ).order_by('name').exclude(supply_point_id__isnull=True)
+
             for sp in supply_points:
-                if sp.location_type == 'facility':
+                location_types = [loc_type.name for loc_type in filter(
+                    lambda loc_type: not loc_type.administrative,
+                    Domain.get_by_name(self.config['domain']).location_types
+                )]
+                if sp.location_type in location_types:
                     cls = StockLevelsReport
                 else:
                     cls = StockStatus
@@ -177,7 +198,7 @@ class MonthOfStockProduct(EWSData):
                     self.config['domain'],
                     '?location_id=%s&filter_by_program=%s&startdate=%s'
                     '&enddate=%s&report_type=%s&filter_by_product=%s',
-                    (sp.location_id, self.config['program'], self.config['startdate'],
+                    (sp.location_id, self.config['program'] or '0', self.config['startdate'],
                     self.config['enddate'], self.config['report_type'],
                     '&filter_by_product='.join(self.config['products'])))
 
@@ -266,8 +287,19 @@ class StockoutTable(EWSData):
     def rows(self):
         rows = []
         if self.config['location_id']:
-            supply_points = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])\
-                .order_by('name').exclude(supply_point_id__isnull=True)
+            location = SQLLocation.objects.get(
+                domain=self.config['domain'],
+                location_id=self.config['location_id']
+            )
+            if location.location_type == 'country':
+                supply_points = SQLLocation.objects.filter(
+                    Q(parent__location_id=self.config['location_id']) |
+                    Q(location_type='Regional Medical Store', domain=self.config['domain'])
+                ).order_by('name').exclude(supply_point_id__isnull=True)
+            else:
+                supply_points = SQLLocation.objects.filter(
+                    parent__location_id=self.config['location_id']
+                ).order_by('name').exclude(supply_point_id__isnull=True)
             products = SQLProduct.objects.filter(is_archived=False, domain=self.config['domain'])
 
             for supply_point in supply_points:

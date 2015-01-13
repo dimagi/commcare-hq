@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from django.utils.timesince import timesince
 from math import ceil
+from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
@@ -407,7 +408,11 @@ class StockLevelsReport(MultiReport):
     @memoized
     def data_providers(self):
         config = self.report_config
-        if not self.needs_filters and Location.get(config['location_id']).location_type == 'facility':
+        location_types = [loc_type.name for loc_type in filter(
+            lambda loc_type: not loc_type.administrative,
+            Domain.get_by_name(self.domain).location_types
+        )]
+        if not self.needs_filters and Location.get(config['location_id']).location_type in location_types:
             return [FacilityReportData(config),
                     StockLevelsLegend(config),
                     FacilitySMSUsers(config),
