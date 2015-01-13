@@ -669,7 +669,6 @@ class OPMCaseRow(object):
         ) + self.year_end_bonus_cash
 
 
-
 class ConditionsMet(OPMCaseRow):
     method_map = [
         ('name', _("List of Beneficiaries"), True),
@@ -689,10 +688,16 @@ class ConditionsMet(OPMCaseRow):
         ('cash', _("Payment Amount"), True),
         ('case_id', _('Case ID'), True),
         ('closed_date', _("Closed On"), True),
+        ('payment_last_month', _("Payment amount received last month"), True),
+        ('cash_received_last_month', _("Cash received last month (Yes/No)"), True),
+        ('serial_number', _("Serial number"), True),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
+        self.serial_number = 0
+        self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
+        self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
