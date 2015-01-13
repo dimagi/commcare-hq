@@ -545,9 +545,13 @@ class SettingsForm(Form):
                     css_id="custom-chat-template-group",
                 )
             )
+        attrs = {}
+        if not self._cchq_is_previewer:
+            attrs["style"] = "display: none;"
         return crispy.Fieldset(
             _("Chat Settings"),
-            *fields
+            *fields,
+            **attrs
         )
 
     def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False,
@@ -740,6 +744,10 @@ class SettingsForm(Form):
     def clean_sms_case_registration_enabled(self):
         return (self.cleaned_data.get("sms_case_registration_enabled")
             == ENABLED)
+
+    def clean_sms_case_registration_type(self):
+        return self._clean_dependent_field("sms_case_registration_enabled",
+            "sms_case_registration_type")
 
     def _clean_registration_id_field(self, field_name):
         if self.cleaned_data.get("sms_case_registration_enabled"):
