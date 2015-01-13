@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import patterns, url, include
-from corehq.apps.app_manager.views import DownloadCCZ
+from corehq.apps.app_manager.view_helpers import DynamicTemplateView
+from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
 app_urls = patterns('corehq.apps.app_manager.views',
@@ -31,6 +32,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         'form_source', name='form_source'),
     url(r'^summary/$', 'app_summary', name='app_summary'),
+    url(r'^summary_new/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
     url(r'^exchange_summary/$', 'app_summary_from_exchange',
         name='exchange_app_summary'),
     url(r'^update_build_comment/$', 'update_build_comment',
@@ -128,6 +130,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
+    url(r'^ng_template/(?P<template>[\w-]+)', DynamicTemplateView.as_view(), name='ng_template'),
 
     url(r'^', include('custom.ucla.urls')),
 )

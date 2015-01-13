@@ -1,0 +1,117 @@
+{% extends "app_manager/ng_partials/base_summary_view.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+{% block navigation_extra %}
+    {% angularjs %}
+    <li role="presentation">
+        <a ng-click="filterCaseTypes()">{% trans "All Case Types" %}</a>
+        <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"></hierarchy>
+    </li>
+    {% endangularjs %}
+{% endblock %}
+
+{% block content %}
+{% angularjs %}
+<div class="page-header" style="margin-top: 0;">
+    <h1 style="font-size: 1.8em;">{% trans "Case Summary" %}</h1>
+    <form class="form-inline" role="form" ng-hide="loading">
+      <div class="form-group">
+        <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
+        <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name">
+      </div>
+    </form>
+</div>
+<div>
+    <loading></loading>
+    <div class="row-fluid" ng-hide="loading">
+        <div ng-repeat="caseType in caseTypes|filter:typeSearch">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                      <div class="col-md-3"><h3>{{ caseType.name }}</h3></div>
+                      <div class="col-md-3">
+                          {% trans "Relationships:" %}
+                          <ul>
+                                <li ng-repeat="(relationship, case_type) in caseType.relationships">
+                                    <span class="label label-primary">{{ relationship }}</span> {{ case_type }}
+                                </li>
+                            </ul>
+                      </div>
+                      <div class="col-md-3">
+                          {% trans "Opened by:" %}
+                          <opener-closer forms="caseType.opened_by" lang="lang"></opener-closer>
+                      </div>
+                      <div class="col-md-3">
+                          {% trans "Closed by:" %}
+                          <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>
+                      </div>
+                    </div>
+                </div>
+                <table class="table" ng-repeat-end>
+                    <thead>
+                        <th>{% trans "Case Property" %}</th>
+                        <th>{% trans "Form" %}</th>
+                        <th>{% trans "Load questions" %}</th>
+                        <th>{% trans "Save questions" %}</th>
+                    </thead>
+                    <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
+                        <tr ng-repeat="form in property.forms">
+                            <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
+                            <td>{% verbatim %}{{ getFormName(form.form_id, lang) }}{% endverbatim %}</td>
+                            <td><form-questions questions="form.load_questions"></form-questions></td>
+                            <td><form-questions questions="form.save_questions"></form-questions></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- template for rendering case type hierarchy in navigation -->
+<script type="text/ng-template" id="/hierarchy.html">
+<ul>
+    <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"
+             type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"></member>
+</ul>
+</script>
+
+<!-- sub-template for member of case type hierarchy -->
+<script type="text/ng-template" id="/hierarchy_member.html">
+<li role="presentation" ng-class="typeSearch.name === casetype ? 'active' : ''">
+    <a ng-click="filterCaseTypes({casetype: casetype})">{{ casetype }}</a>
+</li>
+</script>
+
+<!-- template for forms that open / close a case type -->
+<script type="text/ng-template" id="/opener_closer.html">
+<ul>
+    <li ng-repeat="(form_id, conditions) in forms">
+        {% verbatim %}{{ getFormName(form_id, lang) }}{% endverbatim %}
+        <ul ng-if="conditions.length">
+            <li ng-repeat="condition in conditions">
+                If {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
+            </li>
+        </ul>
+    </li>
+</ul>
+</script>
+
+<!-- template for rendering form questions -->
+<script type="text/ng-template" id="/form_questions.html">
+<ul>
+    <li ng-repeat="question in questions">
+        {% verbatim %}<i class="fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
+        {{ question.question.value }}
+        <ul ng-if="question.condition">
+            <li>
+                If {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
+            </li>
+        </ul>
+    </li>
+</ul>
+</script>
+{% endangularjs %}
+{% endblock %}

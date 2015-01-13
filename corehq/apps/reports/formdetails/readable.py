@@ -3,7 +3,7 @@ from django.http import Http404
 from django.utils.safestring import mark_safe
 from jsonobject import *
 from jsonobject.base import DefaultProperty
-from corehq.apps.app_manager.models import get_app, Application
+from corehq.apps.app_manager.models import get_app, Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
@@ -42,6 +42,118 @@ class FormQuestion(JsonObject):
 class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()
     children = ListProperty(lambda: FormQuestionResponse, exclude_if_none=True)
+
+
+class ConditionalFormQuestionResponse(JsonObject):
+    question = ObjectProperty(FormQuestionResponse)
+    condition = ObjectProperty(FormActionCondition)
+
+
+class QuestionList(JsonObject):
+    questions = ListProperty(FormQuestionResponse)
+
+
+class ConditionList(JsonObject):
+    conditions = ListProperty(FormActionCondition)
+
+
+class CaseFormMeta(JsonObject):
+    form_id = StringProperty()
+    load_questions = ListProperty(ConditionalFormQuestionResponse)
+    save_questions = ListProperty(ConditionalFormQuestionResponse)
+
+
+class CaseProperty(JsonObject):
+    name = StringProperty()
+    forms = ListProperty(CaseFormMeta)
+
+    def get_form(self, form_id):
+        try:
+            form = next(form for form in self.forms if form.form_id == form_id)
+        except StopIteration:
+            form = CaseFormMeta(form_id=form_id)
+            self.forms.append(form)
+        return form
+
+    def add_load(self, form_id, question):
+        form = self.get_form(form_id)
+        form.load_questions.append(ConditionalFormQuestionResponse(
+            question=question,
+            condition=None
+        ))
+
+    def add_save(self, form_id, question, condition=None):
+        form = self.get_form(form_id)
+        form.save_questions.append(ConditionalFormQuestionResponse(
+            question=question,
+            condition=(condition if condition and condition.type == 'if' else None)
+        ))
+
+
+class CaseTypeMeta(JsonObject):
+    name = StringProperty(required=True)
+    relationships = DictProperty()  # relationship name -> case type
+    properties = ListProperty(CaseProperty)  # property -> CaseProperty
+    opened_by = DictProperty(ConditionList)  # form_ids -> [FormActionCondition, ...]
+    closed_by = DictProperty(ConditionList)  # form_ids -> [FormActionCondition, ...]
+
+    def get_property(self, name):
+        assert '/' not in name, "Add parent properties to the correct case type"
+        try:
+            prop = next(prop for prop in self.properties if prop.name == name)
+        except StopIteration:
+            prop = CaseProperty(name=name)
+            self.properties.append(prop)
+        return prop
+
+    def add_opener(self, form_id, condition):
+        openers = self.opened_by.get(form_id, ConditionList())
+        if condition.type == 'if':
+            # only add optional conditions
+            openers.conditions.append(condition)
+        self.opened_by[form_id] = openers
+
+    def add_closer(self, form_id, condition):
+        closers = self.closed_by.get(form_id, ConditionList())
+        if condition.type == 'if':
+            # only add optional conditions
+            closers.conditions.append(condition)
+        self.closed_by[form_id] = closers
+
+
+class AppCaseMetadata(JsonObject):
+    case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
+    type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
+
+    def get_property(self, root_case_type, name):
+        type_ = self.get_type(root_case_type)
+        if '/' in name:
+            # find the case property from the correct case type
+            parent_rel, name = name.split('/', 1)
+            parent_case_type = type_.relationships[parent_rel]
+            return self.get_property(parent_case_type, name)
+
+        return type_.get_property(name)
+
+    def add_property_load(self, root_case_type, name, form_id, question):
+        prop = self.get_property(root_case_type, name)
+        prop.add_load(form_id, question)
+
+    def add_property_save(self, root_case_type, name, form_id, question, condition=None):
+        prop = self.get_property(root_case_type, name)
+        prop.add_save(form_id, question, condition)
+
+    def get_type(self, name):
+        if not name:
+            return CaseTypeMeta(name='')
+
+        try:
+            type_ = next(type_ for type_ in self.case_types if type_.name == name)
+        except StopIteration:
+            type_ = CaseTypeMeta(name=name)
+            self.case_types.append(type_)
+
+        return type_
 
 
 SYSTEM_FIELD_NAMES = (

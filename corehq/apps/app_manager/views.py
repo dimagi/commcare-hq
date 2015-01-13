@@ -3,6 +3,7 @@ import copy
 import logging
 import hashlib
 import itertools
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from lxml import etree
 import os
 import re
@@ -13,7 +14,7 @@ from xml.dom.minidom import parseString
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, get_language
+from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
 from corehq.apps.app_manager import commcare_settings
@@ -35,6 +36,8 @@ from corehq.apps.app_manager.translations import (
     expected_bulk_app_sheet_headers,
     process_bulk_app_translation_upload
 )
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.programs.models import Program
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -83,7 +86,7 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
@@ -95,8 +98,8 @@ from corehq.apps.app_manager.xform import (
     CaseError,
     XForm,
     XFormError,
-    XFormValidationError
-)
+    XFormValidationError,
+    VELLUM_TYPES)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -2685,6 +2688,85 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/summary.html", context)
     else:
         return render(request, "app_manager/exchange_summary.html", context)
+
+
+class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
+    urlname = 'app_summary_new'
+    page_title = ugettext_noop("Summary")
+    template_name = 'app_manager/summary_new.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        request.preview_bootstrap3 = True
+        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(AppSummaryView, self).main_context
+        context.update({
+            'domain': self.domain,
+        })
+        return context
+
+    @property
+    def page_context(self):
+        if self.app.doc_type == 'RemoteApp':
+            raise Http404()
+
+        form_name_map = {}
+        for module in self.app.get_modules():
+            for form in module.get_forms():
+                form_name_map[form.unique_id] = {
+                    'module_name': module.name,
+                    'form_name': form.name
+                }
+
+        return {
+            'VELLUM_TYPES': VELLUM_TYPES,
+            'form_name_map': form_name_map,
+            'langs': self.app.langs,
+        }
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': _("Applications"),
+                'url': reverse('view_app', args=[self.domain, self.app_id]),
+            },
+            {
+                'title': self.app.name,
+                'url': reverse('view_app', args=[self.domain, self.app_id]),
+            }
+        ]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.app_id])
+
+    @allow_remote_invocation
+    def get_case_data(self, in_data):
+        return {
+            'response': self.app.get_case_metadata().to_json(),
+            'success': True,
+        }
+
+    @allow_remote_invocation
+    def get_form_data(self, in_data):
+        modules = []
+        for module in self.app.get_modules():
+            forms = []
+            for form in module.get_forms():
+                questions = form.get_questions(self.app.langs, include_triggers=True, include_groups=True)
+                forms.append({
+                    'name': _find_name(form.name, self.app.langs),
+                    'questions': [FormQuestionResponse(q).to_json() for q in questions],
+                })
+
+            modules.append({'name': _find_name(module.name, self.app.langs), 'forms': forms})
+        return {
+            'response': modules,
+            'success': True,
+        }
 
 
 def get_default_translations_for_download(app):

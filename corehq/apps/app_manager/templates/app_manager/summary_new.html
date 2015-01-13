@@ -1,0 +1,63 @@
+{% extends "style/base_section.html" %}
+{% load xforms_extras %}
+{% load url_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load compress %}
+{% load djangular_tags %}
+
+{% block js %}
+    <script type="text/javascript" src="{% new_static 'app_manager/js/app_summary.ng.js' %}"></script>
+{% endblock js %}
+
+{% block uncompressed-js %} {{ block.super }}
+    <script type="text/javascript">
+        (function (angular, undefined) {
+            'use strict';
+
+            var summaryApp = angular.module('summaryApp', ['ngRoute', 'summaryModule']);
+            summaryApp.config(['$httpProvider', function($httpProvider) {
+                $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+            }]);
+            summaryApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+                djangoRMIProvider.configure({% djng_current_rmi %});
+            }]);
+
+            summaryApp.constant('summaryConfig', {
+                staticRoot: '{{ STATIC_URL }}',
+                vellumTypes: {{ VELLUM_TYPES|JSON }},
+                formNameMap: {{ form_name_map|JSON }}
+            });
+
+            summaryApp.config(['$routeProvider', function($routeProvider) {
+                $routeProvider.
+                    when('/forms', {
+                        templateUrl: '{% url 'ng_template' domain 'form_summary_view' %}',
+                        controller: 'FormController'
+                    }).
+                    when('/cases', {
+                        templateUrl: '{% url 'ng_template' domain 'case_summary_view' %}',
+                        controller: 'CaseController'
+                    }).
+                    otherwise({
+                        redirectTo: '/cases'
+                    });
+            }]);
+        }(window.angular));
+    </script>
+{% endblock %}
+
+{% block content %}
+<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
+    {% for parent in current_page.parents %}
+        <li><a href="{{ parent.url }}">{{ parent.title }}</a></li>
+    {% endfor %}
+    <li class="active">{{ current_page.page_name }}</li>
+</ol>
+<div class="container-fluid" ng-app="summaryApp">
+    <div class="row">
+        <ng-view></ng-view>
+    </div>
+</div>
+{% endblock content %}
