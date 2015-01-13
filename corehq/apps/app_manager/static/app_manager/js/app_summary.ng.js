@@ -36,8 +36,48 @@
         };
     }]);
 
+    summaryModule.factory('summaryDataService', ['$q', 'djangoRMI', function ($q, djangoRMI) {
+        var self = this,
+            service = {};
+        self.caseData = null;
+        self.formData = null;
+
+        service.getCaseData = function () {
+            var deferred = $q.defer();
+
+            if (self.caseData === null) {
+                djangoRMI.get_case_data({}).success(function (data) {
+                    self.caseData = data;
+                    deferred.resolve(data);
+                }).error(function () {
+                    deferred.reject();
+                });
+            } else {
+                deferred.resolve(self.caseData);
+            }
+            return deferred.promise;
+        };
+
+        service.getFormData = function () {
+            var deferred = $q.defer();
+
+            if (self.formData === null) {
+                djangoRMI.get_form_data({}).success(function (data) {
+                    self.formData = data;
+                    deferred.resolve(data);
+                }).error(function () {
+                    deferred.reject();
+                });
+            } else {
+                deferred.resolve(self.formData);
+            }
+            return deferred.promise;
+        };
+        return service;
+    }]);
+
     var controllers = {};
-    controllers.FormController = function ($scope, djangoRMI, summaryConfig, utils) {
+    controllers.FormController = function ($scope, summaryDataService, summaryConfig, utils) {
         var self = this;
 
         $scope.loading = true;
@@ -48,11 +88,10 @@
 
         self.init = function () {
             $scope.loading = true;
-            djangoRMI.get_form_data({
-            }).success(function (data) {
+            summaryDataService.getFormData().then(function (data) {
                 $scope.loading = false;
                 self.updateView(data);
-            }).error(function () {
+            }, function () {
                 $scope.loading = false;
             });
         };
@@ -73,7 +112,7 @@
         self.init();
     };
 
-    controllers.CaseController = function ($scope, djangoRMI, summaryConfig, utils) {
+    controllers.CaseController = function ($scope, summaryDataService, summaryConfig, utils) {
         var self = this;
 
         $scope.caseTypes = [];
@@ -90,11 +129,10 @@
 
         self.init = function () {
             $scope.loading = true;
-            djangoRMI.get_case_data({
-            }).success(function (data) {
+            summaryDataService.getCaseData().then(function (data) {
                 $scope.loading = false;
                 self.updateView(data);
-            }).error(function () {
+            }, function () {
                 $scope.loading = false;
             });
         };
