@@ -188,6 +188,7 @@ def preview_data_source(request, domain, config_id):
         'data_source': config,
         'columns': q.column_descriptions,
         'data': q[:20],
+        'total_rows': q.count(),
     })
     return render(request, "userreports/preview_data.html", context)
 

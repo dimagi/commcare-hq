@@ -185,10 +185,10 @@ cloudCare.SessionView = Selectable.extend({
         deleteEl.appendTo($(this.el));
         deleteEl.click(function (e) {
             e.stopPropagation();
-            var dialog = confirm("Permanently delete this form? You will not be able to return to it later.");
+            var dialog = confirm(translatedStrings.deleteSaved);
             if (dialog == true) {
                 self.model.destroy();
-                showSuccess('Form was deleted.', $("#cloudcare-notifications"), 10000);
+                showSuccess(translatedStrings.deleteSuccess, $("#cloudcare-notifications"), 10000);
             }
         });
         $("<a />").text(this.model.get('display')).appendTo($(this.el));
@@ -550,7 +550,7 @@ cloudCare.AppView = Backbone.View.extend({
             ).addClass("btn btn-primary").appendTo(
                 self.formListView.caseView.detailsView.el
             );
-            $('<a />').attr('href', buttonUrl).attr('target', '_blank').text("open in new window").appendTo(
+            $('<a />').attr('href', buttonUrl).attr('target', '_blank').text(translatedStrings.newWindow).appendTo(
                 self.formListView.caseView.detailsView.el
             ).css("padding-left", "2em");
             self.formListView.enterForm.click(buttonOnClick);
@@ -655,14 +655,12 @@ cloudCare.AppView = Backbone.View.extend({
                 },
                 error: function (resp, status, message) {
                     if (message) {
-                        message = "Save failed. Details: " + message;
+                        message = translatedStrings.errSavingDetail + message;
                     } else {
-                        message = "Unknown error: " + status + " " + resp.status;
+                        message = translatedStrings.unknownError + status + " " + resp.status;
                         if (resp.status === 0) {
-                            message = (message
-                                + ". This can happen if you loaded CloudCare "
-                                + "from a different address than the server "
-                                + "address (" + submitUrl + ")");
+                            message = (message + ". "
+                                + translatedStrings.unknownErrorDetail + " (" + submitUrl + ")");
                         }
                     }
                     data.onerror({message: message});

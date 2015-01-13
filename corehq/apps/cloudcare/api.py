@@ -1,13 +1,11 @@
 import json
-from django.utils import html
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from casexml.apps.case.util import iter_cases
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
-from corehq.apps.locations.models import Location
 from corehq.apps.app_manager.models import (
-    Application,
     ApplicationBase,
     get_app,
 )
@@ -22,6 +20,7 @@ from dimagi.utils.chunked import chunked
 from django.utils.translation import ugettext as _
 from touchforms.formplayer.models import EntrySession
 from django.core.urlresolvers import reverse
+
 
 def api_closed_to_status(closed_string):
     # legacy api support
@@ -43,6 +42,7 @@ def status_to_closed_flags(status):
             CASE_STATUS_CLOSED: [True],
             CASE_STATUS_OPEN: [False]}[status]
 
+
 class CaseAPIResult(object):
     """
     The result of a case API query. Useful for abstracting out the difference
@@ -63,7 +63,7 @@ class CaseAPIResult(object):
     @property
     def id(self):
         if self._id is None:
-            self._id = self._couch_doc._id
+            self._id = self._couch_doc['_id']
         return self._id
 
     @property
@@ -79,6 +79,7 @@ class CaseAPIResult(object):
     def to_json(self):
         return self.id if self.id_only else self.case_json
 
+
 class CaseAPIHelper(object):
     """
     Simple config object for querying the APIs
@@ -91,21 +92,11 @@ class CaseAPIHelper(object):
         self.status = status
         self.case_type = case_type
         self.ids_only = ids_only
+        self.wrap = not ids_only  # if we're just querying IDs we don't need to wrap the docs
         self.footprint = footprint
         self.strip_history = strip_history
         self.filters = filters
         self.include_children = include_children
-
-
-    def iter_cases(self, ids):
-        database = CommCareCase.get_db()
-        if not self.strip_history:
-            for doc in iter_docs(database, ids):
-                yield CommCareCase.wrap(doc)
-        else:
-            for doc_ids in chunked(ids, 100):
-                for case in CommCareCase.bulk_get_lite(doc_ids, wrapper=CommCareCase):
-                    yield case
 
     def _case_results(self, case_id_list):
         def _filter(res):
@@ -121,11 +112,11 @@ class CaseAPIHelper(object):
                             return False
                 return True
 
-        if not self.ids_only or self.filters or self.footprint:
+        if not self.ids_only or self.filters or self.footprint or self.include_children:
             # optimization hack - we know we'll need the full cases eventually
             # so just grab them now.
             base_results = [CaseAPIResult(couch_doc=case, id_only=self.ids_only)
-                            for case in self.iter_cases(case_id_list)]
+                            for case in iter_cases(case_id_list, self.strip_history, self.wrap)]
 
         else:
             base_results = [CaseAPIResult(id=id, id_only=True) for id in case_id_list]

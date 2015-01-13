@@ -1,33 +1,40 @@
-import copy
-from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.utils.safestring import mark_safe
-from django.views.decorators.http import require_POST
-from corehq.apps.commtrack.views import BaseCommTrackManageView
-
-from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.models import Location
-from corehq.apps.locations.forms import LocationForm
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config, dump_locations
-from corehq.apps.commtrack.models import LocationType, SupplyPointCase
-from corehq.apps.products.models import Product
-from corehq.apps.commtrack.util import unicode_slug
-from corehq.apps.facilities.models import FacilityRegistry
-from django.core.urlresolvers import reverse
-from django.shortcuts import render
-from django.contrib import messages
-from couchdbkit import ResourceNotFound
-import urllib
 import json
+import urllib
+import logging
 
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.shortcuts import render
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.http import require_POST
+
+from couchdbkit import ResourceNotFound, MultipleResultsFound
+from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
-from custom.openlmis.tasks import bootstrap_domain_task
 from soil.util import expose_download, get_download_context
+
+from corehq import toggles
+from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
+from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tasks import import_locations_async
-from couchexport.models import Format
+from corehq.apps.commtrack.util import unicode_slug
+from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
+from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
+from corehq.apps.facilities.models import FacilityRegistry
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.users.forms import MultipleSelectionForm
+from custom.openlmis.tasks import bootstrap_domain_task
+
+from .models import Location
+from .forms import LocationForm
+from .util import load_locs_json, location_hierarchy_config, dump_locations
+from .schema import LocationType
 
 
 @domain_admin_required
@@ -70,6 +77,12 @@ class LocationsListView(BaseLocationView):
         }
 
 
+class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
+    urlname = 'location_fields_view'
+    field_type = 'LocationFields'
+    entity_string = _("Location")
+
+
 class LocationSettingsView(BaseCommTrackManageView):
     urlname = 'location_settings'
     page_title = ugettext_noop("Location Types")
@@ -79,12 +92,13 @@ class LocationSettingsView(BaseCommTrackManageView):
     def page_context(self):
         return {
             'settings': self.settings_context,
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
 
     @property
     def settings_context(self):
         return {
-            'loc_types': [self._get_loctype_info(l) for l in self.domain_object.commtrack_settings.location_types],
+            'loc_types': [self._get_loctype_info(l) for l in self.domain_object.location_types],
         }
 
     def _get_loctype_info(self, loctype):
@@ -112,9 +126,9 @@ class LocationSettingsView(BaseCommTrackManageView):
 
         #TODO add server-side input validation here (currently validated on client)
 
-        self.domain_object.commtrack_settings.location_types = [mk_loctype(l) for l in payload['loc_types']]
+        self.domain_object.location_types = [mk_loctype(l) for l in payload['loc_types']]
 
-        self.domain_object.commtrack_settings.save()
+        self.domain_object.save()
 
         return self.get(request, *args, **kwargs)
 
@@ -146,23 +160,27 @@ class NewLocationView(BaseLocationView):
 
     @property
     @memoized
-    def metadata(self):
-        return copy.copy(dict(self.location.metadata))
-
-    @property
-    @memoized
     def location_form(self):
         if self.request.method == 'POST':
-            return LocationForm(self.location, self.request.POST)
-        return LocationForm(self.location)
+            return LocationForm(self.location, self.request.POST, is_new=True)
+        return LocationForm(self.location, is_new=True)
 
     @property
     def page_context(self):
+        try:
+            consumption = self.consumption
+        except MultipleSupplyPointException:
+            consumption = []
+            logging.error("Invalid setup: Multiple supply point cases found for the location",
+                          exc_info=True, extra={'request': self.request})
+            messages.error(self.request, _(
+                "There was a problem with the setup for your project. " +
+                "Please contact support at commcarehq-support@dimagi.com."
+            ))
         return {
             'form': self.location_form,
             'location': self.location,
-            'consumption': self.consumption,
-            'metadata': self.metadata
+            'consumption': consumption,
         }
 
     def post(self, request, *args, **kwargs):
@@ -202,10 +220,7 @@ def unarchive_location(request, domain, loc_id):
     })
 
 
-class EditLocationView(NewLocationView):
-    urlname = 'edit_location'
-    page_title = ugettext_noop("Edit Location")
-
+class IndividualLocationMixin(object):
     @property
     def location_id(self):
         return self.kwargs['loc_id']
@@ -219,9 +234,33 @@ class EditLocationView(NewLocationView):
             raise Http404()
 
     @property
+    def sql_location(self):
+        return self.location.sql_location
+
+    @property
     @memoized
     def supply_point(self):
-        return SupplyPointCase.get_by_location(self.location)
+        try:
+            return SupplyPointCase.get_by_location(self.location)
+        except MultipleResultsFound:
+            raise MultipleSupplyPointException
+
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.location_id])
+
+
+class EditLocationView(IndividualLocationMixin, NewLocationView):
+    urlname = 'edit_location'
+    page_title = ugettext_noop("Edit Location")
+
+    @property
+    @memoized
+    def location_form(self):
+        if self.request.method == 'POST':
+            return LocationForm(self.location, self.request.POST)
+        return LocationForm(self.location)
 
     @property
     def consumption(self):
@@ -242,10 +281,6 @@ class EditLocationView(NewLocationView):
         return mark_safe(_("Edit {name} <small>{type}</small>").format(
             name=self.location.name, type=self.location.location_type
         ))
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.location_id])
 
 
 class BaseSyncView(BaseLocationView):
@@ -297,12 +332,6 @@ class FacilitySyncView(BaseSyncView):
     source = 'openlmis'
 
 
-class EditLocationHierarchy(BaseLocationView):
-    urlname = 'location_hierarchy'
-    page_title = ugettext_noop("Location Hierarchy")
-    template_name = 'locations/location_hierarchy.html'
-
-
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Location Import Status')
@@ -331,6 +360,12 @@ class LocationImportView(BaseLocationView):
 
     @property
     def page_context(self):
+        def _get_manage_consumption():
+            if self.domain_object.commtrack_settings:
+                return self.domain_object.commtrack_settings.individual_consumption_defaults
+            else:
+                return False
+
         context = {
             'bulk_upload': {
                 "download_url": reverse(
@@ -338,7 +373,7 @@ class LocationImportView(BaseLocationView):
                 "adjective": _("location"),
                 "plural_noun": _("locations"),
             },
-            "manage_consumption": self.domain_object.commtrack_settings.individual_consumption_defaults,
+            "manage_consumption": _get_manage_consumption(),
         }
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
@@ -391,58 +426,22 @@ def location_export(request, domain):
     return response
 
 
-@domain_admin_required # TODO: will probably want less restrictive permission
-def location_edit(request, domain, loc_id=None):
-    parent_id = request.GET.get('parent')
-
-    if loc_id:
-        try:
-            location = Location.get(loc_id)
-        except ResourceNotFound:
-            raise Http404()
-    else:
-        location = Location(domain=domain, parent=parent_id)
-
-    if request.method == "POST":
-        form = LocationForm(location, request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Location saved!')
-            return HttpResponseRedirect('%s?%s' % (
-                    reverse('manage_locations', kwargs={'domain': domain}),
-                    urllib.urlencode({'selected': form.location._id})
-                ))
-    else:
-        form = LocationForm(location)
-
-    context = {
-        'domain': domain,
-        'api_root': reverse('api_dispatch_list', kwargs={'domain': domain,
-                                                         'resource_name': 'location',
-                                                         'api_name': 'v0.3'}),
-        'location': location,
-        'hierarchy': location_hierarchy_config(domain),
-        'form': form,
-    }
-    return render(request, 'locations/manage/location.html', context)
-
-
 @domain_admin_required
 @require_POST
 def sync_facilities(request, domain):
-    commtrack_settings = request.project.commtrack_settings
-
     # create Facility Registry and Facility LocationTypes if they don't exist
-    if not any(lt.name == 'Facility Registry' 
-               for lt in commtrack_settings.location_types):
-        commtrack_settings.location_types.extend([
+    if not any(lt.name == 'Facility Registry'
+               for lt in request.project.location_types):
+        request.project.location_types.extend([
             LocationType(name='Facility Registry', allowed_parents=['']),
             LocationType(name='Facility', allowed_parents=['Facility Registry'])
         ])
-        commtrack_settings.save()
+        request.project.save()
 
-    registry_locs = dict((l.external_id, l) for l in
-            Location.filter_by_type(domain, 'Facility Registry'))
+    registry_locs = {
+        l.external_id: l
+        for l in Location.filter_by_type(domain, 'Facility Registry')
+    }
 
     # sync each registry and add/update Locations for each Facility
     for registry in FacilityRegistry.by_domain(domain):
@@ -458,9 +457,11 @@ def sync_facilities(request, domain):
         registry_loc.save()
         registry_loc._seen = True
 
-        facility_locs = dict((l.external_id, l) for l in
-                Location.filter_by_type(domain, 'Facility', registry_loc))
-        
+        facility_locs = {
+            l.external_id: l
+            for l in Location.filter_by_type(domain, 'Facility', registry_loc)
+        }
+
         for facility in registry.get_facilities():
             uuid = facility.data['uuid']
             try:
@@ -491,3 +492,50 @@ def sync_openlmis(request, domain):
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
 
+
+class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
+    """
+    Manage products stocked at each location
+    """
+    urlname = 'products_per_location'
+    page_title = ugettext_noop("Products Per Location")
+    template_name = 'locations/manage/products_per_location.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.PRODUCTS_PER_LOCATION.enabled(request.domain):
+            raise Http404
+        # TODO verify that this location stocks products
+        return super(ProductsPerLocationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def products_at_location(self):
+        return [p.product_id for p in self.sql_location.products.all()]
+
+    @property
+    def all_products(self):
+        return [(p.product_id, p.name)
+                for p in SQLProduct.by_domain(self.domain)]
+
+    @property
+    def products_form(self):
+        form = MultipleSelectionForm(initial={
+            'selected_ids': self.products_at_location
+        })
+        form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
+    def page_context(self):
+        return {
+            'products_per_location_form': self.products_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        products = SQLProduct.objects.filter(
+            product_id__in=request.POST.getlist('selected_ids', [])
+        )
+        self.sql_location.products = products
+        self.sql_location.save()
+        msg = _("Products updated for {}").format(self.location.name)
+        messages.success(request, msg)
+        return self.get(request, *args, **kwargs)

@@ -1,8 +1,10 @@
+from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
 import os
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import (check_user_has_case, delete_all_sync_logs,
@@ -18,12 +20,12 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from datetime import datetime
 from xml.etree import ElementTree
+from no_exceptions.exceptions import HttpException
 
 USER_ID = "main_user"
 OTHER_USER_ID = "someone_else"
 SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
-
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class SyncBaseTest(TestCase):
@@ -37,7 +39,7 @@ class SyncBaseTest(TestCase):
         delete_all_sync_logs()
 
         self.user = User(user_id=USER_ID, username="syncguy", 
-                         password="changeme", date_joined=datetime(2011, 6, 9)) 
+                         password="changeme", date_joined=datetime(2011, 6, 9))
         # this creates the initial blank sync token in the database
         restore_config = RestoreConfig(self.user)
         self.sync_log = synclog_from_restore_payload(restore_config.get_payload())
@@ -987,3 +989,59 @@ class SyncTokenReprocessingTest(SyncBaseTest):
         except AssertionError:
             # this should fail because it's a true error
             pass
+
+
+class LooseSyncTokenValidationTest(SyncBaseTest):
+
+    def test_submission_with_bad_log_default(self):
+        with self.assertRaises(ResourceNotFound):
+            post_case_blocks(
+                [CaseBlock(create=True, case_id='bad-log-default', version=V2).as_xml()],
+                form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
+                domain='some-domain-without-toggle',
+            )
+
+    def test_submission_with_bad_log_toggle_enabled(self):
+        domain = 'submission-domain-with-toggle'
+
+        def _test():
+            post_case_blocks(
+                [CaseBlock(create=True, case_id='bad-log-toggle-enabled', version=V2).as_xml()],
+                form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
+                domain=domain,
+            )
+
+        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, False, namespace='domain')
+        with self.assertRaises(ResourceNotFound):
+            _test()
+
+        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
+        # this is just asserting that an exception is not raised after the toggle is set
+        _test()
+
+    def test_restore_with_bad_log_default(self):
+        with self.assertRaises(ResourceNotFound):
+            RestoreConfig(
+                self.user, version=V2,
+                restore_id='not-a-valid-synclog-id',
+                domain='some-domain-without-toggle',
+            ).get_payload()
+
+    def test_restore_with_bad_log_toggle_enabled(self):
+        domain = 'restore-domain-with-toggle'
+
+        def _test():
+            RestoreConfig(
+                self.user, version=V2,
+                restore_id='not-a-valid-synclog-id',
+                domain=domain,
+            ).get_payload()
+
+        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, False, namespace='domain')
+        with self.assertRaises(ResourceNotFound):
+            _test()
+
+        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
+        # when the toggle is set the exception should be an HttpException instead
+        with self.assertRaises(HttpException):
+            _test()

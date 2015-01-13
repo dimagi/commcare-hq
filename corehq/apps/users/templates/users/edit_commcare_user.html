@@ -53,6 +53,7 @@
                                 .text("{% trans 'Password changed successfully' %}");
                         form.find('.reset-password-body').prepend($alert);
                         form.find('input').val('');
+                        ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
                     }
                 },
                 error: function (response) {
@@ -68,7 +69,7 @@
                  self.signOff = ko.observable('');
                  self.formDeleteUserSent = ko.observable(false);
                  self.disabled = function () {
-                     var understand = self.signOff().toLowerCase() === 'i understand';
+                     var understand = self.signOff().toLowerCase() === '{{ couch_user.username }}';
                      return self.formDeleteUserSent() || !understand;
                  };
                  self.submit = function () {
@@ -81,6 +82,18 @@
              if ($('#delete_user_{{ couch_user.user_id }}').get(0)) {
                  ko.applyBindings(new DeleteUserButtonModel(), $('#delete_user_{{ couch_user.user_id }}').get(0));
              }
+
+            // Event tracking
+            var $deleteModalForm = $("#delete_user_{{ couch_user.user_id }} form");
+            $("button:submit", $deleteModalForm).on("click", function(){
+                ga_track_event("Edit Mobile Worker", "Deleted User", "{{couch_user.user_id|escapejs}}", {
+                    'hitCallback': function() {
+                        $deleteModalForm.submit();
+                    }
+                });
+                return false;
+            });
+
         });
         {% endif %}
 
@@ -109,8 +122,10 @@
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
-        {% if commtrack %}
+        {% if commtrack_enabled %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommTrack" %}</a></li>
+        {% elif locations_enabled %}
+        <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
         {% endif %}
         <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
         {% if not is_currently_logged_in_user %}
@@ -119,7 +134,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            {% include 'users/partial/basic_info_form.html' %}
+            {% include 'users/partial/basic_info_form.html' with user_type="mobile"%}
         </div>
 
         <div class="tab-pane" id="groups">
@@ -216,10 +231,9 @@
                     {% endblocktrans %}
                 </p>
                 <p>
-                    {% blocktrans %}
+                    {% blocktrans with couch_user.username as username %}
                     If even after reading this you decide that you really want
-                    to delete this user and all of their data, type "I
-                    understand" into the box below.
+                    to delete this user and all of their data, type <strong>{{ username }}</strong> into the box below.
                     {% endblocktrans %}
                 </p>
 

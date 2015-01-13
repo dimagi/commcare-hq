@@ -77,7 +77,8 @@ class ExpressionFromSpecTest(SimpleTestCase):
 class ConditionalExpressionTest(SimpleTestCase):
 
     def setUp(self):
-        # doc.true_value if doc.test == 'match' else doc.false_value
+        # this expression is the equivalent to:
+        #   doc.true_value if doc.test == 'match' else doc.false_value
         spec = {
             'type': 'conditional',
             'test': {

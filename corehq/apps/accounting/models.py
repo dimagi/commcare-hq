@@ -816,6 +816,8 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is None or self.date_end > today:
             self.date_end = date_end
+        if self.is_active and self.date_end is not None and self.date_end <= today:
+            self.is_active = False
 
         if (self.date_start > today and date_start is not None
             and date_start > today and not date_start > self.date_end
@@ -1731,7 +1733,7 @@ class CreditLine(models.Model):
                 product_type__exact=product_type,
                 feature_type__exact=feature_type,
             )
-            if not credit_line.is_active:
+            if not credit_line.is_active and not invoice:
                 raise CreditLineError(
                     "Could not add credit to CreditLine %s because it is "
                     "inactive." % credit_line.__str__()

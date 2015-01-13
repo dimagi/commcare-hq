@@ -5,6 +5,8 @@ doc_urlpatterns = patterns('corehq.apps.styleguide.views.docs',
     url(r'^$', 'default', name='sg_examples_default'),
     url(r'^simple_crispy/',
         include('corehq.apps.styleguide.examples.simple_crispy_form.urls')),
+    url(r'^controls_demo/',
+        include('corehq.apps.styleguide.examples.controls_demo.urls')),
 )
 
 urlpatterns = patterns('corehq.apps.styleguide.views',

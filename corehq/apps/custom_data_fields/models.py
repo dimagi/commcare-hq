@@ -1,10 +1,33 @@
 from couchdbkit.ext.django.schema import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from jsonobject import JsonObject
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
+# This list is used to grandfather in existing data, any new fields should use
+# the system prefix defined below
+SYSTEM_FIELDS = ["commtrack-supply-point"]
+SYSTEM_PREFIX = "commcare"
+
+
+def _validate_reserved_words(slug):
+    if slug in SYSTEM_FIELDS:
+        return _('You may not use "{}" as a field name').format(slug)
+    for prefix in [SYSTEM_PREFIX, 'xml']:
+        if slug and slug.startswith(prefix):
+            return _('Field names may not begin with "{}"').format(prefix)
+
+
+def is_system_key(slug):
+    return bool(_validate_reserved_words(slug))
+
+
+def validate_reserved_words(slug):
+    error = _validate_reserved_words(slug)
+    if error is not None:
+        raise ValidationError(error)
 
 
 class CustomDataField(JsonObject):
@@ -22,6 +45,13 @@ class CustomDataFieldsDefinition(Document):
     base_doc = "CustomDataFieldsDefinition"
     domain = StringProperty()
     fields = SchemaListProperty(CustomDataField)
+
+    def get_fields(self, required_only=False):
+        def _is_match(field):
+            if required_only and not field.is_required:
+                return False
+            return True
+        return filter(_is_match, self.fields)
 
     @classmethod
     def get_or_create(cls, domain, field_type):
@@ -76,7 +106,24 @@ class CustomDataFieldsDefinition(Document):
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
-
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields
+
+    def get_model_and_uncategorized(self, data_dict):
+        """
+        Splits data_dict into two dictionaries:
+        one for data which matches the model and one for data that doesn't
+        """
+        if not data_dict:
+            return {}, {}
+        model_data = {}
+        uncategorized_data = {}
+        slugs = [field.slug for field in self.fields]
+        for k, v in data_dict.items():
+            if k in slugs:
+                model_data[k] = v
+            else:
+                uncategorized_data[k] = v
+
+        return model_data, uncategorized_data

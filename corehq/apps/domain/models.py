@@ -23,6 +23,7 @@ from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
+from corehq.apps.locations.schema import LocationType
 
 
 lang_lookup = defaultdict(str)
@@ -206,6 +207,8 @@ class Domain(Document, SnapshotMixin):
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
     commtrack_enabled = BooleanProperty(default=False)
+    locations_enabled = BooleanProperty(default=False)
+    location_types = SchemaListProperty(LocationType)
     call_center_config = SchemaProperty(CallCenterProperties)
     has_careplan = BooleanProperty(default=False)
     restrict_superusers = BooleanProperty(default=False)
@@ -634,7 +637,8 @@ class Domain(Document, SnapshotMixin):
         ignore = ignore if ignore is not None else []
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
-        db = get_db()
+
+        db = Domain.get_db()
 
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:

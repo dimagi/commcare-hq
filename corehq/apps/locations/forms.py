@@ -1,39 +1,57 @@
-import json
-from django import forms
-from corehq.apps.locations.models import Location
-from django.template.loader import get_template
-from django.template import Context
-from corehq.apps.locations.util import load_locs_json, allowed_child_types, location_custom_properties, lookup_by_property
-from django.utils.safestring import mark_safe
-from corehq.apps.locations.signals import location_created, location_edited
-from django.utils.translation import ugettext as _
 import re
+
+from django import forms
+from django.template import Context
+from django.template.loader import get_template
+from django.utils.translation import ugettext as _
+
+from corehq.apps.custom_data_fields import CustomDataEditor
+
+from .models import Location
+from .signals import location_created, location_edited
+from .util import load_locs_json, allowed_child_types, lookup_by_property
+
 
 class ParentLocWidget(forms.Widget):
     def render(self, name, value, attrs=None):
-        return get_template('locations/manage/partials/parent_loc_widget.html').render(Context({
-                    'name': name,
-                    'value': value,
-                    'locations': load_locs_json(self.domain, value),
-                }))
+        return get_template(
+            'locations/manage/partials/parent_loc_widget.html'
+        ).render(Context({
+            'name': name,
+            'value': value,
+            'locations': load_locs_json(self.domain, value),
+        }))
+
 
 class LocTypeWidget(forms.Widget):
     def render(self, name, value, attrs=None):
-        return get_template('locations/manage/partials/loc_type_widget.html').render(Context({
-                    'name': name,
-                    'value': value,
-                }))
+        return get_template(
+            'locations/manage/partials/loc_type_widget.html'
+        ).render(Context({
+            'name': name,
+            'value': value,
+        }))
+
 
 class LocationForm(forms.Form):
-    parent_id = forms.CharField(label='Parent', required=False, widget=ParentLocWidget())
+    parent_id = forms.CharField(
+        label=_('Parent'),
+        required=False,
+        widget=ParentLocWidget(),
+    )
     name = forms.CharField(max_length=100)
     location_type = forms.CharField(widget=LocTypeWidget())
-    coordinates = forms.CharField(max_length=30, required=False,
-                                  help_text="enter as 'lat lon' or 'lat, lon' (e.g., '42.3652 -71.1029')")
+    coordinates = forms.CharField(
+        max_length=30,
+        required=False,
+        help_text=_("enter as 'lat lon' or 'lat, lon' "
+                    "(e.g., '42.3652 -71.1029')"),
+    )
     site_code = forms.CharField(
         label='Site Code',
         required=False,
-        help_text=_("A unique system code for this location. Leave this blank to have it auto generated")
+        help_text=_("A unique system code for this location. "
+                    "Leave this blank to have it auto generated"),
     )
     external_id = forms.CharField(
         label='External ID',
@@ -42,16 +60,21 @@ class LocationForm(forms.Form):
     )
     external_id.widget.attrs['readonly'] = True
 
-    strict = True # optimization hack: strict or loose validation 
-    def __init__(self, location, bound_data=None, *args, **kwargs):
+    strict = True  # optimization hack: strict or loose validation
+
+    def __init__(self, location, bound_data=None, is_new=False,
+                 *args, **kwargs):
         self.location = location
 
-        kwargs['prefix'] = 'main'
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
         kwargs['initial']['parent_id'] = self.cur_parent_id
-        lat, lon = (getattr(self.location, k, None) for k in ('latitude', 'longitude'))
-        kwargs['initial']['coordinates'] = '%s, %s' % (lat, lon) if lat is not None else ''
+        lat, lon = (getattr(self.location, k, None)
+                    for k in ('latitude', 'longitude'))
+        kwargs['initial']['coordinates'] = ('%s, %s' % (lat, lon)
+                                            if lat is not None else '')
+
+        self.custom_data = self.get_custom_data(bound_data, is_new)
 
         super(LocationForm, self).__init__(bound_data, *args, **kwargs)
         self.fields['parent_id'].widget.domain = self.location.domain
@@ -59,14 +82,23 @@ class LocationForm(forms.Form):
         if not self.location.external_id:
             self.fields['external_id'].widget = forms.HiddenInput()
 
-        # custom properties
-        self.sub_forms = {}
-        # TODO think i need to change this to iterate over all types, since the parent
-        # can be changed dynamically
-        for potential_type in allowed_child_types(self.location.domain, self.location.parent):
-            subform = LocationCustomPropertiesSubForm(self.location, potential_type, bound_data)
-            if subform.fields:
-                self.sub_forms[potential_type] = subform
+    def get_custom_data(self, bound_data, is_new):
+        from .views import LocationFieldsView
+
+        existing = self.location.metadata
+
+        # Don't show validation error preemptively on new user creation
+        if is_new and bound_data is None:
+            existing = None
+
+        return CustomDataEditor(
+            field_view=LocationFieldsView,
+            domain=self.location.domain,
+            # For new locations, only display required fields
+            required_only=is_new,
+            existing_custom_data=existing,
+            post_dict=bound_data,
+        )
 
     @property
     def cur_parent_id(self):
@@ -75,10 +107,22 @@ class LocationForm(forms.Form):
         except Exception:
             return None
 
+    def is_valid(self):
+        return all([
+            super(LocationForm, self).is_valid(),
+            self.custom_data.is_valid(),
+        ])
+
+    @property
+    def errors(self):
+        errors = super(LocationForm, self).errors
+        errors.update(self.custom_data.errors)
+        return errors
+
     def clean_parent_id(self):
         parent_id = self.cleaned_data['parent_id']
         if not parent_id:
-            parent_id = None # normalize ''
+            parent_id = None  # normalize ''
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
@@ -89,7 +133,10 @@ class LocationForm(forms.Form):
                 assert False, 'location being re-parented to self or descendant'
 
             if self.location.descendants:
-                raise forms.ValidationError('only locations that have no sub-locations can be moved to a different parent')
+                raise forms.ValidationError(
+                    'only locations that have no sub-locations can be '
+                    'moved to a different parent'
+                )
 
             self.cleaned_data['orig_parent_id'] = self.cur_parent_id
 
@@ -101,7 +148,9 @@ class LocationForm(forms.Form):
         if self.strict:
             siblings = self.location.siblings(self.cleaned_data.get('parent'))
             if name in [loc.name for loc in siblings]:
-                raise forms.ValidationError('name conflicts with another location with this parent')
+                raise forms.ValidationError(
+                    'name conflicts with another location with this parent'
+                )
 
         return name
 
@@ -118,17 +167,21 @@ class LocationForm(forms.Form):
             'global'
         )
         if lookup and lookup != set([self.location._id]):
-            raise forms.ValidationError('another location already uses this site code')
+            raise forms.ValidationError(
+                'another location already uses this site code'
+            )
 
         return site_code
 
     def clean_location_type(self):
         loc_type = self.cleaned_data['location_type']
 
-        child_types = allowed_child_types(self.location.domain, self.cleaned_data.get('parent'))
+        child_types = allowed_child_types(self.location.domain,
+                                          self.cleaned_data.get('parent'))
 
         if not child_types:
-            assert False, 'the selected parent location cannot have sub-locations!'
+            assert False, \
+                'the selected parent location cannot have sub-locations!'
         elif loc_type not in child_types:
             assert False, 'not valid for the select parent location'
 
@@ -151,20 +204,6 @@ class LocationForm(forms.Form):
 
         return [lat, lon]
 
-    def clean(self):
-        super(LocationForm, self).clean()
-
-        subform = self.sub_forms.get(self.cleaned_data.get('location_type'))
-        if subform:
-            if not subform.is_valid():
-                raise forms.ValidationError('Error in location properties')
-            self.cleaned_data.update(('prop:%s' % k, v) for k, v in subform.cleaned_data.iteritems())
-
-        self.cleaned_data['metadata'] = json.loads(self.data['metadata']) \
-            if self.data.get('metadata', None) else {}
-
-        return self.cleaned_data
-
     def save(self, instance=None, commit=True):
         if self.errors:
             raise ValueError('form does not validate')
@@ -177,8 +216,10 @@ class LocationForm(forms.Form):
         coords = self.cleaned_data['coordinates']
         setattr(location, 'latitude', coords[0] if coords else None)
         setattr(location, 'longitude', coords[1] if coords else None)
-        location.lineage = Location(parent=self.cleaned_data['parent_id']).lineage
-        location.metadata = self.cleaned_data.get('metadata', {})
+        location.lineage = Location(
+            parent=self.cleaned_data['parent_id']
+        ).lineage
+        location.metadata = self.custom_data.get_data_to_save()
 
         for k, v in self.cleaned_data.iteritems():
             if k.startswith('prop:'):
@@ -197,7 +238,9 @@ class LocationForm(forms.Form):
         if is_new:
             location_created.send(sender='loc_mgmt', loc=location)
         else:
-            location_edited.send(sender='loc_mgmt', loc=location, moved=reparented)
+            location_edited.send(sender='loc_mgmt',
+                                 loc=location,
+                                 moved=reparented)
 
         if reparented:
             # post-location move processing here
@@ -205,28 +248,3 @@ class LocationForm(forms.Form):
             pass
 
         return location
-
-class LocationCustomPropertiesSubForm(forms.Form):
-    def __init__(self, location, potential_type, *args, **kwargs):
-        self.location = location
-        self.properties = location_custom_properties(location.domain, potential_type)
-
-        kwargs['prefix'] = 'props_%s' % potential_type
-        super(LocationCustomPropertiesSubForm, self).__init__(*args, **kwargs)
-
-        for p in self.properties:
-            self.fields[p.name] = p.field(getattr(location, p.name, None))
-
-    def __getattr__(self, attr):
-        for p in self.properties:
-            if attr == 'clean_%s' % p.name:
-                def clean_custom():
-                    try:
-                        val = self.cleaned_data[p.name]
-                        if val is not None:
-                            p.custom_validate(self.location, val, p.name)
-                        return val
-                    except Exception, e:
-                        raise forms.ValidationError(mark_safe(str(e)))
-                return clean_custom
-        raise AttributeError

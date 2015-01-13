@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from couchdbkit.resource import ResourceNotFound
-from corehq import toggles, privileges
+from corehq import privileges
 
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
@@ -77,6 +77,22 @@ def cached_user_id_to_username(user_id):
         return ret
 
 
+def cached_owner_id_to_display(owner_id):
+    from corehq.apps.users.cases import get_wrapped_owner
+    from corehq.apps.users.models import CouchUser
+    key = 'owner_id_to_display_cache_{id}'.format(id=owner_id)
+    ret = cache.get(key)
+    if ret:
+        return ret
+    owner = get_wrapped_owner(owner_id)
+    if owner is None:
+        return None
+    else:
+        ret = raw_username(owner.username) if isinstance(owner, CouchUser) else owner.name
+        cache.set(key, ret)
+        return ret
+
+
 def django_user_from_couch_id(id):
     """
     From a couch id of a profile object, get the django user
@@ -137,3 +153,19 @@ def can_add_extra_mobile_workers(request):
         if account is None or account.date_confirmed_extra_charges is None:
             return False
     return True
+
+
+def smart_query_string(query):
+    """
+    If query does not use the ES query string syntax,
+    default to doing an infix search for each term.
+    returns (is_simple, query)
+    """
+    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
+                     '~', '*', '?', ':', '\\', '/']
+    for char in special_chars:
+        if char in query:
+            return False, query
+    r = re.compile(r'\w+')
+    tokens = r.findall(query)
+    return True, "*{}*".format("* *".join(tokens))

@@ -46,8 +46,9 @@ class AnteNatalCareServiceOverview(BaseSqlData):
                                              filters=self.filters + [EQ('iron_folic', 'yes')])),
             DatabaseColumn("Completed 100 IFA tablets",
                            CountUniqueColumn('doc_id', alias="100_tablets",
-                                             filters=self.filters + [AND([EQ('completed_100_ifa', 'yes'),
-                                                                          NOTEQ('delivery_date', 'empty')])])),
+                                             filters=self.filters[1:-1] + [AND([EQ('completed_100_ifa', 'yes'),
+                                                                                GTE('delivery_date', 'strsd'),
+                                                                                LTE('delivery_date', 'stred')])])),
             DatabaseColumn("ANC3 Total Eligible",
                            CountUniqueColumn('doc_id', alias="anc_3_eligible",
                                              filters=self.filters + [AND([EQ('anc_2', 'yes'),
@@ -60,7 +61,8 @@ class AnteNatalCareServiceOverview(BaseSqlData):
                                                                                   alias="ifa_tablets_eligible")),
             DatabaseColumn("Completed 100 IFA tablets Total Eligible",
                            CountUniqueColumn('doc_id', alias="100_tablets_eligible",
-                                             filters=self.filters + [NOTEQ('delivery_date', 'empty')]))
+                                             filters=self.filters[1:-1] + [AND([GTE('delivery_date', 'strsd'),
+                                                                               LTE('delivery_date', 'stred')])])),
         ]
 
 

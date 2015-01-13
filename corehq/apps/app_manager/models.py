@@ -32,6 +32,7 @@ from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.util.quickcache import quickcache
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -93,6 +94,11 @@ DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 FIELD_SEPARATOR = ':'
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
+
+ANDROID_LOGO_PROPERTY_MAPPING = {
+    'hq_logo_android_home': 'brand-banner-home',
+    'hq_logo_android_login': 'brand-banner-login',
+}
 
 def _rename_key(dct, old, new):
     if old in dct:
@@ -467,7 +473,7 @@ class FormSource(object):
 
         try:
             source = app.lazy_fetch_attachment(filename)
-        except (ResourceNotFound, KeyError):
+        except ResourceNotFound:
             source = ''
 
         return source
@@ -708,8 +714,14 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    def get_questions(self, langs, **kwargs):
-        return XForm(self.source).get_questions(langs, **kwargs)
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups'])
+    def get_questions(self, langs, include_triggers=False,
+                      include_groups=False):
+        return XForm(self.source).get_questions(
+            langs=langs,
+            include_triggers=include_triggers,
+            include_groups=include_groups,
+        )
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1189,6 +1201,7 @@ class Detail(IndexedSchema):
 
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
+    custom_xml = StringProperty()
 
     def get_tab_spans(self):
         '''
@@ -2950,6 +2963,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     commtrack_enabled = BooleanProperty(default=False)
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
+    logo_refs = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -3135,6 +3149,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'force': True,
                 'value': 'sync',
             }
+
+        for logo_name in self.logo_refs:
+            if logo_name in ANDROID_LOGO_PROPERTY_MAPPING:
+                app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
+                    'value': self.logo_refs[logo_name]['path'],
+                }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
@@ -3445,17 +3465,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_form_by_xmlns(self, xmlns):
+    def get_form_by_xmlns(self, xmlns, log_missing=True):
         if xmlns == "http://code.javarosa.org/devicereport":
             return None
         forms = self.get_xmlns_map()[xmlns]
         if len(forms) != 1:
-            logging.error('App %s in domain %s has %s forms with xmlns %s' % (
-                self.get_id,
-                self.domain,
-                len(forms),
-                xmlns,
-            ))
+            if log_missing or len(forms) > 1:
+                logging.error('App %s in domain %s has %s forms with xmlns %s' % (
+                    self.get_id,
+                    self.domain,
+                    len(forms),
+                    xmlns,
+                ))
             return None
         else:
             form, = forms
@@ -3760,7 +3781,6 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
     return app
 
 EXAMPLE_DOMAIN = 'example'
-BUG_REPORTS_DOMAIN = 'bug-reports'
 
 
 def _get_or_create_app(app_id):

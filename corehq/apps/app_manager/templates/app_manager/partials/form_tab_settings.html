@@ -25,11 +25,7 @@
             <div class="control-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
-                {% if multimedia %}
-                    {% include "app_manager/partials/nav_menu_media.html" %}
-                {% else %}
-                    {% include "app_manager/partials/nav_menu_media.old.html" with item=module ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
-                {% endif %}
+                {% include "app_manager/partials/nav_menu_media.html" %}
             </div>
         </div>
 

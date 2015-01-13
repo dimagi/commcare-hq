@@ -31,7 +31,7 @@ def should_sync(domain, last_sync, utcnow=None):
     return False
 
 
-def indicators_fixture_generator(user, version, case_sync_op=None, last_sync=None):
+def indicators_fixture_generator(user, version, last_sync=None):
     assert isinstance(user, CommCareUser)
 
     domain = user.project

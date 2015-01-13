@@ -15,8 +15,8 @@ def get_case_data_sources(app):
 def get_default_case_property_datatypes():
     return {
         "name": "string",
-        "modified_on": "date",
-        "opened_on": "date",
+        "modified_on": "datetime",
+        "opened_on": "datetime",
         "owner_id": "string",
         "user_id": "string",
     }
@@ -101,6 +101,16 @@ def get_form_data_source(app, form):
         ret.update(_get_indicator_data_type(data_type, options))
         return ret
 
+    def _make_meta_block_indicator(field_name, data_type):
+        ret = {
+            "type": "raw",
+            "column_id": field_name,
+            "property_path": ['form', 'meta'] + [field_name],
+            "display_name": field_name,
+        }
+        ret.update(_get_indicator_data_type(data_type, []))
+        return ret
+
     questions = xform.get_questions([])
 
     return DataSourceConfiguration(
@@ -116,7 +126,15 @@ def get_form_data_source(app, form):
         },
         configured_indicators=[
             _make_indicator(q) for q in questions
-        ]
+        ] + [
+            _make_meta_block_indicator(field[0], field[1]) for field in [
+                ('username', 'string'),
+                ('userID', 'string'),
+                ('timeStart', 'datetime'),
+                ('timeEnd', 'datetime'),
+                ('deviceID', 'string'),
+            ]
+        ],
     )
 
 

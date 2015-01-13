@@ -4,8 +4,8 @@
 
 {% block js %}
     {{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/knockout.mapping.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
 {% endblock %}
 
@@ -132,7 +132,7 @@
                                     'opened_on': 'opened_date',
                                     'closed_by': 'closed_by_user_id',
                                     'closed_on': 'closed_date'
-                                }
+                                };
                                 renamed_field = self.utils.rename(field, rename_map);
                                 if (meta.hasOwnProperty(field)) {
                                     return {tags: ['info'].concat(tags), field: renamed_field};
@@ -234,6 +234,17 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
+                        column.newOption = ko.observable("");
+                        column.addOption = function(e) {
+                            if (this.newOption() != "") {
+                                if (this.options.indexOf(this.newOption()) === -1) {
+                                    this.options.push(this.newOption());
+                                    this.allOptions.push(this.newOption());
+                                }
+                                this.newOption("");
+                            }
+                            return false;
+                        }.bind(column);
                     });
 
                     for (var i = 0; i < columns.length; i++) {
@@ -290,13 +301,18 @@
                             columns: _(table.column_configuration()).filter(function (column) {
                                 return column.selected();
                             }).map(function (column) {
-                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special));
-                                return {
-                                    index: column.index,
-                                    display: column.display,
-                                    transform: column.transform() || null, // it doesn't save '' well
-                                    is_sensitive: Boolean(is_sensitive)
+                                var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special)),
+                                    col = {
+                                        index: column.index,
+                                        display: column.display,
+                                        transform: column.transform() || null, // it doesn't save '' well
+                                        is_sensitive: Boolean(is_sensitive)
                                 };
+                                if (column.doc_type === 'SplitColumn'){
+                                    col.doc_type = column.doc_type;
+                                    col.options = column.options();
+                                }
+                                return col;
                             })
                         }
                     });
@@ -330,7 +346,31 @@
                 self.save = function () {
                     self.save.state('saving');
                     $.post(self.urls.save(), self.output()).done(function (data) {
-                        window.location.href = data.redirect;
+
+                        var redirect = function(){
+                            window.location.href = data.redirect;
+                        };
+
+                        // If the button had said "Create"
+                        if (!self.custom_export._id || !self.custom_export._id()) {
+                            var event_category = null;
+                            if (self.custom_export.type() == "form") {
+                                event_category = 'Form Exports';
+                            } else if (self.custom_export.type() == "case") {
+                                event_category = 'Case Exports';
+                            }
+
+                            if (event_category) {
+                                // Record an event
+                                ga_track_event(event_category, 'Custom export creation', "", {
+                                    'hitCallback': function () {
+                                        redirect();
+                                    }
+                                });
+                                return;
+                            }
+                        }
+                        redirect();
                     }).fail(function (response) {
                         var data = $.parseJSON(response.responseText);
                         self.save.state('error');
@@ -386,6 +426,7 @@
                 presave: {{ presave|JSON }},
                 export_stock: {{ export_stock|JSON }},
                 deid_options: {{ deid_options|JSON }},
+                column_type_options: {{ column_type_options|JSON }},
                 urls: {
                     save: {{ request.get_full_path|safe|JSON }}
                 },
@@ -482,6 +523,9 @@
                                 {% trans "Question" %}
                             </th>
                             <th>{% trans "Display" %}</th>
+                            {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                            <th>{% trans "Type" %}</th>
+                            {% endif %}
                             {% if helper.allow_deid %}
                             <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
                             {% endif %}
@@ -504,6 +548,26 @@
 
                                 </td>
                                 <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                <td class="input" data-bind="if: allOptions">
+                                    <span data-bind="if: hasNewOptions" class="pull-right">
+                                        <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
+                                    </span>
+                                    <select data-bind="
+                                        value: doc_type,
+                                        foreach: $root.column_type_options
+                                    ">
+                                        <option data-bind="value: value, text: label"></option>
+                                    </select>
+                                    <div data-bind="if: doc_type() === 'SplitColumn'">
+                                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                                        </select>
+                                        <br/>
+                                        <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                    </div>
+                                </td>
+                                {% endif %}
                                 {% if helper.allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
                                     <select data-bind="

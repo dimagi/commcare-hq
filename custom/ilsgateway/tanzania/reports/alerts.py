@@ -4,6 +4,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from couchexport.models import Format
 from custom.ilsgateway.models import Alert
 
 
@@ -12,6 +13,8 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
     fields = [AsyncLocationFilter, MonthFilter, YearFilter]
     name = 'Alerts'
     default_rows = 25
+    exportable = True
+    base_template = 'ilsgateway/base_template.html'
 
     @property
     def headers(self):
@@ -29,3 +32,8 @@ class AlertReport(GenericTabularReport, CustomProjectReport, ProjectReportParame
             expires__lte=end_date
         ).order_by('-id')
         return alerts.values_list('text')
+
+    @property
+    def export_table(self):
+        self.export_format_override = self.export_format_override = self.request.GET.get('format', Format.XLS)
+        return super(AlertReport, self).export_table

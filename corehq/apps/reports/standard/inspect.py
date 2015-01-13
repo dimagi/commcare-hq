@@ -102,7 +102,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
 
         truthy_only = functools.partial(filter, None)
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
-            self.domain, self.request, True, True)
+            self.domain, self.request, True, True, include_inactive=True)
         all_mobile_workers_selected = 't__0' in self.request.GET.getlist('emw')
         if not all_mobile_workers_selected or users_data.admin_and_demo_users:
             yield {
