@@ -1,7 +1,38 @@
 from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, DictProperty
+from jsonobject.properties import StringProperty, BooleanProperty, ListProperty, IntegerProperty, ObjectProperty
 from custom.ilsgateway.api import ProductStock, StockTransaction
 from jsonobject import JsonObject
 from custom.logistics.api import LogisticsEndpoint
+class Group(JsonObject):
+    id = IntegerProperty()
+    name = StringProperty()
+
+
+class SupplyPoint(JsonObject):
+    id = IntegerProperty()
+    active = BooleanProperty()
+    code = StringProperty()
+    groups = ListProperty()
+    last_reported = StringProperty()
+    name = StringProperty()
+    primary_reporter = IntegerProperty()
+    supervised_by = IntegerProperty()
+    supplied_by = IntegerProperty()
+    type = StringProperty()
+    location_id = IntegerProperty()
+
+
+class SMSUser(JsonObject):
+    id = IntegerProperty()
+    name = StringProperty()
+    role = StringProperty()
+    is_active = StringProperty()
+    supply_point = ObjectProperty(item_type=SupplyPoint)
+    email = StringProperty()
+    phone_numbers = ListProperty()
+    backend = StringProperty()
+    family_name = StringProperty()
+    to = StringProperty()
 
 
 class EWSUser(JsonObject):
@@ -20,18 +51,8 @@ class EWSUser(JsonObject):
     sms_notifications = BooleanProperty()
     organization = StringProperty()
 
-
-class SMSUser(JsonObject):
-    id = IntegerProperty()
-    name = StringProperty()
-    role = StringProperty()
-    is_active = StringProperty()
-    supply_point = IntegerProperty()
-    email = StringProperty()
-    phone_numbers = ListProperty()
-    backend = StringProperty()
-    family_name = StringProperty()
-    to = StringProperty()
+    groups = ListProperty(item_type=Group)
+    contact = ObjectProperty(item_type=SMSUser)
 
 
 class Location(JsonObject):
@@ -43,14 +64,13 @@ class Location(JsonObject):
     longitude = StringProperty()
     code = StringProperty()
     groups = ListProperty()
-    historical_groups = ListProperty()
-    created_at = StringProperty()
     supervised_by = IntegerProperty()
+    supply_points = ListProperty(item_type=SupplyPoint)
     is_active = BooleanProperty()
 
 
 class Program(JsonObject):
-    code = IntegerProperty()
+    code = StringProperty()
     name = StringProperty()
 
 
@@ -60,7 +80,7 @@ class Product(JsonObject):
     sms_code = StringProperty()
     description = StringProperty()
     is_active = BooleanProperty()
-    program = DictProperty()
+    program = ObjectProperty(item_type=Program)
 
 
 class GhanaEndpoint(LogisticsEndpoint):
