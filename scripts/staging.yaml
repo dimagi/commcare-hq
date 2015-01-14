@@ -51,8 +51,8 @@ branches:
   - vellum-staging # J$ 11/13
   - custom_location_data  # Ethan & tw 11/17
   - quickview # Simon 11/25
-  - master+double-management # Nick P 12/31
-  - double-management # SK 12/1
+#  - master+double-management # Nick P 12/31
+#  - double-management # SK 12/1
   - lwyszomi:migration-optimization
   - master+caseDetailsInCC  # Nick P 1/7
   - caseDetailsInCC # sravan 2/1/15
