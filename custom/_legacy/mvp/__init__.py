@@ -4,7 +4,7 @@ CUSTOM_REPORTS = (
     ('Custom Reports', (
         mvis.HealthCoordinatorReport,
         chw.CHWManagerReport,
-        va.VerbalAutopsyReport
+        va.VerbalAutopsyReport,
     )),
 )
 
