@@ -208,8 +208,9 @@ class MonthOfStockProduct(EWSData):
                         .order_by('-last_modified_date')
 
                     if stock:
-                        if stock[0].get_monthly_consumption():
-                            row.append(int(stock[0].stock_on_hand / stock[0].get_monthly_consumption()))
+                        monthly = stock[0].get_monthly_consumption()
+                        if monthly:
+                            row.append(int(stock[0].stock_on_hand / monthly))
                         else:
                             row.append('-')
                     else:

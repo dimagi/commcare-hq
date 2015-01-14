@@ -1,6 +1,3 @@
-//probably we need clear this file
-//copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/ko/report_filter.drilldown_options.js
-
 ko.bindingHandlers.select2 = {
     init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
       ko.utils.domNodeDisposal.addDisposeCallback(el, function() {
@@ -15,16 +12,16 @@ ko.bindingHandlers.select2 = {
     update: function (el, valueAccessor, allBindingsAccessor, viewModel) {
         var allBindings = allBindingsAccessor();
 
-        if ("value" in allBindings) {
+        if (allBindings.hasOwnProperty("value")) {
             $(el).select2("data", allBindings.value());
-        } else if ("selectedOptions" in allBindings) {
+        } else if (allBindings.hasOwnProperty("selectedOptions")) {
             var converted = [];
             var textAccessor = function(value) {
                 return value; };
-            if ("optionsText" in allBindings) {
+            if (allBindings.hasOwnProperty("optionsText")) {
                 textAccessor = function(value) {
                     var valueAccessor = function (item) { return item; };
-                    if ("optionsValue" in allBindings) {
+                    if (allBindings.hasOwnProperty("optionsValue")) {
                         valueAccessor = function (item) { return item[allBindings.optionsValue]; };
                     }
                     var items = $.grep(allBindings.options(), function (e) { return valueAccessor(e) == value;});
