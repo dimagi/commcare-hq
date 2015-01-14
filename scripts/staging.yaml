@@ -53,6 +53,7 @@ branches:
   - quickview # Simon 11/25
 #  - master+double-management # Nick P 12/31
 #  - double-management # SK 12/1
+  - ews_stock_status_report+migration-optimization # SK 1/15
   - lwyszomi:migration-optimization
   - master+caseDetailsInCC  # Nick P 1/7
   - caseDetailsInCC # sravan 2/1/15
