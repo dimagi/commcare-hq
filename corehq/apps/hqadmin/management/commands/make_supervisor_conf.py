@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from optparse import make_option
@@ -7,11 +8,11 @@ from django.conf import settings
 
 
 def parse_files(option, opt, value, parser):
-    pairs = value.split(',')
+    pairs = value.split('::')
     args_dict = {}
     for p in pairs:
         try:
-            k, v = p.split('=')
+            k, v = p.split('=', 1)
             args_dict[k] = v
         except ValueError:
             # error handling

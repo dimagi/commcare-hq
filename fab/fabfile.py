@@ -135,11 +135,13 @@ def format_env(current_env):
         'django_port',
         'django_bind',
         'flower_port',
+        'django_command_prefix',
+        'supervisor_env_vars'
     ]
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
-    return ','.join(['%s=%s' % (k, v) for k, v in ret.items()])
+    return '::'.join(['%s=%s' % (k, v) for k, v in ret.items()])
 
 
 @task
@@ -378,6 +380,8 @@ def staging():
 
     _setup_path()
 
+    env.django_command_prefix = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
+    env.supervisor_env_vars = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=staging'
 
 @task
 def realstaging():
