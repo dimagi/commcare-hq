@@ -58,6 +58,7 @@ branches:
   - caseDetailsInCC # sravan 2/1/15
   - lwyszomi:ews_stock_status_report  # cz/kamil 1/13
   - logo-to-android # Nick P 1/7
+  - newrelic # Simon 1/15
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
