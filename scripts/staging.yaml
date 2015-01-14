@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - fab-directory
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -55,7 +54,6 @@ branches:
 #  - double-management # SK 12/1
   - ews_stock_status_report+migration-optimization # SK 1/15
   - lwyszomi:migration-optimization
-  - master+caseDetailsInCC  # Nick P 1/7
   - caseDetailsInCC # sravan 2/1/15
   - lwyszomi:ews_stock_status_report  # cz/kamil 1/13
   - logo-to-android # Nick P 1/7
