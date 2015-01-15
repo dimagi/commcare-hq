@@ -228,7 +228,7 @@
                     'filter-case-types="filterCaseTypes({casetype: casetype})"' +
                     'type-search="typeSearch"' +
                     '></hierarchy>';
-                if (angular.isObject(scope.hierarchy)) {
+                if (angular.isObject(scope.hierarchy) && Object.getOwnPropertyNames(scope.hierarchy).length > 0) {
                     $compile(hierarchySt)(scope, function(cloned, scope)   {
                         element.append(cloned);
                     });

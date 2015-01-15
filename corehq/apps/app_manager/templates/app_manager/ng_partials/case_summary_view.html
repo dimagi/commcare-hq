@@ -5,7 +5,7 @@
 
 {% block navigation_extra %}
     {% angularjs %}
-    <li role="presentation">
+    <li role="presentation" ng-class="{ 'active' : typeSearch.name === '' }">
         <a ng-click="filterCaseTypes()">{% trans "All Case Types" %}</a>
         <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"></hierarchy>
     </li>
@@ -113,16 +113,18 @@
 
 <!-- template for rendering case type hierarchy in navigation -->
 <script type="text/ng-template" id="/hierarchy.html">
-<ul>
-    <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"
-             type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"></member>
-</ul>
+<div class="well">
+    <ul class="nav nav-pills nav-stacked">
+        <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"
+                 type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"></member>
+    </ul>
+</div>
 </script>
 
 <!-- sub-template for member of case type hierarchy -->
 <script type="text/ng-template" id="/hierarchy_member.html">
-<li role="presentation" ng-class="typeSearch.name === casetype ? 'active' : ''">
-    <a ng-click="filterCaseTypes({casetype: casetype})">{{ casetype }}</a>
+<li role="presentation" ng-class="{ 'active' : typeSearch.name === casetype }">
+    <a ng-click="filterCaseTypes({casetype: casetype})"><i class="fa fa-envelope-square"></i> {{ casetype }}</a>
 </li>
 </script>
 
