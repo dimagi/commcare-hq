@@ -8,7 +8,7 @@
     "name": "Test1",
     "phone_numbers": ["+2222222222"],
     "role": "Other",
-    "supply_point": 324,
+    "supply_point": null,
     "to": ""
   },
   {
@@ -20,7 +20,7 @@
     "name": "Test2",
     "phone_numbers": ["+22223333"],
     "role": "Nurse",
-    "supply_point": 43,
+    "supply_point": null,
     "to": ""
   }
 ]

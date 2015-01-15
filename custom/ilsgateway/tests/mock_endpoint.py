@@ -20,7 +20,7 @@ class MockEndpoint(ILSGatewayEndpoint):
         with open(os.path.join(self.datapath, filename)) as f:
             objects = json.loads(f.read())
             meta = {
-                "limit": 1000,
+                "limit": 100,
                 "next": None,
                 "offset": 0,
                 "previous": None,

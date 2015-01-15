@@ -30,7 +30,7 @@ class LogisticsEndpoint(EndpointMixin):
         self.productstock_url = self._urlcombine(self.base_uri, '/productstocks/')
         self.stocktransactions_url = self._urlcombine(self.base_uri, '/stocktransactions/')
 
-    def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
+    def get_objects(self, url, params=None, filters=None, limit=100, offset=0, **kwargs):
         params = params if params else {}
         if filters:
             params.update(filters)
@@ -58,8 +58,7 @@ class LogisticsEndpoint(EndpointMixin):
 
     def get_products(self, **kwargs):
         meta, products = self.get_objects(self.products_url, **kwargs)
-        for product in products:
-            yield (self.models_map['product'])(product)
+        return meta, [(self.models_map['product'])(product) for product in products]
 
     def get_webusers(self, **kwargs):
         meta, users = self.get_objects(self.webusers_url, **kwargs)
