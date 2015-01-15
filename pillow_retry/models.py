@@ -116,7 +116,7 @@ class PillowError(models.Model):
                             a dict containing 'id' and 'date_next_attempt' keys.
         """
         max_attempts = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
-        multi_attempts_cutoff = getattr(settings, 'PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF', max_attempts * 3)
+        multi_attempts_cutoff = cls.multi_attempts_cutoff()
         query = PillowError.objects \
             .filter(date_next_attempt__lte=utcnow) \
             .filter(
@@ -132,13 +132,19 @@ class PillowError(models.Model):
             return query
 
     @classmethod
+    def multi_attempts_cutoff(cls):
+        default = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
+        return getattr(settings, 'PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF', default)
+
+    @classmethod
     def bulk_reset_attempts(cls, last_attempt_lt, attempts_gte=None):
         if attempts_gte is None:
             attempts_gte = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
 
+        multi_attempts_cutoff = cls.multi_attempts_cutoff()
         return PillowError.objects.filter(
-            date_last_attempt__lt=last_attempt_lt,
-            current_attempt__gte=attempts_gte
+            models.Q(date_last_attempt__lt=last_attempt_lt),
+            models.Q(current_attempt__gte=attempts_gte) | models.Q(total_attempts__gte=multi_attempts_cutoff)
         ).update(
             current_attempt=0,
             date_next_attempt=datetime.utcnow()
