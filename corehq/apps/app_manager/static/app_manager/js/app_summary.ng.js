@@ -83,8 +83,8 @@
         $scope.loading = true;
         $scope.isActive = utils.isActive;
         $scope.modules = [];
-        $scope.formSearch = {name: ''};
-        $scope.moduleSearch = {name: ''};
+        $scope.formSearch = {id: ''};
+        $scope.moduleSearch = {id: ''};
 
         self.init = function () {
             $scope.loading = true;
@@ -103,8 +103,16 @@
         };
 
         $scope.filterList = function (module, form) {
-            $scope.moduleSearch.name = module;
-            $scope.formSearch.name = form;
+            $scope.moduleSearch.id = module ? module.id : '';
+            $scope.formSearch.id = form ? form.id : '';
+        };
+
+        $scope.moduleSelected = function (module) {
+            return $scope.moduleSearch.id === module.id && !$scope.formSearch.id;
+        };
+
+        $scope.allSelected = function () {
+            return !$scope.moduleSearch.id && !$scope.formSearch.id;
         };
 
         $scope.getIcon = utils.getIcon;

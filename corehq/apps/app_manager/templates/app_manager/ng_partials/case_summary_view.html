@@ -5,7 +5,7 @@
 
 {% block navigation_extra %}
     {% angularjs %}
-    <li role="presentation" ng-class="{ 'active' : typeSearch.name === '' }">
+    <li role="presentation" ng-class="{ 'active' : !typeSearch.name }">
         <a ng-click="filterCaseTypes()">{% trans "All Case Types" %}</a>
         <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"></hierarchy>
     </li>
