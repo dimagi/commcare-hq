@@ -194,6 +194,20 @@ class PillowRetryTestCase(TestCase):
         errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
         self.assertEqual(len(errors), 5)
 
+    def test_bulk_reset_cutoff(self):
+        for i in range(0, 3):
+            error = create_error({'id': i}, attempts=1)
+            if i >= 1:
+                error.total_attempts = PillowError.multi_attempts_cutoff() + 1
+            error.save()
+
+        errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
+        self.assertEqual(len(errors), 0)
+
+        PillowError.bulk_reset_attempts(datetime.utcnow())
+
+        errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
+        self.assertEqual(len(errors), 2)
 
 class FakePillow(BasicPillow):
     couch_db = CachedCouchDB(Stub.get_db().uri, readonly=True)
