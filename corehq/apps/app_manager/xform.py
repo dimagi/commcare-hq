@@ -768,9 +768,10 @@ class XForm(WrappedNode):
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
-       
+
         for data_node, path in self.get_leaf_data_nodes():
             if path not in excluded_paths:
+                bind = self.get_bind(path)
                 try:
                     matching_repeat_context = [
                         rc for rc in repeat_contexts if path.startswith(rc)
@@ -784,6 +785,7 @@ class XForm(WrappedNode):
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
+                    "calculate": bind.attrib.get('calculate')
                 })
 
         return questions

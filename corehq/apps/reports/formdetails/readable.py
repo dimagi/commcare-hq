@@ -22,6 +22,7 @@ class FormQuestion(JsonObject):
     repeat = StringProperty()
     group = StringProperty()
     options = ListProperty(FormQuestionOption, exclude_if_none=True)
+    calculate = StringProperty()
 
     @property
     def icon(self):

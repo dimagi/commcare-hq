@@ -92,7 +92,7 @@
         {% verbatim %}{{ getFormName(form_id, lang) }}{% endverbatim %}
         <ul ng-if="conditions.length">
             <li ng-repeat="condition in conditions">
-                If {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
+                {% trans "If" %} {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
             </li>
         </ul>
     </li>
@@ -107,7 +107,12 @@
         {{ question.question.value }}
         <ul ng-if="question.condition">
             <li>
-                If {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
+                {% trans "If" %} {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
+            </li>
+        </ul>
+        <ul ng-if="question.question.calculate">
+            <li>
+                {% trans "Calculation:" %} {{ question.question.calculate }}
             </li>
         </ul>
     </li>
