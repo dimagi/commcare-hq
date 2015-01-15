@@ -122,6 +122,8 @@
         $scope.typeSearch = {name: ''};
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
+        $scope.showConditions = false;
+        $scope.showCalculations = true;
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch.name = caseType;
@@ -168,7 +170,9 @@
             restrict: 'E',
             templateUrl: '/form_questions.html',
             scope: {
-                questions: '='
+                questions: '=',
+                showConditions: '=',
+                showCalculations: '='
             },
             controller: function ($scope) {
                 $scope.getIcon = utils.getIcon;

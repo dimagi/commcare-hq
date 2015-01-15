@@ -16,12 +16,26 @@
 {% angularjs %}
 <div class="page-header" style="margin-top: 0;">
     <h1 style="font-size: 1.8em;">{% trans "Case Summary" %}</h1>
-    <form class="form-inline" role="form" ng-hide="loading">
-      <div class="form-group">
-        <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
-        <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name">
-      </div>
-    </form>
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-inline" role="form" ng-hide="loading">
+              <div class="form-group">
+                <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
+                <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name">
+              </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+             <div class="btn-group pull-right">
+                <button type="button" class="btn btn-default"
+                        ng-click="showConditions = !showConditions"
+                        ng-class="{ 'active' : showConditions }">{% trans "Conditions" %}</button>
+                <button type="button" class="btn btn-default"
+                        ng-click="showCalculations = !showCalculations"
+                        ng-class="{ 'active' : showCalculations }">{% trans "Calculations" %}</button>
+            </div>
+         </div>
+    </div>
 </div>
 <div>
     <loading></loading>
@@ -60,8 +74,14 @@
                         <tr ng-repeat="form in property.forms">
                             <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
                             <td>{% verbatim %}{{ getFormName(form.form_id, lang) }}{% endverbatim %}</td>
-                            <td><form-questions questions="form.load_questions"></form-questions></td>
-                            <td><form-questions questions="form.save_questions"></form-questions></td>
+                            <td><form-questions
+                                    questions="form.load_questions"
+                                    show-conditions="showConditions"
+                                    show-calculations="showCalculations"></form-questions></td>
+                            <td><form-questions
+                                    questions="form.save_questions"
+                                    show-conditions="showConditions"
+                                    show-calculations="showCalculations"></form-questions></td>
                         </tr>
                     </tbody>
                 </table>
@@ -105,12 +125,12 @@
     <li ng-repeat="question in questions">
         {% verbatim %}<i class="fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
         {{ question.question.value }}
-        <ul ng-if="question.condition">
+        <ul ng-if="question.condition" ng-show="showConditions">
             <li>
                 {% trans "If" %} {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
             </li>
         </ul>
-        <ul ng-if="question.question.calculate">
+        <ul ng-if="question.question.calculate" ng-show="showCalculations">
             <li>
                 {% trans "Calculation:" %} {{ question.question.calculate }}
             </li>
