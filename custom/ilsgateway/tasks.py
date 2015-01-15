@@ -6,21 +6,17 @@ from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
+from couchforms.models import XFormInstance
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
-from couchforms.models import XFormInstance
-from custom.ilsgateway.api import Location, ILSGatewayEndpoint
-from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, commtrack_settings_sync, \
-    sync_ilsgateway_location, sync_ilsgateway_product
+from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
+from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
 from dimagi.utils.dates import force_to_datetime
-
-
-LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -28,15 +24,13 @@ def migration_task():
     configs = ILSGatewayConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            commtrack_settings_sync(config.domain, LOCATION_TYPES)
-            ils_bootstrap_domain(config, ILSGatewayEndpoint.from_config(config))
+            ils_bootstrap_domain(ILSGatewayAPI(config.domain, ILSGatewayEndpoint.from_config(config)))
 
 
 @task
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
-    commtrack_settings_sync(domain, LOCATION_TYPES)
-    return ils_bootstrap_domain(ils_config, ILSGatewayEndpoint.from_config(ils_config))
+    return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
 
 # District Moshi-Rural
 ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
@@ -62,25 +56,35 @@ ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
                   1117, 920, 769, 1005, 1009, 925, 1115, 907]
 
 
-def get_locations(domain, endpoint, facilities):
+def get_locations(api_object, facilities):
     for facility in facilities:
-        location = endpoint.get_location(facility, params=dict(with_historical_groups=1))
-        sync_ilsgateway_location(domain, endpoint, Location(location))
+        location = api_object.endpoint.get_location(facility, params=dict(with_historical_groups=1))
+        api_object.locations_sync(api_object.endpoint.models_map['location'](location))
 
 
-def get_product_stock(domain, endpoint, facilities):
-    for facility in facilities:
-        has_next = True
-        next_url = ""
-        while has_next:
-            meta, product_stocks = endpoint.get_productstocks(next_url_params=next_url,
-                                                              filters=dict(supply_point=facility))
-            for product_stock in product_stocks:
-                case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(product_stock.supply_point)],
-                                            reduce=False,
-                                            include_docs=True,
-                                            limit=1).first()
+def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
+    has_next = True
+    next_url = ""
+    while has_next:
+        supply_point = facility
+        case = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                    key=[domain, str(supply_point)],
+                                    reduce=False,
+                                    include_docs=True,
+                                    limit=1).first()
+        meta, product_stocks = endpoint.get_productstocks(
+            next_url_params=next_url,
+            limit=limit,
+            offset=offset,
+            filters=dict(supply_point=supply_point, last_modified__gte=date)
+        )
+        save_stock_data_checkpoint(checkpoint,
+                                   'product_stock',
+                                   meta.get('limit') or limit,
+                                   meta.get('offset') or offset,
+                                   date, facility, True)
+        for product_stock in product_stocks:
+            if case:
                 product = Product.get_by_code(domain, product_stock.product)
                 try:
                     stock_state = StockState.objects.get(section_id='stock',
@@ -100,114 +104,153 @@ def get_product_stock(domain, endpoint, facilities):
                     stock_state.daily_consumption = None
                 stock_state.save()
 
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next'].split('?')[1]
+        if not meta.get('next', False):
+            has_next = False
+        else:
+            next_url = meta['next'].split('?')[1]
 
 
-def get_stock_transaction(domain, endpoint, facilities):
+def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
+                           date, limit=100, offset=0):
+    has_next = True
+    next_url = ""
+    while has_next:
+        supply_point = facility
+        case = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                    key=[domain, str(supply_point)],
+                                    reduce=False,
+                                    include_docs=True,
+                                    limit=1).first()
+        if not case:
+            break
+        meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
+                                                                 limit=limit,
+                                                                 offset=offset,
+                                                                 filters=(dict(supply_point=supply_point,
+                                                                               date__gte=date,
+                                                                               order_by='date')))
+        save_stock_data_checkpoint(checkpoint,
+                                   'stock_transaction',
+                                   meta.get('limit') or limit,
+                                   meta.get('offset') or offset,
+                                   date, facility, True)
+        transactions_to_add = []
+        with transaction.commit_on_success():
+            for stocktransaction in stocktransactions:
+                if case:
+                    product = Product.get_by_code(domain, stocktransaction.product)
+                    report = StockReport(
+                        form_id=xform._id,
+                        date=force_to_datetime(stocktransaction.date),
+                        type='balance',
+                        domain=domain
+                    )
+                    report.save()
+                    try:
+                        sql_product = SQLProduct.objects.get(product_id=product._id)
+                    except SQLProduct.DoesNotExist:
+                        continue
+
+                    transactions_to_add.append(StockTransaction(
+                        case_id=case._id,
+                        product_id=product._id,
+                        sql_product=sql_product,
+                        section_id='stock',
+                        type='stockonhand',
+                        stock_on_hand=Decimal(stocktransaction.ending_balance),
+                        report=report
+                    ))
+        # Doesn't send signal
+        StockTransaction.objects.bulk_create(transactions_to_add)
+        if not meta.get('next', False):
+            has_next = False
+        else:
+            next_url = meta['next'].split('?')[1]
+
+
+def get_product_stock(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
+    for facility in facilities:
+        sync_product_stock(domain, endpoint, facility, checkpoint, date, limit, offset)
+        offset = 0
+
+
+def get_stock_transaction(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     # Faking xform
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
     except ResourceNotFound:
         xform = XFormInstance(_id='ilsgateway-xform')
         xform.save()
-
     for facility in facilities:
-        has_next = True
-        next_url = ""
-
-        while has_next:
-            meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
-                                                                     filters=(dict(supply_point=facility,
-                                                                                   order_by='date')))
-            for stocktransaction in stocktransactions:
-                case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(stocktransaction.supply_point)],
-                                            reduce=False,
-                                            include_docs=True,
-                                            limit=1).first()
-                product = Product.get_by_code(domain, stocktransaction.product)
-                try:
-                    StockTransaction.objects.get(case_id=case._id,
-                                                 product_id=product._id,
-                                                 report__date=force_to_datetime(stocktransaction.date),
-                                                 stock_on_hand=Decimal(stocktransaction.ending_balance),
-                                                 type='stockonhand', report__domain=domain)
-                except StockTransaction.DoesNotExist:
-                    r = StockReport.objects.create(form_id=xform._id,
-                                                   date=force_to_datetime(stocktransaction.date),
-                                                   type='balance',
-                                                   domain=domain)
-                    StockTransaction.objects.create(report=r,
-                                                    section_id='stock',
-                                                    case_id=case._id,
-                                                    product_id=product._id,
-                                                    type='stockonhand',
-                                                    stock_on_hand=Decimal(stocktransaction.ending_balance))
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next'].split('?')[1]
+        sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, date, limit, offset)
+        offset = 0
 
 
-def get_supply_point_statuses(domain, endpoint, facilities):
+def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
+    has_next = True
+    next_url = ""
+
+    while has_next:
+        meta, supply_point_statuses = endpoint.get_supplypointstatuses(
+            domain,
+            limit=limit,
+            offset=offset,
+            next_url_params=next_url,
+            filters=dict(supply_point=facility, status_date__gte=date),
+            facility=facility
+        )
+        save_stock_data_checkpoint(checkpoint,
+                                   'supply_point_status',
+                                   meta.get('limit') or limit,
+                                   meta.get('offset') or offset, date, facility, True)
+        for sps in supply_point_statuses:
+            try:
+                SupplyPointStatus.objects.get(external_id=sps.external_id)
+            except SupplyPointStatus.DoesNotExist:
+                sps.save()
+
+        if not meta.get('next', False):
+            has_next = False
+        else:
+            next_url = meta['next'].split('?')[1]
+
+
+def get_supply_point_statuses(domain, endpoint, facilities, limit=100, offset=0, **kwargs):
     for facility in facilities:
-        has_next = True
-        next_url = ""
-
-        while has_next:
-            meta, supply_point_statuses = endpoint.get_supplypointstatuses(domain,
-                                                                           next_url_params=next_url,
-                                                                           filters=dict(supply_point=facility),
-                                                                           facility=facility)
-            for sps in supply_point_statuses:
-                try:
-                    SupplyPointStatus.objects.get(external_id=sps.external_id)
-                except SupplyPointStatus.DoesNotExist:
-                    sps.save()
-
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next'].split('?')[1]
+        sync_supply_point_status(domain, endpoint, facility, limit, offset, **kwargs)
+        offset = 0
 
 
-def get_delivery_group_reports(domain, endpoint, facilities):
+def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
+    has_next = True
+    next_url = ""
+    while has_next:
+        meta, delivery_group_reports = endpoint.get_deliverygroupreports(domain, limit=limit, offset=offset,
+                                                                         next_url_params=next_url,
+                                                                         filters=dict(supply_point=facility,
+                                                                                      report_date__gte=date),
+                                                                         facility=facility)
+        save_stock_data_checkpoint(checkpoint,
+                                   'delivery_group',
+                                   meta.get('limit') or limit,
+                                   meta.get('offset') or offset,
+                                   date, facility, True)
+        for dgr in delivery_group_reports:
+            try:
+                DeliveryGroupReport.objects.get(external_id=dgr.external_id)
+            except DeliveryGroupReport.DoesNotExist:
+                dgr.save()
+
+        if not meta.get('next', False):
+            has_next = False
+        else:
+            next_url = meta['next'].split('?')[1]
+
+
+def get_delivery_group_reports(domain, endpoint, facilities, limit=100, offset=0, **kwargs):
     for facility in facilities:
-        has_next = True
-        next_url = ""
-        while has_next:
-            meta, delivery_group_reports = endpoint.get_deliverygroupreports(domain,
-                                                                             next_url_params=next_url,
-                                                                             filters=dict(supply_point=facility),
-                                                                             facility=facility)
-            for dgr in delivery_group_reports:
-                try:
-                    DeliveryGroupReport.objects.get(external_id=dgr.external_id)
-                except DeliveryGroupReport.DoesNotExist:
-                    dgr.save()
-
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next'].split('?')[1]
-
-
-@task
-def ils_stock_data_task(domain):
-    ilsgateway_config = ILSGatewayConfig.for_domain(domain)
-    domain = ilsgateway_config.domain
-    endpoint = ILSGatewayEndpoint.from_config(ilsgateway_config)
-    commtrack_settings_sync(domain, LOCATION_TYPES)
-    for product in endpoint.get_products():
-        sync_ilsgateway_product(domain, product)
-    get_locations(domain, endpoint, ILS_FACILITIES)
-    get_product_stock(domain, endpoint, ILS_FACILITIES)
-    get_stock_transaction(domain, endpoint, ILS_FACILITIES)
-    get_supply_point_statuses(domain, endpoint, ILS_FACILITIES)
-    get_delivery_group_reports(domain, endpoint, ILS_FACILITIES)
+        sync_delivery_group_report(domain, endpoint, facility, limit, offset, **kwargs)
+        offset = 0
 
 
 # Temporary for staging
