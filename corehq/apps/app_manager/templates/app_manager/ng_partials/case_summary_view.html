@@ -29,10 +29,14 @@
              <div class="btn-group pull-right">
                 <button type="button" class="btn btn-default"
                         ng-click="showConditions = !showConditions"
-                        ng-class="{ 'active' : showConditions }">{% trans "Conditions" %}</button>
+                        ng-class="{ 'active' : showConditions }">
+                    <i class="fa fa-sitemap"></i> {% trans "Conditions" %}
+                </button>
                 <button type="button" class="btn btn-default"
                         ng-click="showCalculations = !showCalculations"
-                        ng-class="{ 'active' : showCalculations }">{% trans "Calculations" %}</button>
+                        ng-class="{ 'active' : showCalculations }">
+                    <i class="fa fa-calculator"></i> {% trans "Calculations" %}
+                </button>
             </div>
          </div>
     </div>
@@ -112,7 +116,7 @@
         {% verbatim %}{{ getFormName(form_id, lang) }}{% endverbatim %}
         <ul ng-if="conditions.length">
             <li ng-repeat="condition in conditions">
-                {% trans "If" %} {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
+                <i class="fa fa-sitemap"></i> {{ condition.question }} {{ condition.operator }} {{ condition.answer }}
             </li>
         </ul>
     </li>
@@ -121,18 +125,18 @@
 
 <!-- template for rendering form questions -->
 <script type="text/ng-template" id="/form_questions.html">
-<ul>
+<ul class="fa-ul">
     <li ng-repeat="question in questions">
-        {% verbatim %}<i class="fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
+        {% verbatim %}<i class="fa-li fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
         {{ question.question.value }}
-        <ul ng-if="question.condition" ng-show="showConditions">
+        <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
             <li>
-                {% trans "If" %} {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
+                <i class="fa-li fa fa-sitemap text-muted"></i> {{ question.condition.question }} {{ question.condition.operator }} {{ question.condition.answer }}
             </li>
         </ul>
-        <ul ng-if="question.question.calculate" ng-show="showCalculations">
+        <ul class="fa-ul" ng-if="question.question.calculate" ng-show="showCalculations">
             <li>
-                {% trans "Calculation:" %} {{ question.question.calculate }}
+                <i class="fa-li fa fa-calculator text-muted"></i> {{ question.question.calculate }}
             </li>
         </ul>
     </li>

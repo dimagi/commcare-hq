@@ -122,7 +122,7 @@
         $scope.typeSearch = {name: ''};
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
-        $scope.showConditions = false;
+        $scope.showConditions = true;
         $scope.showCalculations = true;
 
         $scope.filterCaseTypes = function (caseType) {
