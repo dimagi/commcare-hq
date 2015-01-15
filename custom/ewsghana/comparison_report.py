@@ -176,3 +176,41 @@ class SMSUsersCompareReport(BaseComparisonReport):
                              sms_user.date_updated, sms_user.is_active, is_migrated])
 
         return rows
+
+
+class SupplyPointsCompareReport(BaseComparisonReport):
+    name = "Supply points comparison"
+    slug = "supply_points_comparison"
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Name'),
+            DataTablesColumn('Type'),
+            DataTablesColumn('Code'),
+            DataTablesColumn('Is active?'),
+            DataTablesColumn('Last reported'),
+            DataTablesColumn('Is migrated?')
+        )
+
+    @property
+    def rows(self):
+        rows = []
+        supply_points = []
+        offset = 1000
+        meta, chunk = self.endpoint.get_supply_points(limit=1000)
+        supply_points.extend(chunk)
+        while meta.get('next', False):
+            meta, chunk = self.endpoint.get_supply_points(offset=offset, limit=1000)
+            offset += 1000
+            supply_points.extend(chunk)
+
+        for supply_point in supply_points:
+            couch_sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                            key=[self.domain, str(supply_point.id)],
+                                            reduce=False,
+                                            include_docs=True).first()
+            rows.append([supply_point.name, supply_point.type,
+                         supply_point.code, supply_point.active, supply_point.last_reported, bool(couch_sp)])
+
+        return rows
