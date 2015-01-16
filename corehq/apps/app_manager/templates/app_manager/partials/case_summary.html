@@ -1,0 +1,49 @@
+{% load djangular_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+<div>
+     <div class="row-fluid" ng-show="loading">
+        <div class="span12">
+            <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+            {% trans 'Loading ...' %}
+        </div>
+    </div>
+    <div class="row-fluid" ng-hide="loading">
+        {% trans "Filter case types" %} <input type="text" ng-model="typeSearch.name"/>
+        {% trans "Filter properties" %} <input type="text" ng-model="propertySearch.name"/>
+        <div ng-repeat="caseType in caseTypes|filter:typeSearch">
+            {% angularjs %}
+            <h3>{{ caseType.name }}</h3>
+            <div>
+                <h5>{% trans "Relationships: " %}</h5>
+                <ul>
+                    <li ng-repeat="(relationship, case_type) in caseType.relationships">
+                        {{ relationship }}: {{ case_type }}
+                    </li>
+                </ul>
+                <opener-closer title="{% trans "Opened by" %}" forms="caseType.opened_by" lang="lang"></opener-closer>
+                <opener-closer title="{% trans "Closed by" %}" forms="caseType.closed_by" lang="lang"></opener-closer>
+            </div>
+            <div>
+                <h5>{% trans "Properties" %}</h5>
+                <table class="table" ng-repeat-end>
+                    <thead>
+                        <th>{% trans "Case Property" %}</th>
+                        <th>{% trans "Form" %}</th>
+                        <th>{% trans "Load questions" %}</th>
+                        <th>{% trans "Save questions" %}</th>
+                    </thead>
+                    <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
+                        <tr ng-repeat="form in property.forms">
+                            <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
+                            <td>{% verbatim %}{{ getFormName(form.form_id) }}{% endverbatim %}</td>
+                            <td><form-questions questions="form.load_questions"></form-questions></td>
+                            <td><form-questions questions="form.save_questions"></form-questions></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endangularjs %}
+        </div>
+    </div>
+</div>

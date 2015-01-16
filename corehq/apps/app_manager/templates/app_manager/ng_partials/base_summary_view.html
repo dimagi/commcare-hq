@@ -1,0 +1,38 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% angularjs %}
+<div id="hq-sidebar" class="col-xs-4 col-sm-3 col-lg-2 col-hq-sidebar" role="navigation">
+    <nav class="app-manager-content">
+        <ul class="nav nav-pills nav-stacked">
+            <li role="presentation" ng-class="{active: isActive('/forms')}">
+                <a href="#/forms">
+                    <i class="fa fa-file-text-o"></i>
+                    {% trans "Form Summary" %}
+                </a>
+            </li>
+            <li role="presentation" ng-class="{active: isActive('/cases')}">
+                <a href="#/cases">
+                    <i class="fa fa-envelope-square"></i>
+                    {% trans "Case Summary" %}
+                </a>
+            </li>
+            <li role="presentation" class="nav-divider"></li>
+            {% block navigation_extra %}
+            {% endblock %}
+        </ul>
+    </nav>
+</div>
+<div id="hq-content" class="col-xs-8 col-sm-9 col-lg-10">
+    {% block content %}{% endblock %}
+</div>
+
+<script type="text/ng-template" id="/loading.html">
+  <div class="row-fluid">
+      <div class="span12">
+          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+          {% trans "Loading ..." %}
+      </div>
+  </div>
+</script>
+{% endangularjs %}

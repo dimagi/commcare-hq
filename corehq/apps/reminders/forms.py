@@ -102,6 +102,8 @@ KEYWORD_CONTENT_CHOICES = (
     (METHOD_SMS_SURVEY, _("SMS Survey")),
 )
 
+NO_RESPONSE = "none"
+
 KEYWORD_RECIPIENT_CHOICES = (
     (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
     (RECIPIENT_OWNER, _("The case's owner")),
@@ -2702,17 +2704,17 @@ class NewKeywordForm(Form):
     other_recipient_content_type = ChoiceField(
         required=False,
         label=ugettext_noop("Notify Another Person"),
-        initial='none',
-    )
-    other_recipient_id = ChoiceField(
-        required=False,
-        label=ugettext_noop("Group Name"),
+        initial=NO_RESPONSE,
     )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
         label=ugettext_noop("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
+    )
+    other_recipient_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Group Name"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
@@ -2951,7 +2953,7 @@ class NewKeywordForm(Form):
     def content_type_choices(self):
         choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
         choices.append(
-            ('none', _("No Response"))
+            (NO_RESPONSE, _("No Response"))
         )
         return choices
 
@@ -3106,7 +3108,7 @@ class NewKeywordForm(Form):
             return None
 
     def clean_other_recipient_type(self):
-        if self.cleaned_data['other_recipient_content_type'] == 'none':
+        if self.cleaned_data['other_recipient_content_type'] == NO_RESPONSE:
             return None
         value = self.cleaned_data["other_recipient_type"]
         if value == RECIPIENT_OWNER:
@@ -3118,7 +3120,7 @@ class NewKeywordForm(Form):
         return value
 
     def clean_other_recipient_id(self):
-        if self.cleaned_data['other_recipient_content_type'] == 'none':
+        if self.cleaned_data['other_recipient_content_type'] == NO_RESPONSE:
             return None
         value = self.cleaned_data["other_recipient_id"]
         recipient_type = self.cleaned_data.get("other_recipient_type", None)

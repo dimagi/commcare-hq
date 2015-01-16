@@ -1,10 +1,11 @@
-from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty
+from jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from sqlagg import CountUniqueColumn, SumColumn
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.transforms.factory import TransformFactory
 
 
 SQLAGG_COLUMN_MAP = {
@@ -31,6 +32,7 @@ class ReportFilter(JsonObject):
 class ReportColumn(JsonObject):
     type = StringProperty(required=True)
     display = StringProperty()
+    description = StringProperty()
     field = StringProperty(required=True)
     aggregation = StringProperty(
         choices=SQLAGG_COLUMN_MAP.keys(),
@@ -41,6 +43,12 @@ class ReportColumn(JsonObject):
         'default',
         'percent_of_total'
     ])
+    transform = DictProperty()
+
+    def get_format_fn(self):
+        if self.transform:
+            return TransformFactory.get_transform(self.transform).get_transform_function()
+        return None
 
     def get_sql_column(self):
         return DatabaseColumn(
@@ -48,6 +56,8 @@ class ReportColumn(JsonObject):
             SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
             sortable=False,
             data_slug=self.field,
+            format_fn=self.get_format_fn(),
+            help_text=self.description
         )
 
 
@@ -64,7 +74,7 @@ class FilterSpec(JsonObject):
     This is the spec for a report filter - a thing that should show up as a UI filter element
     in a report (like a date picker or a select list).
     """
-    type = StringProperty(required=True, choices=['date', 'choice_list'])
+    type = StringProperty(required=True, choices=['date', 'choice_list', 'dynamic_choice_list'])
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = StringProperty()

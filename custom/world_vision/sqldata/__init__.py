@@ -53,7 +53,8 @@ class BaseSqlData(SqlData):
 
         if 'startdate' in self.config:
             filters = [AND([LTE("date", "enddate"), OR([GTE('closed_on', "startdate"), EQ('closed_on', 'empty')])])]
-        elif 'startdate' not in self.config:
+        else:
+            self.config['strsd'] = '0001-01-01'
             filters = [LTE("date", "enddate")]
 
         for k, v in LOCATION_HIERARCHY.iteritems():

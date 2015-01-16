@@ -15,8 +15,8 @@ def get_case_data_sources(app):
 def get_default_case_property_datatypes():
     return {
         "name": "string",
-        "modified_on": "date",
-        "opened_on": "date",
+        "modified_on": "datetime",
+        "opened_on": "datetime",
         "owner_id": "string",
         "user_id": "string",
     }

@@ -109,7 +109,7 @@ class OpmCaseSqlData(SqlData):
         filters = [
             "domain = :domain",
             "user_id = :user_id",
-            "(opened_on <= :enddate AND (closed_on >= :enddate OR closed_on = '')) OR (opened_on <= :enddate AND (closed_on >= :startdate or closed_on <= :enddate))"
+            DATE_FILTER_EXTENDED_OPENED,
         ]
 
         return filters
@@ -907,6 +907,9 @@ class MetReport(CaseReportMixin, BaseReport):
         elif sort_dir == 'desc':
             rows.sort(key=lambda x: x[col_id], reverse=True)
         self._store_rows_in_redis(rows)
+
+        for i, row in enumerate(rows):
+            row[self.column_index('serial_number')] = i + 1
 
         if not self.is_rendered_as_email:
             return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]

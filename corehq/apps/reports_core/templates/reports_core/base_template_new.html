@@ -81,6 +81,14 @@
             event.preventDefault();
             reportTables.render();
         });
+
+        $(function() {
+            $('.header-popover').popout({
+                trigger: 'hover',
+                placement: 'bottom'
+            });
+        });
+
     });
 
     $(function () {

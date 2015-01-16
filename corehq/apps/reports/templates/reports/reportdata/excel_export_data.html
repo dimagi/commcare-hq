@@ -20,7 +20,8 @@
             exportFilters: filterParams,
             jsonExportFilters: jsonFilterParams,
             bulkDownloadUrl: '{% url "export_bulk_download" domain %}',
-            is_custom: true
+            is_custom: true,
+            is_deid_form_report: {{ is_deid_form_report|JSON }}
         } );
         ko.applyBindings(customExportManager, $('#custom-form-export')[0]);
 
@@ -47,6 +48,11 @@
 
         $('#all-forms-metadata').one().each(function () {
             ko.applyBindings(metadataExportManager, this);
+        });
+
+        $('.daily-saved-download').click(function(){
+            var exportName = $(this).attr("data-exportName");
+            ga_track_event("Download Form Export", "Download Saved Form Export", exportName);
         });
 
         $(function () {

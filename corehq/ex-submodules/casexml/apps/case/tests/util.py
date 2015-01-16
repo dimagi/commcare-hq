@@ -85,54 +85,87 @@ def check_xml_line_by_line(test_case, expected, actual):
 
 
 def assert_user_has_case(testcase, user, case_id, **kwargs):
-    return check_user_has_case(testcase, user, CaseBlock(case_id=case_id, version=V2).as_xml(),
+    return assert_user_has_cases(testcase, user, [case_id], return_single=True, **kwargs)
+
+
+def assert_user_has_cases(testcase, user, case_ids, **kwargs):
+    case_blocks = [CaseBlock(case_id=case_id, version=V2).as_xml() for case_id in case_ids]
+    return check_user_has_case(testcase, user, case_blocks,
                                should_have=True, line_by_line=False, version=V2, **kwargs)
 
 
 def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
-    return check_user_has_case(testcase, user, CaseBlock(case_id=case_id).as_xml(),
+    return assert_user_doesnt_have_cases(testcase, user, [case_id], return_single=True, **kwargs)
+
+
+def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
+    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
+    return check_user_has_case(testcase, user, case_blocks,
                                should_have=False, version=V2, **kwargs)
 
 
-def check_user_has_case(testcase, user, case_block, should_have=True,
+def check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V1,
-                        purge_restore_cache=False):
+                        purge_restore_cache=False, return_single=False):
+
+    if not isinstance(case_blocks, list):
+        case_blocks = [case_blocks]
+        return_single = True
 
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
-    case_block.set('xmlns', XMLNS)
-    case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
 
     if restore_id and purge_restore_cache:
         SyncLog.get(restore_id).invalidate_cached_payloads()
-    payload_string = RestoreConfig(user, restore_id, version=version).get_payload()
+    restore_config = RestoreConfig(user, restore_id, version=version)
+    payload_string = restore_config.get_payload()
     payload = ElementTree.fromstring(payload_string)
-    
+
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))
+
     def get_case_id(block):
         if version == V1:
             return block.findtext('{{{0}}}case_id'.format(XMLNS))
         else:
             return block.get('case_id')
-    case_id = get_case_id(case_block)
-    n = 0
-    def extra_info():
-        return "\n%s\n%s" % (ElementTree.tostring(case_block), map(ElementTree.tostring, blocks))
-    match = None
-    for block in blocks:
-        if get_case_id(block) == case_id:
-            if should_have:
-                if line_by_line:
-                    check_xml_line_by_line(testcase, ElementTree.tostring(case_block), ElementTree.tostring(block))
-                match = block
-                n += 1
-                if n == 2:
-                    testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
-            else:
-                testcase.fail("User '%s' gets case '%s' but shouldn't:%s" % (user.username, case_id, extra_info()))
-    if not n and should_have:
-        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s" \
-                      % (case_id, user.username, extra_info()))
-    return match
+
+    def check_block(case_block):
+        case_block.set('xmlns', XMLNS)
+        case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
+        case_id = get_case_id(case_block)
+        n = 0
+
+        def extra_info():
+            return "\n%s\n%s" % (ElementTree.tostring(case_block), map(ElementTree.tostring, blocks))
+        match = None
+        for block in blocks:
+            if get_case_id(block) == case_id:
+                if should_have:
+                    if line_by_line:
+                        check_xml_line_by_line(
+                            testcase,
+                            ElementTree.tostring(case_block),
+                            ElementTree.tostring(block)
+                        )
+                    match = block
+                    n += 1
+                    if n == 2:
+                        testcase.fail(
+                            "Block for case_id '%s' appears twice"
+                            " in ota restore for user '%s':%s" % (case_id, user.username, extra_info())
+                        )
+                else:
+                    testcase.fail(
+                        "User '%s' gets case '%s' "
+                        "but shouldn't:%s" % (user.username, case_id, extra_info())
+                    )
+        if not n and should_have:
+            testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s"
+                          % (case_id, user.username, extra_info()))
+
+        return match
+
+    matches = [check_block(case_block) for case_block in case_blocks]
+    return restore_config, matches[0] if return_single else matches
 
 DEFAULT_TEST_TYPE = 'test'
 

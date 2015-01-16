@@ -768,9 +768,10 @@ class XForm(WrappedNode):
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
-       
+
         for data_node, path in self.get_leaf_data_nodes():
             if path not in excluded_paths:
+                bind = self.get_bind(path)
                 try:
                     matching_repeat_context = [
                         rc for rc in repeat_contexts if path.startswith(rc)
@@ -784,6 +785,7 @@ class XForm(WrappedNode):
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
+                    "calculate": bind.attrib.get('calculate')
                 })
 
         return questions
@@ -1923,108 +1925,130 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'intent',
         'icon': 'icon-vellum-android-intent',
+        'icon_bs3': 'fcc-fd-android-intent',
     },
     "Audio": {
         'tag': 'upload',
         'media': 'audio/*',
         'type': 'binary',
         'icon': 'icon-vellum-audio-capture',
+        'icon_bs3': 'fcc-fd-audio-capture',
     },
     "Barcode": {
         'tag': 'input',
         'type': 'barcode',
         'icon': 'icon-vellum-android-intent',
+        'icon_bs3': 'fcc-fd-android-intent',
     },
     "DataBindOnly": {
         'icon': 'icon-vellum-variable',
+        'icon_bs3': 'fcc-fd-data',
     },
     "Date": {
         'tag': 'input',
         'type': 'xsd:date',
         'icon': 'icon-calendar',
+        'icon_bs3': 'fd-question',
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:datetime',
         'icon': 'icon-vellum-datetime',
+        'icon_bs3': 'fcc-fd-datetime',
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
         'icon': 'icon-vellum-decimal',
+        'icon_bs3': 'fcc-fd-decimal',
     },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',
         'icon': 'icon-reorder',
+        'icon_bs3': 'fd-question',
     },
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
         'icon': 'icon-map-marker',
+        'icon_bs3': 'fd-question',
     },
     "Group": {
         'tag': 'group',
         'icon': 'icon-folder-open',
+        'icon_bs3': 'fd-question',
     },
     "Image": {
         'tag': 'upload',
         'media': 'image/*',
         'type': 'binary',
         'icon': 'icon-camera',
+        'icon_bs3': 'fd-question',
     },
     "Int": {
         'tag': 'input',
         'type': ('xsd:int', 'xsd:integer'),
         'icon': 'icon-vellum-numeric',
+        'icon_bs3': 'fcc-fd-numeric',
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
         'icon': 'icon-vellum-long',
+        'icon_bs3': 'fcc-fd-long',
     },
     "MSelect": {
         'tag': 'select',
         'icon': 'icon-vellum-multi-select',
+        'icon_bs3': 'fcc-fd-multi-select',
     },
     "PhoneNumber": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'appearance': 'numeric',
         'icon': 'icon-signal',
+        'icon_bs3': 'fd-question',
     },
     "Repeat": {
         'tag': 'repeat',
         'icon': 'icon-retweet',
+        'icon_bs3': 'fd-question',
     },
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
         'icon': 'icon-key',
+        'icon_bs3': 'fd-question',
     },
     "Select": {
         'tag': 'select1',
         'icon': 'icon-vellum-single-select',
+        'icon_bs3': 'fcc-fd-single-select',
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'icon': "icon-vellum-text",
+        'icon_bs3': 'fcc-fd-text',
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
         'icon': 'icon-time',
+        'icon_bs3': 'fd-question',
     },
     "Trigger": {
         'tag': 'trigger',
         'icon': 'icon-tag',
+        'icon_bs3': 'fd-question',
     },
     "Video": {
         'tag': 'upload',
         'media': 'video/*',
         'type': 'binary',
         'icon': 'icon-facetime-video',
+        'icon_bs3': 'fd-question',
     },
 }
 

@@ -560,6 +560,9 @@ class HQMediaMixin(Document):
 
     def get_menu_media(self, module, module_index, form=None, form_index=None,
                        as_json=False):
+        if not module:
+            # user_registration isn't a real module, for instance
+            return {}
         media_kwargs = self.get_media_ref_kwargs(
             module, module_index, form=form, form_index=form_index,
             is_menu_media=True)
@@ -606,15 +609,16 @@ class HQMediaMixin(Document):
             'is_menu_media': is_menu_media,
         }
 
-    def remove_unused_mappings(self):
+    def remove_unused_mappings(self, additional_permitted_paths=()):
         """
             This checks to see if the paths specified in the multimedia map still exist in the Application.
             If not, then that item is removed from the multimedia map.
         """
         map_changed = False
         paths = self.multimedia_map.keys() if self.multimedia_map else []
+        permitted_paths = self.all_media_paths | set(additional_permitted_paths)
         for path in paths:
-            if path not in self.all_media_paths:
+            if path not in permitted_paths:
                 map_changed = True
                 del self.multimedia_map[path]
         if map_changed:

@@ -9,6 +9,7 @@ from .test_pillow import *
 from .test_report_charts import *
 from .test_report_config import *
 from .test_report_filters import *
+from .test_transforms import *
 from .test_utils import *
 
 from corehq.apps.userreports.expressions.getters import recursive_lookup
