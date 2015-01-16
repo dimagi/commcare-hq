@@ -10,7 +10,7 @@ function (doc) {
             death_place,
             report_date;
 
-        if (indicators.date_of_,death && indicators.date_of_death.value) {
+        if (indicators.date_of_death && indicators.date_of_death.value) {
             report_date = new Date(indicators.date_of_death.value);
         } else {
             report_date = closed_date;
