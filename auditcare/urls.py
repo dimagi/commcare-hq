@@ -1,5 +1,5 @@
 import traceback
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from auditcare.utils import logout_template, login_template
 
 
