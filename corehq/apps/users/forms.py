@@ -1,7 +1,7 @@
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
+from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 from django import forms
 from django.core.validators import EmailValidator, email_re
