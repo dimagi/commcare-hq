@@ -1,5 +1,5 @@
 
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('',
     url(r'^(?P<download_id>[0-9a-fA-Z]{25,32})$', 'soil.views.retrieve_download', name='retrieve_download'),
