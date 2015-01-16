@@ -8,7 +8,7 @@ from PIL import Image
 import uuid
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
@@ -156,9 +156,12 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
+    doc_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
+        help_text=ugettext_noop("An optional file to tell users more about your app."))
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
+        self.dom = kw.pop("domain", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
         self.fields.keyOrder = [
             'title',
@@ -171,6 +174,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'share_reminders',
             'license',
             'cda_confirmed',]
+        if self.dom and toggles.DOCUMENTATION_FILE.enabled(self.dom.name):
+            self.fields.keyOrder.append('doc_file')
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
                 'extra': _("All un-licensed multimedia files in "
