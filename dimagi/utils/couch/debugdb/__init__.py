@@ -7,16 +7,7 @@ import traceback
 import django
 from django.conf import settings
 
-from django.views.debug import linebreak_iter
-import couchdbkit
-from couchdbkit import resource, ResourceNotFound
-
-
 # -*- coding: utf-8 -
-from datetime import  datetime
-from couchdbkit.client import Database, ViewResults
-from django.utils.hashcompat import sha_constructor
-
 
 # Figure out some paths
 django_path = os.path.realpath(os.path.dirname(django.__file__))
