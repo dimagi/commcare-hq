@@ -16,7 +16,6 @@ class TestReportColumn(SimpleTestCase):
     def testGoodFormat(self):
         for format in [
             'default',
-            'month_name',
             'percent_of_total',
         ]:
             self.assertEquals(ReportColumn, type(

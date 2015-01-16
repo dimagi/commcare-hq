@@ -1,4 +1,3 @@
-import calendar
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
@@ -71,10 +70,6 @@ class ConfigurableReportDataSource(SqlData):
                         row[column_name] = '{:.0%}'.format(
                             float(row[column_name]) / total
                         )
-                elif report_column.format == 'month_name':
-                    column_name = report_column.get_sql_column().view.name
-                    for row in ret:
-                        row[column_name] = calendar.month_name[int(row[column_name])]
         except (
             ColumnNotFoundException,
             TableNotFoundException,

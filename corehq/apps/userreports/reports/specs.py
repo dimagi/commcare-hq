@@ -46,7 +46,6 @@ class ReportColumn(JsonObject):
     alias = StringProperty()
     format = StringProperty(default='default', choices=[
         'default',
-        'month_name',
         'percent_of_total',
     ])
     transform = DictProperty()
