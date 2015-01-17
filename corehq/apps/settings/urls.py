@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 from corehq.apps.domain.urls import domain_settings
 from corehq.apps.cloudcare.urls import settings_urls as cloudcare_settings

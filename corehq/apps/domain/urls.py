@@ -1,5 +1,5 @@
 import sys
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext

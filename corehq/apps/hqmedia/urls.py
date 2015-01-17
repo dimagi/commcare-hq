@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from corehq.apps.hqmedia.views import (
     DownloadMultimediaZip,
     BulkUploadMultimediaView,

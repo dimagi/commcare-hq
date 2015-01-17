@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('corehq.apps.hqwebapp.views',
     url(r'^homepage/$', 'redirect_to_default', name='homepage'),
