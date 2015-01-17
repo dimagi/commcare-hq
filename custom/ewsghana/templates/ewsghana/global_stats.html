@@ -10,69 +10,15 @@
     </thead>
     <tbody>
         <tr role="row">
-            <td>Country</td>
-            <td>{{ country }}</td>
-        </tr>
-        <tr role="row">
-            <td>Region</td>
-            <td>{{ region }}</td>
-        </tr>
-        <tr role="row">
-            <td>District</td>
-            <td>{{ district }}</td>
-        </tr>
-        <tr role="row">
             <td>Entities that report stock</td>
             <td>{{ entities_reported_stock }}</td>
         </tr>
-        <tr role="row">
-            <td>Facilities</td>
-            <td>{{ facilities }}</td>
-        </tr>
-        <tr role="row">
-            <td>Clinic</td>
-            <td>{{ clinic }}</td>
-        </tr>
-        <tr role="row">
-            <td>CHPS Facility</td>
-            <td>{{ chps_facility }}</td>
-        </tr>
-        <tr role="row">
-            <td>District Hospital</td>
-            <td>{{ district_hospital }}</td>
-        </tr>
-        <tr role="row">
-            <td>Health Centre</td>
-            <td>{{ health_centre }}</td>
-        </tr>
-        <tr role="row">
-            <td>Hospital</td>
-            <td>{{ hospital }}</td>
-        </tr>
-        <tr role="row">
-            <td>Psychiatric Hospital</td>
-            <td>{{ psychiatric_hospital }}</td>
-        </tr>
-        <tr role="row">
-            <td>Regional Medical Store</td>
-            <td>{{ regional_medical_store }}</td>
-        </tr>
-        <tr role="row">
-            <td>Regional Hospital</td>
-            <td>{{ regional_hospital }}</td>
-        </tr>
-        <tr role="row">
-            <td>Polyclinic</td>
-            <td>{{ polyclinic }}</td>
-        </tr>
-        <tr role="row">
-            <td>Teaching Hospital</td>
-            <td>{{ teaching_hospital }}</td>
-        </tr>
-        <tr role="row">
-            <td>Central Medical Store</td>
-            <td>{{ central_medical_store }}</td>
-        </tr>
+        {% for location_type in location_types %}
+            <tr role='row'>
+                <td>{{ location_type.location_type }}</td>
+                <td>{{ location_type.location_type__count }}</td>
+            </tr>
+        {% endfor %}
         <tr role='row'>
             <td>Contacts</td>
             <td>{{ contacts }}</td>
