@@ -785,7 +785,7 @@ class XForm(WrappedNode):
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
-                    "calculate": bind.attrib.get('calculate')
+                    "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 })
 
         return questions
