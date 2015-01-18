@@ -336,10 +336,10 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
             return app['key'][1]
 
         apps = self.applications[self.skip:self.skip + self.limit]
-        
+
         return [self._fmt_item(_get_app_name(a),
                                _get_app_url(a),
-                               None, # description
-                               None, # full_name
+                               None,  # description
+                               None,  # full_name
                                _get_release_manager_url(a),
                                self.secondary_url_icon) for a in apps]
