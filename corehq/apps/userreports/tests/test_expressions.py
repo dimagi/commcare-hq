@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.getters import NestedDictGetter, DictGetter
+from corehq.apps.userreports.specs import EvaluationContext
 
 
 class ConstantExpressionTest(SimpleTestCase):
@@ -127,3 +128,39 @@ class ConditionalExpressionTest(SimpleTestCase):
             'test': 'match',
             'false_value': 'incorrect',
         }))
+
+
+class BaseDocExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        spec = {
+            "type": "base_doc",
+            "expression": {
+                "type": "property_name",
+                "property_name": "base_property"
+            }
+        }
+        self.expression = ExpressionFactory.from_spec(spec)
+
+    def test_missing_context(self):
+        self.assertEqual(None, self.expression({
+            "base_property": "item_value"
+        }))
+
+    def test_not_in_context(self):
+        self.assertEqual(
+            None,
+            self.expression(
+                {"base_property": "item_value"},
+                context=EvaluationContext({})
+            )
+        )
+
+    def test_comes_from_context(self):
+        self.assertEqual(
+            "base_value",
+            self.expression(
+                {"base_property": "item_value"},
+                context=EvaluationContext({"base_property": "base_value"})
+            )
+        )

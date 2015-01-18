@@ -15,5 +15,5 @@ class EvaluationContext(object):
     An evaluation context. Necessary for repeats to pass both the row of the repeat as well
     as the base document.
     """
-    def __init__(self, base_document):
-        self.base_document = base_document
+    def __init__(self, base_doc):
+        self.base_doc = base_doc

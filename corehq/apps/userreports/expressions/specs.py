@@ -36,3 +36,8 @@ class ConditionalExpressionSpec(JsonObject):
     test = DictProperty(required=True)
     expression_if_true = DictProperty(required=True)
     expression_if_false = DictProperty(required=True)
+
+
+class BaseDocExpressionSpec(JsonObject):
+    type = TypeProperty('base_doc')
+    expression = DictProperty(required=True)
