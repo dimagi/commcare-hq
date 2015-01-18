@@ -1126,7 +1126,7 @@ class EditDomainGatewayView(AddDomainGatewayView):
             backend = self.backend_class.get(self.backend_id)
         except ResourceNotFound:
             raise Http404()
-        if backend.domain != self.domain:
+        if backend.is_global or backend.domain != self.domain:
             raise Http404()
         return backend
 
