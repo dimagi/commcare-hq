@@ -94,12 +94,18 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def indicators(self):
         doc_id_indicator = IndicatorFactory.from_spec({
             "column_id": "doc_id",
-            "type": "raw",
+            "type": "expression",
             "display_name": "document id",
             "datatype": "string",
-            "property_name": "_id",
             "is_nullable": False,
             "is_primary_key": True,
+            "expression": {
+                "type": "base_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "_id"
+                }
+            }
         }, self.named_filter_objects)
         return CompoundIndicator(
             self.display_name,
