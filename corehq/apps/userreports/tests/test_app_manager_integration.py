@@ -24,11 +24,10 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         self.assertEqual('ticket', data_source.display_name)
 
         # test the filter
-        generated_filter = data_source.filter
-        self.assertTrue(generated_filter.filter({'doc_type': 'CommCareCase', 'domain': app.domain, 'type': 'ticket'}))
-        self.assertFalse(generated_filter.filter({'doc_type': 'CommCareCase', 'domain': 'wrong domain', 'type': 'ticket'}))
-        self.assertFalse(generated_filter.filter({'doc_type': 'NotCommCareCase', 'domain': app.domain, 'type': 'ticket'}))
-        self.assertFalse(generated_filter.filter({'doc_type': 'CommCareCase', 'domain': app.domain, 'type': 'not-ticket'}))
+        self.assertTrue(data_source.filter({'doc_type': 'CommCareCase', 'domain': app.domain, 'type': 'ticket'}))
+        self.assertFalse(data_source.filter({'doc_type': 'CommCareCase', 'domain': 'wrong domain', 'type': 'ticket'}))
+        self.assertFalse(data_source.filter({'doc_type': 'NotCommCareCase', 'domain': app.domain, 'type': 'ticket'}))
+        self.assertFalse(data_source.filter({'doc_type': 'CommCareCase', 'domain': app.domain, 'type': 'not-ticket'}))
 
         # check the indicators
         expected_columns = set(["doc_id", "modified_on", "user_id", "opened_on", "owner_id", "name", "category", "priority", "starred", "estimate"])

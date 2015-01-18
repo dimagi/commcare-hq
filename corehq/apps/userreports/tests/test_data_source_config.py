@@ -31,11 +31,11 @@ class DataSourceConfigurationTest(SimpleTestCase):
             dict(doc_type="CommCareCase", domain='user-reports', type='not-ticket'),
         ]
         for document in not_matching:
-            self.assertFalse(self.config.filter.filter(document, EvaluationContext(document)))
+            self.assertFalse(self.config.filter(document))
             self.assertEqual([], self.config.get_all_values(document))
 
         doc = dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
-        self.assertTrue(self.config.filter.filter(doc, EvaluationContext(doc)))
+        self.assertTrue(self.config.filter(doc))
 
     def testColumns(self):
         # columns
@@ -197,7 +197,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         })
 
     def test_match(self):
-        self.assertTrue(self.indicator_configuration.filter.filter({
+        self.assertTrue(self.indicator_configuration.filter({
             'doc_type': 'CommCareCase',
             'domain': 'test',
             'type': 'ttc_mother',
@@ -205,7 +205,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         }))
 
     def test_no_match(self):
-        self.assertFalse(self.indicator_configuration.filter.filter({
+        self.assertFalse(self.indicator_configuration.filter({
             'doc_type': 'CommCareCase',
             'domain': 'test',
             'type': 'ttc_mother',

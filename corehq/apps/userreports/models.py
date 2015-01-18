@@ -45,13 +45,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.display_name)
 
-    @property
-    def filter(self):
-        return self._get_filter([self.referenced_doc_type])
+    def filter(self, document):
+        filter_fn = self._get_filter([self.referenced_doc_type])
+        return filter_fn(document, EvaluationContext(document))
 
-    @property
-    def deleted_filter(self):
-        return self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
+    def deleted_filter(self, document):
+        filter_fn = self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
+        return filter_fn(document, EvaluationContext(document))
 
     def _get_filter(self, doc_types):
         extras = (
@@ -113,7 +113,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return self.indicators.get_columns()
 
     def get_items(self, document):
-        if self.filter.filter(document, EvaluationContext(document)):
+        if self.filter(document):
             if not self.base_doc_expression:
                 return [document]
             else:

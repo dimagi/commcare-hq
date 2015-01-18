@@ -14,7 +14,7 @@ class RepeatDataSourceConfigurationTest(SimpleTestCase):
             self.config = DataSourceConfiguration.wrap(json.loads(f.read()))
 
     def test_test_doc_matches(self):
-        self.assertTrue(self.config.filter.filter(_test_doc()))
+        self.assertTrue(self.config.filter(_test_doc()))
 
     def test_empty_doc_no_rows(self):
         self.assertEqual([], self.config.get_all_values(_test_doc()))
