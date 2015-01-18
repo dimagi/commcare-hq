@@ -5,6 +5,9 @@ from django.test import SimpleTestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
 
 
+DOC_ID = 'repeat-id'
+DAY_OF_WEEK = 'monday'
+
 class RepeatDataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
@@ -35,10 +38,12 @@ class RepeatDataSourceConfigurationTest(SimpleTestCase):
             "start_time": start, "end_time": end, "person": "al"
         }}))
         self.assertEqual(1, len(rows))
-        doc_id_ind, start_ind, end_ind, person_ind = rows[0]
+        doc_id_ind, start_ind, end_ind, person_ind, created_base_ind = rows[0]
+        self.assertEqual(DOC_ID, doc_id_ind.value)
         self.assertEqual(start, start_ind.value)
         self.assertEqual(end, end_ind.value)
         self.assertEqual('al', person_ind.value)
+        self.assertEqual(DAY_OF_WEEK, created_base_ind.value)
 
     def test_list_property(self):
         now = datetime.datetime.now()
@@ -51,30 +56,20 @@ class RepeatDataSourceConfigurationTest(SimpleTestCase):
         rows = self.config.get_all_values(_test_doc(form={"time_logs": logs}))
         self.assertEqual(len(logs), len(rows))
         for i, row in enumerate(rows):
-            doc_id_ind, start_ind, end_ind, person_ind = row
+            doc_id_ind, start_ind, end_ind, person_ind, created_base_ind = row
+            self.assertEqual(DOC_ID, doc_id_ind.value)
             self.assertEqual(logs[i]['start_time'], start_ind.value)
             self.assertEqual(logs[i]['end_time'], end_ind.value)
             self.assertEqual(logs[i]['person'], person_ind.value)
+            self.assertEqual(DAY_OF_WEEK, created_base_ind.value)
 
-
-TODO = {
-    "type": "expression",
-    "expression": {
-        "type": "base_doc_expression",
-        "expression": {
-            "type": "property_name",
-            "property_name": "created"
-        }
-    },
-    "column_id": "start_time",
-    "datatype": "datetime",
-    "display_name": "start time"
-}
 
 def _test_doc(**extras):
     test_doc = {
+        "_id": DOC_ID,
         "domain": "user-reports",
-        "doc_type": "XFormInstance"
+        "doc_type": "XFormInstance",
+        "created": DAY_OF_WEEK
     }
     test_doc.update(extras)
     return test_doc

@@ -40,6 +40,19 @@
             "column_id": "person",
             "datatype": "string",
             "display_name": "person"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "base_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "created"
+                }
+            },
+            "column_id": "created",
+            "datatype": "string",
+            "display_name": "day of week created"
         }
     ]
 }
