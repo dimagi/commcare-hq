@@ -4,6 +4,7 @@ from datetime import date
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.specs import EvaluationContext
 
 
 class DataSourceConfigurationTest(SimpleTestCase):
@@ -30,12 +31,11 @@ class DataSourceConfigurationTest(SimpleTestCase):
             dict(doc_type="CommCareCase", domain='user-reports', type='not-ticket'),
         ]
         for document in not_matching:
-            self.assertFalse(self.config.filter.filter(document))
+            self.assertFalse(self.config.filter.filter(document, EvaluationContext(document)))
             self.assertEqual([], self.config.get_all_values(document))
 
-        self.assertTrue(self.config.filter.filter(
-            dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
-        ))
+        doc = dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
+        self.assertTrue(self.config.filter.filter(doc, EvaluationContext(doc)))
 
     def testColumns(self):
         # columns

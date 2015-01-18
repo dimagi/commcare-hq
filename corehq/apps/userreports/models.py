@@ -10,6 +10,7 @@ from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIn
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
+from corehq.apps.userreports.specs import EvaluationContext
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
@@ -112,7 +113,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return self.indicators.get_columns()
 
     def get_items(self, document):
-        if self.filter.filter(document):
+        if self.filter.filter(document, EvaluationContext(document)):
             if not self.base_doc_expression:
                 return [document]
             else:
@@ -129,7 +130,8 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             return []
 
     def get_all_values(self, doc):
-        return [self.indicators.get_values(item) for item in self.get_items(doc)]
+        context = EvaluationContext(doc)
+        return [self.indicators.get_values(item, context) for item in self.get_items(doc)]
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)

@@ -1,4 +1,4 @@
-from jsonobject import StringProperty
+from jsonobject import StringProperty, DictProperty, JsonObject
 
 
 def TypeProperty(value):
@@ -8,3 +8,12 @@ def TypeProperty(value):
     according to the type.
     """
     return StringProperty(required=True, choices=[value])
+
+
+class EvaluationContext(object):
+    """
+    An evaluation context. Necessary for repeats to pass both the row of the repeat as well
+    as the base document.
+    """
+    def __init__(self, base_document):
+        self.base_document = base_document

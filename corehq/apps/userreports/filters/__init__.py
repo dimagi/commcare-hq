@@ -1,4 +1,60 @@
-from fluff.filters import Filter
+
+# NOTE: this module is heavily copied from fluff, but with some extensions
+# The largest change is the addition of the evaluation context to every filter
+
+
+class Filter(object):
+    """
+    Base filter class
+    """
+
+    def filter(self, item, context=None):
+        return True
+
+
+class NOTFilter(Filter):
+    def __init__(self, filter):
+        self._filter = filter
+
+    def filter(self, item, context=None):
+        return not self._filter.filter(item)
+
+
+class ANDFilter(Filter):
+    """
+    Lets you construct AND operations on filters.
+    """
+    def __init__(self, filters):
+        self.filters = filters
+        assert len(self.filters) > 0
+
+    def filter(self, item, context=None):
+        return all(filter.filter(item, context) for filter in self.filters)
+
+
+class ORFilter(Filter):
+    """
+    Lets you construct OR operations on filters.
+    """
+    def __init__(self, filters):
+        self.filters = filters
+        assert len(self.filters) > 0
+
+    def filter(self, item, context=None):
+        return any(filter.filter(item, context) for filter in self.filters)
+
+
+class CustomFilter(Filter):
+    """
+    This filter allows you to pass in a function reference to use as the filter
+
+    e.g. CustomFilter(lambda f, context: f['gender'] in ['male', 'female'])
+    """
+    def __init__(self, filter):
+        self._filter = filter
+
+    def filter(self, item, context=None):
+        return self._filter(item, context)
 
 
 class SinglePropertyValueFilter(Filter):
@@ -8,5 +64,5 @@ class SinglePropertyValueFilter(Filter):
         self.operator = operator
         self.reference_value = reference_value
 
-    def filter(self, item):
-        return self.operator(self.expression(item), self.reference_value)
+    def filter(self, item, context=None):
+        return self.operator(self.expression(item, context), self.reference_value)

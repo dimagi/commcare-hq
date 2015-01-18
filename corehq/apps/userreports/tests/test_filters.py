@@ -1,7 +1,8 @@
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
-from fluff.filters import ANDFilter, ORFilter, NOTFilter
+
 
 
 class PropertyMatchFilterTest(SimpleTestCase):

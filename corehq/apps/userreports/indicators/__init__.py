@@ -27,7 +27,7 @@ class ConfigurableIndicatorMixIn(object):
     def get_columns(self):
         raise NotImplementedError()
 
-    def get_values(self, item):
+    def get_values(self, item, context=None):
         raise NotImplementedError()
 
 
@@ -57,8 +57,8 @@ class BooleanIndicator(SingleColumnIndicator):
         super(BooleanIndicator, self).__init__(display_name, Column(column_id, datatype=TYPE_INTEGER))
         self.filter = filter
 
-    def get_values(self, item):
-        value = 1 if self.filter.filter(item) else 0
+    def get_values(self, item, context=None):
+        value = 1 if self.filter.filter(item, context) else 0
         return [ColumnValue(self.column, value)]
 
 
@@ -70,8 +70,8 @@ class RawIndicator(SingleColumnIndicator):
         super(RawIndicator, self).__init__(display_name, column)
         self.getter = getter
 
-    def get_values(self, item):
-        return [ColumnValue(self.column, self.getter(item))]
+    def get_values(self, item, context=None):
+        return [ColumnValue(self.column, self.getter(item, context))]
 
 
 class CompoundIndicator(ConfigurableIndicator):
@@ -85,5 +85,5 @@ class CompoundIndicator(ConfigurableIndicator):
     def get_columns(self):
         return [c for ind in self.indicators for c in ind.get_columns()]
 
-    def get_values(self, item):
-        return [val for ind in self.indicators for val in ind.get_values(item)]
+    def get_values(self, item, context=None):
+        return [val for ind in self.indicators for val in ind.get_values(item, context)]

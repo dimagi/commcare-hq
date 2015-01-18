@@ -10,7 +10,7 @@ class ConstantGetterSpec(JsonObject):
 
     @property
     def expression(self):
-        return lambda item: self.constant
+        return lambda item, context=None: self.constant
 
 
 class PropertyNameGetterSpec(JsonObject):
