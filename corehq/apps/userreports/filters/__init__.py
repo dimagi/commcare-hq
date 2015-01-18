@@ -1,6 +1,7 @@
 
 # NOTE: this module is heavily copied from fluff, but with some extensions
 # The largest change is the addition of the evaluation context to every filter
+import warnings
 
 
 class Filter(object):
@@ -8,15 +9,22 @@ class Filter(object):
     Base filter class
     """
 
-    def filter(self, item, context=None):
+    def __call__(self, item, context=None):
         return True
+
+    def filter(self, item, context=None):
+        warnings.warn(
+            "filter function is deprecated. Just use this as a callable.",
+            DeprecationWarning,
+        )
+        return self(item, context)
 
 
 class NOTFilter(Filter):
     def __init__(self, filter):
         self._filter = filter
 
-    def filter(self, item, context=None):
+    def __call__(self, item, context=None):
         return not self._filter.filter(item)
 
 
@@ -28,7 +36,7 @@ class ANDFilter(Filter):
         self.filters = filters
         assert len(self.filters) > 0
 
-    def filter(self, item, context=None):
+    def __call__(self, item, context=None):
         return all(filter.filter(item, context) for filter in self.filters)
 
 
@@ -40,7 +48,7 @@ class ORFilter(Filter):
         self.filters = filters
         assert len(self.filters) > 0
 
-    def filter(self, item, context=None):
+    def __call__(self, item, context=None):
         return any(filter.filter(item, context) for filter in self.filters)
 
 
@@ -53,7 +61,7 @@ class CustomFilter(Filter):
     def __init__(self, filter):
         self._filter = filter
 
-    def filter(self, item, context=None):
+    def __call__(self, item, context=None):
         return self._filter(item, context)
 
 
@@ -64,5 +72,5 @@ class SinglePropertyValueFilter(Filter):
         self.operator = operator
         self.reference_value = reference_value
 
-    def filter(self, item, context=None):
+    def __call__(self, item, context=None):
         return self.operator(self.expression(item, context), self.reference_value)
