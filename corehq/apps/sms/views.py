@@ -974,6 +974,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return get_available_backends()
 
     def _fmt_backend_data(self, backend):
+        is_editable = not backend.is_global and backend.domain == self.domain
         return {
             'id': backend._id,
             'name': backend.name,
@@ -981,8 +982,10 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
-            ) if not backend.is_global else "",
-            'canDelete': not backend.is_global,
+            ) if is_editable else "",
+            'canDelete': is_editable,
+            'isGlobal': backend.is_global,
+            'isShared': not backend.is_global and backend.domain != self.domain,
             'deleteModalId': 'delete_%s' % backend._id,
         }
 
@@ -991,7 +994,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
             backend = SMSBackend.get(item_id)
         except ResourceNotFound:
             raise Http404()
-        if backend.domain != self.domain or backend.base_doc != "MobileBackend":
+        if (backend.is_global or backend.domain != self.domain or
+            backend.base_doc != "MobileBackend"):
             raise Http404()
         if self.domain_object.default_sms_backend_id == backend._id:
             self.domain_object.default_sms_backend_id = None
