@@ -26,7 +26,7 @@ DELETED_DOC_TYPES = {
 }
 
 
-class DataSourceConfiguration(UnicodeMixIn, ConfigurableIndicatorMixIn, CachedCouchDocumentMixin, Document):
+class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     A data source configuration. These map 1:1 with database tables that get created.
     Each data source can back an arbitrary number of reports.
