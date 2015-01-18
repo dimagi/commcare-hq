@@ -1036,6 +1036,10 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     page_title = ugettext_noop("Add SMS Connection")
 
     @property
+    def is_superuser(self):
+        return self.request.couch_user.is_superuser
+
+    @property
     def backend_class_name(self):
         return self.kwargs.get('backend_class_name')
 
@@ -1048,6 +1052,9 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     @property
     @memoized
     def backend_class(self):
+        # For now, only allow superusers to create/edit non-Telerivet backends
+        if not self.is_superuser and self.backend_class_name != "TelerivetBackend":
+            raise Http404()
         backend_classes = get_available_backends()
         try:
             return backend_classes[self.backend_class_name]
