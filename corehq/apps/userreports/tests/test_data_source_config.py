@@ -10,7 +10,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
         folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-        sample_file = os.path.join(folder, 'sample_indicator_config.json')
+        sample_file = os.path.join(folder, 'sample_data_source.json')
         with open(sample_file) as f:
             structure = json.loads(f.read())
             self.config = DataSourceConfiguration.wrap(structure)
