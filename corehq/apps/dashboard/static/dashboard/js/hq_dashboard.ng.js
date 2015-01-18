@@ -180,20 +180,6 @@
         };
     };
 
-    dashboardDirectives.appsPaginatedTileDirective = function (dashboardConfig) {
-        var link = function ($scope, element, attrs, controller) {
-            controller.init(attrs);
-        };
-
-        return {
-            scope: true,
-            restrict: 'EA',
-            templateUrl: utils.getTemplate(dashboardConfig, 'apps_paginated_tile.html'),
-            controller: dashboardControllers.PaginatedTileController,
-            link: link
-        };
-    };
-
     dashboardDirectives.iconTileDirective = function (dashboardConfig) {
         var link = function ($scope, element, attrs, controller) {
             controller.init(attrs);
@@ -246,7 +232,6 @@
 
     dashboard.controller(dashboardControllers);
     dashboard.directive('tilePaginate', dashboardDirectives.paginatedTileDirective);
-    dashboard.directive('tileAppsPaginate', dashboardDirectives.appsPaginatedTileDirective);
     dashboard.directive('tileIcon', dashboardDirectives.iconTileDirective);
     dashboard.directive('processExternalLink', dashboardDirectives.externalLinkDirective);
     dashboard.directive('trackAnalytics', dashboardDirectives.trackAnalyticsDirective);

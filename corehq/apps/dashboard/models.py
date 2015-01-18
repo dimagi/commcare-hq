@@ -12,7 +12,6 @@ class TileConfigurationError(Exception):
 class TileType(object):
     ICON = 'icon'
     PAGINATE = 'paginate'
-    APPS_PAGINATE = 'apps-paginate'
 
 
 class Tile(object):
@@ -210,13 +209,23 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
         }
 
     @staticmethod
-    def _fmt_item(name, url, description=None, full_name=None):
+    def _fmt_item(name,
+                  url,
+                  description=None,
+                  full_name=None,
+                  secondary_url=None,
+                  secondary_url_icon=None):
         """This is the format that the paginator expects items to be in
         so that the template can be fully rendered.
         :param name: string
         :param url: string
         :param description: string. optional.
         If present, a popover will appear to the left of the list item.
+        :param full_name: string. optional.
+        If present, set the popover title.
+        :param secondary_url: string. optional.
+        :param secondary_url_icon: string. optional.
+        If these two values are present, display an icon that link to a secondary url when the line is hovered.
         :return:
         """
 
@@ -230,6 +239,8 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
             'name': _fmt_item_name(name),
             'description': description,
             'url': url,
+            'secondary_url': secondary_url,
+            'secondary_url_icon': secondary_url_icon
         }
 
     @property
@@ -287,7 +298,7 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     """Generates the Paginated context for the Applications Tile.
     """
 
-    tile_type = TileType.APPS_PAGINATE
+    secondary_url_icon = "fa fa-download"
 
     @property
     def total(self):
@@ -325,8 +336,10 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
             return app['key'][1]
 
         apps = self.applications[self.skip:self.skip + self.limit]
-        return [{
-            'name': _get_app_name(a),
-            'url': _get_app_url(a),
-            'release_manager_url': _get_release_manager_url(a)
-        } for a in apps]
+        
+        return [self._fmt_item(_get_app_name(a),
+                               _get_app_url(a),
+                               None, # description
+                               None, # full_name
+                               _get_release_manager_url(a),
+                               self.secondary_url_icon) for a in apps]
