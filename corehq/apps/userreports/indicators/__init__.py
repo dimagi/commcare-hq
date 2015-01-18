@@ -58,7 +58,7 @@ class BooleanIndicator(SingleColumnIndicator):
         self.filter = filter
 
     def get_values(self, item, context=None):
-        value = 1 if self.filter.filter(item, context) else 0
+        value = 1 if self.filter(item, context) else 0
         return [ColumnValue(self.column, value)]
 
 

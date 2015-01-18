@@ -8,7 +8,7 @@ class ConditionalExpression(object):
         self.expression_if_false = expression_if_false
 
     def __call__(self, item, context=None):
-        if self.test_function.filter(item, context):
+        if self.test_function(item, context):
             return self.expression_if_true(item, context)
         else:
             return self.expression_if_false(item, context)

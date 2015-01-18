@@ -12,13 +12,6 @@ class Filter(object):
     def __call__(self, item, context=None):
         return True
 
-    def filter(self, item, context=None):
-        warnings.warn(
-            "filter function is deprecated. Just use this as a callable.",
-            DeprecationWarning,
-        )
-        return self(item, context)
-
 
 class NOTFilter(Filter):
     def __init__(self, filter):
