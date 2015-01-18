@@ -1,0 +1,45 @@
+{
+    "domain": "user-reports",
+    "doc_type": "DataSourceConfiguration",
+    "referenced_doc_type": "XFormInstance",
+    "table_id": "sample-repeat",
+    "display_name": "Time Logged",
+    "base_doc_expression": {
+        "type": "property_path",
+        "property_path": ["form", "time_logs"]
+    },
+    "configured_filter": {
+    },
+    "configured_indicators": [
+        {
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "start_time"
+            },
+            "column_id": "start_time",
+            "datatype": "datetime",
+            "display_name": "start time"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "end_time"
+            },
+            "column_id": "end_time",
+            "datatype": "datetime",
+            "display_name": "end time"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "person"
+            },
+            "column_id": "person",
+            "datatype": "string",
+            "display_name": "person"
+        }
+    ]
+}

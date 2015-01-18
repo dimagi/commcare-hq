@@ -31,7 +31,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
         ]
         for document in not_matching:
             self.assertFalse(self.config.filter.filter(document))
-            self.assertEqual([], self.config.get_values(document))
+            self.assertEqual([], self.config.get_all_values(document))
 
         self.assertTrue(self.config.filter.filter(
             dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
@@ -58,7 +58,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
     def testIndicators(self):
         # indicators
         sample_doc, expected_indicators = get_sample_doc_and_indicators()
-        results = self.config.get_values(sample_doc)
+        [results] = self.config.get_all_values(sample_doc)
         for result in results:
             self.assertEqual(expected_indicators[result.column.id], result.value)
 
@@ -213,7 +213,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         }))
 
     def test_simple_indicator_match(self):
-        values = self.indicator_configuration.indicators.get_values({
+        [values] = self.indicator_configuration.get_all_values({
             'doc_type': 'CommCareCase',
             'domain': 'test',
             'type': 'ttc_mother',
@@ -223,7 +223,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         self.assertEqual(1, values[1].value)
 
     def test_simple_indicator_nomatch(self):
-        values = self.indicator_configuration.indicators.get_values({
+        [values] = self.indicator_configuration.get_all_values({
             'doc_type': 'CommCareCase',
             'domain': 'test',
             'type': 'ttc_mother',
@@ -233,7 +233,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         self.assertEqual(0, values[1].value)
 
     def test_expression_match(self):
-        values = self.indicator_configuration.indicators.get_values({
+        [values] = self.indicator_configuration.get_all_values({
             'doc_type': 'CommCareCase',
             'domain': 'test',
             'type': 'ttc_mother',
@@ -243,7 +243,7 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         self.assertEqual('mwa-ha-ha', values[2].value)
 
     def test_expression_nomatch(self):
-        values = self.indicator_configuration.indicators.get_values({
+        [values] = self.indicator_configuration.get_all_values({
             'doc_type': 'CommCareCase',
             'domain': 'test',
             'type': 'ttc_mother',

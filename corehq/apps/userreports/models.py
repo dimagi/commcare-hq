@@ -3,6 +3,7 @@ from couchdbkit.ext.django.schema import Document, StringListProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
@@ -35,6 +36,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
+    base_doc_expression = DictProperty()
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
     named_filters = DictProperty()
@@ -109,11 +111,25 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def get_columns(self):
         return self.indicators.get_columns()
 
-    def get_values(self, item):
-        if self.filter.filter(item):
-            return self.indicators.get_values(item)
+    def get_items(self, document):
+        if self.filter.filter(document):
+            if not self.base_doc_expression:
+                return [document]
+            else:
+                parsed_expression = ExpressionFactory.from_spec(self.base_doc_expression,
+                                                                context=self.named_filter_objects)
+                result = parsed_expression(document)
+                if result is None:
+                    return []
+                elif isinstance(result, list):
+                    return result
+                else:
+                    return [result]
         else:
             return []
+
+    def get_all_values(self, doc):
+        return [self.indicators.get_values(item) for item in self.get_items(doc)]
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)

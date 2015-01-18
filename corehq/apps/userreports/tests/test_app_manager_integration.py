@@ -54,7 +54,8 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
 
 
         default_case_property_datatypes = get_default_case_property_datatypes()
-        for result in data_source.get_values(sample_doc):
+        [row] = data_source.get_all_values(sample_doc)
+        for result in row:
             self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)
             if result.column.id in default_case_property_datatypes:
                 self.assertEqual(
