@@ -1308,6 +1308,7 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
+    'stock-status-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
