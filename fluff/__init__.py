@@ -17,10 +17,11 @@ import fluff.util
 
 REDUCE_TYPES = set(['sum', 'count', 'min', 'max', 'sumsqr'])
 TYPE_INTEGER = 'integer'
+TYPE_DECIMAL = 'decimal'
 TYPE_STRING = 'string'
 TYPE_DATE = 'date'
 TYPE_DATETIME = 'datetime'
-ALL_TYPES = [TYPE_INTEGER, TYPE_STRING, TYPE_DATE, TYPE_DATETIME]
+ALL_TYPES = [TYPE_INTEGER, TYPE_DECIMAL, TYPE_STRING, TYPE_DATE, TYPE_DATETIME]
 
 
 class base_emitter(object):
