@@ -651,15 +651,10 @@ class XForm(WrappedNode):
         if id[0] == id[-1] and id[0] in ('"', "'"):
             id = id[1:-1]
 
-        try:
-            itext_node = self.itext_node
-        except XFormError:
-            return
-
         if lang is None:
-            trans_node = itext_node.find('{f}translation')
+            trans_node = self.itext_node.find('{f}translation')
         else:
-            trans_node = itext_node.find('{f}translation[@lang="%s"]' % lang)
+            trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % lang)
             if not trans_node.exists():
                 return None
 
