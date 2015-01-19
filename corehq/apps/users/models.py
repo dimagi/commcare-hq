@@ -1319,11 +1319,10 @@ class LocationUserMixin(DocumentSchema):
     def set_location(self, location):
         from corehq.apps.commtrack.models import SupplyPointCase
 
-        # TODO remove this when the form doesn't require
-        # stock tracking locations
-        # we just call this because right now it's a problem
-        # if a location doesnt't have a SP
-        SupplyPointCase.get_or_create_by_location(location)
+        if not location.location_type_object.administrative:
+            # just need to trigger a get or create to make sure
+            # this exists, otherwise things blow up
+            SupplyPointCase.get_or_create_by_location(location)
 
         if self.project.supports_multiple_locations_per_user:
             # TODO is it possible to only remove this
@@ -1398,8 +1397,9 @@ class LocationUserMixin(DocumentSchema):
 
         sp = SupplyPointCase.get_or_create_by_location(location)
 
-        from corehq.apps.commtrack.util import submit_mapping_case_block
-        submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
+        if not location.location_type_object.administrative:
+            from corehq.apps.commtrack.util import submit_mapping_case_block
+            submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
 
     def submit_location_block(self, caseblock):
         # TODO legacy method to be removed/refactored
@@ -1422,15 +1422,16 @@ class LocationUserMixin(DocumentSchema):
 
         mapping = self.get_location_map_case()
 
-        if mapping and location._id in [loc._id for loc in self.locations]:
-            caseblock = CaseBlock(
-                create=False,
-                case_id=mapping._id,
-                version=V2,
-                index=self.supply_point_index_mapping(sp, True)
-            )
+        if not location.location_type_object.administrative:
+            if mapping and location._id in [loc._id for loc in self.locations]:
+                caseblock = CaseBlock(
+                    create=False,
+                    case_id=mapping._id,
+                    version=V2,
+                    index=self.supply_point_index_mapping(sp, True)
+                )
 
-            self.submit_location_block(caseblock)
+                self.submit_location_block(caseblock)
 
     def clear_locations(self):
         # TODO legacy method to be removed/refactored
@@ -1459,8 +1460,9 @@ class LocationUserMixin(DocumentSchema):
 
         index = {}
         for location in locations:
-            sp = SupplyPointCase.get_by_location(location)
-            index.update(self.supply_point_index_mapping(sp))
+            if not location.location_type_object.administrative:
+                sp = SupplyPointCase.get_by_location(location)
+                index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id
         caseblock = CaseBlock(

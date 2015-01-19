@@ -1,7 +1,7 @@
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
+from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 from django import forms
 from django.core.validators import EmailValidator, email_re
@@ -35,6 +35,7 @@ import settings
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
 mark_safe_lazy = lazy(mark_safe, six.text_type)
+
 
 def wrapped_language_validation(value):
     try:
@@ -419,14 +420,11 @@ class CommtrackUserForm(forms.Form):
 
             user.set_location(loc)
 
-            try:
-                # add the supply point case id to user data fields
-                # so that the phone can auto select
-                supply_point = SupplyPointCase.get_by_location(loc)
+            # add the supply point case id to user data fields
+            # so that the phone can auto select
+            supply_point = SupplyPointCase.get_by_location(loc)
+            if supply_point:
                 user.user_data['commtrack-supply-point'] = supply_point._id
-            except SupplyPointCase.ResourceNotFound:
-                # this just means it's an administrative location type
-                pass
 
             user.user_data['commcare_primary_case_sharing_id'] = \
                 LOCATION_SHARING_PREFIX + location_id
