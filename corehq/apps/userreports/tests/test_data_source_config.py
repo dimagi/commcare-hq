@@ -4,17 +4,12 @@ from datetime import date
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.specs import EvaluationContext
 
 
 class DataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
-        folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-        sample_file = os.path.join(folder, 'sample_data_source.json')
-        with open(sample_file) as f:
-            structure = json.loads(f.read())
-            self.config = DataSourceConfiguration.wrap(structure)
+        self.config = get_sample_data_source()
 
     def test_metadata(self):
         # metadata
@@ -61,6 +56,14 @@ class DataSourceConfigurationTest(SimpleTestCase):
         [results] = self.config.get_all_values(sample_doc)
         for result in results:
             self.assertEqual(expected_indicators[result.column.id], result.value)
+
+
+def get_sample_data_source():
+    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
+    sample_file = os.path.join(folder, 'sample_data_source.json')
+    with open(sample_file) as f:
+        structure = json.loads(f.read())
+        return DataSourceConfiguration.wrap(structure)
 
 
 def get_sample_doc_and_indicators():

@@ -1,25 +1,17 @@
-import json
-import os
 from django.test import TestCase
 import sqlalchemy
-from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tests import get_sample_doc_and_indicators
+from corehq.apps.userreports.tests import get_sample_doc_and_indicators, get_sample_data_source
 
 
 class IndicatorPillowTest(TestCase):
 
     def setUp(self):
-        folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-        sample_file = os.path.join(folder, 'sample_data_source.json')
+        self.config = get_sample_data_source()
         self.pillow = ConfigurableIndicatorPillow()
         self.engine = self.pillow.get_sql_engine()
-        with open(sample_file) as f:
-            structure = json.loads(f.read())
-            self.config = DataSourceConfiguration.wrap(structure)
-            self.pillow.bootstrap(configs=[self.config])
-
+        self.pillow.bootstrap(configs=[self.config])
         self.adapter = IndicatorSqlAdapter(self.engine, self.config)
         self.adapter.rebuild_table()
 
