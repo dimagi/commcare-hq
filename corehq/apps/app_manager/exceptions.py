@@ -34,23 +34,23 @@ class ConflictingCaseTypeError(AppEditingError):
     pass
 
 
-class XFormError(AppManagerException):
+class XFormException(AppManagerException):
     pass
 
 
-class BlankXFormError(XFormError):
+class BlankXFormError(XFormException):
     pass
 
 
-class CaseError(XFormError):
+class CaseError(XFormException):
     pass
 
 
-class ScheduleError(XFormError):
+class ScheduleError(XFormException):
     pass
 
 
-class XFormValidationError(XFormError):
+class XFormValidationError(XFormException):
     def __init__(self, fatal_error, version="1.0", validation_problems=None):
         self.fatal_error = fatal_error
         self.version = version
@@ -84,7 +84,7 @@ class XFormValidationError(XFormError):
         return message
 
 
-class BindNotFound(XFormError):
+class BindNotFound(XFormException):
     pass
 
 
