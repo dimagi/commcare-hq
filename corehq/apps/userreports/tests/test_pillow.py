@@ -27,7 +27,7 @@ class IndicatorPillowTest(TestCase):
         self.adapter.drop_table()
         self.engine.dispose()
 
-    def testFilter(self):
+    def test_filter(self):
         # note: this is a silly test now that python_filter always returns true
         not_matching = [
             dict(doc_type="NotCommCareCase", domain='user-reports', type='ticket'),
@@ -41,7 +41,7 @@ class IndicatorPillowTest(TestCase):
             dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
         ))
 
-    def testChangeTransport(self):
+    def test_change_transport(self):
         # indicators
         sample_doc, expected_indicators = get_sample_doc_and_indicators()
         self.pillow.change_transport(sample_doc)

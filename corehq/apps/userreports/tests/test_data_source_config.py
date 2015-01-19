@@ -16,14 +16,14 @@ class DataSourceConfigurationTest(SimpleTestCase):
             structure = json.loads(f.read())
             self.config = DataSourceConfiguration.wrap(structure)
 
-    def testMetadata(self):
+    def test_metadata(self):
         # metadata
         self.assertEqual('user-reports', self.config.domain)
         self.assertEqual('CommCareCase', self.config.referenced_doc_type)
         self.assertEqual('CommBugz', self.config.display_name)
         self.assertEqual('sample', self.config.table_id)
 
-    def testFilters(self):
+    def test_filters(self):
         # filters
         not_matching = [
             dict(doc_type="NotCommCareCase", domain='user-reports', type='ticket'),
@@ -37,7 +37,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
         doc = dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
         self.assertTrue(self.config.filter(doc))
 
-    def testColumns(self):
+    def test_columns(self):
         # columns
         expected_columns = [
             'doc_id',
@@ -55,7 +55,7 @@ class DataSourceConfigurationTest(SimpleTestCase):
             col_back = cols[i]
             self.assertEqual(col, col_back.id)
 
-    def testIndicators(self):
+    def test_indicators(self):
         # indicators
         sample_doc, expected_indicators = get_sample_doc_and_indicators()
         [results] = self.config.get_all_values(sample_doc)
@@ -103,7 +103,7 @@ class DataSourceConfigurationDbTest(TestCase):
         for config in DataSourceConfiguration.all():
             config.delete()
 
-    def testGetByDomain(self):
+    def test_get_by_domain(self):
         results = DataSourceConfiguration.by_domain('foo')
         self.assertEqual(2, len(results))
         for item in results:
@@ -112,20 +112,20 @@ class DataSourceConfigurationDbTest(TestCase):
         results = DataSourceConfiguration.by_domain('not-foo')
         self.assertEqual(0, len(results))
 
-    def testGetAll(self):
+    def test_get_all(self):
         self.assertEqual(3, len(list(DataSourceConfiguration.all())))
 
-    def testDomainIsRequired(self):
+    def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(table_id='table',
                                     referenced_doc_type='doc').save()
 
-    def testTableIdIsRequired(self):
+    def test_table_id_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain',
                                     referenced_doc_type='doc').save()
 
-    def testDocTypeIsRequired(self):
+    def test_doc_type_is_required(self):
         with self.assertRaises(BadValueError):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
