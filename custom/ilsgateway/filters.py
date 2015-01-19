@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
@@ -21,3 +21,23 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
     @classmethod
     def get_labels(cls):
         return [('Program', 'All', 'program'), ('Product', 'All', 'product')]
+
+
+class MSDZoneFilter(BaseSingleOptionFilter):
+
+    slug = 'msd'
+    label = 'MSD zone'
+
+    @property
+    def options(self):
+        return [
+            ('MT', 'Mtwara'),
+            ('MS', 'Moshi'),
+            ('MB', 'Mbeya'),
+            ('TB', 'Tabora'),
+            ('MW', 'Mwanza'),
+            ('IR', 'Iringa'),
+            ('DR', 'Dar'),
+            ('DM', 'Dodoma'),
+            ('TG', 'Tanga'),
+        ]

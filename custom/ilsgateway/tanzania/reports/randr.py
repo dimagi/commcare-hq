@@ -2,7 +2,7 @@ from datetime import datetime
 from functools import partial
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.ilsgateway.filters import ProductByProgramFilter
+from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
@@ -24,7 +24,8 @@ class RRStatus(ILSData):
     @property
     def rows(self):
         rows = []
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                               site_code__contains=self.config['msd_code'])
         for child in locations:
             try:
                 org_summary = OrganizationSummary.objects.get(
@@ -103,14 +104,15 @@ class RRReportingHistory(ILSData):
     @property
     def rows(self):
         rows = []
-        location = Location.get(self.config['location_id'])
-        dg = DeliveryGroups().submitting(location.children, int(self.config['month']))
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                               site_code__contains=self.config['msd_code'])
+        dg = DeliveryGroups().submitting(locations, int(self.config['month']))
         for child in dg:
             total_responses = 0
             total_possible = 0
             group_summaries = GroupSummary.objects.filter(
                 org_summary__date__lte=datetime(int(self.config['year']), int(self.config['month']), 1),
-                org_summary__supply_point=child._id, title='rr_fac'
+                org_summary__supply_point=child.location_id, title='rr_fac'
             )
 
             for g in group_summaries:
@@ -121,10 +123,10 @@ class RRReportingHistory(ILSData):
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
                            '?location_id=%s&filter_by_program=%s%s',
-                           (child._id, self.config['program'], self.config['prd_part_url']))
+                           (child.location_id, self.config['program'], self.config['prd_part_url']))
 
-            rr_value = randr_value(child._id, int(self.config['month']), int(self.config['year']))
-            contact = get_default_contact_for_location(self.config['domain'], child._id)
+            rr_value = randr_value(child.location_id, int(self.config['month']), int(self.config['year']))
+            contact = get_default_contact_for_location(self.config['domain'], child.location_id)
 
             if contact:
                 role = contact.user_data.get('role') or ""
@@ -162,7 +164,7 @@ class RRreport(DetailsReport):
     title = 'R & R'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
 
     @property
     @memoized
