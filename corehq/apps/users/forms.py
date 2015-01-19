@@ -14,7 +14,7 @@ from django.template import Context
 from django_countries.countries import COUNTRIES
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LOCATION_SHARING_PREFIX
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -422,6 +422,9 @@ class CommtrackUserForm(forms.Form):
             # so that the phone can auto select
             supply_point = SupplyPointCase.get_by_location(loc)
             user.user_data['commtrack-supply-point'] = supply_point._id
+
+            user.user_data['commcare_primary_case_sharing_id'] = \
+                LOCATION_SHARING_PREFIX + location_id
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
