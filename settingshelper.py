@@ -1,3 +1,7 @@
+from redis.exceptions import ConnectionError
+from redis_cache.exceptions import ConnectionInterrumped
+
+
 def get_server_url(http_method, server_root, username, password):
     if username and password:
         return '%(http_method)s://%(user)s:%(pass)s@%(server)s' % {
@@ -66,3 +70,8 @@ def get_extra_couchdbs(config, couch_database_url):
             extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
 
     return extra_dbs
+
+
+def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
+    if isinstance(exc, (ConnectionInterrumped, ConnectionError)):
+        task.retry(exc, max_retries=3, countdown=60 * 5)
