@@ -385,8 +385,9 @@ class SupplyPointSelectWidget(forms.Widget):
                     'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
                 }))
 
+
 class CommtrackUserForm(forms.Form):
-    supply_point = forms.CharField(label='Location:', required=False)
+    location = forms.CharField(label='Location:', required=False)
     program_id = forms.ChoiceField(label="Program", choices=(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -400,7 +401,7 @@ class CommtrackUserForm(forms.Form):
         else:
             attrs = {'is_admin': False}
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
+        self.fields['location'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
         if Domain.get_by_name(domain).commtrack_enabled:
             programs = Program.by_domain(domain, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
@@ -412,16 +413,20 @@ class CommtrackUserForm(forms.Form):
     def save(self, user):
         # TODO does this need to do anything special for multiple
         # location flag domains?
-        location_id = self.cleaned_data['supply_point']
+        location_id = self.cleaned_data['location']
         if location_id:
             loc = Location.get(location_id)
 
             user.set_location(loc)
 
-            # add the supply point case id to user data fields
-            # so that the phone can auto select
-            supply_point = SupplyPointCase.get_by_location(loc)
-            user.user_data['commtrack-supply-point'] = supply_point._id
+            try:
+                # add the supply point case id to user data fields
+                # so that the phone can auto select
+                supply_point = SupplyPointCase.get_by_location(loc)
+                user.user_data['commtrack-supply-point'] = supply_point._id
+            except SupplyPointCase.ResourceNotFound:
+                # this just means it's an administrative location type
+                pass
 
             user.user_data['commcare_primary_case_sharing_id'] = \
                 LOCATION_SHARING_PREFIX + location_id
