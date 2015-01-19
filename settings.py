@@ -924,6 +924,11 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
+INDICATOR_CONFIG = {
+    "mvp-sauri": ['mvp_indicators'],
+    "mvp-potou": ['mvp_indicators'],
+}
+
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
@@ -1134,11 +1139,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
         'MAX_PRELOAD_TIME': 20,
         'MAX_LOAD_TIME': 30,
     },
-}
-
-INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
 }
 
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
