@@ -1,6 +1,7 @@
 import json
 import os
 import datetime
+from decimal import Decimal, getcontext
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import DataSourceConfiguration
@@ -42,7 +43,8 @@ class DataSourceConfigurationTest(SimpleTestCase):
             'category_bug', 'category_feature', 'category_app', 'category_schedule',
             'tags_easy-win', 'tags_potential-dupe', 'tags_roadmap', 'tags_public',
             'is_starred',
-            'estimate'
+            'estimate',
+            'priority'
         ]
         cols = self.config.get_columns()
         self.assertEqual(len(expected_columns), len(cols))
@@ -83,7 +85,8 @@ def get_sample_doc_and_indicators():
         category='bug',
         tags='easy-win public',
         is_starred='yes',
-        estimate=2,
+        estimate=2.3,
+        priority=4,
     )
     expected_indicators = {
         'doc_id': 'some-doc-id',
@@ -93,7 +96,8 @@ def get_sample_doc_and_indicators():
         'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
         'tags_easy-win': 1, 'tags_potential-dupe': 0, 'tags_roadmap': 0, 'tags_public': 1,
         'is_starred': 1,
-        'estimate': 2,
+        'estimate': Decimal(2.3),
+        'priority': 4,
     }
     return sample_doc, expected_indicators
 
