@@ -552,7 +552,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             counts_by_date.get(date.strftime(DATE_FORMAT), 0)
             for date in self.dates
         ]
-        styled_date_cols = ['<span class="gray-zero">0</span>' if c == 0 else c for c in date_cols]
+        styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
