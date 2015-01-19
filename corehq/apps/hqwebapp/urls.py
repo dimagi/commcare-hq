@@ -5,7 +5,7 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
     url(r'^home/$', 'landing_page', name='landing_page'),
     url(r'^crossdomain.xml$', 'yui_crossdomain', name='yui_crossdomain'),
     (r'^serverup.txt$', 'server_up'),
-    (r'^change_password/$', 'password_change'),
+    url(r'^change_password/$', 'password_change', name='password_change'),
 
     url(r'^no_permissions/$', 'no_permissions', name='no_permissions'),
 
