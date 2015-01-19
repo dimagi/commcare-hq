@@ -51,17 +51,17 @@ function isChildWelfareForm(doc) {
 }
 
 function isHouseholdCase(doc) {
-    return (doc.doc_type === "CommCareCase"
+    return (doc.doc_type === "IndicatorCase"
         && doc.type === 'household');
 }
 
 function isChildCase(doc) {
-    return (doc.doc_type === "CommCareCase"
+    return (doc.doc_type === "IndicatorCase"
         && doc.type === 'child');
 }
 
 function isPregnancyCase(doc) {
-    return (doc.doc_type === "CommCareCase"
+    return (doc.doc_type === "IndicatorCase"
         && doc.type === 'pregnancy');
 }
 
