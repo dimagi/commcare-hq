@@ -1112,7 +1112,7 @@ class AddDomainGatewayView(BaseMessagingSectionView):
             for key, value in self.backend_form.cleaned_data.items():
                 if key not in self.ignored_fields:
                     setattr(self.backend, key, value)
-                self.backend.save()
+            self.backend.save()
             return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
