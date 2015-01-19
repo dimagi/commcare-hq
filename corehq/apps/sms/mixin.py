@@ -343,7 +343,7 @@ class SMSLoadBalancingMixin(Document):
         Defined as a property here so that subclasses can override if
         necessary.
         """
-        return self._phone_numbers
+        return self.x_phone_numbers
 
     def get_load_balancing_interval(self):
         """
