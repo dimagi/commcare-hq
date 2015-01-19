@@ -37,7 +37,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
-    base_doc_expression = DictProperty()
+    base_item_expression = DictProperty()
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
     named_filters = DictProperty()
@@ -100,7 +100,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             "is_nullable": False,
             "is_primary_key": True,
             "expression": {
-                "type": "base_doc",
+                "type": "root_doc",
                 "expression": {
                     "type": "property_name",
                     "property_name": "_id"
@@ -120,10 +120,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def get_items(self, document):
         if self.filter(document):
-            if not self.base_doc_expression:
+            if not self.base_item_expression:
                 return [document]
             else:
-                parsed_expression = ExpressionFactory.from_spec(self.base_doc_expression,
+                parsed_expression = ExpressionFactory.from_spec(self.base_item_expression,
                                                                 context=self.named_filter_objects)
                 result = parsed_expression(document)
                 if result is None:

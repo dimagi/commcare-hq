@@ -1,8 +1,8 @@
 
 
-class BaseDocExpression(object):
+class RootDocExpression(object):
     """
-    Expression that calls another expression on context.base_doc.
+    Expression that calls another expression on context.root_doc.
     Unlike other expressions, it ignores the passed in item completely
     """
     def __init__(self, expression):
@@ -11,4 +11,4 @@ class BaseDocExpression(object):
     def __call__(self, item, context=None):
         if context is None:
             return None
-        return self.expression(context.base_doc, context)
+        return self.expression(context.root_doc, context)

@@ -130,11 +130,11 @@ class ConditionalExpressionTest(SimpleTestCase):
         }))
 
 
-class BaseDocExpressionTest(SimpleTestCase):
+class RootDocExpressionTest(SimpleTestCase):
 
     def setUp(self):
         spec = {
-            "type": "base_doc",
+            "type": "root_doc",
             "expression": {
                 "type": "property_name",
                 "property_name": "base_property"

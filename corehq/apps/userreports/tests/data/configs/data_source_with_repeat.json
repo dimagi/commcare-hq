@@ -4,7 +4,7 @@
     "referenced_doc_type": "XFormInstance",
     "table_id": "sample-repeat",
     "display_name": "Time Logged",
-    "base_doc_expression": {
+    "base_item_expression": {
         "type": "property_path",
         "property_path": ["form", "time_logs"]
     },
@@ -44,7 +44,7 @@
         {
             "type": "expression",
             "expression": {
-                "type": "base_doc",
+                "type": "root_doc",
                 "expression": {
                     "type": "property_name",
                     "property_name": "created"
