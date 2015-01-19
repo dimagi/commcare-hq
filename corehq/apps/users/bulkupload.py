@@ -17,7 +17,7 @@ from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_blo
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX
 
 from .forms import CommCareAccountForm
 from .models import CommCareUser, CouchUser
@@ -151,12 +151,24 @@ class SiteCodeToSupplyPointCache(BulkCacheBase):
         return supply_point
 
 
-class SiteCodeToLocationIdCache(BulkCacheBase):
+class SiteCodeToLocationCache(BulkCacheBase):
+    def __init__(self, domain):
+        self.non_admin_types = [
+            loc_type.name for loc_type in Domain.get_by_name(domain).location_types
+            if not loc_type.administrative
+        ]
+        return super(SiteCodeToLocationCache, self).__init__(domain)
+
     def lookup(self, site_code):
-        return SQLLocation.objects.get(
+        loc = SQLLocation.objects.get(
             domain=self.domain,
             site_code=site_code
-        ).location_id
+        )
+
+        return {
+            'location_id': loc.location_id,
+            'supply_point_id': loc.supply_point_id
+        }
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):
@@ -320,7 +332,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
-    location_cache = SiteCodeToLocationIdCache(domain)
+    location_cache = SiteCodeToLocationCache(domain)
     try:
         for row in user_specs:
             _set_progress(current)
@@ -419,7 +431,16 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if email:
                         user.email = email
                     if location_code:
-                        user.location_id = location_cache.get(location_code)
+                        loc_data = location_cache.get(location_code)
+                        user.location_id = loc_data['location_id']
+                        user.user_data.update({
+                            'commcare_primary_case_sharing_id':
+                            LOCATION_SHARING_PREFIX + loc_data['location_id']
+                        })
+                        if loc_data['supply_point_id']:
+                            user.user_data.update({
+                                'commtrack-supply-point': loc_data['supply_point_id']
+                            })
                         # TODO set delgate case here
                     user.save()
                     if is_password(password):
