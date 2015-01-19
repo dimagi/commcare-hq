@@ -1,3 +1,4 @@
+import decimal
 from django.test import TestCase
 import sqlalchemy
 from casexml.apps.case.models import CommCareCase

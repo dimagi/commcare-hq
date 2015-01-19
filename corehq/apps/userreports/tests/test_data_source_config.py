@@ -1,7 +1,7 @@
 import json
 import os
 import datetime
-from decimal import Decimal, getcontext
+from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import DataSourceConfiguration
