@@ -1,7 +1,9 @@
 from django.test import TestCase
 import sqlalchemy
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests import get_sample_doc_and_indicators, get_sample_data_source
 
 
@@ -34,9 +36,19 @@ class IndicatorPillowTest(TestCase):
         ))
 
     def test_change_transport(self):
-        # indicators
-        sample_doc, expected_indicators = get_sample_doc_and_indicators()
+        sample_doc, _ = get_sample_doc_and_indicators()
         self.pillow.change_transport(sample_doc)
+        self._check_sample_doc_state()
+
+    def test_rebuild_indicators(self):
+        self.config.save()
+        sample_doc, _ = get_sample_doc_and_indicators()
+        CommCareCase.get_db().save_doc(sample_doc)
+        rebuild_indicators(self.config._id)
+        self._check_sample_doc_state()
+
+    def _check_sample_doc_state(self):
+        _, expected_indicators = get_sample_doc_and_indicators()
         with self.engine.begin() as connection:
             rows = connection.execute(sqlalchemy.select([self.adapter.get_table()]))
             self.assertEqual(1, rows.rowcount)
