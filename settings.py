@@ -309,6 +309,7 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
+    'mvp_indicators',
     'custom.opm',
     'pathfinder',
     'pathindia',
@@ -920,6 +921,8 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
         **db_settings
     )
+
+MVP_INDICATOR_DB = 'mvp-indicators'
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
