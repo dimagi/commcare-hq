@@ -955,14 +955,30 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 
     @property
     def rows(self):
+
+        totals = [[None, None] for i in range(len(self.model.method_map))]
+        def add_to_totals(col, val, denom):
+            for i, num in enumerate([val, denom]):
+                if isinstance(num, int):
+                    total = totals[col][i]
+                    totals[col][i] = total + num if total is not None else num
+
+        rows = []
         for awc in map(AWCHealthStatus, self.awc_data().values()):
-            yield [self.format_cell(getattr(awc, method),
-                                    getattr(awc, denom))
-                   for method, _, _, denom in self.model.method_map]
+            row = []
+            for col, (method, __, __, denom) in enumerate(self.model.method_map):
+                val = getattr(awc, method)
+                denominator = getattr(awc, denom)
+                row.append(self.format_cell(val, denominator))
+                add_to_totals(col, val, denominator)
+            rows.append(row)
+
+        self.total_row = [self.format_cell(v, d) for v, d in totals]
+        return rows
 
     def format_cell(self, val, denom):
         if denom is None:
-            return val
+            return val if val is not None else ""
         pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
         return "{} / {}{}".format(val, denom, pct)
 
