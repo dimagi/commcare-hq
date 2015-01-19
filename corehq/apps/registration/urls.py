@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('corehq.apps.registration.views',
     url(r'^$', 'registration_default', name='registration_default'),

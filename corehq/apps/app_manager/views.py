@@ -2756,11 +2756,16 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
             for form in module.get_forms():
                 questions = form.get_questions(self.app.langs, include_triggers=True, include_groups=True)
                 forms.append({
+                    'id': form.unique_id,
                     'name': _find_name(form.name, self.app.langs),
                     'questions': [FormQuestionResponse(q).to_json() for q in questions],
                 })
 
-            modules.append({'name': _find_name(module.name, self.app.langs), 'forms': forms})
+            modules.append({
+                'id': module.unique_id,
+                'name': _find_name(module.name, self.app.langs),
+                'forms': forms
+            })
         return {
             'response': modules,
             'success': True,

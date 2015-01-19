@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from corehq import SMSAdminInterfaceDispatcher
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
