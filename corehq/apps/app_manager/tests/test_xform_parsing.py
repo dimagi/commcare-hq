@@ -1,7 +1,7 @@
 # coding=utf-8
 from unittest2.case import TestCase
 from corehq.apps.app_manager.tests.util import TestFileMixin
-from corehq.apps.app_manager.xform import XForm, XFormError, ItextValue, \
+from corehq.apps.app_manager.xform import XForm, XFormException, ItextValue, \
     WrappedNode
 
 
@@ -22,14 +22,14 @@ class XFormParsingTest(TestCase, TestFileMixin):
             xform.case_node
             try:
                 xform.itext_node
-            except XFormError as e:
+            except XFormException as e:
                 self.assertEqual(str(e), "Can't find <itext>")
 
     def test_localize(self):
         try:
             self.assertEqual(self.xforms["label_form"].localize(id="pork", lang="kosher"), None)
             self.fail()
-        except XFormError as e:
+        except XFormException as e:
             self.assertEqual(str(e), "Can't find <itext>")
         self.assertEqual(self.xforms["itext_form"].localize(id="pork", lang="kosher"), None)
         self.assertEqual(self.xforms["itext_form"].localize(id="question1", lang="pt"), "P1")

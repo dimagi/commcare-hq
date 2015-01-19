@@ -74,7 +74,7 @@ from .exceptions import (
     ModuleNotFoundException,
     RearrangeError,
     VersioningError,
-    XFormError,
+    XFormException,
     XFormIdNotUnique,
     XFormValidationError,
 )
@@ -659,7 +659,7 @@ class FormBase(DocumentSchema):
             try:
                 _parse_xml(self.source)
                 xml_valid = True
-            except XFormError as e:
+            except XFormException as e:
                 errors.append(dict(
                     type="invalid xml",
                     message=unicode(e) if self.source else '',
@@ -735,7 +735,7 @@ class FormBase(DocumentSchema):
         try:
             valid_paths = {question['value']: question['tag']
                            for question in self.get_questions(langs=[])}
-        except XFormError as e:
+        except XFormException as e:
             # punt on invalid xml (sorry, no rich attachments)
             valid_paths = {}
         def format_key(key, path):
@@ -753,7 +753,7 @@ class FormBase(DocumentSchema):
         _rename_key(self.name, old_lang, new_lang)
         try:
             self.rename_xform_language(old_lang, new_lang)
-        except XFormError:
+        except XFormException:
             pass
 
     def rename_xform_language(self, old_code, new_code):
@@ -831,7 +831,7 @@ class IndexedFormBase(FormBase, IndexedSchema):
         try:
             valid_paths = {question['value']: question['tag']
                            for question in self.get_questions(langs=[])}
-        except XFormError as e:
+        except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
             no_multimedia = not self.get_app().enable_multimedia_case_property
@@ -2832,7 +2832,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.validate_fixtures()
             self.validate_jar_path()
             self.create_all_files()
-        except (AppEditingError, XFormValidationError, XFormError,
+        except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
@@ -3745,8 +3745,8 @@ class RemoteApp(ApplicationBase):
                 if tag == 'xform' and self.build_langs:
                     try:
                         xform = XForm(data)
-                    except XFormError as e:
-                        raise XFormError('In file %s: %s' % (location, e))
+                    except XFormException as e:
+                        raise XFormException('In file %s: %s' % (location, e))
                     xform.exclude_languages(whitelist=self.build_langs)
                     data = xform.render()
                 files.update({location: data})

@@ -7,7 +7,7 @@ import hashlib
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema import LazyDict
-from corehq.apps.app_manager.exceptions import XFormError
+from corehq.apps.app_manager.exceptions import XFormException
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -554,7 +554,7 @@ class HQMediaMixin(Document):
                     for video in parsed.video_references:
                         if video:
                             media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
-                except (XFormValidationError, XFormError):
+                except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
 
