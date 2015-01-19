@@ -138,7 +138,7 @@ class OPMCaseRow(object):
             return 'pregnant'
         else:
             # no dates, not valid
-            raise InvalidRow()
+            raise InvalidRow("Case doesn't specify an EDD or DOD.")
 
     @property
     @memoized
@@ -231,7 +231,7 @@ class OPMCaseRow(object):
 
     def set_case_properties(self):
         if self.child_age is None and self.preg_month is None:
-            raise InvalidRow
+            raise InvalidRow("Window not found")
 
         if self.window > 14:
             raise InvalidRow(_('Child is past window 14 (was {}'.format(self.window)))
@@ -257,7 +257,7 @@ class OPMCaseRow(object):
         self.account_number = unicode(account) if account else ''
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):
-            raise InvalidRow
+            raise InvalidRow("Account begins with 111, assuming test case")
 
     @property
     def closed_date(self):
@@ -767,6 +767,6 @@ class Beneficiary(OPMCaseRow):
 
         # Show only cases that require payment
         if self.total_cash == 0:
-            raise InvalidRow
+            raise InvalidRow("Case does not require payment")
 
         self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0

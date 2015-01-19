@@ -516,7 +516,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                 keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and
                         user.user_data['gp'] and user.user_data['gp'] in keys]
             if keys and value not in keys:
-                raise InvalidRow
+                raise InvalidRow("Case does not match filters")
 
     @property
     def filter_fields(self):
@@ -767,12 +767,12 @@ class CaseReportMixin(object):
                 case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
                 if field == 'is_open':
                     if case_key != (keys == 'closed'):
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
                 else:
                     if field == 'gp':
                         keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
                     if case_key not in keys:
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
 
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
@@ -1231,7 +1231,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             else:
                 return empty_health_status(row)
         else:
-            raise InvalidRow
+            raise InvalidRow("AWC not found for case")
 
     @property
     def fixed_cols_spec(self):
