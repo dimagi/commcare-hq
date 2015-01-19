@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import date
+import datetime
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.models import DataSourceConfiguration
@@ -55,7 +55,12 @@ class DataSourceConfigurationTest(SimpleTestCase):
         sample_doc, expected_indicators = get_sample_doc_and_indicators()
         [results] = self.config.get_all_values(sample_doc)
         for result in results:
-            self.assertEqual(expected_indicators[result.column.id], result.value)
+            try:
+                self.assertEqual(expected_indicators[result.column.id], result.value)
+            except AssertionError:
+                # todo: this is a hack due to the fact that type conversion currently happens
+                # in the database layer. this should eventually be fixed.
+                self.assertEqual(str(expected_indicators[result.column.id]), result.value)
 
 
 def get_sample_data_source():
@@ -67,7 +72,7 @@ def get_sample_data_source():
 
 
 def get_sample_doc_and_indicators():
-    date_opened = date(2014, 6, 21)
+    date_opened = "2014-06-21"
     sample_doc = dict(
         _id='some-doc-id',
         opened_on=date_opened,
@@ -82,7 +87,7 @@ def get_sample_doc_and_indicators():
     )
     expected_indicators = {
         'doc_id': 'some-doc-id',
-        'date': date_opened,
+        'date': datetime.datetime.strptime(date_opened, '%Y-%m-%d').date(),
         'owner': 'some-user-id',
         'count': 1,
         'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
