@@ -8,6 +8,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 DOC_ID = 'repeat-id'
 DAY_OF_WEEK = 'monday'
 
+
 class RepeatDataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):

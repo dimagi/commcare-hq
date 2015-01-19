@@ -1,7 +1,5 @@
-
 # NOTE: this module is heavily copied from fluff, but with some extensions
 # The largest change is the addition of the evaluation context to every filter
-import warnings
 
 
 class Filter(object):

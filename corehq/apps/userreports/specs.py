@@ -1,4 +1,4 @@
-from jsonobject import StringProperty, DictProperty, JsonObject
+from jsonobject import StringProperty
 
 
 def TypeProperty(value):
