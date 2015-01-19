@@ -25,17 +25,17 @@ class IndicatorSqlAdapter(object):
             self.get_table().drop(connection, checkfirst=True)
 
     def save(self, doc):
-        indicators = self.config.get_values(doc)
-        table = self.get_table()
-        if indicators:
-            with self.engine.begin() as connection:
-                # delete all existing rows for this doc to ensure we aren't left with stale data
-                delete = table.delete(table.c.doc_id == doc['_id'])
-                connection.execute(delete)
-
-                all_values = {i.column.id: i.value for i in indicators}
-                insert = table.insert().values(**all_values)
-                connection.execute(insert)
+        indicator_rows = self.config.get_all_values(doc)
+        if indicator_rows:
+            table = self.get_table()
+            for indicator_row in indicator_rows:
+                with self.engine.begin() as connection:
+                    # delete all existing rows for this doc to ensure we aren't left with stale data
+                    delete = table.delete(table.c.doc_id == doc['_id'])
+                    connection.execute(delete)
+                    all_values = {i.column.id: i.value for i in indicator_row}
+                    insert = table.insert().values(**all_values)
+                    connection.execute(insert)
 
     def delete(self, doc):
         table = self.get_table()

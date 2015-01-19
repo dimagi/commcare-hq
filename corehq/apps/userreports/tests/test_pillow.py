@@ -1,25 +1,19 @@
-import json
-import os
 from django.test import TestCase
 import sqlalchemy
-from corehq.apps.userreports.models import DataSourceConfiguration
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tests import get_sample_doc_and_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests import get_sample_doc_and_indicators, get_sample_data_source
 
 
 class IndicatorPillowTest(TestCase):
 
     def setUp(self):
-        folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-        sample_file = os.path.join(folder, 'sample_indicator_config.json')
+        self.config = get_sample_data_source()
         self.pillow = ConfigurableIndicatorPillow()
         self.engine = self.pillow.get_sql_engine()
-        with open(sample_file) as f:
-            structure = json.loads(f.read())
-            self.config = DataSourceConfiguration.wrap(structure)
-            self.pillow.bootstrap(configs=[self.config])
-
+        self.pillow.bootstrap(configs=[self.config])
         self.adapter = IndicatorSqlAdapter(self.engine, self.config)
         self.adapter.rebuild_table()
 
@@ -27,7 +21,7 @@ class IndicatorPillowTest(TestCase):
         self.adapter.drop_table()
         self.engine.dispose()
 
-    def testFilter(self):
+    def test_filter(self):
         # note: this is a silly test now that python_filter always returns true
         not_matching = [
             dict(doc_type="NotCommCareCase", domain='user-reports', type='ticket'),
@@ -41,10 +35,20 @@ class IndicatorPillowTest(TestCase):
             dict(doc_type="CommCareCase", domain='user-reports', type='ticket')
         ))
 
-    def testChangeTransport(self):
-        # indicators
-        sample_doc, expected_indicators = get_sample_doc_and_indicators()
+    def test_change_transport(self):
+        sample_doc, _ = get_sample_doc_and_indicators()
         self.pillow.change_transport(sample_doc)
+        self._check_sample_doc_state()
+
+    def test_rebuild_indicators(self):
+        self.config.save()
+        sample_doc, _ = get_sample_doc_and_indicators()
+        CommCareCase.get_db().save_doc(sample_doc)
+        rebuild_indicators(self.config._id)
+        self._check_sample_doc_state()
+
+    def _check_sample_doc_state(self):
+        _, expected_indicators = get_sample_doc_and_indicators()
         with self.engine.begin() as connection:
             rows = connection.execute(sqlalchemy.select([self.adapter.get_table()]))
             self.assertEqual(1, rows.rowcount)
