@@ -11,42 +11,42 @@ function hasFormLabel(doc, label_name) {
 }
 
 function isChildRegistrationForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "child_registration_form"));
 }
 
 function isChildVisitForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "child_visit_form"));
 }
 
 function isChildCloseForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "child_close_form"));
 }
 
 function isPregnancyVisitForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "pregnancy_visit_form"));
 }
 
 function isPregnancyCloseForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "pregnancy_close_form"));
 }
 
 function isHomeVisitForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "household_visit_form"));
 }
 
 function isDeathWithoutRegistrationForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "death_without_registration_form"));
 }
 
 function isChildWelfareForm(doc) {
-    return (doc.doc_type === "XFormInstance"
+    return (doc.doc_type === "IndicatorXForm"
         && hasFormLabel(doc, "child_welfare_form"));
 }
 
@@ -73,14 +73,14 @@ function get_indicators(doc) {
 }
 
 function get_user_id(doc) {
-    if (doc.doc_type === 'XFormInstance') {
+    if (doc.doc_type === 'IndicatorXForm') {
         return doc.form.meta.userID;
     }
     return doc.owner_id || doc.user_id;
 }
 
 function get_case_id(doc) {
-    if (doc.doc_type === 'XFormInstance') {
+    if (doc.doc_type === 'IndicatorXForm') {
         return doc.form['case']['@case_id'];
     }
     return doc._id;
