@@ -1047,6 +1047,7 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     def ignored_fields(self):
         return [
             'give_other_domains_access',
+            'phone_numbers',
         ]
 
     @property
@@ -1112,6 +1113,8 @@ class AddDomainGatewayView(BaseMessagingSectionView):
             for key, value in self.backend_form.cleaned_data.items():
                 if key not in self.ignored_fields:
                     setattr(self.backend, key, value)
+            if self.use_load_balancing:
+                self.backend.x_phone_numbers = self.backend_form.cleaned_data["phone_numbers"]
             self.backend.save()
             return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
@@ -1153,6 +1156,9 @@ class EditDomainGatewayView(AddDomainGatewayView):
                 else:
                     initial[field.name] = getattr(self.backend, field.name, None)
             initial['give_other_domains_access'] = len(self.backend.authorized_domains) > 0
+            if self.use_load_balancing:
+                initial["phone_numbers"] = json.dumps(
+                    [{"phone_number": p} for p in self.backend.phone_numbers])
         if self.request.method == 'POST':
             form = form_class(self.request.POST, initial=initial,
                               button_text=self.button_text)
