@@ -133,11 +133,7 @@ class StockReportParser(object):
         action = self.C.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
             # TODO: support single-action by product, as well as by action?
-            if not self.location.get('case'):
-                raise NoDefaultLocationException(
-                    _("You have not been registered with a default location yet."
-                      "  Please register a default location for this user.")
-                )
+            self.verify_location_registration()
             self.case_id = self.location['case']._id
             _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
         elif action and action.action in [
@@ -158,17 +154,14 @@ class StockReportParser(object):
             # initial keyword not recognized; delegate to another handler
             return None
 
-        tx = list(_tx)
-        if not tx:
-            raise SMSError("stock report doesn't have any transactions")
+        return self.unpack_transactions(_tx)
 
-        return {
-            'timestamp': datetime.utcnow(),
-            'user': self.v.owner,
-            'phone': self.v.phone_number,
-            'location': self.location['location'],
-            'transactions': tx,
-        }
+    def verify_location_registration(self):
+        if not self.location.get('case'):
+            raise NoDefaultLocationException(
+                _("You have not been registered with a default location yet."
+                  "  Please register a default location for this user.")
+            )
 
     def single_action_transactions(self, action, args, make_tx):
         # special case to handle immediate stock-out reports
@@ -285,6 +278,19 @@ class StockReportParser(object):
         except ValueError:
             return True
 
+    def unpack_transactions(self, txs):
+        tx = list(txs)
+        if not tx:
+            raise SMSError("stock report doesn't have any transactions")
+
+        return {
+            'timestamp': datetime.utcnow(),
+            'user': self.v.owner,
+            'phone': self.v.phone_number,
+            'location': self.location['location'],
+            'transactions': tx,
+        }
+
 
 class StockAndReceiptParser(StockReportParser):
     """
@@ -334,26 +340,12 @@ class StockAndReceiptParser(StockReportParser):
             self.location = self.location_from_code(args[0])
             args = args[1:]
 
-        if not self.location.get('case'):
-            raise NoDefaultLocationException(
-                _("You have not been registered with a default location yet."
-                  "  Please register a default location for this user.")
-            )
+        self.verify_location_registration()
         self.case_id = self.location['case']._id
         action = self.C.action_by_keyword('soh')
         _tx = self.single_action_transactions(action, args, self.transaction_factory(StockTransaction))
 
-        tx = list(_tx)
-        if not tx:
-            raise SMSError("stock report doesn't have any transactions")
-
-        return {
-            'timestamp': datetime.utcnow(),
-            'user': self.v.owner,
-            'phone': self.v.phone_number,
-            'location': self.location['location'],
-            'transactions': tx,
-        }
+        return self.unpack_transactions(_tx)
 
     def single_action_transactions(self, action, args, make_tx):
         products = []
