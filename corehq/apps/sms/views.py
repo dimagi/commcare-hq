@@ -1056,7 +1056,8 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     @property
     @memoized
     def backend_class(self):
-        # For now, only allow superusers to create/edit non-Telerivet backends
+        # Superusers can create/edit any backend
+        # Regular users can only create/edit Telerivet backends for now
         if not self.is_superuser and self.backend_class_name != "TelerivetBackend":
             raise Http404()
         backend_classes = get_available_backends()
