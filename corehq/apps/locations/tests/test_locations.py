@@ -1,4 +1,5 @@
 from corehq.apps.locations.models import Location
+from corehq.apps.locations.schema import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.models import CommCareUser
@@ -10,7 +11,36 @@ from corehq.apps.domain.shortcuts import create_domain
 class LocationsTest(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.loc = make_loc('loc')
+        self.domain.locations_enabled = True
+        self.domain.location_types = [
+            LocationType(
+                name='state',
+                allowed_parents=[''],
+                administrative=True
+            ),
+            LocationType(
+                name='district',
+                allowed_parents=['state'],
+                administrative=True
+            ),
+            LocationType(
+                name='block',
+                allowed_parents=['district'],
+                administrative=True
+            ),
+            LocationType(
+                name='village',
+                allowed_parents=['block'],
+                administrative=True
+            ),
+            LocationType(
+                name='outlet',
+                allowed_parents=['village']
+            ),
+        ]
+        self.domain.save()
+
+        self.loc = make_loc('loc', type='outlet',  domain=self.domain.name)
         self.sp = make_supply_point(self.domain.name, self.loc)
 
         self.user = CommCareUser.create(
@@ -26,24 +56,28 @@ class LocationsTest(TestCase):
         test_state1 = make_loc(
             'teststate1',
             type='state',
-            parent=self.user.location
+            parent=self.user.location,
+            domain=self.domain.name
         )
         test_state2 = make_loc(
             'teststate2',
             type='state',
-            parent=self.user.location
+            parent=self.user.location,
+            domain=self.domain.name
         )
         test_village1 = make_loc(
             'testvillage1',
             type='village',
-            parent=test_state1
+            parent=test_state1,
+            domain=self.domain.name
         )
         test_village1.site_code = 'tv1'
         test_village1.save()
         test_village2 = make_loc(
             'testvillage2',
             type='village',
-            parent=test_state2
+            parent=test_state2,
+            domain=self.domain.name
         )
 
         def compare(list1, list2):
