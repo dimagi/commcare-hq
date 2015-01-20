@@ -4,8 +4,11 @@ from couchdbkit import ResourceNotFound, ResourceConflict
 import datetime
 from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.indicators.models import FormLabelIndicatorDefinition, \
-    FormDataInCaseIndicatorDefinition
+from corehq.apps.indicators.models import (
+    FormLabelIndicatorDefinition,
+    FormDataInCaseIndicatorDefinition,
+    FormDataAliasIndicatorDefinition,
+)
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from mvp_docs.pillows import MVPFormIndicatorPillow, MVPCaseIndicatorPillow
 from couchforms.models import XFormInstance
@@ -63,6 +66,17 @@ class IndicatorPillowTests(TestCase):
             xmlns='http://openrosa.org/formdesigner/indicator-create-xmlns',
         )
         form_label.save()
+
+        # Form Alias
+        form_alias = FormDataAliasIndicatorDefinition.increment_or_create_unique(
+            INDICATOR_TEST_NAMESPACE,
+            INDICATOR_TEST_DOMAIN,
+            slug='club_name',
+            question_id='location.club',
+            xmlns='http://openrosa.org/formdesigner/indicator-create-xmlns',
+        )
+        form_alias.save()
+
         self.form_pillow.run_burst()
 
         indicator_form = IndicatorXForm.get(form_id)
