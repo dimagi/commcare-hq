@@ -11,7 +11,7 @@ def DataTypeProperty():
     """
     Shortcut for valid data types.
     """
-    return StringProperty(required=True, choices=['date', 'datetime', 'string', 'integer'])
+    return StringProperty(required=True, choices=['date', 'datetime', 'string', 'integer', 'decimal'])
 
 
 class IndicatorSpecBase(JsonObject):
