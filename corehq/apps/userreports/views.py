@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from corehq.apps.app_manager.models import get_apps_in_domain
 from corehq import Session
 from corehq import toggles
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
@@ -32,6 +33,16 @@ def edit_report(request, domain, report_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def create_new_report_builder(request, domain):
+
+    apps = get_apps_in_domain(domain, full=True, include_remote=False)
+    context = {
+        "case_types": set([c for app in apps for c in app.get_case_types() if c]),
+        "forms":  set([form for app in apps for form in app.get_forms()])
+    }
+    return render(request, "userreports/create_new_report_builder.html", context)
 
 
 def _edit_report_shared(request, domain, config):

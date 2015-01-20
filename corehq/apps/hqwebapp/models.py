@@ -255,10 +255,14 @@ class ProjectReportsTab(UITab):
              'icon': 'icon-tasks'}
         ])]
 
+        user_reports = [(_("Create Reports"), [
+            {"title": _("(+) Create new report"),
+             "url": reverse("create_new_report_builder", args=[self.domain])}
+        ])]
         project_reports = ProjectReportDispatcher.navigation_sections(context)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(context)
 
-        return tools + project_reports + custom_reports
+        return tools + user_reports + project_reports + custom_reports
 
 
 class ADMReportsTab(UITab):
