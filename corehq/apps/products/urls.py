@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import url, patterns
+from django.conf.urls import url, patterns
 from corehq.apps.products.views import (
     ProductListView, FetchProductListView, NewProductView, EditProductView,
     UploadProductView, ProductImportStatusView, ProductFieldsView

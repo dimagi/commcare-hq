@@ -6,6 +6,15 @@
 {% load compress %}
 {% load djangular_tags %}
 
+{% block stylesheets %}
+{% compress css %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% new_static 'app_manager/less/summary_new.less' %}" />
+{% endcompress %}
+{% endblock stylesheets %}
+
 {% block js %}
     <script type="text/javascript" src="{% new_static 'app_manager/js/app_summary.ng.js' %}"></script>
 {% endblock js %}

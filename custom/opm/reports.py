@@ -516,7 +516,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                 keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and
                         user.user_data['gp'] and user.user_data['gp'] in keys]
             if keys and value not in keys:
-                raise InvalidRow
+                raise InvalidRow("Case does not match filters")
 
     @property
     def filter_fields(self):
@@ -767,12 +767,12 @@ class CaseReportMixin(object):
                 case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
                 if field == 'is_open':
                     if case_key != (keys == 'closed'):
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
                 else:
                     if field == 'gp':
                         keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
                     if case_key not in keys:
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
 
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
@@ -968,14 +968,30 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 
     @property
     def rows(self):
+
+        totals = [[None, None] for i in range(len(self.model.method_map))]
+        def add_to_totals(col, val, denom):
+            for i, num in enumerate([val, denom]):
+                if isinstance(num, int):
+                    total = totals[col][i]
+                    totals[col][i] = total + num if total is not None else num
+
+        rows = []
         for awc in map(AWCHealthStatus, self.awc_data().values()):
-            yield [self.format_cell(getattr(awc, method),
-                                    getattr(awc, denom))
-                   for method, _, _, denom in self.model.method_map]
+            row = []
+            for col, (method, __, __, denom) in enumerate(self.model.method_map):
+                val = getattr(awc, method)
+                denominator = getattr(awc, denom)
+                row.append(self.format_cell(val, denominator))
+                add_to_totals(col, val, denominator)
+            rows.append(row)
+
+        self.total_row = [self.format_cell(v, d) for v, d in totals]
+        return rows
 
     def format_cell(self, val, denom):
         if denom is None:
-            return val
+            return val if val is not None else ""
         pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
         return "{} / {}{}".format(val, denom, pct)
 
@@ -1244,7 +1260,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             else:
                 return empty_health_status(row)
         else:
-            raise InvalidRow
+            raise InvalidRow("AWC not found for case")
 
     @property
     def fixed_cols_spec(self):

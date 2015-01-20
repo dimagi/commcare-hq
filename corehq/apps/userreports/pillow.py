@@ -42,9 +42,9 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if not self.bootstrapped:
             self.bootstrap()
         for table in self.tables:
-            if table.config.filter.filter(doc):
+            if table.config.filter(doc):
                 table.save(doc)
-            elif table.config.deleted_filter.filter(doc):
+            elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
     def set_checkpoint(self, change):

@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, url, include
+from django.conf.urls import patterns, url, include
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
 urlpatterns = patterns('corehq.apps.app_manager.views',

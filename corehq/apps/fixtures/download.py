@@ -248,7 +248,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
             for field in data_type.fields:
                 if len(field.properties) == 0:
-                    if any(item_row.fields.get(field.field_name).field_list):
+                    fixture_fields = item_row.fields.get(field.field_name)
+                    if fixture_fields and any(fixture_fields.field_list):
                         value = item_row.fields.get(field.field_name).field_list[0].field_value
                     else:
                         value = ""

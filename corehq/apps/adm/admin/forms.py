@@ -81,13 +81,13 @@ class ConfigurableADMColumnForm(BaseADMDocumentForm):
 
 
 class CaseFilterFormMixin(forms.Form):
-    filter_option = forms.CharField("Filter Option",
+    filter_option = forms.CharField(label="Filter Option",
         required=False,
         widget=forms.Select(choices=CASE_FILTER_OPTIONS))
-    case_types = hq_fields.CSVListField("Case Types",
+    case_types = hq_fields.CSVListField(label="Case Types",
         required=False,
         help_text="Please provide a comma-separated list of case types.")
-    case_status = forms.CharField("Case Status",
+    case_status = forms.CharField(label="Case Status",
         required=False,
         widget=forms.Select(choices=CASE_STATUS_OPTIONS))
 
