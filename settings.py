@@ -1014,6 +1014,7 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
+    ('mvp_indicators', MVP_INDICATOR_DB),
     'pathfinder',
     'pathindia',
     'pact',
