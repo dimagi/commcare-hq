@@ -1142,6 +1142,8 @@ class EditDomainGatewayView(AddDomainGatewayView):
             raise Http404()
         if backend.is_global or backend.domain != self.domain:
             raise Http404()
+        if backend.doc_type != self.backend_class_name:
+            raise Http404()
         return backend
 
     @property
