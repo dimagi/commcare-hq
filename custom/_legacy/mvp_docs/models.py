@@ -3,8 +3,14 @@ from couchforms.models import XFormInstance
 
 
 class IndicatorXForm(XFormInstance):
-    pass
+
+    def save(self, **kwargs):
+        self.doc_type = 'IndicatorXForm'
+        super(IndicatorXForm, self).save(**kwargs)
 
 
 class IndicatorCase(CommCareCase):
-    pass
+
+    def save(self, **kwargs):
+        self.doc_type = 'IndicatorCase'
+        super(IndicatorCase, self).save(**kwargs)

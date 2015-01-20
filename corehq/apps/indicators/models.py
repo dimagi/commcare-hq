@@ -766,7 +766,7 @@ class FormIndicatorDefinition(BaseDocumentIndicatorDefinition, FormDataIndicator
     base_doc = "FormIndicatorDefinition"
 
     def get_clean_value(self, doc):
-        if not isinstance(doc, XFormInstance):
+        if not isinstance(doc, XFormInstance) or not issubclass(doc.__class__, XFormInstance):
             raise ValueError("The document provided must be an instance of XFormInstance.")
         if not doc.xmlns == self.xmlns:
             raise DocumentMismatchError("The xmlns of the form provided does not match the one for this definition.")
@@ -884,7 +884,7 @@ class CaseIndicatorDefinition(BaseDocumentIndicatorDefinition):
     base_doc = "CaseIndicatorDefinition"
 
     def get_clean_value(self, doc):
-        if not isinstance(doc, CommCareCase):
+        if not isinstance(doc, CommCareCase) or not issubclass(doc.__class__, CommCareCase):
             raise ValueError("The document provided must be an instance of CommCareCase.")
         if not doc.type == self.case_type:
             raise DocumentMismatchError("The case provided should be a '%s' type case." % self.case_type)
@@ -906,7 +906,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
     _admin_crud_class = FormDataInCaseAdminCRUDManager
 
     def get_related_forms(self, case):
-        if not isinstance(case, CommCareCase):
+        if not isinstance(case, CommCareCase) or not issubclass(case.__class__, CommCareCase):
             raise ValueError("case is not an instance of CommCareCase.")
         all_forms = case.get_forms()
         all_forms.reverse()
@@ -922,7 +922,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
             existing_value = dict()
         forms = self.get_related_forms(doc)
         for form in forms:
-            if isinstance(form, XFormInstance):
+            if isinstance(form, XFormInstance) or not issubclass(doc.__class__, XFormInstance):
                 form_data = form.form
                 existing_value[form.get_id] = {
                     'value': self.get_from_form(form_data, self.question_id),
