@@ -1008,6 +1008,9 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         }
 
     def refresh_item(self, item_id):
+        backend = SMSBackend.get_wrapped(item_id)
+        if not backend.domain_is_authorized(self.domain):
+            raise Http404()
         if self.domain_object.default_sms_backend_id == item_id:
             self.domain_object.default_sms_backend_id = None
         else:
