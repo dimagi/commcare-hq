@@ -671,6 +671,7 @@ class OPMCaseRow(object):
 
 class ConditionsMet(OPMCaseRow):
     method_map = [
+        ('serial_number', _("Serial number"), True),
         ('name', _("List of Beneficiaries"), True),
         ('awc_name', _("AWC Name"), True),
         ('block_name', _("Block Name"), True),
@@ -690,12 +691,11 @@ class ConditionsMet(OPMCaseRow):
         ('closed_date', _("Closed On"), True),
         ('payment_last_month', _("Payment amount received last month"), True),
         ('cash_received_last_month', _("Cash received last month (Yes/No)"), True),
-        ('serial_number', _("Serial number"), True),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
-        self.serial_number = 0
+        self.serial_number = child_index
         self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         if self.status == 'mother':

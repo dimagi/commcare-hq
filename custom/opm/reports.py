@@ -822,6 +822,16 @@ class MetReport(CaseReportMixin, BaseReport):
     default_rows = 5
     ajax_pagination = True
     cache_key = 'opm-report'
+    index = 1
+
+    def get_row_data(self, row):
+        self.index += 1
+        return self.model(row, self, child_index=self.index)
+
+    def get_rows(self, datespan):
+        result = super(MetReport, self).get_rows(datespan)
+        result.sort(key=lambda case: [case.block_name, case.village_name, case.awc_name])
+        return result
 
     @property
     def redis_key(self):
@@ -875,9 +885,14 @@ class MetReport(CaseReportMixin, BaseReport):
         for row in rows:
             del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
-            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            link_text = re.search('<a href=.*>(.*)</a>', row[self.column_index('name')])
             if link_text:
-                row[0] = link_text.group(1)
+                row[self.column_index('name')] = link_text.group(1)
+            with localize('hin'):
+                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
+
+        if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
+            rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])
 
         self.context['report_table'].update(
             rows=rows
@@ -893,6 +908,7 @@ class MetReport(CaseReportMixin, BaseReport):
 
     @property
     def rows(self):
+        self.index = 0
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
         col_id = None
         sort_dir = None
@@ -907,9 +923,6 @@ class MetReport(CaseReportMixin, BaseReport):
         elif sort_dir == 'desc':
             rows.sort(key=lambda x: x[col_id], reverse=True)
         self._store_rows_in_redis(rows)
-
-        for i, row in enumerate(rows):
-            row[self.column_index('serial_number')] = i + 1
 
         if not self.is_rendered_as_email:
             return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
