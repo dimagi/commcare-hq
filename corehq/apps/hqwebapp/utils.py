@@ -237,16 +237,16 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
         for side_item in side_list:
             show_in_dropdown = side_item.get("show_in_dropdown", False)
             if show_in_dropdown:
-                second_level_dropdowns = get_second_level_dropdowns(
-                    side_item.get('subpages', []), domain=domain)
+                second_level_dropdowns = subpages_as_dropdowns(
+                    side_item.get('subpages', []), level=2, domain=domain)
                 dropdown_item = format_submenu_context(
                     side_item['title'],
                     url=side_item['url'],
                     second_level_dropdowns=second_level_dropdowns,
                 )
                 current_dropdown_items.append(dropdown_item)
-                first_level_dropdowns = get_first_level_dropdowns(
-                    side_item.get('subpages', []), domain=domain
+                first_level_dropdowns = subpages_as_dropdowns(
+                    side_item.get('subpages', []), level=1, domain=domain
                 )
                 current_dropdown_items = current_dropdown_items + first_level_dropdowns
             else:
@@ -260,35 +260,22 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
         return dropdown_items
 
 
-def get_second_level_dropdowns(subpages, domain=None):
+def subpages_as_dropdowns(subpages, level, domain=None):
     """
-        formats subpages of a sidebar_item as second level dropdown items
+        formats subpages of a sidebar_item as 1st or 2nd level dropdown items
+        depending on if level is 1 or 2 respectively
     """
-    second_level_dropdowns = []
-    for subpage in subpages:
-        if (subpage.get('show_in_dropdown', False) and
-           not subpage.get('show_in_first_level', False)):
-            second_level_dropdowns.append(format_submenu_context(
-                subpage['title'],
-                url=reverse(subpage['urlname'], args=[domain])),
-            )
-    return second_level_dropdowns
+    def is_dropdown(subpage):
+        if subpage.get('show_in_dropdown', False) and level==1:
+            return subpage.get('show_in_first_level', False)
+        elif subpage.get('show_in_dropdown', False) and level==2:
+            return not subpage.get('show_in_first_level', False)
 
-
-def get_first_level_dropdowns(subpages, domain=None):
-    """
-        formats subpages of a side_item as first leve dropdown items
-    """
-    first_level_dropdowns = []
-    for subpage in subpages:
-        if (subpage.get('show_in_dropdown', False) and
-           subpage.get('show_in_first_level', False)):
-            first_level_dropdowns.append(format_submenu_context(
+    return [format_submenu_context(
                 subpage['title'],
-                url=reverse(subpage['urlname'],
-                            args=[domain])),
+                url=reverse(subpage['urlname'], args=[domain])
             )
-    return first_level_dropdowns
+            for subpage in subpages if is_dropdown(subpage)]
 
 
 def format_submenu_context(title, url=None, html=None,
