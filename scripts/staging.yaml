@@ -58,6 +58,7 @@ branches:
   - lwyszomi:ews_stock_status_report  # cz/kamil 1/13
   - logo-to-android # Nick P 1/7
   - newrelic # Simon 1/15
+  - locations-as-groups # tw 1/20
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
