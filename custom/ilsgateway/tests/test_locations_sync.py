@@ -26,7 +26,7 @@ class LocationSyncTest(TestCase):
         with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
             location = Loc(**json.loads(f.read())[1])
 
-        ilsgateway_location = self.api_object.locations_sync(location)
+        ilsgateway_location = self.api_object.location_sync(location)
         self.assertEqual(ilsgateway_location.name, location.name)
         self.assertEqual(ilsgateway_location.location_type, location.type)
         self.assertEqual(ilsgateway_location.longitude, float(location.longitude))
@@ -44,7 +44,7 @@ class LocationSyncTest(TestCase):
         )
         synchronization('location_facility',
                         self.endpoint.get_locations,
-                        self.api_object.locations_sync, checkpoint, None, 100, 0, filters=dict(type='facility'))
+                        self.api_object.location_sync, checkpoint, None, 100, 0, filters=dict(type='facility'))
         self.assertEqual('location_facility', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)

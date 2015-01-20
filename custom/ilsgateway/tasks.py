@@ -59,7 +59,7 @@ ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
 def get_locations(api_object, facilities):
     for facility in facilities:
         location = api_object.endpoint.get_location(facility, params=dict(with_historical_groups=1))
-        api_object.locations_sync(api_object.endpoint.models_map['location'](location))
+        api_object.location_sync(api_object.endpoint.models_map['location'](location))
 
 
 def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):

@@ -28,7 +28,7 @@ class WebUsersSyncTest(TestCase):
             webuser = ILSUser(json.loads(f.read())[0])
 
         self.assertEqual(0, len(WebUser.by_domain(TEST_DOMAIN)))
-        ilsgateway_webuser = self.api_object.web_users_sync(webuser)
+        ilsgateway_webuser = self.api_object.web_user_sync(webuser)
         self.assertEqual(webuser.email, ilsgateway_webuser.username)
         self.assertEqual(webuser.password, ilsgateway_webuser.password)
         self.assertEqual(webuser.first_name, ilsgateway_webuser.first_name)
@@ -54,7 +54,7 @@ class WebUsersSyncTest(TestCase):
         )
         synchronization('webuser',
                         self.endpoint.get_webusers,
-                        self.api_object.web_users_sync, checkpoint, None, 100, 0)
+                        self.api_object.web_user_sync, checkpoint, None, 100, 0)
         self.assertEqual('webuser', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)

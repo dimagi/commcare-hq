@@ -191,12 +191,43 @@ class EWSApi(APISynchronization):
         role = UserRole(domain=self.domain, permissions=Permissions(), name='Facility manager')
         role.save()
 
-    def products_sync(self, ews_product):
-        product = super(EWSApi, self).products_sync(ews_product)
+    def product_sync(self, ews_product):
+        product = super(EWSApi, self).product_sync(ews_product)
         ews_product_extension(product, ews_product)
         return product
 
-    def locations_sync(self, ews_location):
+    def _set_location_properties(self, location, ews_location):
+        location.domain = self.domain
+        location.name = ews_location.name
+        location.metadata = {}
+        if ews_location.latitude:
+            location.latitude = float(ews_location.latitude)
+        if ews_location.longitude:
+            location.longitude = float(ews_location.longitude)
+        location.location_type = ews_location.type
+        location.site_code = ews_location.code
+        location.external_id = str(ews_location.id)
+
+    def _set_up_supply_point(self, location, ews_location):
+        supply_point_with_stock_data = filter(lambda x: x.last_reported, ews_location.supply_points)
+        if location.location_type in ['country', 'region', 'district']:
+            for supply_point in supply_point_with_stock_data:
+                created_location = self._create_location_from_supply_point(supply_point, location)
+                fake_location = Loc(
+                    _id=created_location._id,
+                    name=supply_point.name,
+                    external_id=str(supply_point.id),
+                    domain=self.domain
+                )
+                SupplyPointCase.get_or_create_by_location(fake_location)
+                created_location.save()
+        elif ews_location.supply_points:
+            supply_point = ews_location.supply_points[0]
+            location.location_type = supply_point.type
+            self._create_supply_point_from_location(supply_point, location)
+            location.save()
+
+    def location_sync(self, ews_location):
         try:
             sql_loc = SQLLocation.objects.get(
                 domain=self.domain,
@@ -216,41 +247,17 @@ class EWSApi(APISynchronization):
                     loc_parent_id = loc_parent.location_id
                 except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ews_location.parent_id)
-                    loc_parent = self.locations_sync(Location(parent))
+                    loc_parent = self.location_sync(Location(parent))
                     loc_parent_id = loc_parent._id
 
                 location = Loc(parent=loc_parent_id)
             else:
                 location = Loc()
                 location.lineage = []
-            location.domain = self.domain
-            location.name = ews_location.name
-            location.metadata = {}
-            if ews_location.latitude:
-                location.latitude = float(ews_location.latitude)
-            if ews_location.longitude:
-                location.longitude = float(ews_location.longitude)
-            location.location_type = ews_location.type
-            location.site_code = ews_location.code
-            location.external_id = str(ews_location.id)
+
+            self._set_location_properties(location, ews_location)
             location.save()
-            supply_point_with_stock_data = filter(lambda x: x.last_reported, ews_location.supply_points)
-            if location.location_type in ['country', 'region', 'district']:
-                for supply_point in supply_point_with_stock_data:
-                    created_location = self._create_location_from_supply_point(supply_point, location)
-                    fake_location = Loc(
-                        _id=created_location._id,
-                        name=supply_point.name,
-                        external_id=str(supply_point.id),
-                        domain=self.domain
-                    )
-                    SupplyPointCase.get_or_create_by_location(fake_location)
-                    created_location.save()
-            elif ews_location.supply_points:
-                supply_point = ews_location.supply_points[0]
-                location.location_type = supply_point.type
-                self._create_supply_point_from_location(supply_point, location)
-                location.save()
+            self._set_up_supply_point(location, ews_location)
         else:
             location_dict = {
                 'name': ews_location.name,
@@ -283,7 +290,7 @@ class EWSApi(APISynchronization):
             sms_user.backend = ews_webuser.contact.backend
             sms_user.to = ews_webuser.contact.to
             sms_user.phone_numbers = ews_webuser.contact.phone_numbers
-        return self.sms_users_sync(
+        return self.sms_user_sync(
             sms_user,
             username_part=ews_webuser.username.lower() if ews_webuser.username else None,
             password=ews_webuser.password,
@@ -291,7 +298,7 @@ class EWSApi(APISynchronization):
             last_name=ews_webuser.last_name
         )
 
-    def web_users_sync(self, ews_webuser):
+    def web_user_sync(self, ews_webuser):
         if not ews_webuser.is_superuser and ews_webuser.groups:
             group = ews_webuser.groups[0]
             if group.name == 'facility_manager':
@@ -340,8 +347,8 @@ class EWSApi(APISynchronization):
         user.save()
         return user
 
-    def sms_users_sync(self, ews_smsuser, **kwargs):
-        sms_user = super(EWSApi, self).sms_users_sync(ews_smsuser, **kwargs)
+    def sms_user_sync(self, ews_smsuser, **kwargs):
+        sms_user = super(EWSApi, self).sms_user_sync(ews_smsuser, **kwargs)
         if not sms_user:
             return None
         sms_user.user_data['to'] = ews_smsuser.to

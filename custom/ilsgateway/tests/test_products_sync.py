@@ -26,7 +26,7 @@ class ProductSyncTest(TestCase):
         with open(os.path.join(self.datapath, 'sample_products.json')) as f:
             product = Product(json.loads(f.read())[0])
         self.assertEqual(0, len(Prod.by_domain(TEST_DOMAIN)))
-        ilsgateway_product = self.api_object.products_sync(product)
+        ilsgateway_product = self.api_object.product_sync(product)
         self.assertEqual(product.sms_code, ilsgateway_product.code.lower())
         self.assertEqual(product.name, ilsgateway_product.name)
         self.assertEqual(product.description, ilsgateway_product.description)
@@ -43,7 +43,7 @@ class ProductSyncTest(TestCase):
         )
         synchronization('product',
                         self.endpoint.get_products,
-                        self.api_object.products_sync, checkpoint, None, 100, 0)
+                        self.api_object.product_sync, checkpoint, None, 100, 0)
         self.assertEqual('product', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)

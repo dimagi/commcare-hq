@@ -143,8 +143,8 @@ class ILSGatewayAPI(APISynchronization):
             )
         config.save()
 
-    def web_users_sync(self, ilsgateway_webuser):
-        web_user = super(ILSGatewayAPI, self).web_users_sync(ilsgateway_webuser)
+    def web_user_sync(self, ilsgateway_webuser):
+        web_user = super(ILSGatewayAPI, self).web_user_sync(ilsgateway_webuser)
         if not web_user:
             return None
         dm = web_user.get_domain_membership(self.domain)
@@ -152,9 +152,9 @@ class ILSGatewayAPI(APISynchronization):
         web_user.save()
         return web_user
 
-    def sms_users_sync(self, ilsgateway_smsuser, **kwargs):
+    def sms_user_sync(self, ilsgateway_smsuser, **kwargs):
         from custom.logistics.commtrack import add_location
-        sms_user = super(ILSGatewayAPI, self).sms_users_sync(ilsgateway_smsuser, **kwargs)
+        sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
         sp = SupplyPointCase.view('hqcase/by_domain_external_id',
@@ -169,7 +169,7 @@ class ILSGatewayAPI(APISynchronization):
         add_location(sms_user, location_id)
         return sms_user
 
-    def locations_sync(self, ilsgateway_location, fetch_groups=False):
+    def location_sync(self, ilsgateway_location, fetch_groups=False):
         try:
             sql_loc = SQLLocation.objects.get(
                 domain=self.domain,
@@ -189,7 +189,7 @@ class ILSGatewayAPI(APISynchronization):
                                                   include_docs=True).first()
                 if not loc_parent:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
-                    loc_parent = self.locations_sync(Location(parent))
+                    loc_parent = self.location_sync(Location(parent))
                 else:
                     loc_parent = loc_parent.location
                 location = Loc(parent=loc_parent)

@@ -144,39 +144,39 @@ def bootstrap_domain(api_object, **kwargs):
         ('product', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_products,
-            sync_function=api_object.products_sync
+            sync_function=api_object.product_sync
         )),
         ('location_facility', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_locations,
-            sync_function=api_object.locations_sync,
+            sync_function=api_object.location_sync,
             fetch_groups=True,
             filters=dict(date_updated__gte=date, type='facility', is_active=True)
         )),
         ('location_district', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_locations,
-            sync_function=api_object.locations_sync,
+            sync_function=api_object.location_sync,
             fetch_groups=True,
             filters=dict(date_updated__gte=date, type='district', is_active=True)
         )),
         ('location_region', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_locations,
-            sync_function=api_object.locations_sync,
+            sync_function=api_object.location_sync,
             fetch_groups=True,
             filters=dict(date_updated__gte=date, type='region', is_active=True)
         )),
         ('webuser', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_webusers,
-            sync_function=api_object.web_users_sync,
+            sync_function=api_object.web_user_sync,
             filters=dict(user__date_joined__gte=date)
         )),
         ('smsuser', partial(
             synchronize_domain,
             get_objects_function=endpoint.get_smsusers,
-            sync_function=api_object.sms_users_sync,
+            sync_function=api_object.sms_user_sync,
             filters=dict(date_updated__gte=date)
         ))
     ]

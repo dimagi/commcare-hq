@@ -28,7 +28,7 @@ class SMSUsersSyncTest(TestCase):
             smsuser = SMSUser(json.loads(f.read())[0])
 
         self.assertEqual(0, len(CommCareUser.by_domain(TEST_DOMAIN)))
-        ilsgateway_smsuser = self.api_object.sms_users_sync(smsuser)
+        ilsgateway_smsuser = self.api_object.sms_user_sync(smsuser)
         first_name, last_name = ilsgateway_smsuser.name.split(' ', 1)
         username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(), smsuser.id)
         username = "%s@%s.commcarehq.org" % (username_part, TEST_DOMAIN)
@@ -51,7 +51,7 @@ class SMSUsersSyncTest(TestCase):
         )
         synchronization('smsuser',
                         self.endpoint.get_smsusers,
-                        self.api_object.sms_users_sync, checkpoint, None, 100, 0)
+                        self.api_object.sms_user_sync, checkpoint, None, 100, 0)
         self.assertEqual('smsuser', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)

@@ -95,10 +95,10 @@ class APISynchronization(object):
     def prepare_commtrack_config(self):
         raise NotImplemented("Not implemented yet")
 
-    def locations_sync(self, ilsgateway_location):
+    def location_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")
 
-    def products_sync(self, ilsgateway_product):
+    def product_sync(self, ilsgateway_product):
         product = Product.get_by_code(self.domain, ilsgateway_product.sms_code)
         product_dict = {
             'domain': self.domain,
@@ -115,7 +115,7 @@ class APISynchronization(object):
                 product.save()
         return product
 
-    def web_users_sync(self, ilsgateway_webuser):
+    def web_user_sync(self, ilsgateway_webuser):
         username = ilsgateway_webuser.email.lower()
         if not username:
             try:
@@ -154,7 +154,7 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def sms_users_sync(self, ilsgateway_smsuser, username_part=None, password=None,
+    def sms_user_sync(self, ilsgateway_smsuser, username_part=None, password=None,
                        first_name='', last_name=''):
         domain_part = "%s.commcarehq.org" % self.domain
         if not username_part:
