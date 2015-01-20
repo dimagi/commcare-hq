@@ -9,6 +9,7 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 # from .filters.urls import urlpatterns as filter_urls
 from corehq.apps.example_reports.testreport import TestReport
 from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.views import create_new_report_builder, FooBar
 from .filters import urls as filter_urls
 
 
@@ -19,6 +20,8 @@ custom_report_urls = patterns('',
 urlpatterns = patterns('corehq.apps.reports.views',
     TestReport.url_pattern(),
     ConfigurableReport.url_pattern(),
+    #url(r'^builder/create/$', create_new_report_builder, name="create_new_report_builder"),
+    url(r'^builder/create/$', FooBar.as_view(), name="create_new_report_builder"),
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),
     url(r'^saved_reports', 'old_saved_reports'),

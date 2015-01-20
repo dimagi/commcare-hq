@@ -175,6 +175,7 @@ class ReportDispatcher(View):
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
+                #import ipdb; ipdb.set_trace()
                 if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
                     continue
                 if report.show_in_navigation(

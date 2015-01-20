@@ -5,8 +5,10 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from django.views.generic import View, TemplateView
+from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.app_manager.models import get_apps_in_domain
-from corehq import Session
+from corehq import Session, ConfigurableReport
 from corehq import toggles
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -40,9 +42,46 @@ def create_new_report_builder(request, domain):
     apps = get_apps_in_domain(domain, full=True, include_remote=False)
     context = {
         "case_types": set([c for app in apps for c in app.get_case_types() if c]),
-        "forms":  set([form for app in apps for form in app.get_forms()])
+        "forms": set([form for app in apps for form in app.get_forms()]),
+        "domain": domain,
+        'url': reverse("create_new_report_builder", args=[domain]),
+        'report': {"title": "foo"},
+        "filter_context": "fuuu",
+        "headers": "wut",
+        "project": {},
+        "user": request.couch_user,
+        "request": request
+        #"report": ReportConfiguration(domain=domain)
     }
     return render(request, "userreports/create_new_report_builder.html", context)
+
+
+class FooBar(TemplateView):
+    template_name = "userreports/create_new_report_builder.html"
+
+    @cls_to_view_login_and_domain
+    def dispatch(self, request, domain, **kwargs):
+        self.domain = domain
+        return super(FooBar, self).dispatch(request, domain, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        print "Got context data!"
+
+        apps = get_apps_in_domain(self.domain, full=True, include_remote=False)
+        context = {
+            "case_types": set([c for app in apps for c in app.get_case_types() if c]),
+            "forms": set([form for app in apps for form in app.get_forms()]),
+            "domain": self.domain,
+            'url': reverse("create_new_report_builder", args=[self.domain]),
+            'report': {"title": "foo"},
+            "filter_context": "fuuu",
+            "headers": "wut",
+            #"project": {},
+            "user": self.request.couch_user,
+            "request": self.request
+            #"report": ReportConfiguration(domain=domain)
+        }
+        return context
 
 
 def _edit_report_shared(request, domain, config):
@@ -57,7 +96,7 @@ def _edit_report_shared(request, domain, config):
     context = _shared_context(domain)
     context.update({
         'form': form,
-        'report': config,
+        'report': config
     })
     return render(request, "userreports/edit_report_config.html", context)
 

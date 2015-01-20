@@ -53,6 +53,8 @@ class MainMenuNode(template.Node):
                 if t.is_active:
                     t.is_active_tab = True
                     active_tab = t
+                    # This is where the active tab is found
+                    #import ipdb; ipdb.set_trace()
                     break
 
         if active_tab is None:
@@ -64,6 +66,7 @@ class MainMenuNode(template.Node):
         # set the context variable in the highest scope so it can be used in
         # other blocks
         context.dicts[0]['active_tab'] = active_tab
+        # This is where the context gets updated
 
         template = {
             style_utils.BOOTSTRAP_2: 'hqwebapp/partials/main_menu.html',
@@ -98,6 +101,8 @@ def format_sidebar(context):
     request = context['request']
 
     sections = None
+
+    #import ipdb; ipdb.set_trace()
 
     if active_tab and active_tab.subtabs:
         # if active_tab is active then at least one of its subtabs should have
