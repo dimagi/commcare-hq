@@ -1317,12 +1317,21 @@ class LocationUserMixin(DocumentSchema):
             return None
 
     def set_location(self, location):
+        """
+        Set the location, and all important user data, for
+        the user.
+        """
         from corehq.apps.commtrack.models import SupplyPointCase
+        from corehq.apps.locations.models import LOCATION_SHARING_PREFIX
 
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
             SupplyPointCase.get_or_create_by_location(location)
+
+            self.user_data.update({
+                'commtrack-supply-point': location.sql_location.supply_point_id
+            })
 
         if self.project.supports_multiple_locations_per_user:
             # TODO is it possible to only remove this
@@ -1338,7 +1347,13 @@ class LocationUserMixin(DocumentSchema):
             # the whole case
             self.set_locations([location])
 
+        self.user_data.update({
+            'commcare_primary_case_sharing_id':
+            LOCATION_SHARING_PREFIX + location._id
+        })
+
         self.location_id = location._id
+
         self.save()
 
     @property

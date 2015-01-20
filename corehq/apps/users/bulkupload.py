@@ -160,15 +160,10 @@ class SiteCodeToLocationCache(BulkCacheBase):
         return super(SiteCodeToLocationCache, self).__init__(domain)
 
     def lookup(self, site_code):
-        loc = SQLLocation.objects.get(
+        return SQLLocation.objects.get(
             domain=self.domain,
             site_code=site_code
-        )
-
-        return {
-            'location_id': loc.location_id,
-            'supply_point_id': loc.supply_point_id
-        }
+        ).couch_location()
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):
@@ -430,19 +425,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         user.language = language
                     if email:
                         user.email = email
-                    if location_code:
-                        loc_data = location_cache.get(location_code)
-                        user.location_id = loc_data['location_id']
-                        user.user_data.update({
-                            'commcare_primary_case_sharing_id':
-                            LOCATION_SHARING_PREFIX + loc_data['location_id']
-                        })
-                        if loc_data['supply_point_id']:
-                            user.user_data.update({
-                                'commtrack-supply-point': loc_data['supply_point_id']
-                            })
-                        # TODO set delgate case here
                     user.save()
+                    if location_code:
+                        loc = location_cache.get(location_code)
+                        if user.location_id != loc._id:
+                            # this triggers a second user save so
+                            # we want to avoid doing it if it isn't
+                            # needed
+                            user.set_location(loc)
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.
