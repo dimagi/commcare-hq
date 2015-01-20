@@ -97,6 +97,17 @@ class VerbalAutopsyReport(MVPIndicatorReport):
     def indicator_slugs(self):
         return [
             {
+                'category_title': "Reported",
+                'category_slug': 'va_reported',
+                'indicator_slugs': [
+                    "va_reported_stillbirths",
+                    "va_reported_neonatesdeaths",
+                    "va_reported_1to59deaths",
+                    "va_reported_under5deaths",
+                    "va_reported_adultdeaths",
+                ]
+            },
+            {
                 'category_title': "Observed",
                 'category_slug': 'va_observed',
                 'indicator_slugs': [
@@ -173,7 +184,7 @@ class VerbalAutopsyReport(MVPIndicatorReport):
                 'category_title': "Social All",
                 'category_slug': 'va_social_all',
                 'indicator_slugs': [
-                    "va_social_nohealthcare",
+                    "va_social_no_formal_healthcare_contact",
                     "va_social_clinicial_unavailable_clinic",
                     "va_social_clinicial_unavailable_hosp",
                     "va_social_financial_barrier",

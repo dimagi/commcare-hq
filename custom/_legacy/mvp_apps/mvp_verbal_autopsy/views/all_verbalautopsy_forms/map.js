@@ -10,11 +10,7 @@ function (doc) {
             death_place,
             report_date;
 
-        if (indicators.date_of_death && indicators.date_of_death.value) {
-            report_date = new Date(indicators.date_of_death.value);
-        } else {
-            report_date = closed_date;
-        }
+        report_date = closed_date;
 
         if (isVerbalAutopsyNeonateForm(doc)) {
             indicator_keys.push("va_neonate");
@@ -143,6 +139,53 @@ function (doc) {
             else {
                 indicator_keys.push("va_adult_unknown");
             }
+        }
+
+        //Social Causes of death
+        if (indicators.no_formal_hc_contact && indicators.no_formal_hc_contact.value == 1) {
+            indicator_keys.push("va_social_no_formal_healthcare_contact");
+        }
+        if (indicators.clinician_unavailable_clinic && indicators.clinician_unavailable_clinic.value == 1) {
+            indicator_keys.push("va_social_clinicial_unavailable_clinic");
+        }
+        if (indicators.clinician_unavailable_hospital && indicators.clinician_unavailable_hospital.value == 1) {
+            indicator_keys.push("va_social_clinicial_unavailable_hosp");
+        }
+        if (indicators.financial_barrier_hc && indicators.financial_barrier_hc.value == 1) {
+            indicator_keys.push("va_social_financial_barrier");
+        }
+        if (indicators.barrier_med_access && indicators.barrier_med_access.value == 1) {
+            indicator_keys.push("va_social_access_medication_barrier");
+        }
+        if (indicators.transport_access_barrier && indicators.transport_access_barrier.value == 1) {
+            indicator_keys.push("va_social_access_transport_barrier");
+        }
+        if (indicators.comm_access_barrier && indicators.comm_access_barrier.value == 1) {
+            indicator_keys.push("va_social_access_communication_barrier");
+        }
+        if (indicators.personal_hc_barrier && indicators.personal_hc_barrier.value == 1) {
+            indicator_keys.push("va_social_personal_healthcare_barrier");
+        }
+        if (indicators.unmet_referral && indicators.unmet_referral.value == 1) {
+            indicator_keys.push("va_social_unmet_referral");
+        }
+        if (indicators.delay_first_contact_mild && indicators.delay_first_contact_mild.value == 1) {
+            indicator_keys.push("va_social_delay_first_contact_mild");
+        }
+        if (indicators.delay_first_contact_severe && indicators.delay_first_contact_severe.value == 1) {
+            indicator_keys.push("va_social_delay_first_contact_severe");
+        }
+        if (indicators.delay_chw_to_fac_mild && indicators.delay_chw_to_fac_mild.value == 1) {
+            indicator_keys.push("va_social_delay_chw_facility_mild");
+        }
+        if (indicators.delay_chw_to_fac_severe && indicators.delay_chw_to_fac_severe.value == 1) {
+            indicator_keys.push("va_social_delay_chw_facility_severe");
+        }
+        if (indicators.delay_clinic_to_hos_mild && indicators.delay_clinic_to_hos_mild.value == 1) {
+            indicator_keys.push("va_social_delay_clinic_hosp_mild");
+        }
+        if (indicators.delay_clinic_to_hos_severe && indicators.delay_clinic_to_hos_severe.value == 1) {
+            indicator_keys.push("va_social_delay_clinic_hosp_severe");
         }
 
         emit_standard(doc, report_date, indicator_keys, []);
