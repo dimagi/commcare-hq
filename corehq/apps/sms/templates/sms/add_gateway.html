@@ -34,9 +34,6 @@
 
     <script type="text/html" id="ko-load-balancing-template">
         <div class="control-group">
-            <label class="control-label" for="phone_numbers">
-                {% trans "Add Phone Numbers" %}
-            </label>
             <div class="controls">
                 <table class="table table-bordered">
                     <thead>
@@ -58,6 +55,9 @@
                         </tr>
                     </tbody>
                 </table>
+                <div>
+                    {{ form.phone_numbers.errors }}
+                </div>
                 <input type="hidden"
                        name="phone_numbers"
                        data-bind="value: phone_numbers_json" />
