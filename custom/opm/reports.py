@@ -835,7 +835,8 @@ class MetReport(CaseReportMixin, BaseReport):
                 rows.append(self.get_row_data(row, index=index))
             except InvalidRow as e:
                 if self.debug:
-                    import sys, traceback
+                    import sys
+                    import traceback
                     type, exc, tb = sys.exc_info()
                     self._debug_data.append({
                         'case_id': row._id,
