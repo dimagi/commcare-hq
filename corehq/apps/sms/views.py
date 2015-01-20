@@ -956,7 +956,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 'template': 'gateway-automatic-template',
             }
         elif self.domain_object.default_sms_backend_id:
-            default_backend = SMSBackend.get(self.domain_object.default_sms_backend_id)
+            default_backend = SMSBackend.get_wrapped(self.domain_object.default_sms_backend_id)
             yield {
                 'itemData': self._fmt_backend_data(default_backend),
                 'template': 'gateway-default-template',
