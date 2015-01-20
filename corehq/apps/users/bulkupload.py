@@ -17,7 +17,7 @@ from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_blo
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX
+from corehq.apps.locations.models import SQLLocation
 
 from .forms import CommCareAccountForm
 from .models import CommCareUser, CouchUser
