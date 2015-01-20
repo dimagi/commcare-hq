@@ -155,7 +155,7 @@ class APISynchronization(object):
         return user
 
     def sms_user_sync(self, ilsgateway_smsuser, username_part=None, password=None,
-                       first_name='', last_name=''):
+                      first_name='', last_name=''):
         domain_part = "%s.commcarehq.org" % self.domain
         if not username_part:
             username_part = "%s%d" % (ilsgateway_smsuser.name.strip().replace(' ', '.').lower(),
