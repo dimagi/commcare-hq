@@ -3,6 +3,8 @@ from datetime import datetime
 import json
 import os
 import re
+import sys
+import traceback
 import uuid
 
 from django.conf import settings
@@ -152,7 +154,6 @@ def server_error(request, template_name='500.html'):
 
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name)
-    import sys, traceback
     type, exc, tb = sys.exc_info()
     return HttpResponseServerError(t.render(RequestContext(request,
         {'MEDIA_URL': settings.MEDIA_URL,
@@ -467,7 +468,8 @@ def bug_report(req):
         reply_to = settings.SERVER_EMAIL
 
     if req.POST.get('five-hundred-report'):
-        extra_message = "This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..."
+        extra_message = ("This messge was reported from a 500 error page! "
+                         "Please fix this ASAP (as if you wouldn't anyway)...")
         traceback_info = "Traceback of this 500: \n%s" % report['500traceback']
         message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
 
