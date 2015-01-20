@@ -152,10 +152,13 @@ def server_error(request, template_name='500.html'):
 
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name)
+    import sys, traceback
+    type, exc, tb = sys.exc_info()
     return HttpResponseServerError(t.render(RequestContext(request,
         {'MEDIA_URL': settings.MEDIA_URL,
          'STATIC_URL': settings.STATIC_URL,
-         'domain': domain
+         'domain': domain,
+         '500traceback': ''.join(traceback.format_tb(tb)),
         })))
 
 
@@ -408,7 +411,8 @@ def bug_report(req):
         'message',
         'app_id',
         'cc',
-        'email'
+        'email',
+        '500traceback',
     )])
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
@@ -463,7 +467,10 @@ def bug_report(req):
         reply_to = settings.SERVER_EMAIL
 
     if req.POST.get('five-hundred-report'):
-        message = "%s \n\n This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..." % message
+        extra_message = "This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..."
+        traceback_info = "Traceback of this 500: \n%s" % report['500traceback']
+        message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
+
     email = EmailMessage(
         subject=subject,
         body=message,
