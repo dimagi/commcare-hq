@@ -822,11 +822,30 @@ class MetReport(CaseReportMixin, BaseReport):
     default_rows = 5
     ajax_pagination = True
     cache_key = 'opm-report'
-    index = 1
 
-    def get_row_data(self, row):
-        self.index += 1
-        return self.model(row, self, child_index=self.index)
+    @property
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
+        rows = []
+        self._debug_data = []
+        for index, row in enumerate(self.get_rows(self.datespan), 1):
+            try:
+                rows.append(self.get_row_data(row, index=index))
+            except InvalidRow as e:
+                if self.debug:
+                    import sys, traceback
+                    type, exc, tb = sys.exc_info()
+                    self._debug_data.append({
+                        'case_id': row._id,
+                        'message': e,
+                        'traceback': ''.join(traceback.format_tb(tb)),
+                    })
+        return rows
+
+    def get_row_data(self, row, **kwargs):
+        return self.model(row, self, child_index=kwargs.get('index', 0))
 
     def get_rows(self, datespan):
         result = super(MetReport, self).get_rows(datespan)
@@ -908,7 +927,6 @@ class MetReport(CaseReportMixin, BaseReport):
 
     @property
     def rows(self):
-        self.index = 0
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
         col_id = None
         sort_dir = None
@@ -946,7 +964,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     # report_template_path = "opm/hsr_report.html"
     model = AWCHealthStatus
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
 
     @property
@@ -1088,7 +1106,7 @@ class IncentivePaymentReport(BaseReport):
                 break
         return UsersIdsData(config=config).get_data()
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
         form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
@@ -1242,7 +1260,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
     def get_rows(self, dataspan):
         return self.es_results['hits'].get('hits', [])
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         def empty_health_status(row):
             model = HealthStatus()
             model.awc = row['_source']['user_data']['awc']
