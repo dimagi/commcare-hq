@@ -266,15 +266,14 @@ def subpages_as_dropdowns(subpages, level, domain=None):
         depending on if level is 1 or 2 respectively
     """
     def is_dropdown(subpage):
-        if subpage.get('show_in_dropdown', False) and level==1:
+        if subpage.get('show_in_dropdown', False) and level == 1:
             return subpage.get('show_in_first_level', False)
-        elif subpage.get('show_in_dropdown', False) and level==2:
+        elif subpage.get('show_in_dropdown', False) and level == 2:
             return not subpage.get('show_in_first_level', False)
 
     return [format_submenu_context(
-                subpage['title'],
-                url=reverse(subpage['urlname'], args=[domain])
-            )
+            subpage['title'],
+            url=reverse(subpage['urlname'], args=[domain]))
             for subpage in subpages if is_dropdown(subpage)]
 
 
