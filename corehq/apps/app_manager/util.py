@@ -5,7 +5,7 @@ import itertools
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
 from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX
-from corehq.apps.app_manager.xform import XForm, XFormError, parse_xml
+from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
 from django.core.cache import cache
@@ -42,7 +42,7 @@ def save_xform(app, form, xml):
 
     try:
         xform = XForm(xml)
-    except XFormError:
+    except XFormException:
         pass
     else:
         duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]

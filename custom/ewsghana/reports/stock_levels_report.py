@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from django.utils.timesince import timesince
 from math import ceil
+from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
@@ -8,6 +9,7 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.graph_models import LineChart, Axis
 from corehq.apps.users.models import CommCareUser, CouchUser
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport
@@ -297,6 +299,16 @@ class InventoryManagementData(EWSData):
                                                                                   timedelta(weeks=i))})
         return rows
 
+    @property
+    def charts(self):
+        if self.show_chart:
+            chart = LineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
+                              y_axis=Axis(self.chart_y_label, '.1f'))
+            for product, value in self.chart_data.iteritems():
+                chart.add_dataset(product, value)
+            return [chart]
+        return []
+
 
 class StockLevelsReportMixin(object):
     @memoized
@@ -381,21 +393,26 @@ class StockLevelsReport(MultiReport):
 
     @property
     def report_config(self):
-
+        program = self.request.GET.get('filter_by_program')
+        products = self.request.GET.getlist('filter_by_product')
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            program=self.request.GET.get('filter_by_program'),
-            product=self.request.GET.get('filter_by_product'),
+            program=program if program != '0' else None,
+            product=products if products and products[0] != '0' else [],
         )
 
     @property
     @memoized
     def data_providers(self):
         config = self.report_config
-        if not self.needs_filters and Location.get(config['location_id']).location_type == 'facility':
+        location_types = [loc_type.name for loc_type in filter(
+            lambda loc_type: not loc_type.administrative,
+            Domain.get_by_name(self.domain).location_types
+        )]
+        if not self.needs_filters and Location.get(config['location_id']).location_type in location_types:
             return [FacilityReportData(config),
                     StockLevelsLegend(config),
                     FacilitySMSUsers(config),

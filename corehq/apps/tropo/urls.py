@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('corehq.apps.tropo.views',
     url(r'^sms/?$', 'sms_in', name='sms_in'),

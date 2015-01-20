@@ -3,7 +3,8 @@ from .test_columns import *
 from .test_expressions import *
 from .test_filters import *
 from .test_getters import *
-from .test_indicator_config import *
+from .test_data_source_config import *
+from .test_data_source_repeats import *
 from .test_indicators import *
 from .test_pillow import *
 from .test_report_charts import *

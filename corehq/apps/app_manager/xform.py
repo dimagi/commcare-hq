@@ -6,7 +6,7 @@ from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath
-from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
+from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
 
@@ -18,7 +18,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError, e:
-        raise XFormError("Error parsing XML" + (": %s" % str(e)))
+        raise XFormException("Error parsing XML" + (": %s" % str(e)))
 
 
 namespaces = dict(
@@ -259,14 +259,14 @@ def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
     whose xml can possibly be None to a function that always returns a valid WrappedNode or raises
-    an XFormError with the message given
+    an XFormException with the message given
 
     """
     def decorator(fn):
         def _fn(*args, **kwargs):
             n = fn(*args, **kwargs)
             if not n.exists():
-                raise XFormError(message)
+                raise XFormException(message)
             else:
                 return n
         return _fn
@@ -523,7 +523,7 @@ class XForm(WrappedNode):
         try:
             nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
             return list(set([n.text for n in nodes]))
-        except XFormError:
+        except XFormException:
             return []
 
     @property
@@ -544,7 +544,7 @@ class XForm(WrappedNode):
             title.xml.text = new_name
         try:
             self.data_node.set('name', "%s" % new_name)
-        except XFormError:
+        except XFormException:
             pass
 
     def normalize_itext(self):
@@ -622,15 +622,15 @@ class XForm(WrappedNode):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
         duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
         if not trans_node.exists():
-            raise XFormError("There's no language called '%s'" % old_code)
+            raise XFormException("There's no language called '%s'" % old_code)
         if duplicate_node.exists():
-            raise XFormError("There's already a language called '%s'" % new_code)
+            raise XFormException("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
     def exclude_languages(self, whitelist):
         try:
             translations = self.itext_node.findall('{f}translation')
-        except XFormError:
+        except XFormException:
             # if there's no itext then they must be using labels
             return
 
@@ -665,7 +665,7 @@ class XForm(WrappedNode):
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
-            raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
+            raise XFormException('<translation lang="%s"><text id="%s"> node has no <value>' % (
                 trans_node.attrib.get('lang'), id
             ))
 
@@ -719,7 +719,7 @@ class XForm(WrappedNode):
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
 
-        if the xform is bad, it will raise an XFormError
+        if the xform is bad, it will raise an XFormException
 
         """
 
@@ -759,7 +759,7 @@ class XForm(WrappedNode):
                     try:
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
-                        raise XFormError("<item> (%r) has no <value>" % translation)
+                        raise XFormException("<item> (%r) has no <value>" % translation)
                     options.append({
                         'label': translation,
                         'value': value
@@ -768,9 +768,10 @@ class XForm(WrappedNode):
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
-       
+
         for data_node, path in self.get_leaf_data_nodes():
             if path not in excluded_paths:
+                bind = self.get_bind(path)
                 try:
                     matching_repeat_context = [
                         rc for rc in repeat_contexts if path.startswith(rc)
@@ -784,6 +785,7 @@ class XForm(WrappedNode):
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
+                    "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 })
 
         return questions
@@ -869,7 +871,7 @@ class XForm(WrappedNode):
         elif node.tag_name == "repeat":
             path = node.attrib['nodeset']
         else:
-            raise XFormError("Node <%s> has no 'ref' or 'bind'" % node.tag_name)
+            raise XFormException("Node <%s> has no 'ref' or 'bind'" % node.tag_name)
         return path
     
     def get_leaf_data_nodes(self):
@@ -1006,7 +1008,7 @@ class XForm(WrappedNode):
                     bind_parent.append(bind)
 
         if not case_parent.exists():
-            raise XFormError("Couldn't get the case XML from one of your forms. "
+            raise XFormException("Couldn't get the case XML from one of your forms. "
                              "A common reason for this is if you don't have the "
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '
@@ -1043,7 +1045,7 @@ class XForm(WrappedNode):
     def set_default_language(self, lang):
         try:
             itext_node = self.itext_node
-        except XFormError:
+        except XFormException:
             return
         else:
             for translation in itext_node.findall('{f}translation'):
@@ -1259,14 +1261,14 @@ class XForm(WrappedNode):
 
         if case_block is not None:
             if case.exists():
-                raise XFormError("You cannot use the Case Management UI if you already have a case block in your form.")
+                raise XFormException("You cannot use the Case Management UI if you already have a case block in your form.")
             else:
                 case_parent.append(case_block.elem)
                 if delegation_case_block is not None:
                     case_parent.append(delegation_case_block.elem)
 
         if not case_parent.exists():
-            raise XFormError("Couldn't get the case XML from one of your forms. "
+            raise XFormException("Couldn't get the case XML from one of your forms. "
                              "A common reason for this is if you don't have the "
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '

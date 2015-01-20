@@ -97,7 +97,7 @@ from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import (
     CaseError,
     XForm,
-    XFormError,
+    XFormException,
     XFormValidationError,
     VELLUM_TYPES)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -399,7 +399,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     try:
         xform = form.wrapped_xform()
-    except XFormError as e:
+    except XFormException as e:
         form_errors.append(u"Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
@@ -423,7 +423,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
-        except XFormError as e:
+        except XFormException as e:
             form_errors.append(u"Error in form: %s" % e)
         # any other kind of error should fail hard,
         # but for now there are too many for that to be practical
@@ -1741,7 +1741,7 @@ def rename_language(req, domain, form_unique_id):
         form.rename_xform_language(old_code, new_code)
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
-    except XFormError as e:
+    except XFormException as e:
         response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
         response.status_code = 409
         return response
@@ -2756,11 +2756,16 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
             for form in module.get_forms():
                 questions = form.get_questions(self.app.langs, include_triggers=True, include_groups=True)
                 forms.append({
+                    'id': form.unique_id,
                     'name': _find_name(form.name, self.app.langs),
                     'questions': [FormQuestionResponse(q).to_json() for q in questions],
                 })
 
-            modules.append({'name': _find_name(module.name, self.app.langs), 'forms': forms})
+            modules.append({
+                'id': module.unique_id,
+                'name': _find_name(module.name, self.app.langs),
+                'forms': forms
+            })
         return {
             'response': modules,
             'success': True,

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import pdb
 import dateutil
 import os
 from django.test import TestCase

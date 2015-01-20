@@ -83,8 +83,8 @@
         $scope.loading = true;
         $scope.isActive = utils.isActive;
         $scope.modules = [];
-        $scope.formSearch = {name: ''};
-        $scope.moduleSearch = {name: ''};
+        $scope.formSearch = {id: ''};
+        $scope.moduleSearch = {id: ''};
 
         self.init = function () {
             $scope.loading = true;
@@ -103,8 +103,16 @@
         };
 
         $scope.filterList = function (module, form) {
-            $scope.moduleSearch.name = module;
-            $scope.formSearch.name = form;
+            $scope.moduleSearch.id = module ? module.id : '';
+            $scope.formSearch.id = form ? form.id : '';
+        };
+
+        $scope.moduleSelected = function (module) {
+            return $scope.moduleSearch.id === module.id && !$scope.formSearch.id;
+        };
+
+        $scope.allSelected = function () {
+            return !$scope.moduleSearch.id && !$scope.formSearch.id;
         };
 
         $scope.getIcon = utils.getIcon;
@@ -122,6 +130,9 @@
         $scope.typeSearch = {name: ''};
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
+        $scope.showConditions = true;
+        $scope.showCalculations = true;
+        $scope.showLabels = true;
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch.name = caseType;
@@ -168,7 +179,10 @@
             restrict: 'E',
             templateUrl: '/form_questions.html',
             scope: {
-                questions: '='
+                questions: '=',
+                showConditions: '=',
+                showCalculations: '=',
+                showLabels: '='
             },
             controller: function ($scope) {
                 $scope.getIcon = utils.getIcon;
@@ -222,7 +236,7 @@
                     'filter-case-types="filterCaseTypes({casetype: casetype})"' +
                     'type-search="typeSearch"' +
                     '></hierarchy>';
-                if (angular.isObject(scope.hierarchy)) {
+                if (angular.isObject(scope.hierarchy) && Object.getOwnPropertyNames(scope.hierarchy).length > 0) {
                     $compile(hierarchySt)(scope, function(cloned, scope)   {
                         element.append(cloned);
                     });
