@@ -475,13 +475,15 @@ def read_inventory_file(filename):
 @task
 def development():
     """
-    Must pass in the 'inventory' env variable, which the path to an
-    ansible inventory file
+    Must pass in the 'inventory' env variable,
+    which the path to an ansible inventory file
+    and an 'environment' env variable,
+    which is the name of the directory to be used under /home/cchq/www/
 
     Example command:
 
         fab development awesome_deploy \
-        --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development
+        --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development,environment=dev
 
     """
     env.sudo_user = 'cchq'
@@ -489,13 +491,7 @@ def development():
     env.django_port = '9010'
     env.should_migrate = True
 
-    require('inventory')
-
-    # use inventory filename as environment name
-    # i.e. if the inventory is called my-crazy-setup
-    # then things on the server will be stored in
-    # /home/cchq/www/my-crazy-setup/code_root, etc.
-    env.environment = os.path.basename(env.inventory)
+    require('inventory', 'environment')
     servers = read_inventory_file(env.inventory)
 
     _setup_path()
