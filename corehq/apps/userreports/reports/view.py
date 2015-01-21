@@ -15,7 +15,6 @@ from no_exceptions.exceptions import Http403
 from corehq.apps.reports.datatables import DataTablesHeader
 
 
-# This is a report that works and is similar to ours
 class ConfigurableReport(JSONResponseMixin, TemplateView):
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"

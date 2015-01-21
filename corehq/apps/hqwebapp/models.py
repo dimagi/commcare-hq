@@ -168,19 +168,12 @@ class UITab(object):
     @property
     @memoized
     def is_active(self):
-        # This returns false for the ReportsTab, it should return true
         shortcircuit = self.is_active_shortcircuit
         if shortcircuit is not None:
-            print "RETURNING SHORTCIRCUIT"
             return shortcircuit
 
         request_path = self._request.get_full_path()
 
-        if type(self) == ReportsTab:
-            #import ipdb; ipdb.set_trace()
-            pass
-
-        #mark
         if self.urls:
             if (any(request_path.startswith(url) for url in self.urls) or
                     self._current_url_name in self.subpage_url_names):
@@ -197,9 +190,6 @@ class UITab(object):
                 urls.extend(st.urls)
 
         try:
-            if type(self) == ReportsTab:
-                #import ipdb; ipdb.set_trace()
-                pass
             for name, section in self.sidebar_items:
                 urls.extend(item['url'] for item in section)
         except Exception:

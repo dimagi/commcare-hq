@@ -74,12 +74,8 @@ class FooBar(TemplateView):
             "domain": self.domain,
             'url': reverse("create_new_report_builder", args=[self.domain]),
             'report': {"title": "foo"},
-            "filter_context": "fuuu",
-            "headers": "wut",
-            #"project": {},
             "user": self.request.couch_user,
             "request": self.request
-            #"report": ReportConfiguration(domain=domain)
         }
         return context
 
