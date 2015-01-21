@@ -263,7 +263,7 @@ class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
     @classmethod
     def months(cls):
         month_pairs = []
-        for month_number in range(12):
+        for month_number in range(1, 13):
             month_pairs.append({
                 'name': calendar.month_name[month_number],
                 'value': month_number,

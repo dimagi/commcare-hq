@@ -199,7 +199,7 @@ class ReportDispatcher(View):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls.defaults import url
+        from django.conf.urls import url
         return url(cls.pattern(), cls.as_view(), name=cls.name())
 
 cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)

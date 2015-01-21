@@ -883,7 +883,10 @@ cloudCare.AppMainView = Backbone.View.extend({
 
         // utilities
         var selectApp = function (appId) {
-            self.appListView.getAppView(appId).select();
+            var appView = self.appListView.getAppView(appId);
+            if (appView) {
+                appView.select();
+            }
         };
 
         var selectModule = function (moduleIndex) {

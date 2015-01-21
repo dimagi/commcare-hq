@@ -93,24 +93,26 @@ NOW_OR_LATER = (
 )
 
 CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS Message")),
-    (METHOD_SMS_SURVEY, _("SMS Form Interaction")),
+    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS_SURVEY, _("SMS Survey")),
 )
 
 KEYWORD_CONTENT_CHOICES = (
-    (METHOD_SMS, _("SMS Message")),
-    (METHOD_SMS_SURVEY, _("SMS Interactive Survey")),
+    (METHOD_SMS, _("SMS")),
+    (METHOD_SMS_SURVEY, _("SMS Survey")),
 )
 
+NO_RESPONSE = "none"
+
 KEYWORD_RECIPIENT_CHOICES = (
-    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
     (RECIPIENT_OWNER, _("The case's owner")),
 )
 
 ONE_TIME_RECIPIENT_CHOICES = (
     ("", _("---choose---")),
     (RECIPIENT_SURVEY_SAMPLE, _("Case Group")),
-    (RECIPIENT_USER_GROUP, _("User Group")),
+    (RECIPIENT_USER_GROUP, _("Mobile Worker Group")),
 )
 
 METHOD_CHOICES = (
@@ -164,16 +166,34 @@ FORM_TYPE_CHOICES = (
     (FORM_TYPE_ALL_AT_ONCE, "All questions in one sms"),
 )
 
+
+def validate_integer(value, error_msg, nonnegative=False):
+    try:
+        assert value is not None
+        value = int(value)
+        if nonnegative:
+            assert value >= 0
+        return value
+    except (ValueError, AssertionError):
+        raise ValidationError(error_msg)
+
 def validate_date(value):
     date_regex = re.compile("^\d\d\d\d-\d\d-\d\d$")
     if date_regex.match(value) is None:
         raise ValidationError("Dates must be in yyyy-mm-dd format.")
 
 def validate_time(value):
+    if isinstance(value, time):
+        return value
+    error_msg = _("Please enter a valid time from 00:00 to 23:59.")
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
     if not isinstance(value, basestring) or time_regex.match(value) is None:
-        raise ValidationError("Times must be in hh:mm format.")
-    return parse(value).time()
+        raise ValidationError(error_msg)
+    try:
+        value = parse(value).time()
+        return value
+    except Exception:
+        raise ValidationError(error_msg)
 
 def validate_form_unique_id(form_unique_id, domain):
     try:
@@ -1282,7 +1302,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def section_advanced(self):
         fields = [
             BootstrapMultiField(
-                _("Stop Condition"),
+                _("Additional Stop Condition"),
                 InlineField(
                     'stop_condition',
                     data_bind="value: stop_condition",
@@ -1299,8 +1319,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 ),
                 help_bubble_text=_("Reminders can be stopped after a date set in the case, or if a particular "
                                    "case property is set to OK.  Choose either a case property that is a date or "
-                                   "a case property that is going to be set to Ok.  Reminders will always stop if "
-                                   "the start condition is no longer true."),
+                                   "a case property that is going to be set to OK.  Reminders will always stop if "
+                                   "the start condition is no longer true or if the case that triggered the "
+                                   "reminder is closed."),
                 css_id="stop-condition-group",
             ),
             crispy.Div(
@@ -1578,7 +1599,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return []
 
     def clean_global_timeouts(self):
-        return self._clean_timeouts(self.cleaned_data['global_timeouts'])
+        method = self.cleaned_data['method']
+        if (self.ui_type == UI_SIMPLE_FIXED and
+            method in (METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)):
+            return self._clean_timeouts(self.cleaned_data['global_timeouts'])
+        else:
+            return []
 
     def clean_events(self):
         method = self.cleaned_data['method']
@@ -1643,9 +1669,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
             if fire_time_type == FIRE_TIME_CASE_PROPERTY:
                 event['fire_time'] = None
                 has_fire_time_case_property = True
-
-            if event['is_immediate']:
+            elif event['is_immediate']:
                 event['fire_time'] = ONE_MINUTE_OFFSET
+            else:
+                event['fire_time'] = validate_time(event['fire_time'])
 
             # clean fire_time_aux:
             if fire_time_type != FIRE_TIME_CASE_PROPERTY:
@@ -1669,6 +1696,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # clean day_num:
             if self.ui_type == UI_SIMPLE_FIXED or event['is_immediate']:
                 event['day_num'] = 0
+            else:
+                event['day_num'] = validate_integer(event['day_num'],
+                    _('Day must be specified and must be a non-negative number.'),
+                    nonnegative=True)
 
             # clean callback_timeout_intervals:
             if (method == METHOD_SMS_CALLBACK
@@ -2701,17 +2732,17 @@ class NewKeywordForm(Form):
     other_recipient_content_type = ChoiceField(
         required=False,
         label=ugettext_noop("Notify Another Person"),
-        initial='none',
-    )
-    other_recipient_id = ChoiceField(
-        required=False,
-        label=ugettext_noop("Group Name"),
+        initial=NO_RESPONSE,
     )
     other_recipient_type = ChoiceField(
         required=False,
         initial=False,
         label=ugettext_noop("Recipient"),
         choices=KEYWORD_RECIPIENT_CHOICES,
+    )
+    other_recipient_id = ChoiceField(
+        required=False,
+        label=ugettext_noop("Group Name"),
     )
     other_recipient_message = TrimmedCharField(
         required=False,
@@ -2950,7 +2981,7 @@ class NewKeywordForm(Form):
     def content_type_choices(self):
         choices = [(c[0], c[1]) for c in KEYWORD_CONTENT_CHOICES]
         choices.append(
-            ('none', _("No Response"))
+            (NO_RESPONSE, _("No Response"))
         )
         return choices
 
@@ -3105,7 +3136,7 @@ class NewKeywordForm(Form):
             return None
 
     def clean_other_recipient_type(self):
-        if self.cleaned_data['other_recipient_content_type'] == 'none':
+        if self.cleaned_data['other_recipient_content_type'] == NO_RESPONSE:
             return None
         value = self.cleaned_data["other_recipient_type"]
         if value == RECIPIENT_OWNER:
@@ -3117,7 +3148,7 @@ class NewKeywordForm(Form):
         return value
 
     def clean_other_recipient_id(self):
-        if self.cleaned_data['other_recipient_content_type'] == 'none':
+        if self.cleaned_data['other_recipient_content_type'] == NO_RESPONSE:
             return None
         value = self.cleaned_data["other_recipient_id"]
         recipient_type = self.cleaned_data.get("other_recipient_type", None)

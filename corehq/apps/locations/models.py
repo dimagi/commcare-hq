@@ -3,11 +3,13 @@ from couchdbkit.ext.django.schema import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
 from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
 
 
@@ -25,6 +27,7 @@ class SQLLocation(MPTTModel):
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    products = models.ManyToManyField(SQLProduct, null=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
@@ -54,6 +57,14 @@ class SQLLocation(MPTTModel):
     def root_locations(cls, domain, include_archive_ancestors=False):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
+
+    @memoized
+    def get_products(self):
+        """
+        If there are no products specified for this location, assume all
+        products for the domain are relevant.
+        """
+        return self.products.all() or SQLProduct.by_domain(self.domain)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):

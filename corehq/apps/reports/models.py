@@ -17,6 +17,7 @@ from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.feature_previews import CALLCENTER
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
@@ -751,9 +752,16 @@ class CaseExportSchema(HQExportSchema):
     @property
     def case_properties(self):
         props = set([])
+
+        if CALLCENTER.enabled(self.domain):
+            from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+            user_fields = CustomDataFieldsDefinition.get_or_create(self.domain, 'UserFields')
+            props |= {field.slug for field in user_fields.fields}
+
         for app in self.applications:
             builder = ParentCasePropertyBuilder(app, ("name",))
             props |= set(builder.get_properties(self.case_type))
+
         return props
 
 

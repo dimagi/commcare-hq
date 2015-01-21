@@ -22909,8 +22909,17 @@ msgstr ""
 #~ msgid "Show Archived Mobile Workers"
 #~ msgstr "सब-सेंटर चुनिए"
 
-#~ msgid "pregnant"
-#~ msgstr "गर्भवती"
+msgid "pregnant"
+msgstr "गर्भवती"
+
+msgid "mother"
+msgstr "माँ"
+
+msgid "Payment amount received last month"
+msgstr "भुगतान राशि पिछले महीने प्राप्त"
+
+msgid "Cash received last month (Yes/No)"
+msgstr "पिछले महीने भुगतान प्राप्त (हाँ/नही)"
 
 #, fuzzy
 #~ msgid "Case Display Properties"

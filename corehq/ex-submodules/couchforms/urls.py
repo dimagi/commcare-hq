@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('',
     url(r'^post/?$', 'couchforms.views.post', name='xform_post'),
