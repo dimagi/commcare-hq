@@ -13,6 +13,7 @@ from corehq import Session, ConfigurableReport
 from corehq import toggles
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.forms import CreateNewReportBuilderForm
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -58,7 +59,8 @@ class CreateNewReportBuilderView(TemplateView):
             'url': reverse("create_new_report_builder", args=[self.domain]),
             'report': {"title": "Create New Report"},
             "user": self.request.couch_user,
-            "request": self.request
+            "request": self.request,
+            'create_new_report_builder_form': CreateNewReportBuilderForm(self.domain),
         }
         return context
 
