@@ -1,14 +1,16 @@
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
+from couchdbkit import ResourceNotFound
+from corehq.apps.groups.models import Group
 
 from corehq.apps.domain.shortcuts import create_domain
 
 
-class LocationsTest(TestCase):
+class LocationTestBase(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.locations_enabled = True
@@ -19,18 +21,8 @@ class LocationsTest(TestCase):
                 administrative=True
             ),
             LocationType(
-                name='district',
-                allowed_parents=['state'],
-                administrative=True
-            ),
-            LocationType(
-                name='block',
-                allowed_parents=['district'],
-                administrative=True
-            ),
-            LocationType(
                 name='village',
-                allowed_parents=['block'],
+                allowed_parents=['state'],
                 administrative=True
             ),
             LocationType(
@@ -51,6 +43,26 @@ class LocationsTest(TestCase):
             last_name='Builder',
         )
         self.user.set_location(self.loc)
+
+    def tearDown(self):
+        self.user.delete()
+        # domain delete cascades to everything else
+        self.domain.delete()
+
+
+class LocationsTest(LocationTestBase):
+    def test_storage_types(self):
+        # make sure we can go between sql/couch locs
+        sql_loc = SQLLocation.objects.get(name=self.loc.name)
+        self.assertEqual(
+            sql_loc.couch_location()._id,
+            self.loc._id
+        )
+
+        self.assertEqual(
+            sql_loc.id,
+            self.loc.sql_location.id
+        )
 
     def test_location_queries(self):
         test_state1 = make_loc(
@@ -179,4 +191,128 @@ class LocationsTest(TestCase):
         compare(
             [self.user.location, test_state1, test_state2, test_village1],
             Location.by_domain(self.domain.name)
+        )
+
+
+class LocationGroupTest(LocationTestBase):
+    def setUp(self):
+        super(LocationGroupTest, self).setUp()
+
+        self.test_state = make_loc(
+            'teststate',
+            type='state',
+            domain=self.domain.name
+        )
+        self.test_village = make_loc(
+            'testvillage',
+            type='village',
+            parent=self.test_state,
+            domain=self.domain.name
+        )
+        self.test_outlet = make_loc(
+            'testoutlet',
+            type='outlet',
+            parent=self.test_village,
+            domain=self.domain.name
+        )
+
+    def test_group_name(self):
+        # just location name for top level
+        self.assertEqual(
+            'teststate-Cases',
+            self.test_state.sql_location.case_sharing_group_object().name
+        )
+
+        # locations combined by forward slashes otherwise
+        self.assertEqual(
+            'teststate/testvillage/testoutlet-Cases',
+            self.test_outlet.sql_location.case_sharing_group_object().name
+        )
+
+        # reporting group is similar but has no ending
+        self.assertEqual(
+            'teststate/testvillage/testoutlet',
+            self.test_outlet.sql_location.reporting_group_object().name
+        )
+
+    def test_id_assignment(self):
+        # each should have the same id, but with a different prefix
+        self.assertEqual(
+            'locationgroup-' + self.test_outlet._id,
+            self.test_outlet.sql_location.case_sharing_group_object()._id
+        )
+        self.assertEqual(
+            'locationreportinggroup-' + self.test_outlet._id,
+            self.test_outlet.sql_location.reporting_group_object()._id
+        )
+
+    def test_group_properties(self):
+        # case sharing groups should ... be case sharing
+        self.assertTrue(
+            self.test_outlet.sql_location.case_sharing_group_object().case_sharing
+        )
+        self.assertFalse(
+            self.test_outlet.sql_location.case_sharing_group_object().reporting
+        )
+
+        # and reporting groups reporting
+        self.assertFalse(
+            self.test_outlet.sql_location.reporting_group_object().case_sharing
+        )
+        self.assertTrue(
+            self.test_outlet.sql_location.reporting_group_object().reporting
+        )
+
+        # both should set domain properly
+        self.assertEqual(
+            self.domain.name,
+            self.test_outlet.sql_location.reporting_group_object().domain
+        )
+        self.assertEqual(
+            self.domain.name,
+            self.test_outlet.sql_location.case_sharing_group_object().domain
+        )
+
+    def test_accessory_methods(self):
+        # we need to expose group id without building the group sometimes
+        # so lets make sure those match up
+        expected_id = self.loc.sql_location.case_sharing_group_object()._id
+        self.assertEqual(
+            expected_id,
+            self.loc.group_id
+        )
+
+    def test_not_real_groups(self):
+        # accessing a group object should not cause it to save
+        # in the DB
+        group_obj = self.test_outlet.sql_location.case_sharing_group_object()
+        with self.assertRaises(ResourceNotFound):
+            Group.get(group_obj._id)
+
+    def test_custom_data(self):
+        # need to put the location data on the
+        # group with a special prefix
+        self.loc.metadata = {
+            'foo': 'bar',
+            'fruit': 'banana'
+        }
+        self.loc.save()
+
+        self.assertDictEqual(
+            {
+                'commcare_location_type': self.loc.location_type,
+                'commcare_location_name': self.loc.name,
+                'commcare_location_foo': 'bar',
+                'commcare_location_fruit': 'banana'
+            },
+            self.loc.sql_location.case_sharing_group_object().metadata
+        )
+        self.assertDictEqual(
+            {
+                'commcare_location_type': self.loc.location_type,
+                'commcare_location_name': self.loc.name,
+                'commcare_location_foo': 'bar',
+                'commcare_location_fruit': 'banana'
+            },
+            self.loc.sql_location.reporting_group_object().metadata
         )

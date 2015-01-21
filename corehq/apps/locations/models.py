@@ -157,17 +157,6 @@ def _filter_for_archived(locations, include_archive_ancestors):
     else:
         return locations.filter(is_archived=False)
 
-    @property
-    def group_id(self):
-        """
-        Returns the id with a prefix because this is
-        the magic id we are force setting the locations
-        case sharing group to be.
-
-        This is also the id that owns supply point cases.
-        """
-        return LOCATION_SHARING_PREFIX + self.location_id
-
 
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
