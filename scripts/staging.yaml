@@ -52,10 +52,8 @@ branches:
   - quickview # Simon 11/25
 #  - master+double-management # Nick P 12/31
 #  - double-management # SK 12/1
-  - ews_stock_status_report+migration-optimization # SK 1/15
-  - lwyszomi:migration-optimization
+  - ews_stock_status_report  # cz/kamil 1/13
   - caseDetailsInCC # sravan 2/1/15
-  - lwyszomi:ews_stock_status_report  # cz/kamil 1/13
   - logo-to-android # Nick P 1/7
   - newrelic # Simon 1/15
   - locations-as-groups # tw 1/20
