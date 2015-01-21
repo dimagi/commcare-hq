@@ -36,25 +36,6 @@ def edit_report(request, domain, report_id):
 def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_new_report_builder(request, domain):
-
-    apps = get_apps_in_domain(domain, full=True, include_remote=False)
-    context = {
-        "case_types": set([c for app in apps for c in app.get_case_types() if c]),
-        "forms": set([form for app in apps for form in app.get_forms()]),
-        "domain": domain,
-        'url': reverse("create_new_report_builder", args=[domain]),
-        'report': {"title": "foo"},
-        "filter_context": "fuuu",
-        "headers": "wut",
-        "project": {},
-        "user": request.couch_user,
-        "request": request
-        #"report": ReportConfiguration(domain=domain)
-    }
-    return render(request, "userreports/create_new_report_builder.html", context)
-
 
 class FooBar(TemplateView):
     template_name = "userreports/create_new_report_builder.html"

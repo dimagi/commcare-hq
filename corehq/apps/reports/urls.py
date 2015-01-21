@@ -9,7 +9,7 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 # from .filters.urls import urlpatterns as filter_urls
 from corehq.apps.example_reports.testreport import TestReport
 from corehq.apps.userreports.reports.view import ConfigurableReport
-from corehq.apps.userreports.views import create_new_report_builder, FooBar
+from corehq.apps.userreports.views import FooBar
 from .filters import urls as filter_urls
 
 
