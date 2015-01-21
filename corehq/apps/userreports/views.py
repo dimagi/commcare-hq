@@ -38,14 +38,14 @@ def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
 
-class FooBar(TemplateView):
+class CreateNewReportBuilderView(TemplateView):
     template_name = "userreports/create_new_report_builder.html"
 
     @cls_to_view_login_and_domain
     @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
     def dispatch(self, request, domain, **kwargs):
         self.domain = domain
-        return super(FooBar, self).dispatch(request, domain, **kwargs)
+        return super(CreateNewReportBuilderView, self).dispatch(request, domain, **kwargs)
 
     def get_context_data(self, **kwargs):
         print "Got context data!"
@@ -56,7 +56,7 @@ class FooBar(TemplateView):
             "forms": set([form for app in apps for form in app.get_forms()]),
             "domain": self.domain,
             'url': reverse("create_new_report_builder", args=[self.domain]),
-            'report': {"title": "foo"},
+            'report': {"title": "Create New Report"},
             "user": self.request.couch_user,
             "request": self.request
         }
