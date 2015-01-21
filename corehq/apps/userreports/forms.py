@@ -17,12 +17,17 @@ class CreateNewReportBuilderForm(forms.Form):
         ],
     )
 
+    application = forms.ChoiceField()
+
     report_source = forms.ChoiceField()
 
     def __init__(self, domain, *args, **kwargs):
         super(CreateNewReportBuilderForm, self).__init__(*args, **kwargs)
 
         apps = get_apps_in_domain(domain, full=True, include_remote=False)
+        self.fields['application'].choices = [
+            (app._id, app.name) for app in apps
+        ]
         self.fields['report_source'].choices = [
             (c, c) for c in
             set([case_type for app in apps for case_type in app.get_case_types() if case_type])
@@ -30,11 +35,14 @@ class CreateNewReportBuilderForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+        self.helper.form_id = "report-builder-form"
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Create New Report'),
                 'report_type',
-                'report_source',
+                crispy.Field('application', data_bind='value: application'),
+                crispy.Field('report_source', data_bind = 'options: caseTypeMap[application()]')
+
             ),
             FormActions(
                 crispy.ButtonHolder(
