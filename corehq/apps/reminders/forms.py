@@ -1598,7 +1598,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return []
 
     def clean_global_timeouts(self):
-        if self.ui_type == UI_SIMPLE_FIXED:
+        method = self.cleaned_data['method']
+        if (self.ui_type == UI_SIMPLE_FIXED and
+            method in (METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)):
             return self._clean_timeouts(self.cleaned_data['global_timeouts'])
         else:
             return []
