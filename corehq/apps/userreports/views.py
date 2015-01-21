@@ -49,17 +49,9 @@ class CreateNewReportBuilderView(TemplateView):
         return super(CreateNewReportBuilderView, self).dispatch(request, domain, **kwargs)
 
     def get_context_data(self, **kwargs):
-        print "Got context data!"
-
-        apps = get_apps_in_domain(self.domain, full=True, include_remote=False)
         context = {
-            "case_types": set([c for app in apps for c in app.get_case_types() if c]),
-            "forms": set([form for app in apps for form in app.get_forms()]),
             "domain": self.domain,
-            'url': reverse("create_new_report_builder", args=[self.domain]),
             'report': {"title": "Create New Report"},
-            "user": self.request.couch_user,
-            "request": self.request,
             'create_new_report_builder_form': CreateNewReportBuilderForm(self.domain),
         }
         return context
