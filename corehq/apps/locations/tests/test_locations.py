@@ -32,7 +32,7 @@ class LocationTestBase(TestCase):
         ]
         self.domain.save()
 
-        self.loc = make_loc('loc', type='outlet',  domain=self.domain.name)
+        self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
         self.sp = make_supply_point(self.domain.name, self.loc)
 
         self.user = CommCareUser.create(
