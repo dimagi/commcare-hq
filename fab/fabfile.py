@@ -1205,7 +1205,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
-            '%(conf_command)s --conf_file "%(filename)s" '
+            '%(conf_command)s --traceback --conf_file "%(filename)s" '
             '--conf_destination "%(destination)s" --params "%(params)s"'
         ) % {
 
