@@ -16,6 +16,7 @@ from corehq.apps.hqadmin.reports import (
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
 )
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.reminders.util import can_use_survey_reminders
@@ -258,7 +259,7 @@ class ProjectReportsTab(UITab):
         user_reports = [(_("Create Reports"), [
             {"title": _("(+) Create new report"),
              "url": reverse("create_new_report_builder", args=[self.domain])}
-        ])]
+        ])] if toggle_enabled(self._request, 'USER_CONFIGURABLE_REPORTS') else []
         project_reports = ProjectReportDispatcher.navigation_sections(context)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(context)
 

@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View, TemplateView
@@ -41,6 +42,7 @@ class FooBar(TemplateView):
     template_name = "userreports/create_new_report_builder.html"
 
     @cls_to_view_login_and_domain
+    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
     def dispatch(self, request, domain, **kwargs):
         self.domain = domain
         return super(FooBar, self).dispatch(request, domain, **kwargs)
