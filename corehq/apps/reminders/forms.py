@@ -166,6 +166,7 @@ FORM_TYPE_CHOICES = (
     (FORM_TYPE_ALL_AT_ONCE, "All questions in one sms"),
 )
 
+
 def validate_integer(value, error_msg, nonnegative=False):
     try:
         assert value is not None
