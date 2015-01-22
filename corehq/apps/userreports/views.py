@@ -84,7 +84,7 @@ class CreateNewReportBuilderView(ReportBuilderView):
                         args=[self.domain],
                     ) + '?report_source=%s' % escape(
                         self.create_new_report_builder_form.cleaned_data['report_source']
-                    )
+                    ) + '&source_type=%s' % self.create_new_report_builder_form.cleaned_data['source_type']
                 )
         else:
             return self.get(request, *args, **kwargs)
