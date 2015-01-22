@@ -505,18 +505,7 @@ var DetailScreenConfig = (function () {
                 return column;
             },
             setGrip: function (grip) {
-                if (this.grip !== grip) {
-                    this.grip = grip;
-                    if (grip) {
-                        this.$grip = $('<i class="grip sortable-handle"></i>').addClass(COMMCAREHQ.icons.GRIP).css({
-                            cursor: 'move'
-                        }).mousedown(function () {
-                            $(':focus').blur();
-                        });
-                    } else {
-                        this.$grip = $('<span class="sort-disabled"></span>');
-                    }
-                }
+                this.grip = grip;
             },
             copyCallback: function () {
                 var column = this.serialize();
