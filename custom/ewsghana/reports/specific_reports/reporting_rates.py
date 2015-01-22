@@ -176,11 +176,13 @@ class NonReporting(EWSData):
 
     @property
     def title(self):
-        ltype = SQLLocation.objects.get(location_id=self.config['location_id']).location_type.lower()
-        if ltype == 'country':
-            return _('Non Reporting RMS and THs')
-        else:
-            return _('Non Reporting Facilities')
+        if self.config['location_id']:
+            ltype = SQLLocation.objects.get(location_id=self.config['location_id']).location_type.lower()
+            if ltype == 'country':
+                return _('Non Reporting RMS and THs')
+            else:
+                return _('Non Reporting Facilities')
+        return ''
 
     @property
     def headers(self):
@@ -222,6 +224,7 @@ class NonReporting(EWSData):
                     date = _('---')
                 rows.append([link_format(loc.name, url), date])
         return rows
+
 
 class IncompliteReports(EWSData):
 
