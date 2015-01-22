@@ -12,11 +12,13 @@ CUSTOM_REPORTS = (
     ('Custom reports', (
         StockStatus,
         StockLevelsReport,
+        ReportingRatesReport,
+    )),
+    ('Compare reports', (
         ProductsCompareReport,
         LocationsCompareReport,
         SupplyPointsCompareReport,
         WebUsersCompareReport,
         SMSUsersCompareReport,
-        ReportingRatesReport
-    )),
+    ))
 )

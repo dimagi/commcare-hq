@@ -265,7 +265,7 @@ class StockoutTable(EWSData):
 
 
 class StockStatus(MultiReport):
-    name = 'Stock State'
+    name = 'Stock status'
     title = 'Stock Status'
     slug = 'stock_status'
     fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
