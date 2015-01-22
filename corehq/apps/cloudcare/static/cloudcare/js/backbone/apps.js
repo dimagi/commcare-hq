@@ -1130,12 +1130,12 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.navigate("view/" + module.get("app_id"));
             self.clearModules();
 
-            self.updateTitle(self.app.get('name'))
+            self.updateTitle(self.app.get('name'));
         });
 
         cloudCare.dispatch.on('form:selected', function(form) {
             self.updateTitle(form.get('name')[self.options.language]);
-        })
+        });
         cloudCare.dispatch.on("form:selected:caselist", function (form) {
             self.navigate("view/" + form.get("app_id") +
                 "/" + form.get("module_index") +
@@ -1154,7 +1154,7 @@ cloudCare.AppMainView = Backbone.View.extend({
 
             // After deselect form, update with selected module if it exists
             var module = self.app.modules[self._selectedModule];
-            self.updateTitle(module ? module.get('name')[self.options.language] : null)
+            self.updateTitle(module ? module.get('name')[self.options.language] : null);
         });
         cloudCare.dispatch.on("form:enter", function (form, caseModel) {
             var caseId;
