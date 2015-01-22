@@ -1,10 +1,11 @@
 import json
 from django.core.urlresolvers import reverse
+from django.db.models import Count
 from django.http.response import HttpResponseRedirect
 from corehq.apps.commtrack.models import CommtrackConfig, StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.http import HttpResponse
@@ -13,14 +14,18 @@ from django.views.decorators.http import require_POST
 from corehq import IS_DEVELOPER, Domain
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
+
+from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
+    get_delivery_group_reports, ILS_FACILITIES
+from custom.logistics.models import StockDataCheckpoint
+from casexml.apps.stock.models import StockTransaction
+from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
-from custom.ilsgateway.tasks import ils_stock_data_task, report_run, ils_clear_stock_data_task, \
+from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.models import MigrationCheckpoint
-from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import resync_webusers_passwords_task
-from dimagi.utils.couch.database import iter_docs
 
 
 class GlobalStats(BaseDomainView):
@@ -76,30 +81,10 @@ class GlobalStats(BaseDomainView):
         }
 
         if self.show_supply_point_types:
-            supply_point_types = [
-                'clinic', 'chps facility', 'district hospital', 'health centre', 'hospital',
-                'psychiatric hospital', 'regional medical store', 'regional hospital', 'polyclinic',
-                'teaching hospital', 'central medical store', ''
-            ]
-            supply_point_types_map = {supply_point_type: 0 for supply_point_type in supply_point_types}
-            facility_ids = [location.location_id for location in SQLLocation.objects.filter(domain=self.domain)]
-            for facility in iter_docs(Location.get_db(), facility_ids):
-                supply_point_type = facility.get('metadata', {}).get('supply_point_type', "").lower()
-                supply_point_types_map[supply_point_type] += 1
-
-            context.update({
-                'clinic': supply_point_types_map['clinic'],
-                'chps_facility': supply_point_types_map['chps facility'],
-                'district_hospital': supply_point_types_map['district hospital'],
-                'health_centre': supply_point_types_map['health centre'],
-                'hospital': supply_point_types_map['hospital'],
-                'psychiatric_hospital': supply_point_types_map['psychiatric hospital'],
-                'regional_medical_store': supply_point_types_map['regional medical store'],
-                'regional_hospital': supply_point_types_map['regional hospital'],
-                'polyclinic': supply_point_types_map['polyclinic'],
-                'teaching_hospital': supply_point_types_map['teaching hospital'],
-                'central_medical_store': supply_point_types_map['central medical store']})
-
+            counts = SQLLocation.objects.values('location_type').filter(domain=self.domain).annotate(
+                Count('location_type')
+            ).order_by('location_type')
+            context['location_types'] = counts
         main_context.update(context)
         return main_context
 
@@ -121,7 +106,14 @@ class BaseConfigView(BaseCommTrackManageView):
             runner = ReportRun.objects.get(domain=self.domain, complete=False)
         except ReportRun.DoesNotExist:
             runner = None
+
+        try:
+            stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=self.domain)
+        except StockDataCheckpoint.DoesNotExist, StockDataCheckpoint.MultipleObjectsReturned:
+            stock_data_checkpoint = None
+
         return {
+            'stock_data_checkpoint': stock_data_checkpoint,
             'runner': runner,
             'checkpoint': checkpoint,
             'settings': self.settings_context,
@@ -157,7 +149,6 @@ class BaseConfigView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
 
-
 class ILSConfigView(BaseConfigView):
     config = ILSGatewayConfig
     urlname = 'ils_config'
@@ -178,7 +169,16 @@ def sync_ilsgateway(request, domain):
 @domain_admin_required
 @require_POST
 def ils_sync_stock_data(request, domain):
-    ils_stock_data_task.delay(domain)
+    config = ILSGatewayConfig.for_domain(domain)
+    domain = config.domain
+    endpoint = ILSGatewayEndpoint.from_config(config)
+    apis = (
+        ('product_stock', get_product_stock),
+        ('stock_transaction', get_stock_transaction),
+        ('supply_point_status', get_supply_point_statuses),
+        ('delivery_group', get_delivery_group_reports)
+    )
+    stock_data_task.delay(domain, endpoint, apis, ILS_FACILITIES)
     return HttpResponse('OK')
 
 

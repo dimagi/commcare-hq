@@ -690,7 +690,7 @@ def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
         limit = int(limit)
-    except ValueError:
+    except (TypeError, ValueError):
         limit = 10
     start_build_param = request.GET.get('start_build')
     if start_build_param and json.loads(start_build_param):
