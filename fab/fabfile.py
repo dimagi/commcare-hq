@@ -902,10 +902,11 @@ def awesome_deploy(confirm="yes"):
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
     max_wait = datetime.timedelta(minutes=5)
-    start = datetime.datetime.utcnow()
     pause_length = datetime.timedelta(seconds=5)
 
     execute(preindex_views)
+
+    start = datetime.datetime.utcnow()
 
     @roles(ROLES_DB_ONLY)
     def preindex_complete():
