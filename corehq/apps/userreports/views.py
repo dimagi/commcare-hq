@@ -89,7 +89,7 @@ class CreateNewReportBuilderView(TemplateView):
 
 
 class ConfigureBarChartReportBuilderView(TemplateView):
-    template_name = "userreports/create_new_report_builder.html"
+    template_name = "userreports/base_report_builder.html"
 
     @cls_to_view_login_and_domain
     @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())

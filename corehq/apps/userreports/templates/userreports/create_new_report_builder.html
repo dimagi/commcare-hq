@@ -1,7 +1,6 @@
-{% extends "reports_core/base_template_new.html" %}
-{% load crispy_forms_tags %}
-{% load hq_shared_tags %}
+{% extends "userreports/base_report_builder.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
@@ -12,8 +11,4 @@
         };
         ko.applyBindings(reportBuilderViewModel, $("#report-builder-form").get(0));
     </script>
-{% endblock %}
-
-{% block main_column %}
-    {% crispy form %}
 {% endblock %}
