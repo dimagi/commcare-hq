@@ -1,3 +1,4 @@
+import decimal
 from django.test import TestCase
 import sqlalchemy
 from casexml.apps.case.models import CommCareCase
@@ -54,4 +55,7 @@ class IndicatorPillowTest(TestCase):
             self.assertEqual(1, rows.rowcount)
             row = rows.fetchone()
             for k, v in row.items():
-                self.assertEqual(expected_indicators[k], v)
+                if isinstance(expected_indicators[k], decimal.Decimal):
+                    self.assertAlmostEqual(expected_indicators[k], v)
+                else:
+                    self.assertEqual(expected_indicators[k], v)

@@ -42,7 +42,7 @@ class Command(BaseCommand):
                         name="Privileges for %s" % user.username,
                         slug="%s_privileges" % user.username,
                     )[0]
-                    UserRole.objects.create(
+                    user_role = UserRole.objects.create(
                         user=user,
                         role=user_privs,
                     )
@@ -60,9 +60,9 @@ class Command(BaseCommand):
                     except Grant.DoesNotExist:
                         print("The user %s was never part of the operations "
                               "team. Leaving alone." % user.username)
-                elif not user_privs.has_privilege(ops_role):
+                elif not user_role.has_privilege(ops_role):
                     Grant.objects.create(
-                        from_role=user_privs,
+                        from_role=user_role.role,
                         to_role=ops_role,
                     )
                     print("Added %s to the operations team" % user.username)
