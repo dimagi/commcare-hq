@@ -14,7 +14,7 @@ from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _
 
 
-#TODO Implement this when alerts (moving from EWS) will be finished
+# TODO Implement this when alerts (moving from EWS) will be finished
 class AlertsData(EWSData):
     pass
 
