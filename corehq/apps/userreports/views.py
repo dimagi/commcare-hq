@@ -42,14 +42,16 @@ def create_report(request, domain):
     return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
 
 
-class CreateNewReportBuilderView(TemplateView):
-    template_name = "userreports/create_new_report_builder.html"
-
+class ReportBuilderView(TemplateView):
     @cls_to_view_login_and_domain
     @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
     def dispatch(self, request, domain, **kwargs):
         self.domain = domain
-        return super(CreateNewReportBuilderView, self).dispatch(request, domain, **kwargs)
+        return super(ReportBuilderView, self).dispatch(request, domain, **kwargs)
+
+
+class CreateNewReportBuilderView(ReportBuilderView):
+    template_name = "userreports/create_new_report_builder.html"
 
     def get_context_data(self, **kwargs):
         apps = get_apps_in_domain(self.domain, full=True, include_remote=False)
@@ -88,14 +90,8 @@ class CreateNewReportBuilderView(TemplateView):
             return self.get(request, *args, **kwargs)
 
 
-class ConfigureBarChartReportBuilderView(TemplateView):
+class ConfigureBarChartReportBuilderView(ReportBuilderView):
     template_name = "userreports/base_report_builder.html"
-
-    @cls_to_view_login_and_domain
-    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
-    def dispatch(self, request, domain, **kwargs):
-        self.domain = domain
-        return super(ConfigureBarChartReportBuilderView, self).dispatch(request, domain, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = {
