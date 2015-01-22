@@ -7,12 +7,12 @@
     <script type="text/javascript">
         var reportBuilderViewModel = {
             application: ko.observable(""),
+            sourceType: ko.observable(""),
             caseTypeMap: {{ case_type_map|JSON }}
         };
         ko.applyBindings(reportBuilderViewModel, $("#report-builder-form").get(0));
     </script>
 {% endblock %}
-
 
 {% block main_column %}
     {% crispy create_new_report_builder_form %}

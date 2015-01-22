@@ -51,7 +51,12 @@ class CreateNewReportBuilderView(TemplateView):
     def get_context_data(self, **kwargs):
         apps = get_apps_in_domain(self.domain, full=True, include_remote=False)
         context = {
-            "case_type_map": {app._id : list(app.get_case_types()) for app in apps},
+            "case_type_map": {
+                app._id: {
+                    "case": list(app.get_case_types()),
+                    "form": [form.get_unique_id() for form in app.get_forms()]
+                } for app in apps
+            },
             "domain": self.domain,
             'report': {"title": "Create New Report"},
             'create_new_report_builder_form': CreateNewReportBuilderForm(self.domain),

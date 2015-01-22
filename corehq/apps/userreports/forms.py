@@ -18,7 +18,10 @@ class CreateNewReportBuilderForm(forms.Form):
     )
 
     application = forms.ChoiceField()
-
+    source_type = forms.ChoiceField(choices=[
+        ("case", _("Case")),
+        ("form", _("Form")),
+    ])
     report_source = forms.ChoiceField()
 
     def __init__(self, domain, *args, **kwargs):
@@ -27,10 +30,6 @@ class CreateNewReportBuilderForm(forms.Form):
         apps = get_apps_in_domain(domain, full=True, include_remote=False)
         self.fields['application'].choices = [
             (app._id, app.name) for app in apps
-        ]
-        self.fields['report_source'].choices = [
-            (c, c) for c in
-            set([case_type for app in apps for case_type in app.get_case_types() if case_type])
         ]
 
         self.helper = FormHelper()
@@ -41,8 +40,8 @@ class CreateNewReportBuilderForm(forms.Form):
                 _('Create New Report'),
                 'report_type',
                 crispy.Field('application', data_bind='value: application'),
-                crispy.Field('report_source', data_bind = 'options: caseTypeMap[application()]')
-
+                crispy.Field('source_type', data_bind='value: sourceType'),
+                crispy.Field('report_source', data_bind='options: caseTypeMap[application()][sourceType()]'),
             ),
             FormActions(
                 crispy.ButtonHolder(
