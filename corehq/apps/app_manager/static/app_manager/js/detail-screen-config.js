@@ -860,7 +860,6 @@ var DetailScreenConfig = (function () {
     }());
 
     DetailScreenConfig.message = {
-        EMPTY_SCREEN: 'No detail screen configured',
 
         MODEL: 'Model',
         FIELD: 'Property',
