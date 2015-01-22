@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 
 settings_urls = patterns('corehq.apps.facilities.views',
     url(r'^$', 'default'),

@@ -8,8 +8,11 @@
     word-break: break-all;
 }
 #report_table_met_report_wrapper > div.DTFC_ScrollWrapper > div.DTFC_LeftWrapper > div.DTFC_LeftBodyWrapper > table > tbody > tr {
-    height: 300px !important;
+    height: 180px !important;
 }
 #report_table_met_report > tbody > tr {
-    height: 300px !important;
+    height: 180px !important;
+}
+#hq-report-filters label, #hq-report-filters div, #hq-report-filters select, .select2-result-label {
+    font-size: 18px !important;
 }

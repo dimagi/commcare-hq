@@ -1,6 +1,6 @@
 import logging
 
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from django.core.exceptions import ImproperlyConfigured
 from corehq.apps.reports.util import get_installed_custom_modules
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, 

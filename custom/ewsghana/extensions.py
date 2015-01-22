@@ -32,7 +32,8 @@ def ews_product_extension(couch_product, product):
         program.code = product.program.code.lower()
         program._doc_type_attr = "Program"
         program.save()
-    couch_product.program_id = program._id
-    couch_product.save()
+    if couch_product.program_id != program._id:
+        couch_product.program_id = program._id
+        couch_product.save()
 
     return couch_product

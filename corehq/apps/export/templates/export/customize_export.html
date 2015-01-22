@@ -491,99 +491,101 @@
             </div>
         </fieldset>
         <fieldset data-bind="foreach: table_configuration">
-            <legend data-bind="visible: $root.utils.actuallyShowTable($data)">
-                <span data-bind="visible: $root.repeatsEnabled()">
-                    <input type="checkbox" data-bind="checked: selected" />
-                </span>
-                <span>
-                    <span data-bind="text: $root.utils.tableHeader(index())">
-                </span>
-            </legend>
-            <div data-bind="visibleFade: selected">
-            <div class="control-group" data-bind="visible: $root.repeatsEnabled()">
-                <label class="control-label">{% trans "Sheet Name" %}</label>
-                <div class="controls">
-                    <input type="text" data-bind="value: display" />
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">
-                    <strong>{% trans "Choose the fields you want to export." %}</strong><br />
-                    {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
-                </label>
-                <div class="controls">
-                    <table class="table table-striped table-bordered table-condensed" id="field-select">
-                        <thead>
-                        <tr class="nodrag nodrop">
-                            <th></th>
-                            <th>{% trans "Include this Field?" %}<br>
-                                <a href="#" class="btn btn-mini" data-bind="click: $root.selectAll">{% trans "Select All" %}</a>
-                                <a href="#" class="btn btn-mini btn-inverse" data-bind="click: $root.selectNone">{% trans "Select None" %}</a></th>
-                            <th>
-                                {% trans "Question" %}
-                            </th>
-                            <th>{% trans "Display" %}</th>
-                            {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
-                            <th>{% trans "Type" %}</th>
-                            {% endif %}
-                            {% if helper.allow_deid %}
-                            <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
-                            {% endif %}
-                        </tr>
-                        </thead>
-                        <tbody data-bind="sortable: column_configuration">
-                            <tr data-bind="
-                                visible:  $root.show_deleted() || ($data.show() || selected),
-                                attr: {'data-order': _sortableOrder}
-                                ">
-                                <td class="sortable-handle">
-                                    <i class="icon-resize-vertical"></i>
-                                </td>
-                                <td><input type="checkbox" class="field-include" data-bind="checked: selected" /></td>
-                                <td>
-                                    <span data-bind="foreach: _niceField.tags">
-                                        <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
-                                    </span>
-                                    <code data-bind="text: _niceField.field"></code>
+            <div>
+                <legend data-bind="visible: $root.utils.actuallyShowTable($data)">
+                    <span data-bind="visible: $root.repeatsEnabled()">
+                        <input type="checkbox" data-bind="checked: selected" />
+                    </span>
+                    <span>
+                        <span data-bind="text: $root.utils.tableHeader(index())">
+                    </span>
+                </legend>
+                <div data-bind="visibleFade: selected">
+                    <div class="control-group" data-bind="visible: $root.repeatsEnabled()">
+                        <label class="control-label">{% trans "Sheet Name" %}</label>
+                        <div class="controls">
+                            <input type="text" data-bind="value: display" />
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <strong>{% trans "Choose the fields you want to export." %}</strong><br />
+                            {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
+                        </label>
+                        <div class="controls">
+                            <table class="table table-striped table-bordered table-condensed" id="field-select">
+                                <thead>
+                                <tr class="nodrag nodrop">
+                                    <th></th>
+                                    <th>{% trans "Include this Field?" %}<br>
+                                        <a href="#" class="btn btn-mini" data-bind="click: $root.selectAll">{% trans "Select All" %}</a>
+                                        <a href="#" class="btn btn-mini btn-inverse" data-bind="click: $root.selectNone">{% trans "Select None" %}</a></th>
+                                    <th>
+                                        {% trans "Question" %}
+                                    </th>
+                                    <th>{% trans "Display" %}</th>
+                                    {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                    <th>{% trans "Type" %}</th>
+                                    {% endif %}
+                                    {% if helper.allow_deid %}
+                                    <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
+                                    {% endif %}
+                                </tr>
+                                </thead>
+                                <tbody data-bind="sortable: column_configuration">
+                                    <tr data-bind="
+                                        visible:  $root.show_deleted() || ($data.show() || selected),
+                                        attr: {'data-order': _sortableOrder}
+                                        ">
+                                        <td class="sortable-handle">
+                                            <i class="icon-resize-vertical"></i>
+                                        </td>
+                                        <td><input type="checkbox" class="field-include" data-bind="checked: selected" /></td>
+                                        <td>
+                                            <span data-bind="foreach: _niceField.tags">
+                                                <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
+                                            </span>
+                                            <code data-bind="text: _niceField.field"></code>
 
-                                </td>
-                                <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
-                                {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
-                                <td class="input" data-bind="if: allOptions">
-                                    <span data-bind="if: hasNewOptions" class="pull-right">
-                                        <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
-                                    </span>
-                                    <select data-bind="
-                                        value: doc_type,
-                                        foreach: $root.column_type_options
-                                    ">
-                                        <option data-bind="value: value, text: label"></option>
-                                    </select>
-                                    <div data-bind="if: doc_type() === 'SplitColumn'">
-                                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
-                                        </select>
-                                        <br/>
-                                        <input class="input input-small" type="text" data-bind="value: newOption"/>
-                                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
-                                    </div>
-                                </td>
-                                {% endif %}
-                                {% if helper.allow_deid %}
-                                <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
-                                    <select data-bind="
-                                        value: transform || '',
-                                        foreach: $root.deid_options,
-                                        visible: index() !== 'id' || transform()
-                                    ">
-                                        <option data-bind="value: value, text: label"></option>
-                                    </select>
-                                </td>
-                                {% endif %}
-                            </tr>
-                        </tbody>
-                    </table>
+                                        </td>
+                                        <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
+                                        {% if request|toggle_enabled:'SPLIT_MULTISELECT_EXPORT' %}
+                                        <td class="input" data-bind="if: allOptions">
+                                            <span data-bind="if: hasNewOptions" class="pull-right">
+                                                <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
+                                            </span>
+                                            <select data-bind="
+                                                value: doc_type,
+                                                foreach: $root.column_type_options
+                                            ">
+                                                <option data-bind="value: value, text: label"></option>
+                                            </select>
+                                            <div data-bind="if: doc_type() === 'SplitColumn'">
+                                                <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                                                </select>
+                                                <br/>
+                                                <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                                <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                            </div>
+                                        </td>
+                                        {% endif %}
+                                        {% if helper.allow_deid %}
+                                        <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
+                                            <select data-bind="
+                                                value: transform || '',
+                                                foreach: $root.deid_options,
+                                                visible: index() !== 'id' || transform()
+                                            ">
+                                                <option data-bind="value: value, text: label"></option>
+                                            </select>
+                                        </td>
+                                        {% endif %}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
             </div>
         </fieldset>
         {% if helper.allow_deid %}

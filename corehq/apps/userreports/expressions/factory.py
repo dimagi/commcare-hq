@@ -4,8 +4,9 @@ from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.conditional import ConditionalExpression
+from corehq.apps.userreports.expressions.context_specific import RootDocExpression
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
-    ConditionalExpressionSpec, ConstantGetterSpec
+    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec
 
 
 def _simple_expression_generator(wrapper_class, spec, context):
@@ -14,7 +15,6 @@ def _simple_expression_generator(wrapper_class, spec, context):
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
-
 
 def _conditional_expression(spec, context):
     # no way around this since the two factories inherently depend on each other
@@ -27,12 +27,20 @@ def _conditional_expression(spec, context):
     )
 
 
+def _root_doc_expression(spec, context):
+    wrapped = RootDocExpressionSpec.wrap(spec)
+    return RootDocExpression(
+        expression=ExpressionFactory.from_spec(wrapped.expression, context)
+    )
+
+
 class ExpressionFactory(object):
     spec_map = {
         'constant': _constant_expression,
         'property_name': _property_name_expression,
         'property_path': _property_path_expression,
         'conditional': _conditional_expression,
+        'root_doc': _root_doc_expression,
     }
 
     @classmethod
