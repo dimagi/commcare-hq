@@ -36,7 +36,7 @@ class ReportingRates(EWSData):
             rows = dict(
                 total=len(supply_points),
                 reported=reports,
-                non_reported=len(supply_points)-reports
+                non_reported=len(supply_points) - reports
             )
         return rows
 

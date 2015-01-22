@@ -46,7 +46,8 @@ class EWSData(object):
         return [loc_type.name for loc_type in filter(
                 lambda loc_type: not loc_type.administrative,
                 Domain.get_by_name(self.config['domain']).location_types
-        )]
+                )]
+
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
     title = ''
