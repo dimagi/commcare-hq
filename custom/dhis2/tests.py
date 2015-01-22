@@ -204,6 +204,7 @@ class Dhis2ApiTest(TestCase):
     def test_update_te_inst(self):
         pass
 
+    @skip('Requires settings for live DHIS2 server')
     def test_get_top_org_unit_settings(self):
         """
         get_top_org_unit should return the name and ID of the org unit specified in settings
@@ -215,6 +216,7 @@ class Dhis2ApiTest(TestCase):
         self.assertEqual(org_unit['name'], settings.DHIS2_ORG_UNIT)
         self.assertTrue(bool(org_unit['id']))
 
+    @skip('Requires settings for live DHIS2 server')
     def test_get_top_org_unit(self):
         """
         get_top_org_unit should return the name and ID of the top org unit
