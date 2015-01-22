@@ -35,7 +35,16 @@
                 <!--ko if: isTab -->
                     <td colspan="3" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
-                <td class="detail-screen-icon" data-bind="jqueryElement: $delete, visible: $root.edit"></td>
+
+                <td class="detail-screen-icon">
+                    <i style="cursor: pointer;"
+                       data-bind="
+                        visible: $root.edit && ($parent.columns().length > 1),
+                        click: function(){screen.columns.remove($data);},
+                        css: COMMCAREHQ.icons.DELETE,
+                        attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
+                    "></i>
+                </td>
             </tr>
         </tbody>
         <tbody>
