@@ -39,14 +39,11 @@ class ProductsCompareReport(BaseComparisonReport):
     def rows(self):
         rows = []
         for product in self.endpoint.get_products()[1]:
-            is_migrated = True
             try:
                 SQLProduct.objects.get(domain=self.domain, code=product.sms_code)
             except SQLProduct.DoesNotExist:
-                is_migrated = False
-            finally:
                 rows.append([product.name, product.sms_code,
-                             product.is_active, is_migrated])
+                             product.is_active, False])
         return rows
 
 
@@ -78,14 +75,12 @@ class LocationsCompareReport(BaseComparisonReport):
             locations.extend(chunk)
 
         for location in locations:
-            is_migrated = True
             try:
                 SQLLocation.objects.get(domain=self.domain, external_id=location.id)
             except SQLLocation.DoesNotExist:
-                is_migrated = False
-            finally:
                 rows.append([location.name, location.type,
-                             location.code, location.date_updated, location.is_active, is_migrated])
+                             location.code, location.date_updated, location.is_active, False])
+
         return rows
 
 
@@ -116,7 +111,6 @@ class WebUsersCompareReport(BaseComparisonReport):
             web_users.extend(chunk)
 
         for web_user in web_users:
-            is_migrated = True
             try:
                 if not web_user.is_superuser and web_user.groups and web_user.groups[0].name == 'facility_manager':
                     User.objects.get(username="%s@%s.commcarehq.org" % (web_user.username.lower(),
@@ -125,14 +119,13 @@ class WebUsersCompareReport(BaseComparisonReport):
                     user = User.objects.get(username__in=[web_user.username, web_user.email.lower()])
                     webuser = WebUser.get_by_username(user.username)
                     if webuser:
-                        is_migrated = self.domain in webuser.get_domains()
+                        if self.domain not in webuser.get_domains():
+                            raise User.DoesNotExist
             except User.DoesNotExist:
-                is_migrated = False
+                rows.append([web_user.username, web_user.email,
+                             web_user.date_joined, web_user.is_active, False])
             except User.MultipleObjectsReturned:
                 pass
-            finally:
-                rows.append([web_user.username, web_user.email,
-                             web_user.date_joined, web_user.is_active, is_migrated])
         return rows
 
 
@@ -163,18 +156,14 @@ class SMSUsersCompareReport(BaseComparisonReport):
             sms_users.extend(chunk)
 
         for sms_user in sms_users:
-            is_migrated = True
             domain_part = "%s.commcarehq.org" % self.domain
             username_part = "%s%d" % (sms_user.name.strip().replace(' ', '.').lower(), sms_user.id)
             username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
             try:
                 User.objects.get(username=username)
             except User.DoesNotExist:
-                is_migrated = False
-            finally:
                 rows.append([sms_user.name, sms_user.email,
-                             sms_user.date_updated, sms_user.is_active, is_migrated])
-
+                             sms_user.date_updated, sms_user.is_active, False])
         return rows
 
 
@@ -210,7 +199,8 @@ class SupplyPointsCompareReport(BaseComparisonReport):
                                             key=[self.domain, str(supply_point.id)],
                                             reduce=False,
                                             include_docs=True).first()
-            rows.append([supply_point.name, supply_point.type,
-                         supply_point.code, supply_point.active, supply_point.last_reported, bool(couch_sp)])
+            if not couch_sp:
+                rows.append([supply_point.name, supply_point.type,
+                            supply_point.code, supply_point.active, supply_point.last_reported, False])
 
         return rows
