@@ -1149,6 +1149,10 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         return back_to_main(req, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    vellum_plugins = ["modeliteration"]
+    if settings.VELLUM_PRERELEASE:
+        vellum_plugins.append("itemset")
+
     vellum_features = toggles.toggles_dict(username=req.user.username,
                                            domain=domain)
     vellum_features.update({
@@ -1158,13 +1162,13 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'vellum_prerelease': settings.VELLUM_PRERELEASE,
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': req.COOKIES.get('sessionid'),
-        'features': vellum_features
+        'features': vellum_features,
+        'plugins': vellum_plugins,
     })
     return render(req, 'app_manager/form_designer.html', context)
 
