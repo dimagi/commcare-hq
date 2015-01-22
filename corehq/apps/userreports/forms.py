@@ -31,6 +31,13 @@ class CreateNewReportBuilderForm(forms.Form):
         self.fields['application'].choices = [
             (app._id, app.name) for app in apps
         ]
+        self.fields['report_source'].choices = [
+            (ct, ct) for app in apps for ct in app.get_case_types()
+        ] + [
+            (form_id, form_id) for form_id in [
+                form.get_unique_id() for app in apps for form in app.get_forms()
+            ]
+        ]
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
@@ -52,3 +59,11 @@ class CreateNewReportBuilderForm(forms.Form):
                 ),
             ),
         )
+
+
+class ConfigureBarChartBuilderForm(forms.Form):
+    report_name = forms.TextInput()
+    group_by = forms.ChoiceField()
+
+    def __init__(self, domain, *args, **kwargs):
+        super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)

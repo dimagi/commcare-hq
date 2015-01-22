@@ -1,4 +1,6 @@
 import json
+from oauth2 import escape
+from dimagi.utils.decorators.memoized import memoized
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -13,7 +15,8 @@ from corehq import Session, ConfigurableReport
 from corehq import toggles
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.forms import CreateNewReportBuilderForm
+from corehq.apps.userreports.forms import CreateNewReportBuilderForm, \
+    ConfigureBarChartBuilderForm
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -58,10 +61,56 @@ class CreateNewReportBuilderView(TemplateView):
                 } for app in apps
             },
             "domain": self.domain,
-            'report': {"title": "Create New Report"},
-            'create_new_report_builder_form': CreateNewReportBuilderForm(self.domain),
+            'report': {"title": _("Create New Report")},
+            'form': self.create_new_report_builder_form,
         }
         return context
+
+    @property
+    @memoized
+    def create_new_report_builder_form(self):
+        if self.request.method == 'POST':
+            return CreateNewReportBuilderForm(self.domain, self.request.POST)
+        return CreateNewReportBuilderForm(self.domain)
+
+    def post(self, request, *args, **kwargs):
+        if self.create_new_report_builder_form.is_valid():
+            if self.create_new_report_builder_form.cleaned_data['report_type'] == 'bar_chart':
+                return HttpResponseRedirect(
+                    reverse(
+                        'configure_bar_chart_report_builder',
+                        args=[self.domain],
+                    ) + '?report_source=%s' % escape(
+                        self.create_new_report_builder_form.cleaned_data['report_source']
+                    )
+                )
+        else:
+            return self.get(request, *args, **kwargs)
+
+
+class ConfigureBarChartReportBuilderView(TemplateView):
+    template_name = "userreports/create_new_report_builder.html"
+
+    @cls_to_view_login_and_domain
+    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
+    def dispatch(self, request, domain, **kwargs):
+        self.domain = domain
+        return super(ConfigureBarChartReportBuilderView, self).dispatch(request, domain, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = {
+            "domain": self.domain,
+            'report': {"title": _("Create New Report > Configure Bar Chart Report")},
+            'form': self.configure_bar_chart_builder_form,
+        }
+        return context
+
+    @property
+    @memoized
+    def configure_bar_chart_builder_form(self):
+        if self.request.method == 'POST':
+            return ConfigureBarChartBuilderForm(self.domain, self.request.POST)
+        return ConfigureBarChartBuilderForm(self.domain)
 
 
 def _edit_report_shared(request, domain, config):
