@@ -104,6 +104,7 @@ env.reminder_queue_enabled = False
 env.reminder_rule_queue_enabled = False
 env.reminder_case_update_queue_enabled = False
 env.pillow_retry_queue_enabled = True
+env.celery_periodic_enabled = True
 
 
 def _require_target():
@@ -367,6 +368,7 @@ def staging():
     # queued state.
     env.sms_queue_enabled = False
     env.pillow_retry_queue_enabled = True
+    env.celery_periodic_enabled = False
 
     env.roledefs = {
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
@@ -424,6 +426,7 @@ def preview():
 
     env.sms_queue_enabled = False
     env.pillow_retry_queue_enabled = False
+    env.celery_periodic_enabled = False
 
     env.roledefs = {
         'couch': [],
@@ -1221,8 +1224,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
 def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
 
-    # hack to not have staging environments send out reminders
-    if env.environment not in ['staging', 'preview', 'realstaging']:
+    if env.celery_periodic_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
     if env.sms_queue_enabled:
