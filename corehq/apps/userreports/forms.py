@@ -5,7 +5,14 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 
-from corehq.apps.app_manager.models import get_apps_in_domain
+from corehq.apps.app_manager.models import (
+    Application,
+    get_apps_in_domain,
+)
+from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.userreports.app_manager import (
+    get_default_case_property_datatypes,
+)
 
 
 class CreateNewReportBuilderForm(forms.Form):
@@ -65,12 +72,14 @@ class ConfigureBarChartBuilderForm(forms.Form):
     report_name = forms.CharField()
     group_by = forms.ChoiceField()
 
-    def __init__(self, domain, source_type, report_source, *args, **kwargs):
+    def __init__(self, app_id, source_type, report_source, *args, **kwargs):
         super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)
 
+        app = Application.get(app_id)
         if source_type == 'case':
+            property_builder = ParentCasePropertyBuilder(app, get_default_case_property_datatypes().keys())
             self.fields['group_by'].choices = [
-                # (cp, cp) for cp in # TODO - add case properties for the case here, will also need to know source type
+                (cp, cp) for cp in property_builder.get_properties(report_source)
             ]
         elif source_type == 'form':
             pass
