@@ -479,7 +479,7 @@ def read_inventory_file(filename):
 def development():
     """
     Must pass in the 'inventory' env variable,
-    which the path to an ansible inventory file
+    which is the path to an ansible inventory file
     and an 'environment' env variable,
     which is the name of the directory to be used under /home/cchq/www/
 
