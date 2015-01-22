@@ -62,8 +62,35 @@ class CreateNewReportBuilderForm(forms.Form):
 
 
 class ConfigureBarChartBuilderForm(forms.Form):
-    report_name = forms.TextInput()
+    report_name = forms.CharField()
     group_by = forms.ChoiceField()
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain, source_type, report_source, *args, **kwargs):
         super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)
+
+        if source_type == 'case':
+            self.fields['group_by'].choices = [
+                # (cp, cp) for cp in # TODO - add case properties for the case here, will also need to know source type
+            ]
+        elif source_type == 'form':
+            pass
+        else:
+            raise Exception('no valid source_type')
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Configure Bar Chart'),
+                'report_name',
+                'group_by',
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'configure_bar_chart_builder_btn',
+                        _('Save Bar Chart')
+                    )
+                ),
+            ),
+        )
