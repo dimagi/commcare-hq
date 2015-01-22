@@ -83,7 +83,6 @@ var SortRow = function(params){
     CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
 
     self.showWarning = ko.observable(false);
-    self.warningElement = DetailScreenConfig.field_format_warning.clone().show();
     self.hasValidPropertyName = function(){
         return DetailScreenConfig.field_val_re.test(self.textField.val());
     };
@@ -311,10 +310,10 @@ var DetailScreenConfig = (function () {
                 that.field.observableVal(that.field.val());
             });
 
-            this.format_warning = DetailScreenConfig.field_format_warning.clone().hide();
+            this.saveAttempted = ko.observable(false);
             this.showWarning = ko.computed(function() {
                 // True if an invalid property name warning should be displayed.
-                return this.field.observableVal() && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
+                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
             }, this);
 
             (function () {
@@ -581,11 +580,6 @@ var DetailScreenConfig = (function () {
                 column.field.on('change', function () {
                     column.header.val(getPropertyTitle(this.val()));
                     column.header.fire("change");
-                    if (this.val() && !DetailScreenConfig.field_val_re.test(this.val())) {
-                        column.format_warning.show().parent().addClass('error');
-                    } else {
-                        column.format_warning.hide().parent().removeClass('error');
-                    }
                 });
                 if (column.original.hasAutocomplete) {
                     CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
@@ -651,10 +645,9 @@ var DetailScreenConfig = (function () {
                 var columns = this.columns();
                 for (i = 0; i < columns.length; i++){
                     var column = columns[i];
+                    column.saveAttempted(true);
                     if (!column.isTab) {
-                        if (!DetailScreenConfig.field_val_re.test(column.field.val())) {
-                            // column won't have format_warning showing if it's empty
-                            column.format_warning.show().parent().addClass('error');
+                        if (column.showWarning()){
                             alert("There are errors in your property names");
                             return;
                         }
@@ -944,9 +937,7 @@ var DetailScreenConfig = (function () {
             {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
         );
     }
-
-    DetailScreenConfig.field_format_warning = $('<span/>').addClass('help-inline')
-        .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
+    DetailScreenConfig.field_format_warning_message = "Must begin with a letter and contain only letters, numbers, '-', and '_'";
 
     DetailScreenConfig.field_val_re = new RegExp(
         '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'
