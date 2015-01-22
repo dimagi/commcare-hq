@@ -82,9 +82,16 @@ class CreateNewReportBuilderView(ReportBuilderView):
                     reverse(
                         'configure_bar_chart_report_builder',
                         args=[self.domain],
-                    ) + '?report_source=%s' % escape(
-                        self.create_new_report_builder_form.cleaned_data['report_source']
-                    ) + '&source_type=%s' % self.create_new_report_builder_form.cleaned_data['source_type']
+                    ) + '?' + '&'.join([
+                        '%(key)s=%(value)s' % {
+                            'key': field,
+                            'value': escape(self.create_new_report_builder_form.cleaned_data[field]),
+                        } for field in [
+                            'application',
+                            'source_type',
+                            'report_source',
+                        ]
+                    ])
                 )
         else:
             return self.get(request, *args, **kwargs)
