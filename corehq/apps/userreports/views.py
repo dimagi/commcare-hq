@@ -105,8 +105,12 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
     @memoized
     def configure_bar_chart_builder_form(self):
         if self.request.method == 'POST':
-            return ConfigureBarChartBuilderForm(self.domain, self.request.POST)
-        return ConfigureBarChartBuilderForm(self.domain)
+            source_type = self.request.POST.get('source_type', '')
+            report_source = self.request.POST.get('report_source', '')
+            return ConfigureBarChartBuilderForm(self.domain, source_type, report_source, self.request.POST)
+        source_type = self.request.GET.get('source_type', '')
+        report_source = self.request.GET.get('report_source', '')
+        return ConfigureBarChartBuilderForm(self.domain, source_type, report_source)
 
 
 def _edit_report_shared(request, domain, config):
