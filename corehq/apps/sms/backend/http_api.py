@@ -79,7 +79,7 @@ class HttpBackendForm(BackendForm):
     @property
     def gateway_specific_fields(self):
         return crispy.Fieldset(
-            _("Unicel Settings"),
+            _("HTTP Settings"),
             'url',
             'method',
             'message_param',

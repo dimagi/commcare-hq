@@ -915,7 +915,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 'form.meta.userID': list(get_user_ids(user_type_mobile))
             }
         })
-    if histo_type == 'active_cases':
+    if histo_type == 'active_cases' and not supply_points:
         additional_filters.append(get_case_owner_filters())
     if supply_points:
         additional_filters.append({'terms': {'type': ['supply-point']}})
