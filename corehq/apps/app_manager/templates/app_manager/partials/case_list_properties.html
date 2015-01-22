@@ -27,7 +27,8 @@
                 css: {info: isTab},
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
-                paste: function (data) { $parent.pasteCallback(data, $index() + 1); }">
+                paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
+            ">
                 <td class="detail-screen-icon" data-bind="visible: $root.edit">
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
                     <i class="grip sortable-handle" data-bind="
@@ -58,13 +59,13 @@
                 <!--ko if: !isTab -->
                     <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
-                <!-- ko if: isTab -->
+                <!--ko if: isTab -->
                     <td colspan="3" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
                 {% endblock %}
 
                 {% block format_cell %}
-                <!-- ko if: !isTab -->
+                <!--ko if: !isTab -->
                     <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>
                 <!--/ko-->
                 {% endblock %}
