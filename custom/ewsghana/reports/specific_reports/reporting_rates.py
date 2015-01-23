@@ -228,7 +228,7 @@ class NonReporting(EWSData):
         return rows
 
 
-class IncompliteReports(EWSData):
+class InCompleteReports(EWSData):
 
     show_table = True
     show_chart = False
@@ -307,5 +307,6 @@ class ReportingRatesReport(MultiReport):
 
         data_providers.extend([
             NonReporting(config=config),
-            IncompliteReports(config=config)])
+            InCompleteReports(config=config)
+        ])
         return data_providers
