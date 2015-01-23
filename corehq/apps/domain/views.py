@@ -1939,7 +1939,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'sub_area',
             'organization_name',
             'notes',
-            'platform',
             'self_started',
             'using_adm',
             'using_call_center',

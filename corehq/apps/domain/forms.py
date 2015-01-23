@@ -555,8 +555,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         help_text=_("Quick 1-2 sentence summary of the project."),
     )
     notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
-    platform = forms.MultipleChoiceField(label=ugettext_noop("Platform"), widget=forms.CheckboxSelectMultiple(),
-                                         choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
     phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     restrict_superusers = BooleanField(
@@ -607,7 +605,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             using_call_center=self.cleaned_data['using_call_center'] == 'true',
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
-            platform=self.cleaned_data['platform'],
             project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
             goal_time_period=self.cleaned_data['goal_time_period'],
