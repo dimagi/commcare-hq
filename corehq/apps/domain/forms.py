@@ -467,12 +467,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         choices=[]
     )
-    restrict_superusers = BooleanField(
-        label=_("Restrict Superuser Access"),
-        required=False,
-        help_text=_("If access to a domain is restricted only users added " +
-                    "to the domain and staff members will have access.")
-    )
     secure_submissions = BooleanField(
         label=_("Secure submissions"),
         required=False,
@@ -501,9 +495,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         user = kwargs.pop('user', None)
         domain = kwargs.get('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
-
-        if not (user and user.is_staff):
-            self.fields['restrict_superusers'].widget = forms.HiddenInput()
 
         project = Domain.get_by_name(domain)
         if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
@@ -557,7 +548,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.sms_case_registration_type = self.cleaned_data.get('sms_case_registration_type')
             domain.sms_case_registration_owner_id = self.cleaned_data.get('sms_case_registration_owner_id')
             domain.sms_case_registration_user_id = self.cleaned_data.get('sms_case_registration_user_id')
-            domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
@@ -632,6 +622,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                                          choices=tuple_of_copies(["java", "android", "cloudcare"], blank=False), required=False)
     phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
+    restrict_superusers = BooleanField(
+        label=_("Restrict Superuser Access"),
+        required=False,
+        help_text=_("If access to a domain is restricted only users added " +
+                    "to the domain and staff members will have access.")
+    )
     goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
     goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
     commtrack_domain = ChoiceField(label=ugettext_noop("Supply Chain Enabled"),
@@ -660,6 +656,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
+
+        domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],

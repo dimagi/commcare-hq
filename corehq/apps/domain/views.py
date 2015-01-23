@@ -295,7 +295,6 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
                 # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
                 # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
-            'restrict_superusers': self.domain_object.restrict_superusers,
             'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
         return context
@@ -356,7 +355,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'sms_case_registration_type',
                 'sms_case_registration_owner_id',
                 'sms_case_registration_user_id',
-                'restrict_superusers',
                 'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
@@ -1933,7 +1931,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
-        initial = {}
+        initial = {
+            'restrict_superusers': self.domain_object.restrict_superusers
+        }
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
