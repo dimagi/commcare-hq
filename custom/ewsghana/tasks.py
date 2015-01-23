@@ -1,15 +1,15 @@
 from celery.task import task
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState, Product, SupplyPointCase
-from corehq.apps.consumption.const import DAYS_IN_MONTH
-from corehq.apps.products.models import SQLProduct
+from custom.ewsghana.api import EWSApi
+
+from corehq.apps.commtrack.models import StockState, Product
+
 from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, \
-    sync_ilsgateway_product, bootstrap_domain, commtrack_settings_sync
-from custom.ilsgateway.tasks import get_locations, get_stock_transaction
+from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
+    bootstrap_domain
 
 
 EXTENSIONS = {
@@ -22,7 +22,15 @@ EXTENSIONS = {
 }
 
 
-LOCATION_TYPES = ["country", "region", "district", "facility"]
+# Region Greater Accra
+EWS_FACILITIES = [304, 324, 330, 643, 327, 256, 637, 332, 326, 338, 340, 331, 347, 27, 975, 346, 477, 344, 339,
+                  458, 748, 18, 379, 456, 644, 462, 459, 475, 638, 969, 480, 464, 960, 529, 255, 16, 31, 639, 640,
+                  11, 15, 25, 645, 95, 13, 970, 952, 470, 971, 474, 962, 479, 953, 457, 476, 481, 501, 500, 499,
+                  503, 502, 498, 496, 497, 10, 333, 963, 335, 972, 914, 527, 26, 531, 469, 530, 523, 19, 915, 524,
+                  528, 325, 20, 460, 468, 916, 646, 519, 345, 471, 633, 518, 642, 328, 343, 21, 467, 648, 334, 473,
+                  6, 342, 28, 478, 472, 955, 964, 636, 258, 918, 466, 337, 956, 809, 965, 24, 974, 957, 954, 22,
+                  29, 958, 967, 917, 951, 515, 8, 959, 968, 649, 966, 341, 336, 647, 973, 5, 517, 522, 465, 635,
+                  526, 4, 30, 1, 14, 23, 521, 532, 516, 461, 520, 525, 961, 641, 257, 348]
 
 
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
@@ -30,72 +38,13 @@ def migration_task():
     configs = EWSGhanaConfig.get_all_configs()
     for config in configs:
         if config.enabled:
-            commtrack_settings_sync(config.domain, LOCATION_TYPES)
-            ils_bootstrap_domain(config, GhanaEndpoint.from_config(config), EXTENSIONS)
+            ews_bootstrap_domain(EWSApi(config.domain, GhanaEndpoint.from_config(config)))
 
 
 @task
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
-    commtrack_settings_sync(domain, LOCATION_TYPES)
-    return bootstrap_domain(ews_config, GhanaEndpoint.from_config(ews_config), EXTENSIONS, fetch_groups=False)
-
-# District Ashanti
-EWS_FACILITIES = [109, 110, 624, 626, 922, 908, 961, 948, 956, 967]
-
-
-def get_product_stock(domain, endpoint, facilities):
-    for facility in facilities:
-        has_next = True
-        next_url = ""
-        while has_next:
-            meta, product_stocks = endpoint.get_productstocks(next_url_params=next_url,
-                                                              filters=dict(supply_point=facility))
-            for product_stock in product_stocks:
-                case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                            key=[domain, str(product_stock.supply_point)],
-                                            reduce=False,
-                                            include_docs=True,
-                                            limit=1).first()
-                product = Product.get_by_code(domain, product_stock.product)
-                try:
-                    stock_state = StockState.objects.get(section_id='stock',
-                                                         case_id=case._id,
-                                                         product_id=product._id)
-                except StockState.DoesNotExist:
-                    stock_state = StockState(section_id='stock',
-                                             case_id=case._id,
-                                             product_id=product._id,
-                                             stock_on_hand=product_stock.quantity or 0,
-                                             last_modified_date=product_stock.last_modified,
-                                             sql_product=SQLProduct.objects.get(product_id=product._id))
-
-                if product_stock.auto_monthly_consumption:
-                    stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
-                elif product_stock.use_auto_consumption is False:
-                    stock_state.daily_consumption = product_stock.manual_monthly_consumption / DAYS_IN_MONTH
-                else:
-                    stock_state.daily_consumption = None
-
-                stock_state.save()
-
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next'].split('?')[1]
-
-
-@task
-def ews_stock_data_task(domain):
-    ewsghana_config = EWSGhanaConfig.for_domain(domain)
-    domain = ewsghana_config.domain
-    endpoint = GhanaEndpoint.from_config(ewsghana_config)
-    commtrack_settings_sync(domain, LOCATION_TYPES)
-    for product in endpoint.get_products():
-        sync_ilsgateway_product(domain, product)
-    get_locations(domain, endpoint, EWS_FACILITIES)
-    get_product_stock(domain, endpoint, EWS_FACILITIES)
-    get_stock_transaction(domain, endpoint, EWS_FACILITIES)
+    return bootstrap_domain(EWSApi(domain, GhanaEndpoint.from_config(ews_config)))
 
 
 @task

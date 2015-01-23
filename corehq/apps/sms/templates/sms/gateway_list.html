@@ -48,7 +48,8 @@
                 </div>
             </div>
             <!-- /ko -->
-            <!-- ko ifnot: canDelete --><span class="label"><i class="icon-info-sign"></i> {% trans 'Global Connection' %}</span><!-- /ko -->
+            <!-- ko if: isGlobal --><span class="label"><i class="icon-info-sign"></i> {% trans 'Global Connection' %}</span><!-- /ko -->
+            <!-- ko if: isShared --><span class="label"><i class="icon-info-sign"></i> {% trans 'Shared Connection' %}</span><!-- /ko -->
         </td>
     </script>
 

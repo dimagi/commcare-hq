@@ -29,6 +29,26 @@ class HierarchySqlData(SqlData):
         ]
 
 
+def get_hierarchy():
+    """
+    Creates a location hierarchy structured as follows:
+    hierarchy = {"Atri": {
+                    "Sahora": {
+                        "Sohran Bigha": None}}}
+    """
+    hierarchy = {}
+    for location in HierarchySqlData().get_data():
+        block = location['block']
+        gp = location['gp']
+        awc = location['awc']
+        if not (awc and gp and block):
+            continue
+        hierarchy[block] = hierarchy.get(block, {})
+        hierarchy[block][gp] = hierarchy[block].get(gp, {})
+        hierarchy[block][gp][awc] = None
+    return hierarchy
+
+
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
     template = "opm/drilldown_options.html"
@@ -61,25 +81,6 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
             'single_option_select': self.single_option_select
         }
 
-    def get_hierarchy(self):
-        """
-        Creates a location hierarchy structured as follows:
-        hierarchy = {"Atri": {
-                        "Sahora": {
-                            "Sohran Bigha": None}}}
-        """
-        hierarchy = {}
-        for location in HierarchySqlData().get_data():
-            block = location['block']
-            gp = location['gp']
-            awc = location['awc']
-            if not (awc and gp and block):
-                continue
-            hierarchy[block] = hierarchy.get(block, {})
-            hierarchy[block][gp] = hierarchy[block].get(gp, {})
-            hierarchy[block][gp][awc] = None
-        return hierarchy
-
     @property
     @memoized
     def drilldown_map(self):
@@ -89,7 +90,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
                 "text": current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
-        return make_drilldown(self.get_hierarchy())
+        return make_drilldown(get_hierarchy())
 
     @classmethod
     def get_labels(cls):

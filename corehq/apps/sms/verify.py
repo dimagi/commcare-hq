@@ -1,5 +1,7 @@
 from django.utils import translation
 from django.utils.translation import ugettext as _, ugettext_noop
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.users.models import CommCareUser
@@ -32,6 +34,9 @@ def process_verification(phone_number, msg, backend_id=None):
     msg.couch_recipient_doc_type = v.owner_doc_type
     msg.couch_recipient = v.owner_id
     msg.save()
+
+    if not domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+        return
 
     if backend_id:
         backend = MobileBackend.load(backend_id)

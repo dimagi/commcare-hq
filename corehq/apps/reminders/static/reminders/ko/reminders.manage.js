@@ -179,7 +179,11 @@ var ManageRemindersViewModel = function (
             // only use the first event in the list
             events = [events[0]];
         }
-        self.global_timeouts(events[0].callback_timeout_intervals);
+        var global_timeouts_initial = initial.global_timeouts;
+        if (global_timeouts_initial === null) {
+            global_timeouts_initial = events[0].callback_timeout_intervals;
+        }
+        self.global_timeouts(global_timeouts_initial);
         self.eventObjects(_.map(events, function (event) {
             return new ReminderEvent(
                 event,
