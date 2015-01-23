@@ -35,21 +35,6 @@
                 control_group_element.hide();
             }
         }
-
-        function sms_case_registration_enabled_changed() {
-            var show = false;
-            if($("#id_sms_case_registration_enabled").is(":checked")) {
-                show = true;
-            }
-            show_control_group_by_input("id_sms_case_registration_type", show);
-            show_control_group_by_input("id_sms_case_registration_owner_id", show);
-            show_control_group_by_input("id_sms_case_registration_user_id", show);
-        }
-
-        sms_case_registration_enabled_changed();
-        $("#id_sms_case_registration_enabled").change(function() {
-            sms_case_registration_enabled_changed();
-        });
     });
 </script>
 {% endblock %}

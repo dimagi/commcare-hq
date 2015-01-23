@@ -350,10 +350,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 'project_type',
                 'customer_type',
                 'survey_management_enabled',
-                'sms_case_registration_enabled',
-                'sms_case_registration_type',
-                'sms_case_registration_owner_id',
-                'sms_case_registration_user_id',
                 'secure_submissions',
             ]:
                 initial[attr] = getattr(self.domain_object, attr)
