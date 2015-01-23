@@ -10,10 +10,12 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View, TemplateView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.app_manager.models import get_apps_in_domain
+from corehq.apps.app_manager.models import get_apps_in_domain, Application
+from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq import Session, ConfigurableReport
 from corehq import toggles
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, \
+    get_default_case_property_datatypes
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.forms import CreateNewReportBuilderForm, \
     ConfigureBarChartBuilderForm
@@ -98,29 +100,36 @@ class CreateNewReportBuilderView(ReportBuilderView):
 
 
 class ConfigureBarChartReportBuilderView(ReportBuilderView):
-    template_name = "userreports/base_report_builder.html"
+    template_name = "userreports/partials/configure_bar_report_builder.html"
 
     def get_context_data(self, **kwargs):
+
         context = {
             "domain": self.domain,
             'report': {"title": _("Create New Report > Configure Bar Chart Report")},
             'form': self.configure_bar_chart_builder_form,
+            'case_properties': self.report_source_properties
         }
         return context
 
     @property
+    def report_source_properties(self):
+        app = Application.get(self.request.GET.get('application', ''))
+        property_builder = ParentCasePropertyBuilder(app, get_default_case_property_datatypes().keys())
+        return list(
+            property_builder.get_properties(self.request.GET.get('report_source', ''))
+        )
+
+    @property
     @memoized
     def configure_bar_chart_builder_form(self):
-        if self.request.method == 'POST':
-            app_id = self.request.POST.get('application', '')
-            source_type = self.request.POST.get('source_type', '')
-            report_source = self.request.POST.get('report_source', '')
-            return ConfigureBarChartBuilderForm(app_id, source_type, report_source, self.request.POST)
         app_id = self.request.GET.get('application', '')
         source_type = self.request.GET.get('source_type', '')
         report_source = self.request.GET.get('report_source', '')
-        return ConfigureBarChartBuilderForm(app_id, source_type, report_source)
-
+        case_properties = self.report_source_properties
+        return ConfigureBarChartBuilderForm(
+            app_id, source_type, report_source, case_properties
+        )
 
 def _edit_report_shared(request, domain, config):
     if request.method == 'POST':

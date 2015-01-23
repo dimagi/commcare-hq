@@ -1,0 +1,54 @@
+{% extends "userreports/base_report_builder.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block head %}{{ block.super }}
+    {# needed for the sortable knockout of binding #}
+    {% include "imports/hq-oldstyle-js.html" %}
+    {# needed to style the property table #}
+    {# TODO: Move the css for that table into a seperate file #}
+    <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
+    {# needed for the knockout typeahead binding #}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    {# needed for the sortable and typeahead knockout of binding #}
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+
+        /**
+         * Knockout view model representing a row in the filter property list
+         * @param property
+         * @param displayText
+         * @param format
+         * @constructor
+         */
+        var PropertyListItem = function(property, displayText, format) {
+            this.property = ko.observable(property || "");
+            this.displayText = ko.observable(displayText || "");
+            this.format = ko.observable(format || "");
+
+            this.grip = ko.observable(true);
+            // TODO: Write this:
+            this.copyCallback = function(){};
+
+        };
+        /**
+         * Knockout view model controlling the filter property list.
+         */
+        var propertyList = {
+            // TODO: Write this:
+            pasteCallback: function(){},
+            edit: true,
+
+            formatOptions: ko.observableArray(["Plain", "Date"]),
+            propertyOptions: ko.observableArray({{ case_properties|JSON }}),
+            columns: ko.observableArray([new PropertyListItem()])
+        };
+        ko.applyBindings(propertyList, $(".table.table-condensed.detail-screen-table").get(0));
+    </script>
+{% endblock %}

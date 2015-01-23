@@ -1,0 +1,53 @@
+{% extends "app_manager/partials/case_list_properties.html" %}
+
+{% block field_column_header %}'Property'{% endblock %}
+{% block display_text_column_header %}'Display Text'{% endblock %}
+{% block format_column_header %}'Format'{% endblock %}
+
+{% block field_cell %}
+    <td class="detail-screen-field control-group">
+        <div class="app-designer-input">
+            <input type="text" data-bind="typeahead: $parent.propertyOptions, value: property">
+        </div>
+    </td>
+{% endblock %}
+
+{% block display_text_cell %}
+    <td class="detail-screen-field control-group">
+        <div class="app-designer-input">
+            <input type="text" data-bind="value: displayText">
+        </div>
+    </td>
+{% endblock %}
+
+{% block format_cell %}
+    <td>
+        <select data-bind="
+            options: $parent.formatOptions,
+            value: format
+        "></select>
+    </td>
+{% endblock %}
+
+{% block delete_icon_cell %}
+    <td class="detail-screen-icon">
+        <i style="cursor: pointer;"
+           title="Delete"
+           data-bind="
+            visible: $root.edit,
+            click: function(){$parent.columns.remove($data)},
+            css: COMMCAREHQ.icons.DELETE
+        "></i>
+    </td>
+{% endblock %}
+
+{% block add_property_button %}
+    <button class="btn add-property-item" data-bind="
+        click: function(){columns.push(new PropertyListItem());}
+    ">
+        Add Property
+    </button>
+{% endblock %}
+
+
+

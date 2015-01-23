@@ -1,3 +1,4 @@
+import os
 from django import forms
 from django.utils.translation import ugettext_noop as _
 
@@ -72,14 +73,13 @@ class ConfigureBarChartBuilderForm(forms.Form):
     report_name = forms.CharField()
     group_by = forms.ChoiceField()
 
-    def __init__(self, app_id, source_type, report_source, *args, **kwargs):
+    def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
         super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)
 
         app = Application.get(app_id)
         if source_type == 'case':
-            property_builder = ParentCasePropertyBuilder(app, get_default_case_property_datatypes().keys())
             self.fields['group_by'].choices = [
-                (cp, cp) for cp in property_builder.get_properties(report_source)
+                (cp, cp) for cp in case_properties
             ]
         elif source_type == 'form':
             pass
@@ -88,11 +88,24 @@ class ConfigureBarChartBuilderForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+
+        # TODO: This is almost certainly the wrong way to get this template
+        path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "templates", "userreports", "partials", "report_filter_configuration.html"
+        )
+        with open(path, "r") as f:
+            template = f.read()
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Configure Bar Chart'),
                 'report_name',
                 'group_by',
+                crispy.Fieldset(
+                    _("Filters Available in this Report"),
+                    crispy.HTML(template),
+                ),
             ),
             FormActions(
                 crispy.ButtonHolder(

@@ -24,7 +24,7 @@
             beforeRemove: function (elem) { $(elem).fadeOut() }
         }">
             <tr data-bind="
-                css: {info: isTab},
+                css: {info: $data.isTab},
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
@@ -40,7 +40,7 @@
                 </td>
 
                 {% block field_cell %}
-                <!--ko if: !isTab -->
+                <!--ko if: !$data.isTab -->
                     <td class="detail-screen-field control-group"
                         data-bind="css: {error: showWarning}">
                         <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
@@ -56,20 +56,21 @@
                 {% endblock %}
 
                 {% block display_text_cell %}
-                <!--ko if: !isTab -->
+                <!--ko if: !$data.isTab -->
                     <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
-                <!--ko if: isTab -->
+                <!--ko if: $data.isTab -->
                     <td colspan="3" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
                 {% endblock %}
 
                 {% block format_cell %}
-                <!--ko if: !isTab -->
+                <!--ko if: !$data.isTab -->
                     <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>
                 <!--/ko-->
                 {% endblock %}
 
+                {% block delete_icon_cell %}
                 <td class="detail-screen-icon">
                     <i style="cursor: pointer;"
                        data-bind="
@@ -79,6 +80,7 @@
                         attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
                     "></i>
                 </td>
+                {% endblock %}
             </tr>
         </tbody>
         <tbody>
