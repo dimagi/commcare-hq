@@ -815,10 +815,13 @@ cloudCare.AppView = Backbone.View.extend({
 cloudCare.AppMainView = Backbone.View.extend({
     el: $('#app-main'),
 
+    TITLE_SUFFIX: ' - CommCareHQ',
+    TITLE_DEFAULT: 'Cloudcare',
+
     initialize: function () {
         var self = this;
-        _.bindAll(self, 'render', 'selectApp', "clearCases", "clearForms",
-                  "clearModules", "clearAll", "navigate");
+        _.bindAll(self, "render", 'selectApp', "clearCases", "clearForms",
+                  "clearModules", "clearAll", "navigate", "updateTitle");
 
         self._appCache = {};
         self._selectedModule = null;
@@ -853,7 +856,7 @@ cloudCare.AppMainView = Backbone.View.extend({
             caseUrlRoot: self.options.caseUrlRoot,
             urlRoot: self.options.urlRoot,
             sessionUrlRoot: self.options.sessionUrlRoot,
-			submitUrlRoot: self.options.submitUrlRoot
+            submitUrlRoot: self.options.submitUrlRoot
         });
 
         // fetch session list here
@@ -874,11 +877,13 @@ cloudCare.AppMainView = Backbone.View.extend({
         cloudCare.dispatch.on("app:selected", function (app) {
             self.navigate("view/" + app.model.id);
             self.selectApp(app.model.id);
+            self.updateTitle(app.model.get('name'));
         });
         cloudCare.dispatch.on("app:deselected", function (app) {
             self._selectedModule = null;
             self.navigate("");
             self.selectApp(null);
+            self.updateTitle(null);
         });
 
         // utilities
@@ -1111,6 +1116,7 @@ cloudCare.AppMainView = Backbone.View.extend({
                                  "/" + module.get("index"));
             // hack to resolve annoying event-driven dependencies (see below)
             self.trigger("module:selected");
+            self.updateTitle(module.get('name')[self.options.language]);
         });
         self.on("module:selected", function () {
             // magic pairing with the above to support proper selection ordering
@@ -1123,6 +1129,12 @@ cloudCare.AppMainView = Backbone.View.extend({
         cloudCare.dispatch.on("module:deselected", function (module) {
             self.navigate("view/" + module.get("app_id"));
             self.clearModules();
+
+            self.updateTitle(self.app.get('name'));
+        });
+
+        cloudCare.dispatch.on('form:selected', function(form) {
+            self.updateTitle(form.get('name')[self.options.language]);
         });
         cloudCare.dispatch.on("form:selected:caselist", function (form) {
             self.navigate("view/" + form.get("app_id") +
@@ -1139,6 +1151,10 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.navigate("view/" + form.get("app_id") +
                                  "/" + form.get("module_index"));
             self.clearForms();
+
+            // After deselect form, update with selected module if it exists
+            var module = self.app.modules[self._selectedModule];
+            self.updateTitle(module ? module.get('name')[self.options.language] : null);
         });
         cloudCare.dispatch.on("form:enter", function (form, caseModel) {
             var caseId;
@@ -1178,6 +1194,10 @@ cloudCare.AppMainView = Backbone.View.extend({
         cloudCare.dispatch.on("session:selected", function (session) {
             self.playSession(session);
         });
+    },
+
+    updateTitle: function(title) {
+        $('title').text((title || this.TITLE_DEFAULT) + this.TITLE_SUFFIX);
     },
 
     navigate: function (path, options) {
