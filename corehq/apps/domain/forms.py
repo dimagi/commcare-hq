@@ -500,7 +500,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
 
 
 class DomainDeploymentForm(forms.Form):
-    city = CharField(label=ugettext_noop("City"), required=False)
     countries = forms.MultipleChoiceField(label=ugettext_noop("Countries"),
             choices=COUNTRIES)
     region = CharField(label=ugettext_noop("Region"), required=False,
@@ -515,7 +514,7 @@ class DomainDeploymentForm(forms.Form):
 
     def save(self, domain):
         try:
-            domain.update_deployment(city=self.cleaned_data['city'],
+            domain.update_deployment(
                 countries=self.cleaned_data['countries'],
                 region=self.cleaned_data['region'],
                 date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
