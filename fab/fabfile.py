@@ -104,7 +104,8 @@ env.reminder_queue_enabled = False
 env.reminder_rule_queue_enabled = False
 env.reminder_case_update_queue_enabled = False
 env.pillow_retry_queue_enabled = True
-env.celery_periodic_enabled = True
+if not hasattr(env, 'celery_periodic_enabled'):
+    env.celery_periodic_enabled = True
 
 
 def _require_target():
