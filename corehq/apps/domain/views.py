@@ -1935,7 +1935,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'services',
             'initiative',
             'workshop_region',
-            'project_state',
             'area',
             'sub_area',
             'organization_name',

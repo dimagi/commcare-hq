@@ -544,8 +544,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
     workshop_region = CharField(label=ugettext_noop("Workshop Region"), required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
-    project_state = ChoiceField(label=ugettext_noop("Project State"), required=False,
-                                choices=tuple_of_copies(["POC", "transition", "at-scale"]))
     self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
     area = ChoiceField(label=ugettext_noop("Sector"), required=False, choices=tuple_of_copies(AREA_CHOICES))
     sub_area = ChoiceField(label=ugettext_noop("Sub-Sector"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
@@ -602,7 +600,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             commcare_edition=self.cleaned_data['commcare_edition'],
             services=self.cleaned_data['services'],
             initiative=self.cleaned_data['initiative'],
-            project_state=self.cleaned_data['project_state'],
             self_started=self.cleaned_data['self_started'] == 'true',
             area=self.cleaned_data['area'],
             sub_area=self.cleaned_data['sub_area'],
