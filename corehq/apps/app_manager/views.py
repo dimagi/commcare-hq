@@ -2980,7 +2980,12 @@ def download_bulk_app_translations(request, domain, app_id):
             rows[form_string] = []
 
             itext_items = OrderedDict()
-            for translation_node in xform.itext_node.findall("./{f}translation"):
+            try:
+                nodes = xform.itext_node.findall("./{f}translation")
+            except XFormException:
+                nodes = []
+
+            for translation_node in nodes:
                 lang = translation_node.attrib['lang']
                 for text_node in translation_node.findall("./{f}text"):
                     text_id = text_node.attrib['id']

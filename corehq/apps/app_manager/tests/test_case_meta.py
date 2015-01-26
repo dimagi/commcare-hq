@@ -16,9 +16,15 @@ class CaseMetaTest(SimpleTestCase):
     def test_hierarchy(self):
         app = Application.new_app('domain', 'New App', APP_V2)
         m0 = self._make_module(app, 0, 'parent')
-        m0.get_form(0).actions.subcases.append(OpenSubCaseAction(case_type='child'))
+        m0.get_form(0).actions.subcases.append(OpenSubCaseAction(
+            case_type='child',
+            reference_id='parent'
+        ))
         m1 = self._make_module(app, 1, 'child')
-        m1.get_form(0).actions.subcases.append(OpenSubCaseAction(case_type='grand child'))
+        m1.get_form(0).actions.subcases.append(OpenSubCaseAction(
+            case_type='grand child',
+            reference_id='parent'
+        ))
         m2 = self._make_module(app, 1, 'grand child')
 
         m3 = app.add_module(AdvancedModule.new_module('Module3', lang='en'))

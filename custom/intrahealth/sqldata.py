@@ -612,6 +612,37 @@ class DureeData(BaseSqlData):
         return total_row
 
 
+class RecouvrementDesCouts(BaseSqlData):
+    slug = 'recouvrement'
+    custom_total_calculate = True
+    title = u'Recouvrement des côuts - Taxu de Recouvrement'
+
+    table_name = 'fluff_RecouvrementFluff'
+    have_groups = False
+    col_names = ['district_name', 'payments_amount_paid', 'payments_amount_to_pay',
+                 'payments_in_30_days', 'payments_in_3_months', 'payments_in_year']
+
+    @property
+    def group_by(self):
+        return ['district_name']
+
+    @property
+    def columns(self):
+        columns = [DatabaseColumn(_("District"), SimpleColumn('district_name'))]
+        columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_paid')))
+        columns.append(DatabaseColumn(_(u"Montant payé"), SumColumn('payments_amount_to_pay')))
+        columns.append(DatabaseColumn(_(u"Payé dans le 30 jours"), SumColumn('payments_in_30_days')))
+        columns.append(DatabaseColumn(_(u"Payé dans le 3 mois"), SumColumn('payments_in_3_months')))
+        columns.append(DatabaseColumn(_(u"Payé dans l`annèe"), SumColumn('payments_in_year')))
+        return columns
+
+    def calculate_total_row(self, rows):
+        total_row = super(RecouvrementDesCouts, self).calculate_total_row(rows)
+        if total_row:
+            total_row[0] = 'Total Region'
+        return total_row
+
+
 class IntraHealthQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, key):
@@ -670,4 +701,3 @@ class SumAndAvgGCustomColumn(IntraHealthCustomColumn):
 class CountUniqueAndSumCustomColumn(IntraHealthCustomColumn):
     query_cls = CountUniqueAndSumQueryMeta
     name = 'count_unique_and_sum'
-

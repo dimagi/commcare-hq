@@ -7,6 +7,7 @@ from corehq.apps.users.models import Permissions
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 
+
 require_can_edit_data = require_permission(Permissions.edit_data)
 
 

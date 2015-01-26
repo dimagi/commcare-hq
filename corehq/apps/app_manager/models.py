@@ -1019,7 +1019,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, 'parent'))
+                    parent_types.add((module_case_type, subcase.reference_id))
         return parent_types, case_properties
 
     def update_app_case_meta(self, app_case_meta):
