@@ -128,6 +128,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
+        @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
             if not request.user.is_authenticated():
                 @challenge_fn
