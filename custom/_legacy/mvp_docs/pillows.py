@@ -69,11 +69,10 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         try:
-            indicator_form = IndicatorXForm.wrap(doc_dict)
+            indicator_form = IndicatorXForm.get_or_create_from_dict(doc_dict)[0]
             indicator_form.update_indicators_in_bulk(
                 form_indicator_defs, logger=pillow_eval_logging
             )
-            indicator_form.save()
         except Exception as e:
             pillow_eval_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
@@ -104,11 +103,10 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         try:
-            indicator_case = IndicatorCase.wrap(doc_dict)
+            indicator_case = IndicatorCase.get_or_create_from_dict(doc_dict)[0]
             indicator_case.update_indicators_in_bulk(
                 case_indicator_defs, logger=pillow_eval_logging
             )
-            indicator_case.save()
         except Exception as e:
             pillow_eval_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
