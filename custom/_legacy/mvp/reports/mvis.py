@@ -59,8 +59,11 @@ class HealthCoordinatorReport(MVPIndicatorReport):
             total_rowspan = 0
             for slug in category_group['indicator_slugs']:
                 try:
-                    indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug,
-                                                                       wrap_correctly=True)
+                    indicator = DynamicIndicatorDefinition.get_current(
+                        MVP.NAMESPACE, self.domain, slug,
+                        wrap_correctly=True,
+                        requesting_user=self.request.couch_user.username,
+                    )
                     if self.is_rendered_as_email:
                         retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
                     else:

@@ -39,8 +39,11 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
             for indicator_content in section.get('indicators', []):
                 slug = indicator_content.get('slug')
                 if slug:
-                    indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE,
-                        self.domain, slug, wrap_correctly=True)
+                    indicator = DynamicIndicatorDefinition.get_current(
+                        MVP.NAMESPACE, self.domain, slug,
+                        wrap_correctly=True,
+                        requesting_user=self.request.couch_user.username,
+                    )
                     if indicator is not None:
                         section_indicators.append(indicator)
                     else:
