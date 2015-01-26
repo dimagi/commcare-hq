@@ -49,5 +49,9 @@
     </button>
 {% endblock %}
 
-
-
+{% block post_table_content %}
+    <input name="sort_properties" type="text" data-bind="
+        visible: false,
+        value: serializedSortProperties
+    ">
+{% endblock %}

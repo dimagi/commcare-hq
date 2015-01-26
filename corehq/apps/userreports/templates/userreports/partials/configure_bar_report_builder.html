@@ -22,33 +22,48 @@
 
         /**
          * Knockout view model representing a row in the filter property list
-         * @param property
-         * @param displayText
-         * @param format
          * @constructor
          */
-        var PropertyListItem = function(property, displayText, format) {
-            this.property = ko.observable(property || "");
-            this.displayText = ko.observable(displayText || "");
-            this.format = ko.observable(format || "");
+        var PropertyListItem = function() {
+            this.property = ko.observable("");
+            this.displayText = ko.observable("");
+            this.format = ko.observable("");
 
             this.grip = ko.observable(true);
-            // TODO: Write this:
+            // TODO: Write this (or not):
             this.copyCallback = function(){};
+
+            /**
+             * Return a "plain" javascript object representing this view model
+             * suitable for sending to the server.
+             */
+            this.toJS = function(){
+                return {
+                    property: this.property(),
+                    display_text: this.displayText(),
+                    format: this.format()
+                };
+            };
 
         };
         /**
          * Knockout view model controlling the filter property list.
          */
-        var propertyList = {
-            // TODO: Write this:
-            pasteCallback: function(){},
-            edit: true,
+        var propertyList = function() {
+            // TODO: Write this (or not):
+            var that = this;
+            this.pasteCallback = function(){};
+            this.edit = true;
 
-            formatOptions: ko.observableArray(["Plain", "Date"]),
-            propertyOptions: ko.observableArray({{ case_properties|JSON }}),
-            columns: ko.observableArray([new PropertyListItem()])
+            this.formatOptions = ko.observableArray(["Plain", "Date"]);
+            this.propertyOptions = ko.observableArray({{ case_properties|JSON }});
+            this.columns = ko.observableArray([new PropertyListItem()]);
+            this.serializedSortProperties = ko.computed(function(){
+                return JSON.stringify(
+                    _.map(that.columns(), function(c){return c.toJS()})
+                );
+            });
         };
-        ko.applyBindings(propertyList, $(".table.table-condensed.detail-screen-table").get(0));
+        ko.applyBindings(new propertyList(), $(".table.table-condensed.detail-screen-table").parent().get(0));
     </script>
 {% endblock %}
