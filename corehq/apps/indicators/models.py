@@ -8,6 +8,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProper
 from couchdbkit.schema.base import DocumentSchema
 from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
         FormAliasIndicatorAdminCRUDManager, FormLabelIndicatorAdminCRUDManager,
@@ -44,9 +45,10 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
 
-    def __init__(self, _d=None, **kwargs):
+    def __init__(self, _d=None, requesting_user=None, **kwargs):
         super(IndicatorDefinition, self).__init__(_d, **kwargs)
         self.class_path = self._class_path
+        self.requesting_user = requesting_user
 
     def __str__(self):
         return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
@@ -170,6 +172,11 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     @classmethod
     @memoized
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
+        if 'requesting_user' in kwargs:
+            requesting_user = kwargs.pop('requesting_user')
+        else:
+            requesting_user = None
+
         couch_key = cls._generate_couch_key(
             namespace=namespace,
             domain=domain,
@@ -189,7 +196,9 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         if wrap and doc:
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
-                return doc_class.get(doc.get('id'))
+                doc_instance = doc_class.get(doc.get('id'))
+                doc_instance.requesting_user = requesting_user
+                return doc_instance
             except Exception as e:
                 logging.error("No matching documents found for indicator %s: %s" % (slug, e))
                 return None
@@ -418,7 +427,16 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 reduce=reduce
             )
 
-        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60*6, **view_kwargs)
+        if (self.requesting_user is not None and
+                toggles.USE_NEW_MVP_INDICATORS.enabled(self.requesting_user)):
+            from mvp_docs.models import IndicatorXForm
+            db = IndicatorXForm.get_db()
+            section = self.couch_view.split('/')
+            couch_view = "%s_indicators/%s" % (section[0], section[1])
+        else:
+            db = XFormInstance.get_db()
+            couch_view = self.couch_view
+        return cache_core.cached_view(db, couch_view, cache_expire=60*60*6, **view_kwargs)
 
     def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
