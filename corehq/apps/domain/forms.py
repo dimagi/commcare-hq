@@ -570,6 +570,42 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Basic Information"),
+                'commcare_edition',
+                'initiative',
+                'workshop_region',
+                'self_started',
+                'area',
+                'sub_area',
+                'using_call_center',
+                'organization_name',
+                'notes',
+                'phone_model',
+                'project_manager',
+                'restrict_superusers',
+                'goal_time_period',
+                'goal_followup_rate',
+                'commtrack_domain',
+            ),
+            crispy.Fieldset(
+                 _("Salesforce Details"),
+                'sf_contract_id',
+                'sf_account_id',
+                'services',
+                'using_adm',
+            ),
+            FormActions(
+                StrictButton(
+                    _("Update Project Information"),
+                    type="submit",
+                    css_class='btn btn-primary',
+                ),
+            ),
+        )
         self.can_edit_eula = can_edit_eula
         if self.can_edit_eula:
             self.fields['custom_eula'] = ChoiceField(
