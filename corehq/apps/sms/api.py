@@ -347,8 +347,9 @@ def process_incoming(msg, delay=True):
         if not process_sms_registration(msg):
             import verify
             verify.process_verification(msg.phone_number, msg)
-            
-    create_billable_for_sms(msg)
+
+    if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+        create_billable_for_sms(msg)
 
 
 def create_billable_for_sms(msg, delay=True):
