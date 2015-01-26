@@ -7,6 +7,8 @@ from corehq.apps.reports.graph_models import PieChart
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.reports import MultiReport, EWSData
 from casexml.apps.stock.models import StockTransaction
+from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
+    FacilityUsers, FacilityInChargeUsers, InventoryManagementData
 from custom.ewsghana.utils import calculate_last_period, get_supply_points
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ilsgateway.tanzania import make_url
@@ -291,11 +293,24 @@ class ReportingRatesReport(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
+            product=None,
+            program=None
         )
 
     @property
     def data_providers(self):
         config = self.report_config
+        if self.is_reporting_type():
+            self.split = True
+            return [
+                FacilityReportData(config),
+                StockLevelsLegend(config),
+                FacilitySMSUsers(config),
+                FacilityUsers(config),
+                FacilityInChargeUsers(config),
+                InventoryManagementData(config)
+            ]
+        self.split = False
         data_providers = [
             ReportingRates(config=config),
             ReportingDetails(config=config)]

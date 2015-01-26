@@ -7,7 +7,8 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, LineChart
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
-from custom.ewsghana.reports.stock_levels_report import StockLevelsReport
+from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
+    FacilityInChargeUsers, FacilityUsers, FacilitySMSUsers, StockLevelsLegend, FacilityReportData
 from custom.ewsghana.reports import MultiReport, EWSData
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
@@ -270,6 +271,7 @@ class StockStatus(MultiReport):
     slug = 'stock_status'
     fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
     split = False
+    exportable = True
 
     @property
     def report_config(self):
@@ -286,9 +288,47 @@ class StockStatus(MultiReport):
         )
 
     @property
+    def export_table(self):
+        if not self.is_reporting_type():
+            return super(StockStatus, self).export_table
+        r = self.report_context['reports'][0]['report_table']
+        return [self._export_table(r['title'], r['headers'], r['rows'])]
+
+    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        replace = ''
+
+        for k, v in enumerate(table[0]):
+            if v != ' ':
+                replace = v
+            else:
+                table[0][k] = replace
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]
+
+    @property
     def data_providers(self):
         config = self.report_config
         report_type = self.request.GET.get('report_type', None)
+
+        if self.is_reporting_type():
+            self.split = True
+            return [
+                FacilityReportData(config),
+                StockLevelsLegend(config),
+                FacilitySMSUsers(config),
+                FacilityUsers(config),
+                FacilityInChargeUsers(config),
+                InventoryManagementData(config)
+            ]
+        self.split = False
         if report_type == 'stockouts':
             return [
                 StockoutsProduct(config=config),

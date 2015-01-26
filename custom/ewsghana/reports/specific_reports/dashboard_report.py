@@ -3,6 +3,8 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.ewsghana.reports import MultiReport
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRates, ReportingDetails
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
+from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
+    FacilityUsers, FacilityInChargeUsers, InventoryManagementData
 
 
 class DashboardReport(MultiReport):
@@ -26,6 +28,18 @@ class DashboardReport(MultiReport):
 
     @property
     def data_providers(self):
+        config = self.report_config
+        if self.is_reporting_type():
+            self.split = True
+            return [
+                FacilityReportData(config),
+                StockLevelsLegend(config),
+                FacilitySMSUsers(config),
+                FacilityUsers(config),
+                FacilityInChargeUsers(config),
+                InventoryManagementData(config)
+            ]
+        self.split = False
         return [
             ProductAvailabilityData(config=self.report_config),
             ReportingRates(config=self.report_config),

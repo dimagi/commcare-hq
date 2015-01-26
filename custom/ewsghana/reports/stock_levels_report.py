@@ -444,3 +444,7 @@ class StockLevelsReport(MultiReport):
             table.append(_unformat_row(total_row))
 
         return [export_sheet_name, table]
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False
