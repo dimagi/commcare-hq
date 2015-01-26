@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/$', 'orgs_landing', name='orgs_landing'),

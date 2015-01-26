@@ -97,7 +97,7 @@ from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import (
     CaseError,
     XForm,
-    XFormError,
+    XFormException,
     XFormValidationError,
     VELLUM_TYPES)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -399,7 +399,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     try:
         xform = form.wrapped_xform()
-    except XFormError as e:
+    except XFormException as e:
         form_errors.append(u"Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
@@ -423,7 +423,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
-        except XFormError as e:
+        except XFormException as e:
             form_errors.append(u"Error in form: %s" % e)
         # any other kind of error should fail hard,
         # but for now there are too many for that to be practical
@@ -690,7 +690,7 @@ def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
         limit = int(limit)
-    except ValueError:
+    except (TypeError, ValueError):
         limit = 10
     start_build_param = request.GET.get('start_build')
     if start_build_param and json.loads(start_build_param):
@@ -1149,6 +1149,10 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         return back_to_main(req, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    vellum_plugins = ["modeliteration"]
+    if settings.VELLUM_PRERELEASE:
+        vellum_plugins.append("itemset")
+
     vellum_features = toggles.toggles_dict(username=req.user.username,
                                            domain=domain)
     vellum_features.update({
@@ -1158,13 +1162,13 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'vellum_prerelease': settings.VELLUM_PRERELEASE,
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': req.COOKIES.get('sessionid'),
-        'features': vellum_features
+        'features': vellum_features,
+        'plugins': vellum_plugins,
     })
     return render(req, 'app_manager/form_designer.html', context)
 
@@ -1741,7 +1745,7 @@ def rename_language(req, domain, form_unique_id):
         form.rename_xform_language(old_code, new_code)
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
-    except XFormError as e:
+    except XFormException as e:
         response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
         response.status_code = 409
         return response

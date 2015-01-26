@@ -24,6 +24,7 @@ class ReadableFormdataTest(SimpleTestCase):
             "value": "/data/question4",
             "label": "Question 4",
             "type": "Text",
+            'calculate': None,
         }]
         form_data = {
             "@uiVersion": "1",
@@ -70,6 +71,7 @@ class ReadableFormdataTest(SimpleTestCase):
                 "label": "Question 4",
                 "response": "foo",
                 "type": "Text",
+                'calculate': None,
             }])
         )
 
@@ -150,19 +152,22 @@ class ReadableFormdataTest(SimpleTestCase):
             'type': 'Text',
             'label': 'Text',
             'value': '/data/question1',
-            'response': 'T'
+            'response': 'T',
+            'calculate': None,
         }, {
             'tag': 'input',
             'type': 'Int',
             'label': 'How many names?',
             'value': '/data/question18',
             'response': '3',
+            'calculate': None,
         }, {
             'tag': 'repeat',
             'type': 'Repeat',
             'label': 'Repeat',
             'value': '/data/question12',
             'response': True,
+            'calculate': None,
             'children': [{
                 'children': [{
                     'tag': 'input',
@@ -172,6 +177,7 @@ class ReadableFormdataTest(SimpleTestCase):
                     'repeat': '/data/question12',
                     'group': '/data/question12',
                     'response': 'Jack',
+                    'calculate': None,
                 }],
                 'response': True,
             }, {
@@ -183,6 +189,7 @@ class ReadableFormdataTest(SimpleTestCase):
                     'repeat': '/data/question12',
                     'group': '/data/question12',
                     'response': 'Jill',
+                    'calculate': None,
                 }],
                 'response': True
             }, {
@@ -194,6 +201,7 @@ class ReadableFormdataTest(SimpleTestCase):
                     'repeat': '/data/question12',
                     'group': '/data/question12',
                     'response': 'Up the hill',
+                    'calculate': None,
                 }],
                 'response': True
             }],
@@ -203,6 +211,7 @@ class ReadableFormdataTest(SimpleTestCase):
             'label': 'Label',
             'value': '/data/question2',
             'response': 'OK',
+            'calculate': None,
         }, {
             'tag': 'select1',
             'type': 'Select',
@@ -211,6 +220,7 @@ class ReadableFormdataTest(SimpleTestCase):
             'options': [{'value': 'item1', 'label': 'Item 1'},
                         {'value': 'item2', 'label': 'Item 2'}],
             'response': 'item2',
+            'calculate': None,
         }]
         actual = get_readable_form_data(
             form_data,

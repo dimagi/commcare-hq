@@ -1,5 +1,6 @@
 from lxml import etree
 import copy
+from openpyxl.shared.exc import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -36,7 +37,7 @@ def process_bulk_app_translation_upload(app, f):
 
     try:
         workbook = WorkbookJSONReader(f)
-    except HeaderValueError, e:
+    except (HeaderValueError, InvalidFileException) as e:
         msgs.append(
             (messages.error, _("App Translation Failed! " + str(e)))
         )

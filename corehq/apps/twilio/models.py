@@ -35,9 +35,9 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
     @property
     def phone_numbers(self):
         """
-        Prior to introduction load balancing, the Twilio backend only had
+        Prior to introducing load balancing, the Twilio backend only had
         one phone number, so need to handle old Twilio backends which don't
-        have the _phone_numbers property set.
+        have the x_phone_numbers property set.
         """
         if self.x_phone_numbers:
             return self.x_phone_numbers

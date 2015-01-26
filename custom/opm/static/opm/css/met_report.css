@@ -16,3 +16,6 @@
 #hq-report-filters label, #hq-report-filters div, #hq-report-filters select, .select2-result-label {
     font-size: 18px !important;
 }
+small {
+    font-size: 1.5em !important;
+}

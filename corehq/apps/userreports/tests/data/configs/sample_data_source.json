@@ -69,8 +69,15 @@
             "column_id": "estimate",
             "type": "raw",
             "display_name": "estimate (hours)",
-            "datatype": "integer",
+            "datatype": "decimal",
             "property_name": "estimate"
+        },
+        {
+            "column_id": "priority",
+            "type": "raw",
+            "display_name": "Priority",
+            "datatype": "integer",
+            "property_name": "priority"
         }
     ]
 }
