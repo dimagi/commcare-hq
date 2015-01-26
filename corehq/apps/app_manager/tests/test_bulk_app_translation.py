@@ -83,13 +83,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         )
 
     def test_missing_itext(self):
-        form = self.app.get_module(0).get_form(0)
-        xform = form.wrapped_xform()
-        itext = xform.itext_node
-        itext.xml.getparent().remove(itext.xml)
-        form.source = xform.render()
-
-        self.assert_question_label(None, 0, 0, "en", "/data/question1")
+        self.app = Application.wrap(self.get_json("app_no_itext"))
+        self.assert_question_label('question1', 0, 0, "en", "/data/question1")
         try:
             self.do_upload("upload_no_change")
         except Exception as e:
