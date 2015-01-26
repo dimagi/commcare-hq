@@ -224,7 +224,7 @@ def download_item_lists(request, domain):
     download = DownloadBase()
     download.set_task(fixture_download_async.delay(
         prepare_fixture_download,
-        table_ids=request.GET.getlist("table_id"),
+        table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,
     ))

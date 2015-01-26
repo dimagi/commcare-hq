@@ -233,10 +233,8 @@ $(function () {
             var tables = [];
             if (self.selectedTables().length < 1)
                 return;
-            var querystring = "";
             for (var i in self.selectedTables()) {
                 tables.push(self.selectedTables()[i]);
-                querystring = querystring + "table_id=" + self.selectedTables()[i] + "&";
             }
             $("#fixture-download").modal();
             if (tables.length > 0){
@@ -244,7 +242,7 @@ $(function () {
                 $.ajax({
                     url: FixtureDownloadUrl,
                     type: 'POST',
-                    data: querystring,
+                    data: {'table_ids': tables},
                     dataType: 'json',
                     success: function (response) {
                         self.setupDownload(response);
