@@ -629,6 +629,47 @@ ko.bindingHandlers.typeahead = {
     }
 };
 
+/**
+ * Converts the bound element to a select2 widget. The value of the binding is
+ * a list of strings used for the select2's options.
+ */
+ko.bindingHandlers.select2 = new function(){
+    var that = this;
+
+    this.SOURCE_KEY = "select2-source";
+
+    this.init = function(element, valueAccessor){
+        var $el = $(element);
+
+        // The select2 jquery element uses the array stored at
+        // $el.data(that.SOURCE_KEY) as its data source. Therefore, the options
+        // can only be changed by modifying this object, overwriting it will
+        // not change the select options.
+        $el.data(that.SOURCE_KEY, []);
+
+        $el.select2({
+            multiple: false,
+            width: "element",
+            data: $el.data(that.SOURCE_KEY)
+        });
+    };
+
+    this.update = function(element, valueAccessor){
+        var $el = $(element);
+        var source = $el.data(that.SOURCE_KEY);
+
+        // We clear the array and repopulate it, instead of simply replacing
+        // it, because the select2 options are tied to this specific instance.
+        while(source.length > 0) {
+            source.pop();
+        }
+        var newItems = ko.utils.unwrapObservable(valueAccessor()) || [];
+        for (var i = 0; i < newItems.length; i++) {
+            source.push({id: newItems[i], text: newItems[i]});
+        }
+    };
+}();
+
 ko.bindingHandlers.multiTypeahead = {
     init: function(element, valueAccessor) {
         var contacts = valueAccessor();

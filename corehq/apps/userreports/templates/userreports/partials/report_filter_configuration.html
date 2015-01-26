@@ -7,7 +7,7 @@
 {% block field_cell %}
     <td class="detail-screen-field control-group">
         <div class="app-designer-input">
-            <input type="text" data-bind="typeahead: $parent.propertyOptions, value: property">
+            <input type="text" data-bind="select2: $parent.propertyOptions, value: property">
         </div>
     </td>
 {% endblock %}
@@ -50,8 +50,7 @@
 {% endblock %}
 
 {% block post_table_content %}
-    <input name="sort_properties" type="text" data-bind="
-        visible: false,
+    <input name="sort_properties" type="hidden" data-bind="
         value: serializedSortProperties
     ">
 {% endblock %}
