@@ -562,7 +562,7 @@ class XForm(WrappedNode):
         """
         try:
             itext = self.itext_node
-        except Exception:
+        except XFormException:
             return
         node_groups = {}
         translations = {}
@@ -619,8 +619,12 @@ class XForm(WrappedNode):
                     del node.attrib[key]
 
     def rename_language(self, old_code, new_code):
-        trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
-        duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
+        try:
+            trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
+            duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
+        except XFormException:
+            return
+
         if not trans_node.exists():
             raise XFormException("There's no language called '%s'" % old_code)
         if duplicate_node.exists():
@@ -653,6 +657,7 @@ class XForm(WrappedNode):
             trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % lang)
             if not trans_node.exists():
                 return None
+
         text_node = trans_node.find('{f}text[@id="%s"]' % id)
         if not text_node.exists():
             return None
@@ -706,7 +711,7 @@ class XForm(WrappedNode):
             return []
         try:
             itext = self.itext_node
-        except:
+        except XFormException:
             return []
         langs = []
         for translation in itext.findall('{f}translation'):
