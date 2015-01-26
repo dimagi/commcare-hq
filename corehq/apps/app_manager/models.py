@@ -21,7 +21,7 @@ from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext
+from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError, DocTypeError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -3454,6 +3454,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
+        for lang, name in copy_source['name'].iteritems():
+            with override(lang):
+                copy_source['name'][lang] = _('Copy of %(name)s') % { 'name': name }
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
