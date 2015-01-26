@@ -562,7 +562,7 @@ class XForm(WrappedNode):
         """
         try:
             itext = self.itext_node
-        except XFormError:
+        except XFormException:
             return
         node_groups = {}
         translations = {}
@@ -622,7 +622,7 @@ class XForm(WrappedNode):
         try:
             trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
             duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
-        except XFormError:
+        except XFormException:
             return
 
         if not trans_node.exists():
@@ -711,7 +711,7 @@ class XForm(WrappedNode):
             return []
         try:
             itext = self.itext_node
-        except XFormError:
+        except XFormException:
             return []
         langs = []
         for translation in itext.findall('{f}translation'):

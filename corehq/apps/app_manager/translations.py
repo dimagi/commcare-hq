@@ -5,7 +5,7 @@ from openpyxl.shared.exc import InvalidFileException
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
-    XFormError)
+    XFormException)
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
 from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
@@ -295,7 +295,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
     try:
         itext = xform.itext_node
-    except XFormError:
+    except XFormException:
         return msgs
 
     # Make language nodes for each language if they don't yet exist

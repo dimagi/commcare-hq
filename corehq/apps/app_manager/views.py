@@ -2982,7 +2982,7 @@ def download_bulk_app_translations(request, domain, app_id):
             itext_items = OrderedDict()
             try:
                 nodes = xform.itext_node.findall("./{f}translation")
-            except XFormError:
+            except XFormException:
                 nodes = []
 
             for translation_node in nodes:
