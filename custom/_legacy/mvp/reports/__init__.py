@@ -56,6 +56,7 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
                     self.domain,
                     indicator_slug,
                     wrap_correctly=True,
+                    requesting_user=self.request.couch_user.username,
                 )
                 response = self.get_response_for_indicator(indicator)
                 if response is not None:
