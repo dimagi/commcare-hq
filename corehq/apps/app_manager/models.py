@@ -3445,18 +3445,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
         to_module = self.get_module(to_module_id)
-        self._copy_form(from_module, form, to_module)
+        self._copy_form(from_module, form, to_module, rename=True)
 
-    def _copy_form(self, from_module, form, to_module):
+    def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         if not form.source:
             raise BlankXFormError()
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        for lang, name in copy_source['name'].iteritems():
-            with override(lang):
-                copy_source['name'][lang] = _('Copy of %(name)s') % { 'name': name }
+        if 'rename' in kwargs and kwargs['rename']:
+            for lang, name in copy_source['name'].iteritems():
+                with override(lang):
+                    copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
