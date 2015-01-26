@@ -72,7 +72,7 @@ class CreateNewReportBuilderForm(forms.Form):
 class ConfigureBarChartBuilderForm(forms.Form):
     report_name = forms.CharField()
     group_by = forms.ChoiceField()
-    sort_fields = forms.CharField()
+    sort_fields = forms.CharField(required=False)
 
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
         super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)
@@ -117,3 +117,10 @@ class ConfigureBarChartBuilderForm(forms.Form):
                 ),
             ),
         )
+
+    def create_report_from_form(self):
+        """
+        Creates data source and report config.
+        Returns report config id.
+        """
+        raise NotImplementedError

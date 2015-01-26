@@ -103,7 +103,6 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
     template_name = "userreports/partials/configure_bar_report_builder.html"
 
     def get_context_data(self, **kwargs):
-
         context = {
             "domain": self.domain,
             'report': {"title": _("Create New Report > Configure Bar Chart Report")},
@@ -127,9 +126,22 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
         source_type = self.request.GET.get('source_type', '')
         report_source = self.request.GET.get('report_source', '')
         case_properties = self.report_source_properties
+        if self.request.method == 'POST':
+            return ConfigureBarChartBuilderForm(
+                app_id, source_type, report_source, case_properties, self.request.POST
+            )
         return ConfigureBarChartBuilderForm(
             app_id, source_type, report_source, case_properties
         )
+
+    def post(self, *args, **kwargs):
+        if self.configure_bar_chart_builder_form.is_valid():
+            config_id = self.configure_bar_chart_builder_form.create_report_from_form()
+            return HttpResponseRedirect(
+                reverse(ConfigurableReport.slug, args=[self.domain, config_id])
+            )
+        return self.get(*args, **kwargs)
+
 
 def _edit_report_shared(request, domain, config):
     if request.method == 'POST':
