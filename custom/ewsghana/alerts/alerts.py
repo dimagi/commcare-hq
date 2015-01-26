@@ -36,7 +36,6 @@ def on_going_non_reporting():
             user_location = SQLLocation.objects.get(domain=DOMAIN, location_id=user.location._id)
         except:
             continue
-
         if user_location:
             if user_location.location_type == 'district':
                 facilities = user_location.get_children()
@@ -348,9 +347,10 @@ def report_reminder():
 
 
 # Checking if report was complete or not
-def report_completion_check(sp_id, user):
+def report_completion_check(user):
+    sp_id = SQLLocation.objects.get(domain=DOMAIN, location_id=user.location._id).supply_point_id
     now = datetime.datetime.utcnow()
-    reported_products = StockTransaction.objects.filter(case_id=sp_id, type='stockonhand', report_date=now)
+    reported_products = StockTransaction.objects.filter(case_id=sp_id, type='stockonhand', report__date=now)
     expected_products = SQLProduct.objects.filter(domain=DOMAIN)
     reported_products_ = set()
     expected_products_ = set()
@@ -360,77 +360,9 @@ def report_completion_check(sp_id, user):
         expected_products_.add(SQLProduct.objects.get(product_id=product.product_id).name)
     missing_products = set.difference(reported_products_, expected_products_)
 
-    if len(missing_products) == 0:
+    if not missing_products:
         message = COMPLETE_REPORT
         send_sms_to_verified_number(user.get_verified_number(), message)
-        if user.email:
-            email = str(user.email)
-            send_mail('COMPLETE REPORT', message, 'commcarehq-noreply@dimagi.com', [email])
-
-    elif len(missing_products) != 0:
+    elif missing_products:
         message = INCOMPLETE_REPORT % (user.name, user.location.name, ", ".join(sorted(missing_products)))
-        send_sms_to_verified_number(
-            user.get_verified_number(), message)
-        if user.email:
-            email = str(user.email)
-            send_mail('INCOMPLETE REPORT', message, 'commcarehq-noreply@dimagi.com', [email])
-
-
-def report_below_level(sp_id, user):
-    low_level = 20  # random value
-    products = set()
-    now = datetime.datetime.utcnow()
-    reported_products_below_level = StockTransaction.objects.filter(case_id=sp_id, type='stockonhand',
-                                                                    stock_on_hand__lte=low_level, report_date=now)
-    if reported_products_below_level:
-        for product in reported_products_below_level:
-            products.add(SQLProduct.objects.get(product_id=product.product_id).name)
-
-        message = BELOW_REORDER_LEVELS % (
-            user.name, user.location.name, ", ".join(sorted([str(product) for product in products])))
         send_sms_to_verified_number(user.get_verified_number(), message)
-        if user.email:
-            email = str(user.email)
-            send_mail('COMMODITIES BELOW RE-ORDER LEVEL', message, 'commcarehq-noreply@dimagi.com', [email])
-
-
-def report_above_level(sp_id, user):
-    now = datetime.datetime.utcnow()
-    high_level = 100  # random value
-    products = set()
-    reported_products_above_level = StockTransaction.objects.filter(case_id=sp_id, type='stockonhand',
-                                                                    stock_on_hand__gte=high_level, report_date=now)
-    if reported_products_above_level:
-        for product in reported_products_above_level:
-            products.add(SQLProduct.objects.get(product_id=product.product_id).name)
-
-        message = ABOVE_THRESHOLD % (
-            user.name, user.location.name, ", ".join(sorted([str(product) for product in products])))
-        send_sms_to_verified_number(
-            user.get_verified_number(), message)
-        if user.email:
-            email = str(user.email)
-            send_mail('STOCK LEVELS ABOVE MAXIMUM THRESHOLD', message, 'commcarehq-noreply@dimagi.com', [email])
-
-
-# reported increase in stock levels without corresponding receipts
-def no_receipts(sp_id, user):
-    now = datetime.datetime.utcnow()
-    products = set()
-    stock_transaction = StockTransaction.objects.filter(case_id=sp_id, type='stockonhand', report__date=now)
-    for product in stock_transaction:
-        current_product_stock_state = product.stock_on_hand
-        previous_product_stock_state = StockState.objects.get(
-            case_id=sp_id, product_id=product.product_id).stock_on_hand
-
-        if current_product_stock_state > previous_product_stock_state and not StockTransaction.objects.filter(
-                case_id=sp_id, type='receipts', report__date=now).exists():
-            products.add(SQLProduct.objects.get(product_id=product.product_id).name)
-
-    if products:
-        message = WITHOUT_RECEIPTS % ', '.join(sorted(str(product) for product in products))
-        send_sms_to_verified_number(user.get_verified_number(), message)
-        if user.email:
-            email = str(user.email)
-            send_mail('SUBMITTED INCREASES IN STOCK LEVEL WITHOUT CORRESPONDING RECEIPTS',
-                      message, 'commcarehq-noreply@dimagi.com', [email])
