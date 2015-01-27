@@ -74,6 +74,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     referenced_doc_type = forms.ChoiceField(choices=DOC_TYPE_CHOICES)
     display_name = forms.CharField()
     description = forms.CharField(required=False)
+    base_item_expression = JsonField(expected_type=dict)
     configured_filter = JsonField(expected_type=dict)
     configured_indicators = JsonField(expected_type=list)
     named_filters = JsonField(required=False, expected_type=dict,
