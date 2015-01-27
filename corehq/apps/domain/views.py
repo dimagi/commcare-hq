@@ -343,7 +343,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
         if self.can_user_see_meta:
             for attr in [
-                'customer_type',
                 'survey_management_enabled',
                 'secure_submissions',
             ]:

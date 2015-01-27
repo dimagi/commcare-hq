@@ -419,12 +419,6 @@ class DomainGlobalSettingsForm(forms.Form):
             return False
 
 class DomainMetadataForm(DomainGlobalSettingsForm):
-    customer_type = ChoiceField(
-        label=_("Customer Type"),
-        choices=(('basic', _('Basic')),
-                 ('plus', _('Plus')),
-                 ('full', _('Full')))
-    )
     is_test = ChoiceField(
         label=_("Real Project"),
         choices=(('true', _('Test')),
@@ -480,7 +474,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
         if not res:
             return False
         try:
-            domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test']
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
