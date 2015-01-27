@@ -65,6 +65,13 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
             ]
         super(SubmitHistory, self).__init__(request, **kwargs)
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
     @property
     def other_fields(self):
         return filter(None, self.request.GET.get('custom_field', "").split(","))

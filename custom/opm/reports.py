@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
+from custom.common import ALL_OPTION
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
@@ -46,7 +47,7 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (HierarchyFilter, MetHierarchyFilter,
+from .filters import (get_hierarchy, HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -696,6 +697,8 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
+        # TODO for consistency, we could always filter on awc using
+        # get_matching_awcs from the NewHealthStatusReport
         if self.awcs:
             query = query.filter(get_awc_filter(self.awcs))
         elif self.gp:
@@ -975,11 +978,20 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
+    def get_matching_awcs(self):
+        filter_on = 'awc' if self.awcs else 'gp' if self.gp else 'block'
+        for block, gps in get_hierarchy().items():
+            if not filter_on == 'block' or block == self.block:
+                for gp, awcs in gps.items():
+                    if not filter_on == 'gp' or gp in self.gp:
+                        for awc in awcs.keys():
+                            if not filter_on == 'awc' or awc in self.awcs:
+                                yield awc
+
     def awc_data(self):
-        # TODO use all awcs, not just ones with data
         case_objects = self.row_objects + self.extra_row_objects
-        # Consolidate rows with the same awc
-        awcs = {}
+        awcs = {awc: [] for awc in self.get_matching_awcs()}
+        # populate awcs with cases from that awc
         for case_object in case_objects:
             awc = case_object.awc_name
             awcs[awc] = awcs.get(awc, []) + [case_object]
@@ -996,7 +1008,8 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     totals[col][i] = total + num if total is not None else num
 
         rows = []
-        for awc in map(AWCHealthStatus, self.awc_data().values()):
+        for awc in [AWCHealthStatus(awc, cases)
+                    for awc, cases in self.awc_data().items()]:
             row = []
             for col, (method, __, __, denom) in enumerate(self.model.method_map):
                 val = getattr(awc, method)
@@ -1102,7 +1115,7 @@ class IncentivePaymentReport(BaseReport):
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
             request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == '0':
+            if request_param and not request_param[0] == ALL_OPTION:
                 config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return UsersIdsData(config=config).get_data()

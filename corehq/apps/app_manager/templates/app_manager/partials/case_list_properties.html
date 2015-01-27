@@ -22,8 +22,10 @@
             data: columns,
             afterAdd: function (elem) { $(elem).hide().fadeIn() },
             beforeRemove: function (elem) { $(elem).fadeOut() }
-        }">
-            <tr data-bind="
+        }"
+        {# there must be no whitespace between <tbody> and <tr> #}
+        {# the .hide().fadeIn() will fail badly on FireFox #}
+        ><tr data-bind="
                 css: {info: isTab},
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
@@ -40,6 +42,7 @@
                 </td>
 
                 {% block field_cell %}
+
                 <!--ko if: !isTab -->
                     <td class="detail-screen-field control-group"
                         data-bind="css: {error: showWarning}">
@@ -79,8 +82,7 @@
                         attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
                     "></i>
                 </td>
-            </tr>
-        </tbody>
+            </tr></tbody>
         <tbody>
             <tr>
                 <td></td>

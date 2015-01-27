@@ -51,6 +51,10 @@ class ReportColumn(JsonObject):
     ])
     transform = DictProperty()
 
+    @property
+    def report_column_id(self):
+        return self.alias or self.field
+
     def get_format_fn(self):
         if self.transform:
             return TransformFactory.get_transform(self.transform).get_transform_function()
@@ -61,7 +65,7 @@ class ReportColumn(JsonObject):
             self.display,
             SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.alias),
             sortable=False,
-            data_slug=self.field,
+            data_slug=self.report_column_id,
             format_fn=self.get_format_fn(),
             help_text=self.description
         )

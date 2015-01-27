@@ -199,6 +199,13 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     name = ugettext_noop('Case List')
     slug = 'case_list'
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
     def slugs(self):
         return [
             '_case',
