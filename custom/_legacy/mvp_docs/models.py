@@ -16,7 +16,9 @@ class IndicatorDocument(object):
 
     @classmethod
     def get_db(cls):
-        """Makes damn sure that we get the correct DB for this particular app"""
+        """Makes damn sure that we get the correct DB for this particular app
+        If cls._db has been set by a superclass, then the super method is
+        going to grab the wrong db without this."""
         app_label = getattr(cls._meta, "app_label")
         db = get_db(app_label)
         cls._db = db
@@ -48,6 +50,7 @@ class IndicatorXForm(IndicatorDocument, XFormInstance):
 
     def save(self, **kwargs):
         self.doc_type = 'IndicatorXForm'
+        assert(self.get_db() != XFormInstance.get_db())
         super(IndicatorXForm, self).save(**kwargs)
 
     def is_update(self, doc_dict):
@@ -59,6 +62,7 @@ class IndicatorCase(IndicatorDocument, CommCareCase):
 
     def save(self, **kwargs):
         self.doc_type = 'IndicatorCase'
+        assert(self.get_db() != CommCareCase.get_db())
         super(IndicatorCase, self).save(**kwargs)
 
     def is_update(self, doc_dict):
