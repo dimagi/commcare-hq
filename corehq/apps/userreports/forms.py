@@ -13,6 +13,11 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.userreports.app_manager import (
     get_default_case_property_datatypes,
+    _clean_table_name,
+)
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
 )
 
 
@@ -77,7 +82,11 @@ class ConfigureBarChartBuilderForm(forms.Form):
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
         super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)
 
+        self.doc_type = source_type
+        self.report_source = report_source
+        self.case_properties = case_properties
         app = Application.get(app_id)
+        self.domain = app.domain
         if source_type == 'case':
             self.fields['group_by'].choices = [
                 (cp, cp) for cp in case_properties
@@ -123,4 +132,36 @@ class ConfigureBarChartBuilderForm(forms.Form):
         Creates data source and report config.
         Returns report config id.
         """
-        raise NotImplementedError
+        default_case_property_datatypes = get_default_case_property_datatypes()
+
+        def _make_indicator(property_name):
+            return {
+                "type": "raw",
+                "column_id": property_name,
+                "datatype": default_case_property_datatypes.get(property_name, "string"),
+                'property_name': property_name,
+                "display_name": property_name,
+            }
+
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            referenced_doc_type=self.doc_type,
+            table_id=_clean_table_name(self.domain, self.report_source),
+            configured_filter={
+                'type': 'property_match',  # TODO - use boolean_expression
+                'property_name': 'type',
+                'property_value': self.report_source,
+            },
+            configured_indicators=[
+                _make_indicator(cp) for cp in self.case_properties
+            ],
+        )
+        print data_source_config._id
+        report = ReportConfiguration(
+            domain=self.domain,
+            config_id=data_source_config._id,
+            title=self.cleaned_data['report_name'],
+        )
+        report.validate()
+        report.save()
+        return report
