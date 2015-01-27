@@ -1,5 +1,5 @@
 from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import Document, StringListProperty
+from couchdbkit.ext.django.schema import Document, StringListProperty, BooleanProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -165,6 +165,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     A report configuration. These map 1:1 with reports that show up in the UI.
     """
     domain = StringProperty(required=True)
+    visible = BooleanProperty(default=True)
     config_id = StringProperty(required=True)
     title = StringProperty()
     description = StringProperty()
