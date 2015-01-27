@@ -57,10 +57,10 @@ from soil import views as soil_views
 def pg_check():
     """check django db"""
     try:
-        user_count = User.objects.count()
+        a_user = User.objects.all()[:1].get()
     except:
-        user_count = None
-    return (user_count is not None, None)
+        a_user = None
+    return (a_user is not None, None)
 
 
 def couch_check():
