@@ -4,10 +4,18 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% block head %} {{ block.super }}
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
+
 {% block main_column %}
     <form id="update-project-info" class="form-horizontal disable-on-submit" method="post">
         {% crispy form %}
     </form>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -52,5 +60,17 @@
         });
 
     });
+
+    $(function() {
+        $('#id_deployment_date').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            dateFormat: 'yy-mm-dd',
+            maxDate: '0',
+            numberOfMonths: 2
+        });
+    });
+
     </script>
 {% endblock %}

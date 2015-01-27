@@ -401,7 +401,6 @@ class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
             return DomainDeploymentForm(self.request.POST)
 
         initial = {
-            'deployment_date': self.domain_object.deployment.date.date if self.domain_object.deployment.date else "",
             'public': 'true' if self.domain_object.deployment.public else 'false',
         }
         for attr in [
@@ -1926,7 +1925,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
-            'restrict_superusers': self.domain_object.restrict_superusers
+            'restrict_superusers': self.domain_object.restrict_superusers,
+            'deployment_date': self.domain_object.deployment.date.date if self.domain_object.deployment.date else "",
         }
         internal_attrs = [
             'sf_contract_id',

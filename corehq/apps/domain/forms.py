@@ -504,11 +504,6 @@ class DomainDeploymentForm(forms.Form):
             choices=COUNTRIES)
     region = CharField(label=ugettext_noop("Region"), required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
-    deployment_date = CharField(
-        label=ugettext_noop("Deployment date"),
-        required=False,
-        help_text=_("Date that the project went live (usually right after training).")
-    )
     description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea)
     public = ChoiceField(label=ugettext_noop("Make Public?"), choices=tf_choices('Yes', 'No'), required=False)
 
@@ -517,7 +512,6 @@ class DomainDeploymentForm(forms.Form):
             domain.update_deployment(
                 countries=self.cleaned_data['countries'],
                 region=self.cleaned_data['region'],
-                date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
                 description=self.cleaned_data['description'],
                 public=(self.cleaned_data['public'] == 'true'))
             return True
@@ -556,6 +550,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     notes = CharField(label=ugettext_noop("Notes"), required=False, widget=forms.Textarea)
     phone_model = CharField(label=ugettext_noop("Phone Model"), required=False)
+    deployment_date = CharField(
+        label=ugettext_noop("Deployment date"),
+        required=False,
+        help_text=_("Date that the project went live (usually right after training).")
+    )
     project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
@@ -585,6 +584,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'organization_name',
                 'notes',
                 'phone_model',
+                'deployment_date',
                 'project_manager',
                 'restrict_superusers',
                 'goal_time_period',
@@ -629,6 +629,9 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
 
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+        domain.update_deployment(
+            date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
+        )
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             commcare_edition=self.cleaned_data['commcare_edition'],
