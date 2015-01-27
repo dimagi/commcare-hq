@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import (
     Application,
     get_apps_in_domain,
 )
-from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import (
     get_default_case_property_datatypes,
     _clean_table_name,
@@ -145,6 +145,7 @@ class ConfigureBarChartBuilderForm(forms.Form):
 
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
+            display_name="{} source".format(self.cleaned_data['report_name']),
             referenced_doc_type=self.doc_type,
             table_id=_clean_table_name(self.domain, self.report_source),
             configured_filter={
@@ -154,6 +155,12 @@ class ConfigureBarChartBuilderForm(forms.Form):
             },
             configured_indicators=[
                 _make_indicator(cp) for cp in self.case_properties
+            ]+[
+                {
+                    "display_name": "Count",
+                    "type": "count",
+                    "column_id": "count"
+                }
             ],
         )
         data_source_config.save()
@@ -162,6 +169,23 @@ class ConfigureBarChartBuilderForm(forms.Form):
             domain=self.domain,
             config_id=data_source_config._id,
             title=self.cleaned_data['report_name'],
+            aggregation_columns=[self.cleaned_data["group_by"]],
+            columns=[
+                {
+                    "format": "default",
+                    "aggregation": "simple",
+                    "field": self.cleaned_data["group_by"],
+                    "type": "field",
+                    "display": self.cleaned_data["group_by"]
+                },
+                {
+                    "format": "default",
+                    "aggregation": "sum",
+                    "field": "count",
+                    "type": "field",
+                    "display": "Count"
+                }
+            ]
         )
         report.validate()
         report.save()
