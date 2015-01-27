@@ -2,6 +2,3 @@
 ---
 include_pillows:
   - custom.bihar.models.CareBiharFluffPillow
-  - custom.world_vision.models.WorldVisionMotherFluffPillow
-  - custom.world_vision.models.WorldVisionChildFluffPillow
-  - custom.world_vision.models.WorldVisionHierarchyFluffPillow
