@@ -2,6 +2,7 @@
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import alias
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -340,6 +341,20 @@ class PPSAvecDonnees(BaseSqlData):
                                       format_fn=lambda x: {'sort_key': long(x), 'html': long(x)})
         )
         return columns
+
+    @property
+    def rows(self):
+        rows = super(PPSAvecDonnees, self).rows
+        if 'district_id' in self.config:
+            locations_included = [row[0] for row in rows]
+        else:
+            return rows
+        all_locations = SQLLocation.objects.get(
+            location_id=self.config['district_id']
+        ).get_children().values_list('name', flat=True)
+        locations_not_included = set(all_locations) - set(locations_included)
+        return rows + [[location, {'sort_key': 0L, 'html': 0L}] for location in locations_not_included]
+
 
 class DateSource(BaseSqlData):
     title = ''
