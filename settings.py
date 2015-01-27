@@ -338,6 +338,7 @@ HQ_APPS = (
     'custom.up_nrhm',
 
     'custom.care_pathways',
+    'custom.common',
     'bootstrap3_crispy',
 
     'custom.dhis2',
