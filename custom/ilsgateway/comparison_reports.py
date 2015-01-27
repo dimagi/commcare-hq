@@ -110,7 +110,7 @@ class WebUsersCompareReport(BaseComparisonReport):
             try:
                 user = User.objects.get(username__in=[web_user.username, web_user.email.lower()])
                 webuser = WebUser.get_by_username(user.username)
-                if webuser and not self.domain in webuser.get_domains():
+                if webuser and self.domain not in webuser.get_domains():
                     raise User.DoesNotExist
             except User.DoesNotExist:
                 rows.append([web_user.username, web_user.email,
