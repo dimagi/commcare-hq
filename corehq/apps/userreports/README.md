@@ -441,6 +441,14 @@ A report configuration takes data from a data source and renders it in the UI. A
 2. A list of aggregation fields. These defines how indicator data will be aggregated into rows in the report. The complete list of aggregations fields forms the *primary key* of each row in the report.
 3. A list of columns. Columns define the report columns that show up from the data source, as well as any aggregation information needed.
 
+## Samples
+
+Here are some sample configurations that can be used as a reference until we have better documentation.
+
+- [Dimagi chart report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/dimagi/dimagi-chart-report.json)
+- [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
+
+
 ## Report filters
 
 TODO: Report filters docs will go here.
