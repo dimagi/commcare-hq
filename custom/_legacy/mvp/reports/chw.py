@@ -42,7 +42,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     indicator = DynamicIndicatorDefinition.get_current(
                         MVP.NAMESPACE, self.domain, slug,
                         wrap_correctly=True,
-                        requesting_user=self.request.couch_user.username,
+                        use_new_db=self.use_new_db,
                     )
                     if indicator is not None:
                         section_indicators.append(indicator)

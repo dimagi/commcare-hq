@@ -62,7 +62,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     indicator = DynamicIndicatorDefinition.get_current(
                         MVP.NAMESPACE, self.domain, slug,
                         wrap_correctly=True,
-                        requesting_user=self.request.couch_user.username,
+                        use_new_db=self.use_new_db,
                     )
                     if self.is_rendered_as_email:
                         retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)

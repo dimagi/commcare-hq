@@ -45,10 +45,10 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
 
-    def __init__(self, _d=None, requesting_user=None, **kwargs):
+    def __init__(self, _d=None, use_new_db=False, **kwargs):
         super(IndicatorDefinition, self).__init__(_d, **kwargs)
         self.class_path = self._class_path
-        self.requesting_user = requesting_user
+        self.use_new_db = use_new_db
 
     def __str__(self):
         return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
@@ -172,10 +172,10 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     @classmethod
     @memoized
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
-        if 'requesting_user' in kwargs:
-            requesting_user = kwargs.pop('requesting_user')
+        if 'use_new_db' in kwargs:
+            use_new_db = kwargs.pop('use_new_db', False)
         else:
-            requesting_user = None
+            use_new_db = False
 
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -197,7 +197,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 doc_instance = doc_class.get(doc.get('id'))
-                doc_instance.requesting_user = requesting_user
+                doc_instance.use_new_db = use_new_db
                 return doc_instance
             except Exception as e:
                 logging.error("No matching documents found for indicator %s: %s" % (slug, e))
@@ -427,8 +427,7 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 reduce=reduce
             )
 
-        if (self.requesting_user is not None and
-                toggles.USE_NEW_MVP_INDICATORS.enabled(self.requesting_user)):
+        if self.use_new_db:
             from mvp_docs.models import IndicatorXForm
             db = IndicatorXForm.get_db()
             section = self.couch_view.split('/')
