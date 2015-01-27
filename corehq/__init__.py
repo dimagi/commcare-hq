@@ -155,10 +155,15 @@ def _get_configurable_reports(project):
             def get_url(cls, domain):
                 return reverse(ConfigurableReport.slug, args=[domain, config._id])
 
+            @classmethod
+            def show_in_navigation(cls, domain=None, project=None, user=None):
+                return config.visible or (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+
             return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
                 'name': config.title,
                 'description': config.description or None,
                 'get_url': get_url,
+                'show_in_navigation': show_in_navigation,
             })
 
         yield (_('Project Reports'), [_make_report_class(config) for config in configs])

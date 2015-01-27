@@ -22,8 +22,10 @@
             data: columns,
             afterAdd: function (elem) { $(elem).hide().fadeIn() },
             beforeRemove: function (elem) { $(elem).fadeOut() }
-        }">
-            <tr data-bind="
+        }"
+        {# there must be no whitespace between <tbody> and <tr> #}
+        {# the .hide().fadeIn() will fail badly on FireFox #}
+        ><tr data-bind="
                 css: {info: $data.isTab},
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
@@ -81,8 +83,9 @@
                     "></i>
                 </td>
                 {% endblock %}
-            </tr>
-        </tbody>
+            {# there must be no whitespace between <tbody> and <tr> #}
+            {# the .hide().fadeIn() will fail badly on FireFox #}
+            </tr></tbody>
         <tbody>
             <tr>
                 <td></td>

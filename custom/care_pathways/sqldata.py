@@ -238,13 +238,15 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
     def columns(self):
         return [
             DatabaseColumn('', AliasColumn('gender'), format_fn=self._to_display),
-            AggregateColumn('All', lambda x:x,
-                            [CareCustomColumn('all', filters=self.filters + [EQ("maxmin", 'all')])]),
+            AggregateColumn('None', lambda x:x,
+                            [CareCustomColumn('none', filters=self.filters + [EQ("maxmin", 'none')])]),
             AggregateColumn('Some', lambda x:x,
                             [CareCustomColumn('some', filters=self.filters + [EQ("maxmin", 'some')])]),
-            AggregateColumn('None', lambda x:x,
-                            [CareCustomColumn('none', filters=self.filters + [EQ("maxmin", 'none')])])
+            AggregateColumn('All', lambda x:x,
+                            [CareCustomColumn('all', filters=self.filters + [EQ("maxmin", 'all')])])
+
         ]
+
 
 class TableCardSqlData(CareSqlData):
 

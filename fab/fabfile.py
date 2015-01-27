@@ -104,6 +104,8 @@ env.reminder_queue_enabled = False
 env.reminder_rule_queue_enabled = False
 env.reminder_case_update_queue_enabled = False
 env.pillow_retry_queue_enabled = True
+if not hasattr(env, 'celery_periodic_enabled'):
+    env.celery_periodic_enabled = True
 
 
 def _require_target():
@@ -367,6 +369,7 @@ def staging():
     # queued state.
     env.sms_queue_enabled = False
     env.pillow_retry_queue_enabled = True
+    env.celery_periodic_enabled = False
 
     env.roledefs = {
         'couch': ['hqdb0-staging.internal.commcarehq.org'],
@@ -424,6 +427,7 @@ def preview():
 
     env.sms_queue_enabled = False
     env.pillow_retry_queue_enabled = False
+    env.celery_periodic_enabled = False
 
     env.roledefs = {
         'couch': [],
@@ -475,13 +479,15 @@ def read_inventory_file(filename):
 @task
 def development():
     """
-    Must pass in the 'inventory' env variable, which the path to an
-    ansible inventory file
+    Must pass in the 'inventory' env variable,
+    which is the path to an ansible inventory file
+    and an 'environment' env variable,
+    which is the name of the directory to be used under /home/cchq/www/
 
     Example command:
 
         fab development awesome_deploy \
-        --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development
+        --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development,environment=dev
 
     """
     env.sudo_user = 'cchq'
@@ -489,38 +495,35 @@ def development():
     env.django_port = '9010'
     env.should_migrate = True
 
-    require('inventory')
-
-    # use inventory filename as environment name
-    # i.e. if the inventory is called my-crazy-setup
-    # then things on the server will be stored in
-    # /home/cchq/www/my-crazy-setup/code_root, etc.
-    env.environment = os.path.basename(env.inventory)
+    require('inventory', 'environment')
     servers = read_inventory_file(env.inventory)
 
     _setup_path()
 
+    proxy = servers['proxy']
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
     couchdb = servers['couchdb']
     redis = servers['redis']
     memcached = servers['memcached']
+    touchforms = servers['touchforms']
+    elasticsearch = servers['elasticsearch']
+    celery = servers['celery']
+    rabbitmq = servers['rabbitmq']
     # if no server specified, just don't run pillowtop
     pillowtop = servers.get('pillowtop', [])
-
-    proxy = servers['proxy']
 
     env.roledefs = {
         'couch': couchdb,
         'pg': postgresql,
-        'rabbitmq': postgresql,
-        'django_celery': postgresql,
-        'sms_queue': postgresql,
-        'reminder_queue': postgresql,
-        'pillow_retry_queue': postgresql,
+        'rabbitmq': rabbitmq,
+        'django_celery': celery,
+        'sms_queue': celery,
+        'reminder_queue': celery,
+        'pillow_retry_queue': celery,
         'django_app': webworkers,
         'django_pillowtop': pillowtop,
-        'formsplayer': postgresql,
+        'formsplayer': touchforms,
         'staticfiles': proxy,
         'lb': [],
         'deploy': postgresql,
@@ -900,10 +903,11 @@ def awesome_deploy(confirm="yes"):
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
     max_wait = datetime.timedelta(minutes=5)
-    start = datetime.datetime.utcnow()
     pause_length = datetime.timedelta(seconds=5)
 
     execute(preindex_views)
+
+    start = datetime.datetime.utcnow()
 
     @roles(ROLES_DB_ONLY)
     def preindex_complete():
@@ -1206,7 +1210,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
     with cd(env.code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
-            '%(conf_command)s --conf_file "%(filename)s" '
+            '%(conf_command)s --traceback --conf_file "%(filename)s" '
             '--conf_destination "%(destination)s" --params "%(params)s"'
         ) % {
 
@@ -1222,8 +1226,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
 def set_celery_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_main.conf')
 
-    # hack to not have staging environments send out reminders
-    if env.environment not in ['staging', 'preview', 'realstaging']:
+    if env.celery_periodic_enabled:
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_beat.conf')
         _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_celery_periodic.conf')
     if env.sms_queue_enabled:

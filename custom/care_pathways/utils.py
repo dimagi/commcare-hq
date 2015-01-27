@@ -81,14 +81,14 @@ class CareDataFormatter(DataFormatter):
             for k, v in missing_rows.iteritems():
                 for missing_val in v:
                     dict_key = k + (missing_val,)
-                    tmp_missing.update({dict_key:dict(all=0, some=0, none=0, gender=missing_val)})
+                    tmp_missing.update({dict_key: dict(all=0, some=0, none=0, gender=missing_val)})
             data.update(tmp_missing)
-        if len(group_by)-1 == 1:
-            f = lambda x: (x[0][0])
-        elif len(group_by)-1 == 2:
+        if len(group_by) - 1 == 1:
             f = lambda x: (x[0][0], x[0][1])
-        elif len(group_by)-1 == 3:
+        elif len(group_by) - 1 == 2:
             f = lambda x: (x[0][0], x[0][1], x[0][2])
+        elif len(group_by) - 1 == 3:
+            f = lambda x: (x[0][0], x[0][1], x[0][2], x[0][3])
         else:
             f = lambda x: x
         chunks = _chunks(sorted(data.items(), key=f), chunk_size)
@@ -117,7 +117,8 @@ class CareDataFormatter(DataFormatter):
             for value in chunk:
                 formatted_row = self._format.format_row(value[1])
                 if self.filter_row(value[0], formatted_row):
-                    yield [formatted_row[0]['html'], formatted_row[1]['html'], formatted_row[2]['html'], formatted_row[3]['html']]
+                    yield [formatted_row[0]['html'], formatted_row[1]['html'], formatted_row[2]['html'],
+                           formatted_row[3]['html']]
 
 
 class TableCardDataGroupsFormatter(DataFormatter):

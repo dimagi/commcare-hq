@@ -46,7 +46,6 @@ branches:
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
   - quickview # Simon 11/25
 #  - master+double-management # Nick P 12/31

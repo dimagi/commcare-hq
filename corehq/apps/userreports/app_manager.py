@@ -24,6 +24,7 @@ def get_default_case_property_datatypes():
 
 def get_case_data_source(app, case_type):
     default_case_property_datatypes = get_default_case_property_datatypes()
+
     def _make_indicator(property_name):
         return {
             "type": "raw",
@@ -40,9 +41,13 @@ def get_case_data_source(app, case_type):
         table_id=_clean_table_name(app.domain, case_type),
         display_name=case_type,
         configured_filter={
-            'type': 'property_match',
-            'property_name': 'type',
-            'property_value': case_type,
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "property_value": case_type
         },
         configured_indicators=[
             _make_indicator(property) for property in property_builder.get_properties(case_type)
@@ -119,10 +124,13 @@ def get_form_data_source(app, form):
         table_id=_clean_table_name(app.domain, form_name),
         display_name=form_name,
         configured_filter={
-            "type": "property_match",
-            "property_name": "xmlns",
-            "property_path": [],
-            "property_value": xform.data_node.tag_xmlns
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+            },
+            "property_value": xform.data_node.tag_xmlns,
         },
         configured_indicators=[
             _make_indicator(q) for q in questions

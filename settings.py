@@ -338,7 +338,10 @@ HQ_APPS = (
     'custom.up_nrhm',
 
     'custom.care_pathways',
+    'custom.common',
     'bootstrap3_crispy',
+
+    'custom.dhis2',
 )
 
 TEST_APPS = ()
@@ -708,6 +711,13 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+
+# DHIS2 config
+# Only required for DHIS2 API integration
+DHIS2_HOST = 'http://dhis2.changeme.com:8123/dhis'
+DHIS2_USERNAME = 'changeme'
+DHIS2_PASSWORD = 'changeme'
+DHIS2_ORG_UNIT = None  # Top org unit for CommCareHQ integration
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -1192,6 +1202,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecapPassagePillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.world_vision.models.WorldVisionMotherFluffPillow',

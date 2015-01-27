@@ -1,3 +1,4 @@
+from functools import wraps
 import json
 import inspect
 import logging
@@ -39,6 +40,7 @@ def json_error(f):
     Inspired by (and some parts shamelessly copied from)
     https://github.com/jsocol/django-jsonview
     """
+    @wraps(f)
     def inner(request, *args, **kwargs):
         try:
             response = f(request, *args, **kwargs)
