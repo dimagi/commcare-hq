@@ -310,10 +310,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         return self.request.couch_user.is_previewer()
 
     @property
-    def autocomplete_fields(self):
-        return ['project_type']
-
-    @property
     def can_use_custom_logo(self):
         return has_privilege(self.request, privileges.CUSTOM_BRANDING)
 
@@ -347,7 +343,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
         if self.can_user_see_meta:
             for attr in [
-                'project_type',
                 'customer_type',
                 'survey_management_enabled',
                 'secure_submissions',

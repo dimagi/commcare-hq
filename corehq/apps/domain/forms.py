@@ -58,10 +58,6 @@ logger = logging.getLogger(__name__)
 def tf_choices(true_txt, false_txt):
     return (('false', false_txt), ('true', true_txt))
 
-class SnapshotSettingsMixin(forms.Form):
-    project_type = CharField(label=ugettext_noop("Project Category"), required=False,
-        help_text=ugettext_noop("e.g. MCH, HIV, etc."))
-
 
 class ProjectSettingsForm(forms.Form):
     """
@@ -142,7 +138,7 @@ class SnapshotFixtureForm(forms.Form):
             'description',
         ]
 
-class SnapshotSettingsForm(SnapshotSettingsMixin):
+class SnapshotSettingsForm(forms.Form):
     title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
     project_type = CharField(label=ugettext_noop("Project Category"), required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc."))
@@ -422,7 +418,7 @@ class DomainGlobalSettingsForm(forms.Form):
         except Exception:
             return False
 
-class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
+class DomainMetadataForm(DomainGlobalSettingsForm):
     customer_type = ChoiceField(
         label=_("Customer Type"),
         choices=(('basic', _('Basic')),
@@ -484,7 +480,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not res:
             return False
         try:
-            domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test']
             domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
