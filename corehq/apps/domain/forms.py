@@ -529,9 +529,6 @@ def tuple_of_copies(a_list, blank=True):
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    commcare_edition = ChoiceField(label=ugettext_noop("CommCare Plan"), initial="community", required=False,
-                                   choices=tuple([(p, p) for p in
-                                                  ["community", "standard", "pro", "advanced", "enterprise"]]))
     services = ChoiceField(label=ugettext_noop("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
     initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
@@ -577,7 +574,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
-                'commcare_edition',
                 'initiative',
                 'workshop_region',
                 'self_started',
@@ -636,7 +632,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
-            commcare_edition=self.cleaned_data['commcare_edition'],
             services=self.cleaned_data['services'],
             initiative=self.cleaned_data['initiative'],
             self_started=self.cleaned_data['self_started'] == 'true',

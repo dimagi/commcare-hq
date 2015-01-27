@@ -1931,7 +1931,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'commcare_edition',
             'services',
             'initiative',
             'workshop_region',
