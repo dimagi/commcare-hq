@@ -2,19 +2,20 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from custom.common import ALL_OPTION
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
     slug = "filter_by"
     single_option_select = 0
-    template = "opm/drilldown_options.html"
+    template = "common/drilldown_options.html"
     label = ugettext_noop("Filter By")
 
     @property
     def drilldown_map(self):
-        options = [{"val": "0", "text": "All", "next": []}]
+        options = [{"val": ALL_OPTION, "text": "All", "next": []}]
         for program in Program.by_domain(self.domain):
-            products = [{"val": "0", "text": "All", "next": []}]
+            products = [{"val": ALL_OPTION, "text": "All", "next": []}]
             for product in SQLProduct.objects.filter(domain=self.domain, program_id=program.get_id):
                 products.append({"val": product.id, "text": product.name})
             options.append({"val": program.get_id, "text": program.name, "next": products})

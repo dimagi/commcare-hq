@@ -2,6 +2,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
 from couchexport.models import Format
+from custom.common import ALL_OPTION
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
 from dimagi.utils.decorators.memoized import memoized
@@ -146,11 +147,11 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
 
         if 'filter_by_program' in self.request.GET:
             program = self.request.GET.get('filter_by_program', '')
-            if program and program != '0':
+            if program and program != ALL_OPTION:
                 products_list = self.request.GET.getlist('filter_by_product')
-                if products_list and products_list[0] == '0':
+                if products_list and products_list[0] == ALL_OPTION:
                     products = SQLProduct.objects.filter(program_id=program).values_list('product_id', flat=True)
-                    prd_part_url = '&filter_by_product=0'
+                    prd_part_url = '&filter_by_product=%s' % ALL_OPTION
                 else:
                     products = [SQLProduct.objects.get(pk=product).product_id for product in products_list]
                     prd_part_url = "".join(["&filter_by_product=%s" % product for product in products_list])

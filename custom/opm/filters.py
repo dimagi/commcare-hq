@@ -1,3 +1,5 @@
+from custom.common import ALL_OPTION
+
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.columns import SimpleColumn
 
@@ -31,14 +33,14 @@ class HierarchySqlData(SqlData):
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
-    template = "opm/drilldown_options.html"
+    template = "common/drilldown_options.html"
 
     @property
     def selected(self):
         selected = super(OpmBaseDrilldownOptionFilter, self).selected
         if selected:
             return selected
-        return [["Atri"], ["0"]]
+        return [["Atri"], [ALL_OPTION]]
 
     @property
     def filter_context(self):
@@ -84,7 +86,7 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     @memoized
     def drilldown_map(self):
         def make_drilldown(hierarchy):
-            return [{"val": "0", "text": "All", "next": []}] + [{
+            return [{"val": ALL_OPTION, "text": "All", "next": []}] + [{
                 "val": current,
                 "text": current,
                 "next": make_drilldown(next_level) if next_level else []
@@ -114,7 +116,7 @@ class HierarchyFilter(OpmBaseDrilldownOptionFilter):
         selected = super(OpmBaseDrilldownOptionFilter, self).selected
         if selected:
             return selected
-        return [["0"]]
+        return [[ALL_OPTION]]
 
 
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):

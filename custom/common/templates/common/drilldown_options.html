@@ -35,10 +35,10 @@
 <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
 
 <script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
-<script type="text/javascript" src="{% static 'opm/ko/opm_report_filter.drilldown_options.js' %}"></script>
+<script type="text/javascript" src="{% static 'common/ko/report_filter.drilldown_options.js' %}"></script>
 <script type="text/javascript">
     $(function () {
-       $('#{{ css_id }}').opmdrilldownOptionFilter({
+       $('#{{ css_id }}').drilldownOptionFilter({
            drilldown_map: {{ option_map|JSON }},
            controls: {{ controls|JSON }},
            selected: {{ selected|JSON }},
