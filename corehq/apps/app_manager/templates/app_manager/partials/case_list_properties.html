@@ -1,20 +1,16 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{# TODO: Remove the useless classes from this thing #}
+
 <div>
     <table class="table table-condensed detail-screen-table">
         <thead>
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th class="detail-screen-icon"></th>
-                <th class="detail-screen-field" data-bind="
-                    text: {% block field_column_header %}DetailScreenConfig.message.FIELD{% endblock %}
-                "></th>
-                <th class="detail-screen-header" data-bind="
-                    text: {% block display_text_column_header %}DetailScreenConfig.message.HEADER{% endblock %}
-                "></th>
-                <th class="detail-screen-format" data-bind="
-                    text: {% block format_column_header %}DetailScreenConfig.message.FORMAT{% endblock %}
-                "></th>
+                <th class="detail-screen-field" data-bind="text: DetailScreenConfig.message.FIELD"></th>
+                <th class="detail-screen-header" data-bind="text: DetailScreenConfig.message.HEADER"></th>
+                <th class="detail-screen-format" data-bind="text: DetailScreenConfig.message.FORMAT"></th>
                 <th class="detail-screen-icon"></th>
             </tr>
         </thead>
@@ -30,67 +26,54 @@
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
-            ">
-                <td class="detail-screen-icon" data-bind="visible: $root.edit">
-                    <span class="sort-disabled" data-bind="ifnot: grip"></span>
-                    <i class="grip sortable-handle" data-bind="
-                        if: grip,
-                        css: COMMCAREHQ.icons.GRIP,
-                        style: {cursor: 'move'},
-                        event: {mousedown: function(){ $(':focus').blur(); }}
-                    "></i>
+        ">
+            <td class="detail-screen-icon" data-bind="visible: $root.edit">
+                <span class="sort-disabled" data-bind="ifnot: grip"></span>
+                <i class="grip sortable-handle" data-bind="
+                    if: grip,
+                    css: COMMCAREHQ.icons.GRIP,
+                    style: {cursor: 'move'},
+                    event: {mousedown: function(){ $(':focus').blur(); }}
+                "></i>
+            </td>
+
+            <!--ko if: !$data.isTab -->
+                <td class="detail-screen-field control-group"
+                    data-bind="css: {error: showWarning}">
+                    <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
+                    <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
+                    <div data-bind="visible: showWarning">
+                        <span class="help-inline" data-bind="
+                            text: DetailScreenConfig.field_format_warning_message
+                        ">
+                        <span/>
+                    </div>
                 </td>
 
-                {% block field_cell %}
-                <!--ko if: !$data.isTab -->
-                    <td class="detail-screen-field control-group"
-                        data-bind="css: {error: showWarning}">
-                        <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
-                        <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
-                        <div data-bind="visible: showWarning">
-                            <span class="help-inline" data-bind="
-                                text: DetailScreenConfig.field_format_warning_message
-                            ">
-                            <span/>
-                        </div>
-                    </td>
-                <!--/ko-->
-                {% endblock %}
+                <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
+                <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>
 
-                {% block display_text_cell %}
-                <!--ko if: !$data.isTab -->
-                    <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
-                <!--/ko-->
-                <!--ko if: $data.isTab -->
-                    <td colspan="3" data-bind="jqueryElement: header.ui"></td>
-                <!--/ko-->
-                {% endblock %}
+            <!--/ko-->
+            <!--ko if: $data.isTab -->
+                <td colspan="3" data-bind="jqueryElement: header.ui"></td>
+            <!--/ko-->
 
-                {% block format_cell %}
-                <!--ko if: !$data.isTab -->
-                    <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>
-                <!--/ko-->
-                {% endblock %}
-
-                {% block delete_icon_cell %}
-                <td class="detail-screen-icon">
-                    <i style="cursor: pointer;"
-                       data-bind="
-                        visible: $root.edit && ($parent.columns().length > 1),
-                        click: function(){screen.columns.remove($data);},
-                        css: COMMCAREHQ.icons.DELETE,
-                        attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
-                    "></i>
-                </td>
-                {% endblock %}
-            {# there must be no whitespace between <tbody> and <tr> #}
-            {# the .hide().fadeIn() will fail badly on FireFox #}
-            </tr></tbody>
+            <td class="detail-screen-icon">
+                <i style="cursor: pointer;"
+                   data-bind="
+                    visible: $root.edit && ($parent.columns().length > 1),
+                    click: function(){screen.columns.remove($data);},
+                    css: COMMCAREHQ.icons.DELETE,
+                    attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
+                "></i>
+            </td>
+        {# there must be no whitespace between <tbody> and <tr> #}
+        {# the .hide().fadeIn() will fail badly on FireFox #}
+        </tr></tbody>
         <tbody>
             <tr>
                 <td></td>
                 <td colspan="4">
-                    {% block add_property_button %}
                     <div class="btn-group">
                         <button class="btn add-property-item" data-bind="click: addProperty">Add Property</button>
                         {% if request|feature_preview_enabled:'CALC_XPATHS' or request|toggle_enabled:'GRAPH_CREATION' %}
@@ -113,13 +96,8 @@
                         </ul>
                         {% endif %}
                     </div>
-                    {% endblock %}
                 </td>
             </tr>
         </tbody>
     </table>
-
-    {% block post_table_content %}
-    {% endblock %}
-
 </div>

@@ -1,56 +1,72 @@
-{% extends "app_manager/partials/case_list_properties.html" %}
+{% load i18n %}
 
-{% block field_column_header %}'Property'{% endblock %}
-{% block display_text_column_header %}'Display Text'{% endblock %}
-{% block format_column_header %}'Format'{% endblock %}
+{% comment %}
+TODO:
+- Move the fade stuff into an option for the `sortable` binding.
+- The span1's don't give the best look...
+- Move grip and delete icons into their own widgets/templates
+{% endcomment%}
 
-{% block field_cell %}
-    <td class="detail-screen-field control-group">
-        <div class="app-designer-input">
+
+{# Is it bad to inline this style? #}
+<table id="properties-table" class="table table-condensed" style="display: inline-block">
+
+    <thead>
+        <tr>
+            <th></th>
+            <th>{% trans "Property" %}</th>
+            <th>{% trans "Display Text" %}</th>
+            <th>{% trans "Format" %}</th>
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody data-bind="sortable: {
+        data: columns,
+        afterAdd: function (elem) { $(elem).hide().fadeIn() },
+        beforeRemove: function (elem) { $(elem).fadeOut() }
+    }"
+    {# there must be no whitespace between <tbody> and <tr> #}
+    {# the .hide().fadeIn() will fail badly on FireFox #}
+    ><tr data-bind="attr: {'data-order': _sortableOrder}">
+        <td class="span1">
+            <i class="grip sortable-handle" style="cursor: move;" data-bind="
+                css: COMMCAREHQ.icons.GRIP
+            "></i>
+        </td>
+
+        <td class="control-group">
             <input type="text" data-bind="select2: $parent.propertyOptions, value: property">
-        </div>
-    </td>
-{% endblock %}
-
-{% block display_text_cell %}
-    <td class="detail-screen-field control-group">
-        <div class="app-designer-input">
+        </td>
+        <td class="control-group">
             <input type="text" data-bind="value: displayText">
-        </div>
-    </td>
-{% endblock %}
+        </td>
+        <td>
+            <select data-bind="options: $parent.formatOptions, value: format"></select>
+        </td>
 
-{% block format_cell %}
-    <td>
-        <select data-bind="
-            options: $parent.formatOptions,
-            value: format
-        "></select>
-    </td>
-{% endblock %}
-
-{% block delete_icon_cell %}
-    <td class="detail-screen-icon">
-        <i style="cursor: pointer;"
-           title="Delete"
-           data-bind="
-            visible: $root.edit,
-            click: function(){$parent.columns.remove($data)},
-            css: COMMCAREHQ.icons.DELETE
-        "></i>
-    </td>
-{% endblock %}
-
-{% block add_property_button %}
-    <button class="btn add-property-item" data-bind="
-        click: function(){columns.push(new PropertyListItem());}
-    ">
-        Add Property
-    </button>
-{% endblock %}
-
-{% block post_table_content %}
-    <input name="sort_properties" type="hidden" data-bind="
-        value: serializedSortProperties
-    ">
-{% endblock %}
+        <td class="span1">
+            <i style="cursor: pointer;"
+               title="Delete"
+               data-bind="
+                click: function(){$parent.columns.remove($data)},
+                css: COMMCAREHQ.icons.DELETE
+            "></i>
+        </td>
+    {# there must be no whitespace between <tbody> and <tr> #}
+    {# the .hide().fadeIn() will fail badly on FireFox #}
+    </tr></tbody>
+    <tbody>
+        <tr>
+            <td></td>
+            <td colspan="4">
+                <button class="btn" data-bind="
+                    click: function(){columns.push(new PropertyListItem());}
+                ">
+                    Add Property
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<input name="sort_properties" type="hidden" data-bind="value: serializedSortProperties">
