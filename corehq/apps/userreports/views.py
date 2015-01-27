@@ -136,9 +136,12 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
 
     def post(self, *args, **kwargs):
         if self.configure_bar_chart_builder_form.is_valid():
-            config_id = self.configure_bar_chart_builder_form.create_report_from_form()
+            report_configuration = self.configure_bar_chart_builder_form.create_report_from_form()
             return HttpResponseRedirect(
-                reverse(ConfigurableReport.slug, args=[self.domain, config_id])
+                reverse(
+                    ConfigurableReport.slug,
+                    args=[self.domain, report_configuration._id]
+                )
             )
         return self.get(*args, **kwargs)
 

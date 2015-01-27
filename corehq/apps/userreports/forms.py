@@ -156,7 +156,8 @@ class ConfigureBarChartBuilderForm(forms.Form):
                 _make_indicator(cp) for cp in self.case_properties
             ],
         )
-        print data_source_config._id
+        data_source_config.save()
+
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config._id,
