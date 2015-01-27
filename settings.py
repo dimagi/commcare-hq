@@ -1192,6 +1192,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecapPassagePillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
