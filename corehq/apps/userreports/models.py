@@ -115,6 +115,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             ]
         )
 
+    @property
+    def parsed_expression(self):
+        if self.base_item_expression:
+            return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
+        return None
+
     def get_columns(self):
         return self.indicators.get_columns()
 
@@ -123,9 +129,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             if not self.base_item_expression:
                 return [document]
             else:
-                parsed_expression = ExpressionFactory.from_spec(self.base_item_expression,
-                                                                context=self.named_filter_objects)
-                result = parsed_expression(document)
+                result = self.parsed_expression(document)
                 if result is None:
                     return []
                 elif isinstance(result, list):
@@ -144,6 +148,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         # these two properties implicitly call other validation
         self.filter
         self.indicators
+        self.parsed_expression
 
     @classmethod
     def by_domain(cls, domain):
