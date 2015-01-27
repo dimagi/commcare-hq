@@ -551,15 +551,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text=_("Date that the project went live (usually right after training).")
     )
-    project_manager = CharField(label=ugettext_noop("Project Manager's Email"), required=False)
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
         required=False,
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
-    goal_time_period = IntegerField(label=ugettext_noop("Goal time period (in days)"), required=False)
-    goal_followup_rate = DecimalField(label=ugettext_noop("Goal followup rate (percentage in decimal format. e.g. 70% is .7)"), required=False)
     commtrack_domain = ChoiceField(
         label=ugettext_noop("Supply Chain Enabled"),
         choices=tf_choices('Yes', 'No'),
@@ -583,10 +580,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'notes',
                 'phone_model',
                 'deployment_date',
-                'project_manager',
                 'restrict_superusers',
-                'goal_time_period',
-                'goal_followup_rate',
                 'commtrack_domain',
             ),
             crispy.Fieldset(
@@ -640,10 +634,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             using_adm=self.cleaned_data['using_adm'] == 'true',
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
-            project_manager=self.cleaned_data['project_manager'],
             phone_model=self.cleaned_data['phone_model'],
-            goal_time_period=self.cleaned_data['goal_time_period'],
-            goal_followup_rate=self.cleaned_data['goal_followup_rate'],
             commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
             **kwargs
         )

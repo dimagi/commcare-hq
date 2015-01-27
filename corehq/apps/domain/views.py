@@ -1940,10 +1940,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'notes',
             'self_started',
             'using_adm',
-            'project_manager',
             'phone_model',
-            'goal_time_period',
-            'goal_followup_rate',
             'commtrack_domain',
         ]
         if can_edit_eula:
