@@ -1100,21 +1100,23 @@ class Subscription(models.Model):
 
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):
-        try:
-            active_subscriptions = cls.objects.filter(subscriber=subscriber, is_active=True)
-            if active_subscriptions.count() > 1:
-                logger.error(
-                    "[BILLING] "
-                    "There seem to be multiple ACTIVE subscriptions for the "
-                    "subscriber %s. Odd, right? The latest one by "
-                    "date_created was used, but consider this an issue."
-                    % subscriber
-                )
-            current_subscription = active_subscriptions.latest('date_created')
-            return current_subscription.plan_version, current_subscription
-        except Subscription.DoesNotExist:
-            pass
-        return None, None
+        active_subscriptions = cls.objects\
+            .filter(subscriber=subscriber, is_active=True)\
+            .order_by('-date_created')[:2]
+
+        if not active_subscriptions:
+            return None, None
+
+        if len(active_subscriptions) > 1:
+            logger.error(
+                "[BILLING] "
+                "There seem to be multiple ACTIVE subscriptions for the "
+                "subscriber %s. Odd, right? The latest one by "
+                "date_created was used, but consider this an issue."
+                % subscriber
+            )
+        current_subscription = active_subscriptions[0]
+        return current_subscription.plan_version, current_subscription
 
     @classmethod
     def get_subscribed_plan_by_organization(cls, organization):
