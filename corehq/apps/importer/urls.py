@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('corehq.apps.importer.views',
     url(r'^excel/config/$', 'excel_config', name='excel_config'),

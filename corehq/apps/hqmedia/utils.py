@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.xform import XFormValidationError, XFormError
+from corehq.apps.app_manager.xform import XFormValidationError, XFormException
 from corehq.apps.domain.models import LICENSES
 
 MULTIMEDIA_PREFIX = "jr://file/"
@@ -45,7 +45,7 @@ def get_application_media(app):
                 for audio in parsed.audio_references:
                     if audio:
                         form_media['audio'].add(audio.strip())
-            except (XFormValidationError, XFormError):
+            except (XFormValidationError, XFormException):
                 form_errors = True
 
     return {

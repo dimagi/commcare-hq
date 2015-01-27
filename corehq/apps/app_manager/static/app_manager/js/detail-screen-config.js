@@ -472,10 +472,6 @@ var DetailScreenConfig = (function () {
             this.format.$edit_view.on("change", function(event){
                 ga_track_event('Case List Config', 'Display Format', event.target.value);
             });
-
-            this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
-                that.screen.columns.remove(that);
-            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
         }
 
         Column.init = function (col, screen) {

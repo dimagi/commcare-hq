@@ -150,7 +150,6 @@ def post(request, domain):
     msg.save()
     return HttpResponse('OK')
 
-@requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 @require_api_user_permission(PERMISSION_POST_SMS)
 def sms_in(request):
     """
@@ -301,7 +300,7 @@ def send_to_recipients(request, domain):
     )
 
 @domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+@requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
@@ -956,7 +955,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 'template': 'gateway-automatic-template',
             }
         elif self.domain_object.default_sms_backend_id:
-            default_backend = SMSBackend.get(self.domain_object.default_sms_backend_id)
+            default_backend = SMSBackend.get_wrapped(self.domain_object.default_sms_backend_id)
             yield {
                 'itemData': self._fmt_backend_data(default_backend),
                 'template': 'gateway-default-template',
@@ -974,6 +973,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return get_available_backends()
 
     def _fmt_backend_data(self, backend):
+        is_editable = not backend.is_global and backend.domain == self.domain
         return {
             'id': backend._id,
             'name': backend.name,
@@ -981,8 +981,10 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
-            ) if not backend.is_global else "",
-            'canDelete': not backend.is_global,
+            ) if is_editable else "",
+            'canDelete': is_editable,
+            'isGlobal': backend.is_global,
+            'isShared': not backend.is_global and backend.domain != self.domain,
             'deleteModalId': 'delete_%s' % backend._id,
         }
 
@@ -991,7 +993,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
             backend = SMSBackend.get(item_id)
         except ResourceNotFound:
             raise Http404()
-        if backend.domain != self.domain or backend.base_doc != "MobileBackend":
+        if (backend.is_global or backend.domain != self.domain or
+            backend.base_doc != "MobileBackend"):
             raise Http404()
         if self.domain_object.default_sms_backend_id == backend._id:
             self.domain_object.default_sms_backend_id = None
@@ -1004,6 +1007,9 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         }
 
     def refresh_item(self, item_id):
+        backend = SMSBackend.get_wrapped(item_id)
+        if not backend.domain_is_authorized(self.domain):
+            raise Http404()
         if self.domain_object.default_sms_backend_id == item_id:
             self.domain_object.default_sms_backend_id = None
         else:
@@ -1032,6 +1038,10 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     page_title = ugettext_noop("Add SMS Connection")
 
     @property
+    def is_superuser(self):
+        return self.request.couch_user.is_superuser
+
+    @property
     def backend_class_name(self):
         return self.kwargs.get('backend_class_name')
 
@@ -1039,11 +1049,16 @@ class AddDomainGatewayView(BaseMessagingSectionView):
     def ignored_fields(self):
         return [
             'give_other_domains_access',
+            'phone_numbers',
         ]
 
     @property
     @memoized
     def backend_class(self):
+        # Superusers can create/edit any backend
+        # Regular users can only create/edit Telerivet backends for now
+        if not self.is_superuser and self.backend_class_name != "TelerivetBackend":
+            raise Http404()
         backend_classes = get_available_backends()
         try:
             return backend_classes[self.backend_class_name]
@@ -1101,7 +1116,9 @@ class AddDomainGatewayView(BaseMessagingSectionView):
             for key, value in self.backend_form.cleaned_data.items():
                 if key not in self.ignored_fields:
                     setattr(self.backend, key, value)
-                self.backend.save()
+            if self.use_load_balancing:
+                self.backend.x_phone_numbers = self.backend_form.cleaned_data["phone_numbers"]
+            self.backend.save()
             return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
@@ -1126,7 +1143,9 @@ class EditDomainGatewayView(AddDomainGatewayView):
             backend = self.backend_class.get(self.backend_id)
         except ResourceNotFound:
             raise Http404()
-        if backend.domain != self.domain:
+        if backend.is_global or backend.domain != self.domain:
+            raise Http404()
+        if backend.doc_type != self.backend_class_name:
             raise Http404()
         return backend
 
@@ -1142,6 +1161,9 @@ class EditDomainGatewayView(AddDomainGatewayView):
                 else:
                     initial[field.name] = getattr(self.backend, field.name, None)
             initial['give_other_domains_access'] = len(self.backend.authorized_domains) > 0
+            if self.use_load_balancing:
+                initial["phone_numbers"] = json.dumps(
+                    [{"phone_number": p} for p in self.backend.phone_numbers])
         if self.request.method == 'POST':
             form = form_class(self.request.POST, initial=initial,
                               button_text=self.button_text)

@@ -7,7 +7,6 @@ import io
 from PIL import Image
 import uuid
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import UNUSABLE_PASSWORD
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -43,6 +42,12 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
+import django
+
+if django.VERSION < (1, 6):
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
+else:
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -704,7 +709,7 @@ class HQPasswordResetForm(PasswordResetForm):
         if not any(user.is_active for user in self.users_cache):
             # none of the filtered users are active
             raise forms.ValidationError(self.error_messages['unknown'])
-        if any((user.password == UNUSABLE_PASSWORD)
+        if any((user.password == UNUSABLE_PASSWORD_PREFIX)
                for user in self.users_cache):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email

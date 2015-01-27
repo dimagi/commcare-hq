@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, url, include
+from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls

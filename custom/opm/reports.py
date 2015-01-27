@@ -47,7 +47,7 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (HierarchyFilter, MetHierarchyFilter,
+from .filters import (get_hierarchy, HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -517,7 +517,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                 keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and
                         user.user_data['gp'] and user.user_data['gp'] in keys]
             if keys and value not in keys:
-                raise InvalidRow
+                raise InvalidRow("Case does not match filters")
 
     @property
     def filter_fields(self):
@@ -697,6 +697,8 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
+        # TODO for consistency, we could always filter on awc using
+        # get_matching_awcs from the NewHealthStatusReport
         if self.awcs:
             query = query.filter(get_awc_filter(self.awcs))
         elif self.gp:
@@ -768,12 +770,12 @@ class CaseReportMixin(object):
                 case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
                 if field == 'is_open':
                     if case_key != (keys == 'closed'):
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
                 else:
                     if field == 'gp':
                         keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
                     if case_key not in keys:
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
 
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
@@ -823,6 +825,36 @@ class MetReport(CaseReportMixin, BaseReport):
     default_rows = 5
     ajax_pagination = True
     cache_key = 'opm-report'
+
+    @property
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
+        rows = []
+        self._debug_data = []
+        for index, row in enumerate(self.get_rows(self.datespan), 1):
+            try:
+                rows.append(self.get_row_data(row, index=index))
+            except InvalidRow as e:
+                if self.debug:
+                    import sys
+                    import traceback
+                    type, exc, tb = sys.exc_info()
+                    self._debug_data.append({
+                        'case_id': row._id,
+                        'message': e,
+                        'traceback': ''.join(traceback.format_tb(tb)),
+                    })
+        return rows
+
+    def get_row_data(self, row, **kwargs):
+        return self.model(row, self, child_index=kwargs.get('index', 0))
+
+    def get_rows(self, datespan):
+        result = super(MetReport, self).get_rows(datespan)
+        result.sort(key=lambda case: [case.block_name, case.village_name, case.awc_name])
+        return result
 
     @property
     def redis_key(self):
@@ -876,9 +908,14 @@ class MetReport(CaseReportMixin, BaseReport):
         for row in rows:
             del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
-            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            link_text = re.search('<a href=.*>(.*)</a>', row[self.column_index('name')])
             if link_text:
-                row[0] = link_text.group(1)
+                row[self.column_index('name')] = link_text.group(1)
+            with localize('hin'):
+                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
+
+        if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
+            rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])
 
         self.context['report_table'].update(
             rows=rows
@@ -909,9 +946,6 @@ class MetReport(CaseReportMixin, BaseReport):
             rows.sort(key=lambda x: x[col_id], reverse=True)
         self._store_rows_in_redis(rows)
 
-        for i, row in enumerate(rows):
-            row[self.column_index('serial_number')] = i + 1
-
         if not self.is_rendered_as_email:
             return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
         else:
@@ -934,7 +968,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     # report_template_path = "opm/hsr_report.html"
     model = AWCHealthStatus
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
 
     @property
@@ -944,11 +978,20 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
+    def get_matching_awcs(self):
+        filter_on = 'awc' if self.awcs else 'gp' if self.gp else 'block'
+        for block, gps in get_hierarchy().items():
+            if not filter_on == 'block' or block == self.block:
+                for gp, awcs in gps.items():
+                    if not filter_on == 'gp' or gp in self.gp:
+                        for awc in awcs.keys():
+                            if not filter_on == 'awc' or awc in self.awcs:
+                                yield awc
+
     def awc_data(self):
-        # TODO use all awcs, not just ones with data
         case_objects = self.row_objects + self.extra_row_objects
-        # Consolidate rows with the same awc
-        awcs = {}
+        awcs = {awc: [] for awc in self.get_matching_awcs()}
+        # populate awcs with cases from that awc
         for case_object in case_objects:
             awc = case_object.awc_name
             awcs[awc] = awcs.get(awc, []) + [case_object]
@@ -956,14 +999,31 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 
     @property
     def rows(self):
-        for awc in map(AWCHealthStatus, self.awc_data().values()):
-            yield [self.format_cell(getattr(awc, method),
-                                    getattr(awc, denom))
-                   for method, _, _, denom in self.model.method_map]
+
+        totals = [[None, None] for i in range(len(self.model.method_map))]
+        def add_to_totals(col, val, denom):
+            for i, num in enumerate([val, denom]):
+                if isinstance(num, int):
+                    total = totals[col][i]
+                    totals[col][i] = total + num if total is not None else num
+
+        rows = []
+        for awc in [AWCHealthStatus(awc, cases)
+                    for awc, cases in self.awc_data().items()]:
+            row = []
+            for col, (method, __, __, denom) in enumerate(self.model.method_map):
+                val = getattr(awc, method)
+                denominator = getattr(awc, denom)
+                row.append(self.format_cell(val, denominator))
+                add_to_totals(col, val, denominator)
+            rows.append(row)
+
+        self.total_row = [self.format_cell(v, d) for v, d in totals]
+        return rows
 
     def format_cell(self, val, denom):
         if denom is None:
-            return val
+            return val if val is not None else ""
         pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
         return "{} / {}{}".format(val, denom, pct)
 
@@ -1060,7 +1120,7 @@ class IncentivePaymentReport(BaseReport):
                 break
         return UsersIdsData(config=config).get_data()
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
         form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
@@ -1214,7 +1274,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
     def get_rows(self, dataspan):
         return self.es_results['hits'].get('hits', [])
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         def empty_health_status(row):
             model = HealthStatus()
             model.awc = row['_source']['user_data']['awc']
@@ -1232,7 +1292,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             else:
                 return empty_health_status(row)
         else:
-            raise InvalidRow
+            raise InvalidRow("AWC not found for case")
 
     @property
     def fixed_cols_spec(self):

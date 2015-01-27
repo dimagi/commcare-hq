@@ -335,7 +335,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
                 row_sum = sum(row)
                 row = (
                     [self.get_user_link(user)] +
-                    [self.table_cell(row_data) for row_data in row] +
+                    [self.table_cell(row_data, zerostyle=True) for row_data in row] +
                     [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
                 )
                 totals = [totals[i] + col.get('sort_key')
@@ -552,8 +552,9 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             counts_by_date.get(date.strftime(DATE_FORMAT), 0)
             for date in self.dates
         ]
+        styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
-        return [first_col] + date_cols + [sum(date_cols)]
+        return [first_col] + styled_date_cols + [sum(date_cols)]
 
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,

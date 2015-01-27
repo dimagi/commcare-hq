@@ -138,7 +138,7 @@ class OPMCaseRow(object):
             return 'pregnant'
         else:
             # no dates, not valid
-            raise InvalidRow()
+            raise InvalidRow("Case doesn't specify an EDD or DOD.")
 
     @property
     @memoized
@@ -231,7 +231,7 @@ class OPMCaseRow(object):
 
     def set_case_properties(self):
         if self.child_age is None and self.preg_month is None:
-            raise InvalidRow
+            raise InvalidRow("Window not found")
 
         if self.window > 14:
             raise InvalidRow(_('Child is past window 14 (was {}'.format(self.window)))
@@ -257,7 +257,7 @@ class OPMCaseRow(object):
         self.account_number = unicode(account) if account else ''
         # fake cases will have accounts beginning with 111
         if re.match(r'^111', self.account_number):
-            raise InvalidRow
+            raise InvalidRow("Account begins with 111, assuming test case")
 
     @property
     def closed_date(self):
@@ -671,6 +671,7 @@ class OPMCaseRow(object):
 
 class ConditionsMet(OPMCaseRow):
     method_map = [
+        ('serial_number', _("Serial number"), True),
         ('name', _("List of Beneficiaries"), True),
         ('awc_name', _("AWC Name"), True),
         ('block_name', _("Block Name"), True),
@@ -690,12 +691,11 @@ class ConditionsMet(OPMCaseRow):
         ('closed_date', _("Closed On"), True),
         ('payment_last_month', _("Payment amount received last month"), True),
         ('cash_received_last_month', _("Cash received last month (Yes/No)"), True),
-        ('serial_number', _("Serial number"), True),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
-        self.serial_number = 0
+        self.serial_number = child_index
         self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         if self.status == 'mother':
@@ -767,6 +767,6 @@ class Beneficiary(OPMCaseRow):
 
         # Show only cases that require payment
         if self.total_cash == 0:
-            raise InvalidRow
+            raise InvalidRow("Case does not require payment")
 
         self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0

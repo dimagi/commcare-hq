@@ -187,7 +187,7 @@ DEFAULT_APPS = (
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'django.contrib.markup',
+    'markup_deprecated',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
@@ -501,6 +501,10 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 
 # celery
 BROKER_URL = 'django://'  # default django db based
+
+from settingshelper import celery_failure_handler
+
+CELERY_ANNOTATIONS = {'*': {'on_failure': celery_failure_handler}}
 
 CELERY_MAIN_QUEUE = 'celery'
 
@@ -1309,6 +1313,7 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
+    'stock-status-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
