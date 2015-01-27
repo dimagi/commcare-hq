@@ -542,7 +542,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     area = ChoiceField(label=ugettext_noop("Sector"), required=False, choices=tuple_of_copies(AREA_CHOICES))
     sub_area = ChoiceField(label=ugettext_noop("Sub-Sector"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
     using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
-    using_call_center = ChoiceField(label=ugettext_noop("Using Call Center?"), choices=tf_choices('Yes', 'No'), required=False)
     organization_name = CharField(
         label=ugettext_noop("Organization Name"),
         required=False,
@@ -584,7 +583,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'self_started',
                 'area',
                 'sub_area',
-                'using_call_center',
                 'organization_name',
                 'notes',
                 'phone_model',
@@ -645,7 +643,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             area=self.cleaned_data['area'],
             sub_area=self.cleaned_data['sub_area'],
             using_adm=self.cleaned_data['using_adm'] == 'true',
-            using_call_center=self.cleaned_data['using_call_center'] == 'true',
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
             project_manager=self.cleaned_data['project_manager'],

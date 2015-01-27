@@ -1941,7 +1941,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'notes',
             'self_started',
             'using_adm',
-            'using_call_center',
             'project_manager',
             'phone_model',
             'goal_time_period',
