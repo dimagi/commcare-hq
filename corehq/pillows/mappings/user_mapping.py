@@ -1,4 +1,4 @@
-USER_INDEX="hqusers_31n2pdyzqix4hd023lv6h67771c7wer"
+USER_INDEX="hqusers_31n2pdyzqix4hd023lv6h67771c7wes"
 USER_MAPPING={'_all': {'analyzer': 'standard'},
  '_meta': {'comment': 'Yedi modified on 2013-01-27',
            'created': None},
@@ -52,7 +52,8 @@ USER_MAPPING={'_all': {'analyzer': 'standard'},
                                                      'is_admin': {'type': 'boolean'},
                                                      'override_global_tz': {'type': 'boolean'},
                                                      'role_id': {'type': 'string'},
-                                                     'timezone': {'type': 'string'}},
+                                                     'timezone': {'type': 'string'},
+                                                     'location_id': {'type': 'string'}},
                                       'type': 'object'},
                 'email_opt_out': {'type': 'boolean'},
                 'eulas': {'dynamic': False,
