@@ -1,12 +1,10 @@
 from datetime import datetime
 import re
 from django.contrib import messages
-from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.aggregates import Count
-from django.db.models.query_utils import Q
 from django.http.response import Http404
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
