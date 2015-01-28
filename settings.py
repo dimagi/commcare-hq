@@ -178,7 +178,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -309,6 +308,8 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
+    'mvp_docs',
+    'mvp_indicators',
     'custom.opm',
     'pathfinder',
     'pathindia',
@@ -935,6 +936,13 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
         **db_settings
     )
 
+MVP_INDICATOR_DB = 'mvp-indicators'
+
+INDICATOR_CONFIG = {
+    "mvp-sauri": ['mvp_indicators'],
+    "mvp-potou": ['mvp_indicators'],
+}
+
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
@@ -1020,6 +1028,7 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
+    ('mvp_docs', MVP_INDICATOR_DB),
     'pathfinder',
     'pathindia',
     'pact',
@@ -1147,11 +1156,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
-INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
-}
-
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
@@ -1221,6 +1225,10 @@ PILLOWTOPS = {
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
         'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+    ],
+    'mvp_indicators': [
+        'mvp_docs.pillows.MVPFormIndicatorPillow',
+        'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
 }
 
