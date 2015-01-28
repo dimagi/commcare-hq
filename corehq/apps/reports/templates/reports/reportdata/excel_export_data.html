@@ -198,7 +198,9 @@
             <th>{% trans "Form" %}</th>
             <th>{% trans "Custom Export" %}</th>
             <th>{% trans "Download" %}</th>
+            {% if exports_has_media %}
             <th>{% trans "Download Multimedia" %}</th>
+            {% endif %}
             <th>{% trans "Total Submissions" %}</th>
             <th>
                 {% trans "Add to Bulk Export" %} <i class="bulk-export-info icon-white icon-info-sign"></i>
@@ -313,6 +315,7 @@
                         {% trans "No Forms" %}
                     {% endif %}
                 </td>
+                {% if exports_has_media %}
                 <td class="cell-vertical-centered">
                     {% if form.size %}
                         {% if form.app.id %}
@@ -328,6 +331,7 @@
                         <span class="label">{% trans "No Multimedia" %}</span>
                     {% endif %}
                 </td>
+                {% endif %}
                 <td>
                     {{ form.submissions }} {% if form.submissions %}
                     <i class="icon-info-sign all-users-all-time">
