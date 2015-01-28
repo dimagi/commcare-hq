@@ -178,7 +178,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
