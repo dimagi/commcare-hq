@@ -68,6 +68,8 @@ def sync_org_units():
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
+    if not settings.DHIS2_ENABLED:
+        return
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     # TODO: Is it a bad idea to read all org units into dictionaries and sync them ...
     their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units()}
@@ -292,6 +294,8 @@ def sync_child_entities():
     Create new child cases for nutrition tracking in CommCare or associate
     already-registered child cases with DHIS2 child entities.
     """
+    if not settings.DHIS2_ENABLED:
+        return
     children = get_children_only_theirs()
     pull_child_entities(DOMAIN, children)
 
@@ -310,6 +314,8 @@ def send_nutrition_data():
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
 
     """
+    if not settings.DHIS2_ENABLED:
+        return
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     nutrition_id = dhis2_api.get_program_id('Pediatric Nutrition Assessment')
     xforms = []
