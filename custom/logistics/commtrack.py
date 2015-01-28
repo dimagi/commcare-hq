@@ -70,6 +70,8 @@ def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id
         if not supply_point:
             return
         checkpoint.location = supply_point.location.sql_location
+    else:
+        checkpoint.location = None
     if commit:
         checkpoint.save()
 
