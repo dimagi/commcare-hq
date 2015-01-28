@@ -22918,8 +22918,8 @@ msgstr "माँ"
 msgid "Payment amount received last month"
 msgstr "भुगतान राशि पिछले महीने प्राप्त"
 
-msgid "Cash received last month (Yes/No)"
-msgstr "पिछले महीने भुगतान प्राप्त (हाँ/नही)"
+msgid "Cash received last month"
+msgstr "पिछले महीने भुगतान प्राप्त"
 
 #, fuzzy
 #~ msgid "Case Display Properties"
