@@ -181,6 +181,42 @@ class AWCHealthStatus(object):
          _("Child Weighing Machine"),
         _("Child weighing machine available at vhnd"),
          'no_denom'),
+        ('ifa_stock_available',
+         _("Stock of IFA tablets"),
+         _("AWC has enough Stock of IFA tablets"),
+         'no_denom'),
+        ('ors_stock_available',
+         _("Stock of ORS packets"),
+         _("AWC has enough Stock of ORS packets"),
+         'no_denom'),
+        ('zinc_stock_available',
+         _("Stock of ZINC tablets"),
+         _("AWC has enough Stock of ZINC tablets"),
+         'no_denom'),
+        ('measles_stock_available',
+         _("Stock of Measles Vaccine"),
+         _("AWC has enough Stock of Measles Vaccine"),
+         'no_denom'),
+        ('birth_spacing_bonus',
+         _("Eligilble for Birth Spacing bonus"),
+         _("Number of Beneficiaries eligilble for Birth Spacing bonus"),
+         'beneficiaries'),
+        ('nutritional_bonus',
+         _("Eligilble for Nutritional status bonus"),
+         _("Number of Beneficiaries eligilble for Nutritional status bonus"),
+         'beneficiaries'),
+        ('closed_pregnants',
+         _("Pregnants closed this month"),
+         _("Number of Pregnant women closed this month"),
+         'beneficiaries'),
+        ('closed_mothers',
+         _("Mothers closed this month"),
+         _("Number of Mothers closed this month"),
+         'mothers'),
+        ('closed_children',
+         _("Children closed this month"),
+         _("Number of Children closed this month"),
+         'children'),
         # ('',
          # _(""),
         # _(""),
@@ -320,3 +356,40 @@ class AWCHealthStatus(object):
     @property
     def child_scale(self):
         return self.service_available('vhnd_child_scale_available')
+
+    @property
+    def ifa_stock_available(self):
+        return self.service_available('ifa_available')
+
+    @property
+    def ors_stock_available(self):
+        return self.service_available('ors_available')
+
+    @property
+    def zinc_stock_available(self):
+        return self.service_available('zn_available')
+
+    @property
+    def measles_stock_available(self):
+        return self.service_available('measles_vacc_available')
+
+    @property
+    def birth_spacing_bonus(self):
+        return len([c for c in self.all_cases if c.birth_spacing_years])
+
+    @property
+    def nutritional_bonus(self):
+        return len([c for c in self.all_cases if c.weight_grade_normal])
+
+    @property
+    def closed_pregnants(self):
+        return len([c for c in self.all_cases if c.status == 'pregnant' and c.closed_in_reporting_month])
+
+    @property
+    def closed_mothers(self):
+        return len([c for c in self.primary_cases if c.status == 'mother' and c.closed_in_reporting_month])
+
+    @property
+    def closed_children(self):
+        return len([c.num_children for c in self.primary_cases if c.status == 'mother' and c.closed_in_reporting_month])
+
