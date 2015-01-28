@@ -14,33 +14,32 @@
                ng-show="showItemList()"></i>
             <i class="fa fa-spinner fa-spin fa-5x" ng-show="showSpinner()"></i>
             <div class="list-group" ng-show="showItemList()">
-                {% if item.secondary_url and item.secondary_url_icon %}
                     <div class="list-group-item"
-                    data-ng-repeat="item in paginatedItems"
-                    popover-placement="right"
-                    popover-title="{{ item.name_full }}"
-                    popover="{{ item.description }}"
-                    popover-trigger="mouseenter"
-                    track-analytics=""
-                    title="">
+                         data-ng-repeat="item in paginatedItems"
+                         data-ng-if="item.secondary_url"
+                         popover-placement="right"
+                         popover-title="{{ item.name_full }}"
+                         popover="{{ item.description }}"
+                         popover-trigger="mouseenter"
+                         track-analytics=""
+                         title="">
                         <a href="{{ item.url }}">{{ item.name }}</a>
                         <a class="list-group-item-icon" href="{{ item.secondary_url }}">
                             <i class="{{ item.secondary_url_icon }}"></i>
                         </a>
                     </div>
-                {% else %}
                     <a class="list-group-item"
-                    href="{{ item.url }}"
-                    data-ng-repeat="item in paginatedItems"
-                    popover-placement="right"
-                    popover-title="{{ item.name_full }}"
-                    popover="{{ item.description }}"
-                    popover-trigger="mouseenter"
-                    track-analytics=""
-                    title="">
+                       href="{{ item.url }}"
+                       data-ng-repeat="item in paginatedItems"
+                       data-ng-if="!item.secondary_url"
+                       popover-placement="right"
+                       popover-title="{{ item.name_full }}"
+                       popover="{{ item.description }}"
+                       popover-trigger="mouseenter"
+                       track-analytics=""
+                       title="">
                         {{ item.name }}
                     </a>
-                {% endif %}
             </div>
             <pagination direction-links="true"
                         total-items="total"
