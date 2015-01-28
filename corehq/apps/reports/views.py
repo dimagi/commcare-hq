@@ -593,15 +593,15 @@ def normalize_hour(hour):
     return (hour, day_change)
 
 def calculate_hour(hour, hour_difference, minute_difference):
-    hour += hour_difference
-    if hour_difference < 0 and minute_difference != 0:
+    hour -= hour_difference
+    if hour_difference > 0 and minute_difference != 0:
         hour -= 1
     return normalize_hour(hour)
 
 
 def recalculate_hour(hour, hour_difference, minute_difference):
-    hour -= hour_difference
-    if hour_difference < 0 and minute_difference != 0:
+    hour += hour_difference
+    if hour_difference > 0 and minute_difference != 0:
         hour += 1
     return normalize_hour(hour)
 
