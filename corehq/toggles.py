@@ -262,12 +262,6 @@ PAGINATE_WEB_USERS = StaticToggle(
     'Paginate Web Users',
 )
 
-USE_NEW_MVP_INDICATORS = StaticToggle(
-    'new_mvp_indicators',
-    'Allow reports to use the new mvp indicator apps where the indicator docs '
-    'are stored in a different DB from the rest of prod.'
-)
-
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
