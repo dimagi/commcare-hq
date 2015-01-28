@@ -64,6 +64,9 @@
         <div class="row">
           <table class="table table-striped">
             <tr><td>{% trans "Doc ID:" %}</td><td><a href="{% url "global_quick_find" %}?q={{ error.doc_id }}" target="_blank">{{ error.doc_id }}</a></td></tr>
+            <tr><td>{% trans "Doc Type:" %}</td><td>{{ error.doc_type}}</td></tr>
+            <tr><td>{% trans "Domain(s):" %}</td><td>{{ error.domains }}</td></tr>
+            <tr><td>{% trans "Doc Date:" %}</td><td>{{ error.doc_date|date:"d M Y H:i" }}</td></tr>
             <tr><td>{% trans "Date Created:" %}</td><td>{{ error.date_created|date:"d M Y H:i"}}</td></tr>
             <tr><td>{% trans "Date of Last Attempt:" %}</td><td>{{ error.date_last_attempt|date:"d M Y H:i" }}</td></tr>
             <tr><td>{% trans "Date of Next Attempt:" %}</td><td>{{ error.date_next_attempt|date:"d M Y H:i" }}</td></tr>
