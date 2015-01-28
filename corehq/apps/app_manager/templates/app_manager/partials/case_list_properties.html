@@ -7,8 +7,8 @@
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th class="detail-screen-icon"></th>
                 <th class="detail-screen-field" data-bind="text: DetailScreenConfig.message.FIELD"></th>
-                <th class="detail-screen-header" data-bind="text: DetailScreenConfig.message.HEADER"></th>
-                <th class="detail-screen-format" data-bind="text: DetailScreenConfig.message.FORMAT"></th>
+                <th data-bind="text: DetailScreenConfig.message.HEADER"></th>
+                <th data-bind="text: DetailScreenConfig.message.FORMAT"></th>
                 <th class="detail-screen-icon"></th>
             </tr>
         </thead>
@@ -47,8 +47,8 @@
                             <span/>
                         </div>
                     </td>
-                    <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
-                    <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>
+                    <td data-bind="jqueryElement: header.ui"></td>
+                    <td data-bind="jqueryElement: $format"></td>
                 <!--/ko-->
                 <!--ko if: isTab -->
                     <td colspan="3" data-bind="jqueryElement: header.ui"></td>
@@ -68,7 +68,7 @@
                 <td></td>
                 <td colspan="4">
                     <div class="btn-group">
-                        <button class="btn add-property-item" data-bind="click: addProperty">Add Property</button>
+                        <button class="btn" data-bind="click: addProperty">Add Property</button>
                         {% if request|feature_preview_enabled:'CALC_XPATHS' or request|toggle_enabled:'GRAPH_CREATION' %}
                         <button class="btn dropdown-toggle" data-toggle="dropdown">
                             <span class="caret"></span>
