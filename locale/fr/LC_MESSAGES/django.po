@@ -16151,9 +16151,8 @@ msgid "Raw XML"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:228
-#, fuzzy
 msgid "Edit Submission"
-msgstr "Nombre total de soumissions de formulaires"
+msgstr "Modifier Soumission"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:241
 msgid "View standalone form"
@@ -16208,9 +16207,8 @@ msgid "Double-click code below to select all:"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:393
-#, fuzzy
 msgid "Edit submission"
-msgstr "Nombre total de soumissions de formulaires"
+msgstr "Modifier soumission"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form_tree.html:7
 msgid "Hidden Values (Form Calculations)"

@@ -15742,7 +15742,7 @@ msgstr "XML brut"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:228
 msgid "Edit Submission"
-msgstr ""
+msgstr "Modifier soumission"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:241
 msgid "View standalone form"
@@ -15796,7 +15796,7 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:393
 msgid "Edit submission"
-msgstr ""
+msgstr "Modifier soumission"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form_tree.html:7
 msgid "Hidden Values (Form Calculations)"
