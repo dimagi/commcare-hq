@@ -8,6 +8,11 @@ from jsonobject.properties import DateTimeProperty
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
+from corehq.apps.es.forms import FormES
+from corehq.apps.hqadmin.reporting.reports import (
+    USER_COUNT_UPPER_BOUND,
+    get_mobile_users,
+)
 
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
@@ -33,24 +38,39 @@ DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 def active_mobile_users(domain, *args):
     """
-    Returns the number of mobile users who have submitted a form in the last 30 days
+    Returns the number of mobile users who have submitted a form or SMS in the
+    last 30 days
     """
     now = datetime.now()
-    then = (now - timedelta(days=30)).strftime(DATE_FORMAT)
-    now = now.strftime(DATE_FORMAT)
+    then = (now - timedelta(days=30))
 
-    q = {"query": {
-            "range": {
-                "form.meta.timeEnd": {
-                    "from": then,
-                    "to": now}}},
-         "filter": {"and": ADD_TO_ES_FILTER["forms"][:]}}
+    user_ids = get_mobile_users(domain)
 
-    facets = ['form.meta.userID']
-    data = es_query(params={"domain.exact": domain}, q=q, facets=facets, es_url=XFORM_INDEX + '/xform/_search', size=1)
-    terms = [t.get('term') for t in data["facets"]["form.meta.userID"]["terms"]]
-    user_ids = CouchUser.ids_by_domain(domain)
-    return len(filter(lambda t: t and t in user_ids, terms))
+    form_users = {q['term'] for q in (
+        FormES()
+        .domain(domain)
+        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .submitted(gte=then)
+        .user_id(user_ids)
+        .size(0)
+        .run()
+        .facets.user.result
+    )}
+
+    sms_users = {q['term'] for q in (
+        SMSES()
+        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .to_commcare_user()
+        .domain(domain)
+        .received(gte=then)
+        .size(0)
+        .run()
+        .facets.user.result
+    )}
+
+    num_users = len(form_users | sms_users)
+    return num_users if 'inactive' not in args else len(user_ids) - num_users
+
 
 def cases(domain, *args):
     row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
