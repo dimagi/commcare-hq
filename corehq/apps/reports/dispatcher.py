@@ -184,7 +184,7 @@ class ReportDispatcher(View):
                     else:
                         report_contexts.append({
                             'is_active': report.slug == current_slug,
-                            'url': report.get_url(domain=domain),
+                            'url': report.get_url(domain=domain, request=request),
                             'description': _(report.description),
                             'icon': report.icon,
                             'title': _(report.name),
