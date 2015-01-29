@@ -2,7 +2,11 @@
 # vim: ai ts=4 sts=4 et sw=4
 
 from __future__ import absolute_import
-import os, re, traceback, sys
+import os
+import re
+import traceback
+import sys
+import warnings
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import RequestContext
@@ -16,18 +20,19 @@ from dimagi.utils.parsing import json_format_datetime
 from datetime import date, datetime, time
 from decimal import Decimal
 
-def get_url_base():
-    try:
-        protocol = settings.DEFAULT_PROTOCOL
-    except AttributeError:
-        protocol = 'http'
-    address = getattr(settings, "BASE_ADDRESS", None)
-    if address is None:
-        address = Site.objects.get(id = settings.SITE_ID).domain
-    return '%s://%s' % (protocol, address)
 
-def get_secure_url_base():
-    return 'https://%s' % Site.objects.get(id = settings.SITE_ID).domain
+def get_url_base():
+    return '{}://{}'.format(settings.DEFAULT_PROTOCOL, get_site_domain())
+
+
+def get_site_domain():
+    try:
+        return settings.BASE_ADDRESS
+    except AttributeError:
+        warnings.warn("Please don't use Site to set domain anymore; "
+                      "use BASE_ADDRESS instead.", DeprecationWarning)
+        return Site.objects.get(id=settings.SITE_ID).domain
+
 
 def render_to_response(req, template_name, dictionary=None, **kwargs):
     """Proxies calls to django.shortcuts.render_to_response, to avoid having
