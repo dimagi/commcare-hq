@@ -215,9 +215,9 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
             next_url = meta['next'].split('?')[1]
 
 
-def get_supply_point_statuses(domain, endpoint, facilities, limit=100, offset=0, **kwargs):
+def get_supply_point_statuses(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     for facility in facilities:
-        sync_supply_point_status(domain, endpoint, facility, limit, offset, **kwargs)
+        sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit, offset)
         offset = 0
 
 
@@ -247,9 +247,9 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
             next_url = meta['next'].split('?')[1]
 
 
-def get_delivery_group_reports(domain, endpoint, facilities, limit=100, offset=0, **kwargs):
+def get_delivery_group_reports(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     for facility in facilities:
-        sync_delivery_group_report(domain, endpoint, facility, limit, offset, **kwargs)
+        sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, limit, offset)
         offset = 0
 
 
