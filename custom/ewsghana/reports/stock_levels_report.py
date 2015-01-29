@@ -11,6 +11,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import LineChart, Axis
+from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url
 from dimagi.utils.decorators.memoized import memoized
@@ -400,8 +401,8 @@ class StockLevelsReport(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            program=program if program != '0' else None,
-            product=products if products and products[0] != '0' else [],
+            program=program if program != ALL_OPTION else None,
+            product=products if products and products[0] != ALL_OPTION else [],
         )
 
     @property
