@@ -54,9 +54,9 @@ def _check(config):
         source_rows = config.source_db.view(view, limit=0, reduce=False).total_rows
         dest_rows = config.dest_db.view(view, limit=0, reduce=False).total_rows
         if source_rows == dest_rows:
-            print 'view {} looks good {} rows in both databases'.format(view, source_rows)
+            print 'WOOT! {} looks good: {} rows in both databases'.format(view, source_rows)
         else:
-            print 'view {} has different data - {} rows in source db and {} in dest'.format(
+            print 'SHUCKS... {} has different data: {} rows in source db and {} in dest'.format(
                 view, source_rows, dest_rows
             )
     print 'check complete'
