@@ -175,16 +175,14 @@ SOIL_BACKEND = "soil.CachedDownload"
 # reports cache
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
+redis_cache = {
+    'BACKEND': 'redis_cache.cache.RedisCache',
+    'LOCATION': 'localhost:6379:0',
+    'OPTIONS': {},
+}
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': 'localhost:11211',
-    },
-    'redis': {
-        'BACKEND': 'redis_cache.cache.RedisCache',
-        'LOCATION': 'localhost:6379:0',
-        'OPTIONS': {},
-    },
+    'default': redis_cache,
+    'redis': redis_cache,
 }
 
 # on both a local and a distributed environment this should be localhost
