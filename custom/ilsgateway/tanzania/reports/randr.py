@@ -25,7 +25,7 @@ class RRStatus(ILSData):
     def rows(self):
         rows = []
         locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                               site_code__contains=self.config['msd_code'])
+                                               site_code__icontains=self.config['msd_code'])
         for child in locations:
             try:
                 org_summary = OrganizationSummary.objects.get(
@@ -105,7 +105,7 @@ class RRReportingHistory(ILSData):
     def rows(self):
         rows = []
         locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                               site_code__contains=self.config['msd_code'])
+                                               site_code__icontains=self.config['msd_code'])
         dg = DeliveryGroups().submitting(locations, int(self.config['month']))
         for child in dg:
             total_responses = 0

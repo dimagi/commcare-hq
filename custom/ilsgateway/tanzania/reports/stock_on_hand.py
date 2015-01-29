@@ -100,7 +100,7 @@ class SohPercentageTableData(ILSData):
         if self.config['location_id']:
 
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                                   site_code__contains=self.config['msd_code'])
+                                                   site_code__icontains=self.config['msd_code'])
             for loc in locations:
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
                                                                  self.config['enddate']),
@@ -286,7 +286,7 @@ class DistrictSohPercentageTableData(ILSData):
 
         if self.config['location_id']:
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                                   site_code__contains=self.config['msd_code'])
+                                                   site_code__icontains=self.config['msd_code'])
             for loc in locations:
                 supply_point = loc.supply_point_id
 

@@ -46,7 +46,7 @@ class SupervisionData(ILSData):
         rows = []
         if self.config['location_id']:
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                                   site_code__contains=self.config['msd_code'])
+                                                   site_code__icontains=self.config['msd_code'])
             for loc in locations:
                 facilities = SQLLocation.objects.filter(parent=loc).count()
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
@@ -106,7 +106,7 @@ class DistrictSupervisionData(ILSData):
         rows = []
         if self.config['location_id']:
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
-                                                   site_code__contains=self.config['msd_code'])
+                                                   site_code__icontains=self.config['msd_code'])
             for loc in locations:
                 total_responses = 0
                 total_possible = 0
