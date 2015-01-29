@@ -136,11 +136,16 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'Show text area for entering custom case list xml',
 )
 
+CASE_LIST_TILE = StaticToggle(
+    'case_list_tile',
+    'Allow configuration of case list tiles',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-
 )
 
 GRAPH_CREATION = StaticToggle(

@@ -25,6 +25,12 @@
 </legend>
 
 <div data-bind="with: shortScreen">
+    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
+    <select data-bind="value: useCaseTiles">
+        <option value="no">Don't Use Case Tiles</option>
+        <option value="yes">Use Case Tiles</option>
+    </select>
+    {% endif %}
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
 

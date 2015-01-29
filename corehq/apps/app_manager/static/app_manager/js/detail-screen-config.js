@@ -554,6 +554,7 @@ var DetailScreenConfig = (function () {
             this.containsFilterConfiguration = options.containsFilterConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
+            this.useCaseTiles = ko.observable(spec[this.columnKey].useCaseTiles ? "yes" : "no");
 
             this.fireChange = function() {
                 that.fire('change');
@@ -705,6 +706,10 @@ var DetailScreenConfig = (function () {
                     _.filter(columns, function(c){return c.isTab;}),
                     function(c){return c.serialize();}
                 ));
+
+                // Add case tile configuration
+                data.caseTileConfiguration = this.useCaseTiles ? true : false;
+                //TODO: Eventually this will be a more complicated data structure that involves mapping of properties to buckets.
 
                 if (this.containsParentConfiguration) {
                     var parentSelect;

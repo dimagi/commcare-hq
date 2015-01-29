@@ -9,6 +9,9 @@
                 <th class="detail-screen-field" data-bind="text: DetailScreenConfig.message.FIELD"></th>
                 <th data-bind="text: DetailScreenConfig.message.HEADER"></th>
                 <th data-bind="text: DetailScreenConfig.message.FORMAT"></th>
+                <!-- ko if: useCaseTiles() == "yes" -->
+                <th>{% trans "Case Tile Mapping" %}</th>
+                <!-- /ko -->
                 <th class="detail-screen-icon"></th>
             </tr>
         </thead>
@@ -53,6 +56,12 @@
                 <!--ko if: isTab -->
                     <td colspan="3" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
+                <!-- ko if: $parent.useCaseTiles() == "yes" -->
+                <td>
+                    <select>
+                    </select>
+                </td>
+                <!-- /ko -->
                 <td class="detail-screen-icon">
                     <i style="cursor: pointer;"
                        data-bind="
