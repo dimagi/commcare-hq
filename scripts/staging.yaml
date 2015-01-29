@@ -52,7 +52,6 @@ branches:
 #  - double-management # SK 12/1
   - lwyszomi:reporting_rates_report  # cz/kamil 1/13
   - caseDetailsInCC # sravan 2/1/15
-  - logo-to-android # Nick P 1/7
   - locations-as-groups # tw 1/20
   - vellum-model-iteration # daniel 1/22
 submodules:

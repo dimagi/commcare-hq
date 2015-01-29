@@ -150,6 +150,15 @@ def get_project_spaces(facets=None):
     return domain_names
 
 
+def get_mobile_users(domains):
+    return set(
+        UserES()
+        .show_inactive()
+        .mobile_users()
+        .domain(domains)
+        .run().doc_ids
+    )
+
 def get_sms_query(begin, end, facet_name, facet_terms, domains, size):
     return (SMSES()
             .domain(domains)
@@ -278,13 +287,8 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
     30 days before each timestamp
     """
     histo_data = []
-    mobile_users = set(
-        UserES()
-        .show_inactive()
-        .mobile_users()
-        .domain(domains)
-        .run().doc_ids
-    )
+    mobile_users = get_mobile_users(domains)
+
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)

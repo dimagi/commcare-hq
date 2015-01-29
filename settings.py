@@ -338,6 +338,7 @@ HQ_APPS = (
     'custom.up_nrhm',
 
     'custom.care_pathways',
+    'custom.common',
     'bootstrap3_crispy',
 
     'custom.dhis2',
@@ -1201,6 +1202,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecapPassagePillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.world_vision.models.WorldVisionMotherFluffPillow',

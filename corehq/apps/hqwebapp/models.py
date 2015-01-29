@@ -972,11 +972,16 @@ class ProjectUsersTab(UITab):
     @property
     @memoized
     def is_active(self):
+        if super(ProjectUsersTab, self).is_active:
+            return True
+
+        if not self.domain:
+            return False
+
         cloudcare_settings_url = reverse('cloudcare_app_settings',
                                          args=[self.domain])
         full_path = self._request.get_full_path()
-        return (super(ProjectUsersTab, self).is_active
-                or full_path.startswith(cloudcare_settings_url))
+        return full_path.startswith(cloudcare_settings_url)
 
     @property
     def can_view_cloudcare(self):

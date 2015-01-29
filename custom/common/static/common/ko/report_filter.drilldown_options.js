@@ -43,13 +43,13 @@ ko.bindingHandlers.select2 = {
             converted = _.uniq(converted, function(obj) {return obj.id});
             var data = $(el).select2('data');
             if (data.length === _.uniq(allBindings.selectedOptions()).length) {
-                if (_.indexOf(_.pluck(data, 'id'), '0') === 0 && data.length > 1) {
+                if (_.indexOf(_.pluck(data, 'id'), 'all') === 0 && data.length > 1) {
                     converted.splice(0, 1)
-                } else if ((_.indexOf(_.pluck(data, 'id'), '0') + 1) === data.length && converted.length > 1) {
-                    converted = converted[_.indexOf(_.pluck(converted, 'id'), '0')];
+                } else if ((_.indexOf(_.pluck(data, 'id'), 'all') + 1) === data.length && converted.length > 1) {
+                    converted = converted[_.indexOf(_.pluck(converted, 'id'), 'all')];
                     var tmplist = allBindings.selectedOptions().slice();
                     $.each(tmplist, function (key, value) {
-                        if (textAccessor(value) !== '' && value !== '0') {
+                        if (textAccessor(value) !== '' && value !== 'all') {
                             allBindings.selectedOptions().pop()
                         }
                     });
@@ -61,12 +61,12 @@ ko.bindingHandlers.select2 = {
     }
 };
 
-var OPMDrilldownOptionFilterControl = function (options) {
+var DrilldownOptionFilterControl = function (options) {
     var self = this;
 
     self.notification = new DrilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
-        return new OPMDrilldownOption(select, options.drilldown_map);
+        return new DrilldownOption(select, options.drilldown_map);
     }));
 
     self.init = function () {
@@ -112,7 +112,7 @@ var OPMDrilldownOptionFilterControl = function (options) {
 
 };
 
-var OPMDrilldownOption = function (select, drilldown_map) {
+var DrilldownOption = function (select, drilldown_map) {
     var self = this;
     self.label = select.label;
     self.default_text = select.default_text;
@@ -127,7 +127,7 @@ var OPMDrilldownOption = function (select, drilldown_map) {
             self.selected.removeAll();
         }
         if (self.selected.length === 0){
-            self.selected.push("0");
+            self.selected.push("all");
         }
         return !!(self.control_options().length);
     });
@@ -137,9 +137,9 @@ var OPMDrilldownOption = function (select, drilldown_map) {
     });
 };
 
-$.fn.opmdrilldownOptionFilter = function (options) {
+$.fn.drilldownOptionFilter = function (options) {
     this.each(function(i) {
-        var viewModel = new OPMDrilldownOptionFilterControl(options);
+        var viewModel = new DrilldownOptionFilterControl(options);
         ko.applyBindings(viewModel, $(this).get(i));
         viewModel.init();
     });

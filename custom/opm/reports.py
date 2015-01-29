@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
+from custom.common import ALL_OPTION
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
@@ -1116,7 +1117,7 @@ class IncentivePaymentReport(BaseReport):
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
             request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == '0':
+            if request_param and not request_param[0] == ALL_OPTION:
                 config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return UsersIdsData(config=config).get_data()

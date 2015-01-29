@@ -116,7 +116,11 @@
 
                     <td class="detail-screen-field control-group" data-bind="css: {error: showWarning}">
                         <div data-bind="jqueryElement: textField.ui"></div>
-                        <div data-bind="jqueryElement: warningElement, visible: showWarning"></div>
+                        <div data-bind="visible: showWarning">
+                            <span class="help-inline" data-bind="
+                                text: DetailScreenConfig.field_format_warning_message
+                            "></span>
+                        </div>
                     </td>
 
                     <td>

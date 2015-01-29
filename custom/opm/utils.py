@@ -1,19 +1,22 @@
+from custom.common import ALL_OPTION
+
+
 class BaseMixin(object):
 
     @property
     def blocks(self):
         hierarchy_block = self.request.GET.getlist('hierarchy_block', [])
-        return [] if hierarchy_block and hierarchy_block[0] == '0' else hierarchy_block
+        return [] if hierarchy_block and hierarchy_block[0] == ALL_OPTION else hierarchy_block
 
     @property
     def awcs(self):
         hierarchy_awc = self.request.GET.getlist('hierarchy_awc', [])
-        return [] if hierarchy_awc and hierarchy_awc[0] == '0' else hierarchy_awc
+        return [] if hierarchy_awc and hierarchy_awc[0] == ALL_OPTION else hierarchy_awc
 
     @property
     def gp(self):
         hierarchy_gp = self.request.GET.getlist('hierarchy_gp', [])
-        return [] if hierarchy_gp and hierarchy_gp[0] == '0' else hierarchy_gp
+        return [] if hierarchy_gp and hierarchy_gp[0] == ALL_OPTION else hierarchy_gp
 
 
 def _safeint(value):
