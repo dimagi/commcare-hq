@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Server layout:
     ~/services/
@@ -902,6 +904,21 @@ def awesome_deploy(confirm="yes"):
             'Are you sure you want to preindex and deploy to '
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
+
+    if datetime.datetime.now().isoweekday() == 5:
+        print('')
+        print('┓┏┓┏┓┃')
+        print('┛┗┛┗┛┃＼○／')
+        print('┓┏┓┏┓┃  /      Friday')
+        print('┛┗┛┗┛┃ノ)')
+        print('┓┏┓┏┓┃         deploy,')
+        print('┛┗┛┗┛┃')
+        print('┓┏┓┏┓┃         good')
+        print('┛┗┛┗┛┃')
+        print('┓┏┓┏┓┃         luck!')
+        print('┃┃┃┃┃┃')
+        print('┻┻┻┻┻┻')
+
     max_wait = datetime.timedelta(minutes=5)
     pause_length = datetime.timedelta(seconds=5)
 
