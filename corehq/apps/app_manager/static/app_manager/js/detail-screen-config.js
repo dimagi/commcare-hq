@@ -418,6 +418,7 @@ var DetailScreenConfig = (function () {
             for (i = 0; i < elements.length; i += 1) {
                 this[elements[i]].on('change', fireChange);
             }
+            this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
             this.format.on('change', function () {
@@ -629,6 +630,9 @@ var DetailScreenConfig = (function () {
             });
             this.on('change', function () {
                 this.saveButton.fire('change');
+            });
+            this.useCaseTiles.subscribe(function(){
+                that.saveButton.fire('change');
             });
             ko.computed(function () {
                 that.columns();
