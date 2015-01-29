@@ -1,8 +1,7 @@
 from datetime import timedelta
 from django.utils.timesince import timesince
 from math import ceil
-from sqlagg.columns import SimpleColumn
-from sqlagg.filters import NOTNULL, EQ
+from corehq.apps.es import UserES
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
@@ -12,9 +11,8 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import LineChart, Axis
-from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, EWSSqlData, get_url
+from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
@@ -316,10 +314,10 @@ class InputStock(EWSData):
         return [["Input Stock"]]
 
 
-class FacilitySMSUsers(EWSSqlData):
+class FacilitySMSUsers(EWSData):
     title = 'SMS Users'
     slug = 'facility_sms_users'
-    table_name = 'fluff_EwsSmsUserFluff'
+    show_table = True
 
     @property
     def headers(self):
@@ -329,26 +327,17 @@ class FacilitySMSUsers(EWSSqlData):
         ])
 
     @property
-    def columns(self):
-        return [DatabaseColumn(_("Name"), SimpleColumn('name')),
-                DatabaseColumn(_("Phone number"), SimpleColumn('phone_number'))]
-
-    @property
-    def group_by(self):
-        return ['name', 'phone_number']
-
-    @property
-    def filters(self):
-        filters = super(FacilitySMSUsers, self).filters
-        filters.append(NOTNULL('phone_number'))
-        return filters
-
-    @property
     def rows(self):
         from corehq.apps.users.views.mobile import CreateCommCareUserView
-        rows = super(FacilitySMSUsers, self).rows
-        rows.append([get_url(CreateCommCareUserView.urlname, 'Create new Mobile Worker', self.config['domain'])])
-        return rows
+
+        query = (UserES().mobile_users().domain(self.config['domain'])
+                 .term("domain_membership.location_id", self.config['location_id']))
+
+        for hit in query.run().hits:
+            if (hit['first_name'] or hit['last_name']) and hit['phone_numbers']:
+                yield [hit['first_name'] + ' ' + hit['last_name'], hit['phone_numbers'][0]]
+
+        yield [get_url(CreateCommCareUserView.urlname, 'Create new Mobile Worker', self.config['domain'])]
 
 
 class FacilityUsers(EWSData):
@@ -365,7 +354,6 @@ class FacilityUsers(EWSData):
 
     @property
     def rows(self):
-        from corehq.apps.es import UserES
         query = (UserES().web_users().domain(self.config['domain'])
                  .term("domain_memberships.location_id", self.config['location_id']))
 
@@ -374,10 +362,10 @@ class FacilityUsers(EWSData):
                 yield [hit['first_name'] + ' ' + hit['last_name'], hit['email']]
 
 
-class FacilityInChargeUsers(EWSSqlData):
+class FacilityInChargeUsers(EWSData):
     title = ''
     slug = 'in_charge'
-    table_name = 'fluff_EwsSmsUserFluff'
+    show_table = True
 
     @property
     def headers(self):
@@ -386,24 +374,13 @@ class FacilityInChargeUsers(EWSSqlData):
         ])
 
     @property
-    def columns(self):
-        return [DatabaseColumn(_("Name"), SimpleColumn('name')),
-                DatabaseColumn(_("In charge"), SimpleColumn('role'))]
-
-    @property
-    def group_by(self):
-        return ['name', 'role']
-
-    @property
-    def filters(self):
-        self.config['in_charge_role'] = 'In Charge'
-        filters = super(FacilityInChargeUsers, self).filters
-        filters.append(EQ('role', 'in_charge_role'))
-        return filters
-
-    @property
     def rows(self):
-        return [row[:1] for row in super(FacilityInChargeUsers, self).rows]
+        query = (UserES().mobile_users().domain(self.config['domain'])
+                 .term("domain_membership.location_id", self.config['location_id']))
+
+        for hit in query.run().hits:
+            if hit['user_data'].get('role') == 'In Charge' and (hit['first_name'] or hit['last_name']):
+                yield [hit['first_name'] + ' ' + hit['last_name']]
 
 
 class StockLevelsReport(MultiReport):

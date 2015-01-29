@@ -1,7 +1,5 @@
 from django.core.urlresolvers import reverse
-from sqlagg.filters import EQ
 from corehq import Domain
-from corehq.apps.reports.sqlreport import SqlData, DataFormatter, TableDataFormat
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
@@ -54,37 +52,6 @@ class EWSData(object):
                 lambda loc_type: not loc_type.administrative,
                 Domain.get_by_name(self.config['domain']).location_types
                 )]
-
-
-class EWSSqlData(SqlData):
-    show_table = True
-    show_total = False
-    use_datatables = False
-    show_chart = False
-    no_value = {'sort_key': 0, 'html': 0}
-    title = ''
-    slug = ''
-
-    @property
-    def filters(self):
-        return [EQ('location_id', 'location_id'), EQ('domain', 'domain')]
-
-    @property
-    def group_by(self):
-        return []
-
-    @property
-    def columns(self):
-        return []
-
-    @property
-    def headers(self):
-        return []
-
-    @property
-    def rows(self):
-        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
