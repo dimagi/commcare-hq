@@ -475,7 +475,14 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def location_type_object(self):
-        # TODO i hate couch ok
+        """
+        Brute force lookup for the LocationType object
+        that corresponds to this locations type.
+
+        This could definitely use a more efficient way,
+        but no domains at this point have a large list of
+        types.
+        """
         for loc_type in Domain.get_by_name(self.domain).location_types:
             if loc_type.name == self.location_type:
                 return loc_type

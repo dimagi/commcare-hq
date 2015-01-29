@@ -1342,10 +1342,7 @@ class LocationUserMixin(DocumentSchema):
             # if we can actually remove the old..
             self.add_location(location)
         else:
-            # TODO should rename this, it's confusing
-            # the sane way: for normal domain we just override
-            # the whole case
-            self.set_locations([location])
+            self.create_location_delegates([location])
 
         self.user_data.update({
             'commcare_primary_case_sharing_id':
@@ -1358,12 +1355,16 @@ class LocationUserMixin(DocumentSchema):
 
     @property
     def locations(self):
+        """
+        This method is only used for domains with the multiple
+        locations per user flag set. It will error if you try
+        to call it on a normal domain.
+        """
         if not self.project.supports_multiple_locations_per_user:
             raise InvalidLocationConfig(
                 "Attempting to access multiple locations for a user in a domain that does not support this."
             )
 
-        # TODO legacy method to be removed/refactored
         from corehq.apps.locations.models import Location
         from corehq.apps.commtrack.models import SupplyPointCase
 
@@ -1388,7 +1389,6 @@ class LocationUserMixin(DocumentSchema):
         return list(_gen())
 
     def supply_point_index_mapping(self, supply_point, clear=False):
-        # TODO legacy method to be removed/refactored
         from corehq.apps.commtrack.exceptions import (
             LinkedSupplyPointNotFoundError
         )
@@ -1407,7 +1407,9 @@ class LocationUserMixin(DocumentSchema):
             )
 
     def add_location(self, location, create_sp_if_missing=False):
-        # TODO legacy method to be removed/refactored
+        """
+        Add a single location to the delgate case access.
+        """
         from corehq.apps.commtrack.models import SupplyPointCase
 
         sp = SupplyPointCase.get_or_create_by_location(location)
@@ -1417,7 +1419,6 @@ class LocationUserMixin(DocumentSchema):
             submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
 
     def submit_location_block(self, caseblock):
-        # TODO legacy method to be removed/refactored
         from corehq.apps.hqcase.utils import submit_case_blocks
 
         submit_case_blocks(
@@ -1430,7 +1431,9 @@ class LocationUserMixin(DocumentSchema):
         )
 
     def remove_location(self, location):
-        # TODO legacy method to be removed/refactored
+        """
+        Remove a single location from the case delagate access.
+        """
         from corehq.apps.commtrack.models import SupplyPointCase
 
         sp = SupplyPointCase.get_by_location(location)
@@ -1449,13 +1452,18 @@ class LocationUserMixin(DocumentSchema):
                 self.submit_location_block(caseblock)
 
     def clear_locations(self):
-        # TODO legacy method to be removed/refactored
+        """
+        Wipe all case delagate access.
+        """
         mapping = self.get_location_map_case()
         if mapping:
             mapping.delete()
 
-    def set_locations(self, locations):
-        # TODO legacy method to be removed/refactored
+    def create_location_delegates(self, locations):
+        """
+        Submit the case blocks creating the delgate case access
+        for the location(s).
+        """
         from corehq.apps.commtrack.models import SupplyPointCase
 
         if self.project.supports_multiple_locations_per_user:
@@ -1492,9 +1500,12 @@ class LocationUserMixin(DocumentSchema):
         self.submit_location_block(caseblock)
 
     def get_location_map_case(self):
-        # TODO this is only used for special
-        # domains that enable multiple locations per user
-        # it should eventually be abstracted out or properly hidden
+        """
+        Returns the location mapping case for this supply point.
+
+        That lets us give access to the supply point via
+        delagate access.
+        """
         try:
             from corehq.apps.commtrack.util import location_map_case_id
             return CommCareCase.get(location_map_case_id(self))

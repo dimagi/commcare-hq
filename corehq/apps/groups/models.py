@@ -172,7 +172,6 @@ class Group(UndoableDocument):
         else:
             return [r['id'] for r in results]
 
-
     @classmethod
     def get_case_sharing_groups(cls, domain, wrap=True):
         all_groups = cls.by_domain(domain)
@@ -181,7 +180,7 @@ class Group(UndoableDocument):
             groups.extend([
                 location.case_sharing_group_object() for location in
                 SQLLocation.objects.filter(domain=domain)
-                # TODO if locations type is sharing cases
+                if location.couch_location().location_type_object.shares_cases
             ])
             return groups
         else:
@@ -190,11 +189,12 @@ class Group(UndoableDocument):
     @classmethod
     def get_reporting_groups(cls, domain):
         key = ['^Reporting', domain]
-        return cls.view('groups/by_name',
+        return cls.view(
+            'groups/by_name',
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-            #stale=settings.COUCH_STALE_QUERY,
+            # stale=settings.COUCH_STALE_QUERY,
         ).all()
 
     def create_delete_record(self, *args, **kwargs):
