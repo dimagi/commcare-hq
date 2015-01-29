@@ -78,7 +78,7 @@ def get_privileges(plan_version):
 
 def get_change_status(from_plan_version, to_plan_version):
     all_privs = set(privileges.MAX_PRIVILEGES)
-    to_privs = get_privileges(to_plan_version)
+    to_privs = get_privileges(to_plan_version) if to_plan_version is not None else set()
 
     downgraded_privs = all_privs.difference(to_privs)
     upgraded_privs = to_privs
