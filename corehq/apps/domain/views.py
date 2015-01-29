@@ -59,8 +59,9 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect, render
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 
-from corehq.apps.domain.decorators import (domain_admin_required,
-    login_required, require_superuser, login_and_domain_required)
+from corehq.apps.domain.decorators import (
+    domain_admin_required, login_required, require_superuser, login_and_domain_required
+)
 from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
     SnapshotApplicationForm, DomainInternalForm,
@@ -290,10 +291,11 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
         context = super(BaseEditProjectInfoView, self).main_context
         context.update({
             'autocomplete_fields': self.autocomplete_fields,
-            'commtrack_enabled': self.domain_object.commtrack_enabled, # ideally the template gets access to the domain doc through
-                # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
-                # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
-                # i will not worry about it until he is done
+            'commtrack_enabled': self.domain_object.commtrack_enabled,
+            # ideally the template gets access to the domain doc through
+            # some other means. otherwise it has to be supplied to every view reachable in that sidebar (every
+            # view whose template extends users_base.html); mike says he's refactoring all of this imminently, so
+            # i will not worry about it until he is done
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'cloudcare_releases':  self.domain_object.cloudcare_releases,
         })
@@ -1876,7 +1878,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
             'restrict_superusers': self.domain_object.restrict_superusers,
-            'deployment_date': self.domain_object.deployment.date.date if self.domain_object.deployment.date else "",
+            'deployment_date': self.domain_object.deployment.date.date
+            if self.domain_object.deployment.date else '',
             'countries': self.domain_object.deployment.countries
         }
         internal_attrs = [

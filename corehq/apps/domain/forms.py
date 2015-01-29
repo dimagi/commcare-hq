@@ -138,15 +138,21 @@ class SnapshotFixtureForm(forms.Form):
             'description',
         ]
 
+
 class SnapshotSettingsForm(forms.Form):
     title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
-    project_type = CharField(label=ugettext_noop("Project Category"), required=True,
-        help_text=ugettext_noop("e.g. MCH, HIV, etc."))
+    project_type = CharField(
+        label=ugettext_noop("Project Category"),
+        required=True,
+        help_text=ugettext_noop("e.g. MCH, HIV, etc.")
+    )
     license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
-        widget=Select(attrs={'class': 'input-xxlarge'}))
-    description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
+                          widget=Select(attrs={'class': 'input-xxlarge'}))
+    description = CharField(
+        label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
         help_text=ugettext_noop("A high-level overview of your project as a whole"))
-    short_description = CharField(label=ugettext_noop("Short Description"), required=False,
+    short_description = CharField(
+        label=ugettext_noop("Short Description"), required=False,
         widget=forms.Textarea(attrs={'maxlength': 200}),
         help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
     share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
@@ -418,6 +424,7 @@ class DomainGlobalSettingsForm(forms.Form):
         except Exception:
             return False
 
+
 class DomainMetadataForm(DomainGlobalSettingsForm):
     is_test = ChoiceField(
         label=_("Real Project"),
@@ -490,13 +497,26 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
     services = ChoiceField(label=ugettext_noop("Services"), required=False,
                            choices=tuple_of_copies(["basic", "plus", "full", "custom"]))
-    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"), widget=forms.CheckboxSelectMultiple(),
-                                           choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False), required=False)
-    workshop_region = CharField(label=ugettext_noop("Workshop Region"), required=False,
+    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
+                                           widget=forms.CheckboxSelectMultiple(),
+                                           choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
+                                           required=False)
+    workshop_region = CharField(
+        label=ugettext_noop("Workshop Region"),
+        required=False,
         help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
-    self_started = ChoiceField(label=ugettext_noop("Self Started?"), choices=tf_choices('Yes', 'No'), required=False)
-    area = ChoiceField(label=ugettext_noop("Sector"), required=False, choices=tuple_of_copies(AREA_CHOICES))
-    sub_area = ChoiceField(label=ugettext_noop("Sub-Sector"), required=False, choices=tuple_of_copies(SUB_AREA_CHOICES))
+    self_started = ChoiceField(
+        label=ugettext_noop("Self Started?"),
+        choices=tf_choices('Yes', 'No'),
+        required=False)
+    area = ChoiceField(
+        label=ugettext_noop("Sector"),
+        required=False,
+        choices=tuple_of_copies(AREA_CHOICES))
+    sub_area = ChoiceField(
+        label=ugettext_noop("Sub-Sector"),
+        required=False,
+        choices=tuple_of_copies(SUB_AREA_CHOICES))
     using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
     organization_name = CharField(
         label=ugettext_noop("Organization Name"),
@@ -548,7 +568,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'commtrack_domain',
             ),
             crispy.Fieldset(
-                 _("Salesforce Details"),
+                _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
                 'services',
@@ -583,13 +603,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
-
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.update_deployment(
             date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
             countries=self.cleaned_data['countries'],
         )
-        domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
+        domain.update_internal(
+            sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
             services=self.cleaned_data['services'],
             initiative=self.cleaned_data['initiative'],
