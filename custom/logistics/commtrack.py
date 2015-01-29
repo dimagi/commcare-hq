@@ -124,7 +124,7 @@ def bootstrap_domain(api_object, **kwargs):
         checkpoint = MigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
         date = checkpoint.date
-        limit = checkpoint.limit
+        limit = 100
         offset = checkpoint.offset
         if not checkpoint.start_date:
             checkpoint.start_date = start_date
