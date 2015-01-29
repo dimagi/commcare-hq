@@ -59,7 +59,13 @@ from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
-from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
+from corehq.apps.hqadmin.escheck import (
+    check_es_cluster_health,
+    check_xform_es_index,
+    check_reportcase_es_index,
+    check_case_es_index,
+    check_reportxform_es_index
+)
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
 from corehq.apps.hqadmin.reporting.reports import (
     get_project_spaces,
