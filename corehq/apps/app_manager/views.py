@@ -2711,7 +2711,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 
     @property
     def page_context(self):
-        if self.app.doc_type == 'RemoteApp':
+        if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
         form_name_map = {}
