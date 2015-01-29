@@ -6,6 +6,7 @@
 
 {% block head %} {{ block.super }}
 <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
 {% endblock %}
 
 {% block main_column %}
@@ -16,6 +17,8 @@
 
 {% block js %}{{ block.super }}
 <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -71,6 +74,8 @@
             numberOfMonths: 2
         });
     });
+
+    $("#id_countries").width(600).height(200).multiselect();
 
     </script>
 {% endblock %}

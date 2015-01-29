@@ -478,26 +478,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             return False
 
 
-class DomainDeploymentForm(forms.Form):
-    countries = forms.MultipleChoiceField(label=ugettext_noop("Countries"),
-            choices=COUNTRIES)
-    region = CharField(label=ugettext_noop("Region"), required=False,
-        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
-    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea)
-    public = ChoiceField(label=ugettext_noop("Make Public?"), choices=tf_choices('Yes', 'No'), required=False)
-
-    def save(self, domain):
-        try:
-            domain.update_deployment(
-                countries=self.cleaned_data['countries'],
-                region=self.cleaned_data['region'],
-                description=self.cleaned_data['description'],
-                public=(self.cleaned_data['public'] == 'true'))
-            return True
-        except Exception:
-            return False
-
-
 def tuple_of_copies(a_list, blank=True):
     ret = [(item, item) for item in a_list]
     if blank:
@@ -530,6 +510,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text=_("Date that the project went live (usually right after training).")
     )
+    countries = forms.MultipleChoiceField(
+        label=ugettext_noop("Countries"),
+        choices=COUNTRIES,
+    )
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
         required=False,
@@ -559,6 +543,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'notes',
                 'phone_model',
                 'deployment_date',
+                'countries',
                 'restrict_superusers',
                 'commtrack_domain',
             ),
@@ -602,6 +587,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.update_deployment(
             date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
+            countries=self.cleaned_data['countries'],
         )
         domain.update_internal(sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],

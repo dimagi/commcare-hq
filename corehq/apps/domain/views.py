@@ -63,7 +63,7 @@ from corehq.apps.domain.decorators import (domain_admin_required,
     login_required, require_superuser, login_and_domain_required)
 from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
-    SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
+    SnapshotApplicationForm, DomainInternalForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm,
 )
@@ -372,50 +372,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 messages.success(request, _("Project settings saved!"))
             else:
                 messages.error(request, _("There seems to have been an error saving your settings. Please try again!"))
-        return self.get(request, *args, **kwargs)
-
-
-class EditDeploymentProjectInfoView(BaseEditProjectInfoView):
-    template_name = 'domain/admin/info_deployment.html'
-    urlname = 'domain_deployment_info'
-    page_title = ugettext_noop("Deployment")
-
-    @property
-    def autocomplete_fields(self):
-        return ['countries', 'region']
-
-    @property
-    @memoized
-    def deployment_info_form(self):
-        if self.request.method == 'POST':
-            return DomainDeploymentForm(self.request.POST)
-
-        initial = {
-            'public': 'true' if self.domain_object.deployment.public else 'false',
-        }
-        for attr in [
-            'countries',
-            'region',
-            'description',
-        ]:
-            initial[attr] = getattr(self.domain_object.deployment, attr)
-        return DomainDeploymentForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {
-            'deployment_info_form': self.deployment_info_form,
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.deployment_info_form.is_valid():
-            if self.deployment_info_form.save(self.domain_object):
-                messages.success(request,
-                                 _("The deployment information for project %s was successfully updated!")
-                                 % self.domain_object.name)
-            else:
-                messages.error(request, _("There seems to have been an error. Please try again!"))
-
         return self.get(request, *args, **kwargs)
 
 
@@ -1909,6 +1865,10 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     strict_domain_fetching = True
 
     @property
+    def autocomplete_fields(self):
+        return ['countries']
+
+    @property
     @memoized
     def internal_settings_form(self):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
@@ -1917,6 +1877,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial = {
             'restrict_superusers': self.domain_object.restrict_superusers,
             'deployment_date': self.domain_object.deployment.date.date if self.domain_object.deployment.date else "",
+            'countries': self.domain_object.deployment.countries
         }
         internal_attrs = [
             'sf_contract_id',

@@ -1048,16 +1048,12 @@ class ProjectSettingsTab(UITab):
         project_info = []
 
         if user_is_admin:
-            from corehq.apps.domain.views import EditBasicProjectInfoView, EditDeploymentProjectInfoView
+            from corehq.apps.domain.views import EditBasicProjectInfoView
 
             project_info.extend([
                 {
                     'title': _(EditBasicProjectInfoView.page_title),
                     'url': reverse(EditBasicProjectInfoView.urlname, args=[self.domain])
-                },
-                {
-                    'title': _(EditDeploymentProjectInfoView.page_title),
-                    'url': reverse(EditDeploymentProjectInfoView.urlname, args=[self.domain])
                 }
             ])
 

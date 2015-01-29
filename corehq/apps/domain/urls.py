@@ -8,7 +8,7 @@ from django.views.generic import RedirectView
 
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm
 from corehq.apps.domain.views import (
-    EditBasicProjectInfoView, EditDeploymentProjectInfoView,
+    EditBasicProjectInfoView,
     DefaultProjectSettingsView, EditMyProjectSettingsView,
     ExchangeSnapshotsView, CreateNewExchangeSnapshotView,
     ManageProjectMediaView, DomainForwardingOptionsView,
@@ -115,7 +115,6 @@ domain_settings = patterns(
     url(r'^subscription/renew/$', ConfirmSubscriptionRenewalView.as_view(),
         name=ConfirmSubscriptionRenewalView.urlname),
     url(r'^billing_information/$', EditExistingBillingAccountView.as_view(), name=EditExistingBillingAccountView.urlname),
-    url(r'^deployment/$', EditDeploymentProjectInfoView.as_view(), name=EditDeploymentProjectInfoView.urlname),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type':'FormRepeater'}, name=AddFormRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
