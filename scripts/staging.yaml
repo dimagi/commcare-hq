@@ -43,6 +43,7 @@
 trunk: master
 name: autostaging
 branches:
+  - locations-as-groups+email-report-urls  # Danny 1/28
   - email-report-urls  # Danny 1/28
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
