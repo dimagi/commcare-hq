@@ -89,6 +89,13 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
@@ -287,6 +294,13 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
     is_cacheable = True
     description = ugettext_noop("Number of submissions by form.")
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
@@ -392,6 +406,13 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     emailable = True
     is_cacheable = False
     ajax_pagination = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     @memoized
@@ -948,6 +969,13 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     ]
     fix_left_col = True
     emailable = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     @memoized

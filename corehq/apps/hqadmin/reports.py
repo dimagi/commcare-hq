@@ -1005,7 +1005,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('CommTrack Project Spaces')
     default_params = {
         'es_is_test': 'false',
-        'es_internal.commtrack_domain': 'true',
+        'es_internal.commtrack_domain': 'T',
     }
     indicators = [
         'commtrack_domain_count',

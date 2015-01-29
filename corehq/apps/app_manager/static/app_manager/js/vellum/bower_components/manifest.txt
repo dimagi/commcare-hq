@@ -1,5 +1,3 @@
-bower check-new     Checking for new versions of the project dependencies..
-Vellum /Users/dmiller/code/vellum
 ├── MediaUploader#170f4b63c7
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 (latest is 0.3.0)
@@ -23,6 +21,6 @@ Vellum /Users/dmiller/code/vellum
 ├── requirejs-tpl#a3ca1e0e7f
 ├── sinonjs#1.10.2 extraneous
 ├── underscore#1.5.2 (latest is 1.7.0)
-├── when#2.8.0 (latest is 3.6.4)
+├── when#2.8.0 (latest is 3.7.0)
 ├── xpath#1926d1ebd2
 └── xrayquire#2a0861abd7

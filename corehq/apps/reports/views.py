@@ -64,6 +64,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xml import V2
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.hqwebapp.models import ReportsTab
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
@@ -508,7 +509,7 @@ def add_config(request, domain=None):
             delattr(config, "end_date")
 
     config.save()
-
+    ReportsTab.clear_dropdown_cache(request, domain)
     touch_saved_reports_views(request.couch_user, domain)
 
     return json_response(config)
@@ -574,6 +575,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
+    ReportsTab.clear_dropdown_cache(request, domain)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -688,6 +690,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             instance.day = calculate_day(instance.interval, instance.day, day_change)
 
         instance.save()
+        ReportsTab.clear_dropdown_cache(request, domain)
         if is_new:
             messages.success(request, "Scheduled report added!")
         else:
