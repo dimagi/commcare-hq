@@ -154,7 +154,6 @@
                 <tr>
                     <th></th>
                     <th>Current Worker</th>
-                    <th>Memcached Status</th>
                     <th>Redis Status</th>
                     <th>Celery Status</th>
                     <th>Elasticsearch Status</th>
@@ -164,11 +163,6 @@
             <tr>
                 <td><img src="{% static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
                 <td><strong>{{ current_system }}</strong></td>
-                <td>
-                    {{ memcached_status }}
-                    <br>
-                    {{ memcached_results }}
-                </td>
                 <td>
                     {{ redis_status }}
                     <br>

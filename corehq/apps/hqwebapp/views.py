@@ -134,15 +134,6 @@ def redis_check():
         result = False
     return (result, None)
 
-def memcached_check():
-    try:
-        memcached = cache.get_cache('default')
-        uuid_val = uuid.uuid1()
-        memcached.set('serverup_check_key', uuid_val)
-        result = memcached.get('serverup_check_key') == uuid_val
-    except:
-        result = False
-    return (result, None)
 
 def server_error(request, template_name='500.html'):
     """
@@ -276,11 +267,6 @@ def server_up(req):
             "message": "* redis has issues",
             "check_func": redis_check
         },
-        "memcached": {
-            "always_check": True,
-            "message": "* memcached has issues",
-            "check_func": memcached_check
-        }
     }
 
     failed = False

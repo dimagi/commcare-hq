@@ -60,7 +60,7 @@ from corehq.apps.domain.decorators import require_superuser, require_superuser_o
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
-from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
+from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
 from corehq.apps.hqadmin.reporting.reports import (
     get_project_spaces,
     get_stats_data,
@@ -688,7 +688,6 @@ def system_info(request):
     context.update(check_redis())
     context.update(check_rabbitmq())
     context.update(check_celery_health())
-    context.update(check_memcached())
     context.update(check_es_cluster_health())
 
     return render(request, "hqadmin/system_info.html", context)
