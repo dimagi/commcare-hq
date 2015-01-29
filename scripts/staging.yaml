@@ -57,6 +57,7 @@ branches:
   - locations-as-groups+fixtures-spike  # cz 1/29
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
+  - killmemcached  # sk 1/29
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
