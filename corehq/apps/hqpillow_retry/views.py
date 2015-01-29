@@ -1,12 +1,10 @@
 from datetime import datetime
 import re
 from django.contrib import messages
-from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.aggregates import Count
-from django.db.models.query_utils import Q
 from django.http.response import Http404
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
@@ -23,6 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
 from pillow_retry.models import PillowError
 from django.conf import settings
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 SOURCE_SINGLE = 'single'
 ACTION_RESET = 'reset'
@@ -56,11 +55,13 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             DataTablesColumn('Error ID', sortable=False),
             DataTablesColumn('Doc ID', sortable=False),
             DataTablesColumn('Pillow Class', sortable=True),
-            DataTablesColumn('Date created', sortable=True),
-            DataTablesColumn('Date last attempt', sortable=True),
-            DataTablesColumn('Date next attempt', sortable=True),
+            DataTablesColumn('Created', sortable=True),
+            DataTablesColumn('Last attempt', sortable=True),
+            DataTablesColumn('Next attempt', sortable=True),
             DataTablesColumn('Attempts (current / total)', sortable=True),
             DataTablesColumn('Error type', sortable=True),
+            DataTablesColumn('Doc type', sortable=False),
+            DataTablesColumn('Domain(s)', sortable=False),
             DataTablesColumn('Select', sortable=False),
         )
 
@@ -152,11 +153,13 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
                 self.make_traceback_link(error),
                 self.make_search_link(error),
                 error.pillow,
-                error.date_created,
-                error.date_last_attempt,
-                error.date_next_attempt,
+                naturaltime(error.date_created),
+                naturaltime(error.date_last_attempt),
+                naturaltime(error.date_next_attempt),
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
+                error.doc_type,
+                error.domains,
                 self.make_checkbox(error)
             ]
 

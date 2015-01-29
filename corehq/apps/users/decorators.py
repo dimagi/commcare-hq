@@ -13,6 +13,7 @@ def require_permission_raw(permission_check, login_decorator=login_and_domain_re
     the page, otherwise false.
     """
     def decorator(view_func):
+        @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, "couch_user"):
                 return domain_specific_login_redirect(request, domain)

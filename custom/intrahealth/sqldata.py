@@ -2,6 +2,7 @@
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
 from sqlalchemy.sql.expression import alias
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -182,7 +183,7 @@ class DispDesProducts(BaseSqlData):
         commandes = ['Comanndes']
         raux = ['Recu']
         taux = ['Taux']
-        products = Product.by_domain(self.config['domain'])
+        products = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False)
         for product in products:
             commandes.append(0)
             raux.append(0)
@@ -203,7 +204,7 @@ class DispDesProducts(BaseSqlData):
     @property
     def headers(self):
         headers = DataTablesHeader(*[DataTablesColumn('Quantity')])
-        for product in Product.by_domain(self.config['domain']):
+        for product in SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False):
             headers.add_column(DataTablesColumn(product.name))
         return headers
 
@@ -211,7 +212,8 @@ class DispDesProducts(BaseSqlData):
     def columns(self):
         return [
             DatabaseColumn('Product Name', SimpleColumn('product_code'),
-                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
+                           format_fn=lambda code: SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                                                                         is_archived=False).name),
             DatabaseColumn("Commandes", SumColumn('commandes_total')),
             DatabaseColumn("Recu", SumColumn('recus_total'))
         ]
@@ -340,6 +342,20 @@ class PPSAvecDonnees(BaseSqlData):
         )
         return columns
 
+    @property
+    def rows(self):
+        rows = super(PPSAvecDonnees, self).rows
+        if 'district_id' in self.config:
+            locations_included = [row[0] for row in rows]
+        else:
+            return rows
+        all_locations = SQLLocation.objects.get(
+            location_id=self.config['district_id']
+        ).get_children().values_list('name', flat=True)
+        locations_not_included = set(all_locations) - set(locations_included)
+        return rows + [[location, {'sort_key': 0L, 'html': 0L}] for location in locations_not_included]
+
+
 class DateSource(BaseSqlData):
     title = ''
     table_name = 'fluff_RecapPassageFluff'
@@ -394,7 +410,8 @@ class RecapPassageData(BaseSqlData):
         diff = lambda x, y: (x or 0) - (y or 0)
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_code'),
-                           format_fn=lambda x: SQLProduct.objects.get(code=x, domain=self.config['domain']).name),
+                           format_fn=lambda code: SQLProduct.objects.get(code=code, domain=self.config['domain'],
+                                                                         is_archived=False).name),
             DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('product_old_stock_total')),
             DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('product_total_stock')),
             DatabaseColumn(_("Livraison"), SumColumn('product_livraison')),
@@ -610,6 +627,37 @@ class DureeData(BaseSqlData):
         return total_row
 
 
+class RecouvrementDesCouts(BaseSqlData):
+    slug = 'recouvrement'
+    custom_total_calculate = True
+    title = u'Recouvrement des côuts - Taxu de Recouvrement'
+
+    table_name = 'fluff_RecouvrementFluff'
+    have_groups = False
+    col_names = ['district_name', 'payments_amount_paid', 'payments_amount_to_pay',
+                 'payments_in_30_days', 'payments_in_3_months', 'payments_in_year']
+
+    @property
+    def group_by(self):
+        return ['district_name']
+
+    @property
+    def columns(self):
+        columns = [DatabaseColumn(_("District"), SimpleColumn('district_name'))]
+        columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_paid')))
+        columns.append(DatabaseColumn(_(u"Montant payé"), SumColumn('payments_amount_to_pay')))
+        columns.append(DatabaseColumn(_(u"Payé dans le 30 jours"), SumColumn('payments_in_30_days')))
+        columns.append(DatabaseColumn(_(u"Payé dans le 3 mois"), SumColumn('payments_in_3_months')))
+        columns.append(DatabaseColumn(_(u"Payé dans l`annèe"), SumColumn('payments_in_year')))
+        return columns
+
+    def calculate_total_row(self, rows):
+        total_row = super(RecouvrementDesCouts, self).calculate_total_row(rows)
+        if total_row:
+            total_row[0] = 'Total Region'
+        return total_row
+
+
 class IntraHealthQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, key):
@@ -668,4 +716,3 @@ class SumAndAvgGCustomColumn(IntraHealthCustomColumn):
 class CountUniqueAndSumCustomColumn(IntraHealthCustomColumn):
     query_cls = CountUniqueAndSumQueryMeta
     name = 'count_unique_and_sum'
-

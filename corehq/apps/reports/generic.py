@@ -497,7 +497,6 @@ class GenericReportView(CacheableRequestMixIn):
         self.context.update(self._validate_context_dict(self.report_context))
 
     @property
-    @request_cache("default")
     def view_response(self):
         """
             Intention: Not to be overridden in general.
@@ -651,6 +650,10 @@ class GenericReportView(CacheableRequestMixIn):
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return False
 
     @classmethod
     def get_subpages(cls):
@@ -883,6 +886,7 @@ class GenericTabularReport(GenericReportView):
             return self.rows
 
     @property
+    @request_cache("report_context")
     def report_context(self):
         """
             Don't override.
@@ -943,10 +947,11 @@ class GenericTabularReport(GenericReportView):
             context.update(provider_function(self))
         return context
 
-    def table_cell(self, value, html=None):
+    def table_cell(self, value, html=None, zerostyle=False):
+        styled_value = '<span class="muted">0</span>' if zerostyle and value == 0 else value
         return dict(
             sort_key=value,
-            html="%s" % value if html is None else html
+            html="%s" % styled_value if html is None else html
         )
 
 

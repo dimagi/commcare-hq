@@ -10,7 +10,7 @@ class ConstantGetterSpec(JsonObject):
 
     @property
     def expression(self):
-        return lambda item: self.constant
+        return lambda item, context=None: self.constant
 
 
 class PropertyNameGetterSpec(JsonObject):
@@ -36,3 +36,8 @@ class ConditionalExpressionSpec(JsonObject):
     test = DictProperty(required=True)
     expression_if_true = DictProperty(required=True)
     expression_if_false = DictProperty(required=True)
+
+
+class RootDocExpressionSpec(JsonObject):
+    type = TypeProperty('root_doc')
+    expression = DictProperty(required=True)

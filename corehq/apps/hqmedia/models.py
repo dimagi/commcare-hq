@@ -7,12 +7,12 @@ import hashlib
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema import LazyDict
+from corehq.apps.app_manager.exceptions import XFormException
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 import magic
 from corehq.apps.app_manager.xform import XFormValidationError
-from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
@@ -554,7 +554,7 @@ class HQMediaMixin(Document):
                     for video in parsed.video_references:
                         if video:
                             media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
-                except (XFormValidationError, XFormError):
+                except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
 
@@ -609,15 +609,16 @@ class HQMediaMixin(Document):
             'is_menu_media': is_menu_media,
         }
 
-    def remove_unused_mappings(self):
+    def remove_unused_mappings(self, additional_permitted_paths=()):
         """
             This checks to see if the paths specified in the multimedia map still exist in the Application.
             If not, then that item is removed from the multimedia map.
         """
         map_changed = False
         paths = self.multimedia_map.keys() if self.multimedia_map else []
+        permitted_paths = self.all_media_paths | set(additional_permitted_paths)
         for path in paths:
-            if path not in self.all_media_paths:
+            if path not in permitted_paths:
                 map_changed = True
                 del self.multimedia_map[path]
         if map_changed:

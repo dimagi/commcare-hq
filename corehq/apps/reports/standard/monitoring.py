@@ -89,6 +89,13 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
@@ -287,6 +294,13 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
     is_cacheable = True
     description = ugettext_noop("Number of submissions by form.")
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
     @property
     def headers(self):
         headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
@@ -335,7 +349,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTableBase,
                 row_sum = sum(row)
                 row = (
                     [self.get_user_link(user)] +
-                    [self.table_cell(row_data) for row_data in row] +
+                    [self.table_cell(row_data, zerostyle=True) for row_data in row] +
                     [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)]
                 )
                 totals = [totals[i] + col.get('sort_key')
@@ -392,6 +406,13 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     emailable = True
     is_cacheable = False
     ajax_pagination = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     @memoized
@@ -552,8 +573,9 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             counts_by_date.get(date.strftime(DATE_FORMAT), 0)
             for date in self.dates
         ]
+        styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
-        return [first_col] + date_cols + [sum(date_cols)]
+        return [first_col] + styled_date_cols + [sum(date_cols)]
 
 
 class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
@@ -947,6 +969,13 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
     ]
     fix_left_col = True
     emailable = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
 
     @property
     @memoized

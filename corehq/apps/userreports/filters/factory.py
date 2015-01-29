@@ -6,9 +6,8 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.specs import (PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec,
     BooleanExpressionFilterSpec)
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.filters import SinglePropertyValueFilter
+from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter, SinglePropertyValueFilter
 from corehq.apps.userreports.operators import EQUAL, get_operator
-from fluff.filters import ANDFilter, ORFilter, NOTFilter
 
 
 def _build_compound_filter(spec, context):

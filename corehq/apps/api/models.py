@@ -1,3 +1,4 @@
+from functools import wraps
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 
@@ -72,6 +73,7 @@ def _require_api_user(permission=None):
         if settings.DEBUG:
             return fn
         @require_POST
+        @wraps(fn)
         def _outer(request, *args, **kwargs):
             if ApiUser.auth(request.POST.get('username', ''), request.POST.get('password', ''), permission):
                 response = fn(request, *args, **kwargs)

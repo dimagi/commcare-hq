@@ -1,6 +1,7 @@
 import os
 
 from django.test import SimpleTestCase as TestCase
+from django.test.testcases import SimpleTestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.app_manager.models import Application, Module, APP_V2
@@ -83,11 +84,12 @@ QUESTIONS = [
         'value': '/data/datanode',
         'label': '/data/datanode',
         'type': 'DataBindOnly',
+        'calculate': None
     },
 ]
 
 
-class GetFormQuestionsTest(TestCase):
+class GetFormQuestionsTest(SimpleTestCase):
     domain = 'test-domain'
 
     maxDiff = None

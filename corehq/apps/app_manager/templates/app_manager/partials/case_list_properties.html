@@ -2,48 +2,73 @@
 {% load hq_shared_tags %}
 
 <div>
-    <p data-bind="text: DetailScreenConfig.message.EMPTY_SCREEN, visible: !$root.edit && _.isEmpty(columns)"></p>
-    <table class="table table-condensed detail-screen-table">
+    <table class="table table-condensed">
         <thead>
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
-                <th class="detail-screen-icon"></th>
-                <th class="detail-screen-field" data-bind="text: DetailScreenConfig.message.FIELD"></th>
-                <th class="detail-screen-header" data-bind="text: DetailScreenConfig.message.HEADER"></th>
-                <th class="detail-screen-format" data-bind="text: DetailScreenConfig.message.FORMAT"></th>
-                <th class="detail-screen-icon"></th>
+                <th></th>
+                <th data-bind="text: DetailScreenConfig.message.FIELD"></th>
+                <th data-bind="text: DetailScreenConfig.message.HEADER"></th>
+                <th data-bind="text: DetailScreenConfig.message.FORMAT"></th>
+                <th></th>
             </tr>
         </thead>
-        <tbody class="detail-screen-columns" data-bind="sortable: {
+        <tbody data-bind="sortable: {
             data: columns,
             afterAdd: function (elem) { $(elem).hide().fadeIn() },
             beforeRemove: function (elem) { $(elem).fadeOut() }
-        }">
-            <tr data-bind="css: {info: isTab}, attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
-                           copy: function () { return copyCallback(); },
-                           paste: function (data) { $parent.pasteCallback(data, $index() + 1); }">
-                <td class="detail-screen-icon" data-bind="jqueryElement: $grip, visible: $root.edit"></td>
+        }"
+        {# there must be no whitespace between <tbody> and <tr> #}
+        {# the .hide().fadeIn() will fail badly on FireFox #}
+        ><tr data-bind="
+                css: {info: isTab},
+                attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
+                copy: function () { return copyCallback(); },
+                paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
+            ">
+                <td data-bind="visible: $root.edit">
+                    <span class="sort-disabled" data-bind="ifnot: grip"></span>
+                    <i class="grip sortable-handle" data-bind="
+                        if: grip,
+                        css: COMMCAREHQ.icons.GRIP,
+                        style: {cursor: 'move'},
+                        event: {mousedown: function(){ $(':focus').blur(); }}
+                    "></i>
+                </td>
+
                 <!--ko if: !isTab -->
-                    <td class="detail-screen-field control-group"
+                    <td class="control-group"
                         data-bind="css: {error: showWarning}">
                         <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
-                        <div data-bind="jqueryElement: format_warning, visible: showWarning"></div>
+                        <div data-bind="visible: showWarning">
+                            <span class="help-inline" data-bind="
+                                text: DetailScreenConfig.field_format_warning_message
+                            ">
+                            </span>
+                        </div>
                     </td>
-                    <td class="detail-screen-header" data-bind="jqueryElement: header.ui"></td>
-                    <td class="detail-screen-format" data-bind="jqueryElement: $format"></td>
+                    <td data-bind="jqueryElement: header.ui"></td>
+                    <td data-bind="jqueryElement: $format"></td>
                 <!--/ko-->
                 <!--ko if: isTab -->
                     <td colspan="3" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
-                <td class="detail-screen-icon" data-bind="jqueryElement: $delete, visible: $root.edit"></td>
-            </tr>
-        </tbody>
+                <td>
+                    <i style="cursor: pointer;"
+                       data-bind="
+                        visible: $root.edit && ($parent.columns().length > 1),
+                        click: function(){screen.columns.remove($data);},
+                        css: COMMCAREHQ.icons.DELETE,
+                        attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
+                    "></i>
+                </td>
+            </tr></tbody>
         <tbody>
             <tr>
                 <td></td>
                 <td colspan="4">
                     <div class="btn-group">
-                        <button class="btn add-property-item" data-bind="click: addProperty">Add Property</button>
+                        <button class="btn" data-bind="click: addProperty">Add Property</button>
                         {% if request|feature_preview_enabled:'CALC_XPATHS' or request|toggle_enabled:'GRAPH_CREATION' %}
                         <button class="btn dropdown-toggle" data-toggle="dropdown">
                             <span class="caret"></span>

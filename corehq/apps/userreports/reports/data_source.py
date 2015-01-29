@@ -78,7 +78,7 @@ class ConfigurableReportDataSource(SqlData):
             raise UserReportsError(e.message)
         # arbitrarily sort by the first column in memory
         # todo: should get pushed to the database but not currently supported in sqlagg
-        return sorted(ret, key=lambda x: x[self.column_configs[0].field])
+        return sorted(ret, key=lambda x: x[self.column_configs[0].report_column_id])
 
     def get_total_records(self):
         return len(self.get_data())

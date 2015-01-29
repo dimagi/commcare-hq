@@ -44,6 +44,42 @@ function splitTableByNumber(table, firstPage, otherPages) {
     breakTable(table, header, rows, splitIndices);
 }
 
+function splitTableByNumberAndAWCName(table, firstPage, otherPages) {
+    var header = table.children("thead");
+    if (!header.length)
+        return;
+
+    header = header.detach();
+
+    var splitIndices = [0];
+    var lastSplit = 0;
+    var lastAWC = "";
+    var isFirstSplit = true;
+    var rows = table.children("tbody").children();
+
+    rows.each(function(i, row) {
+        if(lastAWC !== "" && lastAWC !== row.children[2].textContent) {
+            splitIndices.push(i);
+            lastSplit = i;
+            if (isFirstSplit) {
+                isFirstSplit = false;
+            }
+        }
+        else if(isFirstSplit && i === firstPage) {
+            splitIndices.push(i);
+            lastSplit = i;
+            isFirstSplit = false;
+        }
+        else if(!isFirstSplit && i === lastSplit + otherPages) {
+            splitIndices.push(i);
+            lastSplit = i;
+        }
+        lastAWC = row.children[2].textContent;
+    });
+    splitIndices.push(undefined);
+    breakTable(table, header, rows, splitIndices);
+}
+
 function breakTable(table, header, rows, splitIndices) {
     table = table.replaceWith('<div id="_split_table_wrapper"></div>');
     table.empty();
