@@ -16,9 +16,8 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login as django_login, redirect_to_login
+from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
-from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
     HttpResponseForbidden
@@ -47,7 +46,7 @@ from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base, json_response
+from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 from soil import heartbeat
@@ -224,7 +223,7 @@ def yui_crossdomain(req):
     <allow-access-from domain="yui.yahooapis.com"/>
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
-</cross-domain-policy>""" % Site.objects.get(id=settings.SITE_ID).domain
+</cross-domain-policy>""" % get_site_domain()
     return HttpResponse(x_domain, mimetype="application/xml")
 
 

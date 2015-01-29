@@ -33,7 +33,6 @@ from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
@@ -75,7 +74,7 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 
-from dimagi.utils.web import get_ip, json_response
+from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
@@ -88,7 +87,6 @@ import cStringIO
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop
 from toggle.models import Toggle
-from toggle.shortcuts import update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -2060,19 +2058,25 @@ def _publish_snapshot(request, domain, published_snapshot=None):
         _notification_email_on_publish(domain, published_snapshot, request.couch_user)
     return True
 
+
 def _notification_email_on_publish(domain, snapshot, published_by):
-    url_base = Site.objects.get_current().domain
-    params = {"domain": domain, "snapshot": snapshot, "published_by": published_by, "url_base": url_base}
-    text_content = render_to_string("domain/email/published_app_notification.txt", params)
-    html_content = render_to_string("domain/email/published_app_notification.html", params)
+    params = {"domain": domain, "snapshot": snapshot,
+              "published_by": published_by, "url_base": get_site_domain()}
+    text_content = render_to_string(
+        "domain/email/published_app_notification.txt", params)
+    html_content = render_to_string(
+        "domain/email/published_app_notification.html", params)
     recipients = settings.EXCHANGE_NOTIFICATION_RECIPIENTS
     subject = "New App on Exchange: %s" % snapshot.title
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+            send_HTML_email(subject, recipient, html_content,
+                            text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
-        logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
+        logging.warning("Can't send notification email, "
+                        "but the message was:\n%s" % text_content)
+
 
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):
@@ -2272,16 +2276,22 @@ def org_request(request, domain):
         messages.error(request, "The organization '%s' does not exist" % org_name)
     return HttpResponseRedirect(reverse('domain_org_settings', args=[domain]))
 
+
 def _send_request_notification_email(request, org, dom):
-    url_base = Site.objects.get_current().domain
-    params = {"org": org, "dom": dom, "requestee": request.couch_user, "url_base": url_base}
-    text_content = render_to_string("domain/email/org_request_notification.txt", params)
-    html_content = render_to_string("domain/email/org_request_notification.html", params)
-    recipients = [member.email for member in org.get_members() if member.is_org_admin(org.name)]
+    params = {"org": org, "dom": dom, "requestee": request.couch_user,
+              "url_base": get_site_domain()}
+    text_content = render_to_string(
+        "domain/email/org_request_notification.txt", params)
+    html_content = render_to_string(
+        "domain/email/org_request_notification.html", params)
+    recipients = [member.email for member in org.get_members()
+                  if member.is_org_admin(org.name)]
     subject = "New request to add a project to your organization! -- CommcareHQ"
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+            send_HTML_email(subject, recipient, html_content,
+                            text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
-        logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
+        logging.warning("Can't send notification email, "
+                        "but the message was:\n%s" % text_content)

@@ -21,6 +21,7 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
 from corehq.apps.reports.graph_models import PieChart
 from corehq import elastic
@@ -186,7 +187,7 @@ class SubmitHistory(ElasticProjectInspectionReport, ProjectReport,
     def rows(self):
         def form_data_link(instance_id):
             return "<a class='ajax_dialog' href='%(url)s'>%(text)s</a>" % {
-                "url": reverse('render_form_data', args=[self.domain, instance_id]),
+                "url": absolute_reverse('render_form_data', args=[self.domain, instance_id]),
                 "text": _("View Form")
             }
 
