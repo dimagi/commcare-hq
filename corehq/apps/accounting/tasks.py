@@ -61,7 +61,7 @@ def deactivate_subscriptions(based_on_date=None):
     for subscription in ending_subscriptions:
         subscription.is_active = False
         subscription.save()
-        if subscription.next_subscription:
+        if subscription.next_subscription and subscription.next_subscription.date_start == ending_date:
             new_plan_version = subscription.next_subscription.plan_version
             subscription.next_subscription.is_active = True
             subscription.next_subscription.save()
