@@ -425,14 +425,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
                  ('false', _('Real')),
                  ('none', _('Not Sure')))
     )
-    survey_management_enabled = BooleanField(
-        label=_("Survey Management Enabled"),
-        required=False,
-        help_text=_("Survey Management is a CommCareHQ module for SMS and "
-                    "Call Center based surveys for large samples.  It is "
-                    "under active development. Do not enable for your domain "
-                    "unless you're piloting it.")
-    )
     secure_submissions = BooleanField(
         label=_("Secure submissions"),
         required=False,
@@ -475,7 +467,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             return False
         try:
             domain.is_test = self.cleaned_data['is_test']
-            domain.survey_management_enabled = self.cleaned_data.get('survey_management_enabled', False)
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default

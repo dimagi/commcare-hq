@@ -342,14 +342,10 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             )
 
         if self.can_user_see_meta:
-            for attr in [
-                'survey_management_enabled',
-                'secure_submissions',
-            ]:
-                initial[attr] = getattr(self.domain_object, attr)
             initial.update({
                 'is_test': self.domain_object.is_test,
                 'cloudcare_releases': self.domain_object.cloudcare_releases,
+                'secure_submissions': getattr(self.domain_object, 'secure_submissions')
             })
 
             return DomainMetadataForm(
