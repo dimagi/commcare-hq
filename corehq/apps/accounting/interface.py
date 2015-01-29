@@ -419,6 +419,7 @@ class InvoiceInterface(GenericTabularReport):
     @property
     def headers(self):
         header = DataTablesHeader(
+            DataTablesColumn("Invoice #"),
             DataTablesColumn("Account Name (Fogbugz Client Name)"),
             DataTablesColumn("Subscription"),
             DataTablesColumn("Project Space"),
@@ -475,6 +476,7 @@ class InvoiceInterface(GenericTabularReport):
                 contact_info = BillingContactInfo()
 
             columns = [
+                invoice.invoice_number,
                 format_datatables_data(
                     mark_safe(
                         '<a href="%(account_url)s">%(name)s</a>' % {

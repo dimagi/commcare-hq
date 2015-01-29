@@ -1,5 +1,4 @@
-#from django.conf.urls.defaults import patterns, url
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('corehq.apps.groups.views',
     url(r'^add_group/$',

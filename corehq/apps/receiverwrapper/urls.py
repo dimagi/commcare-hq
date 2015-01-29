@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 urlpatterns = patterns('corehq.apps.receiverwrapper.views',
     url(r'^/?$', 'post', name='receiver_post'),

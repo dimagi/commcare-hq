@@ -86,6 +86,10 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     exportable = True
     emailable = True
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return True
+
     @property
     def headers(self):
         columns = [
@@ -283,6 +287,10 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     exportable = True
     emailable = True
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return True
+
     # temporary
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -371,6 +379,10 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     ]
     exportable = True
     emailable = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return True
 
     # temporary
     @classmethod

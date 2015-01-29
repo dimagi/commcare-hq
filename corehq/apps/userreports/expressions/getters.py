@@ -10,8 +10,8 @@ class TransformedGetter(object):
         self.getter = getter
         self.transform = transform
 
-    def __call__(self, item):
-        extracted = self.getter(item)
+    def __call__(self, item, context=None):
+        extracted = self.getter(item, context)
         if self.transform:
             return self.transform(extracted)
         return extracted
@@ -22,7 +22,7 @@ class DictGetter(object):
     def __init__(self, property_name):
         self.property_name = property_name
 
-    def __call__(self, item):
+    def __call__(self, item, context=None):
         if not isinstance(item, dict):
             return None
         try:
@@ -41,7 +41,7 @@ class NestedDictGetter(object):
     def __init__(self, property_path):
         self.property_path = property_path
 
-    def __call__(self, item):
+    def __call__(self, item, context=None):
         if not isinstance(item, dict):
             return None
         try:

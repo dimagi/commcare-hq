@@ -6,8 +6,12 @@
     "table_id": "hiv_test",
     "display_name": "HIV Tests",
     "configured_filter": {
-        "type": "property_match",
-        "property_name": "xmlns",
+        "type": "boolean_expression",
+        "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+        },
+        "operator": "eq",
         "property_value": "http://openrosa.org/formdesigner/a3477838a9ede4f6d110632327c64845ded6d155"
     },
     "configured_indicators": [

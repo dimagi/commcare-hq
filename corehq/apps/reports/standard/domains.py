@@ -9,6 +9,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.util import numcell
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
+from corehq.util.view_utils import absolute_reverse
 
 
 def format_date(dstr, default):
@@ -31,8 +32,8 @@ class DomainStatsReport(GenericTabularReport):
     def get_name_or_link(self, d, internal_settings=False):
         if not getattr(self, 'show_name', None):
             reverse_str = "domain_homepage" if not internal_settings else "domain_internal_settings"
-            return mark_safe('<a href="%s">%s</a>' % \
-                   (reverse(reverse_str, args=[d['name']]), d.get('hr_name') or d['name']))
+            return mark_safe('<a href="%s">%s</a>' %
+                             (absolute_reverse(reverse_str, args=[d['name']]), d.get('hr_name') or d['name']))
         else:
             return d['name']
 

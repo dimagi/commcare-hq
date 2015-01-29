@@ -6,7 +6,7 @@ from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath
-from .exceptions import XFormError, CaseError, XFormValidationError, BindNotFound
+from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
 import formtranslate.api
 
 
@@ -18,7 +18,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError, e:
-        raise XFormError("Error parsing XML" + (": %s" % str(e)))
+        raise XFormException("Error parsing XML" + (": %s" % str(e)))
 
 
 namespaces = dict(
@@ -259,14 +259,14 @@ def raise_if_none(message):
     """
     raise_if_none("message") is a decorator that turns a function that returns a WrappedNode
     whose xml can possibly be None to a function that always returns a valid WrappedNode or raises
-    an XFormError with the message given
+    an XFormException with the message given
 
     """
     def decorator(fn):
         def _fn(*args, **kwargs):
             n = fn(*args, **kwargs)
             if not n.exists():
-                raise XFormError(message)
+                raise XFormException(message)
             else:
                 return n
         return _fn
@@ -523,7 +523,7 @@ class XForm(WrappedNode):
         try:
             nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
             return list(set([n.text for n in nodes]))
-        except XFormError:
+        except XFormException:
             return []
 
     @property
@@ -544,7 +544,7 @@ class XForm(WrappedNode):
             title.xml.text = new_name
         try:
             self.data_node.set('name', "%s" % new_name)
-        except XFormError:
+        except XFormException:
             pass
 
     def normalize_itext(self):
@@ -562,7 +562,7 @@ class XForm(WrappedNode):
         """
         try:
             itext = self.itext_node
-        except Exception:
+        except XFormException:
             return
         node_groups = {}
         translations = {}
@@ -619,18 +619,22 @@ class XForm(WrappedNode):
                     del node.attrib[key]
 
     def rename_language(self, old_code, new_code):
-        trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
-        duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
+        try:
+            trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
+            duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
+        except XFormException:
+            return
+
         if not trans_node.exists():
-            raise XFormError("There's no language called '%s'" % old_code)
+            raise XFormException("There's no language called '%s'" % old_code)
         if duplicate_node.exists():
-            raise XFormError("There's already a language called '%s'" % new_code)
+            raise XFormException("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
     def exclude_languages(self, whitelist):
         try:
             translations = self.itext_node.findall('{f}translation')
-        except XFormError:
+        except XFormException:
             # if there's no itext then they must be using labels
             return
 
@@ -653,6 +657,7 @@ class XForm(WrappedNode):
             trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % lang)
             if not trans_node.exists():
                 return None
+
         text_node = trans_node.find('{f}text[@id="%s"]' % id)
         if not text_node.exists():
             return None
@@ -665,7 +670,7 @@ class XForm(WrappedNode):
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
-            raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
+            raise XFormException('<translation lang="%s"><text id="%s"> node has no <value>' % (
                 trans_node.attrib.get('lang'), id
             ))
 
@@ -706,7 +711,7 @@ class XForm(WrappedNode):
             return []
         try:
             itext = self.itext_node
-        except:
+        except XFormException:
             return []
         langs = []
         for translation in itext.findall('{f}translation'):
@@ -719,7 +724,7 @@ class XForm(WrappedNode):
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
 
-        if the xform is bad, it will raise an XFormError
+        if the xform is bad, it will raise an XFormException
 
         """
 
@@ -759,7 +764,7 @@ class XForm(WrappedNode):
                     try:
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
-                        raise XFormError("<item> (%r) has no <value>" % translation)
+                        raise XFormException("<item> (%r) has no <value>" % translation)
                     options.append({
                         'label': translation,
                         'value': value
@@ -768,9 +773,10 @@ class XForm(WrappedNode):
             questions.append(question)
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
-       
+
         for data_node, path in self.get_leaf_data_nodes():
             if path not in excluded_paths:
+                bind = self.get_bind(path)
                 try:
                     matching_repeat_context = [
                         rc for rc in repeat_contexts if path.startswith(rc)
@@ -784,6 +790,7 @@ class XForm(WrappedNode):
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
+                    "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 })
 
         return questions
@@ -869,7 +876,7 @@ class XForm(WrappedNode):
         elif node.tag_name == "repeat":
             path = node.attrib['nodeset']
         else:
-            raise XFormError("Node <%s> has no 'ref' or 'bind'" % node.tag_name)
+            raise XFormException("Node <%s> has no 'ref' or 'bind'" % node.tag_name)
         return path
     
     def get_leaf_data_nodes(self):
@@ -1006,7 +1013,7 @@ class XForm(WrappedNode):
                     bind_parent.append(bind)
 
         if not case_parent.exists():
-            raise XFormError("Couldn't get the case XML from one of your forms. "
+            raise XFormException("Couldn't get the case XML from one of your forms. "
                              "A common reason for this is if you don't have the "
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '
@@ -1043,7 +1050,7 @@ class XForm(WrappedNode):
     def set_default_language(self, lang):
         try:
             itext_node = self.itext_node
-        except XFormError:
+        except XFormException:
             return
         else:
             for translation in itext_node.findall('{f}translation'):
@@ -1259,14 +1266,14 @@ class XForm(WrappedNode):
 
         if case_block is not None:
             if case.exists():
-                raise XFormError("You cannot use the Case Management UI if you already have a case block in your form.")
+                raise XFormException("You cannot use the Case Management UI if you already have a case block in your form.")
             else:
                 case_parent.append(case_block.elem)
                 if delegation_case_block is not None:
                     case_parent.append(delegation_case_block.elem)
 
         if not case_parent.exists():
-            raise XFormError("Couldn't get the case XML from one of your forms. "
+            raise XFormException("Couldn't get the case XML from one of your forms. "
                              "A common reason for this is if you don't have the "
                              "xforms namespace defined in your form. Please verify "
                              'that the xmlns="http://www.w3.org/2002/xforms" '
@@ -1923,108 +1930,130 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'intent',
         'icon': 'icon-vellum-android-intent',
+        'icon_bs3': 'fcc-fd-android-intent',
     },
     "Audio": {
         'tag': 'upload',
         'media': 'audio/*',
         'type': 'binary',
         'icon': 'icon-vellum-audio-capture',
+        'icon_bs3': 'fcc-fd-audio-capture',
     },
     "Barcode": {
         'tag': 'input',
         'type': 'barcode',
         'icon': 'icon-vellum-android-intent',
+        'icon_bs3': 'fcc-fd-android-intent',
     },
     "DataBindOnly": {
         'icon': 'icon-vellum-variable',
+        'icon_bs3': 'fcc-fd-data',
     },
     "Date": {
         'tag': 'input',
         'type': 'xsd:date',
         'icon': 'icon-calendar',
+        'icon_bs3': 'fd-question',
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:datetime',
         'icon': 'icon-vellum-datetime',
+        'icon_bs3': 'fcc-fd-datetime',
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
         'icon': 'icon-vellum-decimal',
+        'icon_bs3': 'fcc-fd-decimal',
     },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',
         'icon': 'icon-reorder',
+        'icon_bs3': 'fd-question',
     },
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
         'icon': 'icon-map-marker',
+        'icon_bs3': 'fd-question',
     },
     "Group": {
         'tag': 'group',
         'icon': 'icon-folder-open',
+        'icon_bs3': 'fd-question',
     },
     "Image": {
         'tag': 'upload',
         'media': 'image/*',
         'type': 'binary',
         'icon': 'icon-camera',
+        'icon_bs3': 'fd-question',
     },
     "Int": {
         'tag': 'input',
         'type': ('xsd:int', 'xsd:integer'),
         'icon': 'icon-vellum-numeric',
+        'icon_bs3': 'fcc-fd-numeric',
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
         'icon': 'icon-vellum-long',
+        'icon_bs3': 'fcc-fd-long',
     },
     "MSelect": {
         'tag': 'select',
         'icon': 'icon-vellum-multi-select',
+        'icon_bs3': 'fcc-fd-multi-select',
     },
     "PhoneNumber": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'appearance': 'numeric',
         'icon': 'icon-signal',
+        'icon_bs3': 'fd-question',
     },
     "Repeat": {
         'tag': 'repeat',
         'icon': 'icon-retweet',
+        'icon_bs3': 'fd-question',
     },
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
         'icon': 'icon-key',
+        'icon_bs3': 'fd-question',
     },
     "Select": {
         'tag': 'select1',
         'icon': 'icon-vellum-single-select',
+        'icon_bs3': 'fcc-fd-single-select',
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'icon': "icon-vellum-text",
+        'icon_bs3': 'fcc-fd-text',
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
         'icon': 'icon-time',
+        'icon_bs3': 'fd-question',
     },
     "Trigger": {
         'tag': 'trigger',
         'icon': 'icon-tag',
+        'icon_bs3': 'fd-question',
     },
     "Video": {
         'tag': 'upload',
         'media': 'video/*',
         'type': 'binary',
         'icon': 'icon-facetime-video',
+        'icon_bs3': 'fd-question',
     },
 }
 

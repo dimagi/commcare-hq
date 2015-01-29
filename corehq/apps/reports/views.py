@@ -35,6 +35,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
 from corehq.util.couch import get_document_or_404
+from corehq.util.view_utils import absolute_reverse
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -64,6 +65,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xml import V2
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.hqwebapp.models import ReportsTab
 from corehq.apps.reports.exportfilters import default_form_filter
 import couchforms.views as couchforms_views
 from couchforms.filters import instances
@@ -508,7 +510,7 @@ def add_config(request, domain=None):
             delattr(config, "end_date")
 
     config.save()
-
+    ReportsTab.clear_dropdown_cache(request, domain)
     touch_saved_reports_views(request.couch_user, domain)
 
     return json_response(config)
@@ -574,6 +576,7 @@ def delete_config(request, domain, config_id):
         raise Http404()
 
     config.delete()
+    ReportsTab.clear_dropdown_cache(request, domain)
 
     touch_saved_reports_views(request.couch_user, domain)
     return HttpResponse()
@@ -688,6 +691,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             instance.day = calculate_day(instance.interval, instance.day, day_change)
 
         instance.save()
+        ReportsTab.clear_dropdown_cache(request, domain)
         if is_new:
             messages.success(request, "Scheduled report added!")
         else:
@@ -858,7 +862,7 @@ def case_details(request, domain, case_id):
         "case_display_options": {
             "display": request.project.get_case_display(case),
             "timezone": timezone,
-            "get_case_url": lambda case_id: reverse(case_details, args=[domain, case_id]),
+            "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),

@@ -154,11 +154,6 @@ OFFLINE_CLOUDCARE = StaticToggle(
     'Offline Cloudcare'
 )
 
-REMINDERS_UI_PREVIEW = StaticToggle(
-    'reminders_ui_preview',
-    'New reminders UI'
-)
-
 CASE_REBUILD = StaticToggle(
     'case_rebuild',
     'Show UI-based case rebuild option',

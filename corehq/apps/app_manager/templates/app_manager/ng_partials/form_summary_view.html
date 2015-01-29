@@ -1,0 +1,63 @@
+{% extends "app_manager/ng_partials/base_summary_view.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+{% block navigation_extra %}
+{% angularjs %}
+    <li role="presentation" ng-class="{ 'active' : allSelected()}">
+        <a ng-click="filterList()">{% trans "All Forms" %}</a>
+        <div class="well">
+            <ul class="nav nav-pills nav-stacked">
+                <li ng-repeat="module in modules" role="presentation" ng-class="{ 'active' : moduleSelected(module)}">
+                    <a ng-click="filterList(module)"><i class="fa fa-folder-open"></i> {{ module.name }}</a>
+                    <div class="well">
+                        <ul class="nav nav-pills nav-stacked">
+                            <li ng-repeat="form in module.forms" ng-class="{ 'active' : formSearch.id === form.id }">
+                                <a ng-click="filterList(module, form)">{{ form.name }}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </li>
+{% endangularjs %}
+{% endblock %}
+
+{% block content %}
+{% angularjs %}
+    <div class="page-header" style="margin-top: 0;">
+        <h1 style="font-size: 1.8em;">{% trans "Form Summary" %}</h1>
+    </div>
+    <div>
+        <loading></loading>
+        <ul>
+            <li ng-repeat="module in modules|filter:moduleSearch">
+                 <h4><i class="fa fa-folder-open"></i> {{ module.name }}</h4>
+
+                <ul>
+                    <li ng-repeat="form in module.forms|filter:formSearch">
+                    <h5>{{ form.name }}</h5>
+                        <ol>
+                            <li ng-repeat="question in form.questions">
+                                {% verbatim %}<i class="fcc {{ getIcon(question.type) }}"></i>{% endverbatim %}
+                                <span class="label label-info">{{ question.value }}</span> {{ question.label }}
+                                <ol>
+                                    <li ng-repeat="option in question.options">
+                                        <span class="label label-info">{{ option.value }}</span> {{ option.label }}
+                                    </li>
+                                </ol>
+                            </li>
+                        </ol>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <script type="text/ng-template" id="/form_question_tree.html">
+
+    </script>
+{% endangularjs %}
+{% endblock %}

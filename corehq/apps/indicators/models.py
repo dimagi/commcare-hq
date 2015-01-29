@@ -8,6 +8,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProper
 from couchdbkit.schema.base import DocumentSchema
 from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
         FormAliasIndicatorAdminCRUDManager, FormLabelIndicatorAdminCRUDManager,
@@ -44,9 +45,10 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
 
-    def __init__(self, _d=None, **kwargs):
+    def __init__(self, _d=None, use_new_db=False, **kwargs):
         super(IndicatorDefinition, self).__init__(_d, **kwargs)
         self.class_path = self._class_path
+        self.use_new_db = use_new_db
 
     def __str__(self):
         return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
@@ -170,6 +172,11 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     @classmethod
     @memoized
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
+        if 'use_new_db' in kwargs:
+            use_new_db = kwargs.pop('use_new_db', False)
+        else:
+            use_new_db = False
+
         couch_key = cls._generate_couch_key(
             namespace=namespace,
             domain=domain,
@@ -189,7 +196,9 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
         if wrap and doc:
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
-                return doc_class.get(doc.get('id'))
+                doc_instance = doc_class.get(doc.get('id'))
+                doc_instance.use_new_db = use_new_db
+                return doc_instance
             except Exception as e:
                 logging.error("No matching documents found for indicator %s: %s" % (slug, e))
                 return None
@@ -418,7 +427,15 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 reduce=reduce
             )
 
-        return cache_core.cached_view(self.get_db(), self.couch_view, cache_expire=60*60*6, **view_kwargs)
+        if self.use_new_db:
+            from mvp_docs.models import IndicatorXForm
+            db = IndicatorXForm.get_db()
+            section = self.couch_view.split('/')
+            couch_view = "%s_indicators/%s" % (section[0], section[1])
+        else:
+            db = XFormInstance.get_db()
+            couch_view = self.couch_view
+        return cache_core.cached_view(db, couch_view, cache_expire=60*60*6, **view_kwargs)
 
     def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
         """
@@ -766,7 +783,7 @@ class FormIndicatorDefinition(BaseDocumentIndicatorDefinition, FormDataIndicator
     base_doc = "FormIndicatorDefinition"
 
     def get_clean_value(self, doc):
-        if not isinstance(doc, XFormInstance):
+        if not isinstance(doc, XFormInstance) or not issubclass(doc.__class__, XFormInstance):
             raise ValueError("The document provided must be an instance of XFormInstance.")
         if not doc.xmlns == self.xmlns:
             raise DocumentMismatchError("The xmlns of the form provided does not match the one for this definition.")
@@ -884,7 +901,7 @@ class CaseIndicatorDefinition(BaseDocumentIndicatorDefinition):
     base_doc = "CaseIndicatorDefinition"
 
     def get_clean_value(self, doc):
-        if not isinstance(doc, CommCareCase):
+        if not isinstance(doc, CommCareCase) or not issubclass(doc.__class__, CommCareCase):
             raise ValueError("The document provided must be an instance of CommCareCase.")
         if not doc.type == self.case_type:
             raise DocumentMismatchError("The case provided should be a '%s' type case." % self.case_type)
@@ -906,7 +923,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
     _admin_crud_class = FormDataInCaseAdminCRUDManager
 
     def get_related_forms(self, case):
-        if not isinstance(case, CommCareCase):
+        if not isinstance(case, CommCareCase) or not issubclass(case.__class__, CommCareCase):
             raise ValueError("case is not an instance of CommCareCase.")
         all_forms = case.get_forms()
         all_forms.reverse()
@@ -922,7 +939,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
             existing_value = dict()
         forms = self.get_related_forms(doc)
         for form in forms:
-            if isinstance(form, XFormInstance):
+            if isinstance(form, XFormInstance) or not issubclass(doc.__class__, XFormInstance):
                 form_data = form.form
                 existing_value[form.get_id] = {
                     'value': self.get_from_form(form_data, self.question_id),

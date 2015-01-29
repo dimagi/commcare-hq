@@ -1,3 +1,4 @@
+from functools import wraps
 import json
 from django.contrib import messages
 from django.utils.encoding import force_unicode
@@ -18,6 +19,7 @@ def require_billing_admin():
         Decorator to require the current logged in user to be a billing
         admin to access the decorated view.
         """
+        @wraps(fn)
         def wrapped(request, *args, **kwargs):
             if (not hasattr(request, 'couch_user')
                     or not hasattr(request, 'domain')):
@@ -41,6 +43,7 @@ def requires_privilege_with_fallback(slug, **assignment):
     of 402 that means "Payment Required"
     """
     def decorate(fn):
+        @wraps(fn)
         def wrapped(request, *args, **kwargs):
             try:
                 if (hasattr(request, 'subscription')
@@ -86,6 +89,7 @@ def requires_privilege_plaintext_response(slug,
     content_type of tex/plain if the privilege is not found.
     """
     def decorate(fn):
+        @wraps(fn)
         def wrapped(request, *args, **kwargs):
             try:
                 return requires_privilege(slug, **assignment)(fn)(
@@ -123,6 +127,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
         get_response = lambda msg, code: {'code': code, 'message': msg}
 
     def decorate(fn):
+        @wraps(fn)
         def wrapped(request, *args, **kwargs):
             try:
                 return requires_privilege(slug, **assignment)(fn)(
@@ -142,6 +147,7 @@ def requires_privilege_for_commcare_user(slug, **assignment):
     the specified privilege only for CommCareUsers.
     """
     def decorate(fn):
+        @wraps(fn)
         def wrapped(request, *args, **kwargs):
             if (hasattr(request, 'couch_user')
                     and request.couch_user.is_web_user()):

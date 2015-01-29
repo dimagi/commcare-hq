@@ -8,9 +8,8 @@ from couchforms.const import (
 import logging
 from datetime import datetime
 from django.conf import settings
-from django.contrib.sites.models import Site
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.web import get_ip
+from dimagi.utils.web import get_ip, get_site_domain
 
 
 __all__ = ['get_path', 'get_instance_and_attachment',
@@ -57,10 +56,10 @@ def get_location(request=None):
     if hasattr(settings, "OVERRIDE_LOCATION"):
         return settings.OVERRIDE_LOCATION
     if request is None:
-        prefix = getattr(settings, 'DEFAULT_PROTOCOL', 'http')
+        prefix = settings.DEFAULT_PROTOCOL
     else:
         prefix = "https" if request.is_secure() else "http"
-    return "%s://%s" % (prefix, Site.objects.get_current().domain)
+    return "%s://%s" % (prefix, get_site_domain())
 
 
 def get_received_on(request):

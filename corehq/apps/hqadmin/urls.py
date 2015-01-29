@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from corehq.apps.hqadmin.views import PrimeRestoreCache
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import FlagBrokenBuilds

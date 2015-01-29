@@ -7,12 +7,12 @@ import hashlib
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from couchdbkit.schema import LazyDict
+from corehq.apps.app_manager.exceptions import XFormException
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 import magic
 from corehq.apps.app_manager.xform import XFormValidationError
-from couchforms.models import XFormError
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from dimagi.utils.couch.database import get_db, SafeSaveDocument, get_safe_read_kwargs, iter_docs
@@ -554,7 +554,7 @@ class HQMediaMixin(Document):
                     for video in parsed.video_references:
                         if video:
                             media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
-                except (XFormValidationError, XFormError):
+                except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
 

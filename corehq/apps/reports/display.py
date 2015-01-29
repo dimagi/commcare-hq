@@ -1,8 +1,6 @@
 import json
-from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -10,6 +8,7 @@ class StringWithAttributes(unicode):
     def replace(self, *args):
         string = super(StringWithAttributes, self).replace(*args)
         return StringWithAttributes(string)
+
 
 class FormType(object):
     def __init__(self, domain, xmlns, app_id=None):
@@ -69,12 +68,7 @@ class FormType(object):
                     title += " [Multiple Forms]"
 
                 if html:
-                    name = u"<span>{title}</span>".format(
-                        url=reverse("corehq.apps.app_manager.views.view_app", args=[self.domain, form['app']['id']])
-                        + "?m=%s&f=%s" % (form['module']['id'], form['form']['id']),
-                        title=title,
-                        form=form_name
-                    )
+                    name = u"<span>{title}</span>".format(title=title)
                 else:
                     name = title
             else:
@@ -96,6 +90,7 @@ class FormType(object):
             # cache doc a short interval for the life of someone viewing the page
             cache.set(cache_key, json.dumps(form), 30)
         return form
+
 
 def xmlns_to_name(domain, xmlns, app_id, html=False):
     return FormType(domain, xmlns, app_id).get_label(html=html)

@@ -1,8 +1,8 @@
+from corehq import Domain
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
-from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 
 REORDER_LEVEL = 1.5
 MAXIMUM_LEVEL = 3
@@ -13,6 +13,7 @@ class EWSData(object):
     show_chart = False
     title = ''
     slug = ''
+    use_datatables = False
 
     def __init__(self, config=None):
         self.config = config or {}
@@ -40,11 +41,19 @@ class EWSData(object):
         else:
             return [location]
 
+    @property
+    def location_types(self):
+        return [loc_type.name for loc_type in filter(
+                lambda loc_type: not loc_type.administrative,
+                Domain.get_by_name(self.config['domain']).location_types
+                )]
+
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
+    split = True
 
     @property
     @memoized
@@ -69,7 +78,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title
+            'title': self.title,
+            'split': self.split
         }
         return context
 
@@ -77,17 +87,10 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         total_row = []
         headers = []
         rows = []
-        charts = []
+
         if not self.needs_filters and data_provider.show_table:
             headers = data_provider.headers
             rows = data_provider.rows
-
-        if not self.needs_filters and data_provider.show_chart:
-            chart = LineChart("Inventory Management Trends", x_axis=Axis(data_provider.chart_x_label, 'd'),
-                              y_axis=Axis(data_provider.chart_y_label, '.1f'))
-            for product, value in data_provider.chart_data.iteritems():
-                chart.add_dataset(product, value)
-            charts.append(chart)
 
         context = dict(
             report_table=dict(
@@ -97,11 +100,23 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
                 rows=rows,
                 total_row=total_row,
                 start_at_row=0,
+                use_datatables=data_provider.use_datatables,
             ),
             show_table=data_provider.show_table,
             show_chart=data_provider.show_chart,
-            charts=charts,
+            charts=data_provider.charts if data_provider.show_chart else [],
             chart_span=12,
         )
 
         return context
+
+    def is_reporting_type(self):
+        if not self.report_config.get('location_id'):
+            return False
+        sql_location = SQLLocation.objects.get(location_id=self.report_config['location_id'])
+        reporting_types = [
+            location_type.name
+            for location_type in Domain.get_by_name(self.domain).location_types
+            if not location_type.administrative
+        ]
+        return sql_location.location_type in reporting_types
