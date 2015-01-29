@@ -1,0 +1,64 @@
+[_indiacloud1]
+10.10.1.21
+
+[_indiacloud2]
+10.10.1.22
+
+[_indiacloud3]
+10.10.1.23
+
+[_indiacloud4]
+10.10.1.24
+
+[_indiacloud5]
+10.10.1.25
+
+[couchdb]
+# no children, cloudant
+
+# _indiacloud1, _indiacloud2
+[proxy:children]
+_indiacloud1
+_indiacloud2
+[webworkers:children]
+_indiacloud2
+_indiacloud1
+
+# _indiacloud3
+[postgresql:children]
+_indiacloud3
+[redis:children]
+_indiacloud3
+[memcached:children]
+_indiacloud3
+[rabbitmq:children]
+_indiacloud3
+
+# _indiacloud4
+[elasticsearch:children]
+_indiacloud4
+[pillowtop:children]
+_indiacloud4
+
+# _indiacloud5
+[celery:children]
+_indiacloud5
+[touchforms:children]
+_indiacloud5
+
+
+[db:children]
+postgresql
+couchdb
+redis
+memcached
+elasticsearch
+rabbitmq
+
+
+[db_accessors:children]
+touchforms
+webworkers
+celery
+pillowtop
+postgresql
