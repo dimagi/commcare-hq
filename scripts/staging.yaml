@@ -55,6 +55,7 @@ branches:
   - caseDetailsInCC # sravan 2/1/15
   - locations-as-groups # tw 1/20
   - vellum-model-iteration # daniel 1/22
+  - fixtures-spike  # cz 1/29
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
