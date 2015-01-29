@@ -1,4 +1,5 @@
 import decimal
+import uuid
 from django.test import TestCase
 import sqlalchemy
 from casexml.apps.case.models import CommCareCase
@@ -47,6 +48,22 @@ class IndicatorPillowTest(TestCase):
         CommCareCase.get_db().save_doc(sample_doc)
         rebuild_indicators(self.config._id)
         self._check_sample_doc_state()
+
+    def test_bad_integer_datatype(self):
+        self.config.save()
+        bad_ints = ['a', '', None]
+        for bad_value in bad_ints:
+            self.pillow.change_transport({
+                '_id': uuid.uuid4().hex,
+                'doc_type': 'CommCareCase',
+                'domain': 'user-reports',
+                'type': 'ticket',
+                'priority': bad_value
+            })
+        # make sure we saved rows to the table for everything
+        with self.engine.begin() as connection:
+            rows = connection.execute(sqlalchemy.select([self.adapter.get_table()]))
+            self.assertEqual(len(bad_ints), rows.rowcount)
 
     def _check_sample_doc_state(self):
         _, expected_indicators = get_sample_doc_and_indicators()
