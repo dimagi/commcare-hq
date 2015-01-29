@@ -43,6 +43,8 @@
 trunk: master
 name: autostaging
 branches:
+  - locations-as-groups+email-report-urls  # Danny 1/28
+  - email-report-urls  # Danny 1/28
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -50,12 +52,15 @@ branches:
   - quickview # Simon 11/25
 #  - master+double-management # Nick P 12/31
 #  - double-management # SK 12/1
-  - lwyszomi:reporting_rates_report  # cz/kamil 1/13
   - caseDetailsInCC # sravan 2/1/15
-  - locations-as-groups # tw 1/20
   - vellum-model-iteration # daniel 1/22
+  - locations-as-groups+fixtures-spike  # cz 1/29
+  - locations-as-groups # tw 1/20
+  - fixtures-spike  # cz 1/29
+  - killmemcached  # sk 1/29
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+    - master

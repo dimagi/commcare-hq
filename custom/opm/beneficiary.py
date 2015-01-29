@@ -690,7 +690,7 @@ class ConditionsMet(OPMCaseRow):
         ('case_id', _('Case ID'), True),
         ('closed_date', _("Closed On"), True),
         ('payment_last_month', _("Payment amount received last month"), True),
-        ('cash_received_last_month', _("Cash received last month (Yes/No)"), True),
+        ('cash_received_last_month', _("Cash received last month"), True),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
