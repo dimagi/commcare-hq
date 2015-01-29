@@ -62,8 +62,3 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - get_url_base
-  submodules/couchlog-src:
-    branches:
-      - get_url_base
-
