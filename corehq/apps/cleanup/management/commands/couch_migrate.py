@@ -1,6 +1,4 @@
 import json
-from couchdbkit import Database
-from django.conf import settings
 from django.core.management.base import LabelCommand, CommandError
 from optparse import make_option
 from jsonobject import JsonObject, StringProperty, ListProperty
@@ -14,15 +12,15 @@ class Command(LabelCommand):
 
     option_list = LabelCommand.option_list + (
         make_option('--replicate',
-                      action='store_true',
-                      dest='replicate',
-                      default=False,
-                      help="Replicate documents."),
+                    action='store_true',
+                    dest='replicate',
+                    default=False,
+                    help="Replicate documents."),
         make_option('--check',
-                      action='store_true',
-                      dest='check',
-                      default=False,
-                      help="Check views."),
+                    action='store_true',
+                    dest='check',
+                    default=False,
+                    help="Check views."),
     )
 
     def handle(self, *args, **options):
@@ -75,4 +73,3 @@ class MigrationConfig(JsonObject):
     @property
     def dest_db(self):
         return get_db(self.to_db_postfix)
-
