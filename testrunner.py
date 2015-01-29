@@ -122,7 +122,7 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         db_mock = self._db_patch.start()
         error = RuntimeError(
             "Attempt to access database in a 'no database' test suite run. "
-            "It could be that you don't have 'BASE_ADDRESS' set in your local_settings.py. "
+            "It could be that you don't have 'BASE_ADDRESS' set in your localsettings.py. "
             "If your test really needs database access it must subclass 'TestCase' and not 'SimpleTestCase'.")
         db_mock.side_effect = error
 
