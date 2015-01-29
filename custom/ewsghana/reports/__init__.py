@@ -76,7 +76,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         user = getattr(request, 'couch_user', None)
         if user:
             if _is_admin(user, domain):
-                loc = SQLLocation.objects.filter(location_type='country')[0]
+                loc = SQLLocation.objects.filter(domain=domain, location_type='country')[0]
                 url = '%s?location_id=%s' % (url, loc.location_id)
             elif _is_read_only(user, domain) or _can_see_reports(user):
                     dm = user.get_domain_membership(domain)
