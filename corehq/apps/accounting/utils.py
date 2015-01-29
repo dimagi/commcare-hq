@@ -213,7 +213,7 @@ def get_active_reminders_by_domain_name(domain_name):
     reminder_rules = db.view(
         'reminders/handlers_by_reminder_type',
         startkey=key,
-        endkey=key+[{}],
+        endkey=(key + [{}]),
         reduce=False
     ).all()
     return [
