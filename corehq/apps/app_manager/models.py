@@ -1139,6 +1139,7 @@ class DetailColumn(IndexedSchema):
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
+    case_tile_field = StringProperty()
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
@@ -1235,6 +1236,7 @@ class Detail(IndexedSchema):
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
     custom_xml = StringProperty()
+    use_case_tiles = BooleanProperty()
 
     def get_tab_spans(self):
         '''

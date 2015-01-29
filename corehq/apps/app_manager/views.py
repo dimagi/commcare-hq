@@ -1509,6 +1509,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
+    use_case_tiles = params.get('useCaseTiles', None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1536,8 +1537,11 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
-    if custom_xml != None:
+    if custom_xml is not None:
         detail.short.custom_xml = custom_xml
+    if use_case_tiles is not None and short is not None:
+        print "SAVING", use_case_tiles
+        detail.short.use_case_tiles = use_case_tiles
     if sort_elements is not None:
         detail.short.sort_elements = []
         for sort_element in sort_elements:

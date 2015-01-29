@@ -284,13 +284,14 @@ var DetailScreenConfig = (function () {
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
             this.original.graph_configuration = this.original.graph_configuration || {};
+            this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || null;
 
             // Tab attributes
             this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
             this.isTab = this.original.isTab;
 
-            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
-                           ? COMMCAREHQ.icons.PAPERCLIP : null);
+            this.case_tile_field = ko.observable(this.original.case_tile_field);
+
 
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 
@@ -300,6 +301,9 @@ var DetailScreenConfig = (function () {
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
+
+            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
+               ? COMMCAREHQ.icons.PAPERCLIP : null);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
 
             // Make it possible to observe changes to this.field
@@ -489,6 +493,7 @@ var DetailScreenConfig = (function () {
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
                 column.calc_xpath = this.calc_xpath_extra.val();
+                column.case_tile_field = this.case_tile_field();
                 if (this.isTab) {
                     // Note: starting_index is added by Screen.serialize
                     return {
@@ -554,7 +559,7 @@ var DetailScreenConfig = (function () {
             this.containsFilterConfiguration = options.containsFilterConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
-            this.useCaseTiles = ko.observable(spec[this.columnKey].useCaseTiles ? "yes" : "no");
+            this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
 
             this.fireChange = function() {
                 that.fire('change');
@@ -707,9 +712,7 @@ var DetailScreenConfig = (function () {
                     function(c){return c.serialize();}
                 ));
 
-                // Add case tile configuration
-                data.caseTileConfiguration = this.useCaseTiles ? true : false;
-                //TODO: Eventually this will be a more complicated data structure that involves mapping of properties to buckets.
+                data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
 
                 if (this.containsParentConfiguration) {
                     var parentSelect;
