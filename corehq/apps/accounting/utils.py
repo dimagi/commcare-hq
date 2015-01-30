@@ -6,6 +6,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
+from corehq.apps.reminders.models import (
+    REMINDER_TYPE_DEFAULT,
+    REMINDER_TYPE_KEYWORD_INITIATED,
+)
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
@@ -219,5 +223,8 @@ def get_active_reminders_by_domain_name(domain_name):
     return [
         CaseReminderHandler.wrap(reminder_doc)
         for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules])
-        if reminder_doc.get('active', True)
+        if (
+            reminder_doc.get('active', True)
+            and reminder_doc.get('reminder_type', REMINDER_TYPE_DEFAULT) != REMINDER_TYPE_KEYWORD_INITIATED
+        )
     ]
