@@ -3655,8 +3655,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return {child: get_hierarchy(child) for child in get_children(case_type)}
 
         roots = [type_ for type_ in meta.case_types if not type_.relationships]
+        seen_types = []
         for type_ in roots:
+            seen_types.append(type_.name)
             meta.type_hierarchy[type_.name] = get_hierarchy(type_.name)
+
+        for type_ in meta.case_types:
+            if type_.name not in seen_types:
+                meta.type_hierarchy[type_.name] = {}
+                type_.error = _("Error in case type hierarchy")
 
         return meta
 
