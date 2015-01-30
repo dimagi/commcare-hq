@@ -45,12 +45,6 @@ ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
 
-PROD_PROXIES = [
-    'hqproxy0.internal.commcarehq.org',
-    'hqproxy3.internal.commcarehq.org',
-]
-
-
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
 
@@ -277,12 +271,8 @@ def staging():
         env.code_branch = 'autostaging'
         print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
-    env.sudo_user = 'cchq'
     env.environment = 'staging'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '9010'
 
-    env.should_migrate = True
     # We should not enable the sms queue on staging because replication
     # can cause sms to be processed again if an sms is replicated in its
     # queued state.
@@ -290,38 +280,11 @@ def staging():
     env.pillow_retry_queue_enabled = True
     env.celery_periodic_enabled = False
 
-    env.roledefs = {
-        'couch': ['hqdb0-staging.internal.commcarehq.org'],
-        'pg': ['hqdb0-staging.internal.commcarehq.org'],
-        'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
-        'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
-        'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'reminder_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'pillow_retry_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
-        'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
-
-        'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        'deploy': ['hqdb0-staging.internal.commcarehq.org'],
-        # fab complains if this doesn't exist
-        'django_monolith': [],
-    }
-
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
-    env.flower_port = 5555
-
-    _setup_path()
+    env.inventory = os.path.join('fab', 'inventory', 'staging')
+    execute(development)
 
     env.django_command_prefix = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
     env.supervisor_env_vars = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=staging'
-
-@task
-def realstaging():
-    print "(You know you can just use 'staging' now, right? Doing that for ya.)"
-    staging()
 
 
 @task
@@ -359,7 +322,10 @@ def preview():
 
         'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
         'lb': [],
-        'staticfiles': PROD_PROXIES,
+        'staticfiles': [
+            'hqproxy0.internal.commcarehq.org',
+            'hqproxy3.internal.commcarehq.org',
+        ],
         'deploy': ['hqdb0-preview.internal.commcarehq.org'],
         'django_monolith': [],
     }
@@ -439,7 +405,7 @@ def development():
         # we don't get prompted for a host or run deploy too many times
         'deploy': postgresql,
         # fab complains if this doesn't exist
-        'django_monolith': []
+        'django_monolith': [],
     }
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
