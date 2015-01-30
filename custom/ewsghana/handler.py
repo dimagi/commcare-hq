@@ -59,8 +59,6 @@ def handle(verified_contact, text, msg=None):
             handler.handle()
         else:
             handler.help()
-
     if keyword == 'soh':
         return True
-    else:
-        return False
+    return False

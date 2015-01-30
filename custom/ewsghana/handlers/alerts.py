@@ -18,7 +18,7 @@ class AlertsHandler(KeywordHandler):
         if not domain.commtrack_enabled:
             return False
         try:
-            data = StockAndReceiptParser(domain, verified_contact).parse(text.lower())
+            data = StockAndReceiptParser(domain, verified_contact).parse(text)
             if not data:
                 return False
         except NotAUserClassError:
