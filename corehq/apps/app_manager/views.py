@@ -2029,6 +2029,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('secure_submissions', None),
         ('translation_strategy', None),
         ('auto_gps_capture', None),
+        ('amplifies_workers', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
