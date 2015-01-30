@@ -125,7 +125,8 @@
         self.init();
     };
 
-    controllers.CaseController = function ($scope, summaryDataService, summaryConfig, utils) {
+    controllers.CaseController = function ($scope, $anchorScroll, $location, _,
+                                           summaryDataService, summaryConfig, utils) {
         var self = this;
 
         $scope.caseTypes = [];
@@ -141,6 +142,22 @@
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch.name = caseType;
+        };
+
+        $scope.hasErrors = function (caseTypeName) {
+            var caseType =  _.find($scope.caseTypes, function (caseType) {
+                return caseType.name === caseTypeName ;
+            });
+            return caseType ? caseType.has_errors : false;
+        };
+
+        $scope.gotoAnchor = function(caseType, property) {
+            var newHash = caseType + ':' + property;
+            if ($location.hash() !== newHash) {
+                $location.hash(newHash);
+            } else {
+                $anchorScroll();
+            }
         };
 
         self.init = function () {
@@ -218,6 +235,7 @@
             scope: {
                 hierarchy: '=',
                 filterCaseTypes: '&',
+                hasErrors: '&',
                 typeSearch: '='
             },
             templateUrl: '/hierarchy.html'
@@ -232,6 +250,7 @@
                 casetype: '=',
                 hierarchy: '=',
                 filterCaseTypes: '&',
+                hasErrors: '&',
                 typeSearch: '='
             },
             templateUrl: '/hierarchy_member.html',
@@ -239,6 +258,7 @@
                 var hierarchySt = '<hierarchy ' +
                     'hierarchy="hierarchy" ' +
                     'filter-case-types="filterCaseTypes({casetype: casetype})"' +
+                    'has-errors="hasErrors({casetype: casetype})"' +
                     'type-search="typeSearch"' +
                     '></hierarchy>';
                 if (angular.isObject(scope.hierarchy) && Object.getOwnPropertyNames(scope.hierarchy).length > 0) {
