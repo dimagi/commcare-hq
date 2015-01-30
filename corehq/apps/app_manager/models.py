@@ -2519,6 +2519,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         choices=['yes', 'no', 'not_set'],
         default='not_set'
     )
+    amplifies_project = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
 
     # exchange properties
     cached_properties = DictProperty()
