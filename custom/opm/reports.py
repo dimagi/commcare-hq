@@ -434,7 +434,7 @@ class SharedDataProvider(object):
         for (owner_id, date), row in data.iteritems():
             if row['vhnd_available'] > 0:
                 for prop in VHND_PROPERTIES:
-                    if row[prop] == '1' or prop == 'vhnd_available':
+                    if row[prop] == 1 or prop == 'vhnd_available':
                         results[owner_id][prop].add(date)
         return results
 
