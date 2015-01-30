@@ -1,7 +1,5 @@
 from django.utils.translation import ugettext as _
 
-DOMAIN = 'ewsghana-test-1'
-
 ONGOING_NON_REPORTING = 'SMS report MISSING from these facilities over the past 3 weeks! Please follow up:\n%s '
 ONGOING_STOCKOUT_AT_SDP = 'Ongoing STOCKOUTS at these facilities over the past 3 weeks! Please follow up:\n%s'
 ONGOING_STOCKOUT_AT_RMS = 'Ongoing STOCKOUTS at these RMS over the past 3 weeks! Please follow up:\n%s '
