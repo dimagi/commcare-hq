@@ -5,6 +5,7 @@ import uuid
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.reports.scheduled import get_scheduled_reports
+from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group
 from dimagi.utils.couch.database import get_db
@@ -14,14 +15,22 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 from dimagi.utils.couch import get_redis_client
 from dimagi.utils.django.email import send_HTML_email
-from django.contrib.sites.models import Site
-from django.core.urlresolvers import reverse
 
 from corehq.apps.domain.calculations import CALC_FNS, _all_domain_stats, total_distinct_users
-from corehq.apps.hqadmin.escheck import check_es_cluster_health, CLUSTER_HEALTH, check_case_es_index, check_xform_es_index, check_reportcase_es_index, check_reportxform_es_index
+from corehq.apps.hqadmin.escheck import (
+    CLUSTER_HEALTH,
+    check_case_es_index,
+    check_es_cluster_health,
+    check_reportcase_es_index,
+    check_reportxform_es_index,
+    check_xform_es_index,
+)
 from corehq.apps.reports.export import save_metadata_export_to_tempfile
-from corehq.apps.reports.models import (ReportNotification,
-    UnsupportedScheduledReportError, HQGroupExportConfiguration)
+from corehq.apps.reports.models import (
+    HQGroupExportConfiguration,
+    ReportNotification,
+    UnsupportedScheduledReportError,
+)
 from corehq.elastic import get_es, ES_URLS, stream_es_query
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
@@ -202,9 +211,10 @@ def export_all_rows_task(ReportClass, report_state):
     user = WebUser.get(report_state["request"]["couch_user"])
     _send_email(user.get_email(), report, hash_id)
 
+
 def _send_email(to, report, hash_id):
-    domain = Site.objects.get_current().domain
-    link = "http://%s%s" % (domain, reverse("export_report", args=[report.domain, str(hash_id), report.export_format]))
+    link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
+                                                   report.export_format])
 
     title = "%s: Requested export excel data"
     body = "The export you requested for the '%s' report is ready.<br>" \
