@@ -75,7 +75,10 @@
 
   <ul class="nav nav-tabs">
     <li class="active"><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
-    <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
+
+    {% if request|toggle_enabled:"PRODUCTS_PER_LOCATION" %}
+      <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
+    {% endif %}
   </ul>
 
   <div class="tab-content">
@@ -85,6 +88,7 @@
         {% bootstrap_fieldset form "Location Information" %}
 
         {% crispy form.custom_data.form %}
+        <input type="hidden" name="form_type" value="location-settings" />
 
         {% if consumption %}
           <legend>{% trans "Default monthly consumption values" %}</legend>
@@ -113,14 +117,17 @@
       </form>
     </div>
 
-    <div class="tab-pane" id="products">
-      <div class="row-fluid">
-        <form class="form disable-on-submit" id="edit_products" action="" method='post'>
-          <legend>{% trans 'Specify Products Per Location' %}</legend>
-          {% crispy products_per_location_form %}
-        </form>
+    {% if request|toggle_enabled:"PRODUCTS_PER_LOCATION" %}
+      <div class="tab-pane" id="products">
+        <div class="row-fluid">
+          <form class="form disable-on-submit" id="edit_products" action="" method='post'>
+            <legend>{% trans 'Specify Products Per Location' %}</legend>
+            {% crispy products_per_location_form %}
+            <input type="hidden" name="form_type" value="location-products" />
+          </form>
+        </div>
       </div>
-    </div>
+    {% endif %}
   </div>
 
 </div>

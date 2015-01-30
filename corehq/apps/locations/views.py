@@ -202,15 +202,38 @@ class NewLocationView(BaseLocationView):
             'consumption': consumption,
         }
 
-    def post(self, request, *args, **kwargs):
+    def form_valid(self):
+        messages.success(self.request, _('Location saved!'))
+        return HttpResponseRedirect(
+            reverse(self.urlname,
+                    args=[self.domain, self.location_form.location._id]),
+        )
+
+    def settings_form_post(self, request, *args, **kwargs):
         if self.location_form.is_valid():
             self.location_form.save()
-            messages.success(request, _('Location saved!'))
-            return HttpResponseRedirect('%s?%s' % (
-                reverse(LocationsListView.urlname, args=[self.domain]),
-                urllib.urlencode({'selected': self.location_form.location._id})
-            ))
+            return self.form_valid()
         return self.get(request, *args, **kwargs)
+
+    def products_form_post(self, request, *args, **kwargs):
+        # TODO do they actually track stock?
+        # TODO make parents of stock-tracking locations trickle down filter
+        # TODO make "none selected" look like "all selected"
+        products = SQLProduct.objects.filter(
+            product_id__in=request.POST.getlist('selected_ids', [])
+        )
+        self.sql_location.products = products
+        self.sql_location.save()
+        return self.form_valid()
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "location-settings":
+            return self.settings_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "location-products"
+              and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
+            return self.products_form_post(request, *args, **kwargs)
+        else:
+            raise Http404
 
 
 @domain_admin_required
@@ -510,28 +533,3 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
-
-
-class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
-    """
-    Manage products stocked at each location
-    """
-    urlname = 'products_per_location'
-    page_title = ugettext_noop("Products Per Location")
-    template_name = 'locations/manage/products_per_location.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.PRODUCTS_PER_LOCATION.enabled(request.domain):
-            raise Http404
-        # TODO verify that this location stocks products
-        return super(ProductsPerLocationView, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('selected_ids', [])
-        )
-        self.sql_location.products = products
-        self.sql_location.save()
-        msg = _("Products updated for {}").format(self.location.name)
-        messages.success(request, msg)
-        return self.get(request, *args, **kwargs)
