@@ -41,7 +41,7 @@ def _replicate(config):
         config.source_db.uri,
         config.dest_db.uri,
         continuous=True,
-        filter="hqadmin/doc_types",
+        filter="hqadmin/domains_and_doc_types",
         query_params={'doc_types': ' '.join(config.doc_types)},
     )
     print 'started replication: {}'.format(result)
