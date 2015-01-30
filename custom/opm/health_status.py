@@ -191,12 +191,12 @@ class AWCHealthStatus(object):
     # subclass OPMCaseRow specifically for this report, and add in indicators to
     # our hearts' content.  This would allow us to override definitions of
     # indicators based on their meanings in THIS report.
-    def __init__(self, cases):
+    def __init__(self, awc_name, cases):
         # Some of the cases are second or third children of the same mother
         # include that distinction here
         self.all_cases = cases
         self.primary_cases = [c for c in cases if not c.is_secondary]
-        self.awc_name = cases[0].awc_name
+        self.awc_name = awc_name
 
     @property
     def no_denom(self):
@@ -307,10 +307,11 @@ class AWCHealthStatus(object):
 
     @property
     def vhnd_held(self):
-        return 1 if self.all_cases[0].vhnd_available else 0
+        return 1 if self.all_cases and self.all_cases[0].vhnd_available else 0
 
     def service_available(self, service):
-        return 1 if self.all_cases[0].is_service_available(service, 1) else 0
+        return (1 if self.all_cases and
+                self.all_cases[0].is_service_available(service, 1) else 0)
 
     @property
     def adult_scale(self):

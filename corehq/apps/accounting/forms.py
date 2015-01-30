@@ -83,7 +83,7 @@ class BillingAccountBasicForm(forms.Form):
     active_accounts = forms.CharField(
         label=_("Transfer Subscriptions To"),
         help_text=_("Transfer any existing subscriptions to the "
-                    "Billing Account Specified here."),
+                    "Billing Account specified here."),
         required=False,
     )
     dimagi_contact = forms.EmailField(

@@ -16,11 +16,7 @@
     <script>
 
         var VELLUM_OPTIONS = {
-            {% if vellum_prerelease %}
-            {# use the default set of plugins otherwise #}
-            {# non-optional plugins don't need to be listed #}
-            plugins: ['itemset'],
-            {% endif %}
+            plugins: {{ plugins|JSON }},
             features: {{ features|JSON }},
             core: {
                 form: {{ form.source|to_javascript_string }},

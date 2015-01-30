@@ -103,6 +103,10 @@ class ExcelExportReport(FormExportReportBase):
     report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
 
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return True
+
     def _get_domain_attachments_size(self):
         # hash of app_id, xmlns to size of attachments
         startkey = [self.domain]
@@ -273,6 +277,10 @@ class ExcelExportReport(FormExportReportBase):
         # if there is a custom group export defined grab it here
         groups = HQGroupExportConfiguration.by_domain(self.domain)
         context = super(ExcelExportReport, self).report_context
+
+        # Check if any custom exports are in the size hash
+        saved_exports_has_media = any((e.app_id, e.index[1]) in size_hash for e in context['saved_exports'])
+
         context.update(
             forms=forms,
             edit=self.request.GET.get('edit') == 'true',
@@ -280,6 +288,8 @@ class ExcelExportReport(FormExportReportBase):
                 if group.form_exports],
             report_slug=self.slug,
             property_hash=self.properties(size_hash),
+            exports_has_media=size_hash,
+            saved_exports_has_media=saved_exports_has_media
         )
         return context
 
@@ -291,6 +301,10 @@ class CaseExportReport(ExportReport):
               'corehq.apps.reports.filters.select.GroupFilter']
     report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return True
 
     def get_filter_params(self):
         return self.request.GET.copy()

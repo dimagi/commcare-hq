@@ -61,6 +61,13 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
 
     @classmethod
     def from_case(cls, case):
+        if isinstance(case, dict):
+            return cls.wrap({
+                'case_id': case['_id'],
+                'type': case['type'],
+                'indices': case['indices'],
+            })
+
         return cls(
             case_id=case.get_id,
             type=case.type,

@@ -9,7 +9,7 @@
             <th>{% trans "Edit" %}</th>
         {% endif %}
         <th>{% trans "Download" %}</th>
-        {% if not deid %}
+        {% if not deid and saved_exports_has_media %}
             <th>{% trans "Download Multimedia" %}</th>
         {% endif %}
         <th>
@@ -44,7 +44,7 @@
             </td>
             <td class="cell-vertical-centered">
                 <a class="btn" href='{% url "export_custom_data" domain export.get_id %}?format=html&limit=50&{{ get_filter_params.urlencode|safe }}'>
-                    {% trans "HTML Preview" %}
+                    {% trans "Web Preview" %}
                 </a>
             </td>
             {% if allow_edit %}
@@ -66,7 +66,7 @@
                    data-bind="click: requestDownload"
                    class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
             </td>
-            {% if not deid %}
+            {% if not deid and saved_exports_has_media %}
                 <td class="cell-vertical-centered">
                     {% with property_hash|dict_lookup:export.name as properties %}
                       {% if properties.size %}

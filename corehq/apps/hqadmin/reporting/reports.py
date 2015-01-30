@@ -150,6 +150,15 @@ def get_project_spaces(facets=None):
     return domain_names
 
 
+def get_mobile_users(domains):
+    return set(
+        UserES()
+        .show_inactive()
+        .mobile_users()
+        .domain(domains)
+        .run().doc_ids
+    )
+
 def get_sms_query(begin, end, facet_name, facet_terms, domains, size):
     return (SMSES()
             .domain(domains)
@@ -278,13 +287,8 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
     30 days before each timestamp
     """
     histo_data = []
-    mobile_users = set(
-        UserES()
-        .show_inactive()
-        .mobile_users()
-        .domain(domains)
-        .run().doc_ids
-    )
+    mobile_users = get_mobile_users(domains)
+
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
@@ -915,7 +919,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 'form.meta.userID': list(get_user_ids(user_type_mobile))
             }
         })
-    if histo_type == 'active_cases':
+    if histo_type == 'active_cases' and not supply_points:
         additional_filters.append(get_case_owner_filters())
     if supply_points:
         additional_filters.append({'terms': {'type': ['supply-point']}})

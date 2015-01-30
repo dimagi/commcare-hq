@@ -3,6 +3,7 @@ import copy
 import logging
 import hashlib
 import itertools
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from lxml import etree
 import os
 import re
@@ -13,7 +14,7 @@ from xml.dom.minidom import parseString
 from diff_match_patch import diff_match_patch
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, get_language
+from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
 from corehq.apps.app_manager import commcare_settings
@@ -35,6 +36,8 @@ from corehq.apps.app_manager.translations import (
     expected_bulk_app_sheet_headers,
     process_bulk_app_translation_upload
 )
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.programs.models import Program
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -83,7 +86,7 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
 from corehq.apps.app_manager.util import save_xform, get_settings_values
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
 from couchexport.export import FormattedRow, export_raw
 from couchexport.models import Format
@@ -94,9 +97,9 @@ from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.xform import (
     CaseError,
     XForm,
-    XFormError,
-    XFormValidationError
-)
+    XFormException,
+    XFormValidationError,
+    VELLUM_TYPES)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -396,7 +399,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 
     try:
         xform = form.wrapped_xform()
-    except XFormError as e:
+    except XFormException as e:
         form_errors.append(u"Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
@@ -420,7 +423,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
-        except XFormError as e:
+        except XFormException as e:
             form_errors.append(u"Error in form: %s" % e)
         # any other kind of error should fail hard,
         # but for now there are too many for that to be practical
@@ -687,7 +690,7 @@ def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
         limit = int(limit)
-    except ValueError:
+    except (TypeError, ValueError):
         limit = 10
     start_build_param = request.GET.get('start_build')
     if start_build_param and json.loads(start_build_param):
@@ -1010,9 +1013,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     })
 
     if app and app.doc_type == 'Application':
-        uploader_slugs = [
-            "hq_logo_java",
-        ] + ANDROID_LOGO_PROPERTY_MAPPING.keys()
+        uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         context.update({
@@ -1148,6 +1149,10 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         return back_to_main(req, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    vellum_plugins = ["modeliteration"]
+    if settings.VELLUM_PRERELEASE:
+        vellum_plugins.append("itemset")
+
     vellum_features = toggles.toggles_dict(username=req.user.username,
                                            domain=domain)
     vellum_features.update({
@@ -1157,13 +1162,13 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'vellum_prerelease': settings.VELLUM_PRERELEASE,
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': req.COOKIES.get('sessionid'),
-        'features': vellum_features
+        'features': vellum_features,
+        'plugins': vellum_plugins,
     })
     return render(req, 'app_manager/form_designer.html', context)
 
@@ -1740,7 +1745,7 @@ def rename_language(req, domain, form_unique_id):
         form.rename_xform_language(old_code, new_code)
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
-    except XFormError as e:
+    except XFormException as e:
         response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
         response.status_code = 409
         return response
@@ -2687,6 +2692,90 @@ def summary(request, domain, app_id, should_edit=True):
         return render(request, "app_manager/exchange_summary.html", context)
 
 
+class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
+    urlname = 'app_summary_new'
+    page_title = ugettext_noop("Summary")
+    template_name = 'app_manager/summary_new.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        request.preview_bootstrap3 = True
+        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(AppSummaryView, self).main_context
+        context.update({
+            'domain': self.domain,
+        })
+        return context
+
+    @property
+    def page_context(self):
+        if self.app.doc_type == 'RemoteApp':
+            raise Http404()
+
+        form_name_map = {}
+        for module in self.app.get_modules():
+            for form in module.get_forms():
+                form_name_map[form.unique_id] = {
+                    'module_name': module.name,
+                    'form_name': form.name
+                }
+
+        return {
+            'VELLUM_TYPES': VELLUM_TYPES,
+            'form_name_map': form_name_map,
+            'langs': self.app.langs,
+        }
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': _("Applications"),
+                'url': reverse('view_app', args=[self.domain, self.app_id]),
+            },
+            {
+                'title': self.app.name,
+                'url': reverse('view_app', args=[self.domain, self.app_id]),
+            }
+        ]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.app_id])
+
+    @allow_remote_invocation
+    def get_case_data(self, in_data):
+        return {
+            'response': self.app.get_case_metadata().to_json(),
+            'success': True,
+        }
+
+    @allow_remote_invocation
+    def get_form_data(self, in_data):
+        modules = []
+        for module in self.app.get_modules():
+            forms = []
+            for form in module.get_forms():
+                questions = form.get_questions(self.app.langs, include_triggers=True, include_groups=True)
+                forms.append({
+                    'id': form.unique_id,
+                    'name': _find_name(form.name, self.app.langs),
+                    'questions': [FormQuestionResponse(q).to_json() for q in questions],
+                })
+
+            modules.append({
+                'id': module.unique_id,
+                'name': _find_name(module.name, self.app.langs),
+                'forms': forms
+            })
+        return {
+            'response': modules,
+            'success': True,
+        }
+
+
 def get_default_translations_for_download(app):
     return app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
 
@@ -2891,7 +2980,12 @@ def download_bulk_app_translations(request, domain, app_id):
             rows[form_string] = []
 
             itext_items = OrderedDict()
-            for translation_node in xform.itext_node.findall("./{f}translation"):
+            try:
+                nodes = xform.itext_node.findall("./{f}translation")
+            except XFormException:
+                nodes = []
+
+            for translation_node in nodes:
                 lang = translation_node.attrib['lang']
                 for text_node in translation_node.findall("./{f}text"):
                     text_id = text_node.attrib['id']

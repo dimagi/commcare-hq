@@ -32,7 +32,6 @@ class MixedTTCReport(TTCReport):
             PregnantMotherBreakdownByTrimester(config=config),
             AnteNatalCareServiceOverview(config=config),
             DeliveryPlaceDetails(config=config),
-            DeliveryStillBirthDetails(config=config),
             DeliveryLiveBirthDetails(config=config),
             PostnatalCareOverview(config=config),
             AnteNatalCareServiceOverviewExtended(config=config),

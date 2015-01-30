@@ -34,10 +34,17 @@ class DocumentFormBase(forms.Form):
         return instance
 
 
+VISIBILITY_CHOICES = (
+    (True, _('all users')),
+    (False, _('feature flag only'))
+)
+
+
 class ConfigurableReportEditForm(DocumentFormBase):
 
     config_id = forms.ChoiceField()  # gets overridden on instantiation
     title = forms.CharField()
+    visible = forms.ChoiceField(label=_('Visible to:'), choices=VISIBILITY_CHOICES)
     description = forms.CharField(required=False)
     aggregation_columns = JsonField(expected_type=list)
     filters = JsonField(expected_type=list)
@@ -47,6 +54,9 @@ class ConfigurableReportEditForm(DocumentFormBase):
     def __init__(self, domain, instance=None, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, *args, **kwargs)
         self.fields['config_id'] = ReportDataSourceField(domain=domain)
+
+    def clean_visible(self):
+        return self.cleaned_data['visible'] == 'True'
 
     def clean(self):
         cleaned_data = super(ConfigurableReportEditForm, self).clean()
@@ -63,8 +73,8 @@ class ConfigurableReportEditForm(DocumentFormBase):
 
 
 DOC_TYPE_CHOICES = (
-    ('CommCareCase', 'cases'),
-    ('XFormInstance', 'forms')
+    ('CommCareCase', _('cases')),
+    ('XFormInstance', _('forms'))
 )
 
 
@@ -74,6 +84,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     referenced_doc_type = forms.ChoiceField(choices=DOC_TYPE_CHOICES)
     display_name = forms.CharField()
     description = forms.CharField(required=False)
+    base_item_expression = JsonField(expected_type=dict)
     configured_filter = JsonField(expected_type=dict)
     configured_indicators = JsonField(expected_type=list)
     named_filters = JsonField(required=False, expected_type=dict,
@@ -90,6 +101,12 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             raise ValidationError(
                 _('Table id is too long. Your table id and domain name must add up to fewer than 40 characters')
             )
+        for src in self.instance.by_domain(self.domain):
+            if src.table_id == table_id and src.get_id != self.instance.get_id:
+                raise ValidationError(
+                    _('A data source with this table id already exists. Table'
+                      ' ids must be unique')
+                )
         return table_id
 
     def clean(self):

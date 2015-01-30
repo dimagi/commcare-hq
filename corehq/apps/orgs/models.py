@@ -1,10 +1,9 @@
 from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
-from django.contrib.sites.models import Site
-from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from corehq.apps.users.models import WebUser, MultiMembershipMixin, Invitation
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 from dimagi.utils.django.email import send_HTML_email
@@ -103,14 +102,16 @@ class DeleteTeamRecord(DeleteDocRecord):
     def get_doc(self):
         return Team.get(self.doc_id)
 
+
 class OrgInvitation(Invitation):
     doc_type = "OrgInvitation"
     organization = StringProperty()
 
     def send_activation_email(self):
-        url = "http://%s%s" % (Site.objects.get_current().domain,
-                               reverse("orgs_accept_invitation", args=[self.organization, self.get_id]))
-        params = {"organization": self.organization, "url": url, "inviter": self.get_inviter().formatted_name}
+        url = absolute_reverse("orgs_accept_invitation",
+                               args=[self.organization, self.get_id])
+        params = {"organization": self.organization, "url": url,
+                  "inviter": self.get_inviter().formatted_name}
         text_content = render_to_string("orgs/email/org_invite.txt", params)
         html_content = render_to_string("orgs/email/org_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name

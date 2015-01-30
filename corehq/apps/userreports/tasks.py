@@ -20,11 +20,12 @@ def rebuild_indicators(indicator_config_id):
                                database=couchdb)
 
     for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
-        if config.filter.filter(doc):
-            try:
-                adapter.save(doc)
-            except DataError as e:
-                logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
+        try:
+            # save is a noop if the filter doesn't match
+            adapter.save(doc)
+        except DataError as e:
+            logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
+    adapter.engine.dispose()
 
 
 def _get_db(doc_type):

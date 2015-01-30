@@ -52,24 +52,30 @@
     </style>
     {% for thisreport in reports %}
         <br/>
-        {% if forloop.counter == 1 %}
-            <div class="firstreport">
+        {% if split %}
+            {% if forloop.counter == 1 %}
+                <div class="firstreport">
+                    <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                    {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
+                    <br/>
+                </div>
+            <div class="other_reports">
+            {% elif  forloop.last %}
+                </div>
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                 <br/>
-            </div>
-        <div class="other_reports">
-        {% elif  forloop.last %}
-            </div>
-            <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-            {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
-            <br/>
+            {% else %}
+                <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
+                <br/>
+            {% endif %}
         {% else %}
             <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
             {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
-            <br/>
         {% endif %}
     {% endfor %}
+
 {% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
