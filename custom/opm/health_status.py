@@ -359,19 +359,19 @@ class AWCHealthStatus(object):
 
     @property
     def ifa_stock_available(self):
-        return self.service_available('ifa_available')
+        return self.service_available('vhnd_ifa_available')
 
     @property
     def ors_stock_available(self):
-        return self.service_available('ors_available')
+        return self.service_available('vhnd_ors_available')
 
     @property
     def zinc_stock_available(self):
-        return self.service_available('zn_available')
+        return self.service_available('vhnd_zn_available')
 
     @property
     def measles_stock_available(self):
-        return self.service_available('measles_vacc_available')
+        return self.service_available('vhnd_measles_vacc_available')
 
     @property
     def birth_spacing_bonus(self):
