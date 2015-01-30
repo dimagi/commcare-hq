@@ -2,7 +2,8 @@
     'use strict';
 
     var summaryModule = angular.module('summaryModule', [
-        'ng.django.rmi'
+        'ng.django.rmi',
+        'ui.bootstrap'
     ]);
 
     summaryModule.constant('summaryConfig', {
@@ -35,6 +36,10 @@
             }
         };
     }]);
+
+    summaryModule.factory('_', function() {
+		return window._; // assumes underscore has already been loaded on the page
+	});
 
     summaryModule.factory('summaryDataService', ['$q', 'djangoRMI', function ($q, djangoRMI) {
         var self = this,
