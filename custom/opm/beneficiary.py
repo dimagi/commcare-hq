@@ -265,6 +265,18 @@ class OPMCaseRow(object):
             return EMPTY_FIELD
         return str(self.case_property('closed_on', EMPTY_FIELD))
 
+    @property
+    def closed_in_reporting_month(self):
+        if not self.closed:
+            return False
+
+        closed_datetime = self.case_property('closed_on', EMPTY_FIELD)
+        if closed_datetime and not isinstance(closed_datetime, datetime.datetime):
+            raise InvalidRow('Closed date is not of datetime.datetime type')
+        closed_date = closed_datetime.date()
+        return closed_date >= self.reporting_window_start and\
+            closed_date < self.reporting_window_end
+
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
             return ''
