@@ -238,18 +238,13 @@ def zambia():
         'django_monolith': ['41.222.19.153'],
     }
     env.roles = ['django_monolith']
-    env.es_endpoint = 'localhost'
     env.flower_port = 5555
 
 
 @task
 def production():
     """www.commcarehq.org"""
-    env.sudo_user = 'cchq'
     env.environment = 'production'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '9010'
-    env.should_migrate = True
     env.sms_queue_enabled = True
     env.reminder_queue_enabled = True
     env.reminder_rule_queue_enabled = True
@@ -264,52 +259,8 @@ def production():
         if not console.confirm(branch_message, default=False):
             utils.abort('Action aborted.')
 
-    class Servers(object):
-        db = ['hqdb0.internal.commcarehq.org']
-        celery = ['hqcelery1.internal.commcarehq.org']
-        touch = ['hqtouch1.internal.commcarehq.org']
-        django = ['hqdjango3.internal.commcarehq.org',
-                  'hqdjango4.internal.commcarehq.org',
-                  'hqdjango5.internal.commcarehq.org']
-
-    env.roledefs = {
-        'couch': Servers.db,
-        'pg': Servers.db,
-        'rabbitmq': Servers.db,
-        'django_celery': Servers.celery,
-        'sms_queue': Servers.celery,
-        'reminder_queue': Servers.celery,
-        'pillow_retry_queue': Servers.celery,
-        'django_app': Servers.django,
-        'django_pillowtop': Servers.db,
-
-        # for now, we'll have touchforms run on both hqdb0 and hqdjango0
-        # will remove hqdjango0 once we verify it works well on hqdb0
-        'formsplayer': Servers.touch,
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        # having deploy here makes it so that
-        # we don't get prompted for a host or run deploy too many times
-        'deploy': Servers.db,
-        # fab complains if this doesn't exist
-        'django_monolith': []
-    }
-
-    env.server_name = 'commcare-hq-production'
-    env.settings = '%(project)s.localsettings' % env
-    # e.g. 'ubuntu' or 'redhat'.
-    # Gets auto-populated by what_os()
-    # if you don't know what it is or don't want to specify.
-    env.host_os_map = None
-
-    # The next 2 lines should be commented out when running bootstrap on a new machine
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
-
-    env.es_endpoint = 'hqes0.internal.commcarehq.org'
-    env.flower_port = 5555
-
-    _setup_path()
+    env.inventory = os.path.join('fab', 'inventory', 'production')
+    execute(development)
 
     env.django_command_prefix = {
         'hqdjango3.internal.commcarehq.org': '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
@@ -358,11 +309,6 @@ def staging():
         'django_monolith': [],
     }
 
-    env.es_endpoint = 'hqdjango1-staging.internal.commcarehq.org'''
-
-    env.server_name = 'commcare-hq-staging'
-    env.settings = '%(project)s.localsettings' % env
-    env.host_os_map = None
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
     env.flower_port = 5555
@@ -418,11 +364,6 @@ def preview():
         'django_monolith': [],
     }
 
-    env.es_endpoint = 'hqdjango1-preview.internal.commcarehq.org'''
-
-    env.server_name = 'commcare-hq-preview'
-    env.settings = '%(project)s.localsettings' % env
-    env.host_os_map = None
     env.roles = ['deploy']
     env.hosts = env.roledefs['deploy']
     env.flower_port = 5556
@@ -458,13 +399,13 @@ def development():
         --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development,environment=dev
 
     """
+    require('inventory', 'environment')
+    servers = read_inventory_file(env.inventory)
+
     env.sudo_user = 'cchq'
     env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
-
-    require('inventory', 'environment')
-    servers = read_inventory_file(env.inventory)
 
     _setup_path()
 
@@ -494,14 +435,15 @@ def development():
         'formsplayer': touchforms,
         'staticfiles': proxy,
         'lb': [],
+        # having deploy here makes it so that
+        # we don't get prompted for a host or run deploy too many times
         'deploy': postgresql,
-
+        # fab complains if this doesn't exist
         'django_monolith': []
     }
     env.roles = ['deploy']
-    env.es_endpoint = 'localhost'
-    env.flower_port = 5555
     env.hosts = env.roledefs['deploy']
+    env.flower_port = 5555
 
 
 @task
