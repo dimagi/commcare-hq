@@ -276,6 +276,8 @@ def report_run(domain):
 
     if last_run.has_error:
         run = last_run
+        run.complete = False
+        run.save()
     else:
         # start new run
         run = ReportRun.objects.create(start=start_date, end=end_date,

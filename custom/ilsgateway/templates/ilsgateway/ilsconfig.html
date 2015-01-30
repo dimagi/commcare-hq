@@ -72,6 +72,7 @@
                     <th>End</th>
                     <th>Start run</th>
                     <th>End run</th>
+                    <th>Location</th>
                     <th></th>
                 </tr>
             </thead>
@@ -97,6 +98,9 @@
                     {% else %}
                         Not finished yet.
                     {% endif %}
+                </td>
+                <td>
+                    {{ runner.location.name }}
                 </td>
                 <td>
                     <form action="{% url 'end_report_run' domain %}" method="POST">
