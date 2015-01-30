@@ -184,13 +184,13 @@ def get_events_scheduling_info(events):
     result = []
     for e in events:
         result.append({
-            "day_num" : e.day_num,
-            "fire_time" : e.fire_time,
-            "fire_time_aux" : e.fire_time_aux,
-            "fire_time_type" : e.fire_time_type,
-            "time_window_length" : e.time_window_length,
-            "callback_timeout_intervals" : e.callback_timeout_intervals,
-            "form_unique_id" : e.form_unique_id,
+            "day_num": e.day_num,
+            "fire_time": e.fire_time,
+            "fire_time_aux": e.fire_time_aux,
+            "fire_time_type": e.fire_time_type,
+            "time_window_length": e.time_window_length,
+            "callback_timeout_intervals": e.callback_timeout_intervals,
+            "form_unique_id": e.form_unique_id,
         })
     return result
 
