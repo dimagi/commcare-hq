@@ -1865,7 +1865,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
         reminder_handler.domain = self.domain
         reminder_handler.start_condition_type = CASE_CRITERIA
 
-        reminder_handler.save()
+        # If any of the scheduling information has changed, have it recalculate
+        # the schedule for each reminder instance
+        old_definition = CaseReminderHandler.get(reminder_handler._id)
+        save_kwargs = {
+            "schedule_changed": reminder_handler.schedule_has_changed(old_definition),
+            "prev_definition": old_definition,
+        }
+
+        reminder_handler.save(**save_kwargs)
 
     @classmethod
     def compute_initial(cls, reminder_handler, available_languages):

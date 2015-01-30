@@ -176,6 +176,25 @@ def case_matches_criteria(case, match_type, case_property, value_to_match):
     
     return result
 
+
+def get_events_scheduling_info(events):
+    """
+    Return a list of events as dictionaries, only with information pertinent to scheduling changes.
+    """
+    result = []
+    for e in events:
+        result.append({
+            "day_num" : e.day_num,
+            "fire_time" : e.fire_time,
+            "fire_time_aux" : e.fire_time_aux,
+            "fire_time_type" : e.fire_time_type,
+            "time_window_length" : e.time_window_length,
+            "callback_timeout_intervals" : e.callback_timeout_intervals,
+            "form_unique_id" : e.form_unique_id,
+        })
+    return result
+
+
 class MessageVariable(object):
     def __init__(self, variable):
         self.variable = variable
@@ -510,6 +529,20 @@ class CaseReminderHandler(Document):
             return getattr(cls, 'now')
         except Exception:
             return datetime.utcnow()
+
+    def schedule_has_changed(self, old_definition):
+        """
+        Returns True if the scheduling information in self is different from
+        the scheduling information in old_definition.
+
+        old_definition - the CaseReminderHandler to compare to
+        """
+        return (
+            get_events_scheduling_info(old_definition.events) !=
+            get_events_scheduling_info(self.events) or
+            old_definition.start_offset != self.start_offset or
+            old_definition.schedule_length != self.schedule_length
+        )
 
     def get_reminder(self, case):
         domain = self.domain
