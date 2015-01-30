@@ -143,9 +143,16 @@ class StockLevelsForm(forms.Form):
     """
     Form for specifying stock levels per location type
     """
+    sub_form = LocationTypeStockLevels
 
 
 class LocationTypeStockLevels(forms.Form):
     """
     Sub form for configuring stock levels for a specific location type
     """
+    stock_emergency_level = forms.DecimalField(
+        label=ugettext_lazy("Emergency Level (months)"), required=False)
+    stock_understock_threshold = forms.DecimalField(
+        label=ugettext_lazy("Low Stock Level (months)"), required=False)
+    stock_overstock_threshold = forms.DecimalField(
+        label=ugettext_lazy("Overstock Level (months)"), required=False)

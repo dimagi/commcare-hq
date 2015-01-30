@@ -1,23 +1,25 @@
 from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseNotFound
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.commtrack.util import all_sms_codes
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.forms import ConsumptionForm
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from corehq.apps.commtrack.tasks import recalculate_domain_consumption_task
 import json
 from couchdbkit import ResourceNotFound
 import itertools
 import copy
+
+from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
+from .models import CommtrackActionConfig, StockRestoreConfig
+from .tasks import recalculate_domain_consumption_task
+from .util import all_sms_codes
 
 
 @domain_admin_required
@@ -60,7 +62,6 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     @property
     @memoized
     def commtrack_settings_form(self):
-        from corehq.apps.commtrack.forms import CommTrackSettingsForm
         initial = self.commtrack_settings.to_json()
         initial.update(dict(('consumption_' + k, v) for k, v in
             self.commtrack_settings.consumption_config.to_json().items()))
@@ -81,7 +82,6 @@ class CommTrackSettingsView(BaseCommTrackManageView):
         be done differently.
         """
 
-        from corehq.apps.commtrack.models import StockRestoreConfig
         if self.commtrack_settings.sync_consumption_fixtures:
             self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
                 section_to_consumption_types={
@@ -241,8 +241,6 @@ class SMSSettingsView(BaseCommTrackManageView):
                 yield (k, (v[0], v[1].name))
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.commtrack.models import CommtrackActionConfig
-
         payload = json.loads(request.POST.get('json'))
 
         self.domain_object.commtrack_settings.multiaction_keyword = payload['keyword']
@@ -280,4 +278,4 @@ class StockLevelsView(BaseCommTrackManageView):
     @property
     @memoized
     def stock_levels_form(self):
-        return
+        return StockLevelsForm(self.domain, self.request.POST)
