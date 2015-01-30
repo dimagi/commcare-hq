@@ -166,6 +166,24 @@ class NewLocationView(BaseLocationView):
         return LocationForm(self.location, is_new=True)
 
     @property
+    def all_products(self):
+        return [(p.product_id, p.name)
+                for p in SQLProduct.by_domain(self.domain)]
+
+    @property
+    def products_at_location(self):
+        return [p.product_id for p in self.sql_location.products.all()]
+
+    @property
+    def products_form(self):
+        form = MultipleSelectionForm(
+            initial={'selected_ids': self.products_at_location},
+            submit_label=_("Update Product List")
+        )
+        form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
     def page_context(self):
         try:
             consumption = self.consumption
@@ -179,6 +197,7 @@ class NewLocationView(BaseLocationView):
             ))
         return {
             'form': self.location_form,
+            'products_per_location_form': self.products_form,
             'location': self.location,
             'consumption': consumption,
         }
@@ -506,29 +525,6 @@ class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
             raise Http404
         # TODO verify that this location stocks products
         return super(ProductsPerLocationView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def products_at_location(self):
-        return [p.product_id for p in self.sql_location.products.all()]
-
-    @property
-    def all_products(self):
-        return [(p.product_id, p.name)
-                for p in SQLProduct.by_domain(self.domain)]
-
-    @property
-    def products_form(self):
-        form = MultipleSelectionForm(initial={
-            'selected_ids': self.products_at_location
-        })
-        form.fields['selected_ids'].choices = self.all_products
-        return form
-
-    @property
-    def page_context(self):
-        return {
-            'products_per_location_form': self.products_form,
-        }
 
     def post(self, request, *args, **kwargs):
         products = SQLProduct.objects.filter(
