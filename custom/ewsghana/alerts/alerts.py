@@ -10,10 +10,9 @@ from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS,\
     REPORT_REMINDER, DOMAIN, WEB_REMINDER, URGENT_NON_REPORTING, URGENT_STOCKOUT, COMPLETE_REPORT, INCOMPLETE_REPORT, \
     BELOW_REORDER_LEVELS, ABOVE_THRESHOLD, WITHOUT_RECEIPTS
-from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues
-from custom.ilsgateway.tanzania.reminders import update_statuses
 from django.core.mail import send_mail
 import settings
+from corehq.apps.commtrack.models import CommtrackConfig
 
 
 def send_alert(transactions, sp, user, message):
@@ -366,3 +365,44 @@ def report_completion_check(user):
     elif missing_products:
         message = INCOMPLETE_REPORT % (user.name, user.location.name, ", ".join(sorted(missing_products)))
         send_sms_to_verified_number(user.get_verified_number(), message)
+
+
+# sends overstock, understock, or SOH without receipts alerts
+def stock_alerts(transactions, user):
+    products_without_receipts = set()
+    products_above = set()
+    products_below = set()
+    sp = SupplyPointCase.get_by_location(user.location)
+    for i in range(0, len(transactions), 2):
+        if StockState.objects.filter(case_id=sp._id, product_id=transactions[i + 1].product_id).exists():
+            receipt = int(transactions[i].quantity)
+            stock = int(transactions[i + 1].quantity)
+            product = SQLProduct.objects.get(product_id=transactions[i].product_id).name
+            last_stock = StockState.objects.get(
+                case_id=sp._id, product_id=transactions[i].product_id).stock_on_hand
+
+            stock_levels_config = CommtrackConfig.for_domain(user.domain).stock_levels_config
+            over_stock_threshold = stock_levels_config.overstock_threshold
+            under_stock_threshold = stock_levels_config.understock_threshold
+
+            if stock > over_stock_threshold:
+                products_above.add(product)
+            elif stock < under_stock_threshold:
+                products_below.add(product)
+            if stock > last_stock and receipt == 0:
+                products_without_receipts.add(product)
+
+    if products_below:
+        message = BELOW_REORDER_LEVELS % (user.name, user.location,
+                                          ", ".join(sorted([str(prod) for prod in products_below])))
+        send_sms_to_verified_number(user.get_verified_number(), message)
+    elif products_above:
+        message = ABOVE_THRESHOLD % (
+            user.name, ", ".join(sorted([str(prod) for prod in products_above])))
+        send_sms_to_verified_number(user.get_verified_number(), message)
+    elif products_without_receipts:
+        message = WITHOUT_RECEIPTS % (
+            ', '.join(sorted([str(prod) for prod in products_without_receipts])))
+        send_sms_to_verified_number(user.get_verified_number(), message)
+    else:
+        return False
