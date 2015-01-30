@@ -1,8 +1,7 @@
-from _collections import defaultdict
+from collections import defaultdict
 import datetime
 from urllib import urlencode
 import dateutil
-from django.core.urlresolvers import reverse
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
@@ -22,12 +21,12 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
-from dimagi.utils.web import get_url_base
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
@@ -39,8 +38,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         from corehq.apps.reports.standard.cases.basic import CaseListReport
         user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
         user_link = user_link_template % {
-            'link': "%s%s" % (get_url_base(),
-                              CaseListReport.get_url(domain=self.domain)),
+            'link': CaseListReport.get_url(domain=self.domain),
             'params': urlencode(EMWF.for_user(user.user_id)),
             'username': user.username_in_report,
         }
@@ -608,7 +606,7 @@ class FormCompletionTimeReport(WorkerMonitoringReportTableBase, DatespanMixin,
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
         user_link_template = '<a href="%(link)s">%(username)s</a>'
-        base_link = "%s%s" % (get_url_base(), SubmitHistory.get_url(domain=self.domain))
+        base_link = SubmitHistory.get_url(domain=self.domain)
         link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
         user_link = user_link_template % {
             'link': link,
@@ -848,7 +846,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTableBase, Mu
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
+        return '<a class="btn" href="%s">View Form</a>' % absolute_reverse(
+            'render_form_data', args=[self.domain, instance_id])
 
 
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
@@ -1166,7 +1165,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             """
             takes a row, and converts certain cells in the row to links that link to the submit history report
             """
-            fs_url = reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+            fs_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
             if type == 'user':
                 url_args = EMWF.for_user(owner_id)
             else:
@@ -1179,8 +1178,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
                 "enddate": end_date,
             })
 
-            return util.numcell(u'<a href="{base}{report}?{params}" target="_blank">{display}</a>'.format(
-                base=get_url_base(),
+            return util.numcell(u'<a href="{report}?{params}" target="_blank">{display}</a>'.format(
                 report=fs_url,
                 params=urlencode(url_args, True),
                 display=val,
@@ -1190,7 +1188,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             """
                 takes a row, and converts certain cells in the row to links that link to the case list page
             """
-            cl_url = reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
+            cl_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
             url_args = EMWF.for_user(owner_id)
 
             start_date, end_date = dates_for_linked_reports(case_list=True)
@@ -1225,7 +1223,7 @@ class WorkerActivityReport(WorkerMonitoringReportTableBase, DatespanMixin):
             """
                 takes group info, and creates a cell that links to the user status report focused on the group
             """
-            us_url = reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
+            us_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
             start_date, end_date = dates_for_linked_reports()
             url_args = {
                 "group": group_id,

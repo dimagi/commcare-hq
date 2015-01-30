@@ -125,9 +125,9 @@ OVERRIDE_LOCATION = "https://www.commcarehq.org"
 
 # Set to something like "192.168.1.5:8000" (with your IP address).
 # See corehq/apps/builds/README.md for more information.
-BASE_ADDRESS = None
+BASE_ADDRESS = 'localhost:8000'
 
-#Set your analytics IDs here for GA and pingdom RUM
+# Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
     'PINGDOM_ID': '*****',

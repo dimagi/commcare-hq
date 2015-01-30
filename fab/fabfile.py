@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Server layout:
     ~/services/
@@ -198,45 +200,11 @@ def setup_dirs():
     sudo('mkdir -p %(services)s/supervisor' % env)
 
 
-
 @task
 def india():
-    """Our production server in India."""
-    env.home = '/home/commcarehq/'
+    env.inventory = os.path.join('fab', 'inventory', 'india')
     env.environment = 'india'
-    env.sudo_user = 'commcarehq'
-    env.hosts = ['220.226.209.82']
-    env.user = prompt("Username: ", default=env.user)
-    env.django_port = '8001'
-    env.should_migrate = True
-
-    _setup_path()
-    env.virtualenv_root = posixpath.join(
-        env.home, '.virtualenvs/commcarehq27')
-    env.virtualenv_root_preindex = posixpath.join(
-        env.home, '.virtualenvs/commcarehq27_preindex')
-
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': [],
-        'django_celery': [],
-        'sms_queue': [],
-        'reminder_queue': [],
-        'pillow_retry_queue': [],
-        'django_app': [],
-        'django_pillowtop': [],
-        'formsplayer': [],
-        'staticfiles': [],
-        'lb': [],
-        'deploy': [],
-
-        'django_monolith': ['220.226.209.82'],
-    }
-    env.roles = ['django_monolith']
-    env.es_endpoint = 'localhost'
-    env.flower_port = 5555
-
+    execute(development)
 
 
 @task
@@ -902,6 +870,21 @@ def awesome_deploy(confirm="yes"):
             'Are you sure you want to preindex and deploy to '
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
+
+    if datetime.datetime.now().isoweekday() == 5:
+        print('')
+        print('┓┏┓┏┓┃')
+        print('┛┗┛┗┛┃＼○／')
+        print('┓┏┓┏┓┃  /      Friday')
+        print('┛┗┛┗┛┃ノ)')
+        print('┓┏┓┏┓┃         deploy,')
+        print('┛┗┛┗┛┃')
+        print('┓┏┓┏┓┃         good')
+        print('┛┗┛┗┛┃')
+        print('┓┏┓┏┓┃         luck!')
+        print('┃┃┃┃┃┃')
+        print('┻┻┻┻┻┻')
+
     max_wait = datetime.timedelta(minutes=5)
     pause_length = datetime.timedelta(seconds=5)
 

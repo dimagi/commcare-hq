@@ -14,6 +14,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.users.models import CouchUser
+from corehq.util.view_utils import absolute_reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -645,7 +646,8 @@ class GenericReportView(CacheableRequestMixIn):
         url_args = [domain] if domain is not None else []
         if render_as is not None:
             url_args.append(render_as+'/')
-        return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
+        return absolute_reverse(cls.dispatcher.name(),
+                                args=url_args + [cls.slug])
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
