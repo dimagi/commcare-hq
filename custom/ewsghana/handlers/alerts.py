@@ -1,36 +1,24 @@
-from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
-from custom.ewsghana.reminders import REGISTER_HELP, REGISTRATION_CONFIRM
-from django.contrib.auth.models import User
-from corehq.apps.users.models import CommCareUser
-from custom.logistics.commtrack import add_location
-from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
-from custom.ilsgateway.tanzania.reminders import Languages
-from corehq.apps.products.models import SQLProduct
-from custom.ewsghana.alerts import DOMAIN, COMPLETE_REPORT, INCOMPLETE_REPORT, WITHOUT_RECEIPTS, ABOVE_THRESHOLD, \
-    BELOW_REORDER_LEVELS
-from custom.ewsghana.alerts.alerts import report_completion_check
+from custom.ewsghana.alerts.alerts import report_completion_check, stock_alerts
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.commtrack.sms import *
 import re
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import SupplyPointCase, StockState
 
 
 class AlertsHandler(KeywordHandler):
 
     def handle(self):
-
-        text = self.args
         verified_contact = self.verified_contact
-
+        user = verified_contact.owner
         domain = Domain.get_by_name(verified_contact.domain)
+        # 'soh' needs to be added because it's cut from args in EWS handler
+        text = 'soh ' + ' '.join(str(arg) for arg in self.args)
+
         if not domain.commtrack_enabled:
             return False
-
         try:
-            data = StockAndReceiptParser(domain, verified_contact).parse(text.lower())
+            data = StockAndReceiptParser(domain, verified_contact).parse(text)
             if not data:
                 return False
         except NotAUserClassError:
@@ -40,10 +28,11 @@ class AlertsHandler(KeywordHandler):
                 raise
             send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
             return True
-
-        process(domain.name, data)
-        report_completion_check(self.user)  # sends COMPLETE_REPORT or INCOMPLETE_REPORT
-        # send_confirmation(verified_contact, data)
+        transactions = data['transactions']
+        # sends overstock, understock or SOH without receipts alerts
+        if not stock_alerts(transactions, user):
+            process(domain.name, data)
+            report_completion_check(self.user)  # sends COMPLETE_REPORT or INCOMPLETE_REPORT
         return True
 
 
@@ -68,7 +57,6 @@ class StockAndReceiptParser(StockReportParser):
     add duplication instead of complexity. The goal is to
     override only the couple methods that required modifications.
     """
-
     def looks_like_prod_code(self, code):
         """
         Special for EWS, this version doesn't consider "10.20"
@@ -82,11 +70,6 @@ class StockAndReceiptParser(StockReportParser):
 
     def single_action_transactions(self, action, args, make_tx):
         products = []
-        products_without_receipts = set()
-        products_above = set()
-        products_below = set()
-        above = 100  # todo random value, find thresholds values
-        below = 10  # random value
         for arg in args:
             if self.looks_like_prod_code(arg):
                 products.append(self.product_from_code(arg))
@@ -103,42 +86,19 @@ class StockAndReceiptParser(StockReportParser):
                     raise SMSError('could not understand product quantity "%s"' % arg)
 
                 for p in products:
-                    # addition to StockAndReceiptParser copied from corehq starts here
-                    last_stock = StockState.objects.get(case_id=self.case_id,
-                                                        product_id=p.product_id).stock_on_hand
-                    stock = value.split('.')[0]
-                    receipt = value.split('.')[1]
-                    if stock > last_stock and receipt == 0:
-                        products_without_receipts.add(p)
-                    elif stock > above:
-                        products_above.add(p)
-                    elif stock < below:
-                        products_below.add(p)
-                    # ends here
-                    else:
-                        yield make_tx(
-                            product=p,
-                            action=const.StockActions.RECEIPTS,
-                            quantity=value.split('.')[1]
-                        )
-                        yield make_tx(
-                            product=p,
-                            action=const.StockActions.STOCKONHAND,
-                            quantity=value.split('.')[0]
-                        )
+                    # for EWS we have to do two transactions, one being a receipt
+                    # and second being a transaction (that's reverse of the order
+                    # the user provides them)
+                    yield make_tx(
+                        product=p,
+                        action=const.StockActions.RECEIPTS,
+                        quantity=value.split('.')[1]
+                    )
+                    yield make_tx(
+                        product=p,
+                        action=const.StockActions.STOCKONHAND,
+                        quantity=value.split('.')[0]
+                    )
                 products = []
-
         if products:
             raise SMSError('missing quantity for product "%s"' % products[-1].code)
-        # addition to StockAndReceiptParser copied from corehq starts here
-        elif products_without_receipts:
-            raise SMSError(WITHOUT_RECEIPTS % ', '.join(sorted(str(product)
-                                                               for product in products_without_receipts)))
-        elif products_below:
-            message = BELOW_REORDER_LEVELS % (self.v.owner, self.v.owner.location,
-                                              ", ".join(sorted([str(product) for product in products_below])))
-            raise SMSError(message)
-        elif products_above:
-            raise SMSError(ABOVE_THRESHOLD % (self.v.owner, self.v.owner.location,
-                                              ", ".join(sorted([str(product) for product in products_above]))))
-        # ends here

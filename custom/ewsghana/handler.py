@@ -59,4 +59,5 @@ def handle(verified_contact, text, msg=None):
             handler.handle()
         else:
             handler.help()
+        return True
     return False
