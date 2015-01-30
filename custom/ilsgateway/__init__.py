@@ -29,3 +29,10 @@ CUSTOM_REPORTS = (
 TEST = True
 
 LOCATION_TYPES = ["MOHSW", "REGION", "DISTRICT", "FACILITY"]
+
+PRODUCTS_CODES_PROGRAMS_MAPPING = {
+    "Reproductive Health": ['dp', 'ip', 'cc', 'id', 'pp', 'cond'],
+    "Anti-Malaria": ['al', 'sp', 'qi'],
+    "Essential Medicine": ['ab', 'bp', 'ca', 'cp', 'dx', 'fs', 'md', 'os', 'pc', 'zs'],
+    "Safe Motherhood": ['eo', 'ff']
+}

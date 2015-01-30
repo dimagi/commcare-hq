@@ -47,6 +47,7 @@ def render_case(case, options):
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_definition
     case = wrapped_case(case)
     timezone = options.get('timezone', pytz.utc)
+    timezone = timezone.localize(datetime.datetime.now()).tzinfo
     _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
     display = options.get('display') or case.get_display_config()
     show_transaction_export = options.get('show_transaction_export') or False
