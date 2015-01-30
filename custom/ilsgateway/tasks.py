@@ -265,19 +265,25 @@ def ils_clear_stock_data_task():
 # @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 @task
 def report_run(domain):
-    last_run = ReportRun.last_success(domain)
-    start_date = (datetime.min if not last_run else last_run.end)
+    last_successful_run = ReportRun.last_success(domain)
+    last_run = ReportRun.last_run(domain)
+    start_date = (datetime.min if not last_successful_run else last_successful_run.end)
     end_date = datetime.utcnow()
 
     running = ReportRun.objects.filter(complete=False, domain=domain)
     if running.count() > 0:
         raise Exception("Warehouse already running, will do nothing...")
 
-    # start new run
-    new_run = ReportRun.objects.create(start=start_date, end=end_date,
+    if last_run.has_error:
+        run = last_run
+    else:
+        # start new run
+        run = ReportRun.objects.create(start=start_date, end=end_date,
                                        start_run=datetime.utcnow(), domain=domain)
     try:
-        populate_report_data(start_date, end_date, domain)
+        run.has_error = True
+        populate_report_data(start_date, end_date, domain, run)
+        run.has_error = False
     except Exception, e:
         # just in case something funky happened in the DB
         if isinstance(e, DatabaseError):
@@ -285,11 +291,11 @@ def report_run(domain):
                 transaction.rollback()
             except:
                 pass
-        new_run.has_error = True
+        run.has_error = True
         raise
     finally:
         # complete run
-        new_run.end_run = datetime.utcnow()
-        new_run.complete = True
-        new_run.save()
+        run.end_run = datetime.utcnow()
+        run.complete = True
+        run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.now())
