@@ -541,7 +541,8 @@ class CaseReminderHandler(Document):
             get_events_scheduling_info(old_definition.events) !=
             get_events_scheduling_info(self.events) or
             old_definition.start_offset != self.start_offset or
-            old_definition.schedule_length != self.schedule_length
+            old_definition.schedule_length != self.schedule_length or
+            old_definition.max_iteration_count != self.max_iteration_count
         )
 
     def get_reminder(self, case):
