@@ -1019,7 +1019,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, subcase.reference_id))
+                    parent_types.add((module_case_type, subcase.reference_id or 'parent'))
         return parent_types, case_properties
 
     def update_app_case_meta(self, app_case_meta):
@@ -2513,6 +2513,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # only the languages that go in the build
     build_langs = StringListProperty()
     secure_submissions = BooleanProperty(default=False)
+
+    # metadata for data platform
+    amplifies_workers = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
+    amplifies_project = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
 
     # exchange properties
     cached_properties = DictProperty()
