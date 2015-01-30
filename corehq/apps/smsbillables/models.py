@@ -7,7 +7,7 @@ from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import DIRECTION_CHOICES
-from corehq.apps.sms.phonenumbers_helper import get_country_code
+from corehq.apps.sms.phonenumbers_helper import get_country_code_or_prefix
 from corehq.apps.sms.util import clean_phone_number
 
 
@@ -233,10 +233,11 @@ class SmsBillable(models.Model):
         backend_api_id = message_log.backend_api
         backend_instance = message_log.backend_id
 
-        country_code = get_country_code(phone_number)
+        # let's pretend that SMS shortcodes are just country codes for billing's sake
+        country_code_or_prefix = get_country_code_or_prefix(phone_number)
 
         billable.gateway_fee = SmsGatewayFee.get_by_criteria(
-            backend_api_id, direction, backend_instance=backend_instance, country_code=country_code
+            backend_api_id, direction, backend_instance=backend_instance, country_code=country_code_or_prefix
         )
         if billable.gateway_fee is not None:
             conversion_rate = billable.gateway_fee.currency.rate_to_default
