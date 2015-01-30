@@ -296,45 +296,18 @@ def preview():
 
     """
     env.code_branch = 'master'
-    env.sudo_user = 'cchq'
     env.environment = 'preview'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '7999'
-    env.should_migrate = False
 
     env.sms_queue_enabled = False
     env.pillow_retry_queue_enabled = False
     env.celery_periodic_enabled = False
 
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
-        'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'reminder_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'pillow_retry_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_app': [
-            'hqdjango0-preview.internal.commcarehq.org',
-            'hqdjango1-preview.internal.commcarehq.org'
-        ],
-        'django_pillowtop': ['hqdb0-preview.internal.commcarehq.org'],
+    env.inventory = os.path.join('fab', 'inventory', 'preview')
+    execute(development)
 
-        'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
-        'lb': [],
-        'staticfiles': [
-            'hqproxy0.internal.commcarehq.org',
-            'hqproxy3.internal.commcarehq.org',
-        ],
-        'deploy': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_monolith': [],
-    }
-
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
     env.flower_port = 5556
-
-    _setup_path()
+    env.django_port = '7999'
+    env.should_migrate = False
 
 
 def read_inventory_file(filename):
@@ -388,6 +361,8 @@ def development():
     # if no server specified, just don't run pillowtop
     pillowtop = servers.get('pillowtop', [])
 
+    deploy = servers.get('deploy', servers['postgresql'])[:1]
+
     env.roledefs = {
         'couch': couchdb,
         'pg': postgresql,
@@ -403,7 +378,7 @@ def development():
         'lb': [],
         # having deploy here makes it so that
         # we don't get prompted for a host or run deploy too many times
-        'deploy': postgresql,
+        'deploy': deploy,
         # fab complains if this doesn't exist
         'django_monolith': [],
     }
