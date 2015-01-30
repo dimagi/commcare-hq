@@ -6,10 +6,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
-from corehq.apps.reminders.models import (
-    REMINDER_TYPE_DEFAULT,
-    REMINDER_TYPE_KEYWORD_INITIATED,
-)
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
@@ -211,7 +207,11 @@ def is_accounting_admin(user):
 
 
 def get_active_reminders_by_domain_name(domain_name):
-    from corehq.apps.reminders.models import CaseReminderHandler
+    from corehq.apps.reminders.models import (
+        CaseReminderHandler,
+        REMINDER_TYPE_DEFAULT,
+        REMINDER_TYPE_KEYWORD_INITIATED,
+    )
     db = CaseReminderHandler.get_db()
     key = [domain_name]
     reminder_rules = db.view(
