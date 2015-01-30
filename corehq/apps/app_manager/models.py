@@ -2514,6 +2514,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     build_langs = StringListProperty()
     secure_submissions = BooleanProperty(default=False)
 
+    # metadata for data platform
+    amplifies_workers = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
+    amplifies_project = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
+
     # exchange properties
     cached_properties = DictProperty()
     description = StringProperty()

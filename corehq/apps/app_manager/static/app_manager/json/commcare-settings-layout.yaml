@@ -73,6 +73,8 @@
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions
     - hq.translation_strategy
+    - hq.amplifies_workers
+    - hq.amplifies_project
 
 - title: 'Disabled'
   id: app-settings-disabled
