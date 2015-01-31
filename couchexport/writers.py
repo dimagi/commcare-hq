@@ -221,18 +221,6 @@ class Excel2007ExportWriter(ExportWriter):
         self.tables[table_index] = sheet
         self.table_indices[table_index] = 0
 
-    def get_stripped_data(self, row):
-        """
-        A generator that returns data stripped of HTML tags
-
-        .. NOTE:: This does not convert or strip HTML entities like `&amp;`
-
-        """
-        tag = re.compile('<[^<]+?>')
-        for value in self.get_data(row):
-            if isinstance(value, basestring):
-                value = tag.sub('', value)
-            yield value
 
     def _write_row(self, sheet_index, row):
         sheet = self.tables[sheet_index]
@@ -246,7 +234,7 @@ class Excel2007ExportWriter(ExportWriter):
             [dirty_chars.sub(
                 u'?',
                 unicode(v, encoding="utf-8") if isinstance(v, str) else unicode(v))
-             for v in self.get_stripped_data(row)]
+             for v in self.get_data(row)]
         )
 
     def _close(self):
