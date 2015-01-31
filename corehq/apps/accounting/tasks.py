@@ -6,7 +6,6 @@ from celery.utils.log import get_task_logger
 import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
