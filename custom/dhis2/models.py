@@ -182,6 +182,12 @@ class Dhis2Api(object):
         """
         return self.get_resource_id('programs', name)
 
+    def get_program_stage_id(self, name):
+        """
+        Returns the ID of the given program stage
+        """
+        return self.get_resource_id('programStages', name)
+
     def get_te_id(self, name):
         """
         Returns the ID of the given tracked entity type
@@ -246,6 +252,34 @@ class Dhis2Api(object):
                     'ou': top_ou['id'],
                     'ouMode': 'DESCENDANTS',
                     'attribute': attr_id + ':EQ:' + attr_value
+                })
+            instances = self.entities_to_dicts(json)
+            for inst in instances:
+                yield inst
+            if page < json['metaData']['pager']['pageCount']:
+                page += 1
+            else:
+                break
+
+    def gen_instances_in_program(self, te_name, program):
+        """
+        Yields tracked entity instances enrolled in the given program
+        """
+        top_ou = self.get_top_org_unit()
+        te_id = self.get_te_id(te_name)
+        program_id = self.get_program_id(program)
+        page = 1
+        while True:
+            __, json = self._request.get(
+                'trackedEntityInstances',
+                params={
+                    'paging': 'true',
+                    'page': page,
+                    'links': 'false',
+                    'trackedEntity': te_id,
+                    'ou': top_ou['id'],
+                    'ouMode': 'DESCENDANTS',
+                    'program': program_id
                 })
             instances = self.entities_to_dicts(json)
             for inst in instances:

@@ -389,6 +389,9 @@ Required CommCare case attributes:
 
 * dhis2_organization_unit_id: The organisation unit ID of the owner of the
   case.
+* external_id: The DHIS2 tracked entity instance ID of the child.
+  This will be imported from DHIS2, and doesn't need to be populated by
+  the app.
 
 Instead of creating an attribute for the DHIS2 tracked entity instance
 ID, the DHIS2 API client uses `external_id`. This is indexed, and allows
@@ -421,7 +424,7 @@ Tracked entity attributes of Child:
 * weight
 * BMI
 * age at time of visit
-* cchq_case_id: Used to refer to the corresponding CommCareHQ case. This
+* CCHQ Case ID: Used to refer to the corresponding CommCareHQ case. This
   will be populated with a hexadecimal UUID.
 
 DHIS2 needs the following two projects for CommCareHQ child_gmp cases /

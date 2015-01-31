@@ -9,7 +9,7 @@ from unittest import skip, SkipTest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from couchdbkit import ResourceNotFound
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError
-from custom.dhis2.tasks import sync_child_entities, DOMAIN, sync_org_units, mark_as_processed, \
+from custom.dhis2.tasks import sync_cases, DOMAIN, sync_org_units, mark_as_processed, \
     gen_unprocessed_growth_monitoring_forms, is_at_risk
 from django.conf import settings
 from django.test import TestCase
@@ -408,7 +408,7 @@ class TaskTest(TestCase):
 
             delete_mock.assert_called()
 
-    def test_sync_child_entities(self):
+    def test_sync_cases(self):
         with patch('custom.dhis2.tasks.get_children_only_theirs') as only_theirs_mock, \
                 patch('custom.dhis2.tasks.pull_child_entities') as pull_mock, \
                 patch('custom.dhis2.tasks.gen_children_only_ours') as only_ours_mock, \
@@ -418,7 +418,7 @@ class TaskTest(TestCase):
             only_theirs_mock.return_value = foo
             only_ours_mock.return_value = bar
 
-            sync_child_entities()
+            sync_cases()
 
             only_theirs_mock.assert_called()
             pull_mock.assert_called_with(DOMAIN, foo)
@@ -426,7 +426,7 @@ class TaskTest(TestCase):
             push_mock.assert_called_with(bar)
 
     @skip('Finish writing this test')
-    def test_send_nutrition_data(self):
+    def test_sync_forms(self):
         """
         send_nutrition_data should update DHIS2 with received nutrition data
         """
