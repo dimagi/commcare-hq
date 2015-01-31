@@ -458,13 +458,28 @@ class PhoneNumber(models.Model):
         phone_number = smsutil.strip_plus(phone_number)
         if not phone_number:
             return (None, False)
-        return PhoneNumber.objects.get_or_create(phone_number=phone_number)
+        return cls.objects.get_or_create(phone_number=phone_number)
 
     @classmethod
     def can_receive_sms(cls, phone_number):
         try:
-            phone_obj = PhoneNumber.objects.get(phone_number=phone_number)
+            phone_obj = cls.objects.get(phone_number=phone_number)
             return phone_obj.send_sms
-        except PhoneNumber.DoesNotExist:
+        except cls.DoesNotExist:
             # This means the phone number has not opted-out
             return True
+
+    @classmethod
+    def opt_in_sms(cls, phone_number):
+        try:
+            phone_obj = cls.objects.get(phone_number=phone_number)
+            phone_obj.send_sms = True
+            phone_obj.save()
+        except cls.DoesNotExist:
+            pass
+
+    @classmethod
+    def opt_out_sms(cls, phone_number):
+        phone_obj = cls.get_or_create(phone_number)
+        phone_obj.send_sms = False
+        phone_obj.save()

@@ -32,6 +32,11 @@ from corehq.apps.groups.models import Group
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
+
+OPT_OUT_KEYWORDS = ["STOP", "END", "CANCEL", "UNSUBSCRIBE", "QUIT"]
+OPT_IN_KEYWORDS = ["START"]
+
+
 class DomainScopeValidationError(Exception):
     pass
 
@@ -314,6 +319,23 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         process_incoming(msg, delay=delay)
     return msg
 
+
+def is_opt_message(text, keyword_list):
+    if not isinstance(text, basestring):
+        return False
+
+    text = text.strip().upper()
+    return text in keyword_list
+
+
+def is_opt_in_message(text):
+    return is_opt_message(text, OPT_IN_KEYWORDS)
+
+
+def is_opt_out_message(text):
+    return is_opt_message(text, OPT_OUT_KEYWORDS)
+
+
 def process_incoming(msg, delay=True):
     v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
 
@@ -331,7 +353,11 @@ def process_incoming(msg, delay=True):
                 'verified with this domain'
             )
 
-    if v is not None and v.verified:
+    if is_opt_out_message(msg.text):
+        PhoneNumber.opt_out_sms(msg.phone_number)
+    elif is_opt_in_message(msg.text):
+        PhoneNumber.opt_in_sms(msg.phone_number)
+    elif v is not None and v.verified:
         if domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
             for h in settings.SMS_HANDLERS:
                 try:
