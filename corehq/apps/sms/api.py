@@ -8,7 +8,8 @@ from dimagi.utils.logging import notify_exception
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import clean_phone_number, format_message_list, clean_text
-from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING, ForwardingRule, FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD
+from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, ForwardingRule,
+    FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD, PhoneNumber)
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.domain.models import Domain
@@ -182,6 +183,10 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     except Exception:
         logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
     try:
+        if not PhoneNumber.can_receive_sms(msg.phone_number):
+            # TODO: Mark error on msg
+            return True
+
         if not backend:
             backend = msg.outbound_backend
             # note: this will handle "verified" contacts that are still pending
