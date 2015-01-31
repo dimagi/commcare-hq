@@ -438,7 +438,7 @@ class PhoneNumber(models.Model):
     now, it's only used to prevent sending SMS/IVR to phone numbers who
     have opted out.
     """
-    phone_number = models.CharField(max_length=30, null=False, db_index=True)
+    phone_number = models.CharField(max_length=30, unique=True, null=False, db_index=True)
 
     # True if it's ok to send SMS to this phone number, False if not
     send_sms = models.BooleanField(null=False, default=True)
