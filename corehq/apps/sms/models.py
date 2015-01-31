@@ -430,3 +430,22 @@ def case_changed_receiver(sender, case, **kwargs):
 
 case_post_save.connect(case_changed_receiver, CommCareCase)
 
+
+class PhoneNumber(models.Model):
+    """
+    Represents a single phone number. This is not intended to be a
+    comprehensive list of phone numbers in the system (yet). For
+    now, it's only used to prevent sending SMS/IVR to phone numbers who
+    have opted out.
+    """
+    phone_number = models.CharField(max_length=30, null=False, db_index=True)
+
+    # True if it's ok to send SMS to this phone number, False if not
+    send_sms = models.BooleanField(null=False, default=True)
+
+    # True if it's ok to call this phone number, False if not
+    # This is not yet implemented but will be in the future.
+    send_ivr = models.BooleanField(null=False, default=True)
+
+    # True to allow this phone number to opt back in, False if not
+    can_opt_in = models.BooleanField(null=False, default=True)
