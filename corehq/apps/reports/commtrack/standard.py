@@ -235,12 +235,8 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         if self.program_id:
             products = products.filter(program_id=self.program_id)
 
-        # product names used for columns are sorted by product_id
-        # since that is the easiest way to sort the data later
-        self.product_names = [p.name for p in sorted(
-            products,
-            key=lambda p: p.product_id
-        )]
+        # product names used for columns are sorted by product name
+        self.product_names = dict([(p.product_id, p.name) for p in products])
 
         self.product_dict = {
             p: None for p in products.values_list('product_id', flat=True)
@@ -252,7 +248,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn(_('Location')),
         ]
 
-        columns += [DataTablesColumn(p) for p in self.product_names]
+        columns += [DataTablesColumn(p) for p in sorted(self.product_names.values())]
 
         return DataTablesHeader(*columns)
 
@@ -272,7 +268,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             row_dict = dict(self.product_dict, **dict(loc_data))
             yield [loc_name] + [
                 v if v is not None else _('No data')
-                for k, v in sorted(row_dict.items(), key=lambda(k, v): k)]
+                for k, v in sorted(row_dict.items(), key=lambda(k, v): self.product_names[k])]
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
