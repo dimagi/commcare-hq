@@ -26,10 +26,6 @@
             this.displayText = ko.observable("");
             this.format = ko.observable("");
 
-            this.grip = ko.observable(true);
-            // TODO: Write this (or not):
-            this.copyCallback = function(){};
-
             /**
              * Return a "plain" javascript object representing this view model
              * suitable for sending to the server.
@@ -47,10 +43,7 @@
          * Knockout view model controlling the filter property list.
          */
         var propertyList = function() {
-            // TODO: Write this (or not):
             var that = this;
-            this.pasteCallback = function(){};
-            this.edit = true;
 
             this.formatOptions = ko.observableArray(["Plain", "Date"]);
             this.propertyOptions = ko.observableArray({{ case_properties|JSON }});
