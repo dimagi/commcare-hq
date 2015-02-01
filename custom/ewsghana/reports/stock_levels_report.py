@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.utils.timesince import timesince
 from math import ceil
+from corehq.apps.es import UserES
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
@@ -11,8 +12,9 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import LineChart, Axis
 from corehq.apps.users.models import CommCareUser, CouchUser
+from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport
+from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
@@ -22,6 +24,7 @@ class StockLevelsSubmissionData(EWSData):
     title = 'Aggregate Stock Report'
     slug = 'stock_levels_submission'
     show_table = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -145,7 +148,7 @@ class FacilityReportData(EWSData):
     title = 'Facility Report'
     slug = 'facility_report'
     show_table = True
-    datatables = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -179,7 +182,7 @@ class FacilityReportData(EWSData):
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
         elif self.config['program'] and self.config['product']:
-            product_ids = [self.config['product']]
+            product_ids = self.config['product']
         else:
             product_ids = Product.ids_by_domain(self.config['domain'])
 
@@ -190,13 +193,12 @@ class FacilityReportData(EWSData):
         ).order_by('-last_modified_date')
 
         for state in stock_states:
-            days = (datetime.now() - state.last_modified_date).days
             monthly_consumption = int(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
                     'commodity': Product.get(state.product_id).name,
-                    'months_until_stockout': "%.2f" % (days / 30.0) if state.stock_on_hand else '',
-                    'months_until_stockout_helper': state.stock_on_hand != 0,
+                    'months_until_stockout': "%.2f" % (state.stock_on_hand / monthly_consumption)
+                    if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': timesince(state.last_modified_date) if state.stock_on_hand == 0 else '',
                     'stockout_duration_helper': state.stock_on_hand == 0,
                     'current_stock': state.stock_on_hand,
@@ -205,13 +207,7 @@ class FacilityReportData(EWSData):
                     'maximum_level': int(monthly_consumption * MAXIMUM_LEVEL),
                     'date_of_last_report': state.last_modified_date.strftime("%Y-%m-%d")
                 }
-            else:
-                if not state_grouping[state.product_id]['months_until_stockout_helper']:
-                    if state.stock_on_hand:
-                        state_grouping[state.product_id]['months_until_stockout'] = "%.2f" % (days / 30.0)
-                    else:
-                        state_grouping[state.product_id]['stockout_duration_helper'] = False
-                if state_grouping[state.product_id]['stockout_duration_helper']:
+            elif state_grouping[state.product_id]['stockout_duration_helper']:
                     if not state.stock_on_hand:
                         state_grouping[state.product_id]['stockout_duration'] = timesince(state.last_modified_date)
                     else:
@@ -275,7 +271,7 @@ class InventoryManagementData(EWSData):
             if stock_state.last_modified_date < date:
                 if not stock_state.daily_consumption:
                     return 0
-                consumption = float(stock_state.daily_consumption) * 7.0
+                consumption = float(stock_state.daily_consumption) * 30.0
                 quantity = float(stock_state.stock_on_hand) - int((date - state.last_modified_date).days / 7.0) \
                     * consumption
                 if consumption and consumption > 0 and quantity > 0:
@@ -310,18 +306,17 @@ class InventoryManagementData(EWSData):
         return []
 
 
-class StockLevelsReportMixin(object):
-    @memoized
-    def get_users_by_location_id(self, domain, location_id):
-        rows = []
-        for user in CommCareUser.by_domain(domain):
-            user_number = user.phone_numbers[0] if user.phone_numbers else None
-            if user.get_domain_membership(domain).location_id == location_id and user_number:
-                rows.append([user.name, user_number])
-        return rows
+class InputStock(EWSData):
+    slug = 'input_stock'
+    show_table = True
+
+    @property
+    def rows(self):
+        # TODO: change text to get_url(form_name, "Input Stock", self.config['domain']) and add params
+        return [["Input Stock"]]
 
 
-class FacilitySMSUsers(EWSData, StockLevelsReportMixin):
+class FacilitySMSUsers(EWSData):
     title = 'SMS Users'
     slug = 'facility_sms_users'
     show_table = True
@@ -335,10 +330,19 @@ class FacilitySMSUsers(EWSData, StockLevelsReportMixin):
 
     @property
     def rows(self):
-        return self.get_users_by_location_id(self.config['domain'], self.config['location_id'])
+        from corehq.apps.users.views.mobile import CreateCommCareUserView
+
+        query = (UserES().mobile_users().domain(self.config['domain'])
+                 .term("domain_membership.location_id", self.config['location_id']))
+
+        for hit in query.run().hits:
+            if (hit['first_name'] or hit['last_name']) and hit['phone_numbers']:
+                yield [hit['first_name'] + ' ' + hit['last_name'], hit['phone_numbers'][0]]
+
+        yield [get_url(CreateCommCareUserView.urlname, 'Create new Mobile Worker', self.config['domain'])]
 
 
-class FacilityUsers(EWSData, StockLevelsReportMixin):
+class FacilityUsers(EWSData):
     title = 'Web Users'
     slug = 'facility_users'
     show_table = True
@@ -352,15 +356,12 @@ class FacilityUsers(EWSData, StockLevelsReportMixin):
 
     @property
     def rows(self):
-        rows = []
-        sms_users = [u[0] for u in self.get_users_by_location_id(self.config['domain'],
-                                                                 self.config['location_id'])]
-        for user in CouchUser.by_domain(self.config['domain']):
-            if user.name not in sms_users:
-                if hasattr(user, 'domain_membership') \
-                        and user.domain_membership['location_id'] == self.config['location_id']:
-                    rows.append([user.name, user.get_email()])
-        return rows
+        query = (UserES().web_users().domain(self.config['domain'])
+                 .term("domain_memberships.location_id", self.config['location_id']))
+
+        for hit in query.run().hits:
+            if (hit['first_name'] or hit['last_name']) and hit['email']:
+                yield [hit['first_name'] + ' ' + hit['last_name'], hit['email']]
 
 
 class FacilityInChargeUsers(EWSData):
@@ -376,12 +377,12 @@ class FacilityInChargeUsers(EWSData):
 
     @property
     def rows(self):
-        rows = []
-        for user in CouchUser.by_domain(self.config['domain']):
-            if user.user_data.get('role') == 'In Charge' and hasattr(user, 'domain_membership') \
-                    and user.domain_membership['location_id'] == self.config['location_id']:
-                    rows.append([user.name])
-        return rows if rows else [['No data']]
+        query = (UserES().mobile_users().domain(self.config['domain'])
+                 .term("domain_membership.location_id", self.config['location_id']))
+
+        for hit in query.run().hits:
+            if hit['user_data'].get('role') == 'In Charge' and (hit['first_name'] or hit['last_name']):
+                yield [hit['first_name'] + ' ' + hit['last_name']]
 
 
 class StockLevelsReport(MultiReport):
@@ -390,6 +391,7 @@ class StockLevelsReport(MultiReport):
     name = "Stock Levels Report"
     slug = 'ews_stock_levels_report'
     exportable = True
+    base_template = "ewsghana/facility_report_base_template.html"
 
     @property
     def report_config(self):
@@ -400,8 +402,8 @@ class StockLevelsReport(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            program=program if program != '0' else None,
-            product=products if products and products[0] != '0' else [],
+            program=program if program != ALL_OPTION else None,
+            product=products if products and products[0] != ALL_OPTION else [],
         )
 
     @property
@@ -415,6 +417,7 @@ class StockLevelsReport(MultiReport):
         if not self.needs_filters and Location.get(config['location_id']).location_type in location_types:
             return [FacilityReportData(config),
                     StockLevelsLegend(config),
+                    InputStock(config),
                     FacilitySMSUsers(config),
                     FacilityUsers(config),
                     FacilityInChargeUsers(config),
@@ -432,6 +435,8 @@ class StockLevelsReport(MultiReport):
 
         table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
+        for row in rows:
+            row[1] = row[1][:row[1].index('<')]
         replace = ''
 
         for k, v in enumerate(table[0]):

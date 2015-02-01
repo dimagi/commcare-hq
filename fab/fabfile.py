@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Server layout:
     ~/services/
@@ -42,12 +44,6 @@ ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
 ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
-
-PROD_PROXIES = [
-    'hqproxy0.internal.commcarehq.org',
-    'hqproxy3.internal.commcarehq.org',
-]
-
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
@@ -198,45 +194,11 @@ def setup_dirs():
     sudo('mkdir -p %(services)s/supervisor' % env)
 
 
-
 @task
 def india():
-    """Our production server in India."""
-    env.home = '/home/commcarehq/'
+    env.inventory = os.path.join('fab', 'inventory', 'india')
     env.environment = 'india'
-    env.sudo_user = 'commcarehq'
-    env.hosts = ['220.226.209.82']
-    env.user = prompt("Username: ", default=env.user)
-    env.django_port = '8001'
-    env.should_migrate = True
-
-    _setup_path()
-    env.virtualenv_root = posixpath.join(
-        env.home, '.virtualenvs/commcarehq27')
-    env.virtualenv_root_preindex = posixpath.join(
-        env.home, '.virtualenvs/commcarehq27_preindex')
-
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': [],
-        'django_celery': [],
-        'sms_queue': [],
-        'reminder_queue': [],
-        'pillow_retry_queue': [],
-        'django_app': [],
-        'django_pillowtop': [],
-        'formsplayer': [],
-        'staticfiles': [],
-        'lb': [],
-        'deploy': [],
-
-        'django_monolith': ['220.226.209.82'],
-    }
-    env.roles = ['django_monolith']
-    env.es_endpoint = 'localhost'
-    env.flower_port = 5555
-
+    execute(development)
 
 
 @task
@@ -270,18 +232,13 @@ def zambia():
         'django_monolith': ['41.222.19.153'],
     }
     env.roles = ['django_monolith']
-    env.es_endpoint = 'localhost'
     env.flower_port = 5555
 
 
 @task
 def production():
     """www.commcarehq.org"""
-    env.sudo_user = 'cchq'
     env.environment = 'production'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '9010'
-    env.should_migrate = True
     env.sms_queue_enabled = True
     env.reminder_queue_enabled = True
     env.reminder_rule_queue_enabled = True
@@ -296,52 +253,8 @@ def production():
         if not console.confirm(branch_message, default=False):
             utils.abort('Action aborted.')
 
-    class Servers(object):
-        db = ['hqdb0.internal.commcarehq.org']
-        celery = ['hqcelery1.internal.commcarehq.org']
-        touch = ['hqtouch1.internal.commcarehq.org']
-        django = ['hqdjango3.internal.commcarehq.org',
-                  'hqdjango4.internal.commcarehq.org',
-                  'hqdjango5.internal.commcarehq.org']
-
-    env.roledefs = {
-        'couch': Servers.db,
-        'pg': Servers.db,
-        'rabbitmq': Servers.db,
-        'django_celery': Servers.celery,
-        'sms_queue': Servers.celery,
-        'reminder_queue': Servers.celery,
-        'pillow_retry_queue': Servers.celery,
-        'django_app': Servers.django,
-        'django_pillowtop': Servers.db,
-
-        # for now, we'll have touchforms run on both hqdb0 and hqdjango0
-        # will remove hqdjango0 once we verify it works well on hqdb0
-        'formsplayer': Servers.touch,
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        # having deploy here makes it so that
-        # we don't get prompted for a host or run deploy too many times
-        'deploy': Servers.db,
-        # fab complains if this doesn't exist
-        'django_monolith': []
-    }
-
-    env.server_name = 'commcare-hq-production'
-    env.settings = '%(project)s.localsettings' % env
-    # e.g. 'ubuntu' or 'redhat'.
-    # Gets auto-populated by what_os()
-    # if you don't know what it is or don't want to specify.
-    env.host_os_map = None
-
-    # The next 2 lines should be commented out when running bootstrap on a new machine
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
-
-    env.es_endpoint = 'hqes0.internal.commcarehq.org'
-    env.flower_port = 5555
-
-    _setup_path()
+    env.inventory = os.path.join('fab', 'inventory', 'production')
+    execute(development)
 
     env.django_command_prefix = {
         'hqdjango3.internal.commcarehq.org': '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
@@ -358,12 +271,8 @@ def staging():
         env.code_branch = 'autostaging'
         print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
-    env.sudo_user = 'cchq'
     env.environment = 'staging'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '9010'
 
-    env.should_migrate = True
     # We should not enable the sms queue on staging because replication
     # can cause sms to be processed again if an sms is replicated in its
     # queued state.
@@ -371,43 +280,11 @@ def staging():
     env.pillow_retry_queue_enabled = True
     env.celery_periodic_enabled = False
 
-    env.roledefs = {
-        'couch': ['hqdb0-staging.internal.commcarehq.org'],
-        'pg': ['hqdb0-staging.internal.commcarehq.org'],
-        'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
-        'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
-        'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'reminder_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'pillow_retry_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
-        'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
-
-        'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        'deploy': ['hqdb0-staging.internal.commcarehq.org'],
-        # fab complains if this doesn't exist
-        'django_monolith': [],
-    }
-
-    env.es_endpoint = 'hqdjango1-staging.internal.commcarehq.org'''
-
-    env.server_name = 'commcare-hq-staging'
-    env.settings = '%(project)s.localsettings' % env
-    env.host_os_map = None
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
-    env.flower_port = 5555
-
-    _setup_path()
+    env.inventory = os.path.join('fab', 'inventory', 'staging')
+    execute(development)
 
     env.django_command_prefix = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
     env.supervisor_env_vars = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=staging'
-
-@task
-def realstaging():
-    print "(You know you can just use 'staging' now, right? Doing that for ya.)"
-    staging()
 
 
 @task
@@ -419,47 +296,18 @@ def preview():
 
     """
     env.code_branch = 'master'
-    env.sudo_user = 'cchq'
     env.environment = 'preview'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '7999'
-    env.should_migrate = False
 
     env.sms_queue_enabled = False
     env.pillow_retry_queue_enabled = False
     env.celery_periodic_enabled = False
 
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
-        'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'reminder_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'pillow_retry_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_app': [
-            'hqdjango0-preview.internal.commcarehq.org',
-            'hqdjango1-preview.internal.commcarehq.org'
-        ],
-        'django_pillowtop': ['hqdb0-preview.internal.commcarehq.org'],
+    env.inventory = os.path.join('fab', 'inventory', 'preview')
+    execute(development)
 
-        'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        'deploy': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_monolith': [],
-    }
-
-    env.es_endpoint = 'hqdjango1-preview.internal.commcarehq.org'''
-
-    env.server_name = 'commcare-hq-preview'
-    env.settings = '%(project)s.localsettings' % env
-    env.host_os_map = None
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
     env.flower_port = 5556
-
-    _setup_path()
+    env.django_port = '7999'
+    env.should_migrate = False
 
 
 def read_inventory_file(filename):
@@ -490,13 +338,13 @@ def development():
         --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development,environment=dev
 
     """
+    require('inventory', 'environment')
+    servers = read_inventory_file(env.inventory)
+
     env.sudo_user = 'cchq'
     env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
-
-    require('inventory', 'environment')
-    servers = read_inventory_file(env.inventory)
 
     _setup_path()
 
@@ -513,6 +361,8 @@ def development():
     # if no server specified, just don't run pillowtop
     pillowtop = servers.get('pillowtop', [])
 
+    deploy = servers.get('deploy', servers['postgresql'])[:1]
+
     env.roledefs = {
         'couch': couchdb,
         'pg': postgresql,
@@ -526,14 +376,15 @@ def development():
         'formsplayer': touchforms,
         'staticfiles': proxy,
         'lb': [],
-        'deploy': postgresql,
-
-        'django_monolith': []
+        # having deploy here makes it so that
+        # we don't get prompted for a host or run deploy too many times
+        'deploy': deploy,
+        # fab complains if this doesn't exist
+        'django_monolith': [],
     }
     env.roles = ['deploy']
-    env.es_endpoint = 'localhost'
-    env.flower_port = 5555
     env.hosts = env.roledefs['deploy']
+    env.flower_port = 5555
 
 
 @task
@@ -902,6 +753,21 @@ def awesome_deploy(confirm="yes"):
             'Are you sure you want to preindex and deploy to '
             '{env.environment}?'.format(env=env), default=False):
         utils.abort('Deployment aborted.')
+
+    if datetime.datetime.now().isoweekday() == 5:
+        print('')
+        print('┓┏┓┏┓┃')
+        print('┛┗┛┗┛┃＼○／')
+        print('┓┏┓┏┓┃  /      Friday')
+        print('┛┗┛┗┛┃ノ)')
+        print('┓┏┓┏┓┃         deploy,')
+        print('┛┗┛┗┛┃')
+        print('┓┏┓┏┓┃         good')
+        print('┛┗┛┗┛┃')
+        print('┓┏┓┏┓┃         luck!')
+        print('┃┃┃┃┃┃')
+        print('┻┻┻┻┻┻')
+
     max_wait = datetime.timedelta(minutes=5)
     pause_length = datetime.timedelta(seconds=5)
 

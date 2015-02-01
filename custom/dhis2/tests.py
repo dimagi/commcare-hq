@@ -355,6 +355,9 @@ class Dhis2OrgUnitTest(TestCase):
 
 class TaskTest(TestCase):
 
+    def setUp(self):
+        settings.DHIS2_ENABLED = True
+
     def test_sync_org_units_dict_comps(self):
         """
         sync_org_units should create dictionaries of CCHQ and DHIS2 org units

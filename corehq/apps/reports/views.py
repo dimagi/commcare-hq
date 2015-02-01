@@ -35,6 +35,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
 from corehq.util.couch import get_document_or_404
+from corehq.util.view_utils import absolute_reverse
 
 import couchexport
 from couchexport import views as couchexport_views
@@ -593,15 +594,15 @@ def normalize_hour(hour):
     return (hour, day_change)
 
 def calculate_hour(hour, hour_difference, minute_difference):
-    hour += hour_difference
-    if hour_difference < 0 and minute_difference != 0:
+    hour -= hour_difference
+    if hour_difference > 0 and minute_difference != 0:
         hour -= 1
     return normalize_hour(hour)
 
 
 def recalculate_hour(hour, hour_difference, minute_difference):
-    hour -= hour_difference
-    if hour_difference < 0 and minute_difference != 0:
+    hour += hour_difference
+    if hour_difference > 0 and minute_difference != 0:
         hour += 1
     return normalize_hour(hour)
 
@@ -861,7 +862,7 @@ def case_details(request, domain, case_id):
         "case_display_options": {
             "display": request.project.get_case_display(case),
             "timezone": timezone,
-            "get_case_url": lambda case_id: reverse(case_details, args=[domain, case_id]),
+            "get_case_url": lambda case_id: absolute_reverse(case_details, args=[domain, case_id]),
             "show_transaction_export": toggles.STOCK_TRANSACTION_EXPORT.enabled(request.user.username),
         },
         "show_case_rebuild": toggles.CASE_REBUILD.enabled(request.user.username),
