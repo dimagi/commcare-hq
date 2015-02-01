@@ -28,7 +28,9 @@ var DrilldownOptionFilterControl = function (options) {
         for (var l = trigger_level+1; l < self.controls().length; l++) {
             if (current_index >= 0 && l === trigger_level+1) {
                 var next_options = current_options[current_index].next;
-                self.controls()[trigger_level+1].control_options(next_options);
+                self.controls()[trigger_level+1]
+                    .selected(null)
+                    .control_options(next_options);
             } else {
                 self.controls()[l].control_options([]);
             }

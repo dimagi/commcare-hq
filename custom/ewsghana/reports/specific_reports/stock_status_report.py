@@ -6,6 +6,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, LineChart
 from corehq.apps.reports.filters.dates import DatespanFilter
+from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
     FacilityInChargeUsers, FacilityUsers, FacilitySMSUsers, StockLevelsLegend, FacilityReportData
@@ -150,7 +151,7 @@ class MonthOfStockProduct(EWSData):
                     self.config['domain'],
                     '?location_id=%s&filter_by_program=%s&startdate=%s'
                     '&enddate=%s&report_type=%s&filter_by_product=%s',
-                    (sp.location_id, self.config['program'] or '0', self.config['startdate'],
+                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'],
                     self.config['enddate'], self.config['report_type'],
                     '&filter_by_product='.join(self.config['products'])))
 
@@ -282,8 +283,8 @@ class StockStatus(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            program=program if program != '0' else None,
-            products=products if products and products[0] != '0' else [],
+            program=program if program != ALL_OPTION else None,
+            products=products if products and products[0] != ALL_OPTION else [],
             report_type=self.request.GET.get('report_type', None)
         )
 

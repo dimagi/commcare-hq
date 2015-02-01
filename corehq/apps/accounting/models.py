@@ -7,13 +7,13 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.web import get_site_domain
 
 from django_prbac.models import Role
 
@@ -22,7 +22,6 @@ from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import SafeSaveDocument
 
-from corehq import toggles
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.accounting.exceptions import (
@@ -1065,18 +1064,14 @@ class Subscription(models.Model):
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 
         from corehq.apps.domain.views import DomainSubscriptionView
-        base_url = Site.objects.get_current().domain
         context = {
             'domain': domain_name,
             'plan_name': plan_name,
             'product': product,
             'ending_on': ending_on,
-            'subscription_url': "http://%s%s" % (
-                base_url,
-                reverse(DomainSubscriptionView.urlname,
-                        args=[self.subscriber.domain]),
-            ),
-            'base_url': base_url,
+            'subscription_url': absolute_reverse(
+                DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
+            'base_url': get_site_domain(),
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
@@ -1437,18 +1432,14 @@ class BillingRecord(models.Model):
                 'name': self.invoice.subscription.plan_version.plan.edition,
             },
             'domain': domain,
-            'domain_url': "http://%s%s" % (
-                Site.objects.get_current().domain,
-                reverse(DefaultProjectSettingsView.urlname, args=[domain])
-            ),
+            'domain_url': absolute_reverse(DefaultProjectSettingsView.urlname,
+                                           args=[domain]),
             'statement_number': self.invoice.invoice_number,
             'payment_status': (_("Paid") if self.invoice.date_paid is not None
                                else _("Payment Required")),
             'amount_due': fmt_dollar_amount(self.invoice.balance),
-            'statements_url': "http://%s%s" % (
-                Site.objects.get_current().domain,
-                reverse(DomainBillingStatementsView.urlname,args=[domain])
-            ),
+            'statements_url': absolute_reverse(
+                DomainBillingStatementsView.urlname, args=[domain]),
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients

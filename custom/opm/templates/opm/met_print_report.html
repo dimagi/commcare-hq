@@ -16,15 +16,9 @@
     <script type="text/javascript">
 
         $(function() {
-            var level = $("small")[1].innerText.trim();
-            var gp_filter = false;
-            if (level === "Awc's -" || (level !== "Gram Panchayat -" && level.indexOf("Gram Panchayat -") == 0)) {
-                gp_filter = true;
-            }
             document.body.style.zoom="55%";
             setTimeout(function() {
-                gp_filter ? splitTableByNumberAndAWCName($(".table"), 4, 6) :
-                        splitTableByNumber($(".table"), 4, 6);
+                splitTableByNumberAndAWCName($(".table"), 4, 6);
                 $('.hq-loading').hide();
                 window.print();
             }, 3000);
@@ -38,8 +32,13 @@
     <style media="all">
         @page {
             size: A4 landscape;
-            margin: 0 0 9mm 0 !important;
+            margin: 0mm 5mm 8.5mm 5mm;
         }
+
+        body {
+            margin: 0;
+        }
+
         th {
             font-weight:bold;
             line-height: 1.3;

@@ -8,9 +8,8 @@ from corehq.apps.accounting.models import (
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
 )
 from corehq.apps.registration.models import RegistrationRequest
-from dimagi.utils.web import get_ip, get_url_base
+from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
@@ -280,7 +279,7 @@ PRICING_LINK = 'http://www.commcarehq.org/software-plans'
 
 
 def send_domain_registration_email(recipient, domain_name, guid):
-    DNS_name = Site.objects.get(id=settings.SITE_ID).domain
+    DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
 
     message_plaintext = u"""
@@ -324,7 +323,7 @@ Username:  "{username}"
 
 
 def send_global_domain_registration_email(requesting_user, domain_name):
-    DNS_name = Site.objects.get(id=settings.SITE_ID).domain
+    DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
 
     message_plaintext = u"""
