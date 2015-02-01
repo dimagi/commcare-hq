@@ -164,6 +164,7 @@ class ConfigureBarChartBuilderForm(forms.Form):
             ],
         )
         data_source_config.save()
+        tasks.rebuild_indicators.delay(data_source_config._id)
 
         report = ReportConfiguration(
             domain=self.domain,
