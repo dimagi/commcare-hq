@@ -284,7 +284,7 @@ var DetailScreenConfig = (function () {
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
             this.original.graph_configuration = this.original.graph_configuration || {};
-            this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || null;
+            this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
 
             // Tab attributes
             this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
