@@ -1,5 +1,6 @@
 from collections import namedtuple, defaultdict
 from functools import total_ordering
+import os
 from os.path import commonprefix
 import re
 from corehq.apps.app_manager import id_strings
@@ -918,8 +919,52 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                         if detail_column_infos:
                             if detail.custom_xml:
-                                d = load_xmlobject_from_string(detail.custom_xml, xmlclass=Detail)
+                                d = load_xmlobject_from_string(
+                                    detail.custom_xml,
+                                    xmlclass=Detail
+                                )
                                 r.append(d)
+
+                            elif detail.use_case_tiles:
+
+                                template_args = {
+                                    "detail_id": self.id_strings.detail(module, detail_type),
+                                    "title_text_id": self.id_strings.detail_title_locale(
+                                        module, detail_type
+                                    )
+                                }
+
+                                # Get field/case property mappings
+                                for template_field in ["dob", "village", "case_name", "sex", "mother_name"]:
+                                    column = None
+                                    for col in detail.columns:
+                                        if col.case_tile_field == template_field:
+                                            column = col
+                                            break
+                                    template_args[template_field] = {
+                                        "prop_name": column.field,
+                                        "locale_id": self.id_strings.detail_column_header_locale(
+                                            module, detail_type, column,
+                                        )
+                                    }
+                                    if column.format == "enum":
+                                        template_args[template_field]["enum_keys"] = {}
+                                        for mapping in column.enum:
+                                            key = mapping.key
+                                            template_args[template_field]["enum_keys"][key] = self.id_strings.detail_column_enum_variable(module, detail_type, column, key)
+
+                                # Populate the template
+                                with open(os.path.join(
+                                    os.path.dirname(__file__), "case_tile_templates", "tdh.txt"
+                                )) as f:
+                                    template = f.read()
+                                detail_as_string = template.format(**template_args)
+
+                                detail = load_xmlobject_from_string(
+                                    detail_as_string,
+                                    xmlclass=Detail
+                                )
+                                r.append(detail)
                             else:
                                 d = self.build_detail(
                                     module,

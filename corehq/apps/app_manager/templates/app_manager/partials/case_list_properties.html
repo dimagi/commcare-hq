@@ -59,6 +59,12 @@
                 <!-- ko if: $parent.useCaseTiles() == "yes" -->
                 <td>
                     <select data-bind="value: case_tile_field">
+                        <option value=""></option>
+                        <option value="case_name">case_name</option>
+                        <option value="village">village</option>
+                        <option value="mother_name">mother_name</option>
+                        <option value="sex">sex</option>
+                        <option value="dob">dob</option>
                     </select>
                 </td>
                 <!-- /ko -->
