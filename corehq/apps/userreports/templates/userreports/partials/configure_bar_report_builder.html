@@ -5,9 +5,6 @@
 {% block head %}{{ block.super }}
     {# needed for the sortable knockout of binding #}
     {% include "imports/hq-oldstyle-js.html" %}
-    {# needed to style the property table #}
-    {# TODO: Move the css for that table into a seperate file #}
-    <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
     {# needed for the knockout typeahead binding #}
     <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
 {% endblock %}
