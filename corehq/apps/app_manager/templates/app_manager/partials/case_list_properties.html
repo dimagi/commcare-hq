@@ -1,8 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{# TODO: Remove the useless classes from this thing #}
-
 <div>
     <table class="table table-condensed">
         <thead>
@@ -26,7 +24,6 @@
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
-<<<<<<< HEAD
         ">
             <td data-bind="visible: $root.edit">
                 <span class="sort-disabled" data-bind="ifnot: grip"></span>
