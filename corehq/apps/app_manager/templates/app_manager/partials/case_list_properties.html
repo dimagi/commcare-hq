@@ -9,7 +9,7 @@
                 <th data-bind="text: DetailScreenConfig.message.FIELD"></th>
                 <th data-bind="text: DetailScreenConfig.message.HEADER"></th>
                 <th data-bind="text: DetailScreenConfig.message.FORMAT"></th>
-                <!-- ko if: useCaseTiles() == "yes" -->
+                <!-- ko if: useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
                 <th>{% trans "Case Tile Mapping" %}</th>
                 <!-- /ko -->
                 <th></th>
@@ -56,11 +56,11 @@
                 <!--ko if: isTab -->
                     <td colspan="3" data-bind="jqueryElement: header.ui"></td>
                 <!--/ko-->
-                <!-- ko if: $parent.useCaseTiles() == "yes" -->
+                <!-- ko if: $parent.useCaseTiles() == "yes" && {{request|toggle_enabled:'CASE_LIST_TILE'|BOOL }}-->
                 <td>
                     <select data-bind="value: case_tile_field">
                         <option value=""></option>
-                        <option value="case_name">case_name</option>
+                        <option value="child_name">child_name</option>
                         <option value="village">village</option>
                         <option value="mother_name">mother_name</option>
                         <option value="sex">sex</option>

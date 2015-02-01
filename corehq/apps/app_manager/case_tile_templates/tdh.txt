@@ -57,17 +57,17 @@
        </style>
       <header>
         <text>
-          <locale id="{case_name[locale_id]}"/>
+          <locale id="{child_name[locale_id]}"/>
         </text>
       </header>
       <template>
         <text>
-          <xpath function="{case_name[prop_name]}"/>
+          <xpath function="{child_name[prop_name]}"/>
         </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{case_name[prop_name]}"/>
+          <xpath function="{child_name[prop_name]}"/>
         </text>
       </sort>
     </field>
@@ -136,7 +136,7 @@
        </style>
       <header>
         <text>
-          <locale id="{case_name[locale_id]}"/>
+          <locale id="{child_name[locale_id]}"/>
         </text>
       </header>
       <template>
@@ -161,7 +161,7 @@
        </style>
       <header>
         <text>
-          <locale id="{case_name[locale_id]}"/>
+          <locale id="{child_name[locale_id]}"/>
         </text>
       </header>
       <template>
