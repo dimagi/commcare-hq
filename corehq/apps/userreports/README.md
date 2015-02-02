@@ -459,7 +459,7 @@ Report filters are _completely_ different from data source filters. Data source 
 
 #### "numeric" Filters
 Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
-Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are &eq;, &ne;, &lt;, &le;, &gt;, and &ge;.
+Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
 
 ex:
 ```
