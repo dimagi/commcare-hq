@@ -138,6 +138,7 @@ class DatespanFilter(BaseFilter):
 
 
 class NumericFilter(BaseFilter):
+    template = "reports_core/filters/numeric_filter.html"
 
     def __init__(self, name, required=True, label='Numeric Filter', css_id=None):
         self.label = label
@@ -162,7 +163,7 @@ class NumericFilter(BaseFilter):
         operand = kwargs[self.operand_param_name]
 
         try:
-            assert operator in ["eq", "neq", "lt", "lte", "gt", "gte"]
+            assert operator in ["=", "!=", "<", "<=", ">", ">="]
             try:
                 operand = int(operand)
             except ValueError:
