@@ -206,7 +206,13 @@ class ConfigureBarChartBuilderForm(forms.Form):
             ],
             filters=[
                 _make_report_filter(f) for f in json.loads(self.cleaned_data['filters'])
-            ]
+            ],
+            configured_charts=[{
+                "type": "multibar",
+                "x_axis_column": self.cleaned_data["group_by"],
+                "y_axis_columns": ["count"],
+
+            }]
         )
         report.validate()
         report.save()
