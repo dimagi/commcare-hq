@@ -2029,6 +2029,8 @@ def edit_app_attr(request, domain, app_id, attr):
         ('secure_submissions', None),
         ('translation_strategy', None),
         ('auto_gps_capture', None),
+        ('amplifies_workers', None),
+        ('amplifies_project', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -2693,7 +2695,7 @@ def summary(request, domain, app_id, should_edit=True):
 
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary_new'
+    urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary_new.html'
 

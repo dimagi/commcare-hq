@@ -153,6 +153,7 @@
             <thead>
                 <tr>
                     <th></th>
+                    <th>Quick Links</th>
                     <th>Current Worker</th>
                     <th>Memcached Status</th>
                     <th>Redis Status</th>
@@ -163,6 +164,11 @@
             <tbody>
             <tr>
                 <td><img src="{% static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
+                <td>
+                    <ul>
+                        <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>
+                    </ul>
+                </td>
                 <td><strong>{{ current_system }}</strong></td>
                 <td>
                     {{ memcached_status }}
@@ -363,31 +369,6 @@
 
     <div class="row-fluid">
     {% include "hqadmin/partials/deploy_history.html" %}
-    </div>
-    <div class="row-fluid">
-        <h3>Recent Database Changes <small><a href="{% url 'download_recent_changes' %}">download</a></small></h3>
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Domain</th>
-                <th>Doc Type</th>
-                <th>Date modified (guess)</th>
-                <th>id</th>
-                <th>rev</th>
-            </tr>
-            </thead>
-            <tbody>
-{% for change in recent_changes %}
-            <tr>
-                <td>{{ change.domain }}</td>
-                <td>{{ change.doc_type }}</td>
-                <td>{{ change.date }}</td>
-                <td>{{ change.id }}</td>
-                <td>{{ change.rev }}</td>
-            </tr>
-{% endfor %}
-            </tbody>
-        </table>
     </div>
 {% endblock %}
 

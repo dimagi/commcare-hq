@@ -43,8 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - locations-as-groups+email-report-urls  # Danny 1/28
-  - email-report-urls  # Danny 1/28
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -58,6 +56,7 @@ branches:
   - fixtures-spike  # cz 1/29
   - killmemcached  # sk 1/29
   - project-settings-update # sravan 1/30
+  - tdh-tiles # Noah 2/1
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
