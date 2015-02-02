@@ -7,13 +7,14 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.sms.util import clean_phone_number, format_message_list, clean_text
+from corehq.apps.sms.util import (clean_phone_number, format_message_list,
+    clean_text, get_available_backends)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, ForwardingRule,
     FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD, PhoneNumber,
     ERROR_PHONE_NUMBER_OPTED_OUT)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT)
-from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
+from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.domain.models import Domain
 from datetime import datetime
@@ -34,10 +35,6 @@ from corehq.apps.groups.models import Group
 # Keywords should be in all caps.
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
-
-
-OPT_OUT_KEYWORDS = ["STOP", "END", "CANCEL", "UNSUBSCRIBE", "QUIT"]
-OPT_IN_KEYWORDS = ["START"]
 
 
 class DomainScopeValidationError(Exception):
@@ -331,12 +328,11 @@ def is_opt_message(text, keyword_list):
     return text in keyword_list
 
 
-def is_opt_in_message(text):
-    return is_opt_message(text, OPT_IN_KEYWORDS)
-
-
-def is_opt_out_message(text):
-    return is_opt_message(text, OPT_OUT_KEYWORDS)
+def get_opt_keywords(msg):
+    backends_classes = get_available_backends(index_by_api_id=True)
+    backend_class = backend_classes.get(msg.backend_api, SMSBackend)
+    return (backend_class.get_opt_in_keywords(),
+        backend_class.get_opt_out_keywords())
 
 
 def process_incoming(msg, delay=True):
@@ -356,14 +352,15 @@ def process_incoming(msg, delay=True):
                 'verified with this domain'
             )
 
-    if is_opt_out_message(msg.text):
+    opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
+    if is_opt_message(msg.text, opt_out_keywords):
         PhoneNumber.opt_out_sms(msg.phone_number)
         text = get_message(MSG_OPTED_OUT, v)
         if v:
             send_sms_to_verified_number(v, text)
         else:
             send_sms(msg.domain, None, msg.phone_number, text)
-    elif is_opt_in_message(msg.text):
+    elif is_opt_message(msg.text, opt_in_keywords):
         PhoneNumber.opt_in_sms(msg.phone_number)
         text = get_message(MSG_OPTED_IN, v)
         if v:
