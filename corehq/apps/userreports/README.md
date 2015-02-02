@@ -453,6 +453,37 @@ Here are some sample configurations that can be used as a reference until we hav
 
 TODO: Report filters docs will go here.
 
+Here are a few examples of report filters:
+
+```
+{
+  "type": "date",
+  "slug": "modified_on",
+  "field": "modified_on",
+  "display": "Modified on",
+  "required": false
+}
+```
+```
+{
+  "type": "dynamic_choice_list",
+  "slug": "village",
+  "field": "village",
+  "display": "Village",
+}
+```
+```
+{
+  "type": "choice_list",
+  "slug": "role",
+  "field": "role",
+  "choices": [
+    {"value": "doctor", display:"Doctor"},
+    {"value": "nurse"}
+  ]
+}
+```
+
 **A note about report filters versus data source filters**
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
