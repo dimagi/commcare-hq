@@ -1,5 +1,5 @@
-from sqlagg.columns import CountColumn, CountUniqueColumn
-from sqlagg.filters import BETWEEN, EQ, GTE
+from sqlagg.columns import CountUniqueColumn
+from sqlagg.filters import BETWEEN, EQ, GTE, LTE
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -16,7 +16,15 @@ class ASHAFacilitatorsData(SqlData):
                 "Total number of ASHAs under the Facilitator",
                 CountUniqueColumn(
                     "case_id",
+                    filters=[EQ('owner_id', 'af'), LTE('registration_date', 'enddate_str')],
                     alias="all_functional"
+                )
+            ),
+            DatabaseColumn(
+                "Total number of ASHAs for whom functionality checklist was filled",
+                CountUniqueColumn(
+                    "case_id",
+                    alias="all_checklist_filled"
                 )
             ),
             DatabaseColumn(
@@ -103,8 +111,8 @@ class ASHAFacilitatorsData(SqlData):
             ),
             DatabaseColumn(
                 "Total number of ASHAs who are functional on at least 6/10 tasks",
-                CountColumn(
-                    "hv_percent_functionality_total",
+                CountUniqueColumn(
+                    "case_id",
                     filters=self.filters + [GTE("hv_percent_functionality_total", "sixty_percents")],
                     alias="percent_functionality"
                 )
