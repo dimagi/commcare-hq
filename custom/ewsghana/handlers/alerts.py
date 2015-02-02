@@ -12,8 +12,7 @@ class AlertsHandler(KeywordHandler):
         verified_contact = self.verified_contact
         user = verified_contact.owner
         domain = Domain.get_by_name(verified_contact.domain)
-        # 'soh' needs to be added because it's cut from args in EWS handler
-        text = 'soh ' + ' '.join(str(arg) for arg in self.args)
+        text = self.msg.text
 
         if not domain.commtrack_enabled:
             return False
@@ -29,10 +28,10 @@ class AlertsHandler(KeywordHandler):
             send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
             return True
         transactions = data['transactions']
-        # sends overstock, understock or SOH without receipts alerts
-        if not stock_alerts(transactions, user):
+
+        if not stock_alerts(transactions, user) and user.location:
             process(domain.name, data)
-            report_completion_check(self.user)  # sends COMPLETE_REPORT or INCOMPLETE_REPORT
+            report_completion_check(self.user)
         return True
 
 
