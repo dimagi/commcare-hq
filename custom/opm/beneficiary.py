@@ -666,22 +666,8 @@ class OPMCaseRow(object):
                 self.child_breastfed,
             ]
 
-    def duplicate(self):
-        """more than one case has been recorded with same bank account numbers"""
-        # TODO
-        if False:
-            return _("Duplicate account")
-
-    def milestone_repeated(self):
-        """The case has repeated a particular cash window"""
-        # TODO
-        if False:
-            return _("Milestone month repeated")
-
     def bad_edd(self):
         """The expected date of delivery is beyond program range"""
-        # TODO not sure what this one should be - although this condition
-        # clearly constitutes an error:
         # EDD is more than nine months from the date the report is run
         if self.edd and self.edd > add_months_to_date(datetime.date.today(), 9):
             return _("Incorrect EDD")
@@ -699,21 +685,17 @@ class OPMCaseRow(object):
 
     def bad_account_num(self):
         """Account number is incorrect"""
-        # TODO
-        if False:
-            return _("Incorrect account number")
+        if not (11 <= len(self.account_number) <= 16):
+            return _("Account number is the wrong length")
 
     def bad_ifsc(self):
-        """IFSC is not correct"""
-        # TODO
-        if False:
-            return _("Incorrect IFSC")
+        """IFSC is not precisely 11 characters"""
+        if len(self.ifs_code) != 11:
+            return _("IFSC {} incorrect").format(self.ifs_code)
 
     @property
     def issues(self):
         return ", ".join(filter(None, [
-            self.duplicate(),
-            self.milestone_repeated(),
             self.bad_edd(),
             self.bad_dod(),
             self.bad_lmp(),
