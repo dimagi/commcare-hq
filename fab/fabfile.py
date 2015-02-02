@@ -276,9 +276,6 @@ def staging():
     env.inventory = os.path.join('fab', 'inventory', 'staging')
     execute(development)
 
-    env.django_command_prefix = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
-    env.supervisor_env_vars = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=staging'
-
 
 @task
 def preview():
