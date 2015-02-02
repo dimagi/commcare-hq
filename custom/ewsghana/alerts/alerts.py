@@ -3,7 +3,7 @@ from celery.task import periodic_task
 import datetime
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase, StockState
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
@@ -27,15 +27,15 @@ def send_alert(transactions, sp, user, message):
 @periodic_task(run_every=crontab(hour=10, minute=00),
               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def on_going_non_reporting():
-    sp_ids = set()
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=21)
     domains = EWSGhanaConfig.get_all_enabled_domains()
+
     for domain in domains:
         for user in CommCareUser.by_domain(domain):
             try:
                 user_location = SQLLocation.objects.get(domain=domain, location_id=user.location._id)
-            except SQLLocation.DoesNotExist:
+            except AttributeError:
                 continue
             if user_location:
                 if user_location.location_type == 'district':
@@ -44,11 +44,9 @@ def on_going_non_reporting():
                     for facility in facilities:
                         sp = facility.supply_point_id
                         if sp and not StockTransaction.objects.filter(
-                                case_id=sp, type="stockonhand", report__date__gte=date).exists() \
-                                and user.get_verified_number():
+                                case_id=sp, type="stockonhand", report__date__gte=date).exists():
                             fac.add(str(facility.name))
-                            sp_ids.add(sp)
-                    if fac:
+                    if fac and user.get_verified_number():
                         message = ONGOING_NON_REPORTING % " \n".join(fac)
                         send_sms_to_verified_number(user.get_verified_number(), message)
                         if user.email:
@@ -56,30 +54,26 @@ def on_going_non_reporting():
                             send_mail('ONGOING NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
                 elif user_location.location_type == 'region':
-                    districts = user_location.get_children()
-                    for district in districts:
-                        facilities = district.get_children()
-                        fac = set()
-                        for facility in facilities:
-                            sp = facility.supply_point_id
-                            if sp and not StockTransaction.objects.filter(
-                                    case_id=sp, type="stockonhand", report__date__gte=date).exists() \
-                                    and user.get_verified_number():
-                                fac.add(str(facility.name))
-                                sp_ids.add(sp)
-                        if fac:
-                            message = ONGOING_NON_REPORTING % " \n".join(fac)
-                            send_sms_to_verified_number(user.get_verified_number(), message)
-                            if user.email:
-                                email = str(user.email)
-                                send_mail('ONGOING NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
+                    facilities = SQLLocation.objects.filter(domain=domain,
+                                                            parent__parent__location_id=user.location._id)
+                    fac = set()
+                    for facility in facilities:
+                        sp = facility.supply_point_id
+                        if sp and not StockTransaction.objects.filter(
+                                case_id=sp, type="stockonhand", report__date__gte=date).exists():
+                            fac.add(str(facility.name))
+                    if fac and user.get_verified_number():
+                        message = ONGOING_NON_REPORTING % " \n".join(fac)
+                        send_sms_to_verified_number(user.get_verified_number(), message)
+                        if user.email:
+                            email = str(user.email)
+                            send_mail('ONGOING NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
 
 # Ongoing STOCKOUTS at SDP and RMS
 @periodic_task(run_every=crontab(hour=10, minute=25),
               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def on_going_stockout():
-    sp_ids = set()
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=21)
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -87,7 +81,7 @@ def on_going_stockout():
         for user in CommCareUser.by_domain(domain):
             try:
                 user_location = SQLLocation.objects.get(domain=domain, location_id=user.location._id)
-            except SQLLocation.DoesNotExist:
+            except AttributeError:
                 continue
 
             if user_location:
@@ -97,11 +91,9 @@ def on_going_stockout():
                     for facility in facilities:
                         sp = facility.supply_point_id
                         if sp and StockTransaction.objects.filter(
-                                case_id=sp, type="stockonhand", stock_on_hand=0, report__date__gte=date).exists() and \
-                                user.get_verified_number():
+                                case_id=sp, type="stockonhand", stock_on_hand=0, report__date__gte=date).exists():
                             fac.add(str(facility.name))
-                            sp_ids.add(sp)
-                    if fac:
+                    if fac and user.get_verified_number():
                         message = ONGOING_STOCKOUT_AT_SDP % " \n".join(fac)
                         send_sms_to_verified_number(user.get_verified_number(), message)
                         if user.email:
@@ -109,18 +101,15 @@ def on_going_stockout():
                             send_mail('ONGOING STOCKOUT AT SDP', message, 'commcarehq-noreply@dimagi.com', [email])
 
                 elif user_location.location_type == 'region':
-                    districts = user_location.get_children()
+                    facilities = SQLLocation.objects.filter(domain=domain,
+                                                            parent__parent__location_id=user.location._id)
                     fac = set()
-                    for district in districts:
-                        facilities = district.get_children()
-                        for facility in facilities:
-                            sp = facility.supply_point_id
-                            if sp and StockTransaction.objects.filter(
-                                    case_id=sp, type="stockonhand", stock_on_hand=0, report__date__gte=date).exists() \
-                                    and user.get_verified_number():
-                                fac.add(str(facility.name))
-                                sp_ids.add(sp)
-                    if fac:
+                    for facility in facilities:
+                        sp = facility.supply_point_id
+                        if sp and StockTransaction.objects.filter(
+                                case_id=sp, type="stockonhand", stock_on_hand=0, report__date__gte=date).exists():
+                            fac.add(str(facility.name))
+                    if fac and user.get_verified_number():
                         message = ONGOING_STOCKOUT_AT_RMS % " \n".join(fac)
                         send_sms_to_verified_number(user.get_verified_number(), message)
                         if user.email:
@@ -132,7 +121,6 @@ def on_going_stockout():
 @periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def urgent_non_reporting():
-    sp_ids = set()
     now = datetime.datetime.utcnow()
     date = now - datetime.timedelta(days=21)
     domains = EWSGhanaConfig.get_all_enabled_domains()
@@ -140,10 +128,9 @@ def urgent_non_reporting():
         for user in CommCareUser.by_domain(domain):
             try:
                 user_location = SQLLocation.objects.get(domain=domain, location_id=user.location._id)
-            except SQLLocation.DoesNotExist:
+            except AttributeError:
                 continue
             if user_location:
-
                 if user_location.location_type == 'district':
                     facilities = user_location.get_children()
                     fac = set()
@@ -151,12 +138,10 @@ def urgent_non_reporting():
                     for facility in facilities:
                         sp = facility.supply_point_id
                         if sp and not StockTransaction.objects.filter(
-                                case_id=sp, type="stockonhand", report__date__gte=date).exists() and \
-                                user.get_verified_number():
+                                case_id=sp, type="stockonhand", report__date__gte=date).exists():
                             fac.add(str(facility.name))
-                            sp_ids.add(sp)
                             no_rep += 1
-                    if fac and no_rep >= len(facilities) / 2:
+                    if fac and no_rep >= len(facilities) / 2 and user.get_verified_number():
                         message = URGENT_NON_REPORTING % user.location.name
                         send_sms_to_verified_number(user.get_verified_number(), message)
                         if user.email:
@@ -164,22 +149,19 @@ def urgent_non_reporting():
                             send_mail('URGENT NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
                 elif user_location.location_type == 'region':
-                    districts = user_location.get_children()
                     no_rep = 0
                     fac = set()
                     facility_count = 0
-                    for district in districts:
-                        facilities = district.get_children()
-                        for facility in facilities:
-                            facility_count += 1
-                            sp = facility.supply_point_id
-                            if sp and not StockTransaction.objects.filter(
-                                case_id=sp, type="stockonhand", report__date__gte=date).exists() and \
-                                    user.get_verified_number():
-                                fac.add(str(facility.name))
-                                sp_ids.add(sp)
-                                no_rep += 1
-                    if fac and no_rep >= facility_count / 2:
+                    facilities = SQLLocation.objects.filter(domain=domain,
+                                                            parent__parent__location_id=user.location._id)
+                    for facility in facilities:
+                        facility_count += 1
+                        sp = facility.supply_point_id
+                        if sp and not StockTransaction.objects.filter(
+                                case_id=sp, type="stockonhand", report__date__gte=date).exists():
+                            fac.add(str(facility.name))
+                            no_rep += 1
+                    if fac and no_rep >= facility_count / 2 and user.get_verified_number():
                         message = URGENT_NON_REPORTING % user.location.name
                         send_sms_to_verified_number(user.get_verified_number(), message)
                         if user.email:
@@ -187,25 +169,19 @@ def urgent_non_reporting():
                             send_mail('URGENT NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
                 elif user_location.location_type == 'country':
-                    regions = user_location.get_children()
                     no_rep = 0
                     fac = set()
                     facility_count = 0
-                    for region in regions:
-                        districts = region.get_children()
-                        for district in districts:
-                            facilities = district.get_children()
-                            if facilities:
-                                for facility in facilities:
-                                    facility_count += 1
-                                    sp = facility.supply_point_id
-                                    if sp and not StockTransaction.objects.filter(
-                                        case_id=sp, type="stockonhand",
-                                        report__date__gte=date).exists() and user.get_verified_number():
-                                        fac.add(str(facility.name))
-                                        sp_ids.add(sp)
-                                        no_rep += 1
-                    if fac and no_rep >= facility_count / 2:
+                    facilities = SQLLocation.objects.filter(domain=domain,
+                                                            parent__parent__parent__location_id=user.location._id)
+                    for facility in facilities:
+                        facility_count += 1
+                        sp = facility.supply_point_id
+                        if sp and not StockTransaction.objects.filter(
+                                case_id=sp, type="stockonhand", report__date__gte=date).exists():
+                            fac.add(str(facility.name))
+                            no_rep += 1
+                    if fac and no_rep >= facility_count / 2 and user.get_verified_number():
                         message = URGENT_NON_REPORTING % user.location.name
                         send_sms_to_verified_number(user.get_verified_number(), message)
                         if user.email:
@@ -217,18 +193,14 @@ def urgent_non_reporting():
 @periodic_task(run_every=crontab(day_of_week=1, hour=8, minute=20),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def urgent_stockout():
-    sp_ids = set()
-    now = datetime.datetime.utcnow()
-    date = now - datetime.timedelta(days=21)
     domains = EWSGhanaConfig.get_all_enabled_domains()
     for domain in domains:
         for user in CommCareUser.by_domain(domain):
             try:
                 user_location = SQLLocation.objects.get(domain=domain, location_id=user.location._id)
-            except SQLLocation.DoesNotExist:
+            except AttributeError:
                 continue
             if user_location:
-
                 if user_location.location_type == 'district':
                     facilities = user_location.get_children()
                     stocked_out_products = set()
@@ -239,14 +211,14 @@ def urgent_stockout():
                         if sp:
                             stocked_out = StockTransaction.objects.filter(
                                 case_id=sp, type="stockonhand", stock_on_hand=0)
-                            if stocked_out.exists() and user.get_verified_number():
+                            if stocked_out.exists():
                                 no_rep += 1
                                 fac.add(str(facility))
                                 for product in stocked_out:
                                     stocked_out_products.add(
                                         SQLProduct.objects.get(product_id=product.product_id).name)
-                                    sp_ids.add(sp)
-                    if fac and no_rep >= len(facilities) / 2:
+
+                    if fac and no_rep >= len(facilities) / 2 and user.get_verified_number():
                         message = URGENT_STOCKOUT % (user_location.name, ", ".join(sorted(
                             [str(product) for product in stocked_out_products])))
                         send_sms_to_verified_number(user.get_verified_number(), message)
@@ -255,27 +227,25 @@ def urgent_stockout():
                             send_mail('URGENT STOCKOUT', message, 'commcarehq-noreply@dimagi.com', [email])
 
                 elif user_location.location_type == 'region':
-                    districts = user_location.get_children()
                     no_rep = 0
                     stocked_out_products = set()
                     fac = set()
                     facility_count = 0
-                    for district in districts:
-                        facilities = district.get_children()
-                        for facility in facilities:
-                            facility_count += 1
-                            sp = facility.supply_point_id
-                            if sp:
-                                stocked_out = StockTransaction.objects.filter(case_id=sp, type="stockonhand",
-                                                                              stock_on_hand=0)
-                                if stocked_out.exists() and user.get_verified_number():
-                                    no_rep += 1
-                                    fac.add(str(facility))
-                                for product in stocked_out:
-                                    stocked_out_products.add(SQLProduct.objects.get(
-                                        product_id=product.product_id).name)
-                                sp_ids.add(sp)
-                    if fac and no_rep >= facility_count / 2:
+                    facilities = SQLLocation.objects.filter(domain=domain,
+                                                            parent__parent__location_id=user.location._id)
+                    for facility in facilities:
+                        facility_count += 1
+                        sp = facility.supply_point_id
+                        if sp:
+                            stocked_out = StockTransaction.objects.filter(case_id=sp, type="stockonhand",
+                                                                          stock_on_hand=0)
+                            if stocked_out.exists():
+                                no_rep += 1
+                                fac.add(str(facility))
+                            for product in stocked_out:
+                                stocked_out_products.add(SQLProduct.objects.get(
+                                    product_id=product.product_id).name)
+                    if fac and no_rep >= facility_count / 2 and user.get_verified_number():
                         message = URGENT_STOCKOUT % (user_location.name, ", ".join(sorted(
                             [str(product) for product in stocked_out_products])))
                         send_sms_to_verified_number(user.get_verified_number(), message)
@@ -284,29 +254,25 @@ def urgent_stockout():
                             send_mail('URGENT STOCKOUT', message, 'commcarehq-noreply@dimagi.com', [email])
 
                 elif user_location.location_type == 'country':
-                    regions = user_location.get_children()
                     no_rep = 0
                     fac = set()
                     stocked_out_products = set()
                     facility_count = 0
-                    for region in regions:
-                        districts = region.get_children()
-                        for district in districts:
-                            facilities = district.get_children()
-                            for facility in facilities:
-                                facility_count += 1
-                                sp = facility.supply_point_id
-                                if sp:
-                                    stocked_out = StockTransaction.objects.filter(case_id=sp, type="stockonhand",
-                                                                                  stock_on_hand=0)
-                                    if stocked_out.exists() and user.get_verified_number():
-                                        no_rep += 1
-                                        fac.add(str(facility))
-                                    for product in stocked_out:
-                                        stocked_out_products.add(SQLProduct.objects.get(
-                                            product_id=product.product_id).name)
-                                        sp_ids.add(sp)
-                    if fac and no_rep >= facility_count / 2:
+                    facilities = SQLLocation.objects.filter(domain=domain,
+                                                            parent__parent__parent__location_id=user.location._id)
+                    for facility in facilities:
+                        facility_count += 1
+                        sp = facility.supply_point_id
+                        if sp:
+                            stocked_out = StockTransaction.objects.filter(case_id=sp, type="stockonhand",
+                                                                          stock_on_hand=0)
+                            if stocked_out.exists():
+                                no_rep += 1
+                                fac.add(str(facility))
+                            for product in stocked_out:
+                                stocked_out_products.add(SQLProduct.objects.get(
+                                    product_id=product.product_id).name)
+                    if fac and no_rep >= facility_count / 2 and user.get_verified_number():
                         message = URGENT_STOCKOUT % (user_location.name, ", ".join(sorted(
                             [str(product) for product in stocked_out_products])))
                         send_sms_to_verified_number(user.get_verified_number(), message)
