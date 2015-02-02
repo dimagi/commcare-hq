@@ -7,7 +7,7 @@
         var reportBuilderViewModel = {
             application: ko.observable(""),
             sourceType: ko.observable(""),
-            caseTypeMap: {{ case_type_map|JSON }}
+            sourcesMap: {{ sources_map|JSON }}
         };
         ko.applyBindings(reportBuilderViewModel, $("#report-builder-form").get(0));
     </script>
