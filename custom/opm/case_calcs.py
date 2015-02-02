@@ -201,6 +201,10 @@ class VhndAvailabilityCalc(fluff.Calculator):
         return self.dates_from_forms(case, lambda form: True)
 
     @fluff.date_emitter
+    def anm_present(self, case):
+        return self.dates_available(case, "attend_ANM")
+
+    @fluff.date_emitter
     def ifa_available(self, case):
         return self.dates_available(case, "stock_ifatab")
 

@@ -179,7 +179,11 @@ class AWCHealthStatus(object):
          'no_denom'),
         ('child_scale',
          _("Child Weighing Machine"),
-        _("Child weighing machine available at vhnd"),
+         _("Child weighing machine available at vhnd"),
+         'no_denom'),
+        ('anm_present',
+         _("ANM Present"),
+         _("ANM Present at VHND"),
          'no_denom'),
         ('ifa_stock_available',
          _("Stock of IFA tablets"),
@@ -348,6 +352,10 @@ class AWCHealthStatus(object):
     def service_available(self, service):
         return (1 if self.all_cases and
                 self.all_cases[0].is_service_available(service, 1) else 0)
+
+    @property
+    def anm_present(self):
+        return self.service_available('vhnd_anm_present')
 
     @property
     def adult_scale(self):
