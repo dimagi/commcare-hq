@@ -185,6 +185,14 @@ class AWCHealthStatus(object):
          _("ANM Present"),
          _("ANM Present at VHND"),
          'no_denom'),
+        ('asha_present',
+         _("ASHA Present"),
+         _("ASHA Present at VHND"),
+         'no_denom'),
+        ('cmg_present',
+         _("CMG Present"),
+         _("CMG Present at VHND"),
+         'no_denom'),
         ('ifa_stock_available',
          _("Stock of IFA tablets"),
          _("AWC has enough Stock of IFA tablets"),
@@ -356,6 +364,14 @@ class AWCHealthStatus(object):
     @property
     def anm_present(self):
         return self.service_available('vhnd_anm_present')
+
+    @property
+    def asha_present(self):
+        return self.service_available('vhnd_asha_present')
+
+    @property
+    def cmg_present(self):
+        return self.service_available('vhnd_cmg_present')
 
     @property
     def adult_scale(self):
