@@ -137,6 +137,46 @@ class DatespanFilter(BaseFilter):
         }
 
 
+class NumericFilter(BaseFilter):
+
+    def __init__(self, name, required=True, label='Numeric Filter', css_id=None):
+        self.label = label
+        self.css_id = css_id or name
+        params = [
+            FilterParam(self.operator_param_name, True),
+            FilterParam(self.operand_param_name, True),
+        ]
+        super(NumericFilter, self).__init__(required=required, name=name, params=params)
+
+    @property
+    def operator_param_name(self):
+        return "{}-operator".format(self.css_id)
+
+    @property
+    def operand_param_name(self):
+        return "{}-operand".format(self.css_id)
+
+    @memoized
+    def value(self, **kwargs):
+        operator = kwargs[self.operator_param_name]
+        operand = kwargs[self.operand_param_name]
+
+        try:
+            assert operator in ["eq", "neq", "lt", "lte", "gt", "gte"]
+            try:
+                operand = int(operand)
+            except ValueError:
+                operand = float(operand)
+        except (AssertionError, ValueError) as e:
+            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(e.message))
+
+        if operator is not None and operand is not None:
+            return {"operator": operator, "operand": operand}
+
+    def default_value(self):
+        return None
+
+
 Choice = namedtuple('Choice', ['value', 'display'])
 
 

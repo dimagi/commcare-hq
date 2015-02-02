@@ -39,6 +39,22 @@ class DateFilterValue(FilterValue):
         }
 
 
+class NumericFilterValue(FilterValue):
+
+    def __init__(self, filter, value):
+        assert filter.type == "numeric"
+        assert ("operator" in value and "operand" in value) or value is None
+        super(NumericFilterValue, self).__init__(filter, value)
+
+    def to_sql_filter(self):
+        pass
+        # TODO: write me!
+
+    def to_sql_values(self):
+        pass
+        # TODO: write me!
+
+
 class ChoiceListFilterValue(FilterValue):
 
     def __init__(self, filter, value):

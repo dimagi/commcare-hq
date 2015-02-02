@@ -109,6 +109,10 @@ class DynamicChoiceListFilterSpec(FilterSpec):
         return []
 
 
+class NumericFilterSpec(FilterSpec):
+    type = TypeProperty('numeric')
+
+
 class ChartSpec(JsonObject):
     type = StringProperty(required=True)
     title = StringProperty()
