@@ -29,6 +29,13 @@ DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
 
+
+ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = "TOO_MANY_UNSUCCESSFUL_ATTEMPTS"
+ERROR_MESSAGE_IS_STALE = "MESSAGE_IS_STALE"
+ERROR_INVALID_DIRECTION = "INVALID_DIRECTION"
+ERROR_PHONE_NUMBER_OPTED_OUT = "PHONE_NUMBER_OPTED_OUT"
+
+
 class MessageLog(SafeSaveDocument, UnicodeMixIn):
     base_doc                    = "MessageLog"
     couch_recipient_doc_type    = StringProperty() # "CommCareCase", "CommCareUser", "WebUser"
@@ -66,6 +73,11 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
 
     def delete(self):
         super(MessageLog, self).delete() # Call the "real" delete() method.
+
+    def set_system_error(self, message=None):
+        self.error = True
+        self.system_error_message = message
+        self.save()
 
     @property
     def username(self):
