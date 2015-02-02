@@ -27,6 +27,12 @@ from django.http import HttpResponse
 from casexml.apps.phone.checksum import CaseStateHash
 from no_exceptions.exceptions import HttpException
 
+try:
+    from newrelic.agent import add_custom_parameter
+except ImportError:
+    def add_custom_parameter(key, value):
+        pass
+
 logger = logging.getLogger(__name__)
 
 # how long a cached payload sits around for (in seconds).
@@ -56,6 +62,7 @@ class StockSettings(object):
 class EtreeRestoreResponse(object):
     def __init__(self, username, items=False):
         self.items = items
+        self.num_items = 0
         self.response = get_response_element(
             "Successfully restored account %s!" % username,
             ResponseNature.OTA_RESTORE_SUCCESS)
@@ -65,7 +72,8 @@ class EtreeRestoreResponse(object):
 
     def __str__(self):
         if self.items:
-            self.response.attrib['items'] = '%d' % len(self.response.getchildren())
+            self.num_items = len(self.response.getchildren())
+            self.response.attrib['items'] = '%d' % self.num_items
         return xml.tostring(self.response)
 
 
@@ -287,6 +295,7 @@ class RestoreConfig(object):
         duration = datetime.utcnow() - start_time
         synclog.duration = duration.seconds
         synclog.save()
+        add_custom_parameter('restore_response_size', response.num_items)
         self.set_cached_payload_if_necessary(resp, duration)
         return resp
 
@@ -307,6 +316,9 @@ class RestoreConfig(object):
         )
         for case_elem in case_xml_elements:
             response.append(case_elem)
+
+        add_custom_parameter('restore_total_cases', len(sync_operation.all_potential_cases))
+        add_custom_parameter('restore_synced_cases', len(sync_operation.actual_cases_to_sync))
 
         # commtrack balance sections
         case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
@@ -337,6 +349,9 @@ class RestoreConfig(object):
         synclog.cases_on_phone = sync_state.actual_owned_cases
         synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
         synclog.save(**get_safe_write_kwargs())
+
+        add_custom_parameter('restore_total_cases', len(sync_state.actual_relevant_cases))
+        add_custom_parameter('restore_synced_cases', len(sync_state.all_synced_cases))
 
         # commtrack balance sections
         commtrack_elements = self.get_stock_payload(sync_state.all_synced_cases)
