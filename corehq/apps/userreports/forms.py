@@ -1,3 +1,4 @@
+import json
 import os
 from django import forms
 from django.utils.translation import ugettext_noop as _
@@ -143,6 +144,22 @@ class ConfigureBarChartBuilderForm(forms.Form):
                 "display_name": property_name,
             }
 
+        def _make_report_filter(conf):
+            filter = {
+                "field": conf["property"],
+                "slug": conf["property"],
+                "display": conf["display_text"]
+            }
+            if conf['format'] == "Plain":
+                filter["type"] = "dynamic_choice_list"
+            elif conf['format'] == "Date":
+                filter["type"] = "date"
+            else:
+                # TODO: Raise something more specific or catch earlier
+                raise Exception
+
+            return filter
+
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             display_name="{} source".format(self.cleaned_data['report_name']),
@@ -186,6 +203,9 @@ class ConfigureBarChartBuilderForm(forms.Form):
                     "type": "field",
                     "display": "Count"
                 }
+            ],
+            filters=[
+                _make_report_filter(f) for f in json.loads(self.cleaned_data['filters'])
             ]
         )
         report.validate()
