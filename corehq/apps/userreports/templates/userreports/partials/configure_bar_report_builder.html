@@ -48,7 +48,7 @@
             this.formatOptions = ko.observableArray(["Plain", "Date"]);
             this.propertyOptions = ko.observableArray({{ case_properties|JSON }});
             this.columns = ko.observableArray([new PropertyListItem()]);
-            this.serializedSortProperties = ko.computed(function(){
+            this.serializedFilterProperties = ko.computed(function(){
                 return JSON.stringify(
                     _.map(that.columns(), function(c){return c.toJS()})
                 );

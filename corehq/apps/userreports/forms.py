@@ -77,7 +77,7 @@ class CreateNewReportBuilderForm(forms.Form):
 class ConfigureBarChartBuilderForm(forms.Form):
     report_name = forms.CharField()
     group_by = forms.ChoiceField()
-    sort_fields = forms.CharField(required=False)
+    filters = forms.CharField(required=False)
 
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
         super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)
