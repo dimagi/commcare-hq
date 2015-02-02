@@ -171,15 +171,23 @@ class AWCHealthStatus(object):
          'child_12_months'),
         ('vhnd_held',
          _("VHND"),
-        _("VHND organized at AWC"),
+         _("VHND organized at AWC"),
          'no_denom'),
-        ('adult_scale',
-         _("Adult Weighing Machine"),
-        _("Adult weighing machine available at vhnd"),
+        ('adult_scale_available',
+         _("Adult Weighing Machine Available"),
+         _("Adult weighing machine available at vhnd"),
          'no_denom'),
-        ('child_scale',
-         _("Child Weighing Machine"),
+        ('adult_scale_functional',
+         _("Adult Weighing Machine Functional"),
+         _("Adult weighing machine functional at vhnd"),
+         'no_denom'),
+        ('child_scale_available',
+         _("Child Weighing Machine Available"),
          _("Child weighing machine available at vhnd"),
+         'no_denom'),
+        ('child_scale_functional',
+         _("Child Weighing Machine Functional"),
+         _("Child weighing machine functional at vhnd"),
          'no_denom'),
         ('anm_present',
          _("ANM Present"),
@@ -374,12 +382,20 @@ class AWCHealthStatus(object):
         return self.service_available('vhnd_cmg_present')
 
     @property
-    def adult_scale(self):
+    def adult_scale_available(self):
         return self.service_available('vhnd_adult_scale_available')
 
     @property
-    def child_scale(self):
+    def adult_scale_functional(self):
+        return self.service_available('vhnd_adult_scale_functional')
+
+    @property
+    def child_scale_available(self):
         return self.service_available('vhnd_child_scale_available')
+
+    @property
+    def child_scale_functional(self):
+        return self.service_available('vhnd_child_scale_functional')
 
     @property
     def ifa_stock_available(self):
