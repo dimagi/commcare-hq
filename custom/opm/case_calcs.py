@@ -201,15 +201,35 @@ class VhndAvailabilityCalc(fluff.Calculator):
         return self.dates_from_forms(case, lambda form: True)
 
     @fluff.date_emitter
+    def asha_present(self, case):
+        return self.dates_available(case, "attend_ASHA")
+
+    @fluff.date_emitter
+    def anm_present(self, case):
+        return self.dates_available(case, "attend_ANM")
+
+    @fluff.date_emitter
+    def cmg_present(self, case):
+        return self.dates_available(case, "attend_cmg")
+
+    @fluff.date_emitter
     def ifa_available(self, case):
         return self.dates_available(case, "stock_ifatab")
 
     @fluff.date_emitter
     def adult_scale_available(self, case):
-        return self.dates_available(case, "func_bigweighmach")
+        return self.dates_available(case, "stock_bigweighmach")
 
     @fluff.date_emitter
     def child_scale_available(self, case):
+        return self.dates_available(case, "stock_childweighmach")
+
+    @fluff.date_emitter
+    def adult_scale_functional(self, case):
+        return self.dates_available(case, "func_bigweighmach")
+
+    @fluff.date_emitter
+    def child_scale_functional(self, case):
         return self.dates_available(case, "func_childweighmach")
 
     @fluff.date_emitter
