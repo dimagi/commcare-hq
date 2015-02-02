@@ -160,7 +160,7 @@ class FetchProductListView(ProductListView):
     def get(self, request, *args, **kwargs):
         return HttpResponse(json.dumps({
             'success': True,
-            'current_page': self.page,
+            'current_page': int(self.page),
             'data_list': self.product_data,
         }), 'text/json')
 
