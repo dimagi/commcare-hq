@@ -162,6 +162,9 @@ class NumericFilter(BaseFilter):
         operator = kwargs[self.operator_param_name]
         operand = kwargs[self.operand_param_name]
 
+        if operand == "":
+            return None
+        
         try:
             assert operator in ["=", "!=", "<", "<=", ">", ">="]
             try:
