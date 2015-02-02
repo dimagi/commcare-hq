@@ -56,7 +56,7 @@ TODO:
     {# there must be no whitespace between <tbody> and <tr> #}
     {# the .hide().fadeIn() will fail badly on FireFox #}
     </tr></tbody>
-    <tbody>
+    <tbody data-bind="visible: columns().length < 10">
         <tr>
             <td></td>
             <td colspan="4">
