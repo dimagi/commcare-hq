@@ -183,6 +183,8 @@ class OpmFormSqlData(SqlData):
 VHND_PROPERTIES = [
     "vhnd_available",
     "vhnd_anm_present",
+    "vhnd_asha_present",
+    "vhnd_cmg_present",
     "vhnd_ifa_available",
     "vhnd_adult_scale_available",
     "vhnd_child_scale_available",
