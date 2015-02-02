@@ -600,6 +600,30 @@ def domain_list_download(request):
 
 
 @require_superuser_or_developer
+def view_recent_changes(request):
+    count = int(request.GET.get('changes', 1000))
+    changes = list(get_recent_changes(get_db(), count))
+    domain_counts = defaultdict(lambda: 0)
+    doc_type_counts = defaultdict(lambda: 0)
+    for change in changes:
+        domain_counts[change['domain']] += 1
+        doc_type_counts[change['doc_type']] += 1
+
+    def _to_chart_data(data_dict):
+        return [
+            {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
+        ]
+
+    return render(request, 'hqadmin/couch_changes.html', {
+        'count': count,
+        'recent_changes': changes,
+        'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
+        'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
+        'hide_filters': True,
+    })
+
+
+@require_superuser_or_developer
 def download_recent_changes(request):
     count = int(request.GET.get('changes', 10000))
     resp = HttpResponse(content_type='text/csv')
@@ -677,9 +701,6 @@ def system_info(request):
     context['db_update'] = request.GET.get('db_update', 30000)
     context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
-    # recent changes
-    recent_changes = int(request.GET.get('changes', 50))
-    context['recent_changes'] = get_recent_changes(get_db(), recent_changes)
     context['rabbitmq_url'] = get_rabbitmq_management_url()
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
