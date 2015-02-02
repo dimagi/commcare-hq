@@ -148,10 +148,13 @@ def handle_outgoing(msg):
             orig_phone_number=orig_phone_number)
         if use_rate_limit:
             wait_and_release_lock(lock, sms_interval)
-        if result:
-            handle_successful_processing_attempt(msg)
-        else:
-            handle_unsuccessful_processing_attempt(msg)
+
+        # Only do the following if an unrecoverable error did not happen
+        if not msg.error:
+            if result:
+                handle_successful_processing_attempt(msg)
+            else:
+                handle_unsuccessful_processing_attempt(msg)
         return False
     else:
         # We're using rate limiting, but couldn't acquire the lock, so
