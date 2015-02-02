@@ -161,21 +161,15 @@ class NumericFilter(BaseFilter):
     def value(self, **kwargs):
         operator = kwargs[self.operator_param_name]
         operand = kwargs[self.operand_param_name]
-
         if operand == "":
             return None
-        
         try:
             assert operator in ["=", "!=", "<", "<=", ">", ">="]
-            try:
-                operand = int(operand)
-            except ValueError:
-                operand = float(operand)
-        except (AssertionError, ValueError) as e:
+            assert isinstance(operand, float) or isinstance(operand, int)
+        except AssertionError as e:
             raise FilterValueException('Error parsing numeric filter parameters: {}'.format(e.message))
 
-        if operator is not None and operand is not None:
-            return {"operator": operator, "operand": operand}
+        return {"operator": operator, "operand": operand}
 
     def default_value(self):
         return None
