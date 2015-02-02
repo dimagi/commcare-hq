@@ -3658,7 +3658,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 
+        seen_types = []
         def get_children(case_type):
+            seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]
 
         def get_hierarchy(case_type):
@@ -3667,6 +3669,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         roots = [type_ for type_ in meta.case_types if not type_.relationships]
         for type_ in roots:
             meta.type_hierarchy[type_.name] = get_hierarchy(type_.name)
+
+        for type_ in meta.case_types:
+            if type_.name not in seen_types:
+                meta.type_hierarchy[type_.name] = {}
+                type_.error = _("Error in case type hierarchy")
 
         return meta
 
