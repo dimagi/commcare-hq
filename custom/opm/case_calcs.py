@@ -218,10 +218,18 @@ class VhndAvailabilityCalc(fluff.Calculator):
 
     @fluff.date_emitter
     def adult_scale_available(self, case):
-        return self.dates_available(case, "func_bigweighmach")
+        return self.dates_available(case, "stock_bigweighmach")
 
     @fluff.date_emitter
     def child_scale_available(self, case):
+        return self.dates_available(case, "stock_childweighmach")
+
+    @fluff.date_emitter
+    def adult_scale_functional(self, case):
+        return self.dates_available(case, "func_bigweighmach")
+
+    @fluff.date_emitter
+    def child_scale_functional(self, case):
         return self.dates_available(case, "func_childweighmach")
 
     @fluff.date_emitter

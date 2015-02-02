@@ -188,6 +188,8 @@ VHND_PROPERTIES = [
     "vhnd_ifa_available",
     "vhnd_adult_scale_available",
     "vhnd_child_scale_available",
+    "vhnd_adult_scale_functional",
+    "vhnd_child_scale_functional",
     "vhnd_ors_available",
     "vhnd_zn_available",
     "vhnd_measles_vacc_available",
