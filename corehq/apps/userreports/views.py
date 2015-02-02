@@ -17,8 +17,11 @@ from corehq import toggles
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, \
     get_default_case_property_datatypes
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.forms import CreateNewReportBuilderForm, \
-    ConfigureBarChartBuilderForm
+from corehq.apps.userreports.forms import (
+    CreateNewReportBuilderForm,
+    ConfigureBarChartBuilderForm,
+    ConfigureTableBuilderForm,
+)
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -79,34 +82,37 @@ class CreateNewReportBuilderView(ReportBuilderView):
 
     def post(self, request, *args, **kwargs):
         if self.create_new_report_builder_form.is_valid():
-            if self.create_new_report_builder_form.cleaned_data['report_type'] == 'bar_chart':
-                return HttpResponseRedirect(
-                    reverse(
-                        'configure_bar_chart_report_builder',
-                        args=[self.domain],
-                    ) + '?' + '&'.join([
-                        '%(key)s=%(value)s' % {
-                            'key': field,
-                            'value': escape(self.create_new_report_builder_form.cleaned_data[field]),
-                        } for field in [
-                            'application',
-                            'source_type',
-                            'report_source',
-                        ]
-                    ])
-                )
+            url_name = None
+            report_type = self.create_new_report_builder_form.cleaned_data['report_type']
+            if report_type == 'bar_chart':
+                url_name = 'configure_bar_chart_report_builder'
+            elif report_type == 'table':
+                url_name = 'configure_table_report_builder'
+            return HttpResponseRedirect(
+                reverse(url_name, args=[self.domain]) + '?' + '&'.join([
+                    '%(key)s=%(value)s' % {
+                        'key': field,
+                        'value': escape(self.create_new_report_builder_form.cleaned_data[field]),
+                    } for field in [
+                        'application',
+                        'source_type',
+                        'report_source',
+                    ]
+                ])
+            )
         else:
             return self.get(request, *args, **kwargs)
 
 
 class ConfigureBarChartReportBuilderView(ReportBuilderView):
     template_name = "userreports/partials/configure_bar_report_builder.html"
+    configure_report_form_class = ConfigureBarChartBuilderForm
 
     def get_context_data(self, **kwargs):
         context = {
             "domain": self.domain,
             'report': {"title": _("Create New Report > Configure Bar Chart Report")},
-            'form': self.configure_bar_chart_builder_form,
+            'form': self.configure_report_form,
             'case_properties': self.report_source_properties
         }
         return context
@@ -121,22 +127,22 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
 
     @property
     @memoized
-    def configure_bar_chart_builder_form(self):
+    def configure_report_form(self):
         app_id = self.request.GET.get('application', '')
         source_type = self.request.GET.get('source_type', '')
         report_source = self.request.GET.get('report_source', '')
         case_properties = self.report_source_properties
         if self.request.method == 'POST':
-            return ConfigureBarChartBuilderForm(
+            return self.configure_report_form_class(
                 app_id, source_type, report_source, case_properties, self.request.POST
             )
-        return ConfigureBarChartBuilderForm(
+        return self.configure_report_form_class(
             app_id, source_type, report_source, case_properties
         )
 
     def post(self, *args, **kwargs):
-        if self.configure_bar_chart_builder_form.is_valid():
-            report_configuration = self.configure_bar_chart_builder_form.create_report_from_form()
+        if self.configure_report_form.is_valid():
+            report_configuration = self.configure_report_form.create_report_from_form()
             return HttpResponseRedirect(
                 reverse(
                     ConfigurableReport.slug,
@@ -144,6 +150,18 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
                 )
             )
         return self.get(*args, **kwargs)
+
+
+class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
+    # Temporarily building this view off of ConfigureBarChartReportBuilderView.
+    # We'll probably want to inherit from a common ancestor in the end
+    template_name = "userreports/partials/configure_table_report_builder.html"
+    configure_report_form_class = ConfigureTableBuilderForm
+
+    def get_context_data(self, **kwargs):
+        context = super(ConfigureTableReportBuilderView, self).get_context_data(**kwargs)
+        context['report'] = {"title": _("Create New Report > Configure Table Report")}
+        return context
 
 
 def _edit_report_shared(request, domain, config):

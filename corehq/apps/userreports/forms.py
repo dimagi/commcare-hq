@@ -79,6 +79,10 @@ class CreateNewReportBuilderForm(forms.Form):
         )
 
 
+class ConfigureTableBuilderForm(forms.Form):
+    pass
+
+
 class ConfigureBarChartBuilderForm(forms.Form):
     report_name = forms.CharField()
     group_by = forms.ChoiceField()
