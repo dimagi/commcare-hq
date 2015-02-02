@@ -391,5 +391,5 @@ class AWCHealthStatus(object):
 
     @property
     def closed_children(self):
-        return len([c.num_children for c in self.primary_cases
+        return sum([c.num_children for c in self.primary_cases
                     if c.status == 'mother' and c.closed_in_reporting_month])
