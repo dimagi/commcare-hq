@@ -11,6 +11,8 @@ from corehq.apps.sms.util import clean_phone_number, format_message_list, clean_
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, ForwardingRule,
     FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD, PhoneNumber,
     ERROR_PHONE_NUMBER_OPTED_OUT)
+from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
+    MSG_OPTED_OUT)
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.domain.models import Domain
@@ -356,8 +358,18 @@ def process_incoming(msg, delay=True):
 
     if is_opt_out_message(msg.text):
         PhoneNumber.opt_out_sms(msg.phone_number)
+        text = get_message(MSG_OPTED_OUT, v)
+        if v:
+            send_sms_to_verified_number(v, text)
+        else:
+            send_sms(msg.domain, None, msg.phone_number, text)
     elif is_opt_in_message(msg.text):
         PhoneNumber.opt_in_sms(msg.phone_number)
+        text = get_message(MSG_OPTED_IN, v)
+        if v:
+            send_sms_to_verified_number(v, text)
+        else:
+            send_sms(msg.domain, None, msg.phone_number, text)
     elif v is not None and v.verified:
         if domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
             for h in settings.SMS_HANDLERS:
