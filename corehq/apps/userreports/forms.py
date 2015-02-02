@@ -62,7 +62,11 @@ class CreateNewReportBuilderForm(forms.Form):
                 'report_type',
                 crispy.Field('application', data_bind='value: application'),
                 crispy.Field('source_type', data_bind='value: sourceType'),
-                crispy.Field('report_source', data_bind='options: sourcesMap[application()][sourceType()]'),
+                crispy.Field('report_source', data_bind='''
+                    options: sourcesMap[application()][sourceType()],
+                    optionsText: function(item){return item.text},
+                    optionsValue: function(item){return item.value}
+                '''),
             ),
             FormActions(
                 crispy.ButtonHolder(

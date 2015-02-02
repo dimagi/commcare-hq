@@ -60,8 +60,8 @@ class CreateNewReportBuilderView(ReportBuilderView):
         context = {
             "sources_map": {
                 app._id: {
-                    "case": list(app.get_case_types()),
-                    "form": [form.get_unique_id() for form in app.get_forms()]
+                    "case": [{"text": t, "value": t} for t in app.get_case_types()],
+                    "form": [{"text": form.default_name(), "value": form.get_unique_id()} for form in app.get_forms()]
                 } for app in apps
             },
             "domain": self.domain,
