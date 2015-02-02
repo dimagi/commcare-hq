@@ -180,7 +180,7 @@ class MultiLocationsTest(CommTrackTest):
         loc2 = make_loc('thirdloc')
         sp2 = make_supply_point(self.domain.name, loc2)
 
-        user.set_locations([loc1, loc2])
+        user.create_location_delegates([loc1, loc2])
 
         # should only have the two new cases
         self.assertEqual(len(user.locations), 2)
@@ -200,7 +200,7 @@ class MultiLocationsTest(CommTrackTest):
         make_supply_point(self.domain.name, loc1)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
-            user.set_locations([loc1])
+            user.create_location_delegates([loc1])
             self.assertEqual(submit_blocks.call_count, 1)
 
     def test_setting_existing_list_does_not_submit(self):
@@ -218,5 +218,5 @@ class MultiLocationsTest(CommTrackTest):
         user.add_location(loc2)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
-            user.set_locations([loc1, loc2])
+            user.create_location_delegates([loc1, loc2])
             self.assertEqual(submit_blocks.call_count, 0)
