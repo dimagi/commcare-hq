@@ -65,7 +65,7 @@ function(doc) {
                                 if (condition_improved.hasOwnProperty(c)) {
                                     var condition_data = condition_improved[c];
                                     var condition_date = new Date(condition_data.timeEnd);
-                                    if (condition_date == referral_date) {
+                                    if (condition_date.getTime() == referral_date.getTime()) {
                                         visit_dates.push(new Date(referral_doc.timeEnd));
                                     }
                                 }
