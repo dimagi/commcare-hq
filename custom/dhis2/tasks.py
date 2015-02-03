@@ -90,7 +90,14 @@ def push_child_entities(children):
     nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
     today = date.today().strftime('%Y-%m-%d')  # More explicit than str(date.today())
     for child in children:
-        ou_id = child['dhis2_organisation_unit_id']  # App sets this case property from user custom data
+        try:
+            ou_id = child['dhis2_organisation_unit_id']  # App sets this case property from user custom data
+        except AttributeError:
+            # App failed to set this case property from user custom data
+            # TODO: Tell someone.
+            # TODO: Or assume top org unit. Or both.
+            # Skip to the next case
+            continue
 
         try:
             # Search for cchq_case_id in case previous attempt to register failed.
@@ -101,10 +108,7 @@ def push_child_entities(children):
             dhis2_child = {
                 'CCHQ Case ID': child['_id'],
             }
-            result = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
-
-            # TODO: What does result look like?
-            dhis2_child_id = result['Identity']
+            dhis2_child_id = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
 
         # Enroll in Pediatric Nutrition Assessment
         program_data = {dhis2_attr: child[cchq_attr] for cchq_attr, dhis2_attr in PROGRAM_FIELDS.iteritems()}
@@ -204,7 +208,7 @@ def get_children_only_theirs():
     Assessment and don't have CCHQ Case ID set.
     """
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    for inst in dhis2_api.gen_instances_in_program('Child', 'Paediatric Nutrition Assessment'):
+    for inst in dhis2_api.gen_instances_in_program('Paediatric Nutrition Assessment'):
         if not inst.get('CCHQ Case ID'):
             yield inst
 

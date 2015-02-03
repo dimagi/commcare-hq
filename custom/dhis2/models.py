@@ -62,13 +62,18 @@ class JsonApiRequest(object):
         return JsonApiRequest.json_or_error(response)
 
     def post(self, path, data, **kwargs):
+        # Make a copy of self.headers because setting content type on requests that don't send content is bad
+        headers = self.headers.copy()
+        headers['Content-type'] = 'application/json'
         try:
-            response = requests.post(self.baseurl + path, data, headers=self.headers, auth=self.auth, **kwargs)
+            response = requests.post(self.baseurl + path, data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 
     def put(self, path, data, **kwargs):
+        headers = self.headers.copy()
+        headers['Content-type'] = 'application/json'
         try:
             response = requests.put(self.baseurl + path, data, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
@@ -97,34 +102,61 @@ class Dhis2Api(object):
         for te in json['trackedEntityAttributes']:
             self._tracked_entity_attributes[te['name']] = te['id']
 
-    def add_te_inst(self, data, te_name=None, ou_id=None):
+    def add_te_inst(self, entity_data, te_name, ou_id):
         """
         Add a tracked entity instance
 
-        :param data: A dictionary of data to post to the API
+        :param entity_data: A dictionary of entity attributes and values
         :param te_name: Name of the tracked entity. Add or override its ID in data.
         :param ou_id: Add or override organisation unit ID in data.
+        :return: New tracked entity instance ID
 
         .. Note:: If te_name is not specified, then `data` must include the
                   *ID* of the tracked entity, not its name.
 
+        Example request: ::
+
+            {
+                "orgUnit": "Thu5YoRCV8y",
+                "trackedEntity": "djYzXj7pXIl",
+                "attributes": [{
+                    "attribute": "HHsieCWv2XR",
+                    "value": "05e17037-4d36-4cb3-af7d-5d9db6ff6b7f"
+                }]
+            }
+
+        Example response: ::
+
+            {
+                "status": "SUCCESS",
+                "importCount": {
+                    "imported": 1,
+                    "updated": 0,
+                    "ignored": 0,
+                    "deleted": 0
+                },
+                "reference": "HI2SHTzkrHo"
+            }
+
+
         """
-        if te_name:
-            data['Tracked entity'] = self.get_te_id(te_name)
-        if ou_id:
-            data['Org unit'] = ou_id
         # Convert data keys to tracked entity attribute IDs
-        if any(key not in self._tracked_entity_attributes for key in data):
+        if any(key not in self._tracked_entity_attributes for key in entity_data):
             # We are going to have to fetch at least one tracked entity attribute ID. Fetch them all to avoid
             # multiple API requests.
             self._fetch_tracked_entity_attributes()
-        # Set instance data keys to attribute IDs
-        inst = {}
-        for key, value in data.iteritems():
-            attr_id = self.get_te_attr_id(key)
-            inst[attr_id] = value
-        result = self._request.post('trackedEntityInstances', inst)
-        return result
+        # Create a list of attributes, looking up the attribute ID of each one
+        attributes = [{
+            'attribute': self.get_te_attr_id(key),
+            'value': value
+        } for key, value in entity_data.iteritems()]
+        request_data = {
+            'trackedEntity': self.get_te_id(te_name),
+            'orgUnit': ou_id,
+            'attributes': attributes
+        }
+        status_code, response = self._request.post('trackedEntityInstances', request_data)
+        return response['reference']
 
     def update_te_inst(self, data):
         """
@@ -261,12 +293,11 @@ class Dhis2Api(object):
             else:
                 break
 
-    def gen_instances_in_program(self, te_name, program):
+    def gen_instances_in_program(self, program):
         """
         Yields tracked entity instances enrolled in the given program
         """
         top_ou = self.get_top_org_unit()
-        te_id = self.get_te_id(te_name)
         program_id = self.get_program_id(program)
         page = 1
         while True:
@@ -276,7 +307,6 @@ class Dhis2Api(object):
                     'paging': 'true',
                     'page': page,
                     'links': 'false',
-                    'trackedEntity': te_id,
                     'ou': top_ou['id'],
                     'ouMode': 'DESCENDANTS',
                     'program': program_id
@@ -348,18 +378,17 @@ class Dhis2Api(object):
         __, json = self._request.post('enrollments', request_data)
         return json
 
-    def enrolled_in(self, te_inst_id, te_name, program):
+    def enrolled_in(self, te_inst_id, program):
         """
         Checks whether a given tracked entity instance is enrolled in a given
         program
 
         :param te_inst_id: The ID of a tracked entity instance
-        :param te_name: The name of the tracked entity (its type, e.g. "Child")
         :param program: The name of a program
         :return: boolean
         """
         # TODO: Find a better DHIS2 API search instead of iterating instances
-        return any(inst['Identity'] == te_inst_id for inst in self.gen_instances_in_program(te_name, program))
+        return any(inst['Identity'] == te_inst_id for inst in self.gen_instances_in_program(program))
 
     def form_to_event(self, program_id, xform, data_element_names):
         """

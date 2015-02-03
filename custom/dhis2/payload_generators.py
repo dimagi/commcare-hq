@@ -52,7 +52,7 @@ class FormRepeaterDhis2RiskAssessmentEventPayloadGenerator(BasePayloadGenerator)
             # This case has not yet been pushed to DHIS2.
             # TODO: Try again tomorrow
             return json.dumps(None)
-        if not dhis2_api.enrolled_in(case['external_id'], 'Child', 'Underlying Risk Assessment'):
+        if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
             today = date.today().strftime('%Y-%m-%d')
             program_data = {dhis2_attr: case[cchq_attr] for cchq_attr, dhis2_attr in PROGRAM_FIELDS.iteritems()}
             dhis2_api.enroll_in_id(case['external_id'], risk_id, today, program_data)
