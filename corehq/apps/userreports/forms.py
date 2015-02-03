@@ -80,7 +80,58 @@ class CreateNewReportBuilderForm(forms.Form):
 
 
 class ConfigureTableBuilderForm(forms.Form):
-    pass
+    report_name = forms.CharField()
+    filters = forms.CharField(required=False)
+    columns = forms.CharField(required=False)
+
+    def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
+        super(ConfigureTableBuilderForm, self).__init__(*args, **kwargs)
+
+        #####
+        self.doc_type = source_type
+        self.report_source = report_source
+        self.case_properties = case_properties
+        app = Application.get(app_id)
+        self.domain = app.domain
+        #####
+
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+
+        # Get filters template
+        filters_template_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "templates", "userreports", "partials", "report_filter_configuration.html"
+        )
+        with open(filters_template_path, "r") as f:
+            filters_template = f.read()
+
+        # Get columns template
+
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Configure Bar Chart'),
+                'report_name',
+                crispy.Fieldset(
+                    _("Filters Available in this Report"),
+                    crispy.HTML(filters_template),
+                ),
+                crispy.Fieldset(
+                    _("Columns to Display"),
+                    crispy.HTML(filters_template),
+                ),
+            ),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'configure_table_builder_btn',
+                        _('Build Report')
+                    )
+                ),
+            ),
+        )
 
 
 class ConfigureBarChartBuilderForm(forms.Form):
