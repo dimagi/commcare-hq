@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from openpyxl.shared.exc import InvalidFileException
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group
+from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_archive_forms
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm)
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -154,6 +154,67 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'deleted-group-template',
         }
 
+class ArchiveFormView(DataInterfaceSection):
+    template_name = 'data_interfaces/interfaces/import_forms.html'
+    urlname = 'archive_forms'
+    page_title = ugettext_noop("Archive Forms")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        context = {}
+        context.update({
+            'bulk_upload': {
+                "download_url": static(
+                    'data_interfaces/files/forms_bulk_example.xlsx'),
+                "adjective": _("example"),
+                "verb": _("archive"),
+                "plural_noun": _("forms"),
+            },
+        })
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+    @property
+    @memoized
+    def uploaded_file(self):
+        try:
+            bulk_file = self.request.FILES['bulk_upload_file']
+        except KeyError:
+            raise BulkUploadCasesException(_("No files uploaded"))
+        try:
+            return WorkbookJSONReader(bulk_file)
+        except InvalidFileException:
+            try:
+                csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
+                                           newline=None))
+                raise BulkUploadCasesException(_("CommCare HQ does not support that file type."
+                                                 "Please convert to Excel 2007 or higher (.xlsx) "
+                                                 "and try again."))
+            except UnicodeDecodeError:
+                raise BulkUploadCasesException(_("Unrecognized format"))
+        except JSONReaderError as e:
+            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % e.message)
+
+    def process(self):
+        try:
+            bulk_archive_forms.delay(
+                self.request.user,
+                list(self.uploaded_file.get_worksheet())
+            )
+            messages.success(self.request, _("We received your file and are processing it..."))
+        except BulkUploadCasesException as e:
+            messages.error(self.request, e.message)
+        return None
+
+    def post(self, request, *args, **kwargs):
+        self.process()
+        return HttpResponseRedirect(self.page_url)
 
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'

@@ -170,7 +170,7 @@ def _get_configurable_reports(project):
 
 
 
-from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
+from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, ArchiveFormInterface
 from corehq.apps.importer.base import ImportCases
 
 DATA_INTERFACES = (
@@ -184,7 +184,8 @@ DATA_INTERFACES = (
 EDIT_DATA_INTERFACES = (
     (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
-        ImportCases
+        ImportCases,
+        ArchiveFormInterface
     )),
 )
 

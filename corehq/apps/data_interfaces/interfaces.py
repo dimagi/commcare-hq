@@ -29,6 +29,9 @@ class DataInterface(GenericReportView):
     def default_report_url(self):
         return reverse('data_interfaces_default', args=[self.request.project])
 
+class ArchiveFormInterface(DataInterface):
+    name = ugettext_noop("Bulk Archive Forms")
+    slug = "archive_forms"
 
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
