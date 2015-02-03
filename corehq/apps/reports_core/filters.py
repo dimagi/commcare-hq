@@ -4,6 +4,7 @@ from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _
 
 
 class FilterException(Exception):
@@ -135,6 +136,44 @@ class DatespanFilter(BaseFilter):
         return {
             'timezone': None
         }
+
+
+class NumericFilter(BaseFilter):
+    template = "reports_core/filters/numeric_filter.html"
+
+    def __init__(self, name, required=True, label=_('Numeric Filter'), css_id=None):
+        self.label = label
+        self.css_id = css_id or name
+        params = [
+            FilterParam(self.operator_param_name, True),
+            FilterParam(self.operand_param_name, True),
+        ]
+        super(NumericFilter, self).__init__(required=required, name=name, params=params)
+
+    @property
+    def operator_param_name(self):
+        return "{}-operator".format(self.css_id)
+
+    @property
+    def operand_param_name(self):
+        return "{}-operand".format(self.css_id)
+
+    @memoized
+    def value(self, **kwargs):
+        operator = kwargs[self.operator_param_name]
+        operand = kwargs[self.operand_param_name]
+        if operand == "":
+            return None
+        try:
+            assert operator in ["=", "!=", "<", "<=", ">", ">="]
+            assert isinstance(operand, float) or isinstance(operand, int)
+        except AssertionError as e:
+            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(e.message))
+
+        return {"operator": operator, "operand": operand}
+
+    def default_value(self):
+        return None
 
 
 Choice = namedtuple('Choice', ['value', 'display'])
