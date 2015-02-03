@@ -269,6 +269,14 @@ class StockLevelsView(BaseCommTrackManageView):
     page_title = ugettext_noop("Stock Levels")
     template_name = 'commtrack/manage/stock_levels.html'
 
+    def get_existing_stock_levels(self):
+        return [{
+            'loc_type': loc_type.name,
+            'emergency_level': 0.5,
+            'understock_threshold': 1.5,
+            'overstock_threshold': 3,
+        } for loc_type in self.domain_object.location_types]
+
     @property
     def page_context(self):
         return {
@@ -278,4 +286,8 @@ class StockLevelsView(BaseCommTrackManageView):
     @property
     @memoized
     def stock_levels_form(self):
-        return StockLevelsForm(self.domain, self.request.POST)
+        if self.request.method == "POST":
+            data = self.request.POST
+        else:
+            data = self.get_existing_stock_levels()
+        return StockLevelsForm(data)

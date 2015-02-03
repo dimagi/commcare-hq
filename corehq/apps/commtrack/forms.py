@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
 
+from corehq.apps.hqwebapp.forms import FormListForm
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
@@ -139,20 +140,32 @@ class ConsumptionForm(forms.Form):
             )
 
 
-class StockLevelsForm(forms.Form):
-    """
-    Form for specifying stock levels per location type
-    """
-    sub_form = LocationTypeStockLevels
-
-
 class LocationTypeStockLevels(forms.Form):
     """
     Sub form for configuring stock levels for a specific location type
     """
-    stock_emergency_level = forms.DecimalField(
-        label=ugettext_lazy("Emergency Level (months)"), required=False)
-    stock_understock_threshold = forms.DecimalField(
-        label=ugettext_lazy("Low Stock Level (months)"), required=False)
-    stock_overstock_threshold = forms.DecimalField(
-        label=ugettext_lazy("Overstock Level (months)"), required=False)
+    emergency_level = forms.DecimalField(
+        label=ugettext_noop("Emergency Level (months)"),
+        required=False
+    )
+    understock_threshold = forms.DecimalField(
+        label=ugettext_noop("Low Stock Level (months)"),
+        required=False
+    )
+    overstock_threshold = forms.DecimalField(
+        label=ugettext_noop("Overstock Level (months)"),
+        required=False
+    )
+
+
+class StockLevelsForm(FormListForm):
+    """
+    Form for specifying stock levels per location type
+    """
+    child_form_class = LocationTypeStockLevels
+    columns = [
+        {'label': _("Location Type"), 'key': 'loc_type'},
+        'emergency_level',
+        'understock_threshold',
+        'overstock_threshold',
+    ]

@@ -7,7 +7,7 @@
     <form class="form-horizontal" method="post">
         <fieldset>
             <legend>{% trans "Configure Stock Levels Per Location Type" %}</legend>
-            {% crispy stock_levels_form %}
+            {{ stock_levels_form.as_table }}
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
                     {% trans "Submit" %}
