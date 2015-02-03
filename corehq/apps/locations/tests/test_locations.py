@@ -29,6 +29,10 @@ class LocationProducts(TestCase):
         couch_loc = make_loc('loc', type='outlet', domain=self.domain.name)
         self.loc = couch_loc.sql_location
 
+    def tearDown(self):
+        # domain delete cascades to everything else
+        self.domain.delete()
+
     def test_start_state(self):
         self.assertTrue(self.loc.stocks_all_products)
         self.assertEqual(
