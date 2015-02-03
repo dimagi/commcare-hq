@@ -158,10 +158,12 @@ class ConfigureBarChartBuilderForm(forms.Form):
                 "slug": conf["property"],
                 "display": conf["display_text"]
             }
-            if conf['format'] == "Plain":
+            if conf['format'] == "Choice":
                 filter["type"] = "dynamic_choice_list"
             elif conf['format'] == "Date":
                 filter["type"] = "date"
+            elif conf['format'] == "Numeric":
+                filter["type"] = "numeric"
             else:
                 # TODO: Raise something more specific or catch earlier
                 raise Exception
