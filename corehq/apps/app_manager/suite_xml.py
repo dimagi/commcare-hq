@@ -906,6 +906,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     @property
     @memoized
     def details(self):
+        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
 
         r = []
         if not self.app.use_custom_suite:
@@ -941,8 +942,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         if col.case_tile_field == template_field:
                                             column = col
                                             break
+
                                     template_args[template_field] = {
-                                        "prop_name": column.field,
+                                        "prop_name": get_column_xpath_generator(
+                                            self.app, module, detail, column
+                                        ).xpath,
                                         "locale_id": self.id_strings.detail_column_header_locale(
                                             module, detail_type, column,
                                         )
