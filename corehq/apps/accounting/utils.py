@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import AccountingError
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
 
@@ -77,8 +78,7 @@ def get_privileges(plan_version):
 
 def get_change_status(from_plan_version, to_plan_version):
     all_privs = set(privileges.MAX_PRIVILEGES)
-    from_privs = get_privileges(from_plan_version) if from_plan_version is not None else all_privs
-    to_privs = get_privileges(to_plan_version)
+    to_privs = get_privileges(to_plan_version) if to_plan_version is not None else set()
 
     downgraded_privs = all_privs.difference(to_privs)
     upgraded_privs = to_privs
@@ -204,3 +204,27 @@ def is_accounting_admin(user):
         return user.prbac_role.has_privilege(accounting_privilege)
     except (AttributeError, UserRole.DoesNotExist):
         return False
+
+
+def get_active_reminders_by_domain_name(domain_name):
+    from corehq.apps.reminders.models import (
+        CaseReminderHandler,
+        REMINDER_TYPE_DEFAULT,
+        REMINDER_TYPE_KEYWORD_INITIATED,
+    )
+    db = CaseReminderHandler.get_db()
+    key = [domain_name]
+    reminder_rules = db.view(
+        'reminders/handlers_by_reminder_type',
+        startkey=key,
+        endkey=(key + [{}]),
+        reduce=False
+    ).all()
+    return [
+        CaseReminderHandler.wrap(reminder_doc)
+        for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules])
+        if (
+            reminder_doc.get('active', True)
+            and reminder_doc.get('reminder_type', REMINDER_TYPE_DEFAULT) != REMINDER_TYPE_KEYWORD_INITIATED
+        )
+    ]

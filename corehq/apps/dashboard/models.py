@@ -209,13 +209,23 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
         }
 
     @staticmethod
-    def _fmt_item(name, url, description=None, full_name=None):
+    def _fmt_item(name,
+                  url,
+                  description=None,
+                  full_name=None,
+                  secondary_url=None,
+                  secondary_url_icon=None):
         """This is the format that the paginator expects items to be in
         so that the template can be fully rendered.
         :param name: string
         :param url: string
         :param description: string. optional.
         If present, a popover will appear to the left of the list item.
+        :param full_name: string. optional.
+        If present, set the popover title.
+        :param secondary_url: string. optional.
+        :param secondary_url_icon: string. optional.
+        If these two values are present, display an icon that link to a secondary url when the line is hovered.
         :return:
         """
 
@@ -229,6 +239,8 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
             'name': _fmt_item_name(name),
             'description': description,
             'url': url,
+            'secondary_url': secondary_url,
+            'secondary_url_icon': secondary_url_icon
         }
 
     @property
@@ -286,6 +298,8 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     """Generates the Paginated context for the Applications Tile.
     """
 
+    secondary_url_icon = "fa fa-download"
+
     @property
     def total(self):
         # todo: optimize this at some point. unfortunately applications_brief
@@ -307,13 +321,25 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     def paginated_items(self):
         def _get_app_url(app):
             return (
-                reverse('view_app', args=[self.request.domain, app['id']])
+                _get_view_app_url(app)
                 if self.request.couch_user.can_edit_apps()
-                else reverse('release_manager', args=[self.request.domain, app['id']])
+                else _get_release_manager_url(app)
             )
 
+        def _get_view_app_url(app):
+            return reverse('view_app', args=[self.request.domain, app['id']])
+
+        def _get_release_manager_url(app):
+            return reverse('release_manager', args=[self.request.domain, app['id']])
+
+        def _get_app_name(app):
+            return app['key'][1]
+
         apps = self.applications[self.skip:self.skip + self.limit]
-        return [{
-            'name': a['key'][1],
-            'url': _get_app_url(a),
-        } for a in apps]
+
+        return [self._fmt_item(_get_app_name(a),
+                               _get_app_url(a),
+                               None,  # description
+                               None,  # full_name
+                               _get_release_manager_url(a),
+                               self.secondary_url_icon) for a in apps]

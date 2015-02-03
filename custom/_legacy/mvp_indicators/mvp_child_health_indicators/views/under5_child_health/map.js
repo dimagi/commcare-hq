@@ -16,8 +16,10 @@ function(doc) {
                     rdt_result = (typeof indicators.rdt_result.value === 'string') ? indicators.rdt_result.value.toLowerCase() : indicators.rdt_result.value,
                     referral_type = indicators.referral_type.value;
 
-                var rdt_test_received = (rdt_result === 'positive' || rdt_result === 'negative'),
-                    rdt_test_positive = (rdt_result === 'positive'),
+                var rdt_test_received = (rdt_result === 'positive' || rdt_result === 'positive_falciparum' || rdt_result === 'positive_vivax' ||
+                                         rdt_result === 'positive_mixed' || rdt_result === 'indeterminate' || rdt_result === 'negative'),
+                    rdt_test_positive = (rdt_result === 'positive' || rdt_result === 'positive_falciparum' || rdt_result === 'positive_vivax' ||
+                                         rdt_result === 'positive_mixed' || rdt_result === 'indeterminate'),
                     rdt_test_negative = (rdt_result === 'negative'),
                     rdt_not_available = (rdt_result === 'rdt_not_available'
                                          || rdt_result === 'not_available' || rdt_result === 'rdt_not_conducted'),

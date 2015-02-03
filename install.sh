@@ -202,7 +202,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
 fi
 
 ## Install couchdb-lucene
-if [ ! "$MINIMAL_INSTALL" ] && ! -f /etc/init.d/couchdb-lucene ]; then
+if [ ! "$MINIMAL_INSTALL" ] && [ ! -f /etc/init.d/couchdb-lucene ]; then
     if [ ! -f v0.8.0.zip ]; then
         wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi

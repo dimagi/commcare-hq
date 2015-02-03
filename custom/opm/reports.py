@@ -182,9 +182,14 @@ class OpmFormSqlData(SqlData):
 
 VHND_PROPERTIES = [
     "vhnd_available",
+    "vhnd_anm_present",
+    "vhnd_asha_present",
+    "vhnd_cmg_present",
     "vhnd_ifa_available",
     "vhnd_adult_scale_available",
     "vhnd_child_scale_available",
+    "vhnd_adult_scale_functional",
+    "vhnd_child_scale_functional",
     "vhnd_ors_available",
     "vhnd_zn_available",
     "vhnd_measles_vacc_available",
@@ -434,7 +439,7 @@ class SharedDataProvider(object):
         for (owner_id, date), row in data.iteritems():
             if row['vhnd_available'] > 0:
                 for prop in VHND_PROPERTIES:
-                    if row[prop] == '1' or prop == 'vhnd_available':
+                    if row[prop] == 1 or prop == 'vhnd_available':
                         results[owner_id][prop].add(date)
         return results
 
@@ -906,13 +911,15 @@ class MetReport(CaseReportMixin, BaseReport):
         Strip user_id and owner_id columns
         """
         for row in rows:
+            with localize('hin'):
+                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
+                row[self.column_index('cash_received_last_month')] = _(row[self.column_index(
+                    'cash_received_last_month')])
             del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
             link_text = re.search('<a href=.*>(.*)</a>', row[self.column_index('name')])
             if link_text:
                 row[self.column_index('name')] = link_text.group(1)
-            with localize('hin'):
-                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
 
         if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
             rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])

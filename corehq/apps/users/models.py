@@ -8,12 +8,12 @@ import re
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from couchdbkit.ext.django.schema import *
 from couchdbkit.resource import ResourceNotFound
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
@@ -34,8 +34,12 @@ from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.users.tasks import tag_docs_as_deleted
-from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException, InvalidFormatException
-from corehq.elastic import es_wrapper
+from corehq.apps.sms.mixin import (
+    CommCareMobileContactMixin,
+    InvalidFormatException,
+    PhoneNumberInUseException,
+    VerifiedNumber,
+)
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
@@ -2180,9 +2184,10 @@ class DomainInvitation(CachedCouchDocumentMixin, Invitation):
     doc_type = "Invitation"
 
     def send_activation_email(self, remaining_days=30):
-        url = "http://%s%s" % (Site.objects.get_current().domain,
-                               reverse("domain_accept_invitation", args=[self.domain, self.get_id]))
-        params = {"domain": self.domain, "url": url, "inviter": self.get_inviter().formatted_name, 'days': remaining_days}
+        url = absolute_reverse("domain_accept_invitation",
+                               args=[self.domain, self.get_id])
+        params = {"domain": self.domain, "url": url, 'days': remaining_days,
+                  "inviter": self.get_inviter().formatted_name}
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name

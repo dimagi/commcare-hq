@@ -214,3 +214,11 @@ def ils_resync_passwords(request, domain):
     endpoint = ILSGatewayEndpoint.from_config(config)
     resync_webusers_passwords_task.delay(config, endpoint)
     return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def delete_reports_runs(request, domain):
+    runs = ReportRun.objects.filter(domain=domain)
+    runs.delete()
+    return HttpResponse('OK')
