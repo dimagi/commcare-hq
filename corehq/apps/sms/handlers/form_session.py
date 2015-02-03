@@ -10,11 +10,10 @@ from touchforms.formplayer.api import current_question
 from corehq.apps.smsforms.app import (
     _get_responses,
     _responses_to_text,
-    start_session,
 )
 from dateutil.parser import parse
 from corehq.apps.smsforms.models import XFormsSession
-import logging
+
 
 def form_session_handler(v, text, msg):
     """
