@@ -299,13 +299,6 @@ def message_log_report(request):
     context['layout_flush_content'] = True
     return render(request, "hqadmin/message_log_report.html", context)
 
-def _get_emails():
-    return [r['key'] for r in get_db().view('hqadmin/emails').all()]
-
-@require_superuser
-def emails(request):
-    email_list = _get_emails()
-    return HttpResponse('"' + '", "'.join(email_list) + '"')
 
 @datespan_default
 @require_superuser
