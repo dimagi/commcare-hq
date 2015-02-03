@@ -44,6 +44,8 @@ class NumericFilterValue(FilterValue):
     def __init__(self, filter, value):
         assert filter.type == "numeric"
         assert (isinstance(value, dict) and "operator" in value and "operand" in value) or value is None
+        assert value['operator'] in ["=", "!=", "<", "<=", ">", ">="]
+        assert isinstance(value['operand'], int) or isinstance(value['operand'], float)
         super(NumericFilterValue, self).__init__(filter, value)
 
     def to_sql_filter(self):
