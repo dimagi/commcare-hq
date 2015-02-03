@@ -1,15 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.apps.smsforms.models import XFormsSession, sync_sql_session_from_couch_session, SQLXFormsSession
 from dimagi.utils.couch.database import iter_docs
-from touchforms.formplayer.api import (
-    get_raw_instance,
-    InvalidSessionIdException,
-)
+
 
 class Command(BaseCommand):
     args = ""
     help = ""
-    
+
     def handle(self, *args, **options):
         db = XFormsSession.get_db()
         session_ids = [row['id'] for row in db.view("smsforms/sessions_by_touchforms_id")]
