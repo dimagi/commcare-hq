@@ -4,6 +4,7 @@ from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _
 
 
 class FilterException(Exception):
@@ -140,7 +141,7 @@ class DatespanFilter(BaseFilter):
 class NumericFilter(BaseFilter):
     template = "reports_core/filters/numeric_filter.html"
 
-    def __init__(self, name, required=True, label='Numeric Filter', css_id=None):
+    def __init__(self, name, required=True, label=_('Numeric Filter'), css_id=None):
         self.label = label
         self.css_id = css_id or name
         params = [
