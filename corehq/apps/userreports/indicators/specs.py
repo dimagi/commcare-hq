@@ -2,7 +2,7 @@ from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.getters import TransformedGetter, getter_from_property_reference, \
-    transform_date
+    transform_date, transform_int
 from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL
 from corehq.apps.userreports.specs import TypeProperty
 
@@ -91,5 +91,6 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
 def _transform_from_datatype(datatype):
     return {
-        'date': transform_date
+        'date': transform_date,
+        'integer': transform_int,
     }.get(datatype)

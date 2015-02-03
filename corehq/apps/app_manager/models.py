@@ -1019,7 +1019,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, subcase.reference_id))
+                    parent_types.add((module_case_type, subcase.reference_id or 'parent'))
         return parent_types, case_properties
 
     def update_app_case_meta(self, app_case_meta):
@@ -2514,6 +2514,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     build_langs = StringListProperty()
     secure_submissions = BooleanProperty(default=False)
 
+    # metadata for data platform
+    amplifies_workers = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
+    amplifies_project = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
+
     # exchange properties
     cached_properties = DictProperty()
     description = StringProperty()
@@ -3634,6 +3644,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def has_careplan_module(self):
         return any((module for module in self.modules if isinstance(module, CareplanModule)))
 
+    @quickcache(['self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
         builder = ParentCasePropertyBuilder(self)
@@ -3648,7 +3659,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 
+        seen_types = []
         def get_children(case_type):
+            seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]
 
         def get_hierarchy(case_type):
@@ -3657,6 +3670,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         roots = [type_ for type_ in meta.case_types if not type_.relationships]
         for type_ in roots:
             meta.type_hierarchy[type_.name] = get_hierarchy(type_.name)
+
+        for type_ in meta.case_types:
+            if type_.name not in seen_types:
+                meta.type_hierarchy[type_.name] = {}
+                type_.error = _("Error in case type hierarchy")
 
         return meta
 

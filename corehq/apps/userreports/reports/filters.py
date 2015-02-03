@@ -39,6 +39,28 @@ class DateFilterValue(FilterValue):
         }
 
 
+class NumericFilterValue(FilterValue):
+
+    def __init__(self, filter, value):
+        assert filter.type == "numeric"
+        assert (isinstance(value, dict) and "operator" in value and "operand" in value) or value is None
+        assert value['operator'] in ["=", "!=", "<", "<=", ">", ">="]
+        assert isinstance(value['operand'], int) or isinstance(value['operand'], float)
+        super(NumericFilterValue, self).__init__(filter, value)
+
+    def to_sql_filter(self):
+        if self.value is None:
+            return ""
+        return "{0} {1} :operand".format(self.filter.field, self.value['operator'])
+
+    def to_sql_values(self):
+        if self.value is None:
+            return {}
+        return {
+            "operand": self.value["operand"]
+        }
+
+
 class ChoiceListFilterValue(FilterValue):
 
     def __init__(self, filter, value):

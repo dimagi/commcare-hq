@@ -152,7 +152,7 @@ def _get_configurable_reports(project):
             # this is really annoying.
             # the report metadata should really be pulled outside of the report classes
             @classmethod
-            def get_url(cls, domain):
+            def get_url(cls, domain, **kwargs):
                 return reverse(ConfigurableReport.slug, args=[domain, config._id])
 
             @classmethod

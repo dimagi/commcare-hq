@@ -125,9 +125,9 @@ OVERRIDE_LOCATION = "https://www.commcarehq.org"
 
 # Set to something like "192.168.1.5:8000" (with your IP address).
 # See corehq/apps/builds/README.md for more information.
-BASE_ADDRESS = None
+BASE_ADDRESS = 'localhost:8000'
 
-#Set your analytics IDs here for GA and pingdom RUM
+# Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_ID': '*******',
     'PINGDOM_ID': '*****',
@@ -175,16 +175,14 @@ SOIL_BACKEND = "soil.CachedDownload"
 # reports cache
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
+redis_cache = {
+    'BACKEND': 'redis_cache.cache.RedisCache',
+    'LOCATION': 'localhost:6379:0',
+    'OPTIONS': {},
+}
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': 'localhost:11211',
-    },
-    'redis': {
-        'BACKEND': 'redis_cache.cache.RedisCache',
-        'LOCATION': 'localhost:6379:0',
-        'OPTIONS': {},
-    },
+    'default': redis_cache,
+    'redis': redis_cache,
 }
 
 # on both a local and a distributed environment this should be localhost

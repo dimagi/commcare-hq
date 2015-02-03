@@ -7,6 +7,7 @@ from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.schema import LocationType
+from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
@@ -142,6 +143,24 @@ class ILSGatewayAPI(APISynchronization):
                     caption='Delivered')
             )
         config.save()
+
+    def product_sync(self, ilsgateway_product):
+        from custom.ilsgateway import PRODUCTS_CODES_PROGRAMS_MAPPING
+        product = super(ILSGatewayAPI, self).product_sync(ilsgateway_product)
+        programs = list(Program.by_domain(self.domain))
+        for program, products in PRODUCTS_CODES_PROGRAMS_MAPPING.iteritems():
+            if product.code in products:
+                existing_program = filter(lambda p: p.name == program, programs)
+                if not existing_program:
+                    new_program = Program(domain=self.domain)
+                    new_program.name = program
+                    new_program.save()
+                    product.program_id = new_program.get_id
+                    product.save()
+                else:
+                    product.program_id = existing_program[0].get_id
+                    product.save()
+        return product
 
     def web_user_sync(self, ilsgateway_webuser):
         web_user = super(ILSGatewayAPI, self).web_user_sync(ilsgateway_webuser)

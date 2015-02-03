@@ -12,8 +12,6 @@ import djcelery
 
 djcelery.setup_loader()
 
-CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
-
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
@@ -713,8 +711,8 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
-# DHIS2 config
-# Only required for DHIS2 API integration
+# DHIS2 API integration
+DHIS2_ENABLED = False
 DHIS2_HOST = 'http://dhis2.changeme.com:8123/dhis'
 DHIS2_USERNAME = 'changeme'
 DHIS2_PASSWORD = 'changeme'
@@ -892,6 +890,9 @@ MAILCHIMP_COMMCARE_USERS_ID = ''
 MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
+
+# override for production
+DEFAULT_PROTOCOL = 'http'
 
 try:
     # try to see if there's an environmental variable set for local_settings

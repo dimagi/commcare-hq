@@ -62,6 +62,7 @@ from corehq.apps.reminders.models import (
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
+    get_events_scheduling_info,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
@@ -376,22 +377,6 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'timezone_now': timezone_now,
     })
 
-def get_events_scheduling_info(events):
-    """
-    Return a list of events as dictionaries, only with information pertinent to scheduling changes.
-    """
-    result = []
-    for e in events:
-        result.append({
-            "day_num" : e.day_num,
-            "fire_time" : e.fire_time,
-            "fire_time_aux" : e.fire_time_aux,
-            "fire_time_type" : e.fire_time_type,
-            "time_window_length" : e.time_window_length,
-            "callback_timeout_intervals" : e.callback_timeout_intervals,
-            "form_unique_id" : e.form_unique_id,
-        })
-    return result
 
 @reminders_framework_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):

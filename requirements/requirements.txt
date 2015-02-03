@@ -30,10 +30,9 @@ Pillow==2.1.0
 phonenumberslite==6.0.0a
 poster==0.8.1
 psycopg2==2.5.1
-http://slowchop.com/pygooglechart/download/pygooglechart-0.3.0.tar.gz
+https://github.com/dimagi/files/raw/master/python-requirements/pygooglechart-0.3.0.tar.gz
 python-dateutil==1.5
 python-magic==0.4.2
-python-memcached==1.47
 pytz==2013d
 PyYAML==3.10
 raven==3.1.10
