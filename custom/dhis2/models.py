@@ -348,6 +348,19 @@ class Dhis2Api(object):
         __, json = self._request.post('enrollments', request_data)
         return json
 
+    def enrolled_in(self, te_inst_id, te_name, program):
+        """
+        Checks whether a given tracked entity instance is enrolled in a given
+        program
+
+        :param te_inst_id: The ID of a tracked entity instance
+        :param te_name: The name of the tracked entity (its type, e.g. "Child")
+        :param program: The name of a program
+        :return: boolean
+        """
+        # TODO: Find a better DHIS2 API search instead of iterating instances
+        return any(inst['Identity'] == te_inst_id for inst in self.gen_instances_in_program(te_name, program))
+
     def form_to_event(self, program_id, xform, data_element_names):
         """
         Builds a dict representing a DHIS2 event
