@@ -173,8 +173,8 @@ class Dhis2Api(object):
             self._fetch_tracked_entity_attributes()
         # Set instance data keys to attribute IDs
         inst = {self.get_te_attr_id(k): v for k, v in data.iteritems()}
-        result = self._request.put('trackedEntityInstances/' + inst['id'], inst)
-        return result
+        status_code, response = self._request.put('trackedEntityInstances/' + inst['id'], inst)
+        return response
 
     def get_top_org_unit(self):
         """

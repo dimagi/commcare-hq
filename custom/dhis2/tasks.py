@@ -100,8 +100,8 @@ def push_child_entities(children):
             continue
 
         try:
-            # Search for cchq_case_id in case previous attempt to register failed.
-            dhis2_child = next(dhis2_api.gen_instances_with_equals('Child', 'cchq_case_id', child['_id']))
+            # Search for CCHQ Case ID in case previous attempt to register failed.
+            dhis2_child = next(dhis2_api.gen_instances_with_equals('Child', 'CCHQ Case ID', child['_id']))
             dhis2_child_id = dhis2_child['Identity']
         except StopIteration:
             # Register child entity in DHIS2, and set CCHQ Case ID.
@@ -132,13 +132,13 @@ def pull_child_entities(domain, dhis2_children):
     """
     Create new child cases for nutrition tracking in CommCare.
 
-    Sets external_id on new child cases, and cchq_case_id on DHIS2
-    tracked entity instances. (cchq_case_id is initially unset because the
+    Sets external_id on new child cases, and CCHQ Case ID on DHIS2
+    tracked entity instances. (CCHQ Case ID is initially unset because the
     case is new and does not exist in CommCare.)
 
     :param domain: The domain/project of the application
     :param dhis2_children: A list of dictionaries of Child tracked entities
-                           from the DHIS2 API where cchq_case_id is unset
+                           from the DHIS2 API where CCHQ Case ID is unset
 
     This fulfills the third requirement of `DHIS2 Integration`_.
 
@@ -176,7 +176,7 @@ def pull_child_entities(domain, dhis2_children):
             )
             casexml = ElementTree.tostring(caseblock.as_xml())
             submit_case_blocks(casexml, domain)
-        dhis2_child['cchq_case_id'] = case_id
+        dhis2_child['CCHQ Case ID'] = case_id
         dhis2_api.update_te_inst(dhis2_child)
 
 
