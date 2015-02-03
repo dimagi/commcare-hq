@@ -807,6 +807,8 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         return map(self.join_rows, accounts.values())
 
     def join_rows(self, rows):
+        if len(rows) == 1:
+            return rows[0]
         def zip_fn((i, values)):
             if isinstance(values[0], int):
                 return sum(values)
@@ -816,6 +818,11 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
                     return ''.join('<p>{}</p>'.format(v) for v in unique_values)
                 else:
                     return ','.join(unique_values)
+            elif i == self.column_index('issues'):
+                sep = ', '
+                msg = _("Duplicate account number")
+                all_issues = sep.join(filter(None, values + (msg,)))
+                return sep.join(set(all_issues.split(sep)))
             else:
                 return sorted(values)[-1]
         return map(zip_fn, enumerate(zip(*rows)))
