@@ -1303,10 +1303,7 @@ class AdminReportsTab(UITab):
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = [
-            {'title': _('View/Update Domain Information'),
-             'url': reverse('domain_update')},
-        ]
+        admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
             admin_operations.extend([
