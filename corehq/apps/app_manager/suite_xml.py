@@ -227,13 +227,14 @@ class Instance(IdNode, OrderedXmlObject):
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
-    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm')
+    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm', 'detail_persistent')
 
     nodeset = XPathField('@nodeset')
     value = StringField('@value')
     function = XPathField('@function')
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
+    detail_persistent = StringField('@detail-persistent')
 
 
 class StackDatum(IdNode):
@@ -1319,6 +1320,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                 parent_filter = ''
             else:
                 parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
+
+            detail_persistent = None
+            for detail_type, detail, enabled in module.get_details():
+                if detail.persist_tile_on_forms and detail.use_case_tiles and enabled:
+                    detail_persistent = self.id_strings.detail(module, detail_type)
+                    break
+
             e.datums.append(SessionDatum(
                 id=datum_ids[i],
                 nodeset=(self.get_nodeset_xpath(module.case_type, module, use_filter)
@@ -1328,7 +1336,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 detail_confirm=(
                     self.get_detail_id_safe(module, 'case_long')
                     if i == 0 else None
-                )
+                ),
+                detail_persistent=detail_persistent
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
