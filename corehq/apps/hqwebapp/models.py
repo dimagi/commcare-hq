@@ -1325,8 +1325,6 @@ class AdminReportsTab(UITab):
                  'url': reverse('message_log_report')},
                 {'title': _('CommCare Versions'),
                  'url': reverse('commcare_version_report')},
-                {'title': _('Submissions & Error Statistics per Domain'),
-                 'url': reverse('global_submissions_errors')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
                 {'title': _('Mobile User Reports'),

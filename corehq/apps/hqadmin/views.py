@@ -216,63 +216,6 @@ def message_log_report(request):
     return render(request, "hqadmin/message_log_report.html", context)
 
 
-@datespan_default
-@require_superuser
-def submissions_errors(request, template="hqadmin/submissions_errors_report.html"):
-    show_dates = "true"
-    datespan = request.datespan
-    domains = Domain.get_all()
-
-    rows = []
-    for domain in domains:
-        key = ["active", domain.name]
-        data = get_db().view('users/by_domain',
-            startkey=key,
-            endkey=key+[{}],
-            reduce=True
-        ).all()
-        num_active_users = data[0].get('value', 0) if data else 0
-
-        key = make_form_couch_key(domain.name)
-        data = get_db().view('reports_forms/all_forms',
-            startkey=key+[datespan.startdate_param_utc],
-            endkey=key+[datespan.enddate_param_utc, {}],
-            reduce=True
-        ).all()
-        num_forms_submitted = data[0].get('value', 0) if data else 0
-
-        phonelogs = DeviceReportEntry.objects.filter(domain__exact=domain.name,
-            date__range=[datespan.startdate_param_utc, datespan.enddate_param_utc])
-        num_errors = phonelogs.filter(type__in=TAGS["error"]).count()
-        num_warnings = phonelogs.filter(type__in=TAGS["warning"]).count()
-
-        rows.append(dict(domain=domain.name,
-                        active_users=num_active_users,
-                        submissions=num_forms_submitted,
-                        errors=num_errors,
-                        warnings=num_warnings))
-
-    context = get_hqadmin_base_context(request)
-    context.update({
-        "show_dates": show_dates,
-        "datespan": datespan,
-        "layout_flush_content": True,
-        "rows": rows
-    })
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("Active Users", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Forms Submitted", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Errors", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Warnings", sort_type=DTSortType.NUMERIC)
-    )
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-
-    return render(request, template, context)
-
-
 @require_superuser
 def mobile_user_reports(request):
     template = "hqadmin/mobile_user_reports.html"
