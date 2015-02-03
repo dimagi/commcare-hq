@@ -9,6 +9,7 @@ from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -405,6 +406,19 @@ class Location(CachedCouchDocumentMixin, Document):
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
+
+    @property
+    def location_type_object(self):
+        """
+        Brute force lookup for the LocationType object
+        that corresponds to this locations type.
+        This could definitely use a more efficient way,
+        but no domains at this point have a large list of
+        types.
+        """
+        for loc_type in Domain.get_by_name(self.domain).location_types:
+            if loc_type.name == self.location_type:
+                return loc_type
 
 
 def root_locations(domain):

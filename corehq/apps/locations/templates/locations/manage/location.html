@@ -76,7 +76,7 @@
   <ul class="nav nav-tabs">
     <li class="active"><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
 
-    {% if request|toggle_enabled:"PRODUCTS_PER_LOCATION" %}
+    {% if products_per_location_form %}
       <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
     {% endif %}
   </ul>
@@ -117,7 +117,7 @@
       </form>
     </div>
 
-    {% if request|toggle_enabled:"PRODUCTS_PER_LOCATION" %}
+    {% if products_per_location_form %}
       <div class="tab-pane" id="products">
         <div class="row-fluid">
           <form class="form disable-on-submit" id="edit_products" action="" method='post'>

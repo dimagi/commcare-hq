@@ -176,6 +176,9 @@ class NewLocationView(BaseLocationView):
 
     @property
     def products_form(self):
+        if self.location.location_type_object.administrative:
+            return None
+
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
             submit_label=_("Update Product List")
@@ -216,9 +219,6 @@ class NewLocationView(BaseLocationView):
         return self.get(request, *args, **kwargs)
 
     def products_form_post(self, request, *args, **kwargs):
-        # TODO do they actually track stock?
-        # TODO make parents of stock-tracking locations trickle down filter
-        # TODO make "none selected" look like "all selected"
         products = SQLProduct.objects.filter(
             product_id__in=request.POST.getlist('selected_ids', [])
         )
