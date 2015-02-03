@@ -64,9 +64,6 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "Message %s %s" % (to_from, self.phone_number)
 
-    def delete(self):
-        super(MessageLog, self).delete() # Call the "real" delete() method.
-
     @property
     def username(self):
         name = self.phone_number
