@@ -32,8 +32,6 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         'form_source', name='form_source'),
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
-    url(r'^exchange_summary/$', 'app_summary_from_exchange',
-        name='exchange_app_summary'),
     url(r'^update_build_comment/$', 'update_build_comment',
         name='update_build_comment'),
 )
