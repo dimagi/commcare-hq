@@ -1324,8 +1324,6 @@ class AdminReportsTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('Domain Activity Report'),
-                 'url': reverse('domain_activity_report')},
                 {'title': _('Message Logs Across All Domains'),
                  'url': reverse('message_log_report')},
                 {'title': _('Global Statistics'),

@@ -267,58 +267,6 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     return render(request, template, context)
 
 
-@cache_page(60*5)
-def _cacheable_domain_activity_report(request):
-    landmarks = json.loads(request.GET.get('landmarks') or "[7, 30, 90]")
-    landmarks.sort()
-    now = datetime.utcnow()
-    dates = []
-    for landmark in landmarks:
-        dates.append(now - timedelta(days=landmark))
-    domains = [{'name': domain.name, 'display_name': domain.display_name()} for domain in Domain.get_all()]
-
-    for domain in domains:
-        domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
-        if not domain['users']:
-            continue
-        key = make_form_couch_key(domain['name'])
-        forms = [r['value'] for r in get_db().view('reports_forms/all_forms',
-            reduce=False,
-            startkey=key+[json_format_datetime(dates[-1])],
-            endkey=key+[json_format_datetime(now)],
-        ).all()]
-        domain['user_sets'] = [dict() for landmark in landmarks]
-
-        for form in forms:
-            user_id = form.get('user_id')
-            try:
-                time = string_to_datetime(form['submission_time']).replace(tzinfo = None)
-            except ValueError:
-                continue
-            if user_id in domain['users']:
-                for i, date in enumerate(dates):
-                    if time > date:
-                        domain['user_sets'][i][user_id] = domain['users'][user_id]
-
-    return HttpResponse(json.dumps({'domains': domains, 'landmarks': landmarks}))
-
-@require_superuser
-def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
-    context = get_hqadmin_base_context(request)
-    context.update(json.loads(_cacheable_domain_activity_report(request).content))
-
-    context['layout_flush_content'] = True
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain")
-    )
-    for landmark in context['landmarks']:
-        headers.add_column(DataTablesColumn("Last %s Days" % landmark))
-    headers.add_column(DataTablesColumn("All Users"))
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-    return render(request, template, context)
-
-
 @datespan_default
 @require_superuser
 def message_log_report(request):
