@@ -171,5 +171,3 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
         xform.partial_submission = True
         xform.survey_incentive = session.survey_incentive
         xform.save()
-
-
