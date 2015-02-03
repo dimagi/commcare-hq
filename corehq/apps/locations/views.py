@@ -262,7 +262,10 @@ def unarchive_location(request, domain, loc_id):
     })
 
 
-class IndividualLocationMixin(object):
+class EditLocationView(NewLocationView):
+    urlname = 'edit_location'
+    page_title = ugettext_noop("Edit Location")
+
     @property
     def location_id(self):
         return self.kwargs['loc_id']
@@ -276,6 +279,7 @@ class IndividualLocationMixin(object):
             raise Http404()
 
     @property
+    @memoized
     def sql_location(self):
         return self.location.sql_location
 
@@ -287,15 +291,9 @@ class IndividualLocationMixin(object):
         except MultipleResultsFound:
             raise MultipleSupplyPointException
 
-
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.location_id])
-
-
-class EditLocationView(IndividualLocationMixin, NewLocationView):
-    urlname = 'edit_location'
-    page_title = ugettext_noop("Edit Location")
 
     @property
     @memoized
@@ -312,6 +310,8 @@ class EditLocationView(IndividualLocationMixin, NewLocationView):
                 self.domain,
                 product._id,
                 self.location.location_type,
+                # FIXME accessing this value from the sql location
+                # would be faster
                 self.supply_point._id if self.supply_point else None,
             )
             if consumption:
