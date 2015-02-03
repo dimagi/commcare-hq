@@ -31,6 +31,19 @@ class GenericRepeaterForm(forms.Form):
         help_text='Please enter the full url, like http://www.example.com/forwarding/',
         widget=forms.TextInput(attrs={"class": "url"})
     )
+    use_basic_auth = forms.BooleanField(
+        required=False,
+        label='Use basic authentication?',
+    )
+    username = forms.CharField(
+        required=False,
+        label='Username',
+    )
+    password = forms.CharField(
+        required=False,
+        label='Password',
+        widget=forms.PasswordInput()
+    )
 
 
 class FormRepeaterForm(GenericRepeaterForm):

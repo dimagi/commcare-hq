@@ -1,3 +1,4 @@
+import base64
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import logging
@@ -175,6 +176,10 @@ class Repeater(Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
+    use_basic_auth = BooleanProperty(default=False)
+    username = StringProperty()
+    password = StringProperty()
+
     def format_or_default_format(self):
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
@@ -254,7 +259,12 @@ class Repeater(Document, UnicodeMixIn):
 
     def get_headers(self, repeat_record):
         # to be overridden
-        return {}
+        if self.use_basic_auth:
+            user_pass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
+            return {'Authorization': 'Basic ' + user_pass}
+        else:
+            return {}
+
 
 @register_repeater_type
 class FormRepeater(Repeater):
@@ -279,9 +289,11 @@ class FormRepeater(Repeater):
         return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
-        return {
+        headers = super(FormRepeater, self).get_headers(repeat_record)
+        headers.update({
             "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
-        }
+        })
+        return headers
 
     def __unicode__(self):
         return "forwarding forms to: %s" % self.url
@@ -301,9 +313,11 @@ class CaseRepeater(Repeater):
         return CommCareCase.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
-        return {
+        headers = super(CaseRepeater, self).get_headers(repeat_record)
+        headers.update({
             "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
-        }
+        })
+        return headers
 
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
@@ -323,9 +337,11 @@ class ShortFormRepeater(Repeater):
         return XFormInstance.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
-        return {
+        headers = super(CaseRepeater, self).get_headers(repeat_record)
+        headers.update({
             "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
-        }
+        })
+        return headers
 
     def __unicode__(self):
         return "forwarding short form to: %s" % self.url
