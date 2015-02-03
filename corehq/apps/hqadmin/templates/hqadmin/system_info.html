@@ -155,7 +155,6 @@
                     <th></th>
                     <th>Quick Links</th>
                     <th>Current Worker</th>
-                    <th>Memcached Status</th>
                     <th>Redis Status</th>
                     <th>Celery Status</th>
                     <th>Elasticsearch Status</th>
@@ -170,11 +169,6 @@
                     </ul>
                 </td>
                 <td><strong>{{ current_system }}</strong></td>
-                <td>
-                    {{ memcached_status }}
-                    <br>
-                    {{ memcached_results }}
-                </td>
                 <td>
                     {{ redis_status }}
                     <br>

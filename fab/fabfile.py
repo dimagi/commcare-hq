@@ -347,8 +347,6 @@ def development():
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
     couchdb = servers['couchdb']
-    redis = servers['redis']
-    memcached = servers['memcached']
     touchforms = servers['touchforms']
     elasticsearch = servers['elasticsearch']
     celery = servers['celery']
