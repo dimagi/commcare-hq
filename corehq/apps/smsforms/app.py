@@ -20,7 +20,9 @@ COMMCONNECT_DEVICE_ID = "commconnect"
 AUTH = DigestAuth(settings.TOUCHFORMS_API_USER, 
                   settings.TOUCHFORMS_API_PASSWORD)
 
-def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False, session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
+
+def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False,
+                  session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
