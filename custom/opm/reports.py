@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
+from custom.common import ALL_OPTION
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
@@ -46,7 +47,7 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (HierarchyFilter, MetHierarchyFilter,
+from .filters import (get_hierarchy, HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -181,9 +182,14 @@ class OpmFormSqlData(SqlData):
 
 VHND_PROPERTIES = [
     "vhnd_available",
+    "vhnd_anm_present",
+    "vhnd_asha_present",
+    "vhnd_cmg_present",
     "vhnd_ifa_available",
     "vhnd_adult_scale_available",
     "vhnd_child_scale_available",
+    "vhnd_adult_scale_functional",
+    "vhnd_child_scale_functional",
     "vhnd_ors_available",
     "vhnd_zn_available",
     "vhnd_measles_vacc_available",
@@ -433,7 +439,7 @@ class SharedDataProvider(object):
         for (owner_id, date), row in data.iteritems():
             if row['vhnd_available'] > 0:
                 for prop in VHND_PROPERTIES:
-                    if row[prop] == '1' or prop == 'vhnd_available':
+                    if row[prop] == 1 or prop == 'vhnd_available':
                         results[owner_id][prop].add(date)
         return results
 
@@ -696,6 +702,8 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
+        # TODO for consistency, we could always filter on awc using
+        # get_matching_awcs from the NewHealthStatusReport
         if self.awcs:
             query = query.filter(get_awc_filter(self.awcs))
         elif self.gp:
@@ -824,6 +832,36 @@ class MetReport(CaseReportMixin, BaseReport):
     cache_key = 'opm-report'
 
     @property
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
+        rows = []
+        self._debug_data = []
+        for index, row in enumerate(self.get_rows(self.datespan), 1):
+            try:
+                rows.append(self.get_row_data(row, index=index))
+            except InvalidRow as e:
+                if self.debug:
+                    import sys
+                    import traceback
+                    type, exc, tb = sys.exc_info()
+                    self._debug_data.append({
+                        'case_id': row._id,
+                        'message': e,
+                        'traceback': ''.join(traceback.format_tb(tb)),
+                    })
+        return rows
+
+    def get_row_data(self, row, **kwargs):
+        return self.model(row, self, child_index=kwargs.get('index', 0))
+
+    def get_rows(self, datespan):
+        result = super(MetReport, self).get_rows(datespan)
+        result.sort(key=lambda case: [case.block_name, case.village_name, case.awc_name])
+        return result
+
+    @property
     def redis_key(self):
         redis_key = self.cache_key + "_" + self.slug
         redis_key += "?blocks=%s&gps=%s&awcs=%s" % (self.blocks, self.gp, self.awcs)
@@ -873,11 +911,18 @@ class MetReport(CaseReportMixin, BaseReport):
         Strip user_id and owner_id columns
         """
         for row in rows:
+            with localize('hin'):
+                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
+                row[self.column_index('cash_received_last_month')] = _(row[self.column_index(
+                    'cash_received_last_month')])
             del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
-            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            link_text = re.search('<a href=.*>(.*)</a>', row[self.column_index('name')])
             if link_text:
-                row[0] = link_text.group(1)
+                row[self.column_index('name')] = link_text.group(1)
+
+        if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
+            rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])
 
         self.context['report_table'].update(
             rows=rows
@@ -908,9 +953,6 @@ class MetReport(CaseReportMixin, BaseReport):
             rows.sort(key=lambda x: x[col_id], reverse=True)
         self._store_rows_in_redis(rows)
 
-        for i, row in enumerate(rows):
-            row[self.column_index('serial_number')] = i + 1
-
         if not self.is_rendered_as_email:
             return rows[self.pagination.start:(self.pagination.start + self.pagination.count)]
         else:
@@ -933,7 +975,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     # report_template_path = "opm/hsr_report.html"
     model = AWCHealthStatus
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
 
     @property
@@ -943,11 +985,20 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
+    def get_matching_awcs(self):
+        filter_on = 'awc' if self.awcs else 'gp' if self.gp else 'block'
+        for block, gps in get_hierarchy().items():
+            if not filter_on == 'block' or block == self.block:
+                for gp, awcs in gps.items():
+                    if not filter_on == 'gp' or gp in self.gp:
+                        for awc in awcs.keys():
+                            if not filter_on == 'awc' or awc in self.awcs:
+                                yield awc
+
     def awc_data(self):
-        # TODO use all awcs, not just ones with data
         case_objects = self.row_objects + self.extra_row_objects
-        # Consolidate rows with the same awc
-        awcs = {}
+        awcs = {awc: [] for awc in self.get_matching_awcs()}
+        # populate awcs with cases from that awc
         for case_object in case_objects:
             awc = case_object.awc_name
             awcs[awc] = awcs.get(awc, []) + [case_object]
@@ -964,7 +1015,8 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     totals[col][i] = total + num if total is not None else num
 
         rows = []
-        for awc in map(AWCHealthStatus, self.awc_data().values()):
+        for awc in [AWCHealthStatus(awc, cases)
+                    for awc, cases in self.awc_data().items()]:
             row = []
             for col, (method, __, __, denom) in enumerate(self.model.method_map):
                 val = getattr(awc, method)
@@ -1070,12 +1122,12 @@ class IncentivePaymentReport(BaseReport):
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
             request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == '0':
+            if request_param and not request_param[0] == ALL_OPTION:
                 config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return UsersIdsData(config=config).get_data()
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
         form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
@@ -1229,7 +1281,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
     def get_rows(self, dataspan):
         return self.es_results['hits'].get('hits', [])
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         def empty_health_status(row):
             model = HealthStatus()
             model.awc = row['_source']['user_data']['awc']

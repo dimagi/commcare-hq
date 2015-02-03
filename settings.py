@@ -178,7 +178,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -309,6 +308,8 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
+    'mvp_docs',
+    'mvp_indicators',
     'custom.opm',
     'pathfinder',
     'pathindia',
@@ -338,7 +339,10 @@ HQ_APPS = (
     'custom.up_nrhm',
 
     'custom.care_pathways',
+    'custom.common',
     'bootstrap3_crispy',
+
+    'custom.dhis2',
 )
 
 TEST_APPS = ()
@@ -709,6 +713,13 @@ LOGSTASH_HOST = 'localhost'
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 
+# DHIS2 API integration
+DHIS2_ENABLED = False
+DHIS2_HOST = 'http://dhis2.changeme.com:8123/dhis'
+DHIS2_USERNAME = 'changeme'
+DHIS2_PASSWORD = 'changeme'
+DHIS2_ORG_UNIT = None  # Top org unit for CommCareHQ integration
+
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
 COUCH_HTTPS = False
@@ -882,6 +893,9 @@ MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
 
+# override for production
+DEFAULT_PROTOCOL = 'http'
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -924,6 +938,13 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
         **db_settings
     )
+
+MVP_INDICATOR_DB = 'mvp-indicators'
+
+INDICATOR_CONFIG = {
+    "mvp-sauri": ['mvp_indicators'],
+    "mvp-potou": ['mvp_indicators'],
+}
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
@@ -1010,6 +1031,7 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
+    ('mvp_docs', MVP_INDICATOR_DB),
     'pathfinder',
     'pathindia',
     'pact',
@@ -1137,11 +1159,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
-INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
-}
-
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
@@ -1192,6 +1209,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecapPassagePillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
@@ -1210,6 +1228,10 @@ PILLOWTOPS = {
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
         'corehq.apps.indicators.pillows.CaseIndicatorPillow',
+    ],
+    'mvp_indicators': [
+        'mvp_docs.pillows.MVPFormIndicatorPillow',
+        'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
 }
 

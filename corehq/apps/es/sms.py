@@ -18,6 +18,9 @@ class SMSES(HQESQuery):
             received,
         ] + super(SMSES, self).builtin_filters
 
+    def user_facet(self, size=None):
+        return self.terms_facet('couch_recipient', 'user', size=size)
+
 
 def incoming_messages():
     return filters.term("direction", "i")

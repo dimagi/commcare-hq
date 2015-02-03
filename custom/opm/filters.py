@@ -1,3 +1,5 @@
+from custom.common import ALL_OPTION
+
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.columns import SimpleColumn
 
@@ -29,16 +31,36 @@ class HierarchySqlData(SqlData):
         ]
 
 
+def get_hierarchy():
+    """
+    Creates a location hierarchy structured as follows:
+    hierarchy = {"Atri": {
+                    "Sahora": {
+                        "Sohran Bigha": None}}}
+    """
+    hierarchy = {}
+    for location in HierarchySqlData().get_data():
+        block = location['block']
+        gp = location['gp']
+        awc = location['awc']
+        if not (awc and gp and block):
+            continue
+        hierarchy[block] = hierarchy.get(block, {})
+        hierarchy[block][gp] = hierarchy[block].get(gp, {})
+        hierarchy[block][gp][awc] = None
+    return hierarchy
+
+
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
-    template = "opm/drilldown_options.html"
+    template = "common/drilldown_options.html"
 
     @property
     def selected(self):
         selected = super(OpmBaseDrilldownOptionFilter, self).selected
         if selected:
             return selected
-        return [["Atri"], ["0"]]
+        return [["Atri"], [ALL_OPTION]]
 
     @property
     def filter_context(self):
@@ -61,35 +83,16 @@ class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
             'single_option_select': self.single_option_select
         }
 
-    def get_hierarchy(self):
-        """
-        Creates a location hierarchy structured as follows:
-        hierarchy = {"Atri": {
-                        "Sahora": {
-                            "Sohran Bigha": None}}}
-        """
-        hierarchy = {}
-        for location in HierarchySqlData().get_data():
-            block = location['block']
-            gp = location['gp']
-            awc = location['awc']
-            if not (awc and gp and block):
-                continue
-            hierarchy[block] = hierarchy.get(block, {})
-            hierarchy[block][gp] = hierarchy[block].get(gp, {})
-            hierarchy[block][gp][awc] = None
-        return hierarchy
-
     @property
     @memoized
     def drilldown_map(self):
         def make_drilldown(hierarchy):
-            return [{"val": "0", "text": "All", "next": []}] + [{
+            return [{"val": ALL_OPTION, "text": "All", "next": []}] + [{
                 "val": current,
                 "text": current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
-        return make_drilldown(self.get_hierarchy())
+        return make_drilldown(get_hierarchy())
 
     @classmethod
     def get_labels(cls):
@@ -114,7 +117,7 @@ class HierarchyFilter(OpmBaseDrilldownOptionFilter):
         selected = super(OpmBaseDrilldownOptionFilter, self).selected
         if selected:
             return selected
-        return [["0"]]
+        return [[ALL_OPTION]]
 
 
 class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):

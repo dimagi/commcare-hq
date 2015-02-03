@@ -1,0 +1,74 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load hq_shared_tags %}
+{% block report-title %}Recent Couch Changes{% endblock %}
+{% block js %}{{ block.super }}
+    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.v1.1.10b.min.js' %}"></script>
+{% endblock %}
+{% block js-inline %} {{ block.super }}
+    <script>
+    $(function () {
+        var domain_data = {{ domain_data|JSON }};
+        var doc_type_data = {{ doc_type_data|JSON }};
+        var addGraph = function (data, divId) {
+            nv.addGraph(function() {
+                var chart = nv.models.discreteBarChart()
+                    .x(function(d) { return d.label })
+                    .y(function(d) { return d.value })
+                    .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
+                    .tooltips(false)        //Don't show tooltips
+                    .showValues(true)       //...instead, show the bar value right on top of each bar.
+                ;
+                d3.select('#' + divId + ' svg')
+                  .datum(data)
+                  .call(chart);
+                nv.utils.windowResize(chart.update);
+                return chart;
+            });
+        };
+        addGraph([domain_data], 'domain-info');
+        addGraph([doc_type_data], 'doc-type-info');
+    });
+    </script>
+{% endblock js-inline %}
+{% block reportcontent %}
+    <form>
+        <p>Showing the last <input type="text" name="changes" value="{{ count }}"> couch changes.
+            <input type="submit" class="btn btn-primary" value="Update">
+        </p>
+    </form>
+    <h2>Recent changes by domain</h2>
+    <div id="domain-info">
+        <svg style='height:200px'> </svg>
+    </div>
+    <h2>Recent changes by doc type</h2>
+    <div id="doc-type-info">
+        <svg style='height:200px'> </svg>
+    </div>
+    <div class="row-fluid">
+        <h3>Full change list<small> <a href="{% url 'download_recent_changes' %}?changes={{ count }}">download</a></small></h3>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Domain</th>
+                <th>Doc Type</th>
+                <th>Date modified (guess)</th>
+                <th>id</th>
+                <th>rev</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for change in recent_changes %}
+                    <tr>
+                        <td>{{ change.domain }}</td>
+                        <td>{{ change.doc_type }}</td>
+                        <td>{{ change.date }}</td>
+                        <td>{{ change.id }}</td>
+                        <td>{{ change.rev }}</td>
+                    </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

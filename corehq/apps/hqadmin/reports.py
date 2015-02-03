@@ -670,7 +670,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
-                help_text=_("The number of mobile workers who have submitted a form in the last 30 days.  Includes deactivated workers.")),
+                help_text=_("The number of mobile workers who have submitted a form or SMS in the last 30 days.  Includes deactivated workers.")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_cc_users",
                              help_text=_("Does not include deactivated users.")),
@@ -1005,7 +1005,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     name = ugettext_noop('CommTrack Project Spaces')
     default_params = {
         'es_is_test': 'false',
-        'es_internal.commtrack_domain': 'true',
+        'es_internal.commtrack_domain': 'T',
     }
     indicators = [
         'commtrack_domain_count',

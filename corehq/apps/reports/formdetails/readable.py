@@ -9,6 +9,10 @@ from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
 
 
+class CaseMetaException(Exception):
+    pass
+
+
 class FormQuestionOption(JsonObject):
     label = StringProperty()
     value = StringProperty()
@@ -62,11 +66,13 @@ class CaseFormMeta(JsonObject):
     form_id = StringProperty()
     load_questions = ListProperty(ConditionalFormQuestionResponse)
     save_questions = ListProperty(ConditionalFormQuestionResponse)
+    errors = ListProperty(unicode)
 
 
 class CaseProperty(JsonObject):
     name = StringProperty()
     forms = ListProperty(CaseFormMeta)
+    has_errors = BooleanProperty()
 
     def get_form(self, form_id):
         try:
@@ -97,9 +103,12 @@ class CaseTypeMeta(JsonObject):
     properties = ListProperty(CaseProperty)  # property -> CaseProperty
     opened_by = DictProperty(ConditionList)  # form_ids -> [FormActionCondition, ...]
     closed_by = DictProperty(ConditionList)  # form_ids -> [FormActionCondition, ...]
+    error = StringProperty()
+    has_errors = BooleanProperty()
 
-    def get_property(self, name):
-        assert '/' not in name, "Add parent properties to the correct case type"
+    def get_property(self, name, allow_parent=False):
+        if not allow_parent:
+            assert '/' not in name, "Add parent properties to the correct case type"
         try:
             prop = next(prop for prop in self.properties if prop.name == name)
         except StopIteration:
@@ -131,18 +140,44 @@ class AppCaseMetadata(JsonObject):
         if '/' in name:
             # find the case property from the correct case type
             parent_rel, name = name.split('/', 1)
-            parent_case_type = type_.relationships[parent_rel]
-            return self.get_property(parent_case_type, name)
+            parent_case_type = type_.relationships.get(parent_rel)
+            if parent_case_type:
+                return self.get_property(parent_case_type, name)
+            else:
+                params = {'case_type': root_case_type, 'relationship': parent_rel}
+                raise CaseMetaException(_(
+                    "Case type '%(case_type)s' has no '%(relationship)s' "
+                    "relationship to any other case type.") % params)
 
         return type_.get_property(name)
 
     def add_property_load(self, root_case_type, name, form_id, question):
-        prop = self.get_property(root_case_type, name)
+        try:
+            prop = self.get_property(root_case_type, name)
+        except CaseMetaException as e:
+            prop = self.add_property_error(root_case_type, name, form_id, str(e))
+
         prop.add_load(form_id, question)
 
     def add_property_save(self, root_case_type, name, form_id, question, condition=None):
-        prop = self.get_property(root_case_type, name)
+        try:
+            prop = self.get_property(root_case_type, name)
+        except CaseMetaException as e:
+            prop = self.add_property_error(root_case_type, name, form_id, str(e))
+
         prop.add_save(form_id, question, condition)
+
+    def add_property_error(self, case_type, case_property, form_id, message):
+        prop = self.get_error_property(case_type, case_property)
+        prop.has_errors = True
+        form = prop.get_form(form_id)
+        form.errors.append(message)
+        return prop
+
+    def get_error_property(self, case_type, name):
+        type_ = self.get_type(case_type)
+        type_.has_errors = True
+        return type_.get_property(name, allow_parent=True)
 
     def get_type(self, name):
         if not name:

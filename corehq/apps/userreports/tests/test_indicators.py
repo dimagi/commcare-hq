@@ -189,7 +189,7 @@ class RawIndicatorTest(SingleIndicatorTestBase):
         self.assertEqual(False, indicator.column.is_nullable)
         self.assertEqual(True, indicator.column.is_primary_key)
 
-    def testRaw(self):
+    def test_raw_ints(self):
         indicator = IndicatorFactory.from_spec({
             "type": "raw",
             "column_id": "foo",
@@ -197,9 +197,21 @@ class RawIndicatorTest(SingleIndicatorTestBase):
             'property_name': 'foo',
             "display_name": "raw foos",
         })
-        # todo: eventually data types should be smarter than this.
-        # when this test starts failing that will be a good thing and when we should fix it.
-        self._check_result(indicator, dict(foo="bar"), "bar")
+        self._check_result(indicator, dict(foo="bar"), None)
+        self._check_result(indicator, dict(foo=1), 1)
+        self._check_result(indicator, dict(foo=1.2), 1)
+        self._check_result(indicator, dict(foo=None), None)
+        self._check_result(indicator, dict(nofoo='foryou'), None)
+
+    def test_raw_strings(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "raw",
+            "column_id": "foo",
+            "datatype": "string",
+            'property_name': 'foo',
+            "display_name": "raw foos",
+        })
+        self._check_result(indicator, dict(foo="bar"), 'bar')
         self._check_result(indicator, dict(foo=1), 1)
         self._check_result(indicator, dict(foo=1.2), 1.2)
         self._check_result(indicator, dict(foo=None), None)
@@ -268,7 +280,7 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
                 "property_name": "foo",
             },
             "column_id": "foo",
-            "datatype": "integer",
+            "datatype": "string",
             "display_name": "expression foos",
         })
 
@@ -299,17 +311,17 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
                 },
             },
             "column_id": "foo",
-            "datatype": "integer",
+            "datatype": "string",
             "display_name": "expression foos",
         })
 
-    def testExpression(self):
+    def test_expression(self):
         self._check_result(self.simple_indicator, dict(foo="bar"), "bar")
 
-    def testMissingValue(self):
+    def test_missing_value(self):
         self._check_result(self.simple_indicator, dict(notfoo="bar"), None)
 
-    def testComplicatedExpression(self):
+    def test_complicated_expression(self):
         # largely duplicated from ConditionalExpressionTest
         indicator = self.complex_indicator
         self._check_result(indicator, {

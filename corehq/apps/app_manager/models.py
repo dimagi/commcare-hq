@@ -21,7 +21,7 @@ from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext
+from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError, DocTypeError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -1019,7 +1019,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, 'parent'))
+                    parent_types.add((module_case_type, subcase.reference_id or 'parent'))
         return parent_types, case_properties
 
     def update_app_case_meta(self, app_case_meta):
@@ -2514,6 +2514,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     build_langs = StringListProperty()
     secure_submissions = BooleanProperty(default=False)
 
+    # metadata for data platform
+    amplifies_workers = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
+    amplifies_project = StringProperty(
+        choices=['yes', 'no', 'not_set'],
+        default='not_set'
+    )
+
     # exchange properties
     cached_properties = DictProperty()
     description = StringProperty()
@@ -3447,15 +3457,19 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
         to_module = self.get_module(to_module_id)
-        self._copy_form(from_module, form, to_module)
+        self._copy_form(from_module, form, to_module, rename=True)
 
-    def _copy_form(self, from_module, form, to_module):
+    def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         if not form.source:
             raise BlankXFormError()
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
+        if 'rename' in kwargs and kwargs['rename']:
+            for lang, name in copy_source['name'].iteritems():
+                with override(lang):
+                    copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
@@ -3646,7 +3660,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 
+        seen_types = []
         def get_children(case_type):
+            seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]
 
         def get_hierarchy(case_type):
@@ -3655,6 +3671,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         roots = [type_ for type_ in meta.case_types if not type_.relationships]
         for type_ in roots:
             meta.type_hierarchy[type_.name] = get_hierarchy(type_.name)
+
+        for type_ in meta.case_types:
+            if type_.name not in seen_types:
+                meta.type_hierarchy[type_.name] = {}
+                type_.error = _("Error in case type hierarchy")
 
         return meta
 

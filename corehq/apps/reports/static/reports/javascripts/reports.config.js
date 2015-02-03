@@ -110,12 +110,13 @@ var HQReport = function (options) {
             $.cookie(self.toggleFiltersCookie, showStr, {path: self.urlRoot, expires: 1});
         };
         
-        if ($.cookie(self.toggleFiltersCookie) === null) {
+        if (!$.cookie(self.toggleFiltersCookie) && $.cookie(self.toggleFiltersCookie) !== '') {
             // default to showing filters
+            // (When filters should be hidden, $.cookie(self.toggleFiltersCookie) === '')
             _setShowFilterCookie(true);
         }
         $(self.filterAccordion).addClass($.cookie(self.toggleFiltersCookie));
-        
+
         if ($.cookie(self.toggleFiltersCookie) == 'in') {
             $(self.toggleFiltersButton).button('close');
         } else {

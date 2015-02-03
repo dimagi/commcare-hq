@@ -690,7 +690,7 @@ def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     try:
         limit = int(limit)
-    except ValueError:
+    except (TypeError, ValueError):
         limit = 10
     start_build_param = request.GET.get('start_build')
     if start_build_param and json.loads(start_build_param):
@@ -1149,6 +1149,10 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
         return back_to_main(req, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    vellum_plugins = ["modeliteration"]
+    if settings.VELLUM_PRERELEASE:
+        vellum_plugins.append("itemset")
+
     vellum_features = toggles.toggles_dict(username=req.user.username,
                                            domain=domain)
     vellum_features.update({
@@ -1158,13 +1162,13 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'vellum_prerelease': settings.VELLUM_PRERELEASE,
         'edit': True,
         'nav_form': form if not is_user_registration else '',
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': req.COOKIES.get('sessionid'),
-        'features': vellum_features
+        'features': vellum_features,
+        'plugins': vellum_plugins,
     })
     return render(req, 'app_manager/form_designer.html', context)
 
@@ -2025,6 +2029,8 @@ def edit_app_attr(request, domain, app_id, attr):
         ('secure_submissions', None),
         ('translation_strategy', None),
         ('auto_gps_capture', None),
+        ('amplifies_workers', None),
+        ('amplifies_project', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -2689,7 +2695,7 @@ def summary(request, domain, app_id, should_edit=True):
 
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary_new'
+    urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary_new.html'
 
@@ -2707,7 +2713,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
 
     @property
     def page_context(self):
-        if self.app.doc_type == 'RemoteApp':
+        if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
         form_name_map = {}
@@ -2976,7 +2982,12 @@ def download_bulk_app_translations(request, domain, app_id):
             rows[form_string] = []
 
             itext_items = OrderedDict()
-            for translation_node in xform.itext_node.findall("./{f}translation"):
+            try:
+                nodes = xform.itext_node.findall("./{f}translation")
+            except XFormException:
+                nodes = []
+
+            for translation_node in nodes:
                 lang = translation_node.attrib['lang']
                 for text_node in translation_node.findall("./{f}text"):
                     text_id = text_node.attrib['id']

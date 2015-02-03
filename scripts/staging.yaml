@@ -46,20 +46,20 @@ branches:
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
-  - custom_location_data  # Ethan & tw 11/17
   - quickview # Simon 11/25
 #  - master+double-management # Nick P 12/31
 #  - double-management # SK 12/1
-  - ews_stock_status_report+migration-optimization # SK 1/15
-  - lwyszomi:migration-optimization
-  - caseDetailsInCC # sravan 2/1/15
-  - lwyszomi:ews_stock_status_report  # cz/kamil 1/13
-  - logo-to-android # Nick P 1/7
-  - newrelic # Simon 1/15
+  - vellum-model-iteration # daniel 1/22
+  - locations-as-groups+fixtures-spike  # cz 1/29
+  - locations-as-groups # tw 1/20
+  - fixtures-spike  # cz 1/29
+  - killmemcached  # sk 1/29
+  - project-settings-update # sravan 1/30
+  - tdh-tiles # Noah 2/1
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+    - master

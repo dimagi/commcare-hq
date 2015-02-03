@@ -1,5 +1,3 @@
-from redis.exceptions import ConnectionError
-from redis_cache.exceptions import ConnectionInterrumped
 
 
 def get_server_url(http_method, server_root, username, password):
@@ -73,5 +71,7 @@ def get_extra_couchdbs(config, couch_database_url):
 
 
 def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
+    from redis.exceptions import ConnectionError
+    from redis_cache.exceptions import ConnectionInterrumped
     if isinstance(exc, (ConnectionInterrumped, ConnectionError)):
-        task.retry(exc, max_retries=3, countdown=60 * 5)
+        task.retry(args=args, kwargs=kwargs, exc=exc, max_retries=3, countdown=60 * 5)

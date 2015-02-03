@@ -176,6 +176,25 @@ def case_matches_criteria(case, match_type, case_property, value_to_match):
     
     return result
 
+
+def get_events_scheduling_info(events):
+    """
+    Return a list of events as dictionaries, only with information pertinent to scheduling changes.
+    """
+    result = []
+    for e in events:
+        result.append({
+            "day_num": e.day_num,
+            "fire_time": e.fire_time,
+            "fire_time_aux": e.fire_time_aux,
+            "fire_time_type": e.fire_time_type,
+            "time_window_length": e.time_window_length,
+            "callback_timeout_intervals": e.callback_timeout_intervals,
+            "form_unique_id": e.form_unique_id,
+        })
+    return result
+
+
 class MessageVariable(object):
     def __init__(self, variable):
         self.variable = variable
@@ -264,7 +283,6 @@ class CaseReminderEvent(DocumentSchema):
 
 def run_rule(case_id, handler, schedule_changed, prev_definition):
     case = CommCareCase.get(case_id)
-    handler.set_rule_checkpoint(1, incr=True)
     try:
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
@@ -273,7 +291,6 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
         # the scheduling.
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
-    handler.set_rule_checkpoint(2, incr=True)
     try:
         # It shouldn't be necessary to lock this out, but a deadlock can
         # happen in rare cases without it
@@ -282,7 +299,6 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
             client.incr("reminder-rule-processing-current-%s" % handler._id)
     except:
         pass
-    handler.set_rule_checkpoint(3, incr=True)
 
 def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
@@ -491,15 +507,6 @@ class CaseReminderHandler(Document):
     # and if a case other than that case triggered the reminder.
     force_surveys_to_use_triggered_case = BooleanProperty(default=False)
 
-    def set_rule_checkpoint(self, num, incr=False):
-        """ Only used for debugging. """
-        client = get_redis_client()
-        key = "reminder-rule-processing-checkpoint-%s-%s" % (num, self._id)
-        if incr:
-            client.incr(key)
-        else:
-            client.set(key, 0)
-
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
@@ -522,6 +529,21 @@ class CaseReminderHandler(Document):
             return getattr(cls, 'now')
         except Exception:
             return datetime.utcnow()
+
+    def schedule_has_changed(self, old_definition):
+        """
+        Returns True if the scheduling information in self is different from
+        the scheduling information in old_definition.
+
+        old_definition - the CaseReminderHandler to compare to
+        """
+        return (
+            get_events_scheduling_info(old_definition.events) !=
+            get_events_scheduling_info(self.events) or
+            old_definition.start_offset != self.start_offset or
+            old_definition.schedule_length != self.schedule_length or
+            old_definition.max_iteration_count != self.max_iteration_count
+        )
 
     def get_reminder(self, case):
         domain = self.domain
@@ -1170,9 +1192,6 @@ class CaseReminderHandler(Document):
                         len(case_ids))
                 except:
                     pass
-                self.set_rule_checkpoint(1)
-                self.set_rule_checkpoint(2)
-                self.set_rule_checkpoint(3)
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
                     use_critical_section=True, print_stack_interval=60)

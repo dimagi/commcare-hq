@@ -82,6 +82,15 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             'Nom'
         )
 
+    def test_missing_itext(self):
+        self.app = Application.wrap(self.get_json("app_no_itext"))
+        self.assert_question_label('question1', 0, 0, "en", "/data/question1")
+        try:
+            self.do_upload("upload_no_change")
+        except Exception as e:
+            self.fail(e)
+
+
 
 class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
     """

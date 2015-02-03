@@ -6,7 +6,6 @@ from celery.utils.log import get_task_logger
 import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -24,6 +23,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
+    get_change_status,
 )
 from corehq.apps.users.models import FakeUser, WebUser
 from couchexport.export import export_from_tables
@@ -35,7 +35,6 @@ import corehq.apps.accounting.filters as filters
 logger = get_task_logger('accounting')
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
 def activate_subscriptions(based_on_date=None):
     """
     Activates all subscriptions starting today (or, for testing, based on the date specified)
@@ -43,12 +42,15 @@ def activate_subscriptions(based_on_date=None):
     starting_date = based_on_date or datetime.date.today()
     starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
     for subscription in starting_subscriptions:
-        if not has_subscription_already_ended(subscription):
+        if not has_subscription_already_ended(subscription) and not subscription.is_active:
             subscription.is_active = True
             subscription.save()
+            _, _, upgraded_privs = get_change_status(None, subscription.plan_version)
+            subscription.subscriber.apply_upgrades_and_downgrades(
+                upgraded_privileges=upgraded_privs,
+            )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
 def deactivate_subscriptions(based_on_date=None):
     """
     Deactivates all subscriptions ending today (or, for testing, based on the date specified)
@@ -58,7 +60,23 @@ def deactivate_subscriptions(based_on_date=None):
     for subscription in ending_subscriptions:
         subscription.is_active = False
         subscription.save()
+        if subscription.next_subscription and subscription.next_subscription.date_start == ending_date:
+            new_plan_version = subscription.next_subscription.plan_version
+            subscription.next_subscription.is_active = True
+            subscription.next_subscription.save()
+        else:
+            new_plan_version = None
+        _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+        subscription.subscriber.apply_upgrades_and_downgrades(
+            downgraded_privileges=downgraded_privs,
+            upgraded_privileges=upgraded_privs,
+        )
 
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def update_subscriptions():
+    deactivate_subscriptions()
+    activate_subscriptions()
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
 def generate_invoices(based_on_date=None, check_existing=False, is_test=False):

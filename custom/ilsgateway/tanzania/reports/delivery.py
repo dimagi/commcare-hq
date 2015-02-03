@@ -1,7 +1,7 @@
 from datetime import datetime
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.ilsgateway.filters import ProductByProgramFilter
+from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
 from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, SupplyPointStatusTypes
@@ -29,7 +29,8 @@ class LeadTimeHistory(ILSData):
 
     @property
     def rows(self):
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                               site_code__icontains=self.config['msd_code'])
         date = datetime(int(self.config['year']), int(self.config['month']), 1)
         rows = []
         for loc in locations:
@@ -83,7 +84,8 @@ class DeliveryStatus(ILSData):
     @property
     def rows(self):
         rows = []
-        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+        locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                               site_code__icontains=self.config['msd_code'])
         dg = DeliveryGroups().delivering(locations, int(self.config['month']))
         for child in dg:
             latest = latest_status_or_none(
@@ -125,7 +127,7 @@ class DeliveryReport(DetailsReport):
     title = 'Delivery Report'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
 
     @property
     @memoized

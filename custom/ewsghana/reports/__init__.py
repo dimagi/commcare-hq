@@ -1,10 +1,18 @@
+from django.core.urlresolvers import reverse
+from corehq import Domain
+from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 
 REORDER_LEVEL = 1.5
 MAXIMUM_LEVEL = 3
+
+
+def get_url(view_name, text, domain):
+    return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
 
 
 class EWSData(object):
@@ -40,12 +48,54 @@ class EWSData(object):
         else:
             return [location]
 
+    @property
+    def location_types(self):
+        return [loc_type.name for loc_type in filter(
+                lambda loc_type: not loc_type.administrative,
+                Domain.get_by_name(self.config['domain']).location_types
+                )]
+
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
     split = True
+
+    @classmethod
+    def get_url(cls, domain=None, render_as=None, **kwargs):
+
+        def _is_admin(user, domain):
+            return isinstance(user, WebUser) and user.get_domain_membership(domain).is_admin
+
+        def _is_read_only(user, domain):
+            user_role = user.get_role()
+            return isinstance(user, WebUser) and user_role == UserRole.get_read_only_role_by_domain(domain)
+
+        def _can_see_reports(user):
+            user_role = user.get_role()
+            return isinstance(user, CommCareUser) and user_role.permissions.view_reports
+
+        url = super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
+        request = kwargs.get('request')
+        user = getattr(request, 'couch_user', None)
+        if user:
+            if _is_admin(user, domain):
+                loc = SQLLocation.objects.filter(domain=domain, location_type='country')[0]
+                url = '%s?location_id=%s' % (url, loc.location_id)
+            elif _is_read_only(user, domain) or _can_see_reports(user):
+                    dm = user.get_domain_membership(domain)
+                    if dm.program_id:
+                        program_id = dm.program_id
+                    else:
+                        program_id = Program.default_for_domain(domain)
+                    url = '%s?location_id=%s&program_id=%s' % (
+                        url,
+                        dm.location_id if dm.location_id else '',
+                        program_id if program_id else ''
+                    )
+
+        return url
 
     @property
     @memoized
@@ -101,3 +151,14 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         )
 
         return context
+
+    def is_reporting_type(self):
+        if not self.report_config.get('location_id'):
+            return False
+        sql_location = SQLLocation.objects.get(location_id=self.report_config['location_id'])
+        reporting_types = [
+            location_type.name
+            for location_type in Domain.get_by_name(self.domain).location_types
+            if not location_type.administrative
+        ]
+        return sql_location.location_type in reporting_types

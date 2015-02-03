@@ -265,6 +265,18 @@ class OPMCaseRow(object):
             return EMPTY_FIELD
         return str(self.case_property('closed_on', EMPTY_FIELD))
 
+    @property
+    def closed_in_reporting_month(self):
+        if not self.closed:
+            return False
+
+        closed_datetime = self.case_property('closed_on', EMPTY_FIELD)
+        if closed_datetime and not isinstance(closed_datetime, datetime.datetime):
+            raise InvalidRow('Closed date is not of datetime.datetime type')
+        closed_date = closed_datetime.date()
+        return closed_date >= self.reporting_window_start and\
+            closed_date < self.reporting_window_end
+
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
             return ''
@@ -671,6 +683,7 @@ class OPMCaseRow(object):
 
 class ConditionsMet(OPMCaseRow):
     method_map = [
+        ('serial_number', _("Serial number"), True),
         ('name', _("List of Beneficiaries"), True),
         ('awc_name', _("AWC Name"), True),
         ('block_name', _("Block Name"), True),
@@ -689,13 +702,12 @@ class ConditionsMet(OPMCaseRow):
         ('case_id', _('Case ID'), True),
         ('closed_date', _("Closed On"), True),
         ('payment_last_month', _("Payment amount received last month"), True),
-        ('cash_received_last_month', _("Cash received last month (Yes/No)"), True),
-        ('serial_number', _("Serial number"), True),
+        ('cash_received_last_month', _("Cash received last month"), True),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
-        self.serial_number = 0
+        self.serial_number = child_index
         self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         if self.status == 'mother':

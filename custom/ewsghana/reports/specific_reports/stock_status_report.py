@@ -1,6 +1,3 @@
-from datetime import timedelta
-from dateutil import rrule
-from dateutil.rrule import MO
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
@@ -9,58 +6,14 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis, LineChart
 from corehq.apps.reports.filters.dates import DatespanFilter
+from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
-from custom.ewsghana.reports.stock_levels_report import StockLevelsReport
+from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
+    FacilityInChargeUsers, FacilityUsers, FacilitySMSUsers, StockLevelsLegend, FacilityReportData
 from custom.ewsghana.reports import MultiReport, EWSData
 from casexml.apps.stock.models import StockTransaction
-from django.utils import html
 from django.db.models import Q
-
-
-def get_supply_points(location_id, domain):
-    loc = SQLLocation.objects.get(location_id=location_id)
-    location_types = [loc_type.name for loc_type in filter(
-        lambda loc_type: not loc_type.administrative,
-        Domain.get_by_name(domain).location_types
-    )]
-    if loc.location_type == 'district':
-        locations = SQLLocation.objects.filter(parent=loc)
-    elif loc.location_type == 'region':
-        locations = SQLLocation.objects.filter(parent__parent=loc)
-    elif loc.location_type in location_types:
-        locations = SQLLocation.objects.filter(id=loc.id)
-    else:
-        locations = SQLLocation.objects.filter(domain=domain, location_type__in=location_types)
-    return locations.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
-
-
-def get_second_week(start_date, end_date):
-    mondays = list(rrule.rrule(rrule.MONTHLY, dtstart=start_date, until=end_date, byweekday=(MO,), bysetpos=2))
-    for monday in mondays:
-        yield {
-            'start_date': monday,
-            'end_date': monday + timedelta(days=6)
-        }
-
-
-def get_products(program_id, products_id, domain):
-    if products_id:
-        return SQLProduct.objects.filter(product_id__in=products_id)
-    elif program_id:
-        return SQLProduct.objects.filter(program_id=program_id)
-    else:
-        return SQLProduct.objects.filter(is_archived=False, domain=domain)
-
-
-def make_url(report_class, domain, string_params, args):
-    try:
-        return html.escape(
-            report_class.get_url(
-                domain=domain
-            ) + string_params % args
-        )
-    except KeyError:
-        return None
+from custom.ewsghana.utils import get_supply_points, get_products, make_url, get_second_week
 
 
 def link_format(text, url):
@@ -198,7 +151,7 @@ class MonthOfStockProduct(EWSData):
                     self.config['domain'],
                     '?location_id=%s&filter_by_program=%s&startdate=%s'
                     '&enddate=%s&report_type=%s&filter_by_product=%s',
-                    (sp.location_id, self.config['program'] or '0', self.config['startdate'],
+                    (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'],
                     self.config['enddate'], self.config['report_type'],
                     '&filter_by_product='.join(self.config['products'])))
 
@@ -314,11 +267,12 @@ class StockoutTable(EWSData):
 
 
 class StockStatus(MultiReport):
-    name = 'Stock State'
+    name = 'Stock status'
     title = 'Stock Status'
     slug = 'stock_status'
     fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
     split = False
+    exportable = True
 
     @property
     def report_config(self):
@@ -329,15 +283,53 @@ class StockStatus(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            program=program if program != '0' else None,
-            products=products if products and products[0] != '0' else [],
+            program=program if program != ALL_OPTION else None,
+            products=products if products and products[0] != ALL_OPTION else [],
             report_type=self.request.GET.get('report_type', None)
         )
+
+    @property
+    def export_table(self):
+        if not self.is_reporting_type():
+            return super(StockStatus, self).export_table
+        r = self.report_context['reports'][0]['report_table']
+        return [self._export_table(r['title'], r['headers'], r['rows'])]
+
+    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        replace = ''
+
+        for k, v in enumerate(table[0]):
+            if v != ' ':
+                replace = v
+            else:
+                table[0][k] = replace
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]
 
     @property
     def data_providers(self):
         config = self.report_config
         report_type = self.request.GET.get('report_type', None)
+
+        if self.is_reporting_type():
+            self.split = True
+            return [
+                FacilityReportData(config),
+                StockLevelsLegend(config),
+                FacilitySMSUsers(config),
+                FacilityUsers(config),
+                FacilityInChargeUsers(config),
+                InventoryManagementData(config)
+            ]
+        self.split = False
         if report_type == 'stockouts':
             return [
                 StockoutsProduct(config=config),

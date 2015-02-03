@@ -104,6 +104,26 @@
 
         <fieldset>
             <legend>{% trans "Key/Value Fields" %}</legend>
+            <div class="alert">
+                <p>
+                    {% blocktrans %}
+                        This is an advanced feature that allows you to
+                        map data from multiple rows to a single case during
+                        upload. It should remain unchecked unless
+                        you intend to do this.
+                    {% endblocktrans %}
+                </p>
+
+                <p>
+                    {% blocktrans %}
+                        Instructions can be found on our
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/Mapping+data+from+multiple+rows+to+a+single+case" target="_blank">
+                            help pages
+                        </a>
+                        for this part of the feature.
+                    {% endblocktrans %}
+                </p>
+            </div>
             <div class="control-group">
                 <div class="controls">
                     <label class="checkbox" for="key_value_columns">

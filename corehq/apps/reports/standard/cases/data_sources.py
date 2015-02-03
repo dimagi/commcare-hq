@@ -9,6 +9,7 @@ import simplejson
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
@@ -44,7 +45,7 @@ class CaseInfo(object):
     @property
     def case_detail_url(self):
         try:
-            return reverse('case_details', args=[self.report.domain, self.case_id])
+            return absolute_reverse('case_details', args=[self.report.domain, self.case_id])
         except NoReverseMatch:
             return None
 

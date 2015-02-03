@@ -1,3 +1,4 @@
+from functools import wraps
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.decorators import require_permission
@@ -8,6 +9,7 @@ def require_cloudcare_access_ex():
     permissions or they should be a mobile user.
     """
     def decorator(view_func):
+        @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if hasattr(request, "couch_user"):
                 if request.couch_user.is_web_user():

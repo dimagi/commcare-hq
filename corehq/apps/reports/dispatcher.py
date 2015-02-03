@@ -184,11 +184,12 @@ class ReportDispatcher(View):
                     else:
                         report_contexts.append({
                             'is_active': report.slug == current_slug,
-                            'url': report.get_url(domain=domain),
+                            'url': report.get_url(domain=domain, request=request),
                             'description': _(report.description),
                             'icon': report.icon,
                             'title': _(report.name),
                             'subpages': report.get_subpages(),
+                            'show_in_dropdown': report.display_in_dropdown(project=project),
                         })
             if report_contexts:
                 if hasattr(section_name, '__call__'):

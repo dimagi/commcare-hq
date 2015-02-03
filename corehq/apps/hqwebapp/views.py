@@ -3,6 +3,8 @@ from datetime import datetime
 import json
 import os
 import re
+import sys
+import traceback
 import uuid
 
 from django.conf import settings
@@ -14,9 +16,8 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login as django_login, redirect_to_login
+from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
-from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
     HttpResponseForbidden
@@ -45,7 +46,7 @@ from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base, json_response
+from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 from soil import heartbeat
@@ -55,10 +56,10 @@ from soil import views as soil_views
 def pg_check():
     """check django db"""
     try:
-        user_count = User.objects.count()
+        a_user = User.objects.all()[:1].get()
     except:
-        user_count = None
-    return (user_count is not None, None)
+        a_user = None
+    return (a_user is not None, None)
 
 
 def couch_check():
@@ -152,10 +153,12 @@ def server_error(request, template_name='500.html'):
 
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name)
+    type, exc, tb = sys.exc_info()
     return HttpResponseServerError(t.render(RequestContext(request,
         {'MEDIA_URL': settings.MEDIA_URL,
          'STATIC_URL': settings.STATIC_URL,
-         'domain': domain
+         'domain': domain,
+         '500traceback': ''.join(traceback.format_tb(tb)),
         })))
 
 
@@ -220,7 +223,7 @@ def yui_crossdomain(req):
     <allow-access-from domain="yui.yahooapis.com"/>
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
-</cross-domain-policy>""" % Site.objects.get(id=settings.SITE_ID).domain
+</cross-domain-policy>""" % get_site_domain()
     return HttpResponse(x_domain, mimetype="application/xml")
 
 
@@ -408,7 +411,8 @@ def bug_report(req):
         'message',
         'app_id',
         'cc',
-        'email'
+        'email',
+        '500traceback',
     )])
 
     report['user_agent'] = req.META['HTTP_USER_AGENT']
@@ -463,7 +467,11 @@ def bug_report(req):
         reply_to = settings.SERVER_EMAIL
 
     if req.POST.get('five-hundred-report'):
-        message = "%s \n\n This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..." % message
+        extra_message = ("This messge was reported from a 500 error page! "
+                         "Please fix this ASAP (as if you wouldn't anyway)...")
+        traceback_info = "Traceback of this 500: \n%s" % report['500traceback']
+        message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
+
     email = EmailMessage(
         subject=subject,
         body=message,

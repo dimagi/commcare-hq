@@ -1,0 +1,23 @@
+#fieldset_year, #fieldset_gender, #fieldset_group_leadership, #fieldset_cbt_name {
+    float: left;
+    width: 30%;
+}
+
+#fieldset_cbt_name, #fieldset_farmer_social_category {
+    float: left;
+    width: 45%;
+}
+
+#fieldset_gender label, #fieldset_group_leadership label,  #fieldset_farmer_social_category label {
+    width: 45%;
+    text-align: left;
+}
+
+#fieldset_year .select2-container, #fieldset_gender .select2-container, #fieldset_group_leadership .select2-container,
+#fieldset_cbt_name .select2-container, #fieldset_farmer_social_category .select2-container {
+    width: 60%;
+}
+
+#fieldset_gender .controls, #fieldset_group_leadership .controls {
+    margin-left: 50px;
+}

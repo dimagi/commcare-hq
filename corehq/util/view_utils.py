@@ -1,7 +1,10 @@
+from functools import wraps
 import json
 import inspect
 import logging
 import traceback
+from django.core.urlresolvers import reverse
+from dimagi.utils.web import get_url_base
 
 from django import http
 from django.conf import settings
@@ -9,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 
 JSON = 'application/json'
 logger = logging.getLogger('django.request')
+
 
 def set_file_download(response, filename):
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
@@ -39,6 +43,7 @@ def json_error(f):
     Inspired by (and some parts shamelessly copied from)
     https://github.com/jsocol/django-jsonview
     """
+    @wraps(f)
     def inner(request, *args, **kwargs):
         try:
             response = f(request, *args, **kwargs)
@@ -112,3 +117,7 @@ def get_request():
                 return frame.f_locals[code.co_varnames[0]]
     finally:
         del frame
+
+
+def absolute_reverse(*args, **kwargs):
+    return "{}{}".format(get_url_base(), reverse(*args, **kwargs))

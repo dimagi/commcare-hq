@@ -8,7 +8,7 @@
     {% endif %}
 {% endblock %}
 {% block enabled_section %}
-    {% if checkpoint %}
+    {% if checkpoint or stock_data_checkpoint %}
         <h3>Checkpoint status</h3>
         <table class="table table-bordered">
             <thead>
@@ -17,6 +17,7 @@
                     <th>Start date</th>
                     <th>Date</th>
                     <th>Checkpoint</th>
+                    <th>Location</th>
                 </tr>
             </thead>
             <tr>
@@ -36,6 +37,27 @@
                     {% endif %}
                 </td>
                 <td>{{ checkpoint.offset }}</td>
+            <td></td>
+            </tr>
+
+            <tr>
+                <td>{{ stock_data_checkpoint.api }}</td>
+                <td>
+                    {% if stock_data_checkpoint.start_date %}
+                        {{ stock_data_checkpoint.start_date }}
+                    {% else %}
+                        Not started yet.
+                    {% endif %}
+                </td>
+                <td>
+                    {% if stock_data_checkpoint.date %}
+                        {{ stock_data_checkpoint.date }}
+                    {% else %}
+                        initial migration
+                    {% endif %}
+                </td>
+                <td>{{ stock_data_checkpoint.offset }}</td>
+                <td>{{ stock_data_checkpoint.location.name }}</td>
             </tr>
 
         </table>
@@ -50,6 +72,7 @@
                     <th>End</th>
                     <th>Start run</th>
                     <th>End run</th>
+                    <th>Location</th>
                     <th></th>
                 </tr>
             </thead>
@@ -75,6 +98,9 @@
                     {% else %}
                         Not finished yet.
                     {% endif %}
+                </td>
+                <td>
+                    {{ runner.location.name }}
                 </td>
                 <td>
                     <form action="{% url 'end_report_run' domain %}" method="POST">
@@ -127,6 +153,15 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="delete_runs">
+                        {% trans "Delete reports runs" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -173,6 +208,12 @@
         $("#resync_passwords").click(function() {
             var url = '{% url 'ils_resync_passwords' domain %}';
             var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#delete_runs").click(function() {
+            var url = '{% url 'delete_runs' domain %}';
+            var successMessage = "{% trans "Started" %}";
             _post(this, url, {success: successMessage});
         });
     </script>

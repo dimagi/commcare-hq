@@ -18,7 +18,7 @@
         $(function() {
             document.body.style.zoom="55%";
             setTimeout(function() {
-                splitTableByNumber($(".table"), 4, 6);
+                splitTableByNumberAndAWCName($(".table"), 4, 6);
                 $('.hq-loading').hide();
                 window.print();
             }, 3000);
@@ -32,8 +32,13 @@
     <style media="all">
         @page {
             size: A4 landscape;
-            margin: 1cm !important;
+            margin: 0mm 5mm 8.5mm 5mm;
         }
+
+        body {
+            margin: 0;
+        }
+
         th {
             font-weight:bold;
             line-height: 1.3;
