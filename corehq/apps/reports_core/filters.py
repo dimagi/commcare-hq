@@ -4,7 +4,7 @@ from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 
 class FilterException(Exception):
