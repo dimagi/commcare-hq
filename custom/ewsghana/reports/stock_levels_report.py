@@ -10,11 +10,10 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.graph_models import LineChart, Axis
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url
+from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url, EWSLineChart
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
@@ -298,8 +297,8 @@ class InventoryManagementData(EWSData):
     @property
     def charts(self):
         if self.show_chart:
-            chart = LineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
-                              y_axis=Axis(self.chart_y_label, '.1f'))
+            chart = EWSLineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
+                                 y_axis=Axis(self.chart_y_label, '.1f'))
             for product, value in self.chart_data.iteritems():
                 chart.add_dataset(product, value)
             return [chart]
