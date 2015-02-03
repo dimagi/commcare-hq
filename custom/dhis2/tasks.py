@@ -34,6 +34,8 @@ from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
 # TODO: Move to custom app attributes
 DOMAIN = 'wv-lanka'
 
+FALLBACK_ORG_UNIT = 'Fermathe Clinic'
+
 PROGRAM_FIELDS = {
     # CCHQ child_gmp case attribute: DHIS2 program attribute
     'child_first_name': 'First Name',
@@ -88,16 +90,17 @@ def push_child_entities(children):
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     # nutrition_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
     nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
+    fallback_org_unit = dhis2_api.get_resource_id('organisationUnits', FALLBACK_ORG_UNIT)
     today = date.today().strftime('%Y-%m-%d')  # More explicit than str(date.today())
     for child in children:
         try:
             ou_id = child['dhis2_organisation_unit_id']  # App sets this case property from user custom data
         except AttributeError:
-            # App failed to set this case property from user custom data
+            # App did not set this case property from user custom data
             # TODO: Tell someone.
-            # TODO: Or assume top org unit. Or both.
-            # Skip to the next case
-            continue
+            # TODO: Or query case owner org unit
+            # Use fallback org unit
+            ou_id = fallback_org_unit
 
         try:
             # Search for CCHQ Case ID in case previous attempt to register failed.
