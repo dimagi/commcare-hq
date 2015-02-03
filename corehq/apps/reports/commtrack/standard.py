@@ -349,7 +349,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
             'overstock': _('over-stock'),
         }
 
-        for row in self.product_data:
+        for row in sorted(self.product_data,  key=lambda p: p[StockStatusDataSource.SLUG_PRODUCT_NAME]):
             result = [
                 fmt(row[StockStatusDataSource.SLUG_PRODUCT_NAME]),
                 fmt(row[StockStatusDataSource.SLUG_CURRENT_STOCK]),
