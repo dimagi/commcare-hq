@@ -50,11 +50,10 @@ class SQLLocation(MPTTModel):
 
     @products.setter
     def products(self, value):
-        # TODO should this set stocks_all_products to true if
-        # all products are stocked? It should definitely not clear it
-        # if it is already set and we still have all domain products
-        # in the list
-        self.stocks_all_products = False
+        # this will set stocks_all_products to true if the user
+        # has added all products in the domain to this location
+        self.stocks_all_products = (set(value) ==
+                                    set(SQLProduct.by_domain(self.domain)))
 
         self._products = value
 
