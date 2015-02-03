@@ -1323,8 +1323,6 @@ class AdminReportsTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('Message Logs Across All Domains'),
                  'url': reverse('message_log_report')},
-                {'title': _('Global Statistics'),
-                 'url': reverse('global_report')},
                 {'title': _('CommCare Versions'),
                  'url': reverse('commcare_version_report')},
                 {'title': _('Submissions & Error Statistics per Domain'),

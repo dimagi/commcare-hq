@@ -7,8 +7,6 @@ from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
 urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^$', 'default', name="default_admin_report"),
-    url(r'^export/global/$', 'global_report', name="export_global_report", kwargs=dict(as_export=True)),
-    url(r'^global/$', 'global_report', name="global_report"),
     url(r'^system/$', 'system_info', name="system_info"),
     url(r'^user_reports/$', 'mobile_user_reports', name='mobile_user_reports'),
     url(r'^system/recent_changes/$', 'view_recent_changes', name="view_recent_changes"),
