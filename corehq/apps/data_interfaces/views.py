@@ -154,6 +154,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'deleted-group-template',
         }
 
+
 class ArchiveFormView(DataInterfaceSection):
     template_name = 'data_interfaces/interfaces/import_forms.html'
     urlname = 'archive_forms'
@@ -215,6 +216,7 @@ class ArchiveFormView(DataInterfaceSection):
     def post(self, request, *args, **kwargs):
         self.process()
         return HttpResponseRedirect(self.page_url)
+
 
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/manage_case_groups.html'

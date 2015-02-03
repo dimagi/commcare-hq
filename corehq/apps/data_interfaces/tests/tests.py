@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test import Client
 
 from couchforms.models import XFormInstance
-from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
+from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms
 from dimagi.utils.excel import WorkbookJSONReader
 
@@ -14,8 +14,8 @@ MISSING_XLSX = 'missing_forms_bulk.xlsx'
 MALFORM_XLSX = 'malformatted_forms_bulk.xlsx'
 WRONG_FILETYPE = 'wrong_file.xyz'
 
-class BulkArchiveForms(TestCase):
 
+class BulkArchiveForms(TestCase):
     def setUp(self):
         self.domain_name = 'test'
         self.password = "password"
@@ -48,12 +48,11 @@ class BulkArchiveForms(TestCase):
         self.assertEqual(response.status_code, 302, "Should redirect to login")
 
         # Logged in but not a super user
-        normal_user = WebUser.create(self.domain_name, 'muggle', self.password, 'b@b.com')
+        WebUser.create(self.domain_name, 'muggle', self.password, 'b@b.com')
         self.client.login(username='muggle', password=self.password)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403, "User needs to be a superuser to access")
         self.client.logout()
-
 
     def test_bulk_archive_missing_file(self):
         response = self.client.post(self.url, follow=True)
@@ -80,7 +79,6 @@ class BulkArchiveFormsUnit(TestCase):
         'PRESENT_2': 'present_2_id'
     }
 
-
     def setUp(self):
         self.domain_name = 'test'
         self.password = "password"
@@ -90,13 +88,13 @@ class BulkArchiveFormsUnit(TestCase):
         self.xforms = {}
 
         for key, _id, in self.XFORMS.iteritems():
-            self.xforms[_id] = XFormInstance(xmlns = 'fake-xmlns',
-                                        domain = self.domain_name,
-                                        received_on = datetime.utcnow(),
-                                        form = {
-                                            '#type': 'fake-type',
-                                            '@xmlns': 'fake-xmlns'
-                                        })
+            self.xforms[_id] = XFormInstance(xmlns='fake-xmlns',
+                domain=self.domain_name,
+                received_on=datetime.utcnow(),
+                form={
+                    '#type': 'fake-type',
+                    '@xmlns': 'fake-xmlns'
+                })
             self.xforms[_id]['_id'] = _id
             self.xforms[_id].save()
 
@@ -125,5 +123,5 @@ class BulkArchiveFormsUnit(TestCase):
             self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
 
         self.assertEqual(len(response['success']), len(self.xforms))
-        self.assertEqual(len(response['errors']), 1, 
+        self.assertEqual(len(response['errors']), 1,
                          "One error for trying to archive a missing form")

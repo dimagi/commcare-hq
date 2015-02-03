@@ -36,6 +36,7 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
 
     return response
 
+
 def archive_forms(user, uploaded_data):
     response = {
         'errors': [],
