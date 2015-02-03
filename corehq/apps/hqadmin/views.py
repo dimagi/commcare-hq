@@ -663,18 +663,6 @@ def all_commcare_settings(request):
     return json_response(settings_list)
 
 
-def find_broken_suite_files(request):
-    from corehq.apps.app_manager.management.commands.find_broken_suite_files import find_broken_suite_files
-    try:
-        start = request.GET['start']
-        end = request.GET['end']
-    except KeyError:
-        return HttpResponseBadRequest()
-    # streaming doesn't seem to work; it stops part-way through
-    return HttpResponse(''.join(find_broken_suite_files(start, end)),
-                        mimetype='text/plain')
-
-
 @require_superuser
 @require_GET
 def admin_restore(request):
