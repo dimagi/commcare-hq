@@ -1,28 +1,21 @@
-import base64
 from datetime import date
 import json
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator
+from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator, register_repeater_type
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
-from couchdbkit.ext.django.schema import StringProperty
 from custom.dhis2.models import Dhis2Api
 from custom.dhis2.tasks import NUTRITION_ASSESSMENT_FIELDS, RISK_ASSESSMENT_FIELDS, PROGRAM_FIELDS
 from django.conf import settings
+from custom.dhis2.tasks import DOMAIN
 
 
-class BasicAuthFormRepeater(FormRepeater):
-
-    username = StringProperty()
-    password = StringProperty()
-
-    def get_headers(self, repeat_record):
-        headers = super(BasicAuthFormRepeater, self).get_headers(repeat_record)
-        userpass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
-        headers.update({'Authorization': 'Basic ' + userpass})
-
-
-@RegisterGenerator(BasicAuthFormRepeater, 'dhis2_nutrition_assessment_event_json', 'Default JSON', is_default=True)
+@RegisterGenerator(FormRepeater, 'dhis2_nutrition_assessment_event_json', 'DHIS2 Nutrition Assessment JSON')
 class FormRepeaterDhis2NutritionAssessmentEventPayloadGenerator(BasePayloadGenerator):
+
+    @staticmethod
+    def enabled_for_domain(domain):
+        return domain == DOMAIN
+
     def get_payload(self, repeat_record, form):
         if form['xmlns'] != 'http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40':
             # This is not a growth monitoring form. Only growth monitoring forms
@@ -35,8 +28,13 @@ class FormRepeaterDhis2NutritionAssessmentEventPayloadGenerator(BasePayloadGener
         return json.dumps(event)
 
 
-@RegisterGenerator(BasicAuthFormRepeater, 'dhis2_risk_assessment_event_json', 'Default JSON', is_default=True)
+@RegisterGenerator(FormRepeater, 'dhis2_risk_assessment_event_json', 'DHIS2 Risk Assessment JSON')
 class FormRepeaterDhis2RiskAssessmentEventPayloadGenerator(BasePayloadGenerator):
+
+    @staticmethod
+    def enabled_for_domain(domain):
+        return domain == DOMAIN
+
     def get_payload(self, repeat_record, form):
         if form['xmlns'] != 'http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC':
             # This form cannot be converted into a risk assessment event

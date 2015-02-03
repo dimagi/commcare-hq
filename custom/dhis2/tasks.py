@@ -1,7 +1,7 @@
 """
 Celery tasks used by the World Vision Sri Lanka Nutrition project
 
-Three tasks are executed daily:
+Two tasks are executed daily:
 
   * sync_org_units: Synchronize DHIS2 Organization Units with local data
 
@@ -10,7 +10,9 @@ Three tasks are executed daily:
     and enroll them in the Pediatric Nutrition Assessment and Underlying Risk
     Assessment programs.
 
-  * send_nutrition_data: Send received nutrition data to DHIS2.
+Creating program events for Nutrition Assessment and Risk Assessment programs
+is done using FormRepeater payload generators. See payload_generators.py for
+details.
 
 """
 from datetime import date
@@ -101,7 +103,6 @@ def push_child_entities(children):
             }
             result = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
 
-            import ipdb; ipdb.set_trace()
             # TODO: What does result look like?
             dhis2_child_id = result['Identity']
 
@@ -222,56 +223,6 @@ def gen_children_only_ours(domain):
             yield CommCareCase.wrap(doc)
 
 
-# def gen_unprocessed_growth_monitoring_forms():
-#     # XMLNS: http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40
-#
-#     # sofabed.models.FormData ... store instance_id of last form.
-#     #
-#     # receiverwrapper.repeater_generators.  PayloadGenerator
-#     # get_payload
-#
-#     from corehq.apps.receiverwrapper.models import FormRepeater
-#     repeater = FormRepeater.by_domain(DOMAIN)
-#
-#
-#
-#
-#     query = FormES().domain(DOMAIN).filter({
-#         # dhis2_te_inst_id indicates that the case has been enrolled in both
-#         # programs by push_child_entities()
-#         'not': {'or': [{'missing': {'field': 'form.external_id'}},
-#                        {'term': {'form.external_id': ''}}]}
-#     }).filter({
-#         # and it must not have been processed before
-#         'or': [{'missing': {'field': 'form.dhis2_processed'}},
-#                {'term': {'form.dhis2_processed': ''}}]
-#     })
-#     result = query.run()
-#     if result.total:
-#         for doc in result.hits:
-#             yield XFormInstance.wrap(doc)
-
-
-# def gen_unprocessed_risk_assessment_forms():
-#     # XMLNS: http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC
-#
-#     pass
-
-
-# def mark_as_processed(forms):
-#     for form in forms:
-#         form.form['dhis2_processed'] = True
-#         form.save()
-
-
-# def enroll_case_in_id(case_id, program_id):
-#     pass
-
-
-# def enroll_form_in_risk_assessment(xform):
-#     child['enrolled_in_risk_assessment'] = True  # TODO: or "yes"?
-
-
 @periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04
 def sync_cases():
     """
@@ -286,52 +237,6 @@ def sync_cases():
 
     children = gen_children_only_ours(DOMAIN)
     push_child_entities(children)
-
-
-@periodic_task(run_every=crontab(minute=5, hour=5))  # Run daily at 05h05
-def sync_forms():
-    """
-    Send Growth Monitoring and Risk Assessment forms to DHIS2.
-
-    This fulfills the fourth requirement of `DHIS2 Integration`_
-
-
-    .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
-
-    """
-    if not settings.DHIS2_ENABLED:
-        return
-    # dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
-    # nutrition_id = dhis2_api.get_program_id('Pediatric Nutrition Assessment')
-    # xforms = []
-    # events = {'eventList': []}
-    # for xform in gen_unprocessed_growth_monitoring_forms():
-    #     xforms.append(xform)
-    #     event = dhis2_api.form_to_event(nutrition_id, xform, NUTRITION_ASSESSMENT_FIELDS)
-    #     events['eventList'].append(event)
-    #
-    # today = date.today().strftime('%Y-%m-%d')
-    # risk_id = dhis2_api.get_program_id('Underlying Risk Assessment')
-    # for xform in gen_unprocessed_risk_assessment_forms():
-    #     if not enrolled_in_risk_assessment(xform):
-    #         program_data = {
-    #             'Household Number': child['mother_id'],
-    #             'Name of Mother/Guardian': child['mother_first_name'],
-    #             'GN Division of Household': child['gn'],
-    #         }
-    #         dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, today, program_data)
-    #         enroll_form_in_risk_assessment(xform)
-    #     xforms.append(xform)
-    #     event = dhis2_api.form_to_event(risk_id, xform, RISK_ASSESSMENT_FIELDS)
-    #     events['eventList'].append(event)
-    # dhis2_api.send_events(events)
-    # mark_as_processed(xforms)
-
-    # Register FormRepeaterDhis2NutritionAssessmentEventPayloadGenerator with DHIS2 URL
-    # TODO: ...
-
-    # Register FormRepeaterDhis2RiskAssessmentEventPayloadGenerator with DHIS2 URL
-    # TODO: ...
 
 
 @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
