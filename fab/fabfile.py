@@ -136,17 +136,12 @@ def format_env(current_env):
     ]
 
     host = current_env.get('host_string')
-    command_prefix = current_env.get('django_command_prefix', {})
-    if isinstance(command_prefix, dict):
-        ret['django_command_prefix'] = command_prefix.get(host, '')
+    if host in current_env.get('new_relic_enabled', []):
+        ret['new_relic_command'] = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
+        ret['supervisor_env_vars'] = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=%(environment)s' % env
     else:
-        ret['django_command_prefix'] = command_prefix
-
-    env_vars = current_env.get('supervisor_env_vars', {})
-    if isinstance(env_vars, dict):
-        ret['supervisor_env_vars'] = env_vars.get(host, '')
-    else:
-        ret['supervisor_env_vars'] = env_vars
+        ret['new_relic_command'] = ''
+        ret['supervisor_env_vars'] = ''
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
@@ -256,11 +251,8 @@ def production():
     env.inventory = os.path.join('fab', 'inventory', 'production')
     execute(development)
 
-    env.django_command_prefix = {
-        'hqdjango3.internal.commcarehq.org': '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
-    }
-    env.supervisor_env_vars = {
-        'hqdjango3.internal.commcarehq.org': 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=production'
+    env.new_relic_enabled = {
+        'hqdjango3.internal.commcarehq.org',
     }
 
 
@@ -283,8 +275,11 @@ def staging():
     env.inventory = os.path.join('fab', 'inventory', 'staging')
     execute(development)
 
-    env.django_command_prefix = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
-    env.supervisor_env_vars = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=staging'
+    env.new_relic_enabled = {
+        'hqdjango0-staging.internal.commcarehq.org',
+        'hqdjango1-staging.internal.commcarehq.org',
+        'hqdb0-staging.internal.commcarehq.org',
+    }
 
 
 @task
