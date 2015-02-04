@@ -42,7 +42,7 @@ if [ $? -eq 0 ]; then
     if [[ ! $(sudo grep -r "chris-lea/node\.js" /etc/apt/) ]]; then
     
         # Checks if add-apt-repository is available
-        # add-apt-repository is provided by the python-software-properties package
+        # add-apt-repository is provided by the software-properties-common package
         if [[ ! $(command -v add-apt-repository) ]]; then
             sudo apt-get -y install software-properties-common
         fi
