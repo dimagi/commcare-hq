@@ -110,8 +110,7 @@ if [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
         wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz
     fi
     tar -xzf jdk.tar.gz
-    sudo mkdir /usr/lib/jvm
-    sudo rm -r /usr/lib/jvm/jdk1.7.0/
+    sudo mkdir -p /usr/lib/jvm
     sudo mv ./jdk1.7.0* /usr/lib/jvm/jdk1.7.0
 
     sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
