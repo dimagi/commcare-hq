@@ -5,3 +5,13 @@
 .navbar-default .navbar-brand {
   padding: 5px @navbar-padding-horizontal;
 }
+
+.navbar-static-hq {
+  border: none;
+  .border-top-radius(0);
+  .border-bottom-radius(0);
+
+  .navbar-nav > .active > a {
+    background-color: darken(@cc-bg, 3);
+  }
+}
