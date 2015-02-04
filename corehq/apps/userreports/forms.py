@@ -79,9 +79,6 @@ class CreateNewReportBuilderForm(forms.Form):
         )
 
 # TODO: implement create_report_from_form for table reports
-# TODO: Make a pie report form
-# TODO: Move the js from the templates into the forms
-#       (crispy forms bug might prevent this)
 # TODO: Format types for the columns table don't make sense?
 # TODO: Add some documentation
 
