@@ -19,8 +19,8 @@ from corehq.apps.userreports.app_manager import get_case_data_source, get_form_d
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.forms import (
     CreateNewReportBuilderForm,
-    ConfigureBarChartBuilderForm,
-    ConfigureTableBuilderForm,
+    ReportBuilderConfigureNewBarChartReport,
+    ReportBuilderConfigureNewTableReport,
 )
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
@@ -106,7 +106,7 @@ class CreateNewReportBuilderView(ReportBuilderView):
 
 class ConfigureBarChartReportBuilderView(ReportBuilderView):
     template_name = "userreports/partials/configure_bar_report_builder.html"
-    configure_report_form_class = ConfigureBarChartBuilderForm
+    configure_report_form_class = ReportBuilderConfigureNewBarChartReport
 
     def get_context_data(self, **kwargs):
         context = {
@@ -156,7 +156,7 @@ class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
     # Temporarily building this view off of ConfigureBarChartReportBuilderView.
     # We'll probably want to inherit from a common ancestor in the end
     template_name = "userreports/partials/configure_table_report_builder.html"
-    configure_report_form_class = ConfigureTableBuilderForm
+    configure_report_form_class = ReportBuilderConfigureNewTableReport
 
     def get_context_data(self, **kwargs):
         context = super(ConfigureTableReportBuilderView, self).get_context_data(**kwargs)

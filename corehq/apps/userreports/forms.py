@@ -78,77 +78,82 @@ class CreateNewReportBuilderForm(forms.Form):
             ),
         )
 
+# TODO: implement create_report_from_form for table reports
+# TODO: Make a pie report form
+# TODO: Move the js from the templates into the forms
+# TODO: Format types for the columns table don't make sense.
+# TODO: Add some documentation
 
-class ConfigureTableBuilderForm(forms.Form):
+class ReportBuilderConfigureNewReportBase(forms.Form):
     report_name = forms.CharField()
-    filters = forms.CharField(required=False)
-    columns = forms.CharField(required=False)
+    filters = forms.CharField()
+    form_title = 'Configure Report'
+    button_text = 'Save Report'
 
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
-        super(ConfigureTableBuilderForm, self).__init__(*args, **kwargs)
+        super(ReportBuilderConfigureNewReportBase, self).__init__(*args, **kwargs)
 
-        #####
+        # Following attributes are needed for the create_report_from_form method
+        # TODO: Push these down to subclasses
         self.doc_type = source_type
         self.report_source = report_source
         self.case_properties = case_properties
         app = Application.get(app_id)
         self.domain = app.domain
-        #####
-
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
 
-        # Get filters template
-        filters_template_path = os.path.join(
+        self.helper.layout = crispy.Layout(
+            self.top_fieldset,
+            FormActions(
+               crispy.ButtonHolder(
+                   crispy.Submit(
+                       'submit',
+                       _(self.button_text)
+                   )
+               ),
+            ),
+        )
+
+    @property
+    def column_config_template(self):
+        path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             "templates", "userreports", "partials", "report_filter_configuration.html"
         )
-        with open(filters_template_path, "r") as f:
-            filters_template = f.read()
+        with open(path, "r") as f:
+            template = f.read()
+        return template
 
-        # Get columns template
-
-
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Configure Bar Chart'),
-                'report_name',
-                crispy.Fieldset(
-                    _("Filters Available in this Report"),
-                    crispy.Div(crispy.HTML(filters_template), id="filters-table"),
-                    crispy.Hidden('filters', None, data_bind="value: serializedProperties")
-                ),
-                crispy.Fieldset(
-                    _("Columns to Display"),
-                    crispy.Div(crispy.HTML(filters_template), id="columns-table"),
-                    crispy.Hidden('columns', None, data_bind="value: serializedProperties")
-                ),
-            ),
-            FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'configure_table_builder_btn',
-                        _('Build Report')
-                    )
-                ),
-            ),
+    @property
+    def top_fieldset(self):
+        return crispy.Fieldset(
+            _(self.form_title),
+            'report_name',
+            self.configuration_tables
         )
 
+    @property
+    def configuration_tables(self):
+        return crispy.Fieldset(
+            _("Filters Available in this Report"),
+            crispy.Div(crispy.HTML(self.column_config_template), id="filters-table"),
+            crispy.Hidden('filters', None, data_bind="value: serializedProperties")
+        )
 
-class ConfigureBarChartBuilderForm(forms.Form):
-    report_name = forms.CharField()
+    def create_report_from_form(self):
+        raise NotImplementedError
+
+
+class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBase):
     group_by = forms.ChoiceField()
-    filters = forms.CharField(required=False)
+    form_title = "Configure Bar Chart Report"
 
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
-        super(ConfigureBarChartBuilderForm, self).__init__(*args, **kwargs)
+        super(ReportBuilderConfigureNewBarChartReport, self).__init__(app_id, source_type, report_source, case_properties, *args, **kwargs)
 
-        self.doc_type = source_type
-        self.report_source = report_source
-        self.case_properties = case_properties
-        app = Application.get(app_id)
-        self.domain = app.domain
+        # Populate the group_by choices
         if source_type == 'case':
             self.fields['group_by'].choices = [
                 (cp, cp) for cp in case_properties
@@ -158,36 +163,13 @@ class ConfigureBarChartBuilderForm(forms.Form):
         else:
             raise Exception('no valid source_type')
 
-        self.helper = FormHelper()
-        self.helper.form_class = "form-horizontal"
-
-        # TODO: This is almost certainly the wrong way to get this template
-        path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "templates", "userreports", "partials", "report_filter_configuration.html"
-        )
-        with open(path, "r") as f:
-            template = f.read()
-
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Configure Bar Chart'),
-                'report_name',
-                'group_by',
-                crispy.Fieldset(
-                    _("Filters Available in this Report"),
-                    crispy.Div(crispy.HTML(template), id="filters-table"),
-                    crispy.Hidden('filters', None, data_bind="value: serializedProperties")
-                ),
-            ),
-            FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'configure_bar_chart_builder_btn',
-                        _('Save Bar Chart')
-                    )
-                ),
-            ),
+    @property
+    def top_fieldset(self):
+        return crispy.Fieldset(
+            _(self.form_title),
+            'report_name',
+            'group_by',
+            self.configuration_tables
         )
 
     def create_report_from_form(self):
@@ -234,6 +216,7 @@ class ConfigureBarChartBuilderForm(forms.Form):
                 'property_name': 'type',
                 'property_value': self.report_source,
             },
+            # TODO: Only make indicators for the fields needed by the filters (I think)
             configured_indicators=[
                 _make_indicator(cp) for cp in self.case_properties
             ]+[
@@ -281,3 +264,21 @@ class ConfigureBarChartBuilderForm(forms.Form):
         report.validate()
         report.save()
         return report
+
+
+class ReportBuilderConfigureNewTableReport(ReportBuilderConfigureNewReportBase):
+    form_title = "Configure Table Report"
+    columns = forms.CharField(required=False)
+
+    @property
+    def configuration_tables(self):
+        parent_tables = super(ReportBuilderConfigureNewTableReport, self).configuration_tables
+
+        return crispy.Layout(
+            parent_tables,
+            crispy.Fieldset(
+                _("Columns to Display"),
+                crispy.Div(crispy.HTML(self.column_config_template), id="columns-table"),
+                crispy.Hidden('columns', None, data_bind="value: serializedProperties")
+            )
+        )
