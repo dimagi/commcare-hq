@@ -126,7 +126,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
-            'split': self.split
+            'split': self.split,
+            'location_id': self.request.GET.get('location_id'),
         }
         return context
 

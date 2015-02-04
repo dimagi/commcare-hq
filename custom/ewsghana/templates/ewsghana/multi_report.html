@@ -63,6 +63,14 @@
             {% elif  forloop.last %}
                 </div>
                 <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+                {% if thisreport.report_table.slug == 'inventory_management' %}
+                    <form>
+                        <div style="display: inline-block">
+                            <input type="text" id="inventory_filter" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                            <button style="margin-bottom: 9px;" id="inventory_filter_btn" class="filters btn">Apply</button>
+                        </div>
+                    </form>
+                {% endif %}
                 {% include 'ewsghana/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span show_table=thisreport.show_table%}
                 <br/>
             {% else %}
@@ -84,9 +92,122 @@
 {% block js-inline %}
     {% for thisreport in reports %}
         {% for chart in thisreport.charts %}
-            {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
-                {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
-            {% endwith %}
+            {% if thisreport.report_table.slug != 'inventory_management' %}
+                {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
+                    {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id2|add:id1 %}
+                {% endwith %}
+            {% else %}
+                <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
+                {% with id1=forloop.counter|stringformat:"s" id2=forloop.parentloop.counter|stringformat:"s" slug=report.slug %}
+
+                    <script type="text/javascript">
+
+                        chart = null;
+                        chart_id = null;
+                        nv.addGraph(function() {
+                            var chart_config = {{ chart.config_dict|JSON }};
+                            {% if chart.data_needs_formatting %}
+                                var chart_data = formatDataForLineGraph({{ chart.data|JSON }});
+                            {% else %}
+                                var chart_data = {{ chart.data|JSON }};
+                            {% endif %}
+                            chart_id = '#{{ 'chart_'|add:slug|add:'_'|add:id2|add:id1 }}';
+
+                            $(chart_id).show();
+
+                            chart = nv.models.lineChart();
+
+                            chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
+                            {% if chart.x_axis.format %}
+                                chart.xAxis.tickFormat(d3.format({{ chart.x_axis.format|JSON }}));
+                            {% else %}
+                                {% if chart.x_axis_uses_dates %}
+                                    chart.xAxis.tickFormat(function(d){return d3.time.format.utc('%b %d' + linebreak_txt + '%Y')(new Date(d));});
+                                {% endif %}
+                            {% endif %}
+
+                            //Modify x-values to date-objects and set tickFormat
+                            {% if chart.x_axis.dateFormat %}
+                                for (i=0 ; i<chart_data.length; i++){
+                                    single_chart_data = chart_data[i].values;
+                                    for (j=0; j<single_chart_data.length; j++){
+                                        date = single_chart_data[j].x;
+                                        single_chart_data[j].x = new Date(date).getTime();
+                                    }
+                                }
+                                chart.xAxis.tickFormat(function(d) {return d3.time.format({{ chart.x_axis.dateFormat|JSON }})(new Date(d)); })
+                            {% endif %}
+
+                            chart.yAxis.axisLabel({{ chart.y_axis.label|JSON }});
+                            {% if chart.y_axis.format %}
+                                chart.yAxis.tickFormat(d3.format({{ chart.y_axis.format|JSON }}));
+                            {% endif %}
+
+                            chart.margin(chart_config.margin);
+                            chart.tooltips(chart_config.tooltips);
+
+                            d3.select(chart_id + ' svg')
+                                    .datum(chart_data)
+                                    .transition().duration(500).call(chart);
+
+                            nv.utils.windowResize(chart.update);
+
+                            var updateLineBreaks = function() {
+                                d3.selectAll(chart_id + ' g.nv-x.nv-axis g text').each(insertLinebreaks);
+                            };
+
+                            {% if chart.x_axis_uses_dates %}
+                                // hacks for adding line breaks whenever the graphs are redrawn
+                                updateLineBreaks();
+                                $(document).on('click', chart_id + ' .nv-series', function(){
+                                    updateLineBreaks();
+                                });
+                                nv.utils.windowResize(function(e) {
+                                    chart.update(e);
+                                    updateLineBreaks();
+                                });
+                            {% endif %}
+
+                            return chart;
+                        });
+                    </script>
+                {% endwith %}
+            {% endif %}
         {% endfor %}
     {% endfor %}
+    <script>
+        $inventory_filter = $('#inventory_filter');
+        $inventory_filter.createDefaultDateRangePicker();
+        $('#inventory_filter_btn').on('click', function(e) {
+            e.preventDefault();
+            $('.hq-loading').fadeIn();
+
+            $(this).prop('disabled', true);
+            var dates = $($inventory_filter).val().split($inventory_filter.getDateRangeSeparator());
+            $.ajax({
+                type: 'GET',
+                datatype: 'json',
+                url: '{% url 'inventory_managment' domain %}',
+                data: {
+                    startdate: dates[0],
+                    enddate: dates[1],
+                    location_id: '{{ location_id }}'
+                },
+                success: function(response) {
+                    $(chart_id + ' svg').empty();
+
+                    d3.select(chart_id + ' svg')
+                                    .datum(response)
+                                    .transition().duration(500).call(chart);
+                    $("#inventory_filter_btn").removeAttr('disabled');
+                    $('.hq-loading').fadeOut();
+
+                },
+                error: function() {
+                }
+            });
+
+        });
+    </script>
+
 {% endblock %}
