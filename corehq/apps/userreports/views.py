@@ -21,6 +21,7 @@ from corehq.apps.userreports.forms import (
     CreateNewReportBuilderForm,
     ReportBuilderConfigureNewBarChartReport,
     ReportBuilderConfigureNewTableReport,
+    ReportBuilderConfigureNewPieChartReport,
 )
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
@@ -84,10 +85,16 @@ class CreateNewReportBuilderView(ReportBuilderView):
         if self.create_new_report_builder_form.is_valid():
             url_name = None
             report_type = self.create_new_report_builder_form.cleaned_data['report_type']
+            # TODO: This logic is not very DRY
             if report_type == 'bar_chart':
                 url_name = 'configure_bar_chart_report_builder'
             elif report_type == 'table':
                 url_name = 'configure_table_report_builder'
+            elif report_type == 'pie_chart':
+                url_name = 'configure_pie_chart_report_builder'
+            else:
+                # TODO: Better error please
+                raise Exception
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + '&'.join([
                     '%(key)s=%(value)s' % {
@@ -105,13 +112,14 @@ class CreateNewReportBuilderView(ReportBuilderView):
 
 
 class ConfigureBarChartReportBuilderView(ReportBuilderView):
-    template_name = "userreports/partials/configure_bar_report_builder.html"
+    template_name = "userreports/partials/report_builder_configure_chart.html"
     configure_report_form_class = ReportBuilderConfigureNewBarChartReport
+    report_title = _("Create New Report > Configure Bar Chart Report")
 
     def get_context_data(self, **kwargs):
         context = {
             "domain": self.domain,
-            'report': {"title": _("Create New Report > Configure Bar Chart Report")},
+            'report': {"title": self.report_title},
             'form': self.configure_report_form,
             'case_properties': self.report_source_properties
         }
@@ -152,16 +160,17 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
         return self.get(*args, **kwargs)
 
 
+class ConfigurePieChartReportBuilderView(ConfigureBarChartReportBuilderView):
+    configure_report_form_class = ReportBuilderConfigureNewPieChartReport
+    report_title = _("Create New Report > Configure Pie Chart Report")
+
+
 class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
     # Temporarily building this view off of ConfigureBarChartReportBuilderView.
-    # We'll probably want to inherit from a common ancestor in the end
+    # We'll probably want to inherit from a common ancestor in the end?
     template_name = "userreports/partials/configure_table_report_builder.html"
     configure_report_form_class = ReportBuilderConfigureNewTableReport
-
-    def get_context_data(self, **kwargs):
-        context = super(ConfigureTableReportBuilderView, self).get_context_data(**kwargs)
-        context['report'] = {"title": _("Create New Report > Configure Table Report")}
-        return context
+    report_title = _("Create New Report > Configure Table Report")
 
 
 def _edit_report_shared(request, domain, config):

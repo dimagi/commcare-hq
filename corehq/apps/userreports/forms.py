@@ -81,7 +81,8 @@ class CreateNewReportBuilderForm(forms.Form):
 # TODO: implement create_report_from_form for table reports
 # TODO: Make a pie report form
 # TODO: Move the js from the templates into the forms
-# TODO: Format types for the columns table don't make sense.
+#       (crispy forms bug might prevent this)
+# TODO: Format types for the columns table don't make sense?
 # TODO: Add some documentation
 
 class ReportBuilderConfigureNewReportBase(forms.Form):
@@ -163,6 +164,7 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
         else:
             raise Exception('no valid source_type')
 
+    # TODO: I don't love the name of this property...
     @property
     def top_fieldset(self):
         return crispy.Fieldset(
@@ -172,21 +174,42 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
             self.configuration_tables
         )
 
-    def create_report_from_form(self):
-        """
-        Creates data source and report config.
-        Returns report config id.
-        """
-        default_case_property_datatypes = get_default_case_property_datatypes()
+    @property
+    def _data_source_indicators(self):
+        '''
+        Return the json data source indicator configurations to be used by the
+        DataSourceConfiguration used by the ReportConfiguration that this form
+        produces.
+        '''
 
         def _make_indicator(property_name):
             return {
                 "type": "raw",
                 "column_id": property_name,
-                "datatype": default_case_property_datatypes.get(property_name, "string"),
+                "datatype": get_default_case_property_datatypes().get(property_name, "string"),
                 'property_name': property_name,
                 "display_name": property_name,
             }
+
+        indicators = set(
+            [f['field'] for f in self._report_filters] +
+            [self.cleaned_data["group_by"]]
+        )
+
+        return [_make_indicator(cp) for cp in indicators] + [
+            {
+                "display_name": "Count",
+                "type": "count",
+                "column_id": "count"
+            }
+        ]
+
+    @property
+    def _report_filters(self):
+        '''
+        Return the json filter configurations to be used by the
+        ReportConfiguration that this form produces.
+        '''
 
         def _make_report_filter(conf):
             filter = {
@@ -207,10 +230,21 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
             return filter
 
         filter_configs = json.loads(self.cleaned_data['filters'])
-        indicators = set(
-            [conf['property'] for conf in filter_configs] +
-            [self.cleaned_data["group_by"]]
-        )
+        return [_make_report_filter(f) for f in filter_configs]
+
+    @property
+    def _report_charts(self):
+        return [{
+            "type": "multibar",
+            "x_axis_column": self.cleaned_data["group_by"],
+            "y_axis_columns": ["count"],
+        }]
+
+    def create_report_from_form(self):
+        """
+        Creates data source and report config.
+        Returns report config id. #TODO: Does it?
+        """
 
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
@@ -222,16 +256,10 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
                 'property_name': 'type',
                 'property_value': self.report_source,
             },
-            configured_indicators=[
-                _make_indicator(cp) for cp in indicators
-            ]+[
-                {
-                    "display_name": "Count",
-                    "type": "count",
-                    "column_id": "count"
-                }
-            ],
+            configured_indicators=self._data_source_indicators
         )
+        # TODO: Does validate check for unique table ids? It should I think.
+        data_source_config.validate()
         data_source_config.save()
         tasks.rebuild_indicators.delay(data_source_config._id)
 
@@ -256,19 +284,26 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
                     "display": "Count"
                 }
             ],
-            filters=[
-                _make_report_filter(f) for f in filter_configs
-            ],
-            configured_charts=[{
-                "type": "multibar",
-                "x_axis_column": self.cleaned_data["group_by"],
-                "y_axis_columns": ["count"],
-
-            }]
+            filters=self._report_filters,
+            configured_charts=self._report_charts
         )
         report.validate()
         report.save()
         return report
+
+
+# Should ReportBuilderConfigureNewBarChartReport and this class inherit from a
+# common ancestor instead?
+class ReportBuilderConfigureNewPieChartReport(ReportBuilderConfigureNewBarChartReport):
+    form_title = "Configure Pie Chart Report"
+
+    @property
+    def _report_charts(self):
+        return [{
+            "type": "pie",
+            "aggregation_column": self.cleaned_data["group_by"],
+            "value_column": "count",
+        }]
 
 
 class ReportBuilderConfigureNewTableReport(ReportBuilderConfigureNewReportBase):

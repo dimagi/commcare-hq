@@ -12,7 +12,8 @@ from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.views import (
     CreateNewReportBuilderView,
     ConfigureBarChartReportBuilderView,
-    ConfigureTableReportBuilderView
+    ConfigureTableReportBuilderView,
+    ConfigurePieChartReportBuilderView,
 )
 from .filters import urls as filter_urls
 
@@ -26,6 +27,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ConfigurableReport.url_pattern(),
     url(r'^builder/create/$', CreateNewReportBuilderView.as_view(), name="create_new_report_builder"),
     url(r'^builder/configure/bar/$', ConfigureBarChartReportBuilderView.as_view(), name="configure_bar_chart_report_builder"),
+    url(r'^builder/configure/pie/$', ConfigurePieChartReportBuilderView.as_view(), name="configure_pie_chart_report_builder"),
     url(r'^builder/configure/table/$', ConfigureTableReportBuilderView.as_view(), name="configure_table_report_builder"),
     url(r'^$', "default", name="reports_home"),
     url(r'^saved/', "saved_reports", name="saved_reports"),
