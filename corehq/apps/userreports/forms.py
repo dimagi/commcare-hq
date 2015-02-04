@@ -116,11 +116,13 @@ class ConfigureTableBuilderForm(forms.Form):
                 'report_name',
                 crispy.Fieldset(
                     _("Filters Available in this Report"),
-                    crispy.HTML(filters_template),
+                    crispy.Div(crispy.HTML(filters_template), id="filters-table"),
+                    crispy.Hidden('filters', None, data_bind="value: serializedProperties")
                 ),
                 crispy.Fieldset(
                     _("Columns to Display"),
-                    crispy.HTML(filters_template),
+                    crispy.Div(crispy.HTML(filters_template), id="columns-table"),
+                    crispy.Hidden('columns', None, data_bind="value: serializedProperties")
                 ),
             ),
             FormActions(
@@ -174,7 +176,8 @@ class ConfigureBarChartBuilderForm(forms.Form):
                 'group_by',
                 crispy.Fieldset(
                     _("Filters Available in this Report"),
-                    crispy.HTML(template),
+                    crispy.Div(crispy.HTML(template), id="filters-table"),
+                    crispy.Hidden('filters', None, data_bind="value: serializedProperties")
                 ),
             ),
             FormActions(

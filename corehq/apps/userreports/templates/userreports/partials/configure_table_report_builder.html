@@ -1,3 +1,60 @@
 {% extends "userreports/base_report_builder.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+
+{% block head %}{{ block.super }}
+    {# needed for the sortable knockout of binding #}
+    {% include "imports/hq-oldstyle-js.html" %}
+    {# needed for the knockout typeahead binding #}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    {# needed for the sortable and typeahead knockout of binding #}
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+
+        /**
+         * Knockout view model representing a row in the filter property list
+         * @constructor
+         */
+        var PropertyListItem = function() {
+            this.property = ko.observable("");
+            this.displayText = ko.observable("");
+            this.format = ko.observable("");
+
+            /**
+             * Return a "plain" javascript object representing this view model
+             * suitable for sending to the server.
+             */
+            this.toJS = function(){
+                return {
+                    property: this.property(),
+                    display_text: this.displayText(),
+                    format: this.format()
+                };
+            };
+
+        };
+        /**
+         * Knockout view model controlling the filter property list.
+         */
+        var propertyList = function() {
+            var that = this;
+
+            this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
+            this.propertyOptions = ko.observableArray({{ case_properties|JSON }});
+            this.columns = ko.observableArray([new PropertyListItem()]);
+            this.serializedProperties = ko.computed(function(){
+                return JSON.stringify(
+                    _.map(that.columns(), function(c){return c.toJS()})
+                );
+            });
+        };
+        ko.applyBindings(new propertyList(), $("#filters-table").parent().get(0));
+        ko.applyBindings(new propertyList(), $("#columns-table").parent().get(0));
+    </script>
+{% endblock %}

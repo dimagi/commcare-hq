@@ -48,12 +48,12 @@
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ case_properties|JSON }});
             this.columns = ko.observableArray([new PropertyListItem()]);
-            this.serializedFilterProperties = ko.computed(function(){
+            this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
                     _.map(that.columns(), function(c){return c.toJS()})
                 );
             });
         };
-        ko.applyBindings(new propertyList(), $("#properties-table").parent().get(0));
+        ko.applyBindings(new propertyList(), $("#filters-table").parent().get(0));
     </script>
 {% endblock %}
