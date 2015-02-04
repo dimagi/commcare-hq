@@ -4,6 +4,7 @@ from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
 from corehq.apps.reminders.models import (RECIPIENT_OWNER, RECIPIENT_USER_GROUP)
 from corehq.apps.sms.messages import *
 from datetime import date, time
+from corehq.apps.smsforms.models import XFormsSession, SQLXFormsSession
 
 
 class KeywordTestCase(TouchformsTestCase):
@@ -733,3 +734,7 @@ class KeywordTestCase(TouchformsTestCase):
         incoming("999122", "null", "TEST")
         self.assertLastOutboundSMSEquals(self.user2, "Default SMS Response")
 
+        # make sure the same number of sessions were made
+        couch_number = XFormsSession.get_db().view('smsforms/sessions_by_touchforms_id', limit=0).total_rows
+        sql_number = SQLXFormsSession.objects.count()
+        self.assertEqual(couch_number, sql_number)
