@@ -3,6 +3,7 @@ import json
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
@@ -241,3 +242,89 @@ def toggle_enabled(request, toggle_or_toggle_name):
 def feature_preview_enabled(request, toggle_name):
     import corehq.feature_previews
     return _toggle_enabled(corehq.feature_previews, request, toggle_name)
+
+
+def parse_literal(value, parser, tag):
+    var = parser.compile_filter(value).var
+    if isinstance(var, Variable):
+        try:
+            var = var.resolve({})
+        except VariableDoesNotExist:
+            raise template.TemplateSyntaxError(
+                "'{}' tag expected literal value, got {}".format(tag, value))
+    return var
+
+
+@register.tag
+def case(parser, token):
+    """Hash-lookup branching tag
+
+    Branch on value expression with optional default on no match::
+
+        {% case place.value "first" %}
+            You won first place!
+        {% case "second" "third" %}
+            Great job!
+        {% else %}
+            Practice is the way to success.
+        {% endcase %}
+
+    Each case must have at least one value. Case values must be literal,
+    not expressions, and case values must be unique. An error is raised
+    if more than one case exists with the same value.
+    """
+    args = token.split_contents()
+    tag = args[0]
+    if len(args) < 3:
+        raise template.TemplateSyntaxError(
+            "initial '{}' tag requires at least two arguments: a lookup "
+            "expression and at least one value for the first case".format(tag))
+    lookup_expr = parser.compile_filter(args[1])
+    keys = [parse_literal(key, parser, tag) for key in args[2:]]
+    branches = {}
+    default = None
+    while True:
+        nodelist = parser.parse(("case", "else", "endcase"))
+        for key in keys:
+            if key in branches:
+                raise template.TemplateSyntaxError(
+                    "duplicate case not allowed: {!r}".format(key))
+            branches[key] = nodelist
+        token = parser.next_token()
+        args = token.split_contents()
+        tag = args[0]
+        if tag != "case":
+            break
+        if len(args) < 2:
+            raise template.TemplateSyntaxError(
+                "inner 'case' tag requires at least one argument")
+        keys = [parse_literal(key, parser, tag) for key in args[1:]]
+    if len(args) > 1:
+        raise template.TemplateSyntaxError(
+            "'{}' tag does not accept arguments".format(tag))
+    if tag == "else":
+        default = parser.parse(("endcase",))
+        token = parser.next_token()
+        args = token.split_contents()
+        tag = args[0]
+        if len(args) > 1:
+            raise template.TemplateSyntaxError(
+                "'{}' tag does not accept arguments, got {}".format(tag))
+    assert tag == "endcase", token.contents
+    parser.delete_first_token()
+    return CaseNode(lookup_expr, branches, default)
+
+
+class CaseNode(template.Node):
+
+    def __init__(self, lookup_expr, branches, default):
+        self.lookup_expr = lookup_expr
+        self.branches = branches
+        self.default = default
+
+    def render(self, context):
+        key = self.lookup_expr.resolve(context)
+        nodelist = self.branches.get(key, self.default)
+        if nodelist is None:
+            return ""
+        return nodelist.render(context)
