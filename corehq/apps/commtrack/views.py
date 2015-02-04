@@ -291,3 +291,7 @@ class StockLevelsView(BaseCommTrackManageView):
         else:
             data = self.get_existing_stock_levels()
         return StockLevelsForm(data)
+
+    def post(self, request, *args, **kwargs):
+        print request.POST.get('child_form_data')
+        return self.get(request, *args, **kwargs)

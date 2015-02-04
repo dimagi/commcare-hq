@@ -4,15 +4,6 @@
 {% load hq_shared_tags %}
 
 {% block main_column %}
-    <form class="form-horizontal" method="post">
-        <fieldset>
-            <legend>{% trans "Configure Stock Levels Per Location Type" %}</legend>
-            {{ stock_levels_form.as_table }}
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    {% trans "Submit" %}
-                </button>
-            </div>
-        </fieldset>
-    </form>
+    <legend>{% trans "Configure Stock Levels Per Location Type" %}</legend>
+    {{ stock_levels_form.as_table }}
 {% endblock %}

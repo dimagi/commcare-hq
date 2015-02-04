@@ -97,6 +97,7 @@ class FormListForm(object):
         """
         # TODO use self.child_forms here
         raw_child_form_data = json.loads(self.cleaned_data['child_form_data'])
+        print raw_child_form_data
         self.errors = False
         self.cleaned_data = []
         for raw_child_form in raw_child_form_data:

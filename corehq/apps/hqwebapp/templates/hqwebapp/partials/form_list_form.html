@@ -2,34 +2,48 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
-<table id="table-form" class="table table-striped table-bordered">
+<form id="table-form"
+      action="."
+      method="POST"
+      data-bind="submit: submit_table"
+      class="form form-horizontal">
+    {% csrf_token %}
+<fieldset>
+    <table class="table table-striped table-bordered">
 
-    <thead>
-        <tr>
-            {% for header in headers %}
-                <th>{{ header }}</th>
-            {% endfor %}
-        </tr>
-    </thead>
+        <thead>
+            <tr>
+                {% for header in headers %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
 
-    <tbody data-bind="foreach: rows">
-        <tr>
-            {% for spec in row_spec %}
-            <td>
-                {% if spec.type == "RAW" %}
-                    <span data-bind="text: get_value('{{ spec.key }}')"></span>
-                {% elif spec.type == "TextInput" %}
-                <input name="{{ spec.key }}"
-                       data-bind="value: get_value('{{ spec.key }}')">
-                {% else %}
-                    <span class="error">{{ spec.type }} NOT FOUND</span>
-                {% endif %}
-            </td>
-            {% endfor %}
-        </tr>
-    </tbody>
+        <tbody data-bind="foreach: rows">
+            <tr>
+                {% for spec in row_spec %}
+                <td>
+                    {% if spec.type == "RAW" %}
+                        <span data-bind="text: get_value('{{ spec.key }}')"></span>
+                    {% elif spec.type == "TextInput" %}
+                    <input name="{{ spec.key }}"
+                        data-bind="value: get_value('{{ spec.key }}')">
+                    {% else %}
+                        <span class="error">{{ spec.type }} NOT FOUND</span>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+        </tbody>
 
-</table>
+    </table>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            {% trans "Submit" %}
+        </button>
+    </div>
+</fieldset>
+</form>
 
 <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
 <script>
@@ -45,12 +59,42 @@ $(document).ready(function() {
 
     function TableModel(row_spec, raw_rows) {
         var self = this;
-        self.row_spec = row_spec;
+        self.keys = row_spec.map(function(spec) {
+            return spec['key'];
+        });
         self.rows = ko.observableArray();
 
         for (var i = 0; i < raw_rows.length; i++) {
             self.rows.push(new Row(raw_rows[i]));
         }
+
+        self.serialize = function() {
+            // for (var i = 0; i < self.rows().length; i++) {
+                // var row = self.rows()[i];
+                // console.log(self.keys);
+                // console.log(row);
+            // }
+            return self.rows().map(function(row) {
+                return self.keys.map(function(key) {
+                    return row.data[key];
+                });
+            });
+        };
+
+        self.submit_table = function(table_form) {
+            console.log(self.serialize());
+            var tableForm = $("<form>")
+                .attr("method", "POST")
+                .attr("action", table_form.action);
+            $('<input type="hidden">')
+                .attr('name', 'child_form_data')
+                .attr('value', JSON.stringify(self.serialize()))
+                .appendTo(tableForm);
+            tableForm.appendTo("body");
+            console.log(tableForm);
+            tableForm.submit();
+            console.log("Submitted!");
+        };
     }
 
     var tableModel = new TableModel({{ row_spec|JSON }}, {{ rows|JSON }});
