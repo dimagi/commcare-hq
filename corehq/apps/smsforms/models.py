@@ -179,7 +179,7 @@ class SQLXFormsSession(models.Model):
 def sync_sql_session_from_couch_session(couch_session):
     data = copy(couch_session._doc)
     couch_id = data.pop('_id')
-    data.pop('rev', None)
+    data.pop('_rev', None)
     try:
         sql_session = SQLXFormsSession.objects.get(couch_id=couch_id)
     except SQLXFormsSession.DoesNotExist:
