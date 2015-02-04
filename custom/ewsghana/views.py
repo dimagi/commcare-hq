@@ -1,10 +1,8 @@
 import json
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.domain.decorators import domain_admin_required
-from custom.common import ALL_OPTION
 from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
