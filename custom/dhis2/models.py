@@ -1,5 +1,6 @@
 # from django.db import models
 from datetime import date
+import json
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
 from django.conf import settings
 import requests
@@ -26,6 +27,14 @@ class Dhis2ApiQueryError(JsonApiError):
 
 class Dhis2ConfigurationError(Exception):
     pass
+
+
+def json_serializer(obj):
+    """
+    A JSON serializer that serializes dates and times
+    """
+    if hasattr(obj, 'isoformat'):
+        return obj.isoformat()
 
 
 class JsonApiRequest(object):
@@ -65,8 +74,9 @@ class JsonApiRequest(object):
         # Make a copy of self.headers because setting content type on requests that don't send content is bad
         headers = self.headers.copy()
         headers['Content-type'] = 'application/json'
+        json_data = json.dumps(data, default=json_serializer)
         try:
-            response = requests.post(self.baseurl + path, data, headers=headers, auth=self.auth, **kwargs)
+            response = requests.post(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
@@ -74,8 +84,9 @@ class JsonApiRequest(object):
     def put(self, path, data, **kwargs):
         headers = self.headers.copy()
         headers['Content-type'] = 'application/json'
+        json_data = json.dumps(data, default=json_serializer)
         try:
-            response = requests.put(self.baseurl + path, data, headers=self.headers, auth=self.auth, **kwargs)
+            response = requests.put(self.baseurl + path, json_data, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
@@ -98,8 +109,8 @@ class Dhis2Api(object):
         }
 
     def _fetch_tracked_entity_attributes(self):
-        __, json = self._request.get('trackedEntityAttributes', params={'links': 'false', 'paging': 'false'})
-        for te in json['trackedEntityAttributes']:
+        __, response = self._request.get('trackedEntityAttributes', params={'links': 'false', 'paging': 'false'})
+        for te in response['trackedEntityAttributes']:
             self._tracked_entity_attributes[te['name']] = te['id']
 
     def add_te_inst(self, entity_data, te_name, ou_id):
@@ -155,7 +166,7 @@ class Dhis2Api(object):
             'orgUnit': ou_id,
             'attributes': attributes
         }
-        status_code, response = self._request.post('trackedEntityInstances', request_data)
+        __, response = self._request.post('trackedEntityInstances', request_data)
         return response['reference']
 
     def update_te_inst(self, data):
@@ -173,7 +184,7 @@ class Dhis2Api(object):
             self._fetch_tracked_entity_attributes()
         # Set instance data keys to attribute IDs
         inst = {self.get_te_attr_id(k): v for k, v in data.iteritems()}
-        status_code, response = self._request.put('trackedEntityInstances/' + inst['id'], inst)
+        __, response = self._request.put('trackedEntityInstances/' + inst['id'], inst)
         return response
 
     def get_top_org_unit(self):
@@ -182,9 +193,9 @@ class Dhis2Api(object):
         """
         if settings.DHIS2_ORG_UNIT:
             # A top organisation unit has been specified in the settings. Use that
-            __, json = self._request.get('organisationUnits',
-                                         params={'links': 'false', 'query': settings.DHIS2_ORG_UNIT})
-            return json['organisationUnits'][0]
+            __, response = self._request.get('organisationUnits',
+                                             params={'links': 'false', 'query': settings.DHIS2_ORG_UNIT})
+            return response['organisationUnits'][0]
         # Traverse up the tree of organisation units
         __, org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
         org_unit = org_units_json['organisationUnits'][0]
@@ -201,12 +212,12 @@ class Dhis2Api(object):
         """
         Returns the ID of the given resource type with the given name
         """
-        __, json = self._request.get(resource, params={'links': 'false', 'query': name})
-        if not json[resource]:
+        __, response = self._request.get(resource, params={'links': 'false', 'query': name})
+        if not response[resource]:
             return None
-        if len(json[resource]) > 1:
+        if len(response[resource]) > 1:
             raise Dhis2ApiQueryError('Query returned multiple results')
-        return json[resource][0]['id']
+        return response[resource][0]['id']
 
     def get_program_id(self, name):
         """
@@ -245,7 +256,7 @@ class Dhis2Api(object):
         page = 1
         while True:
             # Because we don't have an "UNSET" filter, we need to fetch all and yield the unset ones
-            __, json = self._request.get(
+            __, response = self._request.get(
                 'trackedEntityInstances',
                 params={
                     'paging': 'true',
@@ -256,11 +267,11 @@ class Dhis2Api(object):
                     'ouMode': 'DESCENDANTS',
                     'attribute': attr_id
                 })
-            instances = self.entities_to_dicts(json)
+            instances = self.entities_to_dicts(response)
             for inst in instances:
                 if not inst.get(attr_name):
                     yield inst
-            if page < json['metaData']['pager']['pageCount']:
+            if page < response['metaData']['pager']['pageCount']:
                 page += 1
             else:
                 break
@@ -274,7 +285,7 @@ class Dhis2Api(object):
         attr_id = self.get_te_attr_id(attr_name)
         page = 1
         while True:
-            __, json = self._request.get(
+            __, response = self._request.get(
                 'trackedEntityInstances',
                 params={
                     'paging': 'true',
@@ -285,10 +296,10 @@ class Dhis2Api(object):
                     'ouMode': 'DESCENDANTS',
                     'attribute': attr_id + ':EQ:' + attr_value
                 })
-            instances = self.entities_to_dicts(json)
+            instances = self.entities_to_dicts(response)
             for inst in instances:
                 yield inst
-            if page < json['metaData']['pager']['pageCount']:
+            if page < response['metaData']['pager']['pageCount']:
                 page += 1
             else:
                 break
@@ -301,7 +312,7 @@ class Dhis2Api(object):
         program_id = self.get_program_id(program)
         page = 1
         while True:
-            __, json = self._request.get(
+            __, response = self._request.get(
                 'trackedEntityInstances',
                 params={
                     'paging': 'true',
@@ -311,10 +322,10 @@ class Dhis2Api(object):
                     'ouMode': 'DESCENDANTS',
                     'program': program_id
                 })
-            instances = self.entities_to_dicts(json)
+            instances = self.entities_to_dicts(response)
             for inst in instances:
                 yield inst
-            if page < json['metaData']['pager']['pageCount']:
+            if page < response['metaData']['pager']['pageCount']:
                 page += 1
             else:
                 break
@@ -325,16 +336,16 @@ class Dhis2Api(object):
         """
         page = 1
         while True:
-            __, json = self._request.get(
+            __, response = self._request.get(
                 'organisationUnits',
                 params={
                     'paging': 'true',
                     'page': page,
                     'links': 'false'
                 })
-            for org_unit in json['organisationUnits']:
+            for org_unit in response['organisationUnits']:
                 yield org_unit
-            if page < json['pager']['pageCount']:
+            if page < response['pager']['pageCount']:
                 page += 1
             else:
                 break
@@ -364,19 +375,23 @@ class Dhis2Api(object):
         """
         # cf. https://www.dhis2.org/doc/snapshot/en/user/html/ch31s34.html
         if when is None:
-            when = date.today().strftime('%Y-%m-%d')
+            when = date.today()
         request_data = {
             "trackedEntityInstance": te_inst_id,
             "program": program_id,
             "dateOfEnrollment": when,
             "dateOfIncident": when
         }
-        if data is not None:
+        if data:
             if any(key not in self._tracked_entity_attributes for key in data):
                 self._fetch_tracked_entity_attributes()
-            request_data['dataValues'] = {self._tracked_entity_attributes[k]: v for k, v in data.iteritems()}
-        __, json = self._request.post('enrollments', request_data)
-        return json
+            attributes = [{
+                'attribute': self.get_te_attr_id(key),
+                'value': value
+            } for key, value in data.iteritems()]
+            request_data['attributes'] = attributes
+        __, response = self._request.post('enrollments', request_data)
+        return response
 
     def enrolled_in(self, te_inst_id, program):
         """
@@ -388,7 +403,7 @@ class Dhis2Api(object):
         :return: boolean
         """
         # TODO: Find a better DHIS2 API search instead of iterating instances
-        return any(inst['Identity'] == te_inst_id for inst in self.gen_instances_in_program(program))
+        return any(inst['Instance'] == te_inst_id for inst in self.gen_instances_in_program(program))
 
     def form_to_event(self, program_id, xform, data_element_names):
         """
@@ -459,11 +474,11 @@ class Dhis2Api(object):
 
         .. _Events documentation: https://www.dhis2.org/doc/snapshot/en/user/html/ch28s09.html
         """
-        __, json = self._request.post('events', events)
-        return json
+        __, response = self._request.post('events', events)
+        return response
 
     @staticmethod
-    def entities_to_dicts(json):
+    def entities_to_dicts(response):
         """
         Parse the list of lists returned by a DHIS2 API entity request,
         and return it as a list of dictionaries.
@@ -557,13 +572,13 @@ class Dhis2Api(object):
 
         """
         entities = []
-        for row in json['rows']:
+        for row in response['rows']:
             entity = {}
             for i, item in enumerate(row):
-                if json['headers'][i]['column'] == 'Tracked entity':
+                if response['headers'][i]['column'] == 'Tracked entity':
                     # Look up the name of the tracked entity
-                    item = json['metaData']['names'][item]
-                entity[json['headers'][i]['column']] = item
+                    item = response['metaData']['names'][item]
+                entity[response['headers'][i]['column']] = item
             entities.append(entity)
         return entities
 

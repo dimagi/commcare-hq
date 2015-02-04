@@ -1,10 +1,11 @@
 from datetime import date
 import json
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator, register_repeater_type
+from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
 from custom.dhis2.models import Dhis2Api
-from custom.dhis2.tasks import NUTRITION_ASSESSMENT_FIELDS, RISK_ASSESSMENT_FIELDS, PROGRAM_FIELDS
+from custom.dhis2.tasks import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
+    RISK_ASSESSMENT_PROGRAM_FIELDS
 from django.conf import settings
 from custom.dhis2.tasks import DOMAIN
 
@@ -24,7 +25,7 @@ class FormRepeaterDhis2NutritionAssessmentEventPayloadGenerator(BasePayloadGener
             return json.dumps(None)
         dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
         nutrition_id = dhis2_api.get_program_id('Pediatric Nutrition Assessment')
-        event = dhis2_api.form_to_event(nutrition_id, form, NUTRITION_ASSESSMENT_FIELDS)
+        event = dhis2_api.form_to_event(nutrition_id, form, NUTRITION_ASSESSMENT_EVENT_FIELDS)
         return json.dumps(event)
 
 
@@ -54,7 +55,8 @@ class FormRepeaterDhis2RiskAssessmentEventPayloadGenerator(BasePayloadGenerator)
             return json.dumps(None)
         if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
             today = date.today().strftime('%Y-%m-%d')
-            program_data = {dhis2_attr: case[cchq_attr] for cchq_attr, dhis2_attr in PROGRAM_FIELDS.iteritems()}
+            program_data = {dhis2_attr: case[cchq_attr]
+                            for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()}
             dhis2_api.enroll_in_id(case['external_id'], risk_id, today, program_data)
-        event = dhis2_api.form_to_event(risk_id, form, RISK_ASSESSMENT_FIELDS)
+        event = dhis2_api.form_to_event(risk_id, form, RISK_ASSESSMENT_EVENT_FIELDS)
         return json.dumps(event)

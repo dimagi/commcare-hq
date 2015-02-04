@@ -33,42 +33,54 @@ from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
 
 # TODO: Move to custom app attributes
 DOMAIN = 'wv-lanka'
+# DOMAIN = 'sheel-wvlanka-test'
 
-FALLBACK_ORG_UNIT = 'Fermathe Clinic'
+NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
+    # CCHQ child_gmp case attribute: DHIS2 paediatric nutrition assessment program attribute
 
-PROGRAM_FIELDS = {
-    # CCHQ child_gmp case attribute: DHIS2 program attribute
+    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/yKSaDwadHTv.json
+    #      programTrackedEntityAttributes
+
     'child_first_name': 'First Name',
     'child_hh_name': 'Last Name',
     'dob': 'Date of Birth',
     'child_gender': 'Gender',
-    'chdr_number': 'CHDR Number',
-    'mother_first_name': 'Name of Mother/Guardian',
+    'chdr_number': 'CHDR Number',  # TODO: DHIS2 says this is optional, but throws an error if it's not passed
+    'mother_first_name': 'Name of the Mother/Guardian',
     'mother_phone_number': 'Mobile Number of the Mother',
     'street_name': 'Address',
 }
 
-NUTRITION_ASSESSMENT_FIELDS = {
-    # CCHQ form field: DHIS2 event attribute
+NUTRITION_ASSESSMENT_EVENT_FIELDS = {
+    # CCHQ form field: DHIS2 nutrition assessment event attribute
 
     # DHIS2 Event: Nutrition Assessment
     # CCHQ Form: Growth Monitoring
     # CCHQ form XMLNS: http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40
-    '/data/date_of_visit': 'Event Date',
-    '/data/child_age_months': 'Age at Follow Up Visit (months)',
-    '/data/child_height_rounded': 'Height (cm)',
-    '/data/child_weight': 'Weight (kg)',
-    '/data/bmi': 'Body Mass Index',
+    # 'date_of_visit': 'Event Date',
+    'child_age_months': 'Age at time of visit',  # 'Age at Follow Up Visit (months)',
+    'child_height_rounded': 'Height',
+    'child_weight': 'Weight',
+    'bmi': 'Body-Mass Index',
 }
 
-RISK_ASSESSMENT_FIELDS = {
-    # CCHQ form field: DHIS2 event attribute
+RISK_ASSESSMENT_PROGRAM_FIELDS = {
+
+    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/rLiay0C2ZVk.json
+    #      programTrackedEntityAttributes
+    'mother_id': 'Household Number',
+    'mother_first_name': 'Name of the Mother/Guardian',
+    'gn': 'GN Division of Household',
+}
+
+RISK_ASSESSMENT_EVENT_FIELDS = {
+    # CCHQ form field: DHIS2 risk assessment event attribute
 
     # DHIS2 Event: Underlying Risk
     # CCHQ form XMLNS: http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC Assessment
-    '/data/mother_id': 'Household Number',
-    '/data/mother_first_name': 'Name of Mother/Guardian',
-    '/data/gn': 'GN Division of Household',
+    'mother_id': 'Household Number',
+    'mother_first_name': 'Name of the Mother/Guardian',
+    'gn': 'GN Division of Household',
 }
 
 
@@ -90,22 +102,25 @@ def push_child_entities(children):
     dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
     # nutrition_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
     nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
-    fallback_org_unit = dhis2_api.get_resource_id('organisationUnits', FALLBACK_ORG_UNIT)
-    today = date.today().strftime('%Y-%m-%d')  # More explicit than str(date.today())
+
+    # For testing
+    # fallback_org_unit = dhis2_api.get_resource_id('organisationUnits', 'Fermathe Clinic')
+
+    today = date.today()
     for child in children:
-        try:
-            ou_id = child['dhis2_organisation_unit_id']  # App sets this case property from user custom data
-        except AttributeError:
-            # App did not set this case property from user custom data
-            # TODO: Tell someone.
-            # TODO: Or query case owner org unit
-            # Use fallback org unit
-            ou_id = fallback_org_unit
+        if getattr(child, 'dhis_org_id', None):
+            ou_id = child.dhis_org_id  # App sets this case property from user custom data
+        else:
+            # This is an old case, or org unit is not set. Skip it
+            continue
+
+            # For testing:
+            # ou_id = fallback_org_unit
 
         try:
             # Search for CCHQ Case ID in case previous attempt to register failed.
             dhis2_child = next(dhis2_api.gen_instances_with_equals('Child', 'CCHQ Case ID', child['_id']))
-            dhis2_child_id = dhis2_child['Identity']
+            dhis2_child_id = dhis2_child['Instance']
         except StopIteration:
             # Register child entity in DHIS2, and set CCHQ Case ID.
             dhis2_child = {
@@ -114,8 +129,16 @@ def push_child_entities(children):
             dhis2_child_id = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
 
         # Enroll in Pediatric Nutrition Assessment
-        program_data = {dhis2_attr: child[cchq_attr] for cchq_attr, dhis2_attr in PROGRAM_FIELDS.iteritems()}
-        dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, today, program_data)
+        date_of_visit = child['date_of_visit'] if getattr(child, 'date_of_visit', None) else today
+        program_data = {dhis2_attr: child[cchq_attr]
+                        for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
+                        if getattr(child, cchq_attr, None)}
+        # TODO: DHIS2 says CHDR Number is optional, but throws an error if it's not passed
+        response = dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, date_of_visit, program_data)
+        if response['status'] != 'SUCCESS':
+            # TODO: Log the error
+            # Skip to the next case
+            continue
 
         # Set external_id in CCHQ to flag the case as pushed.
         commcare_user = CommCareUser.get(child['owner_id'])
@@ -123,9 +146,7 @@ def push_child_entities(children):
             create=False,
             case_id=child['_id'],
             version=V2,
-            update={
-                'external_id': dhis2_child_id,
-            }
+            external_id=dhis2_child_id
         )
         casexml = ElementTree.tostring(caseblock.as_xml())
         submit_case_blocks(casexml, commcare_user.project.name)
