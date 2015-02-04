@@ -99,9 +99,9 @@ class SQLXFormsSession(models.Model):
     Keeps information about an SMS XForm session.
     """
     # generic properties
-    couch_id = models.CharField(null=True, blank=True, max_length=50)
+    couch_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
     connection_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
-    session_id = models.CharField(null=True, blank=True, max_length=50)
+    session_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
     form_xmlns = models.CharField(null=True, blank=True, max_length=100)
     start_time = models.DateTimeField()
     modified_time = models.DateTimeField()
@@ -172,15 +172,14 @@ class SQLXFormsSession(models.Model):
                 len(objs), domain, contact_id
             ))
         elif len(objs) == 0:
-            raise cls.DoesNotExist('no sessions found for domain {} and contact {}'.format(
-                domain, contact_id
-            ))
+            return None
         return objs[0]
 
 
 def sync_sql_session_from_couch_session(couch_session):
     data = copy(couch_session._doc)
     couch_id = data.pop('_id')
+    data.pop('rev', None)
     try:
         sql_session = SQLXFormsSession.objects.get(couch_id=couch_id)
     except SQLXFormsSession.DoesNotExist:
