@@ -507,7 +507,7 @@ class OPMCaseRow(object):
 
     @property
     def weight_grade_normal(self):
-        if self.block == "wazirganj":
+        if self.block == "atri":
             if self.child_age in [24, 36]:
                 if self.child_index == 1:
                     form_prop = 'interpret_grade'
@@ -527,7 +527,7 @@ class OPMCaseRow(object):
         returns None if inapplicable, False if not met, or
         2 for 2 years, or 3 for 3 years.
         """
-        if self.block == "atri":
+        if self.block == "wazirganj":
             if self.child_age in [24, 36]:
                 for form in self.filtered_forms(CHILDREN_FORMS):
                     if form.form.get('birth_spacing_prompt') == '1':

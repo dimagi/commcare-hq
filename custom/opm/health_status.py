@@ -131,6 +131,12 @@ class AWCHealthStatus(object):
            "Beneficiaries are exempt during the 1st month after childbirth, "
            "and when there is no VHND"),
          'mothers'),
+        ('beneficiary_vhnd',
+         _("Beneficiary VHND Attendance"),
+         _("Total beneficiaries who attended a VHND this month or were exempt.  "
+           "Beneficiaries are exempt during the 1st month after childbirth, "
+           "and when there is no VHND"),
+         'beneficiaries'),
         ('ifa_tablets',
          _("IFA Receipts"),
          _("Women 6 months pregnant who have received IFA tablets.  Exempt "
@@ -306,6 +312,10 @@ class AWCHealthStatus(object):
     @property
     def child_vhnd(self):
         return len([c for c in self.all_cases if c.child_attended_vhnd])
+
+    @property
+    def beneficiary_vhnd(self):
+        return len([c for c in self.all_cases if c.child_attended_vhnd or c.preg_attended_vhnd])
 
     @property
     def ifa_tablets(self):
