@@ -87,6 +87,7 @@
         }
 
         function CeleryTaskModel(data) {
+            var self = this;
             this.name = ko.observable(data.name);
             this.uuid = ko.observable(data.uuid);
             this.state = ko.observable(data.state);
@@ -98,6 +99,10 @@
             this.args = ko.observable(data.args);
             this.kwargs = ko.observable(data.kwargs);
             this.runtime = ko.observable(number_fix(data.runtime));
+
+            this.toggleArgs = function () {
+                $('#' + self.uuid()).toggle();
+            }
         }
 
         function PillowModel(pillow) {
@@ -447,8 +452,11 @@
                 <td data-bind="text: succeeded"></td>
                 <td data-bind="text: runtime"></td>
                 <td>
-                    args: <pre><span data-bind="text: args"></span></pre><br>
-                    kwargs:<pre><span data-bind="text: kwargs"></span></pre>
+                    <a href="#" data-bind="click: toggleArgs">Show / Hide args</a>
+                    <div data-bind="attr: {id: uuid}" style="display: none">
+                        args: <pre><span data-bind="text: args"></span></pre><br>
+                        kwargs:<pre><span data-bind="text: kwargs"></span></pre>
+                    </div>
                 </td>
             </tr>
             </tbody>
