@@ -210,7 +210,7 @@ def get_user_by_org_unit(domain, org_unit):
     """
     result = (UserES()
               .domain(domain)
-              .term('user_data.dhis2_org_unit_id', org_unit)
+              .term('user_data.dhis_org_id', org_unit)
               .run())
     if result.total:
         # Don't just assign all cases to the first user
