@@ -1,6 +1,27 @@
 {% load hq_shared_tags %}
 <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
 <script type="text/javascript">
+    function addCheckboxes() {
+        d3.selectAll('.nv-series').append("foreignObject")
+                .attr("x", -25)
+                .attr("y", -10)
+                .attr("width", 20)
+                .attr("height", 20);
+
+        $("foreignObject").append('<input type="checkbox" checked="checked">');
+
+        $(".nv-series").click(function(){
+            setTimeout(function() {
+                $(".nv-series").each(function() {
+                    if(/(^|\s)disabled(\s|$)/.test($(this).attr("class"))) {
+                        $(this).find("input").prop('checked', false);
+                    } else {
+                        $(this).find("input").prop('checked', true);
+                    }
+                });
+            }, 100);
+        });
+    }
 
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
@@ -9,11 +30,11 @@
         {% else %}
             var chart_data = {{ chart.data|JSON }};
         {% endif %}
-        var chart_id = '#{{ chart_id }}';
+        chart_id = '#{{ chart_id }}';
 
         $(chart_id).show();
 
-        var chart = nv.models.lineChart();
+        chart = nv.models.lineChart();
 
         chart.xAxis.axisLabel({{ chart.x_axis.label|JSON }});
         {% if chart.x_axis.format %}
@@ -66,25 +87,7 @@
             });
         {% endif %}
 
-        d3.selectAll('.nv-series').append("foreignObject")
-            .attr("x", -25)
-            .attr("y", -10)
-            .attr("width", 20)
-            .attr("height", 20);
-
-        $("foreignObject").append('<input type="checkbox" checked="checked">');
-
-        $(".nv-series").click(function(){
-            setTimeout(function() {
-            $(".nv-series").each(function() {
-                if(/(^|\s)disabled(\s|$)/.test($(this).attr("class"))) {
-                    $(this).find("input").prop('checked', false);
-                } else {
-                    $(this).find("input").prop('checked', true);
-                }
-            });
-            }, 100);
-        });
+        addCheckboxes();
         return chart;
     });
 </script>
