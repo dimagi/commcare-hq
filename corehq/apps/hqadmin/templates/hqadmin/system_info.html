@@ -68,6 +68,22 @@
             this.started_on = ko.observable(format_date(data.started_on));
             this.updated_on = ko.observable(format_date(data.updated_on));
             this.total_changes = ko.observable(data.total_changes);
+            this.changes_done = ko.observable(data.changes_done);
+            this.progress_contribution = ko.observable(data.progress_contribution);
+        }
+
+        function DesignDocModel(data) {
+            var self = this;
+            self.design_document = ko.observable(data.design_document);
+            self.details_id = self.design_document() + '_details';
+            var tasks = _(data.tasks).map(function (task) {
+                return new ActiveTaskModel(task);
+            });
+            self.tasks = ko.observableArray(tasks);
+
+            self.showDetails = function () {
+                $('#' + self.details_id).toggle();
+            };
         }
 
         function CeleryTaskModel(data) {
@@ -117,7 +133,11 @@
         }
 
         var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel);
+        {% if is_bigcouch %}
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", DesignDocModel, 'design_document');
+        {% else %}
         var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel);
+        {% endif %}
         var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, 'name');
         var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, 'description');
         $(function () {
@@ -291,7 +311,40 @@
             </tbody>
         </table>
     </div>
+    {% if is_bigcouch %}
+    <div class="row-fluid" id="couchblock">
+        <h3>Couch Tasks</h3>
+        <div class="row" data-bind="foreach: models">
+            <strong data-bind="text: design_document"></strong>
+             (<span data-bind="text: tasks().length"></span>)
+            <a href="#" data-bind="click: showDetails"> <i class="icon-plus-sign"></i></a>
+            <div class="progress" data-bind="foreach: tasks">
+              <div class="bar"  data-bind="style: { width: progress_contribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
+            </div>
+            <div class="well" data-bind="attr: {id: details_id}, foreach: tasks" style="display: none">
+                <table class="table">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <div class="progress">
+                              <div class="bar"  data-bind="style: { width: progress() + '%'}"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <p class="help-inline">
+                                <span data-bind="text: changes_done"></span> of
+                                <span data-bind="text: total_changes"></span>
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <em data-bind="text: database"></em>
 
+            </div>
+        </div>
+    </div>
+    {% else %}
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>
         <table class="table">
@@ -327,6 +380,7 @@
             </tbody>
         </table>
     </div>
+    {% endif %}
 
     <div class="row-fluid" id="celeryblock">
         <h3>Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small></h3>
