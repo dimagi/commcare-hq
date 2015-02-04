@@ -63,7 +63,18 @@
         </div>
         <div class="row">
           <table class="table table-striped">
-            <tr><td>{% trans "Doc ID:" %}</td><td><a href="{% url "global_quick_find" %}?q={{ error.doc_id }}" target="_blank">{{ error.doc_id }}</a></td></tr>
+            <tr>
+                <td>{% trans "Doc ID:" %}</td>
+                <td>
+                    {{ error.doc_id }}
+                    <a class="btn btn-mini" href="{% url "global_quick_find" %}?q={{ error.doc_id }}" target="_blank">
+                        <i class="icon-search"></i> {% trans "Search HQ" %}
+                    </a>
+                    <a class="btn btn-mini" href="{% url "doc_in_es" %}?id={{ error.doc_id }}" target="_blank">
+                        <i class="icon-file"></i> {% trans "Raw doc" %}
+                    </a>
+                </td>
+            </tr>
             <tr><td>{% trans "Doc Type:" %}</td><td>{{ error.doc_type}}</td></tr>
             <tr><td>{% trans "Domain(s):" %}</td><td>{{ error.domains }}</td></tr>
             <tr><td>{% trans "Doc Date:" %}</td><td>{{ error.doc_date|date:"d M Y H:i" }}</td></tr>
