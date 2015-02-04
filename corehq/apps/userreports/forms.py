@@ -206,6 +206,12 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
 
             return filter
 
+        filter_configs = json.loads(self.cleaned_data['filters'])
+        indicators = set(
+            [conf['property'] for conf in filter_configs] +
+            [self.cleaned_data["group_by"]]
+        )
+
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             display_name="{} source".format(self.cleaned_data['report_name']),
@@ -216,9 +222,8 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
                 'property_name': 'type',
                 'property_value': self.report_source,
             },
-            # TODO: Only make indicators for the fields needed by the filters (I think)
             configured_indicators=[
-                _make_indicator(cp) for cp in self.case_properties
+                _make_indicator(cp) for cp in indicators
             ]+[
                 {
                     "display_name": "Count",
@@ -252,7 +257,7 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
                 }
             ],
             filters=[
-                _make_report_filter(f) for f in json.loads(self.cleaned_data['filters'])
+                _make_report_filter(f) for f in filter_configs
             ],
             configured_charts=[{
                 "type": "multibar",
