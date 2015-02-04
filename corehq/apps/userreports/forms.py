@@ -92,7 +92,6 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
         super(ReportBuilderConfigureNewReportBase, self).__init__(*args, **kwargs)
 
         # Following attributes are needed for the create_report_from_form method
-        # TODO: Push these down to subclasses
         self.doc_type = source_type
         self.report_source = report_source
         self.case_properties = case_properties
@@ -141,7 +140,93 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
         )
 
     def create_report_from_form(self):
-        raise NotImplementedError
+        """
+        Creates data source and report config.
+        Returns report config id. #TODO: Does it?
+        """
+
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            display_name="{} source".format(self.cleaned_data['report_name']),
+            referenced_doc_type=self.doc_type,
+            table_id=_clean_table_name(self.domain, self.report_source),
+            configured_filter={
+                'type': 'property_match',  # TODO - use boolean_expression
+                'property_name': 'type',
+                'property_value': self.report_source,
+            },
+            configured_indicators=self._data_source_indicators
+        )
+        # TODO: Does validate check for unique table ids? It should I think.
+        data_source_config.validate()
+        data_source_config.save()
+        tasks.rebuild_indicators.delay(data_source_config._id)
+
+        report = ReportConfiguration(
+            domain=self.domain,
+            config_id=data_source_config._id,
+            title=self.cleaned_data['report_name'],
+            aggregation_columns=self._report_aggregation_cols,
+            columns=self._report_columns,
+            filters=self._report_filters,
+            configured_charts=self._report_charts
+        )
+        report.validate()
+        report.save()
+        return report
+
+    def _make_indicator(self, property_name):
+        return {
+            "type": "raw",
+            "column_id": property_name,
+            "datatype": get_default_case_property_datatypes().get(property_name, "string"),
+            'property_name': property_name,
+            "display_name": property_name,
+        }
+
+    @property
+    def _report_aggregation_cols(self):
+        return []
+
+    @property
+    def _report_columns(self):
+        return []
+
+    @property
+    def _data_source_indicators(self):
+        return []
+
+    @property
+    def _report_filters(self):
+        '''
+        Return the json filter configurations to be used by the
+        ReportConfiguration that this form produces.
+        '''
+
+        def _make_report_filter(conf):
+            filter = {
+                "field": conf["property"],
+                "slug": conf["property"],
+                "display": conf["display_text"]
+            }
+            if conf['format'] == "Choice":
+                filter["type"] = "dynamic_choice_list"
+            elif conf['format'] == "Date":
+                filter["type"] = "date"
+            elif conf['format'] == "Numeric":
+                filter["type"] = "numeric"
+            else:
+                # TODO: Raise something more specific or catch earlier
+                raise Exception
+
+            return filter
+
+        filter_configs = json.loads(self.cleaned_data['filters'])
+        return [_make_report_filter(f) for f in filter_configs]
+
+    @property
+    def _report_charts(self):
+        return []
 
 
 class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBase):
@@ -178,22 +263,12 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
         DataSourceConfiguration used by the ReportConfiguration that this form
         produces.
         '''
-
-        def _make_indicator(property_name):
-            return {
-                "type": "raw",
-                "column_id": property_name,
-                "datatype": get_default_case_property_datatypes().get(property_name, "string"),
-                'property_name': property_name,
-                "display_name": property_name,
-            }
-
         indicators = set(
             [f['field'] for f in self._report_filters] +
             [self.cleaned_data["group_by"]]
         )
 
-        return [_make_indicator(cp) for cp in indicators] + [
+        return [self._make_indicator(cp) for cp in indicators] + [
             {
                 "display_name": "Count",
                 "type": "count",
@@ -202,32 +277,8 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
         ]
 
     @property
-    def _report_filters(self):
-        '''
-        Return the json filter configurations to be used by the
-        ReportConfiguration that this form produces.
-        '''
-
-        def _make_report_filter(conf):
-            filter = {
-                "field": conf["property"],
-                "slug": conf["property"],
-                "display": conf["display_text"]
-            }
-            if conf['format'] == "Choice":
-                filter["type"] = "dynamic_choice_list"
-            elif conf['format'] == "Date":
-                filter["type"] = "date"
-            elif conf['format'] == "Numeric":
-                filter["type"] = "numeric"
-            else:
-                # TODO: Raise something more specific or catch earlier
-                raise Exception
-
-            return filter
-
-        filter_configs = json.loads(self.cleaned_data['filters'])
-        return [_make_report_filter(f) for f in filter_configs]
+    def _report_aggregation_cols(self):
+        return [self.cleaned_data["group_by"]]
 
     @property
     def _report_charts(self):
@@ -237,57 +288,24 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
             "y_axis_columns": ["count"],
         }]
 
-    def create_report_from_form(self):
-        """
-        Creates data source and report config.
-        Returns report config id. #TODO: Does it?
-        """
-
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            display_name="{} source".format(self.cleaned_data['report_name']),
-            referenced_doc_type=self.doc_type,
-            table_id=_clean_table_name(self.domain, self.report_source),
-            configured_filter={
-                'type': 'property_match',  # TODO - use boolean_expression
-                'property_name': 'type',
-                'property_value': self.report_source,
+    @property
+    def _report_columns(self):
+        return [
+            {
+                "format": "default",
+                "aggregation": "simple",
+                "field": self.cleaned_data["group_by"],
+                "type": "field",
+                "display": self.cleaned_data["group_by"]
             },
-            configured_indicators=self._data_source_indicators
-        )
-        # TODO: Does validate check for unique table ids? It should I think.
-        data_source_config.validate()
-        data_source_config.save()
-        tasks.rebuild_indicators.delay(data_source_config._id)
-
-        report = ReportConfiguration(
-            domain=self.domain,
-            config_id=data_source_config._id,
-            title=self.cleaned_data['report_name'],
-            aggregation_columns=[self.cleaned_data["group_by"]],
-            columns=[
-                {
-                    "format": "default",
-                    "aggregation": "simple",
-                    "field": self.cleaned_data["group_by"],
-                    "type": "field",
-                    "display": self.cleaned_data["group_by"]
-                },
-                {
-                    "format": "default",
-                    "aggregation": "sum",
-                    "field": "count",
-                    "type": "field",
-                    "display": "Count"
-                }
-            ],
-            filters=self._report_filters,
-            configured_charts=self._report_charts
-        )
-        report.validate()
-        report.save()
-        return report
-
+            {
+                "format": "default",
+                "aggregation": "sum",
+                "field": "count",
+                "type": "field",
+                "display": "Count"
+            }
+        ]
 
 # Should ReportBuilderConfigureNewBarChartReport and this class inherit from a
 # common ancestor instead?
@@ -319,3 +337,29 @@ class ReportBuilderConfigureNewTableReport(ReportBuilderConfigureNewReportBase):
                 crispy.Hidden('columns', None, data_bind="value: serializedProperties")
             )
         )
+
+    @property
+    def _report_columns(self):
+        def _make_column(conf):
+            return {
+                "format": "default",
+                "aggregation": "simple",
+                "field": conf['property'],
+                "type": "field",
+                "display": conf['display_text']
+            }
+        return [_make_column(conf) for conf in json.loads(self.cleaned_data['columns'])]
+
+    @property
+    def _data_source_indicators(self):
+        property_name = set(
+            [conf['property'] for conf in json.loads(self.cleaned_data['columns'])] +
+            [f['field'] for f in self._report_filters]
+        )
+        return [self._make_indicator(p) for p in property_name]
+
+    @property
+    def _report_aggregation_cols(self):
+        # TODO: Why is this needed?
+        #       Does it aggregate on everything by default?
+        return ['doc_id']
