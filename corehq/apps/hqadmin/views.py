@@ -648,17 +648,27 @@ def system_ajax(request):
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
     if type == "_active_tasks":
-        tasks = [] if is_bigcouch() else filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
-        #for reference structure is:
-        #        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
-        #            'design_document': 'mockymock', 'progress': 0,
-        #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
-        #            'total_changes': 1023},
-        #            {'type': 'indexer', 'pid': 'foo', 'database': 'mock',
-        #            'design_document': 'mockymock', 'progress': 70,
-        #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
-        #            'total_changes': 1023}]
-        return json_response(tasks)
+        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        if not is_bigcouch():
+            return json_response(tasks)
+        else:
+            # group tasks by design doc
+            task_map = defaultdict(dict)
+            for task in tasks:
+                meta = task_map[task['design_document']]
+                tasks = meta.get('tasks', [])
+                tasks.append(task)
+                meta['tasks'] = tasks
+
+            design_docs = []
+            for dd, meta in task_map.items():
+                meta['design_document'] = dd[len('_design/'):]
+                total_changes = sum(task['total_changes'] for task in meta['tasks'])
+                for task in meta['tasks']:
+                    task['progress_contribution'] = task['changes_done'] * 100 / total_changes
+
+                design_docs.append(meta)
+            return json_response(design_docs)
     elif type == "_stats":
         return json_response({})
     elif type == "_logs":
@@ -707,6 +717,7 @@ def system_info(request):
     context['db_update'] = request.GET.get('db_update', 30000)
     context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
+    context['is_bigcouch'] = is_bigcouch()
     context['rabbitmq_url'] = get_rabbitmq_management_url()
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
