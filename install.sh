@@ -8,19 +8,6 @@
 # Assumptions when running this install script:
 # - You have downloaded Git (sudo apt-get install git) and cloned this repository (git clone URL_OF_THIS_REPOSITORY)
 #   because it references the requirements folder
-# - Before running, you must download the JDK 7 tar.gz from
-#   http://www.oracle.com/technetwork/java/javase/downloads/index.html and save
-#   it as jdk.tar.gz in the commcare_hq directory, where this script resides.
-#       Note: If you're running this install from terminal, do the following to install oracle JDK 7
-#             - In a browser visit http://www.oracle.com/technetwork/java/javase/downloads/index.html
-#             - Click the Java SE 7 download link under 'JDK'
-#             - Accept the license agreement
-#             - Right Click and copy the download link.
-#             - Paste the download link at the end of the following line of code then execute this code
-#               wget --header "Cookie: oraclelicense=accept-securebackup-cookie" PASTE_DOWNLOAD_URL_HERE
-#             - Rename the file to jdk.tar.gz as per the install instructions
-#             - mv NAME_OF_DOWNLOADED_FILE.tar.gz commcare-hq/jdk.tar.gz
-
 
 
 # Database settings
@@ -37,14 +24,6 @@
 ## Misc settings
 
 ES_VERSION=0.90.13
-MINIMAL_INSTALL=
-JDK=1
-
-if [ ! -f jdk.tar.gz ]; then
-    echo "WARNING: No JDK tarball found; some pieces of CommCareHQ (Cloudcare) may be nonfunctional"
-    JDK=
-    MINIMAL_INSTALL=1
-fi
 
 #We have to get the latest apt-packages.txt file from the dimagi site
 if [ ! -d requirements  ]; then
@@ -53,7 +32,6 @@ if [ ! -d requirements  ]; then
     wget https://raw.github.com/dimagi/commcare-hq/master/requirements/apt-packages.txt
     cd ..
 fi
-
 
 ## Install OS-level package dependencies
 command -v apt-get > /dev/null 2>&1
@@ -66,7 +44,7 @@ if [ $? -eq 0 ]; then
         # Checks if add-apt-repository is available
         # add-apt-repository is provided by the python-software-properties package
         if [[ ! $(command -v add-apt-repository) ]]; then
-            sudo apt-get install python-software-properties
+            sudo apt-get -y install software-properties-common
         fi
 
         sudo add-apt-repository -y ppa:chris-lea/node.js
@@ -126,7 +104,11 @@ if [[ ! $(grep virtualenvwrapper ~/.bashrc) ]]; then
 fi
 
 ## Install Java ##
-if [ "$JDK" ] && [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
+if [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
+    if [ ! -f jdk.tar.gz ]; then
+        # See http://stackoverflow.com/questions/10268583/how-to-automate-download-and-installation-of-java-jdk-on-linux
+        wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz
+    fi
     tar -xzf jdk.tar.gz
     sudo mkdir /usr/lib/jvm
     sudo rm -r /usr/lib/jvm/jdk1.7.0/
@@ -137,11 +119,10 @@ if [ "$JDK" ] && [ ! -d /usr/lib/jvm/jdk1.7.0 ]; then
     sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
 
     sudo update-alternatives --auto java
-
 fi
 
 ## Install Jython ##
-if [ "$JDK" ] && [ ! -d /usr/local/lib/jython ]; then
+if [ ! -d /usr/local/lib/jython ]; then
     if [ ! -f jython_installer-2.5.2.jar ]; then
         wget http://downloads.sourceforge.net/project/jython/jython/2.5.2/jython_installer-2.5.2.jar
     fi
@@ -202,7 +183,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
 fi
 
 ## Install couchdb-lucene
-if [ ! "$MINIMAL_INSTALL" ] && [ ! -f /etc/init.d/couchdb-lucene ]; then
+if [ ! -f /etc/init.d/couchdb-lucene ]; then
     if [ ! -f v0.8.0.zip ]; then
         wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
@@ -230,7 +211,7 @@ _fti = {couch_httpd_external, handle_external_req, <<\"fti\">>}
 fi
 
 ## Install elastic-search ##
-if [ "$JDK" ] && [ ! -f /etc/init.d/elasticsearch ]; then
+if [ ! -f /etc/init.d/elasticsearch ]; then
     if [ "$PM" = "apt-ubuntu" ]; then
         file=elasticsearch-$ES_VERSION.deb
         if [ ! -f $file ]; then
@@ -267,40 +248,37 @@ fi
 # installs a system java package and changes the configured java install path,
 # which we don't want
 
-if [ ! "$MINIMAL_INSTALL" ]; then
-    sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
-    sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
-    sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
-fi
+sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1
+sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1
+sudo update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1
+
 
 sudo update-alternatives --auto java
 
 ## Ensure services start on startup ##
-if [ ! "$MINIMAL_INSTALL" ]; then
-    if [ "$PM" = "apt-ubuntu" ]; then
-        sudo update-rc.d couchdb defaults
-        sudo update-rc.d couchdb-lucene defaults
+if [ "$PM" = "apt-ubuntu" ]; then
+    sudo update-rc.d couchdb defaults
+    sudo update-rc.d couchdb-lucene defaults
 
-        # these should already be on by default
-        sudo update-rc.d elasticsearch defaults
-        sudo update-rc.d postgresql defaults
-    elif [ "$PM" = "yum-rhel" ]; then
-        sudo chkconfig --add couchdb
-        sudo chkconfig --add elasticsearch
-        sudo chkconfig --add postgresql
-        sudo chkconfig --add couchdb-lucene
-    
-        sudo chkconfig couchdb on
-        sudo chkconfig elasticsearch on
-        sudo chkconfig postgresql on
-        sudo chkconfig couchdb-lucene on
-    fi
+    # these should already be on by default
+    sudo update-rc.d elasticsearch defaults
+    sudo update-rc.d postgresql defaults
+elif [ "$PM" = "yum-rhel" ]; then
+    sudo chkconfig --add couchdb
+    sudo chkconfig --add elasticsearch
+    sudo chkconfig --add postgresql
+    sudo chkconfig --add couchdb-lucene
 
-    ## Ensure services are running ##
-    sudo service couchdb start
-    sudo service elasticsearch start
-    sudo service postgresql start
+    sudo chkconfig couchdb on
+    sudo chkconfig elasticsearch on
+    sudo chkconfig postgresql on
+    sudo chkconfig couchdb-lucene on
 fi
+
+## Ensure services are running ##
+sudo service couchdb start
+sudo service elasticsearch start
+sudo service postgresql start
 
 ## Configure databases ##
 DB=$POSTGRES_DB
