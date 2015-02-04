@@ -618,7 +618,7 @@ def view_recent_changes(request):
     def _to_chart_data(data_dict):
         return [
             {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
-        ]
+        ][:20]
 
     return render(request, 'hqadmin/couch_changes.html', {
         'count': count,
