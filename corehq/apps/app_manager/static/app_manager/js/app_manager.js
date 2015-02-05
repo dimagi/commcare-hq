@@ -242,7 +242,7 @@
 
         COMMCAREHQ.app_manager.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {
-                var version = '' + $(this).data('since-version') || '1.1',
+                var version = '' + $(this).attr('data-since-version') || '1.1',
                     upgradeMessage = $('<span class="upgrade-message"/>'),
                     area = $(this);
 
