@@ -1,4 +1,5 @@
 import json
+from django.http.response import HttpResponseServerError
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
 from couchdbkit import ResourceNotFound
@@ -9,6 +10,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
+from soil.exceptions import TaskFailedError
 from soil.util import expose_download, get_download_context
 from StringIO import StringIO
 from dimagi.utils.web import json_response
@@ -290,7 +292,11 @@ class ProductImportStatusView(BaseCommTrackManageView):
 @login_and_domain_required
 def product_importer_job_poll(request, domain, download_id,
         template="products/manage/partials/product_upload_status.html"):
-    context = get_download_context(download_id, check_state=True)
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
     context.update({
         'on_complete_short': _('Import complete.'),
         'on_complete_long': _('Product importing has finished'),
