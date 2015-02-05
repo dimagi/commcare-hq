@@ -181,43 +181,6 @@ class OpmFormSqlData(SqlData):
             return None
 
 
-VHND_PROPERTIES = [
-    "vhnd_available",
-    "vhnd_anm_present",
-    "vhnd_asha_present",
-    "vhnd_cmg_present",
-    "vhnd_ifa_available",
-    "vhnd_adult_scale_available",
-    "vhnd_child_scale_available",
-    "vhnd_adult_scale_functional",
-    "vhnd_child_scale_functional",
-    "vhnd_ors_available",
-    "vhnd_zn_available",
-    "vhnd_measles_vacc_available",
-]
-
-class VhndAvailabilitySqlData(SqlData):
-
-    table_name = "fluff_VhndAvailabilityFluff"
-
-    @property
-    def filter_values(self):
-        return {}
-
-    @property
-    def group_by(self):
-        return ['owner_id', 'date']
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def columns(self):
-        return [DatabaseColumn('date', SimpleColumn("date"))] +\
-               [DatabaseColumn("", SumColumn(prop)) for prop in VHND_PROPERTIES]
-
-
 class OpmHealthStatusSqlData(SqlData):
 
     table_name = 'fluff_OpmHealthStatusAllInfoFluff'
@@ -444,6 +407,15 @@ class SharedDataProvider(object):
     @property
     @memoized
     def _service_dates(self):
+        """
+        returns {
+            u'df5123010b24fc35260a84547148af06': {
+                'ifa_available': {datetime.date(2013, 1, 14),
+                                  datetime.date(2013, 8, 23)}
+                'zn_available': {datetime.date(2013, 1, 14)}
+            }
+        }
+        """
         forms = self.get_all_vhnd_forms()
         results = defaultdict(lambda: defaultdict(lambda: set()))
         for form in forms:

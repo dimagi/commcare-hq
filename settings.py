@@ -1191,7 +1191,6 @@ PILLOWTOPS = {
         'custom.opm.models.OpmFormFluffPillow',
         'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
         'custom.opm.models.OPMHierarchyFluffPillow',
-        'custom.opm.models.VhndAvailabilityFluffPillow',
         'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.reports.care_sa.models.CareSAFluffPillow',
         'custom.reports.mc.models.MalariaConsortiumFluffPillow',
