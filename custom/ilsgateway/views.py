@@ -181,9 +181,9 @@ class SupervisionDocuments(BaseDomainView):
         if form.is_valid():
             supervision_document = SupervisionDocument(document=form.cleaned_data['document'], domain=self.domain)
             supervision_document.save()
-            return HttpResponseRedirect(
-                reverse(self.urlname, args=[self.domain])
-            )
+        return HttpResponseRedirect(
+            reverse(self.urlname, args=[self.domain])
+        )
 
     @property
     def main_context(self):
