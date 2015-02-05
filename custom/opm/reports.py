@@ -443,6 +443,19 @@ class SharedDataProvider(object):
 
     @property
     @memoized
+    def case_owners(self):
+        q = (case_es.CaseES()
+             .domain(DOMAIN)
+             .case_type('vhnd')
+             .fields(['owner_id', '_id']))
+        return {
+            case['_id']: case['owner_id']
+            for case in q.run().hits
+            if (case.get('_id') and case.get('owner_id'))
+        }
+
+    @property
+    @memoized
     def _service_dates(self):
         """
         returns {
@@ -461,7 +474,8 @@ class SharedDataProvider(object):
             if not raw_date:
                 continue
             vhnd_date = parser.parse(raw_date).date()
-            owner_id = source.get('case', {}).get('@user_id')
+            case_id = source.get('case', {}).get('@case_id')
+            owner_id = self.case_owners[case_id]
             results[owner_id]['vhnd_available'].add(vhnd_date)
             for prop in self.vhnd_form_props:
                 if source.get(prop, None) == '1':
