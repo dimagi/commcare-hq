@@ -1,13 +1,13 @@
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import json
 from couchexport.tasks import rebuild_schemas
 
 
-def export_for_group(export_id_or_group, output_dir):
+def export_for_group(export_id_or_group, output_dir, ignore_unused=False):
     if isinstance(export_id_or_group, basestring):
         try:
             config = GroupExportConfiguration.get(export_id_or_group)
@@ -18,12 +18,22 @@ def export_for_group(export_id_or_group, output_dir):
 
     for subconfig, schema in config.all_exports:
         try:
-            rebuild_export(subconfig, schema, output_dir)
+            rebuild_export(subconfig, schema, output_dir, ignore_unused=ignore_unused)
         except ExportRebuildError:
             continue
 
 
-def rebuild_export(config, schema, output_dir):
+def rebuild_export(config, schema, output_dir, ignore_unused=False):
+    if output_dir == "couch":
+        saved = SavedBasicExport.view("couchexport/saved_exports",
+                                      key=json.dumps(config.index),
+                                      include_docs=True,
+                                      reduce=False).one()
+        if ignore_unused and saved and saved.last_accessed and \
+                (datetime.utcnow() - saved.last_accessed) > timedelta(days=7):
+            # ignore exports that haven't been accessed in the last 7 days
+            return
+
     try:
         files = schema.get_export_files(format=config.format)
     except SchemaMismatchException:
@@ -34,10 +44,6 @@ def rebuild_export(config, schema, output_dir):
     with files:
         payload = files.file.payload
         if output_dir == "couch":
-            saved = SavedBasicExport.view("couchexport/saved_exports",
-                                          key=json.dumps(config.index),
-                                          include_docs=True,
-                                          reduce=False).one()
             if not saved:
                 saved = SavedBasicExport(configuration=config)
             else:
