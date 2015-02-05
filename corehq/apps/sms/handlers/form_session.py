@@ -22,7 +22,7 @@ def form_session_handler(v, text, msg):
     the handler passes. If multiple sessions are open, they are all closed and an
     error message is displayed to the user.
     """
-    multiple, session = get_single_open_session(v.domain, v.owner_id)
+    multiple, session = get_single_open_session_or_close_multiple(v.domain, v.owner_id)
     if multiple:
         send_sms_to_verified_number(v, get_message(MSG_MULTIPLE_SESSIONS, v))
         return True
@@ -47,7 +47,7 @@ def form_session_handler(v, text, msg):
         return False
 
 
-def get_single_open_session(domain, contact_id):
+def get_single_open_session_or_close_multiple(domain, contact_id):
     """
     Retrieves the current open XFormsSession for the given contact.
     If multiple sessions are open, it closes all of them and returns
