@@ -463,11 +463,10 @@ class Dhis2Api(object):
             else:
                 # The case doesn't have an org unit.
                 # TODO: log it
-                # return
+                return
                 # For testing, fake it
-                org_unit = 'Thu5YoRCV8y'
+                # org_unit = 'Thu5YoRCV8y'
         data_values = [{
-            'dataElement': self._data_elements[element_name],
             'dataElement': self._data_elements[element_name],
             'value': xform.form[field_name],
         } for field_name, element_name in data_element_names.iteritems() if field_name in xform.form]

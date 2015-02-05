@@ -7,11 +7,11 @@ Replace this with more appropriate tests for your application.
 from contextlib import contextmanager
 from unittest import skip, SkipTest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
-from corehq.apps.receiverwrapper.models import FormRepeater, RepeatRecord
+from corehq.apps.receiverwrapper.models import RepeatRecord
 from corehq.apps.receiverwrapper.signals import create_repeat_records
-from corehq.apps.receiverwrapper.tasks import check_repeaters
 from couchdbkit import ResourceNotFound
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError
+from custom.dhis2.payload_generators import JsonFormRepeater
 from custom.dhis2.tasks import sync_cases, DOMAIN, sync_org_units
 from django.conf import settings
 from django.test import TestCase
@@ -465,11 +465,9 @@ class UtilTest(TestCase):
 
 
 # def test_nutrition_get_payload():
-#     xform = XFormInstance.get('01111de1-5e36-4b7a-a4ce-19ef544710f0')  # Growth monitoring/nutrition assessment
-#                                                                        # There are no risk assessment forms
-#     create_repeat_records(FormRepeater, xform)
-#     # check_repeaters()
 #
+#     xform = XFormInstance.get('01111de1-5e36-4b7a-a4ce-19ef544710f0')  # Growth monitoring/nutrition assessment
+#     create_repeat_records(JsonFormRepeater, xform)                     # There are no risk assessment forms atm
 #     repeat_records = RepeatRecord.all()
 #     for repeat_record in repeat_records:
 #         repeat_record.fire()

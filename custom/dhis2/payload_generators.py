@@ -52,10 +52,6 @@ class JsonFormRepeater(FormRepeater):
         """
         return Repeater.get_url(self, repeat_record)
 
-    @memoized
-    def payload_doc(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id)
-
 
 def create_json_form_repeat_records(sender, xform, **kwargs):
     create_repeat_records(JsonFormRepeater, xform)
@@ -78,7 +74,8 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
             nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
             event = dhis2_api.form_to_event(nutrition_id, form, NUTRITION_ASSESSMENT_EVENT_FIELDS)
-            return json.dumps(event, default=json_serializer)
+            # If the form is not to be forwarded, the event will be None
+            return json.dumps(event, default=json_serializer) if event else None
 
         elif form['xmlns'] == 'http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC':
             # This is a risk assessment form. It needs to be converted into a
@@ -95,6 +92,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
                 # This case has not yet been pushed to DHIS2.
                 # TODO: Try again later
                 return None
+            # TODO: Test one-line alternative below with risk assessment forms
             # Either ...
             if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
                 today = date.today().strftime('%Y-%m-%d')
@@ -105,7 +103,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # ... or just ...
             # event = dhis2_api.form_to_event(risk_id, form, RISK_ASSESSMENT_EVENT_FIELDS, case['external_id'])
             # ...?
-            return json.dumps(event, default=json_serializer)
+            return json.dumps(event, default=json_serializer) if event else None
 
         else:
             # This is not a form we care about

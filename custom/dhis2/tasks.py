@@ -15,7 +15,7 @@ is done using FormRepeater payload generators. See payload_generators.py for
 details.
 
 """
-from datetime import date
+from datetime import date, timedelta
 import random
 import uuid
 from xml.etree import ElementTree
@@ -255,7 +255,8 @@ def gen_children_only_ours(domain):
             yield CommCareCase.wrap(doc)
 
 
-@periodic_task(run_every=crontab(minute=4, hour=4))  # Run daily at 04h04
+# TODO: Use case forwarding, or form forwarding of registration forms
+@periodic_task(run_every=timedelta(minutes=5))  # Run every 5 minutes to match forwarded forms
 def sync_cases():
     """
     Create new child cases in CommCare for nutrition tracking, and associate
