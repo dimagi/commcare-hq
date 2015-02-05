@@ -2,7 +2,7 @@ from copy import copy
 from datetime import datetime
 from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import StringProperty, Document,\
-    DateTimeProperty, BooleanProperty, IntegerProperty
+    DateTimeProperty, BooleanProperty
 from django.db import models
 from django.db.models import Q
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
