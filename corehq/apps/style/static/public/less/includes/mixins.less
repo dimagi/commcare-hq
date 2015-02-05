@@ -1,3 +1,10 @@
 @import '../../../style/less/includes-3/mixins';
 
 @import "mixins/flower";
+
+.background-cover(@property) {
+  -webkit-background-size: @property;
+  -moz-background-size: @property;
+  -o-background-size: @property;
+  background-size: @property;
+}
