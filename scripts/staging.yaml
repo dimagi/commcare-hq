@@ -59,6 +59,7 @@ branches:
   - tdh-tiles # Noah 2/1
   - lwyszomi:ilsgateway-supervision-upload
   - lwyszomi:ews_report_chart_checkboxes
+  - graph-bulk-translations # Noah 2/5
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
