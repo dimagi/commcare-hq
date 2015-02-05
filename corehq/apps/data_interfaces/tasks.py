@@ -30,4 +30,4 @@ def bulk_archive_forms(user, uploaded_data):
         logger.info("[Data interfaces] %s", msg)
 
     html_content = render_to_string('data_interfaces/archive_email.html', response)
-    send_HTML_email('Your archived forms', user.email, html_content)
+    send_HTML_email(_('Your archived forms'), user.email, html_content)
