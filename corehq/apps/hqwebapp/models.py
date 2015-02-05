@@ -1303,10 +1303,7 @@ class AdminReportsTab(UITab):
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = [
-            {'title': _('View/Update Domain Information'),
-             'url': reverse('domain_update')},
-        ]
+        admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
             admin_operations.extend([
@@ -1324,20 +1321,12 @@ class AdminReportsTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('Domain Activity Report'),
-                 'url': reverse('domain_activity_report')},
                 {'title': _('Message Logs Across All Domains'),
                  'url': reverse('message_log_report')},
-                {'title': _('Global Statistics'),
-                 'url': reverse('global_report')},
                 {'title': _('CommCare Versions'),
                  'url': reverse('commcare_version_report')},
-                {'title': _('Submissions & Error Statistics per Domain'),
-                 'url': reverse('global_submissions_errors')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
-                {'title': _('Mobile User Reports'),
-                 'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
             ]),

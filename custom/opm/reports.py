@@ -1057,7 +1057,8 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             return DataTablesHeader(*headers)
 
         def rows():
-            for awc in map(AWCHealthStatus, self.awc_data().values()):
+            for awc_name, cases in self.awc_data().items():
+                awc = AWCHealthStatus(awc_name, cases)
                 row = []
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)
