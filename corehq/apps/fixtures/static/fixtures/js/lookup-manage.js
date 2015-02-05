@@ -264,7 +264,7 @@ $(function () {
                         if (resp.replace(/[ \t\n]/g,'')) {
                             $("#downloading").hide();
                             progress.show().html(resp);
-                            if (progress.find(".alert").length) {
+                            if (progress.find(".alert-success").length) {
                                 clearInterval(interval);
                             };
                         }

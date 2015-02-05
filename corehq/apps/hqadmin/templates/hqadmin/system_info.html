@@ -68,9 +68,26 @@
             this.started_on = ko.observable(format_date(data.started_on));
             this.updated_on = ko.observable(format_date(data.updated_on));
             this.total_changes = ko.observable(data.total_changes);
+            this.changes_done = ko.observable(data.changes_done);
+            this.progress_contribution = ko.observable(data.progress_contribution);
+        }
+
+        function DesignDocModel(data) {
+            var self = this;
+            self.design_document = ko.observable(data.design_document);
+            self.details_id = self.design_document() + '_details';
+            var tasks = _(data.tasks).map(function (task) {
+                return new ActiveTaskModel(task);
+            });
+            self.tasks = ko.observableArray(tasks);
+
+            self.showDetails = function () {
+                $('#' + self.details_id).toggle();
+            };
         }
 
         function CeleryTaskModel(data) {
+            var self = this;
             this.name = ko.observable(data.name);
             this.uuid = ko.observable(data.uuid);
             this.state = ko.observable(data.state);
@@ -82,6 +99,10 @@
             this.args = ko.observable(data.args);
             this.kwargs = ko.observable(data.kwargs);
             this.runtime = ko.observable(number_fix(data.runtime));
+
+            this.toggleArgs = function () {
+                $('#' + self.uuid()).toggle();
+            }
         }
 
         function PillowModel(pillow) {
@@ -117,18 +138,57 @@
         }
 
         var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel);
+        {% if is_bigcouch %}
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", DesignDocModel, 'design_document');
+        {% else %}
         var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel);
+        {% endif %}
         var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, 'name');
         var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, 'description');
+
+        var AutoRefreshModel = function () {
+            var self = this;
+            self.refreshStatus = ko.observable(false);
+            self.refreshStatusText = ko.observable('off');
+            self.models = [];
+            self.timers = [];
+
+            self.addModel = function (model, refreshInterval) {
+                self.models.push({
+                    'model': model,
+                    'interval': refreshInterval
+                });
+            };
+
+            self.toggleRefresh = function () {
+                self.refreshStatus(!self.refreshStatus());
+                self.refreshStatusText(self.refreshStatus() ? 'on' : 'off');
+                var model, timer;
+                if (self.refreshStatus()) {
+                    $.each(self.models, function (index, model) {
+                        self.timers.push(setInterval(function () { model.model.refresh(); }, model.interval));
+                    });
+                } else {
+                    while(self.timers.length > 0) {
+                        clearInterval(self.timers.pop());
+                    }
+                }
+            };
+        };
+
+        var autoRefresh = new AutoRefreshModel();
         $(function () {
             ko.applyBindings(celeryViewModel, $("#celeryblock").get(0));
             ko.applyBindings(couchViewModel, $("#couchblock").get(0));
             ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
             ko.applyBindings(dbComparisonsViewModel, $('#elastic-vs-couch').get(0));
-            setInterval(function () { celeryViewModel.refresh(); }, {{ celery_update }});
-            setInterval(function () { couchViewModel.refresh(); }, {{ couch_update }});
-            setInterval(function () { pillowtopViewModel.refresh(); }, {{ couch_update }});
-            setInterval(function () { dbComparisonsViewModel.refresh(); }, {{ db_update }});
+            autoRefresh.addModel(celeryViewModel, {{ celery_update }});
+            autoRefresh.addModel(couchViewModel, {{ couch_update }});
+            autoRefresh.addModel(pillowtopViewModel, {{ couch_update }});
+            autoRefresh.addModel(dbComparisonsViewModel, {{ db_update }});
+
+            autoRefresh.toggleRefresh();
+            ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
         });
 
         $(document).on("click", ".reset_pillow_checkpoint_btn", function () {
@@ -155,7 +215,6 @@
                     <th></th>
                     <th>Quick Links</th>
                     <th>Current Worker</th>
-                    <th>Memcached Status</th>
                     <th>Redis Status</th>
                     <th>Celery Status</th>
                     <th>Elasticsearch Status</th>
@@ -167,14 +226,14 @@
                 <td>
                     <ul>
                         <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>
+                        <li>
+                            <div id="autorefresh">
+                                Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
+                            </div>
+                        </li>
                     </ul>
                 </td>
                 <td><strong>{{ current_system }}</strong></td>
-                <td>
-                    {{ memcached_status }}
-                    <br>
-                    {{ memcached_results }}
-                </td>
                 <td>
                     {{ redis_status }}
                     <br>
@@ -297,7 +356,40 @@
             </tbody>
         </table>
     </div>
+    {% if is_bigcouch %}
+    <div class="row-fluid" id="couchblock">
+        <h3>Couch Tasks</h3>
+        <div class="row" data-bind="foreach: models">
+            <strong data-bind="text: design_document"></strong>
+             (<span data-bind="text: tasks().length"></span>)
+            <a href="#" data-bind="click: showDetails"> <i class="icon-plus-sign"></i></a>
+            <div class="progress" data-bind="foreach: tasks">
+              <div class="bar"  data-bind="style: { width: progress_contribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
+            </div>
+            <div class="well" data-bind="attr: {id: details_id}, foreach: tasks" style="display: none">
+                <table class="table">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <div class="progress">
+                              <div class="bar"  data-bind="style: { width: progress() + '%'}"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <p class="help-inline">
+                                <span data-bind="text: changes_done"></span> of
+                                <span data-bind="text: total_changes"></span>
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <em data-bind="text: database"></em>
 
+            </div>
+        </div>
+    </div>
+    {% else %}
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>
         <table class="table">
@@ -333,6 +425,7 @@
             </tbody>
         </table>
     </div>
+    {% endif %}
 
     <div class="row-fluid" id="celeryblock">
         <h3>Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small></h3>
@@ -359,8 +452,11 @@
                 <td data-bind="text: succeeded"></td>
                 <td data-bind="text: runtime"></td>
                 <td>
-                    args: <pre><span data-bind="text: args"></span></pre><br>
-                    kwargs:<pre><span data-bind="text: kwargs"></span></pre>
+                    <a href="#" data-bind="click: toggleArgs">Show / Hide args</a>
+                    <div data-bind="attr: {id: uuid}" style="display: none">
+                        args: <pre><span data-bind="text: args"></span></pre><br>
+                        kwargs:<pre><span data-bind="text: kwargs"></span></pre>
+                    </div>
                 </td>
             </tr>
             </tbody>

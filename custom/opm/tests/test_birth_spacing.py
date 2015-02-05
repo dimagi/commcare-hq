@@ -27,7 +27,7 @@ class TestBirthSpacing(TestCase):
             forms=[],
             dod=date(2013, 12, 10),
         )
-        report = Report(month=6, year=2014, block="Atri")
+        report = Report(month=6, year=2014, block="Wazirganj")
         row = MockCaseRow(case, report)
         self.assertEqual(row.child_age, 6)
         self.assertEqual(None, row.birth_spacing_years)
@@ -41,7 +41,7 @@ class TestBirthSpacing(TestCase):
             ],
             dod=date(2012, 1, 10),
         )
-        report = Report(month=1, year=2014, block="Atri")
+        report = Report(month=1, year=2014, block="Wazirganj")
         row = MockCaseRow(case, report)
         self.assertEqual(row.child_age, 24)
         self.assertEqual(row.birth_spacing_years, 2)
@@ -55,7 +55,7 @@ class TestBirthSpacing(TestCase):
             ],
             dod=date(2012, 3, 10),
         )
-        report = Report(month=1, year=2014, block="Atri")
+        report = Report(month=1, year=2014, block="Wazirganj")
         row = MockCaseRow(case, report)
         self.assertEqual(row.child_age, 22)
         self.assertEqual(None, row.birth_spacing_years)
@@ -70,7 +70,7 @@ class TestBirthSpacing(TestCase):
             ],
             dod=date(2012, 1, 10),
         )
-        report = Report(month=1, year=2014, block="Atri")
+        report = Report(month=1, year=2014, block="Wazirganj")
         row = MockCaseRow(case, report)
         self.assertEqual(row.child_age, 24)
         self.assertFalse(row.birth_spacing_years)
@@ -83,14 +83,15 @@ class TestWeightGradeNormal(ChildConditionMixin, TestCase):
         self.row_property = 'weight_grade_normal'
         self.met_value = 'normal'
         self.not_met_value = 'MAM'
-        self.block = 'wazirganj'
+        self.block = 'Atri'
 
     def form_json(self, value):
         return {self.form_prop: value}
 
     def test_wrong_block(self):
-        self.block = 'atri'
-        self.assertCondition(None,
+        self.block = 'wazirganj'
+        self.assertCondition(
+            None,
             forms=[],
             child_age=24,
         )

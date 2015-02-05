@@ -33,7 +33,7 @@ from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
 
 
-ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
+ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
 ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer']
 ROLES_CELERY = ['django_monolith', 'django_celery']
 ROLES_PILLOWTOP = ['django_monolith', 'django_pillowtop']
@@ -347,8 +347,6 @@ def development():
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
     couchdb = servers['couchdb']
-    redis = servers['redis']
-    memcached = servers['memcached']
     touchforms = servers['touchforms']
     elasticsearch = servers['elasticsearch']
     celery = servers['celery']

@@ -131,6 +131,12 @@ class AWCHealthStatus(object):
            "Beneficiaries are exempt during the 1st month after childbirth, "
            "and when there is no VHND"),
          'mothers'),
+        ('beneficiary_vhnd',
+         _("Beneficiary VHND Attendance"),
+         _("Total beneficiaries who attended a VHND this month or were exempt.  "
+           "Beneficiaries are exempt during the 1st month after childbirth, "
+           "and when there is no VHND"),
+         'beneficiaries'),
         ('ifa_tablets',
          _("IFA Receipts"),
          _("Women 6 months pregnant who have received IFA tablets.  Exempt "
@@ -308,6 +314,10 @@ class AWCHealthStatus(object):
         return len([c for c in self.all_cases if c.child_attended_vhnd])
 
     @property
+    def beneficiary_vhnd(self):
+        return len([c for c in self.all_cases if c.child_attended_vhnd or c.preg_attended_vhnd])
+
+    @property
     def ifa_tablets(self):
         return len([c for c in self.all_cases if c.preg_received_ifa])
 
@@ -371,47 +381,47 @@ class AWCHealthStatus(object):
 
     @property
     def anm_present(self):
-        return self.service_available('vhnd_anm_present')
+        return self.service_available('attend_ANM')
 
     @property
     def asha_present(self):
-        return self.service_available('vhnd_asha_present')
+        return self.service_available('attend_ASHA')
 
     @property
     def cmg_present(self):
-        return self.service_available('vhnd_cmg_present')
+        return self.service_available('attend_cmg')
 
     @property
     def adult_scale_available(self):
-        return self.service_available('vhnd_adult_scale_available')
+        return self.service_available('big_weight_machine_avail')
 
     @property
     def adult_scale_functional(self):
-        return self.service_available('vhnd_adult_scale_functional')
+        return self.service_available('func_bigweighmach')
 
     @property
     def child_scale_available(self):
-        return self.service_available('vhnd_child_scale_available')
+        return self.service_available('child_weight_machine_avail')
 
     @property
     def child_scale_functional(self):
-        return self.service_available('vhnd_child_scale_functional')
+        return self.service_available('func_childweighmach')
 
     @property
     def ifa_stock_available(self):
-        return self.service_available('vhnd_ifa_available')
+        return self.service_available('stock_ifatab')
 
     @property
     def ors_stock_available(self):
-        return self.service_available('vhnd_ors_available')
+        return self.service_available('stock_ors')
 
     @property
     def zinc_stock_available(self):
-        return self.service_available('vhnd_zn_available')
+        return self.service_available('stock_zntab')
 
     @property
     def measles_stock_available(self):
-        return self.service_available('vhnd_measles_vacc_available')
+        return self.service_available('stock_measlesvacc')
 
     @property
     def birth_spacing_bonus(self):
