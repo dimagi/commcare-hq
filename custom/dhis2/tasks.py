@@ -19,7 +19,6 @@ from datetime import date, timedelta
 import random
 import uuid
 from xml.etree import ElementTree
-from django.conf import settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
@@ -28,64 +27,8 @@ from celery.task import periodic_task
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
-from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit
-
-
-# TODO: Move to custom app attributes
-DOMAIN = 'wv-lanka'
-# DOMAIN = 'sheel-wvlanka-test'
-
-NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
-    # CCHQ child_gmp case attribute: DHIS2 paediatric nutrition assessment program attribute
-
-    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/yKSaDwadHTv.json
-    #      programTrackedEntityAttributes
-
-    'child_first_name': 'First Name',
-    'child_hh_name': 'Last Name',
-    'dob': 'Date of Birth',
-    'child_gender': 'Gender',
-    'chdr_number': 'CHDR Number',  # TODO: DHIS2 says this is optional, but throws an error if it's not passed
-    'mother_first_name': 'Name of the Mother/Guardian',
-    'mother_phone_number': 'Mobile Number of the Mother',
-    'street_name': 'Address',
-}
-
-NUTRITION_ASSESSMENT_EVENT_FIELDS = {
-    # CCHQ form field: DHIS2 nutrition assessment event data elements
-
-    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/dataElements.json
-
-    # DHIS2 Event: Nutrition Assessment
-    # CCHQ Form: Growth Monitoring
-    # CCHQ form XMLNS: http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40
-    'child_age_months': 'Age at follow-up visit (months)',
-    'child_height_rounded': 'Height (cm)',
-    'child_weight': 'Weight (kg)',
-    'bmi': 'Body Mass Index',
-}
-
-RISK_ASSESSMENT_PROGRAM_FIELDS = {
-    # CCHQ child_gmp case attribute: DHIS2 risk assessment program attribute
-
-    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/rLiay0C2ZVk.json
-    #      programTrackedEntityAttributes
-    'mother_id': 'Household Number',
-    'mother_first_name': 'Name of the Mother/Guardian',
-    'gn': 'GN Division of Household',
-}
-
-RISK_ASSESSMENT_EVENT_FIELDS = {
-    # CCHQ form field: DHIS2 risk assessment event data elements
-
-    # No relevant data elements found at http://dhis1.internal.commcarehq.org:8080/dhis/api/dataElements.json
-
-    # DHIS2 Event: Underlying Risk
-    # CCHQ form XMLNS: http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC Assessment
-    # 'mother_id': 'Household Number',
-    # 'mother_first_name': 'Name of the Mother/Guardian',
-    # 'gn': 'GN Division of Household',
-}
+from custom.dhis2.const import DOMAIN, NUTRITION_ASSESSMENT_PROGRAM_FIELDS
+from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Setting, is_dhis2_enabled
 
 
 def push_child_entities(children):
@@ -103,7 +46,8 @@ def push_child_entities(children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    settings = {s.key: s.value for s in Setting.objects.all()}
+    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
     # nutrition_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
     nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
 
@@ -173,7 +117,8 @@ def pull_child_entities(domain, dhis2_children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    settings = {s.key: s.value for s in Setting.objects.all()}
+    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
     for dhis2_child in dhis2_children:
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
         case = get_case_by_external_id(domain, dhis2_child['Instance'])  # Instance is DHIS2's friendly name for id
@@ -235,7 +180,8 @@ def get_children_only_theirs():
     Returns a list of child entities that are enrolled in Paediatric Nutrition
     Assessment and don't have CCHQ Case ID set.
     """
-    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    settings = {s.key: s.value for s in Setting.objects.all()}
+    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
     for inst in dhis2_api.gen_instances_in_program('Paediatric Nutrition Assessment'):
         if not inst.get('CCHQ Case ID'):
             yield inst
@@ -263,7 +209,7 @@ def sync_cases():
     CommCare child cases with DHIS2 child entities and enroll them in the
     Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
     """
-    if not settings.DHIS2_ENABLED:
+    if not is_dhis2_enabled:
         return
     children = get_children_only_theirs()
     pull_child_entities(DOMAIN, children)
@@ -287,9 +233,10 @@ def sync_org_units():
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
 
     """
-    if not settings.DHIS2_ENABLED:
+    if not is_dhis2_enabled:
         return
-    dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+    settings = {s.key: s.value for s in Setting.objects.all()}
+    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
     # TODO: Is it a bad idea to read all org units into dictionaries and sync them ...
     their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units()}
     # ... or should we rather just drop all ours and import all theirs every time?

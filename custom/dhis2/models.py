@@ -3,13 +3,8 @@ from datetime import date
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
-from django.conf import settings
+from custom.dhis2.const import DOMAIN, ORG_UNIT_FIXTURES, SETTINGS_FIXTURES
 import requests
-
-
-# TODO: Move to init
-DOMAIN = 'wv-lanka'
-LOOKUP_TABLE = 'dhis2_org_unit'
 
 
 class JsonApiError(Exception):
@@ -198,10 +193,13 @@ class Dhis2Api(object):
         """
         Return the top-most organisation unit.
         """
-        if settings.DHIS2_ORG_UNIT:
+        settings = {s.key: s.value for s in Setting.objects.all()}
+
+        if settings['dhis2_top_org_unit_name']:
             # A top organisation unit has been specified in the settings. Use that
             __, response = self._request.get('organisationUnits',
-                                             params={'links': 'false', 'query': settings.DHIS2_ORG_UNIT})
+                                             params={'links': 'false',
+                                                     'query': settings['dhis2_top_org_unit_name']})
             return response['organisationUnits'][0]
         # Traverse up the tree of organisation units
         __, org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
@@ -465,7 +463,7 @@ class Dhis2Api(object):
                 # TODO: log it
                 return
                 # For testing, fake it
-                # org_unit = 'Thu5YoRCV8y'
+                # org_unit = self.get_resource_id('organisationUnits', 'Fermathe Clinic')
         data_values = [{
             'dataElement': self._data_elements[element_name],
             'value': xform.form[field_name],
@@ -687,4 +685,26 @@ class Dhis2OrgUnit(object):
         item = FixtureDataItem.get(self._fixture_id)
         item.delete()
 
-Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, DOMAIN, LOOKUP_TABLE)
+Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, DOMAIN, ORG_UNIT_FIXTURES)
+
+
+class Setting(object):
+
+    objects = None
+
+    def __init__(self, key, value, _fixture_id=None):
+        self.key = key
+        self.value = value
+        self._fixture_id = _fixture_id
+
+Setting.objects = FixtureManager(Setting, DOMAIN, SETTINGS_FIXTURES)
+
+
+def is_dhis2_enabled():
+    """
+    Checks whether the "dhis2_enabled" setting is truthy.
+
+    :return True if "True", "t", "Yes", "y" (case insensitive)
+    """
+    settings = {s.key: s.value for s in Setting.objects.all()}
+    return settings.get('dhis2_enabled', 'n').lower()[0] in ('y', 't')

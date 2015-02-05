@@ -23,13 +23,9 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator, Repeater, register_repeater_type
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
 from corehq.apps.receiverwrapper.signals import create_repeat_records, successful_form_received
-from custom.dhis2.models import Dhis2Api, json_serializer
-from custom.dhis2.tasks import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
+from custom.dhis2.models import Dhis2Api, json_serializer, is_dhis2_enabled, Setting
+from custom.dhis2.const import DOMAIN, NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS
-from custom.dhis2.tasks import DOMAIN
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
-from couchforms.models import XFormInstance
 
 
 @register_repeater_type
@@ -68,10 +64,13 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
         return domain == DOMAIN
 
     def get_payload(self, repeat_record, form):
+        if not is_dhis2_enabled:
+            return
+        settings = {s.key: s.value for s in Setting.objects.all()}
+        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
         if form['xmlns'] == 'http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40':
             # This is a growth monitoring form. It needs to be converted into
             # a paediatric nutrition assessment event.
-            dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
             nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
             event = dhis2_api.form_to_event(nutrition_id, form, NUTRITION_ASSESSMENT_EVENT_FIELDS)
             # If the form is not to be forwarded, the event will be None
@@ -80,7 +79,6 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
         elif form['xmlns'] == 'http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC':
             # This is a risk assessment form. It needs to be converted into a
             # risk assessment event.
-            dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
             risk_id = dhis2_api.get_program_id('Underlying Risk Assessment')
             # Check whether the case needs to be enrolled in the Risk Assessment Program
             cases = CommCareCase.get_by_xform_id(form.get_id)

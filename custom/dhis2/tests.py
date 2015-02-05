@@ -10,10 +10,10 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from corehq.apps.receiverwrapper.models import RepeatRecord
 from corehq.apps.receiverwrapper.signals import create_repeat_records
 from couchdbkit import ResourceNotFound
-from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError
+from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, DOMAIN, \
+    Setting
 from custom.dhis2.payload_generators import JsonFormRepeater
-from custom.dhis2.tasks import sync_cases, DOMAIN, sync_org_units
-from django.conf import settings
+from custom.dhis2.tasks import sync_cases, sync_org_units
 from django.test import TestCase
 from mock import patch, Mock
 from couchforms.models import XFormInstance
@@ -211,9 +211,10 @@ class Dhis2ApiTest(TestCase):
         """
         get_top_org_unit should return the name and ID of the org unit specified in settings
         """
-        if not settings.DHIS2_ORG_UNIT:
+        settings = {s.key: s.value for s in Setting.objects.all()}
+        if not settings['dhis2_top_org_unit_name']:
             raise SkipTest('An org unit is not set in settings.py')
-        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
         org_unit = dhis2_api.get_top_org_unit()
         self.assertEqual(org_unit['name'], settings.DHIS2_ORG_UNIT)
         self.assertTrue(bool(org_unit['id']))
@@ -223,8 +224,9 @@ class Dhis2ApiTest(TestCase):
         """
         get_top_org_unit should return the name and ID of the top org unit
         """
-        self.settings(DHIS2_ORG_UNIT=None)  # Make sure get_top_org_unit navigates up tree of org units
-        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        settings = {s.key: s.value for s in Setting.objects.all()}
+        # TODO: Make sure get_top_org_unit navigates up tree of org units
+        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
         org_unit = dhis2_api.get_top_org_unit()
         self.assertTrue(bool(org_unit['name']))
         self.assertTrue(bool(org_unit['id']))
@@ -236,7 +238,8 @@ class Dhis2ApiTest(TestCase):
         resources = {'Knights': [
             {'name': 'Michael Palin', 'id': 'c0ffee'},
         ]}
-        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        settings = {s.key: s.value for s in Setting.objects.all()}
+        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
         dhis2_api._request.get = Mock(return_value=('foo', resources))
 
         result = dhis2_api.get_resource_id('Knights', 'Who Say "Ni!"')
@@ -249,7 +252,8 @@ class Dhis2ApiTest(TestCase):
         get_resource_id should return None if none found
         """
         resources = {'Knights': []}
-        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        settings = {s.key: s.value for s in Setting.objects.all()}
+        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
         dhis2_api._request.get = Mock(return_value=('foo', resources))
 
         result = dhis2_api.get_resource_id('Knights', 'Who Say "Ni!"')
@@ -264,7 +268,8 @@ class Dhis2ApiTest(TestCase):
             {'name': 'Michael Palin', 'id': 'c0ffee'},
             {'name': 'John Cleese', 'id': 'deadbeef'}
         ]}
-        dhis2_api = Dhis2Api(settings.DHIS2_HOST, settings.DHIS2_USERNAME, settings.DHIS2_PASSWORD)
+        settings = {s.key: s.value for s in Setting.objects.all()}
+        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
         dhis2_api._request.get = Mock(return_value=('foo', resources))
 
         with self.assertRaises(Dhis2ApiQueryError):
@@ -358,7 +363,8 @@ class Dhis2OrgUnitTest(TestCase):
 class TaskTest(TestCase):
 
     def setUp(self):
-        settings.DHIS2_ENABLED = True
+        # TODO: Enable DHIS2
+        pass
 
     def test_sync_org_units_dict_comps(self):
         """

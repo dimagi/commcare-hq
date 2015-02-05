@@ -409,6 +409,18 @@ must include:
 * hidden value "dhis2_processed" to indicate that the form has been sent
   to DHIS2 as an event
 
+Settings are stored in a lookup table, usually called "settings". The lookup
+table must have two fields: "key" and "value". The table must include rows
+with the following keys and values:
+
+* "dhis2_enabled": "True" or "False", or "Yes" or "No"
+* "dhis2_host": e.g. "http://dhis2.changeme.com:8123/dhis" (Do not include
+  "/api" at the end.)
+* "dhis2_username": e.g. "dimagiuser"
+* "dhis2_password": e.g. "t0ps3cr3t"
+* "dhis2_top_org_unit_name": Value may be empty or the name of an org unit.
+  e.g. "Fermathe Clinic"
+
 
 .. _setting_up_dhis2:
 Setting up DHIS2
@@ -430,7 +442,7 @@ Tracked entity attributes of Child:
 DHIS2 needs the following two projects for CommCareHQ child_gmp cases /
 DHIS2 Child tracked entity instances to be enrolled in:
 
-1. "Pediatric Nutrition Assessment"
+1. "Paediatric Nutrition Assessment"
 2. "Underlying Risk Assessment"
 
 
