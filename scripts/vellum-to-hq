@@ -63,7 +63,14 @@ def main():
                 ok = raw_input("Type 'ok' to continue: ")
                 if ok != "ok":
                     sys.exit("Aborted.")
-            vellum_rev = ""
+            vellum_rev = get_version(vellum_tar)
+            head_rev = get_git(vellum_dir)("rev-parse", "HEAD").strip()
+            if vellum_rev != head_rev:
+                print("{} version ({})\ndiffers from HEAD ({})"
+                      .format(vellum_tar, vellum_rev, head_rev))
+                ok = raw_input("Type 'ok' to continue: ")
+                if ok != "ok":
+                    sys.exit("Aborted.")
         else:
             vellum_rev = build_vellum(vellum_dir, vellum_branch, not args.no_test)
 
@@ -147,6 +154,13 @@ def require_clean_working_tree(git, context="", abort=sys.exit):
         git("diff-index", "--cached", "--quiet", "HEAD", "--ignore-submodules", "--")
     except sh.ErrorReturnCode:
         abort("Aborting. You have uncommitted changes{}.".format(context))
+
+
+def get_version(vellum_tar):
+    try:
+        return sh.tar("xOf", vellum_tar, "version.txt").strip()
+    except sh.ErrorReturnCode:
+        return ""
 
 
 if __name__ == '__main__':
