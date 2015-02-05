@@ -408,6 +408,7 @@ class LocationImportView(BaseLocationView):
             )
         )
 
+
 @login_and_domain_required
 def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
     try:

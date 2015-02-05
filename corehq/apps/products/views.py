@@ -289,9 +289,10 @@ class ProductImportStatusView(BaseCommTrackManageView):
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
+
 @login_and_domain_required
 def product_importer_job_poll(request, domain, download_id,
-        template="products/manage/partials/product_upload_status.html"):
+                              template="products/manage/partials/product_upload_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
