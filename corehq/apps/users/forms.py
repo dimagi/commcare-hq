@@ -367,7 +367,8 @@ class MultipleSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.add_input(Submit('submit', 'Update'))
+        submit_label = kwargs.pop('submit_label', "Update")
+        self.helper.add_input(Submit('submit', submit_label))
         super(MultipleSelectionForm, self).__init__(*args, **kwargs)
 
 
