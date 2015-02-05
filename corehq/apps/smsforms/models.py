@@ -157,7 +157,10 @@ class SQLXFormsSession(models.Model):
 
     @classmethod
     def by_session_id(cls, id):
-        return cls.get(session_id=id)
+        try:
+            return cls.get(session_id=id)
+        except SQLXFormsSession.DoesNotExist:
+            return None
 
     @classmethod
     def get_open_sms_session(cls, domain, contact_id):
