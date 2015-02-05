@@ -209,7 +209,7 @@ def sync_cases():
     CommCare child cases with DHIS2 child entities and enroll them in the
     Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
     """
-    if not is_dhis2_enabled:
+    if not is_dhis2_enabled():
         return
     children = get_children_only_theirs()
     pull_child_entities(DOMAIN, children)
@@ -233,7 +233,7 @@ def sync_org_units():
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
 
     """
-    if not is_dhis2_enabled:
+    if not is_dhis2_enabled():
         return
     settings = {s.key: s.value for s in Setting.objects.all()}
     dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])

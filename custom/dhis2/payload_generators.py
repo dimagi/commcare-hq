@@ -64,7 +64,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
         return domain == DOMAIN
 
     def get_payload(self, repeat_record, form):
-        if not is_dhis2_enabled:
+        if not is_dhis2_enabled():
             return
         settings = {s.key: s.value for s in Setting.objects.all()}
         dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])

@@ -1,8 +1,8 @@
 
 # TODO: support multiple domains, or all domains
 # DOMAINS = ('wv-lanka', 'sheel-wvlanka-test')
-DOMAIN = 'wv-lanka'
-# DOMAIN = 'sheel-wvlanka-test'
+# DOMAIN = 'wv-lanka'
+DOMAIN = 'sheel-wvlanka-test'
 
 ORG_UNIT_FIXTURES = 'dhis2_org_unit'
 
