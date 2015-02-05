@@ -12,7 +12,7 @@ from corehq.apps.smsforms.app import (
     _responses_to_text,
 )
 from dateutil.parser import parse
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession
 
 
 def form_session_handler(v, text, msg):
@@ -57,14 +57,15 @@ def get_single_open_session_or_close_multiple(domain, contact_id):
     is True if there were multiple sessions, and session is the session if
     there was a single open session available.
     """
-    sessions = XFormsSession.get_all_open_sms_sessions(domain, contact_id)
-    if len(sessions) > 1:
+    sessions = SQLXFormsSession.get_all_open_sms_sessions(domain, contact_id)
+    count = sessions.count()
+    if count > 1:
         for session in sessions:
             session.end(False)
             session.save()
         return (True, None)
 
-    session = sessions[0] if len(sessions) == 1 else None
+    session = sessions[0] if count == 1 else None
     return (False, session)
 
 
