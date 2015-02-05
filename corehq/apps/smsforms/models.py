@@ -126,6 +126,10 @@ class SQLXFormsSession(models.Model):
              "domain": self.domain,
              "mod": self.modified_time}
 
+    @property
+    def _id(self):
+        return self.couch_id
+
     def end(self, completed):
         """
         Marks this as ended (by setting end time).
