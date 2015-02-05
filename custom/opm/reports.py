@@ -475,11 +475,13 @@ class SharedDataProvider(object):
                 continue
             vhnd_date = parser.parse(raw_date).date()
             case_id = source.get('case', {}).get('@case_id')
-            owner_id = self.case_owners[case_id]
-            results[owner_id]['vhnd_available'].add(vhnd_date)
-            for prop in self.vhnd_form_props:
-                if source.get(prop, None) == '1':
-                    results[owner_id][prop].add(vhnd_date)
+            # case_id might be for a deleted case :(
+            if case_id in self.case_owners:
+                owner_id = self.case_owners[case_id]
+                results[owner_id]['vhnd_available'].add(vhnd_date)
+                for prop in self.vhnd_form_props:
+                    if source.get(prop, None) == '1':
+                        results[owner_id][prop].add(vhnd_date)
         return results
 
     def get_dates_in_range(self, owner_id, startdate, enddate, prop='vhnd_available'):
