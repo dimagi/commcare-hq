@@ -52,19 +52,21 @@ NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
 }
 
 NUTRITION_ASSESSMENT_EVENT_FIELDS = {
-    # CCHQ form field: DHIS2 nutrition assessment event attribute
+    # CCHQ form field: DHIS2 nutrition assessment event data elements
+
+    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/dataElements.json
 
     # DHIS2 Event: Nutrition Assessment
     # CCHQ Form: Growth Monitoring
     # CCHQ form XMLNS: http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40
-    # 'date_of_visit': 'Event Date',
-    'child_age_months': 'Age at time of visit',  # 'Age at Follow Up Visit (months)',
-    'child_height_rounded': 'Height',
-    'child_weight': 'Weight',
-    'bmi': 'Body-Mass Index',
+    'child_age_months': 'Age at follow-up visit (months)',
+    'child_height_rounded': 'Height (cm)',
+    'child_weight': 'Weight (kg)',
+    'bmi': 'Body Mass Index',
 }
 
 RISK_ASSESSMENT_PROGRAM_FIELDS = {
+    # CCHQ child_gmp case attribute: DHIS2 risk assessment program attribute
 
     # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/rLiay0C2ZVk.json
     #      programTrackedEntityAttributes
@@ -74,13 +76,15 @@ RISK_ASSESSMENT_PROGRAM_FIELDS = {
 }
 
 RISK_ASSESSMENT_EVENT_FIELDS = {
-    # CCHQ form field: DHIS2 risk assessment event attribute
+    # CCHQ form field: DHIS2 risk assessment event data elements
+
+    # No relevant data elements found at http://dhis1.internal.commcarehq.org:8080/dhis/api/dataElements.json
 
     # DHIS2 Event: Underlying Risk
     # CCHQ form XMLNS: http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC Assessment
-    'mother_id': 'Household Number',
-    'mother_first_name': 'Name of the Mother/Guardian',
-    'gn': 'GN Division of Household',
+    # 'mother_id': 'Household Number',
+    # 'mother_first_name': 'Name of the Mother/Guardian',
+    # 'gn': 'GN Division of Household',
 }
 
 
@@ -189,8 +193,8 @@ def pull_child_entities(domain, dhis2_children):
                 user_id=user.userID,
                 version=V2,
                 case_type='child_gmp',  # TODO: Move to a constant / setting
+                external_id=dhis2_child['Instance'],
                 update={
-                    'external_id': dhis2_child['Instance'],
                     'name': dhis2_child['Name'],
                     'height': dhis2_child['Height'],
                     'weight': dhis2_child['Weight'],

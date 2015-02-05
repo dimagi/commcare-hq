@@ -7,10 +7,12 @@ Replace this with more appropriate tests for your application.
 from contextlib import contextmanager
 from unittest import skip, SkipTest
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from corehq.apps.receiverwrapper.models import FormRepeater, RepeatRecord
+from corehq.apps.receiverwrapper.signals import create_repeat_records
+from corehq.apps.receiverwrapper.tasks import check_repeaters
 from couchdbkit import ResourceNotFound
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError
-from custom.dhis2.tasks import sync_cases, DOMAIN, sync_org_units, mark_as_processed, \
-    gen_unprocessed_growth_monitoring_forms, is_at_risk
+from custom.dhis2.tasks import sync_cases, DOMAIN, sync_org_units
 from django.conf import settings
 from django.test import TestCase
 from mock import patch, Mock
@@ -450,13 +452,6 @@ class UtilTest(TestCase):
         pass
 
     @skip('Finish writing this test')
-    def test_is_at_risk(self):
-        """
-        (For now) is_at_risk should just return True
-        """
-        self.assertTrue(is_at_risk(None))
-
-    @skip('Finish writing this test')
     def test_get_user_by_org_unit(self):
         pass
 
@@ -468,51 +463,13 @@ class UtilTest(TestCase):
     def test_gen_children_only_ours(self):
         pass
 
-    @skip('Known failure')  # FIXME
-    def test_gen_unprocessed_growth_monitoring_forms(self):
-        """
-        gen_unprocessed_growth_monitoring_forms should return unprocessed forms
-        """
-        is_unprocessed = lambda f: f.form['dhis2_te_inst_id'] and not f.form['dhis2_processed']
 
-        with growth_monitoring_forms_context() as prepopulated:
-            i = 0
-            forms = gen_unprocessed_growth_monitoring_forms()
-            for form in forms:
-                i += 1
-                # Assert that all returned forms are unprocessed
-                self.assertTrue(is_unprocessed(form))
-                # Assert that all returned forms are among the prepopulated context
-                self.assertTrue(any(p.form['child_first_name'] == form.form['child_first_name']
-                                    for p in prepopulated))
-            self.assertTrue(i > 0, 'gen_unprocessed_growth_monitoring_forms did not return unprocessed forms')
-
-    def test_mark_as_processed(self):
-        """
-        mark_as_processed should set form field dhis2_processed as True and save
-        """
-        class Form(object):
-            def __init__(self):
-                self.form = {}
-                self.save = Mock()
-        forms = [Form(), Form(), Form()]
-
-        mark_as_processed(forms)
-
-        for form in forms:
-            self.assertTrue(form.form['dhis2_processed'])
-            form.save.assert_called()
-
-    @skip('Known failure')  # FIXME
-    def test_get_unprocessed_and_mark(self):
-        """
-        test_get_unprocessed_growth_monitoring_forms should not return marked forms
-        """
-        with growth_monitoring_forms_context():
-            forms1 = [f for f in gen_unprocessed_growth_monitoring_forms()]
-            self.assertTrue(len(forms1), 'gen_unprocessed_growth_monitoring_forms returned no forms')
-            forms1_1 = forms1[0]
-            mark_as_processed([forms1_1])
-            forms2 = [f for f in gen_unprocessed_growth_monitoring_forms()]
-            # Assert forms1_1 not in forms2
-            self.assertFalse(any(f.form['child_first_name'] == forms1_1.form['child_first_name'] for f in forms2))
+# def test_nutrition_get_payload():
+#     xform = XFormInstance.get('01111de1-5e36-4b7a-a4ce-19ef544710f0')  # Growth monitoring/nutrition assessment
+#                                                                        # There are no risk assessment forms
+#     create_repeat_records(FormRepeater, xform)
+#     # check_repeaters()
+#
+#     repeat_records = RepeatRecord.all()
+#     for repeat_record in repeat_records:
+#         repeat_record.fire()

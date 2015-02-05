@@ -1,6 +1,7 @@
 # from django.db import models
 from datetime import date
 import json
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
 from django.conf import settings
 import requests
@@ -107,11 +108,17 @@ class Dhis2Api(object):
             'Org unit': 'ou',
             'Tracked entity': 'te',
         }
+        self._data_elements = {}  # Like _tracked_entity_attributes, but for events data
 
     def _fetch_tracked_entity_attributes(self):
         __, response = self._request.get('trackedEntityAttributes', params={'links': 'false', 'paging': 'false'})
         for te in response['trackedEntityAttributes']:
             self._tracked_entity_attributes[te['name']] = te['id']
+
+    def _fetch_data_elements(self):
+        __, response = self._request.get('dataElements', params={'links': 'false', 'paging': 'false'})
+        for de in response['dataElements']:
+            self._data_elements[de['name']] = de['id']
 
     def add_te_inst(self, entity_data, te_name, ou_id):
         """
@@ -405,7 +412,7 @@ class Dhis2Api(object):
         # TODO: Find a better DHIS2 API search instead of iterating instances
         return any(inst['Instance'] == te_inst_id for inst in self.gen_instances_in_program(program))
 
-    def form_to_event(self, program_id, xform, data_element_names):
+    def form_to_event(self, program_id, xform, data_element_names, te_inst_id=None):
         """
         Builds a dict representing a DHIS2 event
 
@@ -413,6 +420,8 @@ class Dhis2Api(object):
         :param xform: An XFormInstance
         :param data_element_names: A dictionary mapping CCHQ form field names
                                    to DHIS2 tracked entity attribute names
+        :param te_inst_id: Tracked entity instance ID, for creating an event
+                           with registration
 
         An example of an event: ::
 
@@ -441,21 +450,37 @@ class Dhis2Api(object):
         """
         # For more information on the data to be sent from CCHQ to DHIS2, see
         # README.rst. Required data is given in 4.3 of the Specification
-        if not any(a not in self._tracked_entity_attributes for a in data_element_names.values()):
-            self._fetch_tracked_entity_attributes()
+        if any(e not in self._data_elements for e in data_element_names.values()):
+            self._fetch_data_elements()
+
+        if xform.form.get('dhis_org_id'):
+            org_unit = xform.form['dhis_org_id']
+        else:
+            case_id = xform.form['case']['@case_id']
+            case = CommCareCase.get(case_id)
+            if getattr(case, 'dhis_org_id', None):
+                org_unit = case['dhis_org_id']
+            else:
+                # The case doesn't have an org unit.
+                # TODO: log it
+                # return
+                # For testing, fake it
+                org_unit = 'Thu5YoRCV8y'
+        data_values = [{
+            'dataElement': self._data_elements[element_name],
+            'dataElement': self._data_elements[element_name],
+            'value': xform.form[field_name],
+        } for field_name, element_name in data_element_names.iteritems() if field_name in xform.form]
         event = {
             'program': program_id,
-            'orgUnit': xform.form['dhis2_org_unit_id'],
+            'orgUnit': org_unit,
             'eventDate': xform.received_on,
             'status': 'COMPLETED',
             'storedBy': self._username,
-            'dataValues': [
-                {
-                    'dataElement': self._tracked_entity_attributes[te_attr_name],
-                    'value': xform.form[field_name],
-                } for field_name, te_attr_name in data_element_names.iteritems()
-            ]
+            'dataValues': data_values
         }
+        if te_inst_id:
+            event['trackedEntityInstance'] = te_inst_id
         if xform.metadata.location:
             event['coordinate'] = {
                 'latitude': xform.metadata.location.latitude,
