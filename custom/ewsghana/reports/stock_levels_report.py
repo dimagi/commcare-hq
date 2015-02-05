@@ -36,7 +36,7 @@ class StockLevelsSubmissionData(EWSData):
             DataTablesColumn(_('Overstock')),
             DataTablesColumn(_('Total'))])
 
-        if self.config['product'] != '':
+        if self.config['products'] != '':
             headers.add_column(DataTablesColumn(_('AMC')))
         return headers
 
@@ -80,11 +80,11 @@ class StockLevelsSubmissionData(EWSData):
                 'amc': 0
             }
             product_ids = []
-            if self.config['program'] != '' and self.config['product'] == '':
+            if self.config['program'] != '' and self.config['products'] == '':
                 product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                    self.config['program'])]
-            elif self.config['program'] != '' and self.config['product'] != '':
-                product_ids = [self.config['product']]
+            elif self.config['program'] != '' and self.config['products'] != '':
+                product_ids = [self.config['products']]
             else:
                 product_ids = Product.ids_by_domain(self.config['domain'])
 
@@ -118,7 +118,7 @@ class StockLevelsSubmissionData(EWSData):
                    location_grouping['adequate'],
                    location_grouping['overstock'],
                    location_grouping['total']]
-            if self.config['product'] != '':
+            if self.config['products'] != '':
                 row.append(location_grouping['amc'])
 
             yield row
@@ -154,7 +154,7 @@ class FacilityReportData(EWSData):
     def headers(self):
         return DataTablesHeader(*[
             DataTablesColumn(_('Commodity')),
-            DataTablesColumn(_('Months Until Stockout')),
+            DataTablesColumn(_('Months of Stock')),
             DataTablesColumn(_('Stockout Duration')),
             DataTablesColumn(_('Current Stock')),
             DataTablesColumn(_('Monthly Consumption')),
@@ -178,11 +178,11 @@ class FacilityReportData(EWSData):
                 return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}
-        if self.config['program'] and not self.config['product']:
+        if self.config['program'] and not self.config['products']:
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
-        elif self.config['program'] and self.config['product']:
-            product_ids = self.config['product']
+        elif self.config['program'] and self.config['products']:
+            product_ids = self.config['products']
         else:
             product_ids = Product.ids_by_domain(self.config['domain'])
 
@@ -251,11 +251,11 @@ class InventoryManagementData(EWSData):
     chart_y_label = 'MOS'
 
     def get_products(self):
-        if self.config['program'] and not self.config['product']:
+        if self.config['program'] and not self.config['products']:
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
-        elif self.config['program'] and self.config['product']:
-            product_ids = [self.config['product']]
+        elif self.config['program'] and self.config['products']:
+            product_ids = self.config['products']
         else:
             product_ids = Product.ids_by_domain(self.config['domain'])
         return product_ids
@@ -287,7 +287,8 @@ class InventoryManagementData(EWSData):
 
         rows = {}
         for state in stock_states:
-            product_name = Product.get(state.product_id).name
+            product = Product.get(state.product_id)
+            product_name = product.name + ' (%s)' % product.code
             rows[product_name] = []
             weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
             for i in range(1, int(weeks + 1)):
@@ -391,7 +392,7 @@ class StockLevelsReport(MultiReport):
     name = "Stock Levels Report"
     slug = 'ews_stock_levels_report'
     exportable = True
-    base_template = "ewsghana/facility_report_base_template.html"
+    is_exportable = True
 
     @property
     def report_config(self):
@@ -403,7 +404,7 @@ class StockLevelsReport(MultiReport):
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
             program=program if program != ALL_OPTION else None,
-            product=products if products and products[0] != ALL_OPTION else [],
+            products=products if products and products[0] != ALL_OPTION else [],
         )
 
     @property
@@ -423,32 +424,6 @@ class StockLevelsReport(MultiReport):
                     FacilityInChargeUsers(config),
                     InventoryManagementData(config)]
         return [StockLevelsSubmissionData(config)]
-
-    @property
-    def export_table(self):
-        r = self.report_context['reports'][0]['report_table']
-        return [self._export_table(r['title'], r['headers'], r['rows'])]
-
-    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
-        def _unformat_row(row):
-            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
-
-        table = headers.as_export_table
-        rows = [_unformat_row(row) for row in formatted_rows]
-        for row in rows:
-            row[1] = row[1][:row[1].index('<')]
-        replace = ''
-
-        for k, v in enumerate(table[0]):
-            if v != ' ':
-                replace = v
-            else:
-                table[0][k] = replace
-        table.extend(rows)
-        if total_row:
-            table.append(_unformat_row(total_row))
-
-        return [export_sheet_name, table]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
