@@ -49,18 +49,19 @@ def archive_forms(user, uploaded_data):
             xform = XFormInstance.get(xform_id)
         except Exception as e:
             response['errors'].append(
-                _(u"Could not get XFormInstance {}: {}").format(xform_id, e))
+                _(u"Could not get XFormInstance {form_id}: {error}").format(form_id=xform_id, error=e))
             continue
 
-        xform_string = _(u"XFORM {} for domain {} by user '{}'").format(
-            xform['_id'],
-            xform['domain'],
-            user.username)
+        xform_string = _(u"XFORM {form_id} for domain {domain} by user '{username}'").format(
+            form_id=xform['_id'],
+            domain=xform['domain'],
+            username=user.username)
 
         try:
             xform.archive(user=user.username)
-            response['success'].append(_(u"Successfully archived {}").format(xform_string))
+            response['success'].append(_(u"Successfully archived {form}").format(form=xform_string))
         except Exception as e:
-            response['errors'].append(_(u"Could not archive {}: {}").format(xform_string, e))
+            response['errors'].append(_(u"Could not archive {form}: {error}").format(
+                form=xform_string, error=e))
 
     return response

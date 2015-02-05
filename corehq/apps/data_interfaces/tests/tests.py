@@ -71,7 +71,7 @@ class BulkArchiveForms(TestCase):
     def test_bulk_archive_basic(self):
         with open(join(BASE_PATH, BASIC_XLSX)) as fp:
             response = self.client.post(self.url, {'bulk_upload_file': fp}, follow=True)
-            self.assertIn('We received your file and are processing it...', response.content)
+            self.assertIn('We received your file and are processing it.', response.content)
 
 
 class BulkArchiveFormsUnit(TestCase):

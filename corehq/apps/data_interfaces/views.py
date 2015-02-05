@@ -208,7 +208,7 @@ class ArchiveFormView(DataInterfaceSection):
                 self.request.user,
                 list(self.uploaded_file.get_worksheet())
             )
-            messages.success(self.request, _("We received your file and are processing it..."))
+            messages.success(self.request, _("We received your file and are processing it. You will receive an email when it has finished."))
         except BulkUploadCasesException as e:
             messages.error(self.request, e.message)
         return None
