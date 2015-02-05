@@ -73,6 +73,46 @@ class SQLSessionTestCase(TestCase):
             self.assertEqual(getattr(couch_session, prop), value)
         self.assertTrue(couch_session._rev.startswith('2-'))
 
+    def test_get_single_open_session(self):
+        properties = _arbitrary_session_properties(
+            end_time=None,
+            session_type=XFORMS_SESSION_SMS,
+        )
+        couch_session = XFormsSession(**properties)
+        couch_session.save()
+        (mult, session) = get_single_open_session_or_close_multiple(
+            couch_session.domain, couch_session.connection_id
+        )
+        self.assertEqual(False, mult)
+        self.assertEqual(couch_session._id, session._id)
+        [couch_session_back] = XFormsSession.get_all_open_sms_sessions(
+            couch_session.domain, couch_session.connection_id
+        )
+        [sql_session] = SQLXFormsSession.get_all_open_sms_sessions(
+            couch_session.domain, couch_session.connection_id
+        )
+        self.assertEqual(couch_session._id, couch_session_back._id)
+        self.assertEqual(couch_session._id, sql_session.couch_id)
+
+    def test_get_single_open_session_close_multiple(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        for i in range(3):
+            properties = _arbitrary_session_properties(
+                domain=domain,
+                connection_id=contact,
+                end_time=None,
+                session_type=XFORMS_SESSION_SMS,
+            )
+            couch_session = XFormsSession(**properties)
+            couch_session.save()
+
+        (mult, session) = get_single_open_session_or_close_multiple(domain, contact)
+        self.assertEqual(True, mult)
+        self.assertEqual(None, session)
+        self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
+        self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
+
 
 def _arbitrary_session_properties(**kwargs):
     def arbitrary_string(max_len=32):
