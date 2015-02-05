@@ -1327,8 +1327,6 @@ class AdminReportsTab(UITab):
                  'url': reverse('commcare_version_report')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
-                {'title': _('Mobile User Reports'),
-                 'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
             ]),

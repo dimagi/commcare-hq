@@ -217,43 +217,6 @@ def message_log_report(request):
 
 
 @require_superuser
-def mobile_user_reports(request):
-    template = "hqadmin/mobile_user_reports.html"
-    _device_users_by_xform = memoized(device_users_by_xform)
-    rows = []
-
-    logs = DeviceReportEntry.objects.filter(type__exact="user-report").order_by('domain')
-    for log in logs:
-        seconds_since_epoch = int(time.mktime(log.date.timetuple()) * 1000)
-        rows.append(dict(domain=log.domain,
-                         time=format_datatables_data(text=log.date, sort_key=seconds_since_epoch),
-                         user=log.username,
-                         device_users=_device_users_by_xform(log.xform_id),
-                         message=log.msg,
-                         version=(log.app_version or 'unknown').split(' ')[0],
-                         detailed_version=html.escape(log.app_version or 'unknown'),
-                         report_id=log.xform_id))
-
-    headers = DataTablesHeader(
-        DataTablesColumn(_("View Form")),
-        DataTablesColumn(_("Domain")),
-        DataTablesColumn(_("Time"), sort_type=DTSortType.NUMERIC),
-        DataTablesColumn(_("User"), sort_type=DTSortType.NUMERIC),
-        DataTablesColumn(_("Device Users"), sort_type=DTSortType.NUMERIC),
-        DataTablesColumn(_("Message"), sort_type=DTSortType.NUMERIC),
-        DataTablesColumn(_("Version"), sort_type=DTSortType.NUMERIC)
-
-    )
-
-    context = get_hqadmin_base_context(request)
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-    context["rows"] = rows
-
-    return render(request, template, context)
-
-
-@require_superuser
 def mass_email(request):
     if not request.couch_user.is_staff:
         raise Http404()
