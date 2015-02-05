@@ -78,8 +78,8 @@ class CommCareBuild(Document):
             try:
                 for name in z.namelist():
                     path = name.split('/')
-                    if path[0] == "dist" and path[-1] != "":
-                        path = '/'.join(path[1:])
+                    if path[0:3] == ["archive", "application", "dist"] and path[-1] != "":
+                        path = '/'.join(path[3:])
                         self.put_file(z.read(name), path)
             except:
                 self.delete()
