@@ -1,8 +1,6 @@
 from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProperty
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER
-from toggle.shortcuts import update_toggle_cache, namespaced_item
-from toggle.models import Toggle
 from corehq.toggles import NAMESPACE_DOMAIN
 
 

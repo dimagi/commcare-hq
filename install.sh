@@ -202,7 +202,7 @@ if [ ! -f /etc/init.d/couchdb ]; then
 fi
 
 ## Install couchdb-lucene
-if [ ! "$MINIMAL_INSTALL" ] && ! -f /etc/init.d/couchdb-lucene ]; then
+if [ ! "$MINIMAL_INSTALL" ] && [ ! -f /etc/init.d/couchdb-lucene ]; then
     if [ ! -f v0.8.0.zip ]; then
         wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
     fi
@@ -283,18 +283,15 @@ if [ ! "$MINIMAL_INSTALL" ]; then
 
         # these should already be on by default
         sudo update-rc.d elasticsearch defaults
-        sudo update-rc.d memcached defaults
         sudo update-rc.d postgresql defaults
     elif [ "$PM" = "yum-rhel" ]; then
         sudo chkconfig --add couchdb
         sudo chkconfig --add elasticsearch
-        sudo chkconfig --add memcached
         sudo chkconfig --add postgresql
         sudo chkconfig --add couchdb-lucene
     
         sudo chkconfig couchdb on
         sudo chkconfig elasticsearch on
-        sudo chkconfig memcached on
         sudo chkconfig postgresql on
         sudo chkconfig couchdb-lucene on
     fi
@@ -302,7 +299,6 @@ if [ ! "$MINIMAL_INSTALL" ]; then
     ## Ensure services are running ##
     sudo service couchdb start
     sudo service elasticsearch start
-    sudo service memcached start
     sudo service postgresql start
 fi
 

@@ -242,7 +242,8 @@
 
         COMMCAREHQ.app_manager.commcareVersion.subscribe(function () {
             $('.commcare-feature').each(function () {
-                var version = '' + $(this).data('since-version') || '1.1',
+                // .attr() keeps zero intact in 2.10, data() doesn't
+                var version = '' + $(this).attr('data-since-version') || '1.1',
                     upgradeMessage = $('<span class="upgrade-message"/>'),
                     area = $(this);
 

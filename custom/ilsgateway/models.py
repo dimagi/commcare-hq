@@ -403,6 +403,7 @@ class ReportRun(models.Model):
     complete = models.BooleanField(default=False)
     has_error = models.BooleanField(default=False)
     domain = models.CharField(max_length=60)
+    location = models.ForeignKey(SQLLocation, null=True)
 
     @classmethod
     def last_success(cls, domain):
@@ -410,6 +411,11 @@ class ReportRun(models.Model):
         The last successful execution of a report, or None if no records found.
         """
         qs = cls.objects.filter(complete=True, has_error=False, domain=domain)
+        return qs.order_by("-start_run")[0] if qs.count() else None
+
+    @classmethod
+    def last_run(cls, domain):
+        qs = cls.objects.filter(complete=True, domain=domain)
         return qs.order_by("-start_run")[0] if qs.count() else None
 
 

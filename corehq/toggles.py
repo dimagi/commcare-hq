@@ -287,3 +287,9 @@ CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
     'Display details of the selected case on top in CloudCare if a form uses Case Management',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+APP_SUMMARY = StaticToggle(
+    'app_summary',
+    'Form and Case summary of an application',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)

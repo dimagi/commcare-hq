@@ -33,7 +33,7 @@ from fabric.contrib import files, console
 from fabric.operations import require, local, prompt
 
 
-ROLES_ALL_SRC = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
+ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
 ROLES_ALL_SERVICES = ['django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer']
 ROLES_CELERY = ['django_monolith', 'django_celery']
 ROLES_PILLOWTOP = ['django_monolith', 'django_pillowtop']
@@ -44,12 +44,6 @@ ROLES_SMS_QUEUE = ['django_monolith', 'sms_queue']
 ROLES_REMINDER_QUEUE = ['django_monolith', 'reminder_queue']
 ROLES_PILLOW_RETRY_QUEUE = ['django_monolith', 'pillow_retry_queue']
 ROLES_DB_ONLY = ['pg', 'django_monolith']
-
-PROD_PROXIES = [
-    'hqproxy0.internal.commcarehq.org',
-    'hqproxy3.internal.commcarehq.org',
-]
-
 
 if env.ssh_config_path and os.path.isfile(os.path.expanduser(env.ssh_config_path)):
     env.use_ssh_config = True
@@ -142,17 +136,12 @@ def format_env(current_env):
     ]
 
     host = current_env.get('host_string')
-    command_prefix = current_env.get('django_command_prefix', {})
-    if isinstance(command_prefix, dict):
-        ret['django_command_prefix'] = command_prefix.get(host, '')
+    if host in current_env.get('new_relic_enabled', []):
+        ret['new_relic_command'] = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
+        ret['supervisor_env_vars'] = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=%(environment)s' % env
     else:
-        ret['django_command_prefix'] = command_prefix
-
-    env_vars = current_env.get('supervisor_env_vars', {})
-    if isinstance(env_vars, dict):
-        ret['supervisor_env_vars'] = env_vars.get(host, '')
-    else:
-        ret['supervisor_env_vars'] = env_vars
+        ret['new_relic_command'] = ''
+        ret['supervisor_env_vars'] = ''
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
@@ -238,18 +227,13 @@ def zambia():
         'django_monolith': ['41.222.19.153'],
     }
     env.roles = ['django_monolith']
-    env.es_endpoint = 'localhost'
     env.flower_port = 5555
 
 
 @task
 def production():
     """www.commcarehq.org"""
-    env.sudo_user = 'cchq'
     env.environment = 'production'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '9010'
-    env.should_migrate = True
     env.sms_queue_enabled = True
     env.reminder_queue_enabled = True
     env.reminder_rule_queue_enabled = True
@@ -264,58 +248,11 @@ def production():
         if not console.confirm(branch_message, default=False):
             utils.abort('Action aborted.')
 
-    class Servers(object):
-        db = ['hqdb0.internal.commcarehq.org']
-        celery = ['hqcelery1.internal.commcarehq.org']
-        touch = ['hqtouch1.internal.commcarehq.org']
-        django = ['hqdjango3.internal.commcarehq.org',
-                  'hqdjango4.internal.commcarehq.org',
-                  'hqdjango5.internal.commcarehq.org']
+    env.inventory = os.path.join('fab', 'inventory', 'production')
+    execute(development)
 
-    env.roledefs = {
-        'couch': Servers.db,
-        'pg': Servers.db,
-        'rabbitmq': Servers.db,
-        'django_celery': Servers.celery,
-        'sms_queue': Servers.celery,
-        'reminder_queue': Servers.celery,
-        'pillow_retry_queue': Servers.celery,
-        'django_app': Servers.django,
-        'django_pillowtop': Servers.db,
-
-        # for now, we'll have touchforms run on both hqdb0 and hqdjango0
-        # will remove hqdjango0 once we verify it works well on hqdb0
-        'formsplayer': Servers.touch,
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        # having deploy here makes it so that
-        # we don't get prompted for a host or run deploy too many times
-        'deploy': Servers.db,
-        # fab complains if this doesn't exist
-        'django_monolith': []
-    }
-
-    env.server_name = 'commcare-hq-production'
-    env.settings = '%(project)s.localsettings' % env
-    # e.g. 'ubuntu' or 'redhat'.
-    # Gets auto-populated by what_os()
-    # if you don't know what it is or don't want to specify.
-    env.host_os_map = None
-
-    # The next 2 lines should be commented out when running bootstrap on a new machine
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
-
-    env.es_endpoint = 'hqes0.internal.commcarehq.org'
-    env.flower_port = 5555
-
-    _setup_path()
-
-    env.django_command_prefix = {
-        'hqdjango3.internal.commcarehq.org': '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
-    }
-    env.supervisor_env_vars = {
-        'hqdjango3.internal.commcarehq.org': 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=production'
+    env.new_relic_enabled = {
+        'hqdjango3.internal.commcarehq.org',
     }
 
 
@@ -326,12 +263,8 @@ def staging():
         env.code_branch = 'autostaging'
         print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
 
-    env.sudo_user = 'cchq'
     env.environment = 'staging'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '9010'
 
-    env.should_migrate = True
     # We should not enable the sms queue on staging because replication
     # can cause sms to be processed again if an sms is replicated in its
     # queued state.
@@ -339,43 +272,14 @@ def staging():
     env.pillow_retry_queue_enabled = True
     env.celery_periodic_enabled = False
 
-    env.roledefs = {
-        'couch': ['hqdb0-staging.internal.commcarehq.org'],
-        'pg': ['hqdb0-staging.internal.commcarehq.org'],
-        'rabbitmq': ['hqdb0-staging.internal.commcarehq.org'],
-        'django_celery': ['hqdb0-staging.internal.commcarehq.org'],
-        'sms_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'reminder_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'pillow_retry_queue': ['hqdb0-staging.internal.commcarehq.org'],
-        'django_app': ['hqdjango0-staging.internal.commcarehq.org','hqdjango1-staging.internal.commcarehq.org'],
-        'django_pillowtop': ['hqdb0-staging.internal.commcarehq.org'],
+    env.inventory = os.path.join('fab', 'inventory', 'staging')
+    execute(development)
 
-        'formsplayer': ['hqdjango1-staging.internal.commcarehq.org'],
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        'deploy': ['hqdb0-staging.internal.commcarehq.org'],
-        # fab complains if this doesn't exist
-        'django_monolith': [],
+    env.new_relic_enabled = {
+        'hqdjango0-staging.internal.commcarehq.org',
+        'hqdjango1-staging.internal.commcarehq.org',
+        'hqdb0-staging.internal.commcarehq.org',
     }
-
-    env.es_endpoint = 'hqdjango1-staging.internal.commcarehq.org'''
-
-    env.server_name = 'commcare-hq-staging'
-    env.settings = '%(project)s.localsettings' % env
-    env.host_os_map = None
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
-    env.flower_port = 5555
-
-    _setup_path()
-
-    env.django_command_prefix = '%(virtualenv_root)s/bin/newrelic-admin run-program ' % env
-    env.supervisor_env_vars = 'NEW_RELIC_CONFIG_FILE=../newrelic.ini,NEW_RELIC_ENVIRONMENT=staging'
-
-@task
-def realstaging():
-    print "(You know you can just use 'staging' now, right? Doing that for ya.)"
-    staging()
 
 
 @task
@@ -387,47 +291,18 @@ def preview():
 
     """
     env.code_branch = 'master'
-    env.sudo_user = 'cchq'
     env.environment = 'preview'
-    env.django_bind = '0.0.0.0'
-    env.django_port = '7999'
-    env.should_migrate = False
 
     env.sms_queue_enabled = False
     env.pillow_retry_queue_enabled = False
     env.celery_periodic_enabled = False
 
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_celery': ['hqdb0-preview.internal.commcarehq.org'],
-        'sms_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'reminder_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'pillow_retry_queue': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_app': [
-            'hqdjango0-preview.internal.commcarehq.org',
-            'hqdjango1-preview.internal.commcarehq.org'
-        ],
-        'django_pillowtop': ['hqdb0-preview.internal.commcarehq.org'],
+    env.inventory = os.path.join('fab', 'inventory', 'preview')
+    execute(development)
 
-        'formsplayer': ['hqdjango0-preview.internal.commcarehq.org'],
-        'lb': [],
-        'staticfiles': PROD_PROXIES,
-        'deploy': ['hqdb0-preview.internal.commcarehq.org'],
-        'django_monolith': [],
-    }
-
-    env.es_endpoint = 'hqdjango1-preview.internal.commcarehq.org'''
-
-    env.server_name = 'commcare-hq-preview'
-    env.settings = '%(project)s.localsettings' % env
-    env.host_os_map = None
-    env.roles = ['deploy']
-    env.hosts = env.roledefs['deploy']
     env.flower_port = 5556
-
-    _setup_path()
+    env.django_port = '7999'
+    env.should_migrate = False
 
 
 def read_inventory_file(filename):
@@ -458,13 +333,13 @@ def development():
         --set inventory=/path/to/commcarehq-ansible/ansible/inventories/development,environment=dev
 
     """
+    require('inventory', 'environment')
+    servers = read_inventory_file(env.inventory)
+
     env.sudo_user = 'cchq'
     env.django_bind = '0.0.0.0'
     env.django_port = '9010'
     env.should_migrate = True
-
-    require('inventory', 'environment')
-    servers = read_inventory_file(env.inventory)
 
     _setup_path()
 
@@ -472,14 +347,14 @@ def development():
     webworkers = servers['webworkers']
     postgresql = servers['postgresql']
     couchdb = servers['couchdb']
-    redis = servers['redis']
-    memcached = servers['memcached']
     touchforms = servers['touchforms']
     elasticsearch = servers['elasticsearch']
     celery = servers['celery']
     rabbitmq = servers['rabbitmq']
     # if no server specified, just don't run pillowtop
     pillowtop = servers.get('pillowtop', [])
+
+    deploy = servers.get('deploy', servers['postgresql'])[:1]
 
     env.roledefs = {
         'couch': couchdb,
@@ -494,14 +369,15 @@ def development():
         'formsplayer': touchforms,
         'staticfiles': proxy,
         'lb': [],
-        'deploy': postgresql,
-
-        'django_monolith': []
+        # having deploy here makes it so that
+        # we don't get prompted for a host or run deploy too many times
+        'deploy': deploy,
+        # fab complains if this doesn't exist
+        'django_monolith': [],
     }
     env.roles = ['deploy']
-    env.es_endpoint = 'localhost'
-    env.flower_port = 5555
     env.hosts = env.roledefs['deploy']
+    env.flower_port = 5555
 
 
 @task

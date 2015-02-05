@@ -9,6 +9,7 @@ from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
 from corehq.apps.domain.models import Domain
@@ -31,9 +32,35 @@ class SQLLocation(MPTTModel):
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
-    products = models.ManyToManyField(SQLProduct, null=True)
+
+    # Use getter and setter below to access this value
+    # since stocks_all_products can cause an empty list to
+    # be what is stored for a location that actually has
+    # all products available.
+    _products = models.ManyToManyField(SQLProduct, null=True)
+    stocks_all_products = models.BooleanField(default=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+
+    @property
+    def products(self):
+        """
+        If there are no products specified for this location, assume all
+        products for the domain are relevant.
+        """
+        if self.stocks_all_products:
+            return SQLProduct.by_domain(self.domain)
+        else:
+            return self._products.all()
+
+    @products.setter
+    def products(self, value):
+        # this will set stocks_all_products to true if the user
+        # has added all products in the domain to this location
+        self.stocks_all_products = (set(value) ==
+                                    set(SQLProduct.by_domain(self.domain)))
+
+        self._products = value
 
     class Meta:
         unique_together = ('domain', 'site_code',)

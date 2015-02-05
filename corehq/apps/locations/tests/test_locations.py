@@ -1,13 +1,75 @@
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.commtrack.helpers import make_supply_point
+from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 from couchdbkit import ResourceNotFound
 from corehq.apps.groups.models import Group
-
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.shortcuts import create_domain
+
+
+class LocationProducts(TestCase):
+    def setUp(self):
+        self.domain = create_domain('locations-test')
+        self.domain.locations_enabled = True
+        self.domain.location_types = [
+            LocationType(
+                name='outlet',
+                allowed_parents=[]
+            ),
+        ]
+        self.domain.save()
+
+        make_product(self.domain.name, 'apple', 'apple')
+        make_product(self.domain.name, 'orange', 'orange')
+        make_product(self.domain.name, 'banana', 'banana')
+        make_product(self.domain.name, 'pear', 'pear')
+
+        couch_loc = make_loc('loc', type='outlet', domain=self.domain.name)
+        self.loc = couch_loc.sql_location
+
+    def tearDown(self):
+        # domain delete cascades to everything else
+        self.domain.delete()
+
+    def test_start_state(self):
+        self.assertTrue(self.loc.stocks_all_products)
+        self.assertEqual(
+            set(SQLProduct.objects.filter(domain=self.domain.name)),
+            set(self.loc.products),
+        )
+
+    def test_specify_products(self):
+        products = [
+            SQLProduct.objects.get(name='apple'),
+            SQLProduct.objects.get(name='orange'),
+        ]
+        self.loc.products = products
+        self.loc.save()
+        self.assertFalse(self.loc.stocks_all_products)
+        self.assertEqual(
+            set(products),
+            set(self.loc.products),
+        )
+
+    def test_setting_all_products(self):
+        # If all products are set for the location,
+        # set stocks_all_products to True
+        products = [
+            SQLProduct.objects.get(name='apple'),
+            SQLProduct.objects.get(name='orange'),
+            SQLProduct.objects.get(name='banana'),
+            SQLProduct.objects.get(name='pear'),
+        ]
+        self.loc.products = products
+        self.loc.save()
+        self.assertTrue(self.loc.stocks_all_products)
+        self.assertEqual(
+            set(SQLProduct.objects.filter(domain=self.domain.name)),
+            set(self.loc.products),
+        )
 
 
 class LocationTestBase(TestCase):

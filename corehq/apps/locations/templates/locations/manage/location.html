@@ -4,14 +4,27 @@
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 
+{% block head %} {{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         var LOAD_LOCS_URL = '{{ api_root }}';
+
+        // for product per location selection
+        $(function () {
+            $("#id_selected_ids").width(800).height(400).multiselect();
+        });
     </script>
 {% endblock %}
 
@@ -60,30 +73,62 @@
     });
   </script>
 
-  <form id="loc_form" class="form form-horizontal" name="product" method="post">
-    {% bootstrap_form_errors form %}
-    {% bootstrap_fieldset form "Location Information" %}
+  <ul class="nav nav-tabs">
+    <li class="active"><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
 
-    {% crispy form.custom_data.form %}
-
-    {% if consumption %}
-      <legend>{% trans "Default monthly consumption values" %}</legend>
-      {% for code, amount in consumption %}
-        <div class="control-group">
-          <label class="control-label">{{ code }}</label>
-          <div class="controls">
-            <span class="uneditable-input">
-              {{ amount }}
-            </span>
-          </div>
-        </div>
-      {% endfor %}
+    {% if products_per_location_form %}
+      <li><a href="#products" data-toggle="tab">{% trans "Products" %}</a></li>
     {% endif %}
+  </ul>
 
-    <div class="form-actions"><button type="submit" class="btn btn-primary">
-        {% if location.get_id %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %} {% trans 'Location' %}
-    </button></div>
-  </form>
+  <div class="tab-content">
+    <div class="tab-pane active" id="basic-info">
+      <form id="loc_form" class="form form-horizontal" name="product" method="post">
+        {% bootstrap_form_errors form %}
+        {% bootstrap_fieldset form "Location Information" %}
+
+        {% crispy form.custom_data.form %}
+        <input type="hidden" name="form_type" value="location-settings" />
+
+        {% if consumption %}
+          <legend>{% trans "Default monthly consumption values" %}</legend>
+          {% for code, amount in consumption %}
+            <div class="control-group">
+              <label class="control-label">{{ code }}</label>
+              <div class="controls">
+                <span class="uneditable-input">
+                  {{ amount }}
+                </span>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            {% if location.get_id %}
+              {% trans 'Update' %}
+            {% else %}
+              {% trans 'Create' %}
+            {% endif %}
+            {% trans 'Location' %}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {% if products_per_location_form %}
+      <div class="tab-pane" id="products">
+        <div class="row-fluid">
+          <form class="form disable-on-submit" id="edit_products" action="" method='post'>
+            <legend>{% trans 'Specify Products Per Location' %}</legend>
+            {% crispy products_per_location_form %}
+            <input type="hidden" name="form_type" value="location-products" />
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </div>
 
 </div>
 {% endblock %}

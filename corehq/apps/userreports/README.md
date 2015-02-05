@@ -457,6 +457,51 @@ TODO: Report filters docs will go here.
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
 
+#### "numeric" Filters
+Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
+Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
+
+ex:
+```
+{
+  "type": "numeric",
+  "slug": "number_of_children_slug",
+  "field": "number_of_children",
+  "display": "Number of Children"
+}
+```
+
+Here are a few examples of report filters:
+
+```
+{
+  "type": "date",
+  "slug": "modified_on",
+  "field": "modified_on",
+  "display": "Modified on",
+  "required": false
+}
+```
+```
+{
+  "type": "dynamic_choice_list",
+  "slug": "village",
+  "field": "village",
+  "display": "Village"
+}
+```
+```
+{
+  "type": "choice_list",
+  "slug": "role",
+  "field": "role",
+  "choices": [
+    {"value": "doctor", display:"Doctor"},
+    {"value": "nurse"}
+  ]
+}
+```
+
 ## Report Columns
 
 TODO: Report column docs will go here.

@@ -43,7 +43,6 @@
 trunk: master
 name: autostaging
 branches:
-  - fab-inventory  # Danny 1/30
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
@@ -57,6 +56,10 @@ branches:
   - fixtures-spike  # cz 1/29
   - killmemcached  # sk 1/29
   - project-settings-update # sravan 1/30
+  - tdh-tiles # Noah 2/1
+  - lwyszomi:ilsgateway-supervision-upload
+  - lwyszomi:ews_report_chart_checkboxes
+  - graph-bulk-translations # Noah 2/5
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty

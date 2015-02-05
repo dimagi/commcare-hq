@@ -142,7 +142,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             soh_month=True if self.request.GET.get('soh_month', '') == 'True' else False,
             products=[],
             program='',
-            prd_part_url=''
+            prd_part_url='',
+            msd_code=self.request.GET.get('msd', '')
         )
 
         if 'filter_by_program' in self.request.GET:

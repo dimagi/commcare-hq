@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from corehq import Domain
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
@@ -8,6 +9,10 @@ from corehq.apps.locations.models import Location, SQLLocation
 
 REORDER_LEVEL = 1.5
 MAXIMUM_LEVEL = 3
+
+
+def get_url(view_name, text, domain):
+    return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
 
 
 class EWSData(object):

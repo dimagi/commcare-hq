@@ -9,7 +9,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from django.utils import html
-from custom.ilsgateway.filters import ProductByProgramFilter
+from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, ProductAvailabilityData, \
     OrganizationSummary, SupplyPointStatus, SupplyPointStatusValues
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
@@ -20,6 +20,18 @@ from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent
 from dimagi.utils.dates import get_business_day_of_month, get_day_of_month
 from dimagi.utils.decorators.memoized import memoized
 
+
+def get_facilities(location, domain):
+
+    if location.location_type == 'district':
+        locations = SQLLocation.objects.filter(parent=location)
+    elif location.location_type == 'region':
+        locations = SQLLocation.objects.filter(parent__parent=location)
+    elif location.location_type == 'FACILITY':
+        locations = SQLLocation.objects.filter(id=location.id)
+    else:
+        locations = SQLLocation.objects.filter(domain=domain)
+    return locations
 
 def product_format(ret, srs, month):
     NO_DATA = -1
@@ -87,20 +99,21 @@ class SohPercentageTableData(ILSData):
 
         if self.config['location_id']:
 
-            location = Location.get(self.config['location_id'])
-            for loc in location.children:
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                                   site_code__icontains=self.config['msd_code'])
+            for loc in locations:
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
                                                                  self.config['enddate']),
-                                                                 supply_point=loc._id)[0]
+                                                                 supply_point=loc.location_id)[0]
 
                 soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SOH_FACILITY,
                                                     org_summary=org_summary)
-                facs = Location.filter_by_type(self.config['domain'], 'FACILITY', loc)
-                facs_count = (float(len(list(facs))) or 1)
+                facs = get_facilities(loc, self.config['domain'])
+                facs_count = facs.count()
                 soh_on_time = soh_data.on_time * 100 / facs_count
                 soh_late = soh_data.late * 100 / facs_count
                 soh_not_responding = soh_data.not_responding * 100 / facs_count
-                fac_ids = get_relevant_supply_point_ids(self.config['domain'], loc)
+                fac_ids = facs.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
                 stockouts = (StockTransaction.objects.filter(
                     case_id__in=fac_ids, quantity__lte=0,
                     report__date__month=int(self.config['month']),
@@ -110,7 +123,7 @@ class SohPercentageTableData(ILSData):
                     StockOnHandReport,
                     self.config['domain'],
                     '?location_id=%s&month=%s&year=%s',
-                    (loc._id, self.config['month'], self.config['year']))
+                    (loc.location_id, self.config['month'], self.config['year']))
 
                 row_data = [
                     link_format(loc.name, url),
@@ -122,7 +135,7 @@ class SohPercentageTableData(ILSData):
 
                 for product in prd_id:
                     ps = ProductAvailabilityData.objects.filter(
-                        supply_point=loc._id,
+                        supply_point=loc.external_id,
                         product=product,
                         date=self.config['startdate'])
                     if ps:
@@ -272,7 +285,8 @@ class DistrictSohPercentageTableData(ILSData):
                                                  domain=self.config['domain']).order_by('code')
 
         if self.config['location_id']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                                   site_code__icontains=self.config['msd_code'])
             for loc in locations:
                 supply_point = loc.supply_point_id
 
@@ -333,7 +347,7 @@ class StockOnHandReport(DetailsReport):
     title = 'Stock On Hand'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
 
     @property
     @memoized

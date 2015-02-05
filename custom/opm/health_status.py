@@ -131,6 +131,12 @@ class AWCHealthStatus(object):
            "Beneficiaries are exempt during the 1st month after childbirth, "
            "and when there is no VHND"),
          'mothers'),
+        ('beneficiary_vhnd',
+         _("Beneficiary VHND Attendance"),
+         _("Total beneficiaries who attended a VHND this month or were exempt.  "
+           "Beneficiaries are exempt during the 1st month after childbirth, "
+           "and when there is no VHND"),
+         'beneficiaries'),
         ('ifa_tablets',
          _("IFA Receipts"),
          _("Women 6 months pregnant who have received IFA tablets.  Exempt "
@@ -171,16 +177,72 @@ class AWCHealthStatus(object):
          'child_12_months'),
         ('vhnd_held',
          _("VHND"),
-        _("VHND organized at AWC"),
+         _("VHND organized at AWC"),
          'no_denom'),
-        ('adult_scale',
-         _("Adult Weighing Machine"),
-        _("Adult weighing machine available at vhnd"),
+        ('adult_scale_available',
+         _("Adult Weighing Machine Available"),
+         _("Adult weighing machine available at vhnd"),
          'no_denom'),
-        ('child_scale',
-         _("Child Weighing Machine"),
-        _("Child weighing machine available at vhnd"),
+        ('adult_scale_functional',
+         _("Adult Weighing Machine Functional"),
+         _("Adult weighing machine functional at vhnd"),
          'no_denom'),
+        ('child_scale_available',
+         _("Child Weighing Machine Available"),
+         _("Child weighing machine available at vhnd"),
+         'no_denom'),
+        ('child_scale_functional',
+         _("Child Weighing Machine Functional"),
+         _("Child weighing machine functional at vhnd"),
+         'no_denom'),
+        ('anm_present',
+         _("ANM Present"),
+         _("ANM Present at VHND"),
+         'no_denom'),
+        ('asha_present',
+         _("ASHA Present"),
+         _("ASHA Present at VHND"),
+         'no_denom'),
+        ('cmg_present',
+         _("CMG Present"),
+         _("CMG Present at VHND"),
+         'no_denom'),
+        ('ifa_stock_available',
+         _("Stock of IFA tablets"),
+         _("AWC has enough Stock of IFA tablets"),
+         'no_denom'),
+        ('ors_stock_available',
+         _("Stock of ORS packets"),
+         _("AWC has enough Stock of ORS packets"),
+         'no_denom'),
+        ('zinc_stock_available',
+         _("Stock of ZINC tablets"),
+         _("AWC has enough Stock of ZINC tablets"),
+         'no_denom'),
+        ('measles_stock_available',
+         _("Stock of Measles Vaccine"),
+         _("AWC has enough Stock of Measles Vaccine"),
+         'no_denom'),
+        ('birth_spacing_bonus',
+         _("Eligilble for Birth Spacing bonus"),
+         _("Number of Beneficiaries eligilble for Birth Spacing bonus"),
+         'beneficiaries'),
+        ('nutritional_bonus',
+         _("Eligilble for Nutritional status bonus"),
+         _("Number of Beneficiaries eligilble for Nutritional status bonus"),
+         'beneficiaries'),
+        ('closed_pregnants',
+         _("Pregnants closed this month"),
+         _("Number of Pregnant women closed this month"),
+         'beneficiaries'),
+        ('closed_mothers',
+         _("Mothers closed this month"),
+         _("Number of Mothers closed this month"),
+         'mothers'),
+        ('closed_children',
+         _("Children closed this month"),
+         _("Number of Children closed this month"),
+         'children'),
         # ('',
          # _(""),
         # _(""),
@@ -252,6 +314,10 @@ class AWCHealthStatus(object):
         return len([c for c in self.all_cases if c.child_attended_vhnd])
 
     @property
+    def beneficiary_vhnd(self):
+        return len([c for c in self.all_cases if c.child_attended_vhnd or c.preg_attended_vhnd])
+
+    @property
     def ifa_tablets(self):
         return len([c for c in self.all_cases if c.preg_received_ifa])
 
@@ -314,9 +380,66 @@ class AWCHealthStatus(object):
                 self.all_cases[0].is_service_available(service, 1) else 0)
 
     @property
-    def adult_scale(self):
-        return self.service_available('vhnd_adult_scale_available')
+    def anm_present(self):
+        return self.service_available('attend_ANM')
 
     @property
-    def child_scale(self):
-        return self.service_available('vhnd_child_scale_available')
+    def asha_present(self):
+        return self.service_available('attend_ASHA')
+
+    @property
+    def cmg_present(self):
+        return self.service_available('attend_cmg')
+
+    @property
+    def adult_scale_available(self):
+        return self.service_available('big_weight_machine_avail')
+
+    @property
+    def adult_scale_functional(self):
+        return self.service_available('func_bigweighmach')
+
+    @property
+    def child_scale_available(self):
+        return self.service_available('child_weight_machine_avail')
+
+    @property
+    def child_scale_functional(self):
+        return self.service_available('func_childweighmach')
+
+    @property
+    def ifa_stock_available(self):
+        return self.service_available('stock_ifatab')
+
+    @property
+    def ors_stock_available(self):
+        return self.service_available('stock_ors')
+
+    @property
+    def zinc_stock_available(self):
+        return self.service_available('stock_zntab')
+
+    @property
+    def measles_stock_available(self):
+        return self.service_available('stock_measlesvacc')
+
+    @property
+    def birth_spacing_bonus(self):
+        return len([c for c in self.all_cases if c.birth_spacing_years])
+
+    @property
+    def nutritional_bonus(self):
+        return len([c for c in self.all_cases if c.weight_grade_normal])
+
+    @property
+    def closed_pregnants(self):
+        return len([c for c in self.all_cases if c.status == 'pregnant' and c.closed_in_reporting_month])
+
+    @property
+    def closed_mothers(self):
+        return len([c for c in self.primary_cases if c.status == 'mother' and c.closed_in_reporting_month])
+
+    @property
+    def closed_children(self):
+        return sum([c.num_children for c in self.primary_cases
+                    if c.status == 'mother' and c.closed_in_reporting_month])

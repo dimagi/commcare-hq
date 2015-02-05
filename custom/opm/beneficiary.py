@@ -103,21 +103,26 @@ class OPMCaseRow(object):
     def case_id(self):
         return self.case._id
 
+    def get_date_property(self, property):
+        prop = self.case_property(property)
+        if prop and not isinstance(prop, datetime.date):
+            raise InvalidRow("{} must be a date!".format(property))
+        return prop
+
     @property
     @memoized
     def dod(self):
-        dod = self.case_property('dod')
-        if dod and not isinstance(dod, datetime.date):
-            raise InvalidRow('Delivery date must be a date!')
-        return dod
+        return self.get_date_property('dod')
 
     @property
     @memoized
     def edd(self):
-        edd = self.case_property('edd')
-        if edd and not isinstance(edd, datetime.date):
-            raise InvalidRow('EDD must be a date!')
-        return edd
+        return self.get_date_property('edd')
+
+    @property
+    @memoized
+    def lmp(self):
+        return self.get_date_property('lmp_date')
 
     @property
     @memoized
@@ -265,6 +270,18 @@ class OPMCaseRow(object):
             return EMPTY_FIELD
         return str(self.case_property('closed_on', EMPTY_FIELD))
 
+    @property
+    def closed_in_reporting_month(self):
+        if not self.closed:
+            return False
+
+        closed_datetime = self.case_property('closed_on', EMPTY_FIELD)
+        if closed_datetime and not isinstance(closed_datetime, datetime.datetime):
+            raise InvalidRow('Closed date is not of datetime.datetime type')
+        closed_date = closed_datetime.date()
+        return closed_date >= self.reporting_window_start and\
+            closed_date < self.reporting_window_end
+
     def condition_image(self, image_y, image_n, condition):
         if condition is None:
             return ''
@@ -332,12 +349,12 @@ class OPMCaseRow(object):
             )
 
         if self.preg_month == 6:
-            if not self.is_service_available('vhnd_adult_scale_available', months=3):
+            if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
             return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
         elif self.preg_month == 9:
-            if not self.is_service_available('vhnd_adult_scale_available', months=3):
+            if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
             return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
@@ -383,7 +400,7 @@ class OPMCaseRow(object):
     @property
     def child_growth_calculated(self):
         if self.child_age and self.child_age % 3 == 0:
-            if not self.is_service_available('vhnd_child_scale_available', months=3):
+            if not self.is_service_available('func_childweighmach', months=3):
                 return True
 
             xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
@@ -396,7 +413,7 @@ class OPMCaseRow(object):
     def preg_received_ifa(self):
         if self.preg_month == 6:
             if self.block == "atri":
-                if not self.is_service_available('vhnd_ifa_available', months=3):
+                if not self.is_service_available('stock_ifatab', months=3):
                     return True
 
                 def _from_case():
@@ -413,7 +430,7 @@ class OPMCaseRow(object):
     @property
     def child_received_ors(self):
         if self.child_age % 3 == 0:
-            if not self.is_service_available('vhnd_ors_available', months=3):
+            if not self.is_service_available('stock_ors', months=3):
                 return True
 
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
@@ -450,7 +467,7 @@ class OPMCaseRow(object):
     @property
     def child_received_measles_vaccine(self):
         if self.child_age == 12:
-            if not self.is_service_available('vhnd_measles_vacc_available', months=3):
+            if not self.is_service_available('stock_measlesvacc', months=3):
                 return True
 
             def _test(form):
@@ -490,7 +507,7 @@ class OPMCaseRow(object):
 
     @property
     def weight_grade_normal(self):
-        if self.block == "wazirganj":
+        if self.block == "atri":
             if self.child_age in [24, 36]:
                 if self.child_index == 1:
                     form_prop = 'interpret_grade'
@@ -510,7 +527,7 @@ class OPMCaseRow(object):
         returns None if inapplicable, False if not met, or
         2 for 2 years, or 3 for 3 years.
         """
-        if self.block == "atri":
+        if self.block == "wazirganj":
             if self.child_age in [24, 36]:
                 for form in self.filtered_forms(CHILDREN_FORMS):
                     if form.form.get('birth_spacing_prompt') == '1':
@@ -649,6 +666,43 @@ class OPMCaseRow(object):
                 self.child_breastfed,
             ]
 
+    def bad_edd(self):
+        """The expected date of delivery is beyond program range"""
+        # EDD is more than nine months from the date the report is run
+        if self.edd and self.edd > add_months_to_date(datetime.date.today(), 9):
+            return _("Incorrect EDD")
+
+    def bad_dod(self):
+        """DOD doesn't line up with the EDD (more than a month's difference)"""
+        if (self.dod and self.edd
+            and abs(self.edd - self.dod) > datetime.timedelta(days=30)):
+            return _("Incorrect DOD")
+
+    def bad_lmp(self):
+        """The LMP date is beyond program range"""
+        if self.lmp and not (self.lmp < datetime.date.today()):
+            return _("Incorrect LMP date")
+
+    def bad_account_num(self):
+        """Account number is incorrect"""
+        if not (11 <= len(self.account_number) <= 16):
+            return _("Account number is the wrong length")
+
+    def bad_ifsc(self):
+        """IFSC is not precisely 11 characters"""
+        if len(self.ifs_code) != 11:
+            return _("IFSC {} incorrect").format(self.ifs_code)
+
+    @property
+    def issues(self):
+        return ", ".join(filter(None, [
+            self.bad_edd(),
+            self.bad_dod(),
+            self.bad_lmp(),
+            self.bad_account_num(),
+            self.bad_ifsc(),
+        ]))
+
     @property
     def bp1_cash(self):
         return MONTH_AMT if self.bp1 else 0
@@ -759,6 +813,7 @@ class Beneficiary(OPMCaseRow):
         ('closed_date', _("Closed On"), True),
         ('vhnd_available_display', _('VHND organised this month'), True),
         ('payment_last_month', _('Payment last month'), True),
+        ('issues', _("Issues"), True),
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
