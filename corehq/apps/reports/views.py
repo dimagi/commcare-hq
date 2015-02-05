@@ -384,6 +384,8 @@ def hq_download_saved_export(req, domain, export_id):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]
+    export.last_accessed = datetime.utcnow()
+    export.save()
     return couchexport_views.download_saved_export(req, export_id)
 
 
