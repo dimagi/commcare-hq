@@ -57,6 +57,8 @@ branches:
   - killmemcached  # sk 1/29
   - project-settings-update # sravan 1/30
   - tdh-tiles # Noah 2/1
+  - lwyszomi:ilsgateway-supervision-upload
+  - lwyszomi:ews_report_chart_checkboxes
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
