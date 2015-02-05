@@ -32,39 +32,39 @@ from django.conf import settings
 from couchforms.models import XFormInstance
 
 
-# @register_repeater_type
-# class JsonFormRepeater(FormRepeater):
-#
-#     def __unicode__(self):
-#         return "forwarding forms to external JSON API: %s" % self.url
-#
-#     def get_headers(self, repeat_record):
-#         """
-#         Adds the correct content type to the HTTP request headers
-#         """
-#         headers = super(JsonFormRepeater, self)
-#         headers['Content-type'] = 'application/json'
-#         return headers
-#
-#     def get_url(self, repeat_record):
-#         """
-#         The parent class adds app_id to the URL params. Avoid that.
-#         """
-#         return Repeater.get_url(self, repeat_record)
-#
-#     @memoized
-#     def payload_doc(self, repeat_record):
-#         return XFormInstance.get(repeat_record.payload_id)
-#
-#
-# def create_json_form_repeat_records(sender, xform, **kwargs):
-#     create_repeat_records(JsonFormRepeater, xform)
-#
-#
-# successful_form_received.connect(create_json_form_repeat_records)
+@register_repeater_type
+class JsonFormRepeater(FormRepeater):
+
+    def __unicode__(self):
+        return "forwarding forms to external JSON API: %s" % self.url
+
+    def get_headers(self, repeat_record):
+        """
+        Adds the correct content type to the HTTP request headers
+        """
+        headers = super(JsonFormRepeater, self)
+        headers['Content-type'] = 'application/json'
+        return headers
+
+    def get_url(self, repeat_record):
+        """
+        The parent class adds app_id to the URL params. Avoid that.
+        """
+        return Repeater.get_url(self, repeat_record)
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return XFormInstance.get(repeat_record.payload_id)
 
 
-@RegisterGenerator(FormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
+def create_json_form_repeat_records(sender, xform, **kwargs):
+    create_repeat_records(JsonFormRepeater, xform)
+
+
+successful_form_received.connect(create_json_form_repeat_records)
+
+
+@RegisterGenerator(JsonFormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
 class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
 
     @staticmethod
