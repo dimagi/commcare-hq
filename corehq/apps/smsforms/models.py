@@ -1,5 +1,6 @@
 from copy import copy
 from datetime import datetime
+import logging
 from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import StringProperty, Document,\
     DateTimeProperty, BooleanProperty
@@ -78,8 +79,8 @@ class XFormsSession(Document):
 
     @classmethod
     def by_session_id(cls, id):
-        return XFormsSession.view("smsforms/sessions_by_touchforms_id",
-                                  key=id, include_docs=True).one()
+        return cls.view("smsforms/sessions_by_touchforms_id",
+                        key=id, include_docs=True).one()
 
     @classmethod
     def get_open_sms_session(cls, domain, contact_id):
@@ -177,6 +178,21 @@ class SQLXFormsSession(models.Model):
         elif len(objs) == 0:
             return None
         return objs[0]
+
+
+def get_session_by_session_id(id):
+    """
+    Utility method to first try and get a session in sql, then failing that get it in couch
+    and log an error.
+    """
+    sql_session = SQLXFormsSession.by_session_id(id)
+    if sql_session:
+        return sql_session
+
+    couch_session = XFormsSession.by_session_id(id)
+    if couch_session:
+        logging.error('session {} could not be found in sql.'.format(couch_session._id))
+    return couch_session
 
 
 def sync_sql_session_from_couch_session(couch_session):
