@@ -1,67 +1,83 @@
 {% load i18n %}
-<section class="section section-alt section-detail">
+<section class="section section-default sedtion-alt section-detail section-home-analyze">
     <div class="container">
         <div class="row">
-            <div class="col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2">
-                <h2 class="text-center">
+            <div class="col-sm-6 text-center">
+                <h2>
                     {% blocktrans %}
-                        Analyze and make data-driven decisions.
+                        Data-driven decisions<br class="visible-sm" /> in real time.
                     {% endblocktrans %}
                 </h2>
                 <p class="lead text-center">
                     {% blocktrans %}
-                        Gain transparency into your program with real-time
-                        analytics.
+                        Gain visibility into on-the-ground activities
+                        <br class="visible-sm visible-md visible-lg" />
+                        with real-time data and analytics.
                     {% endblocktrans %}
                 </p>
+                <div class="graphic graphic-xl graphic-green"></div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-sm-4">
-                <div class="graphic graphic-md"></div>
-                <h3>
-                    {% blocktrans %}
-                        Export data to third party apps.
-                    {% endblocktrans %}
-                </h3>
-                <p>
-                    {% blocktrans %}
-                        Download data into widely-readable Excel and CSV
-                        formats. Use APIs to link with external data management
-                        systems, including DHIS2, Tableau, SQL, and many more.
-                    {% endblocktrans %}
-                </p>
-            </div>
-            <div class="col-sm-4">
-                <div class="graphic graphic-md"></div>
-                <h3>
-                    {% blocktrans %}
-                        Access numerous online reports.
-                    {% endblocktrans %}
-                </h3>
-                <p>
-                    {% blocktrans %}
-                        Review collected data in online or scheduled email
-                        reports, including worker monitoring for easy
-                        supervision and cross-project reports for larger
-                        deployments.
-                    {% endblocktrans %}
-                </p>
-            </div>
-            <div class="col-sm-4">
-                <div class="graphic graphic-md"></div>
-                <h3>
-                    {% blocktrans %}
-                        Data is privacy protected and secure.
-                    {% endblocktrans %}
-                </h3>
-                <p>
-                    {% blocktrans %}
-                        All data is privacy protected, secured, and stored on
-                        our HIPAA compliant servers. Remove sensitive
-                        information in configurable De-Identified Exports.
-                    {% endblocktrans %}
-                </p>
+            <div class="col-sm-6">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="graphic graphic-sm graphic-turquoise"></div>
+                    </div>
+                    <div class="col-sm-8 blurb-right">
+                        <h3>
+                            {% blocktrans %}
+                                Data in easy to read reports.
+                            {% endblocktrans %}
+                        </h3>
+                        <p>
+                            {% blocktrans %}
+                                See data in online or scheduled email reports,
+                                including worker activity and cross-project
+                                reports.
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-8 blurb-left">
+                        <div style="height: 27px;" class="visible-lg"></div>
+                        <div style="height: 18px;" class="visible-md"></div>
+                        <div style="height: 12px;" class="visible-sm"></div>
+                        <h3>
+                            {% blocktrans %}
+                                Privacy protected and secure.
+                            {% endblocktrans %}
+                        </h3>
+                        <p>
+                            {% blocktrans %}
+                                All data is privacy protected, secured, and
+                                stored on our HIPAA compliant servers.
+
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="graphic graphic-sm graphic-blurb-middle graphic-yellow"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="graphic graphic-sm graphic-purple"></div>
+                    </div>
+                    <div class="col-sm-8 blurb-right">
+                        <h3>
+                            {% blocktrans %}
+                                Sync with third party apps.
+                            {% endblocktrans %}
+                        </h3>
+                        <p>
+                            {% blocktrans %}
+                                Download data into Excel and CSV formats, or
+                                use APIs to link with data management
+                                systems like DHIS2, Tableau, or SQL.
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
