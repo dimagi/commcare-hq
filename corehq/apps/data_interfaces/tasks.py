@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 from django.core.cache import cache
 from django.template.loader import render_to_string
 from soil import CachedDownload
+from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms
 from dimagi.utils.django.email import send_HTML_email
