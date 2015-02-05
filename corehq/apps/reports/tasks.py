@@ -131,7 +131,7 @@ def saved_exports():
 
 @task(queue='saved_exports_queue')
 def export_for_group_async(group_config, output_dir):
-    export_for_group(group_config, output_dir)
+    export_for_group(group_config, output_dir, ignore_unused=True)
 
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
