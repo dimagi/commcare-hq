@@ -36,6 +36,17 @@
                 onFormSave: function (data) {
                     COMMCAREHQ.app_manager.updateDOM(data.update);
                 },
+                {% if vellum_debug == "dev" %}
+                onReady: function () {
+                    var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
+                        less_error = $(less_error_id);
+                    if (less_error) {
+                        console.log("hiding less error:", less_error_id);
+                        console.log(less_error.text());
+                        less_error.hide();
+                    }
+                },
+                {% endif %}
                 sessionid: {{ sessionid|JSON }}
             },
             javaRosa: {
