@@ -6,7 +6,6 @@ $(document).ready(function() {
         uvBtnId = '#uvSubmitIdea',
         $uvBtn = $(uvBtnId);
 
-    // Return if the submit an idea button doesn't exist
     if (!$uvBtn.length) {
         return;
     }
@@ -23,7 +22,7 @@ $(document).ready(function() {
     defaults = {
         userEmail: 'Unknown email address',
         userName: 'Unknown name'
-    }
+    };
 
     data = _.defaults(defaults, $uvBtn.data());
 
