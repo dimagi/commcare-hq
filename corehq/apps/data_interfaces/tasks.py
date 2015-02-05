@@ -23,8 +23,11 @@ def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
 @task
 def bulk_archive_forms(user, uploaded_data):
     response = archive_forms(user, uploaded_data)
-    [logger.info("[Data interfaces] {}".format(msg)) for msg in response['errors']]
-    [logger.info("[Data interfaces] {}".format(msg)) for msg in response['success']]
+
+    for msg in response['success']:
+        logger.info("[Data interfaces] %s", msg)
+    for msg in response['errors']:
+        logger.info("[Data interfaces] %s", msg)
 
     html_content = render_to_string('data_interfaces/archive_email.html', response)
     send_HTML_email('Your archived forms', user.email, html_content)

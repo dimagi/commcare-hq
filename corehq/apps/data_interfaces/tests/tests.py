@@ -1,3 +1,4 @@
+from os.path import abspath, dirname, join
 from datetime import datetime
 
 from django.test import TestCase
@@ -8,7 +9,8 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms
 from dimagi.utils.excel import WorkbookJSONReader
 
-BASE_PATH = 'corehq/apps/data_interfaces/tests/files/'
+THISDIR = dirname(abspath(__file__))
+BASE_PATH = join(THISDIR, 'files')
 BASIC_XLSX = 'basic_forms_bulk.xlsx'
 MISSING_XLSX = 'missing_forms_bulk.xlsx'
 MALFORM_XLSX = 'malformatted_forms_bulk.xlsx'
@@ -62,12 +64,12 @@ class BulkArchiveForms(TestCase):
         self.assertIn('No files uploaded', response.content)
 
     def test_bulk_archive_wrong_filetype(self):
-        with open(BASE_PATH + WRONG_FILETYPE) as fp:
+        with open(join(BASE_PATH, WRONG_FILETYPE)) as fp:
             response = self.client.post(self.url, {'bulk_upload_file': fp}, follow=True)
             self.assertIn('CommCare HQ does not support that file type.', response.content)
 
     def test_bulk_archive_basic(self):
-        with open(BASE_PATH + BASIC_XLSX) as fp:
+        with open(join(BASE_PATH, BASIC_XLSX)) as fp:
             response = self.client.post(self.url, {'bulk_upload_file': fp}, follow=True)
             self.assertIn('We received your file and are processing it...', response.content)
 
@@ -104,7 +106,7 @@ class BulkArchiveFormsUnit(TestCase):
             xform.delete()
 
     def test_archive_forms_basic(self):
-        uploaded_file = WorkbookJSONReader("{}{}".format(BASE_PATH, BASIC_XLSX))
+        uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
         response = archive_forms(self.user, list(uploaded_file.get_worksheet()))
 
@@ -115,7 +117,7 @@ class BulkArchiveFormsUnit(TestCase):
         self.assertEqual(len(response['success']), len(self.xforms))
 
     def test_archive_forms_missing(self):
-        uploaded_file = WorkbookJSONReader("{}{}".format(BASE_PATH, MISSING_XLSX))
+        uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
         response = archive_forms(self.user, list(uploaded_file.get_worksheet()))
 

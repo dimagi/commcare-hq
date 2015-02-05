@@ -192,7 +192,7 @@ class ArchiveFormView(DataInterfaceSection):
             return WorkbookJSONReader(bulk_file)
         except InvalidFileException:
             try:
-                csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
+                csv.DictReader(io.StringIO(bulk_file.read().decode('utf-8'),
                                            newline=None))
                 raise BulkUploadCasesException(_("CommCare HQ does not support that file type."
                                                  "Please convert to Excel 2007 or higher (.xlsx) "
