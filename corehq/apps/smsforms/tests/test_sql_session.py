@@ -3,7 +3,8 @@ import random
 import uuid
 from django.test import TestCase
 from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
-from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS
+from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS, \
+    XFORMS_SESSION_IVR
 
 
 class SQLSessionTestCase(TestCase):
@@ -73,6 +74,70 @@ class SQLSessionTestCase(TestCase):
             self.assertEqual(getattr(couch_session, prop), value)
         self.assertTrue(couch_session._rev.startswith('2-'))
 
+    def test_get_all_open_sessions_domain_mismatch(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        _make_session(
+            domain='wrong',
+            connection_id=contact,
+            end_time=None,
+            session_type=XFORMS_SESSION_SMS,
+        )
+        self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
+
+    def test_get_all_open_sessions_contact_mismatch(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        _make_session(
+            domain=domain,
+            connection_id='wrong',
+            end_time=None,
+            session_type=XFORMS_SESSION_SMS,
+        )
+        self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
+
+    def test_get_all_open_sessions_already_ended(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        _make_session(
+            domain=domain,
+            connection_id=contact,
+            end_time=datetime.utcnow(),
+            session_type=XFORMS_SESSION_SMS,
+        )
+        self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
+
+    def test_get_all_open_sessions_wrong_type(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        _make_session(
+            domain=domain,
+            connection_id=contact,
+            end_time=None,
+            session_type=XFORMS_SESSION_IVR,
+        )
+        self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
+
+    def test_get_and_close_all_open_sessions(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        for i in range(3):
+            _make_session(
+                domain=domain,
+                connection_id=contact,
+                end_time=None,
+                session_type=XFORMS_SESSION_SMS,
+            )
+
+        couch_sessions = XFormsSession.get_all_open_sms_sessions(domain, contact)
+        sql_sessions = SQLXFormsSession.get_all_open_sms_sessions(domain, contact)
+        self.assertEqual(3, len(couch_sessions))
+        self.assertEqual(3, len(sql_sessions))
+        self.assertEqual(set([x._id for x in couch_sessions]), set([x.couch_id for x in sql_sessions]))
+        SQLXFormsSession.close_all_open_sms_sessions(domain, contact)
+        self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
+        self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
+
     def test_get_single_open_session(self):
         properties = _arbitrary_session_properties(
             end_time=None,
@@ -98,20 +163,25 @@ class SQLSessionTestCase(TestCase):
         domain = uuid.uuid4().hex
         contact = uuid.uuid4().hex
         for i in range(3):
-            properties = _arbitrary_session_properties(
+            _make_session(
                 domain=domain,
                 connection_id=contact,
                 end_time=None,
                 session_type=XFORMS_SESSION_SMS,
             )
-            couch_session = XFormsSession(**properties)
-            couch_session.save()
 
         (mult, session) = get_single_open_session_or_close_multiple(domain, contact)
         self.assertEqual(True, mult)
         self.assertEqual(None, session)
         self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
         self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
+
+
+def _make_session(**kwargs):
+    properties = _arbitrary_session_properties(**kwargs)
+    couch_session = XFormsSession(**properties)
+    couch_session.save()
+    return couch_session
 
 
 def _arbitrary_session_properties(**kwargs):
