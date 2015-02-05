@@ -6,6 +6,8 @@ from couchdbkit.ext.django.schema import StringProperty, Document,\
     DateTimeProperty, BooleanProperty
 from django.db import models
 from django.db.models import Q
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
 
 XFORMS_SESSION_SMS = "SMS"
@@ -120,6 +122,8 @@ class SQLXFormsSession(models.Model):
     workflow = models.CharField(null=True, blank=True, max_length=20)
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
 
+    do_not_sync = False  # used in the syncing code, can be deleted when couch model is removed
+
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
             {"form": self.form_xmlns,
@@ -199,6 +203,25 @@ def get_session_by_session_id(id):
     return couch_session
 
 
+SESSION_PROPERTIES_TO_SYNC = [
+    'connection_id',
+    'session_id',
+    'form_xmlns',
+    'start_time',
+    'modified_time',
+    'end_time',
+    'completed',
+    'domain',
+    'user_id',
+    'app_id',
+    'submission_id',
+    'survey_incentive',
+    'session_type',
+    'workflow',
+    'reminder_id',
+]
+
+
 def sync_sql_session_from_couch_session(couch_session):
     data = copy(couch_session._doc)
     couch_id = data.pop('_id')
@@ -208,9 +231,34 @@ def sync_sql_session_from_couch_session(couch_session):
     except SQLXFormsSession.DoesNotExist:
         sql_session = SQLXFormsSession(couch_id=couch_id)
 
-    for attr, value in data.items():
-        setattr(sql_session, attr, value)
+    for attr in SESSION_PROPERTIES_TO_SYNC:
+        setattr(sql_session, attr, data.get(attr, None))
+
+    # hack to avoid excess saves. see sync_couch_session_from_couch_session
+    sql_session.do_not_sync = True
     sql_session.save()
+    sql_session.do_not_sync = False
+
+
+@receiver(post_save, sender=SQLXFormsSession)
+def sync_signal_catcher(sender, instance, *args, **kwargs):
+    sync_couch_session_from_couch_session(instance)
+
+
+def sync_couch_session_from_couch_session(sql_session):
+    if sql_session.do_not_sync:
+        return
+
+    if not sql_session.couch_id:
+        logging.error('Only existing sessions can be synced for now.')
+        return
+
+    couch_doc = XFormsSession.get(sql_session.couch_id)
+    for attr in SESSION_PROPERTIES_TO_SYNC:
+        setattr(couch_doc, attr, getattr(sql_session, attr))
+
+    # don't call .save() since that will create a recursive loop of syncing
+    XFormsSession.get_db().save_doc(couch_doc._doc)
 
 
 from . import signals

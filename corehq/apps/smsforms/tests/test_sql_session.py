@@ -2,7 +2,8 @@ from datetime import datetime
 import random
 import uuid
 from django.test import TestCase
-from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSession, XFORMS_SESSION_TYPES
+from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
+from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS
 
 
 class SQLSessionTestCase(TestCase):
@@ -27,6 +28,9 @@ class SQLSessionTestCase(TestCase):
         for prop, value in properties.items():
             self.assertEqual(getattr(sql_session, prop), value)
 
+        # make sure we didn't do any excess saves
+        self.assertTrue(XFormsSession.get_db().get_rev(couch_session._id).startswith('1-'))
+
     def test_sync_from_update(self):
         properties = _arbitrary_session_properties()
         couch_session = XFormsSession(**properties)
@@ -48,8 +52,29 @@ class SQLSessionTestCase(TestCase):
         for prop, value in updated_properties.items():
             self.assertEqual(getattr(sql_session, prop), value)
 
+    def test_reverse_sync(self):
+        properties = _arbitrary_session_properties()
+        couch_session = XFormsSession(**properties)
+        couch_session.save()
+        sql_session = SQLXFormsSession.objects.get(couch_id=couch_session._id)
+        for prop, value in properties.items():
+            self.assertEqual(getattr(sql_session, prop), value)
 
-def _arbitrary_session_properties():
+        # make sure we didn't do any excess saves
+        self.assertTrue(XFormsSession.get_db().get_rev(couch_session._id).startswith('1-'))
+
+        updated_properties = _arbitrary_session_properties()
+        for prop, value in updated_properties.items():
+            setattr(sql_session, prop, value)
+        sql_session.save()
+
+        couch_session = XFormsSession.get(couch_session._id)
+        for prop, value in updated_properties.items():
+            self.assertEqual(getattr(couch_session, prop), value)
+        self.assertTrue(couch_session._rev.startswith('2-'))
+
+
+def _arbitrary_session_properties(**kwargs):
     def arbitrary_string(max_len=32):
         return uuid.uuid4().hex[:max_len]
 
@@ -63,7 +88,7 @@ def _arbitrary_session_properties():
     def arbitrary_bool():
         return random.choice([True, False])
 
-    return {
+    properties = {
         'connection_id': arbitrary_string(),
         'session_id': arbitrary_string(),
         'form_xmlns': arbitrary_string(),
@@ -80,3 +105,5 @@ def _arbitrary_session_properties():
         'workflow': arbitrary_string(20),
         'reminder_id': arbitrary_string(),
     }
+    properties.update(kwargs)
+    return properties
