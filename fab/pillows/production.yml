@@ -2,6 +2,7 @@
 ---
 include_groups:
   - mvp
+  - mvp_indicators
 include_pillows:
   - custom.bihar.models.CareBiharFluffPillow
   - custom.opm.models.OpmCaseFluffPillow
@@ -25,6 +26,7 @@ include_pillows:
   - custom.intrahealth.models.RecapPassagePillow
   - custom.intrahealth.models.TauxDeRuptureFluffPillow
   - custom.intrahealth.models.LivraisonFluffPillow
+  - custom.intrahealth.models.RecouvrementFluffPillow
   - custom.care_pathways.models.GeographyFluffPillow
   - custom.care_pathways.models.FarmerRecordFluffPillow
   - custom.world_vision.models.WorldVisionMotherFluffPillow

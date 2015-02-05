@@ -7,7 +7,8 @@
     {% angularjs %}
     <li role="presentation" ng-class="{ 'active' : !typeSearch.name }">
         <a ng-click="filterCaseTypes()">{% trans "All Case Types" %}</a>
-        <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"></hierarchy>
+        <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"
+                has-errors="hasErrors(casetype)"></hierarchy>
     </li>
     {% endangularjs %}
 {% endblock %}
@@ -70,7 +71,7 @@
                                 <li ng-repeat="(relationship, case_type) in caseType.relationships">
                                     <span class="label label-primary">{{ relationship }}</span> {{ case_type }}
                                 </li>
-                            </ul>
+                          </ul>
                       </div>
                       <div class="col-md-3">
                           {% trans "Opened by:" %}
@@ -81,6 +82,19 @@
                           <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>
                       </div>
                     </div>
+                    <div class="row" ng-show="caseType.has_errors">
+                        <div class="col-md-6">
+                            {% trans "Problems:" %}
+                            <ul>
+                                <li ng-show="caseType.error">
+                                    {{ caseType.error }}
+                                </li>
+                                <li ng-repeat="property in caseType.properties|filter:{'has_errors': true}">
+                                    <a href="" ng-click="gotoAnchor(caseType.name, property.name)">{{ property.name }}</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <table class="table" ng-repeat-end>
                     <thead>
@@ -90,9 +104,17 @@
                         <th>{% trans "Save questions" %}</th>
                     </thead>
                     <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
-                        <tr ng-repeat="form in property.forms">
+                        <tr ng-repeat="form in property.forms" id="{{ caseType.name }}:{{ property.name }}"
+                            ng-class="{'danger': property.has_errors}">
                             <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
-                            <td>{% verbatim %}{{ getFormName(form.form_id, lang) }}{% endverbatim %}</td>
+                            <td>
+                                {% verbatim %}
+                                {{ getFormName(form.form_id, lang) }}
+                                {% endverbatim %}
+                                <i class="fa fa-exclamation-triangle text-danger" ng-repeat="error in form.errors"
+                                        popover="{{ error }}" popover-trigger="mouseenter"
+                                        popover-placement="bottom"></i>
+                            </td>
                             <td><form-questions
                                     questions="form.load_questions"
                                     show-conditions="showConditions"
@@ -116,7 +138,8 @@
 <div class="well">
     <ul class="nav nav-pills nav-stacked">
         <member ng-repeat='(casetype, subhierarchy) in hierarchy' casetype='casetype' hierarchy="subhierarchy"
-                 type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"></member>
+                type-search="typeSearch" filter-case-types="filterCaseTypes({casetype: casetype})"
+                has-errors="hasErrors({casetype: casetype})"></member>
     </ul>
 </div>
 </script>
@@ -124,7 +147,10 @@
 <!-- sub-template for member of case type hierarchy -->
 <script type="text/ng-template" id="/hierarchy_member.html">
 <li role="presentation" ng-class="{ 'active' : typeSearch.name === casetype }">
-    <a ng-click="filterCaseTypes({casetype: casetype})"><i class="fa fa-envelope-square"></i> {{ casetype }}</a>
+    <a ng-click="filterCaseTypes({casetype: casetype})">
+        <i class="fa fa-envelope-square"></i> {{ casetype }}
+        <i class="fa fa-exclamation-triangle text-danger" ng-show="hasErrors({casetype: casetype})"></i>
+    </a>
 </li>
 </script>
 

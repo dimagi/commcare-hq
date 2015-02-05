@@ -7,6 +7,9 @@
     <form name="reset_pillow_checkpoint" method="post" action="{% url "reset_pillow_checkpoint" %}">
         <div class="modal-body">
             <p>{% trans "Are you sure you want to reset checkpoint for this pillow?" %}</p>
+            <div class="alert">
+            <p><i class="icon-warning-sign"></i><strong>{% trans "You still have to RESTART the pillow manually!" %}</strong></p>
+            </div>
             <input type="hidden" id="pillow_name" name="pillow_name" />
         </div>
         <div class="modal-footer">

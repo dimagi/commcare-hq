@@ -12,8 +12,6 @@ import djcelery
 
 djcelery.setup_loader()
 
-CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
-
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG

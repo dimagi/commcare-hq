@@ -49,7 +49,6 @@ individual project sites when necessary.
 + [elasticsearch][elasticsearch] (including Java 7).
   - The version we run is `Version: 0.90.5, JVM: 1.7.0_05`.
   - `brew install homebrew/versions/elasticsearch090` works well on mac
-+ memcached
 + redis >= 2.2.12 ([installation notes](https://gist.github.com/mwhite/c0381c5236855993572c))
 + [Jython][jython] 2.5.2 (optional, only needed for CloudCare)
 + For additional requirements necessary only if you want to modify the default
@@ -237,7 +236,6 @@ If your installation didn't set up the helper processes required by CommCare HQ
 to automatically run on system startup, you need to run them manually:
 
     redis-server /path/to/redis.conf
-    memcached -d &
     /path/to/unzipped/elasticsearch/bin/elasticsearch &
     /path/to/couchdb/bin/couchdb &
 

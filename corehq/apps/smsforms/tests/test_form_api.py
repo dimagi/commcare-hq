@@ -98,5 +98,3 @@ class FormplayerApiTest(TestCase):
         [answer] = responses 
         self.assertEqual("how you feeling, some case?", answer)
         q_and_a(self, "groovy", "thanks, you're done!", self.domain)
-        
-        

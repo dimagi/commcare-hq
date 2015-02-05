@@ -20,7 +20,9 @@ COMMCONNECT_DEVICE_ID = "commconnect"
 AUTH = DigestAuth(settings.TOUCHFORMS_API_USER, 
                   settings.TOUCHFORMS_API_PASSWORD)
 
-def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False, session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
+
+def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False,
+                  session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -42,8 +44,8 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     if contact.doc_type == "CommCareCase":
         session_data["additional_filters"] = {
             "case_id": contact.get_id,
-            "footprint" : "True",
-            "include_children" : "True" if case_for_case_submission else "False",
+            "footprint": "True",
+            "include_children": "True" if case_for_case_submission else "False",
         }
     else:
         session_data["additional_filters"] = {
@@ -56,7 +58,6 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
                           language=language,
                           session_data=session_data,
                           auth=AUTH)
-    
     
     now = datetime.utcnow()
     # just use the contact id as the connection id. may need to revisit this
@@ -79,8 +80,10 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     else:
         return (session, _responses_to_text(responses))
 
+
 def get_responses(msg):
     return _get_responses(msg.domain, msg.couch_recipient, msg.text)
+
 
 def _get_responses(domain, recipient, text, yield_responses=False, session_id=None, update_timestamp=True):
     """
@@ -111,20 +114,22 @@ def _get_responses(domain, recipient, text, yield_responses=False, session_id=No
         else:
             return _responses_to_text(tfsms.next_responses(session_id, text, auth=None))
 
+
 def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]
 
-"""
-Gets the raw instance of the session's form and submits it. This is used with
-sms and ivr surveys to save all questions answered so far in a session that 
-needs to close.
 
-If include_case_side_effects is False, no case create / update / close actions
-will be performed, but the form will still be submitted.
-
-The form is only submitted if the smsforms session has not yet completed.
-"""
 def submit_unfinished_form(session_id, include_case_side_effects=False):
+    """
+    Gets the raw instance of the session's form and submits it. This is used with
+    sms and ivr surveys to save all questions answered so far in a session that
+    needs to close.
+
+    If include_case_side_effects is False, no case create / update / close actions
+    will be performed, but the form will still be submitted.
+
+    The form is only submitted if the smsforms session has not yet completed.
+    """
     session = XFormsSession.by_session_id(session_id)
     if session is not None and session.end_time is None:
         # Get and clean the raw xml
@@ -169,5 +174,3 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
         xform.partial_submission = True
         xform.survey_incentive = session.survey_incentive
         xform.save()
-
-
