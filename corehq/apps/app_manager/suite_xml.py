@@ -3,24 +3,27 @@ from functools import total_ordering
 import os
 from os.path import commonprefix
 import re
-from corehq.apps.app_manager import id_strings
 import urllib
-from django.core.urlresolvers import reverse
-from lxml import etree
+
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, load_xmlobject_from_string
+from lxml import etree
+from xml.sax.saxutils import escape
+
+from django.core.urlresolvers import reverse
+
+from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
+from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
-from corehq.apps.app_manager.xpath import ProductInstanceXpath
-from corehq.apps.hqmedia.models import HQMediaMapItem
-from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
+from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath
 
 FIELD_TYPE_ATTACHMENT = 'attachment'
 FIELD_TYPE_INDICATOR = 'indicator'
@@ -950,6 +953,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         ).xpath,
                                         "locale_id": self.id_strings.detail_column_header_locale(
                                             module, detail_type, column,
+                                        ),
+                                        # Just using default language for now
+                                        # The right thing to do would be to reference the app_strings.txt I think
+                                        "prefix": escape(
+                                            column.header.get(self.app.default_language, "")
                                         )
                                     }
                                     if column.format == "enum":
