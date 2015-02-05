@@ -13,8 +13,8 @@ class Command(BaseCommand):
         session_ids = [row['id'] for row in db.view("smsforms/sessions_by_touchforms_id")]
         errors = []
         for session_doc in iter_docs(db, session_ids):
-            couch_session = XFormsSession.wrap(session_doc)
             try:
+                couch_session = XFormsSession.wrap(session_doc)
                 sync_sql_session_from_couch_session(couch_session)
             except Exception as e:
                 logging.exception('problem migrating session {}: {}'.format(session_doc['_id'], e))
