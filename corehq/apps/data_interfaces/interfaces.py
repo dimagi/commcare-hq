@@ -13,6 +13,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.toggles import BULK_ARCHIVE_FORMS
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -33,6 +34,10 @@ class DataInterface(GenericReportView):
 class ArchiveFormInterface(DataInterface):
     name = ugettext_noop("Bulk Archive Forms")
     slug = "archive_forms"
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return BULK_ARCHIVE_FORMS.enabled(user.username)
 
 
 class CaseReassignmentInterface(CaseListMixin, DataInterface):

@@ -287,3 +287,10 @@ APP_SUMMARY = StaticToggle(
     'Form and Case summary of an application',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+BULK_ARCHIVE_FORMS = StaticToggle(
+    'bulk_archive_forms',
+    'Bulk archive forms with excel',
+)
+
+
