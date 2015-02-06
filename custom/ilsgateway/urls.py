@@ -13,6 +13,6 @@ urlpatterns = patterns('custom.ilsgateway.views',
 
     url(r'^run_reports/$', 'run_warehouse_runner', name='run_reports'),
     url(r'^end_report_run/$', 'end_report_run', name='end_report_run'),
-    url(r'^ils_resync_passwords/$', 'ils_resync_passwords', name='ils_resync_passwords'),
+    url(r'^ils_resync_passwords/$', 'ils_fix_languages', name='ils_fix_languages'),
     url(r'^delete_runs/$', 'delete_reports_runs', name='delete_runs')
 )

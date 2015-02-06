@@ -19,13 +19,12 @@ from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, ge
     get_delivery_group_reports, ILS_FACILITIES
 from custom.logistics.models import StockDataCheckpoint
 from casexml.apps.stock.models import StockTransaction
-from custom.logistics.tasks import stock_data_task
-from custom.ilsgateway.api import ILSGatewayEndpoint
+from custom.logistics.tasks import stock_data_task, language_fix
+from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.models import MigrationCheckpoint
-from custom.logistics.tasks import resync_webusers_passwords_task
 
 
 class GlobalStats(BaseDomainView):
@@ -209,10 +208,10 @@ def end_report_run(request, domain):
 
 @domain_admin_required
 @require_POST
-def ils_resync_passwords(request, domain):
+def ils_fix_languages(request, domain):
     config = ILSGatewayConfig.for_domain(domain)
     endpoint = ILSGatewayEndpoint.from_config(config)
-    resync_webusers_passwords_task.delay(config, endpoint)
+    language_fix.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 

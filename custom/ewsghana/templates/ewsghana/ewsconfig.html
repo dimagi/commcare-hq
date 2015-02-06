@@ -86,8 +86,8 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="resync_passwords">
-                        {% trans "Webusers passwords resync" %}
+                    <button class="btn" id="fix_languages">
+                        {% trans "Fix languages" %}
                     </button>
                 </div>
             </div>
@@ -129,8 +129,8 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#resync_passwords").click(function() {
-            var url = '{% url 'ews_resync_passwords' domain %}';
+        $("#fix_languages").click(function() {
+            var url = '{% url 'ews_fix_languages' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
