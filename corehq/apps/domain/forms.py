@@ -324,17 +324,6 @@ class DomainGlobalSettingsForm(forms.Form):
         required=False,
         help_text=_("Enter the case type to be used for FLWs in call center apps")
     )
-    secure_submissions = BooleanField(
-        label=_("Secure submissions"),
-        required=False,
-        help_text=_(mark_safe(
-            "Secure Submissions prevents others from impersonating your mobile workers."
-            "This setting requires all deployed applications to be using secure "
-            "submissions as well. "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
-            "Read more about secure submissions here</a>"))
-    )
-
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain', None)
@@ -407,19 +396,7 @@ class DomainGlobalSettingsForm(forms.Form):
                         users_to_save.append(user)
                 if users_to_save:
                     WebUser.bulk_save(users_to_save)
-
-            secure_submissions = self.cleaned_data.get(
-                'secure_submissions', False)
-            apps_to_save = []
-            if secure_submissions != domain.secure_submissions:
-                for app in get_apps_in_domain(domain.name):
-                    if app.secure_submissions != secure_submissions:
-                        app.secure_submissions = secure_submissions
-                        apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
             domain.save()
-            if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception:
             return False
@@ -431,16 +408,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
         choices=(('true', _('Test')),
                  ('false', _('Real')),
                  ('none', _('Not Sure')))
-    )
-    secure_submissions = BooleanField(
-        label=_("Secure submissions"),
-        required=False,
-        help_text=_(mark_safe(
-            "Secure Submissions prevents others from impersonating your mobile workers."
-            "This setting requires all deployed applications to be using secure "
-            "submissions as well. "
-            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
-            "Read more about secure submissions here</a>"))
     )
 
     cloudcare_releases = ChoiceField(
