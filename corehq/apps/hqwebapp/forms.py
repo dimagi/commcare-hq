@@ -167,6 +167,8 @@ class FormListForm(object):
                 json_row[header['key']] = get_data(header['key'])
             elif isinstance(self.get_child_form_field(header), forms.Field):
                 json_row[header] = get_data(header)
+        if getattr(form, 'errors', None):
+            json_row['form_errors'] = form.errors
         return json_row
 
     def get_context(self):
@@ -174,6 +176,7 @@ class FormListForm(object):
             'headers': self.get_header_json(),
             'row_spec': self.get_row_spec(),
             'rows': map(self.form_to_json, self.child_forms),
+            'errors': getattr(self, 'errors', False),
         }
 
     def as_table(self):
