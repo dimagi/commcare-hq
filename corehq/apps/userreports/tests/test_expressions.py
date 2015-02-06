@@ -1,5 +1,7 @@
 from django.test import SimpleTestCase
+from fakecouch import FakeCouchDb
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.expressions.context_specific import RelatedDocExpression
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec
 from corehq.apps.userreports.specs import EvaluationContext
@@ -164,3 +166,42 @@ class RootDocExpressionTest(SimpleTestCase):
                 context=EvaluationContext({"base_property": "base_value"})
             )
         )
+
+
+class DocJoinExpressionTest(SimpleTestCase):
+
+    def setUp(self):
+        spec = {
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "parent_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "related_property"
+            }
+        }
+        self.expression = ExpressionFactory.from_spec(spec)
+        self.database = FakeCouchDb()
+        RelatedDocExpression.db_lookup = lambda _, type: self.database
+
+
+    def test_simple_lookup(self):
+        related_id = 'related-id'
+        my_doc = {
+            'parent_id': related_id,
+        }
+        related_doc = {
+            'related_property': 'foo'
+        }
+        self.database.mock_docs = {
+            'my-id': my_doc,
+            related_id: related_doc
+        }
+        self.assertEqual('foo', self.expression(my_doc))
+
+    def test_related_doc_not_found(self):
+        self.assertEqual(None, self.expression({'parent_id': 'some-missing-id'}))
+

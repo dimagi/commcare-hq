@@ -4,7 +4,7 @@ from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
-    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec
+    ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec
 
 
 def _simple_expression_generator(wrapper_class, spec, context):
@@ -32,6 +32,16 @@ def _root_doc_expression(spec, context):
     return wrapped
 
 
+def _related_doc_expression(spec, context):
+    wrapped = RelatedDocExpressionSpec.wrap(spec)
+    wrapped.configure(
+        related_doc_type=wrapped.related_doc_type,
+        doc_id_expression=ExpressionFactory.from_spec(wrapped.doc_id_expression, context),
+        value_expression=ExpressionFactory.from_spec(wrapped.value_expression, context),
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'constant': _constant_expression,
@@ -39,6 +49,7 @@ class ExpressionFactory(object):
         'property_path': _property_path_expression,
         'conditional': _conditional_expression,
         'root_doc': _root_doc_expression,
+        'related_doc': _related_doc_expression,
     }
 
     @classmethod

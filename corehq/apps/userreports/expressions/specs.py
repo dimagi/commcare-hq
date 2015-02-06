@@ -1,7 +1,9 @@
+from couchdbkit.exceptions import ResourceNotFound
 from jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter
 from corehq.apps.userreports.specs import TypeProperty
+from dimagi.utils.couch.database import get_db
 
 
 class ConstantGetterSpec(JsonObject):
@@ -65,3 +67,27 @@ class RootDocExpressionSpec(JsonObject):
         if context is None:
             return None
         return self._expression_fn(context.root_doc, context)
+
+
+class RelatedDocExpressionSpec(JsonObject):
+    type = TypeProperty('related_doc')
+    related_doc_type = StringProperty()
+    doc_id_expression = DictProperty(required=True)
+    value_expression = DictProperty(required=True)
+
+    db_lookup = lambda self, type: get_db()
+
+    def configure(self, related_doc_type, doc_id_expression, value_expression):
+        self._related_doc_type = related_doc_type
+        self._doc_id_expression = doc_id_expression
+        self._value_expression = value_expression
+
+    def __call__(self, item, context=None):
+        doc_id = self._doc_id_expression(item, context)
+        if doc_id:
+            try:
+                doc = self.db_lookup(self._related_doc_type).get(doc_id)
+
+                return self._value_expression(doc, context)
+            except ResourceNotFound:
+                return None
