@@ -1,6 +1,8 @@
+from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
-from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter
+from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter, metadata
+from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
 
@@ -35,9 +37,21 @@ class ConfigurableIndicatorPillow(PythonPillow):
             configs = self.get_all_configs()
 
         self.tables = [IndicatorSqlAdapter(self.get_sql_engine(), config) for config in configs]
-        for table in self.tables:
-            table.create_if_necessary()
+        self.rebuild_tables_if_necessary()
         self.bootstrapped = True
+
+    def rebuild_tables_if_necessary(self):
+        table_map = {t.get_table().name: t for t in self.tables}
+        engine = self.get_sql_engine()
+        with engine.begin() as connection:
+            migration_context = get_migration_context(connection, table_map.keys())
+            diffs = compare_metadata(migration_context, metadata)
+
+        tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
+
+        for table_name in tables_to_rebuild:
+            table = table_map[table_name]
+            table.rebuild_table()
 
     def python_filter(self, doc):
         # filtering is done manually per indicator set change_transport
