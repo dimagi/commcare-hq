@@ -190,19 +190,37 @@ class DocJoinExpressionTest(SimpleTestCase):
     def test_simple_lookup(self):
         related_id = 'related-id'
         my_doc = {
+            'domain': 'test-domain',
             'parent_id': related_id,
         }
         related_doc = {
+            'domain': 'test-domain',
             'related_property': 'foo'
         }
         self.database.mock_docs = {
             'my-id': my_doc,
             related_id: related_doc
         }
-        self.assertEqual('foo', self.expression(my_doc))
+        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc)))
 
     def test_related_doc_not_found(self):
         self.assertEqual(None, self.expression({'parent_id': 'some-missing-id'}))
+
+    def test_cross_domain_lookups(self):
+        related_id = 'cross-domain-id'
+        my_doc = {
+            'domain': 'test-domain',
+            'parent_id': related_id,
+        }
+        related_doc = {
+            'domain': 'wrong-domain',
+            'related_property': 'foo'
+        }
+        self.database.mock_docs = {
+            'my-id': my_doc,
+            related_id: related_doc
+        }
+        self.assertEqual(None, self.expression(my_doc, EvaluationContext(my_doc)))
 
     def test_caching(self):
         self.test_simple_lookup()
@@ -211,7 +229,7 @@ class DocJoinExpressionTest(SimpleTestCase):
         self.database.mock_docs.clear()
 
         self.assertEqual({}, self.database.mock_docs)
-        self.assertEqual('foo', self.expression(my_doc))
+        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc)))
 
         same_expression = ExpressionFactory.from_spec(self.spec)
-        self.assertEqual('foo', same_expression(my_doc))
+        self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc)))

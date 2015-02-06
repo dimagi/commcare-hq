@@ -3,7 +3,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter
-from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
 
@@ -96,7 +96,11 @@ class RelatedDocExpressionSpec(JsonObject):
     def get_value(self, doc_id, context):
         try:
             doc = self.db_lookup(self.related_doc_type).get(doc_id)
-
-            return self._value_expression(doc, context)
+            # ensure no cross-domain lookups of different documents
+            assert context.root_doc['domain']
+            if context.root_doc['domain'] != doc.get('domain'):
+                return None
+            # explicitly use a new evaluation context since this is a new document
+            return self._value_expression(doc, EvaluationContext(doc))
         except ResourceNotFound:
             return None
