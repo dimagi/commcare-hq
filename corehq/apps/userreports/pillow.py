@@ -1,5 +1,5 @@
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
@@ -22,6 +22,9 @@ class ConfigurableIndicatorPillow(PythonPillow):
             cls._engine = get_engine()
         return cls._engine
 
+    def get_all_configs(self):
+        return DataSourceConfiguration.all()
+
     def run(self):
         self.bootstrap()
         super(ConfigurableIndicatorPillow, self).run()
@@ -29,9 +32,11 @@ class ConfigurableIndicatorPillow(PythonPillow):
     def bootstrap(self, configs=None):
         # sets up the initial stuff
         if configs is None:
-            configs = DataSourceConfiguration.all()
+            configs = self.get_all_configs()
 
         self.tables = [IndicatorSqlAdapter(self.get_sql_engine(), config) for config in configs]
+        for table in self.tables:
+            table.create_if_necessary()
         self.bootstrapped = True
 
     def python_filter(self, doc):
@@ -53,3 +58,9 @@ class ConfigurableIndicatorPillow(PythonPillow):
 
         # todo: may want to consider adjusting the frequency or using another mechanism for this
         self.bootstrap()
+
+
+class CustomDataSourcePillow(ConfigurableIndicatorPillow):
+
+    def get_all_configs(self):
+        return CustomDataSourceConfiguration.all()

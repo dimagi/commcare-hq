@@ -1,12 +1,15 @@
+from copy import copy
+import json
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document, StringListProperty, BooleanProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
+from jsonobject import ObjectProperty, JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.indicators import CompoundIndicator, ConfigurableIndicatorMixIn
+from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory
 from corehq.apps.userreports.reports.specs import FilterSpec
 from django.utils.translation import ugettext as _
@@ -14,6 +17,7 @@ from corehq.apps.userreports.specs import EvaluationContext
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
+from django.conf import settings
 
 
 DELETED_DOC_TYPES = {
@@ -46,12 +50,20 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return u'{} - {}'.format(self.domain, self.display_name)
 
     def filter(self, document):
-        filter_fn = self._get_filter([self.referenced_doc_type])
+        filter_fn = self._get_main_filter()
         return filter_fn(document, EvaluationContext(document))
 
     def deleted_filter(self, document):
-        filter_fn = self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
-        return filter_fn(document, EvaluationContext(document))
+        filter_fn = self._get_deleted_filter()
+        return filter_fn and filter_fn(document, EvaluationContext(document))
+
+    def _get_main_filter(self):
+        return self._get_filter([self.referenced_doc_type])
+
+    def _get_deleted_filter(self):
+        if self.referenced_doc_type in DELETED_DOC_TYPES:
+            return self._get_filter(DELETED_DOC_TYPES[self.referenced_doc_type])
+        return None
 
     def _get_filter(self, doc_types):
         extras = (
@@ -59,11 +71,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             if self.configured_filter else []
         )
         built_in_filters = [
-            {
-                'type': 'property_match',
-                'property_name': 'domain',
-                'property_value': self.domain,
-            },
+            self._get_domain_filter_spec(),
             {
                 'type': 'or',
                 'filters': [
@@ -83,6 +91,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             },
             context=self.named_filter_objects,
         )
+
+    def _get_domain_filter_spec(self):
+        return {
+            'type': 'property_match',
+            'property_name': 'domain',
+            'property_value': self.domain,
+        }
 
     @property
     @memoized
@@ -146,9 +161,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
-        self.filter
+        self._get_main_filter()
+        self._get_deleted_filter()
         self.indicators
         self.parsed_expression
+
 
     @classmethod
     def by_domain(cls, domain):
@@ -245,3 +262,18 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                                              reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)
+
+
+class CustomDataSourceConfiguration(JsonObject):
+    domains = ListProperty()
+    config = DictProperty()
+
+    @classmethod
+    def all(cls):
+        for path in settings.CUSTOM_DATA_SOURCES:
+            with open(path) as f:
+                wrapped = cls.wrap(json.load(f))
+                for domain in wrapped.domains:
+                    doc = copy(wrapped.config)
+                    doc['domain'] = domain
+                    yield DataSourceConfiguration.wrap(doc)
