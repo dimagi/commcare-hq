@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.expressions.getters import NestedDictGetter, DictGetter
+from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec
 from corehq.apps.userreports.specs import EvaluationContext
 
 
@@ -36,7 +36,7 @@ class ExpressionFromSpecTest(SimpleTestCase):
             'type': 'property_name',
             'property_name': 'foo',
         })
-        self.assertEqual(DictGetter, type(getter))
+        self.assertEqual(PropertyNameGetterSpec, type(getter))
         self.assertEqual('foo', getter.property_name)
 
     def test_property_name_no_name(self):
@@ -57,7 +57,7 @@ class ExpressionFromSpecTest(SimpleTestCase):
             'type': 'property_path',
             'property_path': ['path', 'to', 'foo'],
         })
-        self.assertEqual(NestedDictGetter, type(getter))
+        self.assertEqual(PropertyPathGetterSpec, type(getter))
         self.assertEqual(['path', 'to', 'foo'], getter.property_path)
 
     def test_property_path_no_path(self):
