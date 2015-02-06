@@ -146,15 +146,15 @@ class LocationTypeStockLevels(forms.Form):
     """
     emergency_level = forms.DecimalField(
         label=ugettext_noop("Emergency Level (months)"),
-        required=False
+        required=True,
     )
     understock_threshold = forms.DecimalField(
         label=ugettext_noop("Low Stock Level (months)"),
-        required=False
+        required=True,
     )
     overstock_threshold = forms.DecimalField(
         label=ugettext_noop("Overstock Level (months)"),
-        required=False
+        required=True,
     )
 
 

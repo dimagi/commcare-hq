@@ -270,12 +270,29 @@ class StockLevelsView(BaseCommTrackManageView):
     template_name = 'commtrack/manage/stock_levels.html'
 
     def get_existing_stock_levels(self):
+        """
+        Returns a list of dicts of this form:
+        {
+            'loc_type': 'district,
+            'emergency_level': 0.5,
+            'understock_threshold': 1.5,
+            'overstock_threshold': 3,
+        }
+        """
         return [{
             'loc_type': loc_type.name,
             'emergency_level': 0.5,
             'understock_threshold': 1.5,
             'overstock_threshold': 3,
         } for loc_type in self.domain_object.location_types]
+
+    def save_stock_levels(self, levels):
+        """
+        Accepts a dict of the form returned by get_existing_stock_levels
+        """
+        for d in levels:
+            print d.values()
+            print "saved levels for {}".format(d['loc_type'])
 
     @property
     def page_context(self):
@@ -293,5 +310,8 @@ class StockLevelsView(BaseCommTrackManageView):
         return StockLevelsForm(data)
 
     def post(self, request, *args, **kwargs):
-        print request.POST.get('child_form_data')
+        if self.stock_levels_form.is_valid():
+            self.save_stock_levels(self.stock_levels_form.cleaned_data)
+            return HttpResponseRedirect(self.page_url)
+        # TODO display error messages to the user...
         return self.get(request, *args, **kwargs)

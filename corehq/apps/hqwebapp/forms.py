@@ -3,12 +3,15 @@ import json
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
+from django.http import QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
+
+from dimagi.utils.decorators.memoized import memoized
 
 
 class EmailAuthenticationForm(AuthenticationForm):
@@ -86,24 +89,33 @@ class FormListForm(object):
                                       "for each row")
         if self.columns is None:
             raise NotImplementedError("You must specify columns for your table")
+        self.data = data
 
-        self.child_forms = []
-        for row in data:
-            self.child_forms.append(self.child_form_class(row, *args, **kwargs))
+    @property
+    @memoized
+    def child_forms(self):
+        if isinstance(self.data, QueryDict):
+            try:
+                rows = json.loads(self.data.get('child_form_data', ""))
+            except ValueError as e:
+                raise ValidationError("POST request poorly formatted. {}"
+                                      .format(e.message))
+        else:
+            rows = self.data
+        return [
+            self.child_form_class(row)
+            for row in rows
+        ]
 
     def clean_child_forms(self):
         """
         Populates self.errors and self.cleaned_data
         """
-        # TODO use self.child_forms here
-        raw_child_form_data = json.loads(self.cleaned_data['child_form_data'])
-        print raw_child_form_data
         self.errors = False
         self.cleaned_data = []
-        for raw_child_form in raw_child_form_data:
-            child_form = self.child_form_class(raw_child_form)
+        for child_form in self.child_forms:
             child_form.is_valid()
-            self.cleaned_data.append(child_form.cleaned_data)
+            self.cleaned_data.append(self.form_to_json(child_form))
             if child_form.errors:
                 self.errors = True
 
@@ -143,14 +155,18 @@ class FormListForm(object):
         """
         Converts a child form to JSON for rendering
         """
+        cleaned_data = getattr(form, 'cleaned_data', {})
+        def get_data(key):
+            if key in cleaned_data:
+                return cleaned_data[key]
+            return form.data.get(key)
+
         json_row = {}
         for header in self.columns:
             if isinstance(header, dict):
-                # form.data should contain everything passed to the form
-                # constructor
-                json_row[header['key']] = form.data.get(header['key'])
+                json_row[header['key']] = get_data(header['key'])
             elif isinstance(self.get_child_form_field(header), forms.Field):
-                json_row[header] = form.data.get(header)
+                json_row[header] = get_data(header)
         return json_row
 
     def get_context(self):

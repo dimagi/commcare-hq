@@ -24,10 +24,10 @@
                 {% for spec in row_spec %}
                 <td>
                     {% if spec.type == "RAW" %}
-                        <span data-bind="text: get_value('{{ spec.key }}')"></span>
+                        <span data-bind="text: data.{{ spec.key }}"></span>
                     {% elif spec.type == "TextInput" %}
                     <input name="{{ spec.key }}"
-                        data-bind="value: get_value('{{ spec.key }}')">
+                        data-bind="value: data.{{ spec.key }}">
                     {% else %}
                         <span class="error">{{ spec.type }} NOT FOUND</span>
                     {% endif %}
@@ -48,13 +48,13 @@
 <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
 <script>
 $(document).ready(function() {
-    function Row(data) {
+    function Row(data, keys) {
         var self = this;
-        self.data = data;
 
-        self.get_value = function(key) {
-            return self.data[key];
-        };
+        self.data = {};
+        keys.forEach(function(key) {
+            self.data[key] = ko.observable(data[key]);
+        });
     }
 
     function TableModel(row_spec, raw_rows) {
@@ -65,24 +65,21 @@ $(document).ready(function() {
         self.rows = ko.observableArray();
 
         for (var i = 0; i < raw_rows.length; i++) {
-            self.rows.push(new Row(raw_rows[i]));
+            self.rows.push(new Row(raw_rows[i], self.keys));
         }
 
         self.serialize = function() {
-            // for (var i = 0; i < self.rows().length; i++) {
-                // var row = self.rows()[i];
-                // console.log(self.keys);
-                // console.log(row);
-            // }
             return self.rows().map(function(row) {
-                return self.keys.map(function(key) {
-                    return row.data[key];
+                var serialized_row = {};
+                self.keys.forEach(function(key) {
+                    serialized_row[key] = row.data[key]();
                 });
+                console.log(serialized_row);
+                return serialized_row;
             });
         };
 
         self.submit_table = function(table_form) {
-            console.log(self.serialize());
             var tableForm = $("<form>")
                 .attr("method", "POST")
                 .attr("action", table_form.action);
@@ -91,9 +88,7 @@ $(document).ready(function() {
                 .attr('value', JSON.stringify(self.serialize()))
                 .appendTo(tableForm);
             tableForm.appendTo("body");
-            console.log(tableForm);
             tableForm.submit();
-            console.log("Submitted!");
         };
     }
 
