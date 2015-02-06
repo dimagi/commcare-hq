@@ -1904,7 +1904,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
-            'restrict_superusers': self.domain_object.restrict_superusers,
             'deployment_date': self.domain_object.deployment.date.date
             if self.domain_object.deployment.date else '',
             'countries': self.domain_object.deployment.countries

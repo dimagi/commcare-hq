@@ -572,12 +572,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label=ugettext_noop("Countries"),
         choices=COUNTRIES,
     )
-    restrict_superusers = BooleanField(
-        label=_("Restrict Superuser Access"),
-        required=False,
-        help_text=_("If access to a domain is restricted only users added " +
-                    "to the domain and staff members will have access.")
-    )
     commtrack_domain = ChoiceField(
         label=ugettext_noop("Supply Chain Enabled"),
         choices=tf_choices('Yes', 'No'),
@@ -602,7 +596,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'phone_model',
                 'deployment_date',
                 'countries',
-                'restrict_superusers',
                 'commtrack_domain',
             ),
             crispy.Fieldset(
@@ -641,7 +634,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             kwargs['custom_eula'] = self.cleaned_data['custom_eula'] == 'true'
             kwargs['can_use_data'] = self.cleaned_data['can_use_data'] == 'true'
 
-        domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.update_deployment(
             date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
             countries=self.cleaned_data['countries'],
