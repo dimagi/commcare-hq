@@ -49,7 +49,7 @@ def catch_signal(app, **kwargs):
             migration_context = get_migration_context(connection, table_pillow_map.keys())
             diffs = compare_metadata(migration_context, fluff_metadata)
 
-        tables_to_rebuild = get_tables_to_rebuild(diffs, table_pillow_map)
+        tables_to_rebuild = get_tables_to_rebuild(diffs, table_pillow_map.keys())
 
         for table in tables_to_rebuild:
             info = table_pillow_map[table]
@@ -58,8 +58,7 @@ def catch_signal(app, **kwargs):
         engine.dispose()
 
 
-def get_tables_to_rebuild(diffs, table_pillow_map):
-    table_names = table_pillow_map.keys()
+def get_tables_to_rebuild(diffs, table_names):
 
     def check_diff(diff):
         if diff[0] in ('add_table', 'remove_table'):
