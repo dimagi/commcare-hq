@@ -353,6 +353,27 @@ class AppStructureRepeater(Repeater):
         return None
 
 
+@register_repeater_type
+class JsonFormRepeater(FormRepeater):
+
+    def __unicode__(self):
+        return "forwarding forms to external JSON API: %s" % self.url
+
+    def get_headers(self, repeat_record):
+        """
+        Adds the correct content type to the HTTP request headers
+        """
+        headers = super(JsonFormRepeater, self)
+        headers['Content-type'] = 'application/json'
+        return headers
+
+    def get_url(self, repeat_record):
+        """
+        The parent class adds app_id to the URL params. Avoid that.
+        """
+        return Repeater.get_url(self, repeat_record)
+
+
 class RepeatRecord(Document, LockableMixIn):
     """
     An record of a particular instance of something that needs to be forwarded

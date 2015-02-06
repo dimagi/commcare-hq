@@ -82,7 +82,7 @@ class JsonApiRequest(object):
         headers['Content-type'] = 'application/json'
         json_data = json.dumps(data, default=json_serializer)
         try:
-            response = requests.put(self.baseurl + path, json_data, headers=self.headers, auth=self.auth, **kwargs)
+            response = requests.put(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)

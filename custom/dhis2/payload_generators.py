@@ -20,40 +20,11 @@ Set up form forwarding as follows:
 from datetime import date
 import json
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.receiverwrapper.models import FormRepeater, RegisterGenerator, Repeater, register_repeater_type
+from corehq.apps.receiverwrapper.models import RegisterGenerator, JsonFormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
-from corehq.apps.receiverwrapper.signals import create_repeat_records, successful_form_received
 from custom.dhis2.models import Dhis2Api, json_serializer, is_dhis2_enabled, Setting
 from custom.dhis2.const import DOMAIN, NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS
-
-
-@register_repeater_type
-class JsonFormRepeater(FormRepeater):
-
-    def __unicode__(self):
-        return "forwarding forms to external JSON API: %s" % self.url
-
-    def get_headers(self, repeat_record):
-        """
-        Adds the correct content type to the HTTP request headers
-        """
-        headers = super(JsonFormRepeater, self)
-        headers['Content-type'] = 'application/json'
-        return headers
-
-    def get_url(self, repeat_record):
-        """
-        The parent class adds app_id to the URL params. Avoid that.
-        """
-        return Repeater.get_url(self, repeat_record)
-
-
-def create_json_form_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(JsonFormRepeater, xform)
-
-
-successful_form_received.connect(create_json_form_repeat_records)
 
 
 @RegisterGenerator(JsonFormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
