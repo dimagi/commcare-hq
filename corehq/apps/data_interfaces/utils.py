@@ -70,6 +70,6 @@ def archive_forms(domain, user, uploaded_data):
 
     for missing_form_id in missing_forms:
         response['errors'].append(
-                _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
+            _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
 
     return response

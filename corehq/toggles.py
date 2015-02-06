@@ -292,5 +292,3 @@ BULK_ARCHIVE_FORMS = StaticToggle(
     'bulk_archive_forms',
     'Bulk archive forms with excel',
 )
-
-
