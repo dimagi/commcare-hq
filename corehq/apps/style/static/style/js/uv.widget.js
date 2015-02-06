@@ -31,6 +31,7 @@ $(document).ready(function() {
         accent_color: 'rgb(15, 64, 147)',
         contact_enabled: false,
         smartvote_enabled: false,
+        forum_id: '283063'
     }]);
 
     // Identify the user and pass traits
