@@ -163,7 +163,7 @@ class SQLXFormsSession(models.Model):
     @classmethod
     def by_session_id(cls, id):
         try:
-            return cls.get(session_id=id)
+            return cls.objects.get(session_id=id)
         except SQLXFormsSession.DoesNotExist:
             return None
 
