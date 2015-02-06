@@ -3,7 +3,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
-from custom.ilsgateway.filters import ProductByProgramFilter
+from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
@@ -45,7 +45,8 @@ class SupervisionData(ILSData):
     def rows(self):
         rows = []
         if self.config['location_id']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                                   site_code__icontains=self.config['msd_code'])
             for loc in locations:
                 facilities = SQLLocation.objects.filter(parent=loc).count()
                 org_summary = OrganizationSummary.objects.filter(date__range=(self.config['startdate'],
@@ -104,7 +105,8 @@ class DistrictSupervisionData(ILSData):
     def rows(self):
         rows = []
         if self.config['location_id']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
+                                                   site_code__icontains=self.config['msd_code'])
             for loc in locations:
                 total_responses = 0
                 total_possible = 0
@@ -144,7 +146,7 @@ class SupervisionReport(DetailsReport):
     title = 'Supervision'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter]
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
 
     @property
     @memoized

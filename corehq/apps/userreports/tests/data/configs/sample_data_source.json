@@ -5,8 +5,12 @@
     "table_id": "sample",
     "display_name": "CommBugz",
     "configured_filter": {
-        "type": "property_match",
-        "property_name": "type",
+        "type": "boolean_expression",
+        "expression": {
+            "type": "property_name",
+            "property_name": "type"
+        },
+        "operator": "eq",
         "property_value": "ticket"
     },
     "configured_indicators": [

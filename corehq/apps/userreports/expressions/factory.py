@@ -48,8 +48,8 @@ class ExpressionFactory(object):
         try:
             return cls.spec_map[spec['type']](spec, context)
         except KeyError:
-            raise BadSpecError(_('Invalid getter type: {}. Valid options are: {}').format(
-                spec['type'],
+            raise BadSpecError(_('Invalid or missing getter type: {}. Valid options are: {}').format(
+                spec.get('type', '[missing]'),
                 ', '.join(cls.spec_map.keys()),
             ))
         except BadValueError as e:

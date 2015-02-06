@@ -14,8 +14,11 @@ class RandRSubmissionData(ILSData):
     def rows(self):
         rr_data = []
         if self.config['org_summary']:
-            rr_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                               org_summary=self.config['org_summary'])
+            try:
+                rr_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                                   org_summary=self.config['org_summary'])
+            except GroupSummary.DoesNotExist:
+                return rr_data
         return rr_data
 
 
@@ -32,7 +35,7 @@ class DistrictSummaryData(ILSData):
 
             def prepare_processing_info(data):
                 return {
-                    'total': data[0] - (data[1].total + data[2].total),
+                    'total': data[0] - (data[1] + data[2]),
                     'complete': 0
                 }
 
@@ -52,15 +55,18 @@ class DistrictSummaryData(ILSData):
             processing_group = dg.current_processing_group(month=endmonth)
             delivery_group = dg.current_delivering_group(month=endmonth)
 
-            processing_numbers = prepare_processing_info([total, rr_data, delivery_data])
+            (rr_complete, rr_total) = (rr_data.complete, rr_data.total) if rr_data else (0, 0)
+            (delivery_complete, delivery_total) = (delivery_data.complete, delivery_data.total)\
+                if delivery_data else (0, 0)
+            processing_numbers = prepare_processing_info([total, rr_total, delivery_total])
 
             return {
                 "processing_total": processing_numbers['total'],
                 "processing_complete": processing_numbers['complete'],
-                "submitting_total": rr_data.total,
-                "submitting_complete": rr_data.complete,
-                "delivery_total": delivery_data.total,
-                "delivery_complete": delivery_data.complete,
+                "submitting_total": rr_total,
+                "submitting_complete": rr_complete,
+                "delivery_total": delivery_total,
+                "delivery_complete": delivery_complete,
                 "delivery_group": delivery_group,
                 "submitting_group": submitting_group,
                 "processing_group": processing_group,
@@ -79,8 +85,11 @@ class SohSubmissionData(ILSData):
     def rows(self):
         soh_data = []
         if self.config['org_summary']:
-            soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SOH_FACILITY,
-                                                org_summary=self.config['org_summary'])
+            try:
+                soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SOH_FACILITY,
+                                                    org_summary=self.config['org_summary'])
+            except GroupSummary.DoesNotExist:
+                return soh_data
         return soh_data
 
 
@@ -92,8 +101,11 @@ class DeliverySubmissionData(ILSData):
     def rows(self):
         del_data = []
         if self.config['org_summary']:
-            del_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
-                                                org_summary=self.config['org_summary'])
+            try:
+                del_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                                                    org_summary=self.config['org_summary'])
+            except GroupSummary.DoesNotExist:
+                return del_data
         return del_data
 
 

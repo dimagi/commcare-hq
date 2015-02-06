@@ -2,17 +2,16 @@ Adding CommCare Builds to CommCare HQ
 =====================================
 
 * First you need to get the CommCare build off the Dimagi build server:
-    1. Go here http://build.dimagi.com:250/ and click [Login as a Guest User](http://build.dimagi.com:250/guestLogin.html?guest=1)
-    2. Pick the branch you want and click on the link (e.g. "CommCare 1.3")
-    3. Pick a build (probably the first one in the table) and write down
+    1. Go here http://jenkins.dimagi.com/view/CommCare%20Mobile/ 
+    2. Pick the branch you want and click on the link (e.g. "commcare-mobile-2.19")
+    3. Pick a build (probably the first one in the table on the left) and write down
        the build number (under "#"). This will be referenced as `$build_number`
        below
-    4. Click on "Success" in that row (under "Results")
-    5. Select the "Build Parameters" tab and write down the version (all
-       the way at the bottom in the "Environment Variables" table.) This will
+    4. Click on that row
+    5. Select the "Environment Variables" tab and write down the VERSION (all
+       the way at the bottom of the table.) This will
        be referenced as `$version` below
-    6. Select the "Artifacts" tab and find "Download all (.zip)" on the
-       right hand side. If you use the commandline option below,
+    6. Go back, and select the ""Build Artifacts" link, then select "All files in zip." If you use the commandline option below,
        note the path of the downloaded file. This will be
        referenced as `$build_path`.
        If you use the web UI, copy the download URL. This will be called `build_url`.

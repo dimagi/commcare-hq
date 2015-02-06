@@ -15,9 +15,9 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
     default_rows = 20
     use_datatables = False
     printable = True
+    base_template = "up_nrhm/asha_report.html"
 
     LEFT_COLUMN_NAMES = [
-        "Total number of ASHAs under the Facilitator",
         "Newborn visits within first day of birth in case of home deliveries",
         "Set of home visits for newborn care as specified in the HBNC guidelines "
         "(six visits in case of Institutional delivery and seven in case of a home delivery)",
@@ -39,9 +39,11 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
             'domain': self.domain,
             'startdate': self.datespan.startdate,
             'enddate': self.datespan.enddate,
+            'startdate_str': str(self.datespan.startdate),
+            'enddate_str': str(self.datespan.enddate),
             'af': self.request.GET.get('hierarchy_af'),
             'count_one': 1,
-            'sixty_percents': 60
+            'sixty_percents': 60,
         }
 
     @property
@@ -50,12 +52,7 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
 
     @property
     def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn("", sortable=False),
-            DataTablesColumn("Total no. of ASHAs functional"),
-            DataTablesColumn("Total no. of ASHAs who did not report/not known"),
-            DataTablesColumn("Rmarks")
-        )
+        return DataTablesHeader()
 
     @property
     def rows(self):
@@ -69,5 +66,14 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
         assert len(rows) == 1
         row = [row.get('sort_key') or 0L for row in rows[0]]
         all_ashas = row[0]
-        return [[self.LEFT_COLUMN_NAMES[idx], element, all_ashas - element if idx != 0 else '', '']
-                for idx, element in enumerate(row)]
+        all_ashas_with_checklist = row[1]
+        headers = [
+            ['Total number of ASHAs under the Facilitator', '', all_ashas, ''],
+            ['Total number of ASHAs for whom the functionality checklist was filled',
+             '', all_ashas_with_checklist, ''],
+            ["", "Total no. of ASHAs functional", "Total no. of ASHAs who did not report/not known", "Rmarks"]
+        ]
+        return headers + [
+            [self.LEFT_COLUMN_NAMES[idx], element, all_ashas - all_ashas_with_checklist, '']
+            for idx, element in enumerate(row[2:])
+        ]

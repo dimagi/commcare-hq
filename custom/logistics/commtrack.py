@@ -70,6 +70,8 @@ def save_stock_data_checkpoint(checkpoint, api, limit, offset, date, external_id
         if not supply_point:
             return
         checkpoint.location = supply_point.location.sql_location
+    else:
+        checkpoint.location = None
     if commit:
         checkpoint.save()
 
@@ -122,7 +124,7 @@ def bootstrap_domain(api_object, **kwargs):
         checkpoint = MigrationCheckpoint.objects.get(domain=domain)
         api = checkpoint.api
         date = checkpoint.date
-        limit = checkpoint.limit
+        limit = 100
         offset = checkpoint.offset
         if not checkpoint.start_date:
             checkpoint.start_date = start_date

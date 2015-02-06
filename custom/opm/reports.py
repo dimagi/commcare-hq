@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
+from custom.common import ALL_OPTION
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import DateSpan
@@ -181,9 +182,14 @@ class OpmFormSqlData(SqlData):
 
 VHND_PROPERTIES = [
     "vhnd_available",
+    "vhnd_anm_present",
+    "vhnd_asha_present",
+    "vhnd_cmg_present",
     "vhnd_ifa_available",
     "vhnd_adult_scale_available",
     "vhnd_child_scale_available",
+    "vhnd_adult_scale_functional",
+    "vhnd_child_scale_functional",
     "vhnd_ors_available",
     "vhnd_zn_available",
     "vhnd_measles_vacc_available",
@@ -433,7 +439,7 @@ class SharedDataProvider(object):
         for (owner_id, date), row in data.iteritems():
             if row['vhnd_available'] > 0:
                 for prop in VHND_PROPERTIES:
-                    if row[prop] == '1' or prop == 'vhnd_available':
+                    if row[prop] == 1 or prop == 'vhnd_available':
                         results[owner_id][prop].add(date)
         return results
 
@@ -801,6 +807,8 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         return map(self.join_rows, accounts.values())
 
     def join_rows(self, rows):
+        if len(rows) == 1:
+            return rows[0]
         def zip_fn((i, values)):
             if isinstance(values[0], int):
                 return sum(values)
@@ -810,6 +818,11 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
                     return ''.join('<p>{}</p>'.format(v) for v in unique_values)
                 else:
                     return ','.join(unique_values)
+            elif i == self.column_index('issues'):
+                sep = ', '
+                msg = _("Duplicate account number")
+                all_issues = sep.join(filter(None, values + (msg,)))
+                return sep.join(set(all_issues.split(sep)))
             else:
                 return sorted(values)[-1]
         return map(zip_fn, enumerate(zip(*rows)))
@@ -905,13 +918,15 @@ class MetReport(CaseReportMixin, BaseReport):
         Strip user_id and owner_id columns
         """
         for row in rows:
+            with localize('hin'):
+                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
+                row[self.column_index('cash_received_last_month')] = _(row[self.column_index(
+                    'cash_received_last_month')])
             del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
             link_text = re.search('<a href=.*>(.*)</a>', row[self.column_index('name')])
             if link_text:
                 row[self.column_index('name')] = link_text.group(1)
-            with localize('hin'):
-                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
 
         if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
             rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])
@@ -1114,7 +1129,7 @@ class IncentivePaymentReport(BaseReport):
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
             request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == '0':
+            if request_param and not request_param[0] == ALL_OPTION:
                 config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return UsersIdsData(config=config).get_data()

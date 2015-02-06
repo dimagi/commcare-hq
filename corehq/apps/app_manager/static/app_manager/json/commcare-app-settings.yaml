@@ -156,3 +156,25 @@
   widget: bool
   default: false
   since: '2.14'
+
+- id: amplifies_workers
+  name: 'Amplifies Workers'
+  description: 'Amplifies the impact of services offered by a Frontline Worker. Examples: an FLW who uses CommCare to improve counseling and screening of pregnant women. An FLW that uses CommTrack to increase their supply of medicines. A nurse who uses CommCare to implement protocols.'
+  values: ['yes', 'no', 'not_set']
+  value_names:
+   - 'Yes'
+   - 'No'
+   - 'Not Set'
+  default: 'not_set'
+  preview: true
+
+- id: amplifies_project
+  name: 'Amplifies Project'
+  description: 'Amplifies the impact of a Frontline Program (FLP). Examples: programs that use M&E data collected by CommCare. Programs that use CommCare data to make programmatic decisions.'
+  values: ['yes', 'no', 'not_set']
+  value_names:
+   - 'Yes'
+   - 'No'
+   - 'Not Set'
+  default: 'not_set'
+  preview: true

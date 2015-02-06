@@ -75,6 +75,13 @@ def transform_date(item):
     return item or None
 
 
+def transform_int(item):
+    try:
+        return int(item)
+    except (ValueError, TypeError):
+        return None
+
+
 def getter_from_property_reference(spec):
     if spec.property_name:
         assert not spec.property_path, \

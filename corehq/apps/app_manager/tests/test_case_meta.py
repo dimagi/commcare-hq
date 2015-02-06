@@ -14,7 +14,13 @@ class CaseMetaTest(SimpleTestCase):
         return m
 
     def test_hierarchy(self):
+        app, expected_hierarchy = self.get_test_app()
+        meta = app.get_case_metadata()
+        self.assertDictEqual(meta.type_hierarchy, expected_hierarchy)
+
+    def get_test_app(self):
         app = Application.new_app('domain', 'New App', APP_V2)
+        app.version = 1
         m0 = self._make_module(app, 0, 'parent')
         m0.get_form(0).actions.subcases.append(OpenSubCaseAction(
             case_type='child',
@@ -25,7 +31,7 @@ class CaseMetaTest(SimpleTestCase):
             case_type='grand child',
             reference_id='parent'
         ))
-        m2 = self._make_module(app, 1, 'grand child')
+        m2 = self._make_module(app, 2, 'grand child')
 
         m3 = app.add_module(AdvancedModule.new_module('Module3', lang='en'))
         m3.case_type = 'other grand child'
@@ -43,10 +49,12 @@ class CaseMetaTest(SimpleTestCase):
         m2.parent_select = ParentSelect(active=True, module_id=m1.unique_id)
         m1.parent_select = ParentSelect(active=True, module_id=m0.unique_id)
 
-        meta = app.get_case_metadata()
-        self.assertDictEqual(meta.type_hierarchy, {
+        expected_hierarchy = {
             'parent': {
                 'child': {
                     'grand child': {},
                     'other grand child': {}
-                }}})
+                }
+            }
+        }
+        return app, expected_hierarchy

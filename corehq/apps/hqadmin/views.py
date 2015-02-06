@@ -59,8 +59,14 @@ from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
-from corehq.apps.hqadmin.escheck import check_es_cluster_health, check_xform_es_index, check_reportcase_es_index, check_case_es_index, check_reportxform_es_index
-from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health, check_memcached
+from corehq.apps.hqadmin.escheck import (
+    check_es_cluster_health,
+    check_xform_es_index,
+    check_reportcase_es_index,
+    check_case_es_index,
+    check_reportxform_es_index
+)
+from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
 from corehq.apps.hqadmin.reporting.reports import (
     get_project_spaces,
     get_stats_data,
@@ -600,6 +606,30 @@ def domain_list_download(request):
 
 
 @require_superuser_or_developer
+def view_recent_changes(request):
+    count = int(request.GET.get('changes', 1000))
+    changes = list(get_recent_changes(get_db(), count))
+    domain_counts = defaultdict(lambda: 0)
+    doc_type_counts = defaultdict(lambda: 0)
+    for change in changes:
+        domain_counts[change['domain']] += 1
+        doc_type_counts[change['doc_type']] += 1
+
+    def _to_chart_data(data_dict):
+        return [
+            {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
+        ][:20]
+
+    return render(request, 'hqadmin/couch_changes.html', {
+        'count': count,
+        'recent_changes': changes,
+        'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
+        'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
+        'hide_filters': True,
+    })
+
+
+@require_superuser_or_developer
 def download_recent_changes(request):
     count = int(request.GET.get('changes', 10000))
     resp = HttpResponse(content_type='text/csv')
@@ -618,17 +648,27 @@ def system_ajax(request):
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
     if type == "_active_tasks":
-        tasks = [] if is_bigcouch() else filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
-        #for reference structure is:
-        #        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
-        #            'design_document': 'mockymock', 'progress': 0,
-        #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
-        #            'total_changes': 1023},
-        #            {'type': 'indexer', 'pid': 'foo', 'database': 'mock',
-        #            'design_document': 'mockymock', 'progress': 70,
-        #            'started_on': 1349906040.723517, 'updated_on': 1349905800.679458,
-        #            'total_changes': 1023}]
-        return json_response(tasks)
+        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        if not is_bigcouch():
+            return json_response(tasks)
+        else:
+            # group tasks by design doc
+            task_map = defaultdict(dict)
+            for task in tasks:
+                meta = task_map[task['design_document']]
+                tasks = meta.get('tasks', [])
+                tasks.append(task)
+                meta['tasks'] = tasks
+
+            design_docs = []
+            for dd, meta in task_map.items():
+                meta['design_document'] = dd[len('_design/'):]
+                total_changes = sum(task['total_changes'] for task in meta['tasks'])
+                for task in meta['tasks']:
+                    task['progress_contribution'] = task['changes_done'] * 100 / total_changes
+
+                design_docs.append(meta)
+            return json_response(design_docs)
     elif type == "_stats":
         return json_response({})
     elif type == "_logs":
@@ -677,9 +717,7 @@ def system_info(request):
     context['db_update'] = request.GET.get('db_update', 30000)
     context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
-    # recent changes
-    recent_changes = int(request.GET.get('changes', 50))
-    context['recent_changes'] = get_recent_changes(get_db(), recent_changes)
+    context['is_bigcouch'] = is_bigcouch()
     context['rabbitmq_url'] = get_rabbitmq_management_url()
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
@@ -688,7 +726,6 @@ def system_info(request):
     context.update(check_redis())
     context.update(check_rabbitmq())
     context.update(check_celery_health())
-    context.update(check_memcached())
     context.update(check_es_cluster_health())
 
     return render(request, "hqadmin/system_info.html", context)

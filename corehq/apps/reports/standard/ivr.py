@@ -1,12 +1,20 @@
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport,\
     ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.sms.models import INCOMING, OUTGOING, CallLog, ExpectedCallbackEventLog, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
+from corehq.apps.sms.models import (
+    CALLBACK_MISSED,
+    CALLBACK_PENDING,
+    CALLBACK_RECEIVED,
+    INCOMING,
+    OUTGOING,
+    CallLog,
+    ExpectedCallbackEventLog,
+)
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.reports.standard.sms import BaseCommConnectLogReport
@@ -146,9 +154,9 @@ class CallLogReport(BaseCommConnectLogReport):
             final_result.append(final_row)
 
         return final_result
-    
+
     def _fmt_submission_link(self, submission_id):
-        url = reverse("render_form_data", args=[self.domain, submission_id])
+        url = absolute_reverse("render_form_data", args=[self.domain, submission_id])
         display_text = _("View Submission")
         ret = self.table_cell(display_text, '<a href="%s">%s</a>' % (url, display_text))
         ret['raw'] = submission_id
