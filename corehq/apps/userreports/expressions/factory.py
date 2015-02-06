@@ -3,14 +3,12 @@ import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.expressions.conditional import ConditionalExpression
-from corehq.apps.userreports.expressions.context_specific import RootDocExpression
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec
 
 
 def _simple_expression_generator(wrapper_class, spec, context):
-    return wrapper_class.wrap(spec).expression
+    return wrapper_class.wrap(spec)
 
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
@@ -20,18 +18,18 @@ def _conditional_expression(spec, context):
     # no way around this since the two factories inherently depend on each other
     from corehq.apps.userreports.filters.factory import FilterFactory
     wrapped = ConditionalExpressionSpec.wrap(spec)
-    return ConditionalExpression(
+    wrapped.configure(
         FilterFactory.from_spec(wrapped.test, context),
         ExpressionFactory.from_spec(wrapped.expression_if_true, context),
         ExpressionFactory.from_spec(wrapped.expression_if_false, context),
     )
+    return wrapped
 
 
 def _root_doc_expression(spec, context):
     wrapped = RootDocExpressionSpec.wrap(spec)
-    return RootDocExpression(
-        expression=ExpressionFactory.from_spec(wrapped.expression, context)
-    )
+    wrapped.configure(ExpressionFactory.from_spec(wrapped.expression, context))
+    return wrapped
 
 
 class ExpressionFactory(object):
