@@ -184,6 +184,27 @@ class DocJoinExpressionTest(SimpleTestCase):
             }
         }
         self.expression = ExpressionFactory.from_spec(self.spec)
+        self.nested_expression = ExpressionFactory.from_spec({
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "parent_id"
+            },
+            "value_expression": {
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "parent_id"
+                },
+                "value_expression": {
+                    "type": "property_name",
+                    "property_name": "related_property"
+                }
+            }
+        })
+
         self.database = FakeCouchDb()
         RelatedDocExpressionSpec.db_lookup = lambda _, type: self.database
 
@@ -221,6 +242,52 @@ class DocJoinExpressionTest(SimpleTestCase):
             related_id: related_doc
         }
         self.assertEqual(None, self.expression(my_doc, EvaluationContext(my_doc)))
+
+    def test_nested_lookup(self):
+        related_id = 'nested-id-1'
+        related_id_2 = 'nested-id-2'
+        my_doc = {
+            'domain': 'test-domain',
+            'parent_id': related_id,
+        }
+        related_doc = {
+            'domain': 'test-domain',
+            'parent_id': related_id_2,
+            'related_property': 'foo',
+        }
+        related_doc_2 = {
+            'domain': 'test-domain',
+            'related_property': 'bar',
+        }
+        self.database.mock_docs = {
+            'my-id': my_doc,
+            related_id: related_doc,
+            related_id_2: related_doc_2
+        }
+        self.assertEqual('bar', self.nested_expression(my_doc, EvaluationContext(my_doc)))
+
+    def test_nested_lookup_cross_domains(self):
+        related_id = 'cross-nested-id-1'
+        related_id_2 = 'cross-nested-id-2'
+        my_doc = {
+            'domain': 'test-domain',
+            'parent_id': related_id,
+        }
+        related_doc = {
+            'domain': 'test-domain',
+            'parent_id': related_id_2,
+            'related_property': 'foo',
+        }
+        related_doc_2 = {
+            'domain': 'wrong-domain',
+            'related_property': 'bar',
+        }
+        self.database.mock_docs = {
+            'my-id': my_doc,
+            related_id: related_doc,
+            related_id_2: related_doc_2
+        }
+        self.assertEqual(None, self.nested_expression(my_doc, EvaluationContext(my_doc)))
 
     def test_caching(self):
         self.test_simple_lookup()
