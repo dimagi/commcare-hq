@@ -64,7 +64,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
-    SnapshotApplicationForm, DomainInternalForm,
+    SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm,
 )
@@ -1096,6 +1096,35 @@ class SelectPlanView(DomainAccountingSettings):
                                 else ""),
             'is_non_ops_superuser': self.is_non_ops_superuser,
         }
+
+
+class EditPrivacySecurityView(BaseEditProjectInfoView):
+    template_name = "domain/admin/project_privacy.html"
+    urlname = "privacy_info"
+    page_title = ugettext_noop("Privacy and Security")
+
+    @property
+    @memoized
+    def privacy_form(self):
+        initial = {
+            "secure_submissions": self.domain_object.secure_submissions,
+            "restrict_superusers": self.domain_object.restrict_superusers
+        }
+        if self.request.method == 'POST':
+            return PrivacySecurityForm(self.request.POST, initial=initial)
+        return PrivacySecurityForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'privacy_form': self.privacy_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.privacy_form.is_valid():
+            self.privacy_form.save(self.domain_object)
+            messages.success(request, _("Your project settings have been saved!"))
+        return self.get(request, *args, **kwargs)
 
 
 class SelectedEnterprisePlanView(SelectPlanView):

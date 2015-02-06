@@ -492,6 +492,44 @@ def tuple_of_copies(a_list, blank=True):
     return tuple(ret)
 
 
+class PrivacySecurityForm(forms.Form):
+    restrict_superusers = BooleanField(
+        label=_("Restrict Superuser Access"),
+        required=False,
+        help_text=_("If access to a domain is restricted only users added " +
+                    "to the domain and staff members will have access.")
+    )
+    secure_submissions = BooleanField(
+        label=_("Secure submissions"),
+        required=False,
+        help_text=_(mark_safe(
+            "Secure Submissions prevents others from impersonating your mobile workers."
+            "This setting requires all deployed applications to be using secure "
+            "submissions as well. "
+            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
+            "Read more about secure submissions here</a>"))
+    )
+
+    def save(self, domain):
+        domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+        try:
+            secure_submissions = self.cleaned_data.get(
+                'secure_submissions', False)
+            apps_to_save = []
+            if secure_submissions != domain.secure_submissions:
+                for app in get_apps_in_domain(domain.name):
+                    if app.secure_submissions != secure_submissions:
+                        app.secure_submissions = secure_submissions
+                        apps_to_save.append(app)
+            domain.secure_submissions = secure_submissions
+            domain.save()
+            if apps_to_save:
+                ApplicationBase.bulk_save(apps_to_save)
+            return True
+        except Exception:
+            return False
+
+
 class DomainInternalForm(forms.Form, SubAreaMixin):
     sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
     sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
