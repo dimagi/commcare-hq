@@ -84,7 +84,8 @@ class RelatedDocExpressionSpec(JsonObject):
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
 
-        self._vary_on = json.dumps(self.value_expression)
+        # used in caching
+        self._vary_on = json.dumps(self.value_expression, sort_keys=True)
 
     def __call__(self, item, context=None):
         doc_id = self._doc_id_expression(item, context)
