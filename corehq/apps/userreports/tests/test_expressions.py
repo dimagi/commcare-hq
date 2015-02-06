@@ -1,9 +1,9 @@
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.expressions.context_specific import RelatedDocExpression
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec
+from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
+    RelatedDocExpressionSpec
 from corehq.apps.userreports.specs import EvaluationContext
 
 
@@ -171,7 +171,7 @@ class RootDocExpressionTest(SimpleTestCase):
 class DocJoinExpressionTest(SimpleTestCase):
 
     def setUp(self):
-        spec = {
+        self.spec = {
             "type": "related_doc",
             "related_doc_type": "CommCareCase",
             "doc_id_expression": {
@@ -183,10 +183,9 @@ class DocJoinExpressionTest(SimpleTestCase):
                 "property_name": "related_property"
             }
         }
-        self.expression = ExpressionFactory.from_spec(spec)
+        self.expression = ExpressionFactory.from_spec(self.spec)
         self.database = FakeCouchDb()
-        RelatedDocExpression.db_lookup = lambda _, type: self.database
-
+        RelatedDocExpressionSpec.db_lookup = lambda _, type: self.database
 
     def test_simple_lookup(self):
         related_id = 'related-id'
@@ -205,3 +204,14 @@ class DocJoinExpressionTest(SimpleTestCase):
     def test_related_doc_not_found(self):
         self.assertEqual(None, self.expression({'parent_id': 'some-missing-id'}))
 
+    def test_caching(self):
+        self.test_simple_lookup()
+
+        my_doc = self.database.get('my-id')
+        self.database.mock_docs.clear()
+
+        self.assertEqual({}, self.database.mock_docs)
+        self.assertEqual('foo', self.expression(my_doc))
+
+        same_expression = ExpressionFactory.from_spec(self.spec)
+        self.assertEqual('foo', same_expression(my_doc))
