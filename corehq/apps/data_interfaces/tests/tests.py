@@ -49,13 +49,6 @@ class BulkArchiveForms(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302, "Should redirect to login")
 
-        # Logged in but not a super user
-        WebUser.create(self.domain_name, 'muggle', self.password, 'b@b.com')
-        self.client.login(username='muggle', password=self.password)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 403, "User needs to be a superuser to access")
-        self.client.logout()
-
     def test_bulk_archive_missing_file(self):
         response = self.client.post(self.url, follow=True)
 
@@ -108,7 +101,7 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_basic(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
 
-        response = archive_forms(self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
 
         # Need to re-get instance from DB to get updated attributes
         for key, _id in self.XFORMS.iteritems():
@@ -119,7 +112,7 @@ class BulkArchiveFormsUnit(TestCase):
     def test_archive_forms_missing(self):
         uploaded_file = WorkbookJSONReader(join(BASE_PATH, MISSING_XLSX))
 
-        response = archive_forms(self.user, list(uploaded_file.get_worksheet()))
+        response = archive_forms(self.domain_name, self.user, list(uploaded_file.get_worksheet()))
 
         for key, _id in self.XFORMS.iteritems():
             self.assertEqual(XFormInstance.get(_id).doc_type, 'XFormArchived')
@@ -127,3 +120,10 @@ class BulkArchiveFormsUnit(TestCase):
         self.assertEqual(len(response['success']), len(self.xforms))
         self.assertEqual(len(response['errors']), 1,
                          "One error for trying to archive a missing form")
+
+    def test_archive_forms_wrong_domain(self):
+        uploaded_file = WorkbookJSONReader(join(BASE_PATH, BASIC_XLSX))
+
+        response = archive_forms('wrong_domain', self.user, list(uploaded_file.get_worksheet()))
+
+        self.assertEqual(len(response['errors']), len(self.xforms), "Error when wrong domain")

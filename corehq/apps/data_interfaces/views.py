@@ -213,10 +213,12 @@ class ArchiveFormView(DataInterfaceSection):
     def process(self):
         try:
             bulk_archive_forms.delay(
+                self.domain,
                 self.request.user,
                 list(self.uploaded_file.get_worksheet())
             )
-            messages.success(self.request, _("We received your file and are processing it. You will receive an email when it has finished."))
+            messages.success(self.request, _("We received your file and are processing it. "
+                                             "You will receive an email when it has finished."))
         except BulkUploadCasesException as e:
             messages.error(self.request, e.message)
         return None

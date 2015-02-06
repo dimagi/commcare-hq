@@ -22,8 +22,8 @@ def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
 
 
 @task
-def bulk_archive_forms(user, uploaded_data):
-    response = archive_forms(user, uploaded_data)
+def bulk_archive_forms(domain, user, uploaded_data):
+    response = archive_forms(domain, user, uploaded_data)
 
     for msg in response['success']:
         logger.info("[Data interfaces] %s", msg)
