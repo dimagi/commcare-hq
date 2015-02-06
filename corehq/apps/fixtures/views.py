@@ -5,6 +5,7 @@ from collections import OrderedDict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
+from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -37,6 +38,7 @@ from dimagi.utils.decorators.view import get_file
 
 from copy import deepcopy
 from soil import CachedDownload, DownloadBase
+from soil.exceptions import TaskFailedError
 from soil.util import expose_download, get_download_context
 
 
@@ -326,7 +328,11 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
 
 @require_can_edit_fixtures
 def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
-    context = get_download_context(download_id, check_state=True)
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
     context.update({
         'on_complete_short': _('Upload complete.'),
         'on_complete_long': _('Lookup table upload has finished'),
