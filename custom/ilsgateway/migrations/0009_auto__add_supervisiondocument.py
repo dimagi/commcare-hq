@@ -11,8 +11,10 @@ class Migration(SchemaMigration):
         # Adding model 'SupervisionDocument'
         db.create_table(u'ilsgateway_supervisiondocument', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('document', self.gf('django.db.models.fields.files.FileField')(max_length=100)),
+            ('document', self.gf('django.db.models.fields.TextField')()),
             ('domain', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('data_type', self.gf('django.db.models.fields.CharField')(max_length=100)),
         ))
         db.send_create_signal(u'ilsgateway', ['SupervisionDocument'])
 
@@ -45,7 +47,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'quantity': ('django.db.models.fields.IntegerField', [], {}),
-            'report_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 5, 8, 51, 2, 596890)'}),
+            'report_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 2, 6, 12, 32, 44, 844133)'}),
             'supply_point': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'})
         },
         u'ilsgateway.groupsummary': {
@@ -112,9 +114,11 @@ class Migration(SchemaMigration):
         },
         u'ilsgateway.supervisiondocument': {
             'Meta': {'object_name': 'SupervisionDocument'},
-            'document': ('django.db.models.fields.files.FileField', [], {'max_length': '100'}),
+            'data_type': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'document': ('django.db.models.fields.TextField', [], {}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'ilsgateway.supplypointstatus': {
             'Meta': {'ordering': "('-status_date',)", 'object_name': 'SupplyPointStatus'},

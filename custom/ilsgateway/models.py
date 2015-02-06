@@ -435,9 +435,7 @@ class RequisitionReport(models.Model):
 
 
 class SupervisionDocument(models.Model):
-    document = models.FileField(upload_to='supervision_documents/')
+    document = models.TextField()
     domain = models.CharField(max_length=100)
-
-    @property
-    def filename(self):
-        return self.document.file.name.split('/')[-1]
+    name = models.CharField(max_length=100)
+    data_type = models.CharField(max_length=100)

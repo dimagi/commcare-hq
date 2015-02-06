@@ -7,7 +7,7 @@
         {% for document in documents %}
             <tr>
                 <td>
-                    <a href='{{ document.document.url }}'>{{ document.filename }}</a>
+                    <a href="{% url 'supervision_document' domain document.id %}">{{ document.name }}</a>
                     {% if is_user_domain_admin or user.is_superuser %}
                         <a class='delete btn btn-mini' href='#'>Delete</a>
                         <div class="modal hide fade">
