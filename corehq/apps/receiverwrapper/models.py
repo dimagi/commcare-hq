@@ -363,7 +363,7 @@ class JsonFormRepeater(FormRepeater):
         """
         Adds the correct content type to the HTTP request headers
         """
-        headers = super(JsonFormRepeater, self)
+        headers = super(JsonFormRepeater, self).get_headers(repeat_record)
         headers['Content-type'] = 'application/json'
         return headers
 

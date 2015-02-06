@@ -5,7 +5,7 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 from contextlib import contextmanager
-from unittest import skip, SkipTest
+from unittest import skip
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
 from corehq.apps.receiverwrapper.models import RepeatRecord
 from corehq.apps.receiverwrapper.signals import create_repeat_records
