@@ -1,5 +1,6 @@
 from StringIO import StringIO
 import datetime
+import re
 from celery.utils.log import get_task_logger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
@@ -857,11 +858,20 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
+        # Strip HTML tags using regex. Regex is much faster than using an HTML
+        # parser, but will strip "<2 && 3>" from a value like "1<2 && 3>2". A
+        # parser will treat each cell like an HTML document, which might be
+        # overkill, but if using regex breaks values then we should use a
+        # parser instead, and take the knock. Assuming we won't have values
+        # with angle brackets, using regex for now.
+        tag_pattern = re.compile('<[^>]*?>')
 
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
                     return val.get('raw', val.get('sort_key', val))
+                elif isinstance(val, basestring):
+                    return tag_pattern.sub('', val)
                 return val
 
             return [_unformat_val(val) for val in row]
