@@ -160,6 +160,9 @@ class ArchiveFormView(DataInterfaceSection):
     urlname = 'archive_forms'
     page_title = ugettext_noop("Archive Forms")
 
+    ONE_MB = 1000000
+    MAX_SIZE = 3 * ONE_MB
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
@@ -186,6 +189,11 @@ class ArchiveFormView(DataInterfaceSection):
     def uploaded_file(self):
         try:
             bulk_file = self.request.FILES['bulk_upload_file']
+            if bulk_file.size > self.MAX_SIZE:
+                raise BulkUploadCasesException(_(u"File size too large. "
+                                                 "Please upload file less than"
+                                                 " {size} Megabytes").format(size=self.MAX_SIZE / self.ONE_MB))
+
         except KeyError:
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
