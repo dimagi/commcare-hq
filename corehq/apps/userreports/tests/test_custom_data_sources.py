@@ -1,5 +1,4 @@
 import os
-from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from corehq.apps.app_manager.tests import TestFileMixin
@@ -14,7 +13,6 @@ class TestCustomDataSource(SimpleTestCase, TestFileMixin):
     def test_wrap(self):
         wrapped = CustomDataSourceConfiguration.wrap(self.get_json('sample_custom_data_source'))
         self.assertEqual(["example", "dimagi"], wrapped.domains)
-
 
     def test_get_all(self):
         with override_settings(CUSTOM_DATA_SOURCES=[self.get_path('sample_custom_data_source', 'json')]):

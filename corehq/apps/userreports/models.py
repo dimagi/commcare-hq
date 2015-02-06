@@ -3,7 +3,7 @@ import json
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import Document, StringListProperty, BooleanProperty
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
-from jsonobject import ObjectProperty, JsonObject
+from jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
