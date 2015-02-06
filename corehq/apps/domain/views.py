@@ -1096,7 +1096,7 @@ class SelectPlanView(DomainAccountingSettings):
         }
 
 
-class EditPrivacySecurityView(BaseEditProjectInfoView):
+class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     template_name = "domain/admin/project_privacy.html"
     urlname = "privacy_info"
     page_title = ugettext_noop("Privacy and Security")
