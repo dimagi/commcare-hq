@@ -178,11 +178,11 @@ class FacilityReportData(EWSData):
                 return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}
-        if self.config['program'] and not self.config['products']:
+        if self.config['program'] and not self.config['product']:
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
-        elif self.config['program'] and self.config['products']:
-            product_ids = self.config['products']
+        elif self.config['program'] and self.config['product']:
+            product_ids = self.config['product']
         else:
             product_ids = Product.ids_by_domain(self.config['domain'])
 
@@ -251,12 +251,11 @@ class InventoryManagementData(EWSData):
     chart_y_label = 'MOS'
 
     def get_products(self):
-        print self.config
-        if self.config['program'] and not self.config['products']:
+        if self.config['program'] and not self.config['product']:
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
-        elif self.config['program'] and self.config['products']:
-            product_ids = [self.config['products']]
+        elif self.config['program'] and self.config['product']:
+            product_ids = [self.config['product']]
         else:
             product_ids = Product.ids_by_domain(self.config['domain'])
         return product_ids
@@ -404,7 +403,7 @@ class StockLevelsReport(MultiReport):
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
             program=program if program != ALL_OPTION else None,
-            products=products if products and products[0] != ALL_OPTION else [],
+            product=products if products and products[0] != ALL_OPTION else [],
         )
 
     @property
