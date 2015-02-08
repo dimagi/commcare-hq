@@ -15,7 +15,7 @@ class HierarchySqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['user_id']
+        return ['block', 'district', 'username', 'user_id']
 
     @property
     def columns(self):
