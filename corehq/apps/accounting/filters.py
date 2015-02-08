@@ -1,4 +1,5 @@
 import calendar
+from django.core.urlresolvers import reverse
 from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
@@ -340,4 +341,3 @@ class PaymentTransactionIdFilter(SearchFilter):
     slug = "transaction_id"
     label = _("Transaction ID")
     search_help_inline = _("Usually begins with 'ch_'")
-

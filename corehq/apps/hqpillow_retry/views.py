@@ -171,11 +171,18 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         )
 
     def make_search_link(self, error):
-        return '<a href="{0}?q={1}" target="_blank">{2}...{3}</a>'.format(
-            reverse("global_quick_find"),
-            error.doc_id,
-            error.doc_id[:5],
-            error.doc_id[-5:]
+        return (
+            '{text}<a href="{search_url}?q={doc_id}" target="_blank" title="{search_title}">'
+            '<i class="icon-search"></i></a>'
+            '&nbsp;<a href="{raw_url}?id={doc_id}" target="_blank" title="{raw_title}">'
+            '<i class="icon-file"></i></a>'
+        ).format(
+            text='{}...'.format(error.doc_id[:5]),
+            search_url=reverse("global_quick_find"),
+            doc_id=error.doc_id,
+            search_title=_("Search HQ for this document: %(doc_id)s") % {'doc_id': error.doc_id},
+            raw_url=reverse("doc_in_es"),
+            raw_title=_("Open the raw document: %(doc_id)s") % {'doc_id': error.doc_id},
         )
 
     def make_checkbox(self, error):

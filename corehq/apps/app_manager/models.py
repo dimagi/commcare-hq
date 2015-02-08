@@ -3299,7 +3299,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_user_registration(self):
         form = self.user_registration
         form._app = self
-        if not form.source:
+        if not (self._id and self._attachments and form.source):
             form.source = load_form_template('register_user.xhtml')
         return form
 
@@ -3644,6 +3644,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def has_careplan_module(self):
         return any((module for module in self.modules if isinstance(module, CareplanModule)))
 
+    @quickcache(['self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
         builder = ParentCasePropertyBuilder(self)
