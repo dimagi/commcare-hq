@@ -259,11 +259,13 @@ class Repeater(Document, UnicodeMixIn):
 
     def get_headers(self, repeat_record):
         # to be overridden
+        generator = self.get_payload_generator(self.format_or_default_format())
+        headers = generator.get_headers(repeat_record, self.payload_doc(repeat_record))
         if self.use_basic_auth:
             user_pass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
-            return {'Authorization': 'Basic ' + user_pass}
-        else:
-            return {}
+            headers.update({'Authorization': 'Basic ' + user_pass})
+
+        return headers
 
 
 @register_repeater_type
