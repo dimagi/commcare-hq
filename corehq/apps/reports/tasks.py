@@ -131,7 +131,9 @@ def saved_exports():
 
 @task(queue='saved_exports_queue')
 def export_for_group_async(group_config, output_dir):
-    export_for_group(group_config, output_dir, ignore_unused=True)
+    # exclude exports not accessed within the last 7 days
+    last_access_cutoff = datetime.utcnow() - timedelta(days=7)
+    export_for_group(group_config, output_dir, last_access_cutoff=last_access_cutoff)
 
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
