@@ -25,7 +25,7 @@ class PillowErrorFilter(BaseDrilldownOptionFilter):
         data_map = defaultdict(list)
         pillow_counts = defaultdict(lambda: 0)
         for row in data:
-            pillow = row['pillow']
+            pillow = row['pillow'].split('.')[-1]
             error = row['error_type']
             count = row['num_errors']
             data_map[pillow].append(err_item(error, count))
