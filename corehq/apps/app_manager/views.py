@@ -2029,6 +2029,8 @@ def edit_app_attr(request, domain, app_id, attr):
         ('secure_submissions', None),
         ('translation_strategy', None),
         ('auto_gps_capture', None),
+        ('amplifies_workers', None),
+        ('amplifies_project', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -2653,47 +2655,8 @@ def _find_name(names, langs):
     return name
 
 
-@require_can_edit_apps
-def app_summary(request, domain, app_id):
-    return summary(request, domain, app_id, should_edit=True)
-
-def app_summary_from_exchange(request, domain, app_id):
-    dom = Domain.get_by_name(domain)
-    if dom.is_snapshot:
-        return summary(request, domain, app_id, should_edit=False)
-    else:
-        return HttpResponseForbidden()
-
-def summary(request, domain, app_id, should_edit=True):
-    app = get_app(domain, app_id)
-    if app.doc_type == 'RemoteApp':
-        raise Http404()
-    context = get_apps_base_context(request, domain, app)
-    langs = context['langs']
-
-    modules = []
-
-    for module in app.get_modules():
-        forms = []
-        for form in module.get_forms():
-            questions, messages = _questions_for_form(request, form, langs)
-            forms.append({'name': _find_name(form.name, langs),
-                          'questions': questions,
-                          'messages': dict(messages)})
-
-        modules.append({'name': _find_name(module.name, langs), 'forms': forms})
-
-    context['modules'] = modules
-    context['summary'] = True
-
-    if should_edit:
-        return render(request, "app_manager/summary.html", context)
-    else:
-        return render(request, "app_manager/exchange_summary.html", context)
-
-
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary_new'
+    urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary_new.html'
 

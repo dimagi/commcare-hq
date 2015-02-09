@@ -5,10 +5,11 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 from corehq import privileges, Domain, toggles
+from corehq.apps.accounting.utils import get_active_reminders_by_domain_name
 from corehq.apps.app_manager.models import Application
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.orgs.models import Organization
-from corehq.apps.reminders.models import CaseReminderHandler, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
+from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
@@ -78,19 +79,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     @property
     @memoized
     def _active_reminders(self):
-        db = CaseReminderHandler.get_db()
-        key = [self.domain.name]
-        reminder_rules = db.view(
-            'reminders/handlers_by_reminder_type',
-            startkey=key,
-            endkey=key+[{}],
-            reduce=False
-        ).all()
-        active_reminders = []
-        for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules]):
-            if reminder_doc.get('active', True):
-                active_reminders.append(CaseReminderHandler.wrap(reminder_doc))
-        return active_reminders
+        return get_active_reminders_by_domain_name(self.domain.name)
 
     @property
     def response_outbound_sms(self):
@@ -327,19 +316,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     @property
     @memoized
     def _active_reminder_methods(self):
-        db = CaseReminderHandler.get_db()
-        key = [self.domain.name]
-        reminder_rules = db.view(
-            'reminders/handlers_by_reminder_type',
-            startkey=key,
-            endkey=key+[{}],
-            reduce=False
-        ).all()
-        recipients = []
-        for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules]):
-            if reminder_doc.get('active', True):
-                recipients.append(reminder_doc['method'])
-        return recipients
+        reminder_rules = get_active_reminders_by_domain_name(self.domain.name)
+        return [reminder.method for reminder in reminder_rules]
 
     @property
     def response_outbound_sms(self):

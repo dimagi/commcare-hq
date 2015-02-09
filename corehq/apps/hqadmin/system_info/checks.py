@@ -84,27 +84,3 @@ def check_celery_health():
     ret['worker_status'] = mark_safe(worker_status)
     ret['heartbeat'] = heartbeat.is_alive()
     return ret
-
-
-def check_memcached():
-    ret = {}
-    mc = cache.get_cache('default')
-    mc_status = "Unknown/Offline"
-    mc_results = ""
-    try:
-        mc_stats = mc._cache.get_stats()
-        if len(mc_stats) > 0:
-            mc_status = "Online"
-            stats_dict = mc_stats[0][1]
-            bytes = stats_dict['bytes']
-            max_bytes = stats_dict['limit_maxbytes']
-            curr_items = stats_dict['curr_items']
-            mc_results = "%s Items %s out of %s" % (curr_items, human_bytes(bytes),
-                                                    human_bytes(max_bytes))
-
-    except Exception, ex:
-        mc_status = "Offline"
-        mc_results = "%s" % ex
-    ret['memcached_status'] = mc_status
-    ret['memcached_results'] = mc_results
-    return ret

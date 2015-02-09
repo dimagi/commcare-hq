@@ -287,3 +287,9 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     "Specify stock rates per location type.",
     [NAMESPACE_DOMAIN]
 )
+
+APP_SUMMARY = StaticToggle(
+    'app_summary',
+    'Form and Case summary of an application',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)

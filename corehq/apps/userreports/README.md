@@ -77,6 +77,7 @@ constant        | A constant   | `"hello"`, `4`, `2014-12-20`
 property_name   | A reference to the property in a document |  `doc["name"]`
 property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
+related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
 
 ### JSON snippets for expressions
@@ -115,6 +116,7 @@ This expression returns `doc["child"]["age"]`:
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 ```
 {
+    "type": "conditional",
     "test": {
         "operator": "gt",
         "expression": {
@@ -128,7 +130,6 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
         "type": "constant",
         "property_name": "legal"
     },
-    "type": "conditional",
     "expression_if_false": {
         "type": "constant",
         "property_name": "underage"
@@ -136,6 +137,25 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 }
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
+
+#### Related document expressions
+
+This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
+
+```
+{
+    "type": "related_doc",
+    "related_doc_type": "CommCareCase",
+    "doc_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "case", "@case_id"]
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "owner_id"
+    }
+}
+```
 
 ### Boolean Expression Filters
 
@@ -456,6 +476,51 @@ TODO: Report filters docs will go here.
 **A note about report filters versus data source filters**
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
+
+#### "numeric" Filters
+Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
+Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
+
+ex:
+```
+{
+  "type": "numeric",
+  "slug": "number_of_children_slug",
+  "field": "number_of_children",
+  "display": "Number of Children"
+}
+```
+
+Here are a few examples of report filters:
+
+```
+{
+  "type": "date",
+  "slug": "modified_on",
+  "field": "modified_on",
+  "display": "Modified on",
+  "required": false
+}
+```
+```
+{
+  "type": "dynamic_choice_list",
+  "slug": "village",
+  "field": "village",
+  "display": "Village"
+}
+```
+```
+{
+  "type": "choice_list",
+  "slug": "role",
+  "field": "role",
+  "choices": [
+    {"value": "doctor", display:"Doctor"},
+    {"value": "nurse"}
+  ]
+}
+```
 
 ## Report Columns
 

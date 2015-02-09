@@ -24,7 +24,7 @@
             </span>
         </span>
         <span data-bind="if: !$root.edit()">
-            <span data-bind="text: selectedOption().label"></span>
+            <span data-bind="text: (selectedOption() ? selectedOption().label : '')"></span>
         </span>
     </span>
 </script>

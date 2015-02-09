@@ -1,3 +1,4 @@
+from django.db.models.aggregates import Count
 from corehq.apps.accounting.filters import DateCreatedFilter
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
@@ -31,6 +32,7 @@ class SMSBillablesInterface(GenericTabularReport):
     name = "SMS Billables"
     description = "List of all SMS Billables"
     slug = "sms_billables"
+    ajax_pagination = True
     fields = [
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -44,16 +46,57 @@ class SMSBillablesInterface(GenericTabularReport):
             DataTablesColumn("Date of Message"),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
-            DataTablesColumn("Gateway Fee"),
-            DataTablesColumn("Usage Fee"),
-            DataTablesColumn("Message Log ID"),
+            DataTablesColumn("Gateway Fee", sortable=False),
+            DataTablesColumn("Usage Fee", sortable=False),
+            DataTablesColumn("Message Log ID", sortable=False),
             DataTablesColumn("Phone Number"),
-            DataTablesColumn("Is Valid?"),
+            DataTablesColumn("Is Valid?", sortable=False),
             DataTablesColumn("Date Created"),
         )
 
     @property
+    def sort_field(self):
+        sort_fields = [
+            'date_sent',
+            'domain',
+            'direction',
+            'phone_number',
+            'date_created',
+        ]
+        sort_index = int(self.request.GET.get('iSortCol_0', 2))
+        sort_index = 1 if sort_index == 0 else sort_index - 1
+        field = sort_fields[sort_index]
+        sort_descending = self.request.GET.get('sSortDir_0', 'asc') == 'desc'
+        return field if not sort_descending else '-{0}'.format(field)
+
+    @property
+    def shared_pagination_GET_params(self):
+        return DateSentFilter.shared_pagination_GET_params(self.request) + \
+            DateCreatedFilter.shared_pagination_GET_params(self.request) + [
+                {
+                    'name': DateCreatedFilter.optional_filter_slug(),
+                    'value': DateCreatedFilter.optional_filter_string_value(self.request)
+                },
+                {
+                    'name': ShowBillablesFilter.slug,
+                    'value': ShowBillablesFilter.get_value(self.request, self.domain)},
+                {
+                    'name': DomainFilter.slug,
+                    'value': DomainFilter.get_value(self.request, self.domain)
+                },
+        ]
+
+    @property
+    def total_records(self):
+        query = self.sms_billables
+        return query.aggregate(Count('id'))['id__count']
+
+    @property
     def rows(self):
+        query = self.sms_billables
+        query = query.order_by(self.sort_field)
+
+        sms_billables = query[self.pagination.start:(self.pagination.start + self.pagination.count)]
         return [
             [
                 sms_billable.date_sent,
@@ -71,7 +114,7 @@ class SMSBillablesInterface(GenericTabularReport):
                 sms_billable.is_valid,
                 sms_billable.date_created,
             ]
-            for sms_billable in self.sms_billables
+            for sms_billable in sms_billables
         ]
 
     @property

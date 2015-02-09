@@ -1,4 +1,4 @@
-DOMAIN_INDEX = "hqdomains_a0223b1c4bc44ec788b322d373b6fa0c"
+DOMAIN_INDEX = "hqdomains_a3dbc2012ed3ba384bed595735ef5100"
 DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
            'created': None},
  'date_detection': False,
@@ -90,7 +90,7 @@ DOMAIN_MAPPING={'_meta': {'comment': 'Yedi modified on 3/20/2014',
                                                                             'type': 'string'}},
                                                        'type': 'multi_field'},
                                               'countries': {'fields':
-                                                               {'countries': {'index': 'analyzed',
+                                                               {'countries': {'index': 'not_analyzed',
                                                                               'type': 'string'},
                                                                 'exact': {'index': 'not_analyzed',
                                                                           'type': 'string'}},

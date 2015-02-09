@@ -9,6 +9,7 @@ from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -27,9 +28,35 @@ class SQLLocation(MPTTModel):
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
-    products = models.ManyToManyField(SQLProduct, null=True)
+
+    # Use getter and setter below to access this value
+    # since stocks_all_products can cause an empty list to
+    # be what is stored for a location that actually has
+    # all products available.
+    _products = models.ManyToManyField(SQLProduct, null=True)
+    stocks_all_products = models.BooleanField(default=True)
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+
+    @property
+    def products(self):
+        """
+        If there are no products specified for this location, assume all
+        products for the domain are relevant.
+        """
+        if self.stocks_all_products:
+            return SQLProduct.by_domain(self.domain)
+        else:
+            return self._products.all()
+
+    @products.setter
+    def products(self, value):
+        # this will set stocks_all_products to true if the user
+        # has added all products in the domain to this location
+        self.stocks_all_products = (set(value) ==
+                                    set(SQLProduct.by_domain(self.domain)))
+
+        self._products = value
 
     class Meta:
         unique_together = ('domain', 'site_code',)
@@ -57,14 +84,6 @@ class SQLLocation(MPTTModel):
     def root_locations(cls, domain, include_archive_ancestors=False):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
-
-    @memoized
-    def get_products(self):
-        """
-        If there are no products specified for this location, assume all
-        products for the domain are relevant.
-        """
-        return self.products.all() or SQLProduct.by_domain(self.domain)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -387,6 +406,19 @@ class Location(CachedCouchDocumentMixin, Document):
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
         return SupplyPointCase.get_by_location(self)
+
+    @property
+    def location_type_object(self):
+        """
+        Brute force lookup for the LocationType object
+        that corresponds to this locations type.
+        This could definitely use a more efficient way,
+        but no domains at this point have a large list of
+        types.
+        """
+        for loc_type in Domain.get_by_name(self.domain).location_types:
+            if loc_type.name == self.location_type:
+                return loc_type
 
 
 def root_locations(domain):
