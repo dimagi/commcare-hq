@@ -51,7 +51,6 @@ branches:
 #  - master+double-management # Nick P 12/31
 #  - double-management # SK 12/1
   - vellum-model-iteration # daniel 1/22
-  - locations-as-groups+fixtures-spike  # cz 1/29
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - project-settings-update # sravan 1/30
