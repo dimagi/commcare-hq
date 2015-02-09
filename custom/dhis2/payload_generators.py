@@ -19,24 +19,29 @@ Set up form forwarding as follows:
 """
 from datetime import date
 import json
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.receiverwrapper.models import RegisterGenerator, JsonFormRepeater
+from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
 from custom.dhis2.models import Dhis2Api, json_serializer, is_dhis2_enabled, Setting
 from custom.dhis2.const import DOMAIN, NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS
 
 
-@RegisterGenerator(JsonFormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
+@RegisterGenerator(FormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
 class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
 
     @staticmethod
     def enabled_for_domain(domain):
         return domain == DOMAIN
 
+    def get_headers(self, repeat_record, payload_doc):
+        return {'Content-type': 'application/json'}
+
     def get_payload(self, repeat_record, form):
         if not is_dhis2_enabled():
             return
+
+        # avoid circular import
+        from casexml.apps.case.models import CommCareCase
         settings = {s.key: s.value for s in Setting.objects.all()}
         dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
         if form['xmlns'] == 'http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40':

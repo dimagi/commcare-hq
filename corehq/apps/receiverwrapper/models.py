@@ -259,11 +259,13 @@ class Repeater(Document, UnicodeMixIn):
 
     def get_headers(self, repeat_record):
         # to be overridden
+        generator = self.get_payload_generator(self.format_or_default_format())
+        headers = generator.get_headers(repeat_record, self.payload_doc(repeat_record))
         if self.use_basic_auth:
             user_pass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
-            return {'Authorization': 'Basic ' + user_pass}
-        else:
-            return {}
+            headers.update({'Authorization': 'Basic ' + user_pass})
+
+        return headers
 
 
 @register_repeater_type
@@ -274,6 +276,7 @@ class FormRepeater(Repeater):
     """
 
     exclude_device_reports = BooleanProperty(default=False)
+    include_app_id_param = BooleanProperty(default=True)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -281,12 +284,15 @@ class FormRepeater(Repeater):
 
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
-        # adapted from http://stackoverflow.com/a/2506477/10840
-        url_parts = list(urlparse.urlparse(url))
-        query = urlparse.parse_qsl(url_parts[4])
-        query.append(("app_id", self.payload_doc(repeat_record).app_id))
-        url_parts[4] = urllib.urlencode(query)
-        return urlparse.urlunparse(url_parts)
+        if not self.include_app_id_param:
+            return url
+        else:
+            # adapted from http://stackoverflow.com/a/2506477/10840
+            url_parts = list(urlparse.urlparse(url))
+            query = urlparse.parse_qsl(url_parts[4])
+            query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            url_parts[4] = urllib.urlencode(query)
+            return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
@@ -351,27 +357,6 @@ class ShortFormRepeater(Repeater):
 class AppStructureRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return None
-
-
-@register_repeater_type
-class JsonFormRepeater(FormRepeater):
-
-    def __unicode__(self):
-        return "forwarding forms to external JSON API: %s" % self.url
-
-    def get_headers(self, repeat_record):
-        """
-        Adds the correct content type to the HTTP request headers
-        """
-        headers = super(JsonFormRepeater, self).get_headers(repeat_record)
-        headers['Content-type'] = 'application/json'
-        return headers
-
-    def get_url(self, repeat_record):
-        """
-        The parent class adds app_id to the URL params. Avoid that.
-        """
-        return Repeater.get_url(self, repeat_record)
 
 
 class RepeatRecord(Document, LockableMixIn):

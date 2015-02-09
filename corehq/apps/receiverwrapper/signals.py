@@ -18,11 +18,6 @@ def create_short_form_repeat_records(sender, xform, **kwargs):
     create_repeat_records(ShortFormRepeater, xform)
 
 
-def create_json_form_repeat_records(sender, xform, **kwargs):
-    from corehq.apps.receiverwrapper.models import JsonFormRepeater
-    create_repeat_records(JsonFormRepeater, xform)
-
-
 def create_repeat_records(repeater_cls, payload):
     domain = payload.domain
     if domain:
@@ -35,5 +30,4 @@ def create_repeat_records(repeater_cls, payload):
 
 successful_form_received.connect(create_form_repeat_records)
 successful_form_received.connect(create_short_form_repeat_records)
-successful_form_received.connect(create_json_form_repeat_records)
 case_post_save.connect(create_case_repeat_records)
