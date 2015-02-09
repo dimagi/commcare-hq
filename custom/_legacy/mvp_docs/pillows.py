@@ -123,35 +123,30 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
 
         for xform_id in xform_ids:
             try:
-                # first try to find the xform in the new db
-                xform_doc = IndicatorXForm.get_locked_obj(_id=xform_id)
-            except ResourceNotFound:
-                # Likely, the Case Indicator Pillow is ahead of the forms, so
-                # grab the original xform.
-                try:
-                    xform_dict = XFormInstance.get_db().get(xform_id)
-                except ResourceNotFound:
-                    pillow_eval_logging.error(
-                        "Could not find an XFormInstance with id %(xform_id)s "
-                        "related to Case %(case_id)s" % {
-                            'xform_id': xform_id,
-                            'case_id': doc_dict['_id'],
-                        }
-                    )
-                    continue
+                xform_dict = XFormInstance.get_db().get(xform_id)
                 xform_doc = IndicatorXForm.get_or_create_from_dict(xform_dict)[0]
-                if not xform_doc.xmlns:
-                    continue
-                related_xform_defs = []
-                for namespace in namespaces:
-                    related_xform_defs.extend(
-                        CaseDataInFormIndicatorDefinition.get_all(
-                            namespace,
-                            domain,
-                            xmlns=xform_doc.xmlns
-                        )
-                    )
-                xform_doc.update_indicators_in_bulk(
-                    related_xform_defs,
-                    logger=pillow_eval_logging,
+            except ResourceNotFound:
+                pillow_eval_logging.error(
+                    "Could not find an XFormInstance with id %(xform_id)s "
+                    "related to Case %(case_id)s" % {
+                        'xform_id': xform_id,
+                        'case_id': doc_dict['_id'],
+                    }
                 )
+                continue
+
+            if not xform_doc.xmlns:
+                continue
+            related_xform_defs = []
+            for namespace in namespaces:
+                related_xform_defs.extend(
+                    CaseDataInFormIndicatorDefinition.get_all(
+                        namespace,
+                        domain,
+                        xmlns=xform_doc.xmlns
+                    )
+                )
+            xform_doc.update_indicators_in_bulk(
+                related_xform_defs,
+                logger=pillow_eval_logging,
+            )
