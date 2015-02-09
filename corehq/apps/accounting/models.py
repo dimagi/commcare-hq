@@ -1246,6 +1246,9 @@ class Invoice(models.Model):
     date_start = models.DateField()
     date_end = models.DateField()
     is_hidden = models.BooleanField(default=False)
+    # If set to True invoice will not appear in invoice report. There is no UI to
+    # control this filter
+    is_hidden_to_ops = models.BooleanField(default=False)
 
     @property
     def subtotal(self):
