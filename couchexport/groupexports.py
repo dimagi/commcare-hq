@@ -1,13 +1,13 @@
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 import json
 from couchexport.tasks import rebuild_schemas
 
 
-def export_for_group(export_id_or_group, output_dir, ignore_unused=False):
+def export_for_group(export_id_or_group, output_dir, last_access_cutoff=None):
     if isinstance(export_id_or_group, basestring):
         try:
             config = GroupExportConfiguration.get(export_id_or_group)
@@ -18,20 +18,20 @@ def export_for_group(export_id_or_group, output_dir, ignore_unused=False):
 
     for subconfig, schema in config.all_exports:
         try:
-            rebuild_export(subconfig, schema, output_dir, ignore_unused=ignore_unused)
+            rebuild_export(subconfig, schema, output_dir, last_access_cutoff=last_access_cutoff)
         except ExportRebuildError:
             continue
 
 
-def rebuild_export(config, schema, output_dir, ignore_unused=False):
+def rebuild_export(config, schema, output_dir, last_access_cutoff=None):
     if output_dir == "couch":
         saved = SavedBasicExport.view("couchexport/saved_exports",
                                       key=json.dumps(config.index),
                                       include_docs=True,
                                       reduce=False).one()
-        if ignore_unused and saved and saved.last_accessed and \
-                (datetime.utcnow() - saved.last_accessed) > timedelta(days=7):
-            # ignore exports that haven't been accessed in the last 7 days
+        if last_access_cutoff and saved and saved.last_accessed and \
+                saved.last_accessed < last_access_cutoff:
+            # ignore exports that haven't been accessed since last_access_cutoff
             return
 
     try:
