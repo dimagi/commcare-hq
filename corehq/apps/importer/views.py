@@ -29,6 +29,18 @@ def render_error(request, domain, message):
 
 @require_can_edit_data
 def excel_config(request, domain):
+    """
+    Step one of three.
+
+    This post uploads the file and is when the user enters:
+
+    named_columns:
+        Whether or not the first row of the excel sheet contains
+        header strings for the columns. This defaults to True and
+        should potentially not be an option as it is always used
+        due to how important it is to see column headers
+        in the rest of the importer.
+    """
     if request.method != 'POST':
         return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
 
@@ -109,6 +121,44 @@ def excel_config(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_fields(request, domain):
+    """
+    Step one of three.
+
+    Important values that are grabbed from the POST or defined by
+    the user on this page:
+
+    named_columns:
+        Passed through from last step, see that for documentation
+
+    case_type:
+        The type of case we are matching to. When creating new cases,
+        this is the type they will be created as. When updating
+        existing cases, this is the type that we will search for.
+        If the wrong case type is used when looking up existing cases,
+        we will not up date them.
+
+    search_field:
+
+    create_new_cases:
+        A boolean that controls whether or not the user wanted
+        to create new cases for any case that doesn't have a matching
+        case id in the upload.
+
+    search_column:
+        Which column of the excel file we are using to specify either
+        case ids or external ids. This is, strangely, required. If
+        creating new cases only you would expect these to be blank with
+        the create_new_cases flag set.
+
+    search_field:
+        Either case id or external id, determines which type of
+        identification we are using to match to cases.
+
+    key_column/value_column:
+        These correspond to an advanced feature allowing a user
+        to modify a single case with multiple rows.
+
+    """
     named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
     try:
@@ -192,6 +242,17 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
+    """
+    Step three of three.
+
+    This page is submitted with the list of column to
+    case property mappings for this upload.
+
+    The config variable is an ImporterConfig object that
+    has everything gathered from previous steps, with the
+    addition of all the field data. See that class for
+    more information.
+    """
     config = importer_util.ImporterConfig.from_request(request)
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
