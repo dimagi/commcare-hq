@@ -354,13 +354,26 @@ class ReportsTab(UITab):
     def dropdown_items(self):
         saved_report_header = format_submenu_context(_('My Saved Reports'),
                                                      is_header=True)
-        saved_report_list = [
-            format_submenu_context(config.name, url=config.url)
-            for config in ReportConfig.by_domain_and_owner(self.domain,
-                                                           self.couch_user._id)
+        saved_reports_list = list(ReportConfig.by_domain_and_owner(
+                                  self.domain,
+                                  self.couch_user._id))
+
+        MAX_DISPLAYABLE_SAVED_REPORTS = 5
+        first_five_items = [
+            format_submenu_context(saved_report.name, url=saved_report.url)
+            for counter, saved_report in enumerate(saved_reports_list)
+            if counter < MAX_DISPLAYABLE_SAVED_REPORTS
         ]
-        if saved_report_list:
-            saved_reports_dropdown = ([saved_report_header] + saved_report_list)
+        rest_as_second_level_items = [
+            format_second_level_context("...", "#", [
+                format_submenu_context(saved_report.name, url=saved_report.url)
+                for counter, saved_report in enumerate(saved_reports_list)
+                if counter >= MAX_DISPLAYABLE_SAVED_REPORTS
+            ])
+        ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
+
+        if first_five_items:
+            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
         else:
             saved_reports_dropdown = []
 
