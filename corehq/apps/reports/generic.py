@@ -832,6 +832,21 @@ class GenericTabularReport(GenericReportView):
         """
         return dict(num=1, width=200)
 
+    @staticmethod
+    def _strip_tags(value):
+        """
+        Strip HTML tags from a value
+        """
+        # Uses regex. Regex is much faster than using an HTML parser, but will
+        # strip "<2 && 3>" from a value like "1<2 && 3>2". A parser will treat
+        # each cell like an HTML document, which might be overkill, but if
+        # using regex breaks values then we should use a parser instead, and
+        # take the knock. Assuming we won't have values with angle brackets,
+        # using regex for now.
+        if isinstance(value, basestring):
+            return re.sub('<[^>]*?>', '', value)
+        return value
+
     @property
     def override_export_sheet_name(self):
         """
@@ -858,21 +873,12 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-        # Strip HTML tags using regex. Regex is much faster than using an HTML
-        # parser, but will strip "<2 && 3>" from a value like "1<2 && 3>2". A
-        # parser will treat each cell like an HTML document, which might be
-        # overkill, but if using regex breaks values then we should use a
-        # parser instead, and take the knock. Assuming we won't have values
-        # with angle brackets, using regex for now.
-        tag_pattern = re.compile('<[^>]*?>')
 
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
                     return val.get('raw', val.get('sort_key', val))
-                elif isinstance(val, basestring):
-                    return tag_pattern.sub('', val)
-                return val
+                return self._strip_tags(val)
 
             return [_unformat_val(val) for val in row]
 
