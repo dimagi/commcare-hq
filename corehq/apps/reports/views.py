@@ -55,6 +55,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.export import WorkBook
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean, string_to_datetime, json_format_date
 from dimagi.utils.web import json_request, json_response
 from soil import DownloadBase
@@ -85,7 +86,7 @@ from corehq.apps.reports.models import (
     HQGroupExportConfiguration
 )
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.reports.tasks import create_metadata_export
+from corehq.apps.reports.tasks import create_metadata_export, rebuild_export_async
 from corehq.apps.reports import util
 from corehq.apps.reports.util import (
     get_all_users_by_domain,
@@ -384,6 +385,20 @@ def hq_download_saved_export(req, domain, export_id):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
     assert domain == export.configuration.index[0]
+    cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    if not export.last_accessed or export.last_accessed < cutoff:
+        group_id = req.GET.get('group_export_id')
+        if group_id:
+            try:
+                group_config = HQGroupExportConfiguration.get(group_id)
+                assert domain == group_config.domain
+                all_config_indices = [schema.index for schema in group_config.all_configs]
+                list_index = all_config_indices.index(export.configuration.index)
+                schema = group_config.all_export_schemas[list_index]
+                rebuild_export_async.delay(export.configuration, schema, 'couch')
+            except Exception:
+                notify_exception(req, 'Failed to rebuild export during download')
+
     export.last_accessed = datetime.utcnow()
     export.save()
     return couchexport_views.download_saved_export(req, export_id)

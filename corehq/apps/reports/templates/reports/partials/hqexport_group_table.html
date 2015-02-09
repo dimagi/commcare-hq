@@ -28,7 +28,7 @@
             <td>{% if component.saved_version.has_file %}{{ component.saved_version.size|filesizeformat }}{% else %}{% trans "N/A" %}{% endif %}</td>
             <td>
                 {% if component.saved_version.has_file %}
-                <a href="{% url "hq_download_saved_export" domain component.saved_version.get_id %}"
+                <a href="{% url "hq_download_saved_export" domain component.saved_version.get_id %}?group_export_id={{ component.group_id }}"
                    class="btn btn-primary daily-saved-download"
                    data-exportName="{{ component.config.name }}"
                    data-typeIdentifier="{{ component.config.index.1}}"
