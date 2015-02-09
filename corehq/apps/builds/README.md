@@ -11,7 +11,7 @@ Adding CommCare Builds to CommCare HQ
     5. Select the "Environment Variables" tab and write down the VERSION (all
        the way at the bottom of the table.) This will
        be referenced as `$version` below
-    6. Go back, and select the ""Build Artifacts" link, then select "All files in zip." If you use the commandline option below,
+    6. Go back, and select "Build Artifacts" -> "application" -> "posttmp" -> "artifacts.zip".   If you use the commandline option below,
        note the path of the downloaded file. This will be
        referenced as `$build_path`.
        If you use the web UI, copy the download URL. This will be called `build_url`.
