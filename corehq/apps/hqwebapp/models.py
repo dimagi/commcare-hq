@@ -461,7 +461,6 @@ class SetupTab(UITab):
             LocationImportStatusView,
             LocationSettingsView,
             LocationFieldsView,
-            ProductsPerLocationView,
         )
 
         locations_config = {
@@ -487,10 +486,6 @@ class SetupTab(UITab):
                 {
                     'title': LocationFieldsView.page_name(),
                     'urlname': LocationFieldsView.urlname,
-                },
-                {
-                    'title': ProductsPerLocationView.page_title,
-                    'urlname': ProductsPerLocationView.urlname,
                 },
             ]
         }

@@ -3,7 +3,7 @@
 
 <div>
     <table class="table table-condensed">
-        <thead>
+        <thead data-bind="visible: columns().length > 0">
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th></th>
                 <th data-bind="text: DetailScreenConfig.message.FIELD"></th>
@@ -71,41 +71,23 @@
                 <td>
                     <i style="cursor: pointer;"
                        data-bind="
-                        visible: $root.edit && ($parent.columns().length > 1),
+                        visible: $root.edit && ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
                         css: COMMCAREHQ.icons.DELETE,
                         attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
                     "></i>
                 </td>
             </tr></tbody>
-        <tbody>
+        <tbody data-bind="visible: columns().length > 0">
             <tr>
                 <td></td>
                 <td colspan="4">
-                    <div class="btn-group">
-                        <button class="btn" data-bind="click: addProperty">Add Property</button>
-                        {% if request|feature_preview_enabled:'CALC_XPATHS' or request|toggle_enabled:'GRAPH_CREATION' %}
-                        <button class="btn dropdown-toggle" data-toggle="dropdown">
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li data-bind="click: addProperty"><a>Property</a></li>
-                            {% if request|feature_preview_enabled:'CALC_XPATHS' %}
-                            <li data-bind="click: addCalculation"><a>Calculation</a></li>
-                            {% endif %}
-                            {% if request|toggle_enabled:'GRAPH_CREATION' %}
-                            <!-- ko if: COMMCAREHQ.app_manager.checkCommcareVersion("2.17") -->
-                            <li data-bind="click: addGraph"><a>Graph</a></li>
-                            <!-- /ko -->
-                            <!-- ko ifnot: COMMCAREHQ.app_manager.checkCommcareVersion("2.17") -->
-                            <li class="disabled"><a>Graph <small>(upgrade to 2.17 or greater)</small></a></li>
-                            <!-- /ko -->
-                            {% endif %}
-                        </ul>
-                        {% endif %}
-                    </div>
+                    {% include "app_manager/partials/add_property_button.html" %}
                 </td>
             </tr>
         </tbody>
     </table>
+    <div data-bind="visible: columns().length == 0">
+        {% include "app_manager/partials/add_property_button.html" %}
+    </div>
 </div>
