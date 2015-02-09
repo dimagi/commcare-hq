@@ -13,14 +13,12 @@ from corehq.apps.app_manager.models import (
     get_apps_in_domain,
 )
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager import (
-    get_default_case_property_datatypes,
-    _clean_table_name,
-)
+from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.apps.userreports.reports.builder import make_case_property_indicator
 
 
 class CreateNewReportForm(forms.Form):
@@ -119,7 +117,7 @@ class ConfigureNewReportBase(forms.Form):
     def column_config_template(self):
         path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "templates", "userreports", "partials", "report_filter_configuration.html"
+            "..", "..", "templates", "userreports", "partials", "report_filter_configuration.html"
         )
         with open(path, "r") as f:
             template = f.read()
@@ -177,15 +175,6 @@ class ConfigureNewReportBase(forms.Form):
         report.validate()
         report.save()
         return report
-
-    def _make_indicator(self, property_name):
-        return {
-            "type": "raw",
-            "column_id": property_name,
-            "datatype": get_default_case_property_datatypes().get(property_name, "string"),
-            'property_name': property_name,
-            "display_name": property_name,
-        }
 
     @property
     def _report_aggregation_cols(self):
@@ -271,7 +260,7 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
             [self.cleaned_data["group_by"]]
         )
 
-        return [self._make_indicator(cp) for cp in indicators] + [
+        return [make_case_property_indicator(cp) for cp in indicators] + [
             {
                 "display_name": "Count",
                 "type": "count",
@@ -359,7 +348,7 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
             [conf['property'] for conf in json.loads(self.cleaned_data['columns'])] +
             [f['field'] for f in self._report_filters]
         )
-        return [self._make_indicator(p) for p in property_name]
+        return [make_case_property_indicator(p) for p in property_name]
 
     @property
     def _report_aggregation_cols(self):

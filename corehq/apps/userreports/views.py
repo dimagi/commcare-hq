@@ -14,8 +14,7 @@ from corehq.apps.app_manager.models import get_apps_in_domain, Application
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq import Session, ConfigurableReport
 from corehq import toggles
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, \
-    get_default_case_property_datatypes
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureNewBarChartReport,
@@ -24,6 +23,7 @@ from corehq.apps.userreports.reports.builder.forms import (
     CreateNewReportForm,
 )
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
+from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm, \
@@ -128,7 +128,7 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
     @property
     def report_source_properties(self):
         app = Application.get(self.request.GET.get('application', ''))
-        property_builder = ParentCasePropertyBuilder(app, get_default_case_property_datatypes().keys())
+        property_builder = ParentCasePropertyBuilder(app, DEFAULT_CASE_PROPERTY_DATATYPES.keys())
         return list(
             property_builder.get_properties(self.request.GET.get('report_source', ''))
         )
