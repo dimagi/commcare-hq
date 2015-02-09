@@ -892,7 +892,7 @@ MAILCHIMP_MASS_EMAIL_ID = ''
 SQL_REPORTING_DATABASE_URL = None
 
 # number of days since last access after which a saved export is considered unused
-SAVED_EXPORT_ACCESS_CUTOFF = 7
+SAVED_EXPORT_ACCESS_CUTOFF = 35
 
 # override for production
 DEFAULT_PROTOCOL = 'http'
