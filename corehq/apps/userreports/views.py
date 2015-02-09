@@ -17,11 +17,11 @@ from corehq import toggles
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, \
     get_default_case_property_datatypes
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.forms import (
-    CreateNewReportBuilderForm,
-    ReportBuilderConfigureNewBarChartReport,
-    ReportBuilderConfigureNewTableReport,
-    ReportBuilderConfigureNewPieChartReport,
+from corehq.apps.userreports.reports.builder.forms import (
+    ConfigureNewBarChartReport,
+    ConfigureNewPieChartReport,
+    ConfigureNewTableReport,
+    CreateNewReportForm,
 )
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
@@ -78,8 +78,8 @@ class CreateNewReportBuilderView(ReportBuilderView):
     @memoized
     def create_new_report_builder_form(self):
         if self.request.method == 'POST':
-            return CreateNewReportBuilderForm(self.domain, self.request.POST)
-        return CreateNewReportBuilderForm(self.domain)
+            return CreateNewReportForm(self.domain, self.request.POST)
+        return CreateNewReportForm(self.domain)
 
     def post(self, request, *args, **kwargs):
         if self.create_new_report_builder_form.is_valid():
@@ -113,7 +113,7 @@ class CreateNewReportBuilderView(ReportBuilderView):
 
 class ConfigureBarChartReportBuilderView(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_chart.html"
-    configure_report_form_class = ReportBuilderConfigureNewBarChartReport
+    configure_report_form_class = ConfigureNewBarChartReport
     report_title = _("Create New Report > Configure Bar Chart Report")
 
     def get_context_data(self, **kwargs):
@@ -161,7 +161,7 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
 
 
 class ConfigurePieChartReportBuilderView(ConfigureBarChartReportBuilderView):
-    configure_report_form_class = ReportBuilderConfigureNewPieChartReport
+    configure_report_form_class = ConfigureNewPieChartReport
     report_title = _("Create New Report > Configure Pie Chart Report")
 
 
@@ -169,7 +169,7 @@ class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
     # Temporarily building this view off of ConfigureBarChartReportBuilderView.
     # We'll probably want to inherit from a common ancestor in the end?
     template_name = "userreports/partials/configure_table_report_builder.html"
-    configure_report_form_class = ReportBuilderConfigureNewTableReport
+    configure_report_form_class = ConfigureNewTableReport
     report_title = _("Create New Report > Configure Table Report")
 
 

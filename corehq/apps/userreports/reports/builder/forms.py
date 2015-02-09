@@ -23,7 +23,7 @@ from corehq.apps.userreports.models import (
 )
 
 
-class CreateNewReportBuilderForm(forms.Form):
+class CreateNewReportForm(forms.Form):
     report_type = forms.ChoiceField(
         choices=[
             ('bar_chart', _("Bar Chart")),
@@ -40,7 +40,7 @@ class CreateNewReportBuilderForm(forms.Form):
     report_source = forms.ChoiceField()
 
     def __init__(self, domain, *args, **kwargs):
-        super(CreateNewReportBuilderForm, self).__init__(*args, **kwargs)
+        super(CreateNewReportForm, self).__init__(*args, **kwargs)
 
         apps = get_apps_in_domain(domain, full=True, include_remote=False)
         self.fields['application'].choices = [
@@ -83,14 +83,14 @@ class CreateNewReportBuilderForm(forms.Form):
 # TODO: Add some documentation
 
 
-class ReportBuilderConfigureNewReportBase(forms.Form):
+class ConfigureNewReportBase(forms.Form):
     report_name = forms.CharField()
     filters = forms.CharField()
     form_title = 'Configure Report'
     button_text = 'Save Report'
 
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
-        super(ReportBuilderConfigureNewReportBase, self).__init__(*args, **kwargs)
+        super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
 
         # Following attributes are needed for the create_report method
         self.source_type = source_type
@@ -232,12 +232,12 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
         return []
 
 
-class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBase):
+class ConfigureNewBarChartReport(ConfigureNewReportBase):
     group_by = forms.ChoiceField()
     form_title = "Configure Bar Chart Report"
 
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
-        super(ReportBuilderConfigureNewBarChartReport, self).__init__(app_id, source_type, report_source, case_properties, *args, **kwargs)
+        super(ConfigureNewBarChartReport, self).__init__(app_id, source_type, report_source, case_properties, *args, **kwargs)
 
         # Populate the group_by choices
         if source_type == 'case':
@@ -310,9 +310,9 @@ class ReportBuilderConfigureNewBarChartReport(ReportBuilderConfigureNewReportBas
             }
         ]
 
-# Should ReportBuilderConfigureNewBarChartReport and this class inherit from a
+# Should ConfigureNewBarChartReport and this class inherit from a
 # common ancestor instead?
-class ReportBuilderConfigureNewPieChartReport(ReportBuilderConfigureNewBarChartReport):
+class ConfigureNewPieChartReport(ConfigureNewBarChartReport):
     form_title = "Configure Pie Chart Report"
 
     @property
@@ -324,13 +324,13 @@ class ReportBuilderConfigureNewPieChartReport(ReportBuilderConfigureNewBarChartR
         }]
 
 
-class ReportBuilderConfigureNewTableReport(ReportBuilderConfigureNewReportBase):
+class ConfigureNewTableReport(ConfigureNewReportBase):
     form_title = "Configure Table Report"
     columns = forms.CharField(required=False)
 
     @property
     def configuration_tables(self):
-        parent_tables = super(ReportBuilderConfigureNewTableReport, self).configuration_tables
+        parent_tables = super(ConfigureNewTableReport, self).configuration_tables
 
         return crispy.Layout(
             parent_tables,
