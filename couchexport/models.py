@@ -909,6 +909,7 @@ class SavedBasicExport(Document):
     """
     configuration = SchemaProperty(ExportConfiguration)
     last_updated = DateTimeProperty()
+    last_accessed = DateTimeProperty()
 
     @property
     def size(self):
