@@ -120,7 +120,8 @@ def format_sidebar(context):
         # and see if the nav needs a subnav for the current contextual item
         for section_title, navs in sections:
             for nav in navs:
-                if request.get_full_path().startswith(nav['url']) or request.build_absolute_uri() == nav['url']:
+                if (request.get_full_path().startswith(nav['url']) or
+                   request.build_absolute_uri().startswith(nav['url'])):
                     nav['is_active'] = True
                 else:
                     nav['is_active'] = False
