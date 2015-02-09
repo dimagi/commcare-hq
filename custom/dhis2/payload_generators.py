@@ -19,15 +19,14 @@ Set up form forwarding as follows:
 """
 from datetime import date
 import json
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.receiverwrapper.models import RegisterGenerator, JsonFormRepeater
+from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
 from custom.dhis2.models import Dhis2Api, json_serializer, is_dhis2_enabled, Setting
 from custom.dhis2.const import DOMAIN, NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS
 
 
-@RegisterGenerator(JsonFormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
+@RegisterGenerator(FormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
 class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
 
     @staticmethod

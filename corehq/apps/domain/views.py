@@ -4,7 +4,6 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
-from custom.dhis2.payload_generators import JsonFormRepeater
 import dateutil
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
@@ -1756,7 +1755,6 @@ class RepeaterMixin(object):
             'CaseRepeater': _("Cases"),
             'ShortFormRepeater': _("Form Stubs"),
             'AppStructureRepeater': _("App Schema Changes"),
-            'JsonFormRepeater': _('JSON-Formatted Forms')
         }
 
 
@@ -1768,7 +1766,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     @property
     def repeaters(self):
         available_repeaters = [
-            FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, JsonFormRepeater,
+            FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater,
         ]
         return [(r.__name__, r.by_domain(self.domain), self.friendly_repeater_names[r.__name__])
                 for r in available_repeaters]

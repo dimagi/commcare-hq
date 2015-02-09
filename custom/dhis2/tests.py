@@ -12,7 +12,6 @@ from corehq.apps.receiverwrapper.signals import create_repeat_records
 from couchdbkit import ResourceNotFound
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, DOMAIN, \
     Setting, is_dhis2_enabled
-from custom.dhis2.payload_generators import JsonFormRepeater
 from custom.dhis2.tasks import sync_cases, sync_org_units
 from django.test import TestCase
 from mock import patch, Mock

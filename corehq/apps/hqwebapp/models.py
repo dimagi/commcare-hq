@@ -1156,8 +1156,6 @@ class ProjectSettingsTab(UITab):
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
                     return _("Forward Forms")
-                if repeater_type == 'JsonFormRepeater':
-                    return _("Forward Forms to External JSON API")
                 elif repeater_type == 'ShortFormRepeater':
                     return _("Forward Form Stubs")
                 elif repeater_type == 'CaseRepeater':
