@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from django import forms
 from django.utils.translation import ugettext_noop as _
 
@@ -92,7 +93,8 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
         super(ReportBuilderConfigureNewReportBase, self).__init__(*args, **kwargs)
 
         # Following attributes are needed for the create_report_from_form method
-        self.doc_type = source_type
+        self.source_type = source_type
+        self.doc_type_map = {"case": "CommCareCase", "form": "XFormInstance"}
         self.report_source = report_source
         self.case_properties = case_properties
         app = Application.get(app_id)
@@ -148,8 +150,8 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             display_name="{} source".format(self.cleaned_data['report_name']),
-            referenced_doc_type=self.doc_type,
-            table_id=_clean_table_name(self.domain, self.report_source),
+            referenced_doc_type=self.doc_type_map[self.source_type],
+            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter={
                 'type': 'property_match',  # TODO - use boolean_expression
                 'property_name': 'type',
