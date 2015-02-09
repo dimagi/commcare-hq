@@ -2,8 +2,10 @@ from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.builder import (
+    DEFAULT_CASE_PROPERTY_DATATYPES,
     make_case_property_indicator,
-    DEFAULT_CASE_PROPERTY_DATATYPES
+    make_form_meta_block_indicator,
+    make_form_question_indicator,
 )
 import unidecode
 
@@ -54,52 +56,9 @@ def get_form_data_sources(app):
     return forms
 
 
-DATATYPE_MAP = {
-    "Select": "single",
-    "MSelect": "multiple"
-}
-
-
 def get_form_data_source(app, form):
     xform = XForm(form.source)
     form_name = form.default_name()
-
-    def _get_indicator_data_type(data_type, options):
-        if data_type == "date":
-            return {"datatype": "date"}
-        if data_type == "MSelect":
-            return {
-                "type": "choice_list",
-                "select_style": DATATYPE_MAP[data_type],
-                "choices": [
-                    option['value'] for option in options
-                ],
-            }
-        return {"datatype": "string"}
-
-    def _make_indicator(question):
-        path = question['value'].split('/')
-        data_type = question['type']
-        options = question.get('options')
-        ret = {
-            "type": "raw",
-            "column_id": path[-1],
-            'property_path': ['form'] + path[2:],
-            "display_name": path[-1],
-        }
-        ret.update(_get_indicator_data_type(data_type, options))
-        return ret
-
-    def _make_meta_block_indicator(field_name, data_type):
-        ret = {
-            "type": "raw",
-            "column_id": field_name,
-            "property_path": ['form', 'meta'] + [field_name],
-            "display_name": field_name,
-        }
-        ret.update(_get_indicator_data_type(data_type, []))
-        return ret
-
     questions = xform.get_questions([])
 
     return DataSourceConfiguration(
@@ -117,9 +76,9 @@ def get_form_data_source(app, form):
             "property_value": xform.data_node.tag_xmlns,
         },
         configured_indicators=[
-            _make_indicator(q) for q in questions
+            make_form_question_indicator(q) for q in questions
         ] + [
-            _make_meta_block_indicator(field[0], field[1]) for field in [
+            make_form_meta_block_indicator(field[0], field[1]) for field in [
                 ('username', 'string'),
                 ('userID', 'string'),
                 ('timeStart', 'datetime'),
