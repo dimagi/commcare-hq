@@ -406,7 +406,8 @@ class TestManagementCmdInvoice(BaseInvoiceTestCase):
         """
         Tests hiding invoices via the management command
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
+        invoice_date = utils.months_from_date(self.subscription.date_start,
+                                              random.randint(2, self.subscription_length))
         tasks.generate_invoices(invoice_date)
         invoices = self.subscription.invoice_set.all()
 
