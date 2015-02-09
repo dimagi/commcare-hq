@@ -1,10 +1,14 @@
+import base64
 import json
+import StringIO
 from django.core.urlresolvers import reverse
 from django.db.models import Count
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, Http404
+from django.utils.decorators import method_decorator
+from django.views.generic.base import TemplateView
 from corehq.apps.commtrack.models import CommtrackConfig, StockState
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -14,6 +18,7 @@ from django.views.decorators.http import require_POST
 from corehq import IS_DEVELOPER, Domain
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
+from custom.ilsgateway.forms import SupervisionDocumentForm
 
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
     get_delivery_group_reports, ILS_FACILITIES
@@ -21,7 +26,7 @@ from custom.logistics.models import StockDataCheckpoint
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.models import MigrationCheckpoint
@@ -158,6 +163,82 @@ class ILSConfigView(BaseConfigView):
     page_title = ugettext_noop("ILSGateway")
     template_name = 'ilsgateway/ilsconfig.html'
     source = 'ilsgateway'
+
+
+class SupervisionDocumentListView(BaseDomainView):
+    section_name = 'Supervision Documents'
+    section_url = ""
+    template_name = "ilsgateway/supervision_docs.html"
+    urlname = 'supervision'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_web_user():
+            raise Http404()
+        return super(SupervisionDocumentListView, self).dispatch(request, *args, **kwargs)
+
+    @method_decorator(domain_admin_required)
+    def post(self, *args, **kwargs):
+        request = args[0]
+        form = SupervisionDocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            supervision_document = SupervisionDocument(
+                name=form.cleaned_data['document'].name,
+                document=base64.b64encode(form.cleaned_data['document'].read()),
+                data_type=form.cleaned_data['document'].content_type,
+                domain=self.domain
+            )
+            supervision_document.save()
+        return HttpResponseRedirect(
+            reverse(self.urlname, args=[self.domain])
+        )
+
+    @property
+    def main_context(self):
+        main_context = super(SupervisionDocumentListView, self).main_context
+        main_context.update({
+            'form': SupervisionDocumentForm(),
+            'documents': SupervisionDocument.objects.filter(domain=self.domain),
+            'is_user_domain_admin': self.request.couch_user.is_domain_admin(self.domain)
+        })
+        return main_context
+
+
+class SupervisionDocumentView(TemplateView):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.couch_user.is_web_user():
+            raise Http404()
+        return super(SupervisionDocumentView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        document_id = kwargs.get('document_id')
+        try:
+            document = SupervisionDocument.objects.get(pk=document_id)
+        except SupervisionDocument.DoesNotExist:
+            raise Http404()
+        response = HttpResponse(StringIO.StringIO(base64.b64decode(document.document)))
+        response['Content-Type'] = document.data_type
+        response['Content-Disposition'] = 'attachment; filename=%s' % document.name
+        return response
+
+
+class SupervisionDocumentDeleteView(TemplateView, DomainViewMixin):
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SupervisionDocumentDeleteView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        document_id = kwargs.get('document_id')
+        try:
+            document = SupervisionDocument.objects.get(pk=document_id)
+        except SupervisionDocument.DoesNotExist:
+            raise Http404()
+        document.delete()
+        return HttpResponseRedirect(
+            reverse(SupervisionDocumentListView.urlname, args=[self.domain])
+        )
+
 
 @domain_admin_required
 @require_POST

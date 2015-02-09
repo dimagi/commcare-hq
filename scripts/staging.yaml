@@ -60,6 +60,7 @@ branches:
   - lwyszomi:ews_report_chart_checkboxes
   - graph-bulk-translations # Noah 2/5
   - dhis2 # Norman 2/6
+  - daily-form-stats-export-all # Nick P 2/6
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
