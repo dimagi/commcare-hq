@@ -276,6 +276,7 @@ class FormRepeater(Repeater):
     """
 
     exclude_device_reports = BooleanProperty(default=False)
+    include_app_id_param = BooleanProperty(default=True)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -283,12 +284,15 @@ class FormRepeater(Repeater):
 
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
-        # adapted from http://stackoverflow.com/a/2506477/10840
-        url_parts = list(urlparse.urlparse(url))
-        query = urlparse.parse_qsl(url_parts[4])
-        query.append(("app_id", self.payload_doc(repeat_record).app_id))
-        url_parts[4] = urllib.urlencode(query)
-        return urlparse.urlunparse(url_parts)
+        if not self.include_app_id_param:
+            return url
+        else:
+            # adapted from http://stackoverflow.com/a/2506477/10840
+            url_parts = list(urlparse.urlparse(url))
+            query = urlparse.parse_qsl(url_parts[4])
+            query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            url_parts[4] = urllib.urlencode(query)
+            return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)

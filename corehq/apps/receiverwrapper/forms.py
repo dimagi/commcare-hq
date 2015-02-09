@@ -52,3 +52,8 @@ class FormRepeaterForm(GenericRepeaterForm):
         label='Exclude device reports',
         initial=True
     )
+    include_app_id_param = forms.BooleanField(
+        required=False,
+        label="Include 'app_id' URL query parameter.",
+        initial=True
+    )
