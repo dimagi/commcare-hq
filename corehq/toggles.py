@@ -287,3 +287,9 @@ APP_SUMMARY = StaticToggle(
     'Form and Case summary of an application',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+PRIME_RESTORE = StaticToggle(
+    'prime_restore',
+    'Prime restore cache',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
