@@ -79,9 +79,9 @@ class CreateNewReportBuilderForm(forms.Form):
             ),
         )
 
-# TODO: implement create_report_from_form for table reports
 # TODO: Format types for the columns table don't make sense?
 # TODO: Add some documentation
+
 
 class ReportBuilderConfigureNewReportBase(forms.Form):
     report_name = forms.CharField()
@@ -92,7 +92,7 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
     def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
         super(ReportBuilderConfigureNewReportBase, self).__init__(*args, **kwargs)
 
-        # Following attributes are needed for the create_report_from_form method
+        # Following attributes are needed for the create_report method
         self.source_type = source_type
         self.doc_type_map = {"case": "CommCareCase", "form": "XFormInstance"}
         self.report_source = report_source
@@ -141,7 +141,7 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
             crispy.Hidden('filters', None, data_bind="value: serializedProperties")
         )
 
-    def create_report_from_form(self):
+    def create_report(self):
         """
         Creates data source and report config.
         Returns report config id. #TODO: Does it?
@@ -151,6 +151,7 @@ class ReportBuilderConfigureNewReportBase(forms.Form):
             domain=self.domain,
             display_name="{} source".format(self.cleaned_data['report_name']),
             referenced_doc_type=self.doc_type_map[self.source_type],
+            # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter={
                 'type': 'property_match',  # TODO - use boolean_expression
