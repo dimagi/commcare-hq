@@ -5,6 +5,7 @@ import logging
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -14,6 +15,7 @@ from couchdbkit import ResourceNotFound, MultipleResultsFound
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from soil.exceptions import TaskFailedError
 from soil.util import expose_download, get_download_context
 
 from corehq import toggles
@@ -450,9 +452,14 @@ class LocationImportView(BaseLocationView):
             )
         )
 
+
 @login_and_domain_required
 def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
-    context = get_download_context(download_id, check_state=True)
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
     context.update({
         'on_complete_short': _('Import complete.'),
         'on_complete_long': _('Location importing has finished'),

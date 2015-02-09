@@ -330,7 +330,7 @@ class FixtureDataItem(Document):
 
     def get_users(self, wrap=True, include_groups=False):
         user_ids = set(
-            get_db().view('fixtures/ownership',
+            self.get_db().view('fixtures/ownership',
                 key=[self.domain, 'user by data_item', self.get_id],
                 reduce=False,
                 wrapper=lambda r: r['value']
@@ -405,7 +405,7 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_group(cls, group, wrap=True):
-        fixture_ids = get_db().view('fixtures/ownership',
+        fixture_ids = cls.get_db().view('fixtures/ownership',
             key=[group.domain, 'data_item by group', group.get_id],
             reduce=False,
             wrapper=lambda r: r['value'],

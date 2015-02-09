@@ -7,6 +7,7 @@ import re
 from couchdbkit import ResourceNotFound
 
 from django.contrib.auth.forms import SetPasswordForm
+from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
@@ -46,6 +47,7 @@ from dimagi.utils.html import format_html
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
+from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_download
 from .custom_data_fields import UserFieldsView
 
@@ -776,7 +778,11 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 
 @require_can_edit_commcare_users
 def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
-    context = get_download_context(download_id, check_state=True)
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
     context.update({
         'on_complete_short': _('Bulk upload complete.'),
         'on_complete_long': _('Mobile Worker upload has finished'),
