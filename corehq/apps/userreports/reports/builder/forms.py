@@ -10,15 +10,20 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.app_manager.models import (
     Application,
-    get_apps_in_domain,
+    Form,
+    get_apps_in_domain
 )
+from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
-from corehq.apps.userreports.reports.builder import make_case_property_indicator
+from corehq.apps.userreports.reports.builder import make_case_property_indicator, \
+    FORM_METADATA_PROPERTIES, DEFAULT_CASE_PROPERTY_DATATYPES
+from dimagi.utils.decorators.memoized import memoized
 
 
 class CreateNewReportForm(forms.Form):
@@ -87,16 +92,26 @@ class ConfigureNewReportBase(forms.Form):
     form_title = 'Configure Report'
     button_text = 'Save Report'
 
-    def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
+    def __init__(self, app_id, source_type, report_source_id, *args, **kwargs):
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
 
         # Following attributes are needed for the create_report method
+        assert source_type in ['case', 'form']
         self.source_type = source_type
         self.doc_type_map = {"case": "CommCareCase", "form": "XFormInstance"}
-        self.report_source = report_source
-        self.case_properties = case_properties
-        app = Application.get(app_id)
-        self.domain = app.domain
+        self.report_source_id = report_source_id
+        self.app = Application.get(app_id)
+        self.domain = self.app.domain
+
+        if self.source_type == "form":
+            self.source_form = Form.get_form(self.report_source_id)
+        elif self.source_type == "case":
+            property_builder = ParentCasePropertyBuilder(
+                self.app, DEFAULT_CASE_PROPERTY_DATATYPES.keys()
+            )
+            self.case_properties = list(
+                property_builder.get_properties(self.report_source_id)
+            )
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
@@ -154,7 +169,7 @@ class ConfigureNewReportBase(forms.Form):
             configured_filter={
                 'type': 'property_match',  # TODO - use boolean_expression
                 'property_name': 'type',
-                'property_value': self.report_source,
+                'property_value': self.report_source_id,
             },
             configured_indicators=self._data_source_indicators
         )
@@ -220,23 +235,42 @@ class ConfigureNewReportBase(forms.Form):
     def _report_charts(self):
         return []
 
+    @property
+    @memoized
+    def data_source_properties(self):
+        '''
+        Return dictionaries representing the various properties that may be
+        present as indicators or columns in the data source or report.
+        '''
+        if self.source_type == 'case':
+            return [{'id': cp, 'text': cp} for cp in self.case_properties]
+        if self.source_type == 'form':
+            xform = XForm(self.source_form.source)
+            questions = xform.get_questions([])
+            return [
+                {
+                    "type": "question",
+                    "value": q,
+                    "id": q['value'],
+                    'text': q['label']
+                } for q in questions
+            ] + [
+                {
+                    "type": "meta",
+                    "value": p[0],
+                    'id': p[0],
+                    'text': p[0]
+                } for p in FORM_METADATA_PROPERTIES
+            ]
+
 
 class ConfigureNewBarChartReport(ConfigureNewReportBase):
     group_by = forms.ChoiceField()
     form_title = "Configure Bar Chart Report"
 
-    def __init__(self, app_id, source_type, report_source, case_properties, *args, **kwargs):
-        super(ConfigureNewBarChartReport, self).__init__(app_id, source_type, report_source, case_properties, *args, **kwargs)
-
-        # Populate the group_by choices
-        if source_type == 'case':
-            self.fields['group_by'].choices = [
-                (cp, cp) for cp in case_properties
-            ]
-        elif source_type == 'form':
-            pass
-        else:
-            raise Exception('no valid source_type')
+    def __init__(self, app_id, source_type, report_source_id, *args, **kwargs):
+        super(ConfigureNewBarChartReport, self).__init__(app_id, source_type, report_source_id, *args, **kwargs)
+        self.fields['group_by'].choices = self._group_by_choices
 
     # TODO: I don't love the name of this property...
     @property
@@ -298,6 +332,10 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
                 "display": "Count"
             }
         ]
+
+    @property
+    def _group_by_choices(self):
+        return [(p['id'], p['text']) for p in self.data_source_properties]
 
 # Should ConfigureNewBarChartReport and this class inherit from a
 # common ancestor instead?

@@ -631,7 +631,8 @@ ko.bindingHandlers.typeahead = {
 
 /**
  * Converts the bound element to a select2 widget. The value of the binding is
- * a list of strings used for the select2's options.
+ * a list of strings, or a list of objects with the keys 'id' and 'text' used
+ * for the select2's options.
  */
 ko.bindingHandlers.select2 = new function(){
     var that = this;
@@ -665,7 +666,9 @@ ko.bindingHandlers.select2 = new function(){
         }
         var newItems = ko.utils.unwrapObservable(valueAccessor()) || [];
         for (var i = 0; i < newItems.length; i++) {
-            source.push({id: newItems[i], text: newItems[i]});
+            var text = newItems[i].text || newItems[i];
+            var id = newItems[i].id || newItems[i];
+            source.push({id: id, text: text});
         }
     };
 }();

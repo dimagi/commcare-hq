@@ -120,37 +120,25 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
         context = {
             "domain": self.domain,
             'report': {"title": self.report_title},
-            'form': self.configure_report_form,
-            'case_properties': self.report_source_properties
+            'form': self.report_form,
+            'property_options': self.report_form.data_source_properties
         }
         return context
 
     @property
-    def report_source_properties(self):
-        app = Application.get(self.request.GET.get('application', ''))
-        property_builder = ParentCasePropertyBuilder(app, DEFAULT_CASE_PROPERTY_DATATYPES.keys())
-        return list(
-            property_builder.get_properties(self.request.GET.get('report_source', ''))
-        )
-
-    @property
     @memoized
-    def configure_report_form(self):
+    def report_form(self):
         app_id = self.request.GET.get('application', '')
         source_type = self.request.GET.get('source_type', '')
         report_source = self.request.GET.get('report_source', '')
-        case_properties = self.report_source_properties
+        args = [app_id, source_type, report_source]
         if self.request.method == 'POST':
-            return self.configure_report_form_class(
-                app_id, source_type, report_source, case_properties, self.request.POST
-            )
-        return self.configure_report_form_class(
-            app_id, source_type, report_source, case_properties
-        )
+            args.append(self.request.POST)
+        return self.configure_report_form_class(*args)
 
     def post(self, *args, **kwargs):
-        if self.configure_report_form.is_valid():
-            report_configuration = self.configure_report_form.create_report()
+        if self.report_form.is_valid():
+            report_configuration = self.report_form.create_report()
             return HttpResponseRedirect(
                 reverse(
                     ConfigurableReport.slug,

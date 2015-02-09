@@ -3,6 +3,7 @@ from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
+    FORM_METADATA_PROPERTIES,
     make_case_property_indicator,
     make_form_meta_block_indicator,
     make_form_question_indicator,
@@ -78,13 +79,8 @@ def get_form_data_source(app, form):
         configured_indicators=[
             make_form_question_indicator(q) for q in questions
         ] + [
-            make_form_meta_block_indicator(field[0], field[1]) for field in [
-                ('username', 'string'),
-                ('userID', 'string'),
-                ('timeStart', 'datetime'),
-                ('timeEnd', 'datetime'),
-                ('deviceID', 'string'),
-            ]
+            make_form_meta_block_indicator(field[0], field[1])
+            for field in FORM_METADATA_PROPERTIES
         ],
     )
 

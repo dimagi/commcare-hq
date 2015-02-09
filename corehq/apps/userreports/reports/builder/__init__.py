@@ -11,6 +11,14 @@ FORM_QUESTION_DATATYPE_MAP = {
     "MSelect": "multiple"
 }
 
+FORM_METADATA_PROPERTIES = [
+    ('username', 'string'),
+    ('userID', 'string'),
+    ('timeStart', 'datetime'),
+    ('timeEnd', 'datetime'),
+    ('deviceID', 'string'),
+]
+
 
 def make_case_property_indicator(property_name):
     '''
