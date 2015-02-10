@@ -326,7 +326,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 
     def get_choices(data_source, filter, search_term=None, limit=20):
         table = get_indicator_table(data_source)
-        sql_column = table.c[filter.name]
+        sql_column = table.c[filter.field]
         query = Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
