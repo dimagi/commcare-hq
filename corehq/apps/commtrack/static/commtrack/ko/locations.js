@@ -81,7 +81,7 @@ function LocationSettingsViewModel() {
 }
 
 function LocationTypeModel(data, root) {
-    var name = data.name || '\u2014';
+    var name = data.name || '';
     var self = this;
     this.name = ko.observable(name);
     this.code = ko.observable(data.code || name);
