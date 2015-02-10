@@ -274,3 +274,9 @@ APP_SUMMARY = StaticToggle(
     'Form and Case summary of an application',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+DHIS2_DOMAIN = StaticToggle(
+    'dhis2_domain',
+    'Enable DHIS2 integration for this domain',
+    [NAMESPACE_DOMAIN]
+)

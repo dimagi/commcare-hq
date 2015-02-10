@@ -3,8 +3,41 @@ from datetime import date
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
-from custom.dhis2.const import DOMAIN, ORG_UNIT_FIXTURES, SETTINGS_FIXTURES
+from couchdbkit.ext.django.schema import *
+from dimagi.utils.couch.cache import cache_core
 import requests
+
+
+class Dhis2SettingsSchema(DocumentSchema):
+    enabled = BooleanProperty()
+    host = StringProperty()  # e.g. "http://dhis2.changeme.com:8123/dhis" (Do not include "/api" at the end.)
+    username = StringProperty()
+    password = StringProperty()
+    top_org_unit_name = StringProperty()  # Value may be empty or the name of an org unit. e.g. "Fermathe Clinic"
+
+
+class Dhis2Settings(Document):
+    domain = StringProperty()
+    dhis2 = SchemaDictProperty(Dhis2SettingsSchema)
+
+    @classmethod
+    def for_domain(cls, domain):
+        res = cache_core.cached_view(
+            cls.get_db(),
+            "domain/docs",
+            key=[domain, 'Dhis2Settings', None],
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap)
+        return res[0] if len(res) > 0 else None
+
+    @classmethod
+    def is_enabled_for_domain(cls, domain):
+        settings = cls.for_domain(domain)
+        return settings is not None and settings.is_enabled()
+
+    def is_enabled(self):
+        return self.dhis2.enabled
 
 
 class JsonApiError(Exception):
@@ -90,8 +123,9 @@ class JsonApiRequest(object):
 
 class Dhis2Api(object):
 
-    def __init__(self, host, username, password):
+    def __init__(self, host, username, password, top_org_unit_name=None):
         self._username = username  # Used when creating DHIS2 events from CCHQ form data
+        self.top_org_unit_name = top_org_unit_name
         self._request = JsonApiRequest(host, username, password)
         self._tracked_entity_attributes = {  # Cached known tracked entity attribute names and IDs
             # Prepopulate with attributes that are not tracked entity attributes. This allows us to treat all
@@ -193,13 +227,11 @@ class Dhis2Api(object):
         """
         Return the top-most organisation unit.
         """
-        settings = {s.key: s.value for s in Setting.objects.all()}
-
-        if settings['dhis2_top_org_unit_name']:
+        if self.top_org_unit_name:
             # A top organisation unit has been specified in the settings. Use that
             __, response = self._request.get('organisationUnits',
                                              params={'links': 'false',
-                                                     'query': settings['dhis2_top_org_unit_name']})
+                                                     'query': self.top_org_unit_name})
             return response['organisationUnits'][0]
         # Traverse up the tree of organisation units
         __, org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
@@ -685,26 +717,8 @@ class Dhis2OrgUnit(object):
         item = FixtureDataItem.get(self._fixture_id)
         item.delete()
 
-Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, DOMAIN, ORG_UNIT_FIXTURES)
-
-
-class Setting(object):
-
-    objects = None
-
-    def __init__(self, key, value, _fixture_id=None):
-        self.key = key
-        self.value = value
-        self._fixture_id = _fixture_id
-
-Setting.objects = FixtureManager(Setting, DOMAIN, SETTINGS_FIXTURES)
-
-
-def is_dhis2_enabled():
-    """
-    Checks whether the "dhis2_enabled" setting is truthy.
-
-    :return True if "True", "t", "Yes", "y" (case insensitive)
-    """
-    settings = {s.key: s.value for s in Setting.objects.all()}
-    return settings.get('dhis2_enabled', 'n').lower()[0] in ('y', 't')
+# To use Dhis2OrgUnit with FixtureManager, create a manager instance, and use
+# it to fetch org units. You need to do it at runtime in order to create your
+# FixtureManager instance with the right domain. e.g.:
+#     org_unit_objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
+#     our_org_units = {ou.id: ou for ou in org_unit_objects.all()}

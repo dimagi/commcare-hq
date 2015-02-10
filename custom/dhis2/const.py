@@ -1,21 +1,10 @@
+# DHIS2 API integration constants
 
-# TODO: support multiple domains, or all domains
-# DOMAINS = ('wv-lanka', 'sheel-wvlanka-test')
-# DOMAIN = 'wv-lanka'
-DOMAIN = 'sheel-wvlanka-test'
+# TODO: Get rid of all of these
 
 ORG_UNIT_FIXTURES = 'dhis2_org_unit'
 
-# Settings are stored in a lookup table in the DOMAIN above, with the following name
-SETTINGS_FIXTURES = 'settings'
-# The SETTINGS lookup table must have two fields: "key" and "value".
-# The table must include rows with the following keys and values:
-#   * "dhis2_enabled": "True" or "False", or "Yes" or "No"
-#   * "dhis2_host": e.g. "http://dhis2.changeme.com:8123/dhis" (Do not include "/api" at the end.)
-#   * "dhis2_username": e.g. "dimagiuser"
-#   * "dhis2_password": e.g. "t0ps3cr3t"
-#   * "dhis2_top_org_unit_name": Value may be empty or the name of an org unit. e.g. "Fermathe Clinic"
-
+# 'child_gmp': 'Child'
 
 NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
     # CCHQ child_gmp case attribute: DHIS2 paediatric nutrition assessment program attribute

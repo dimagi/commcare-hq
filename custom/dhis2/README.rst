@@ -409,17 +409,14 @@ must include:
 * hidden value "dhis2_processed" to indicate that the form has been sent
   to DHIS2 as an event
 
-Settings are stored in a lookup table, usually called "settings". The lookup
-table must have two fields: "key" and "value". The table must include rows
-with the following keys and values:
+The application needs a lookup table named `dhis2_org_unit` (or as specified
+in custom.dhis2.const.ORG_UNIT_FIXTURES, but note that this value applies
+system-wide) to store DHIS2 organisation units. The lookup table must have
+three fields:
 
-* "dhis2_enabled": "True" or "False", or "Yes" or "No"
-* "dhis2_host": e.g. "http://dhis2.changeme.com:8123/dhis" (Do not include
-  "/api" at the end.)
-* "dhis2_username": e.g. "dimagiuser"
-* "dhis2_password": e.g. "t0ps3cr3t"
-* "dhis2_top_org_unit_name": Value may be empty or the name of an org unit.
-  e.g. "Fermathe Clinic"
+1. id
+2. name
+3. parent_id
 
 
 .. _setting_up_dhis2:

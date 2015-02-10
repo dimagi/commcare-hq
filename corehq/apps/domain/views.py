@@ -4,6 +4,7 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from custom.dhis2.forms import Dhis2SettingsForm
 import dateutil
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
@@ -478,6 +479,34 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         if self.my_project_settings_form.is_valid():
             self.my_project_settings_form.save(self.request.couch_user, self.domain)
             messages.success(request, _("Your project settings have been saved!"))
+        return self.get(request, *args, **kwargs)
+
+
+class EditDhis2SettingsView(BaseProjectSettingsView):
+    template_name = 'domain/admin/dhis2_settings.html'
+    urlname = 'dhis2_settings'
+    page_title = ugettext_noop("DHIS2 API settings")
+
+    @property
+    @memoized
+    def dhis2_settings_form(self):
+        initial = {'enabled': False}
+        if self.request.method == 'POST':
+            return Dhis2SettingsForm(self.request.POST, initial=initial)
+        return Dhis2SettingsForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'dhis2_settings_form': self.dhis2_settings_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.dhis2_settings_form.is_valid():
+            if self.dhis2_settings_form.save(self.domain_object):
+                messages.success(request, _('DHIS2 API settings successfully updated'))
+            else:
+                messages.error(request, _('There seems to have been an error. Please try again.'))
         return self.get(request, *args, **kwargs)
 
 

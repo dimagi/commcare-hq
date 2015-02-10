@@ -24,14 +24,15 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from celery.schedules import crontab
 from celery.task import periodic_task
+from corehq import Domain
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
-from custom.dhis2.const import DOMAIN, NUTRITION_ASSESSMENT_PROGRAM_FIELDS
-from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Setting, is_dhis2_enabled
+from custom.dhis2.const import NUTRITION_ASSESSMENT_PROGRAM_FIELDS, ORG_UNIT_FIXTURES
+from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Dhis2Settings, FixtureManager
 
 
-def push_child_entities(children):
+def push_child_entities(settings, children):
     """
     Register child entities in DHIS2 and enroll them in the Pediatric
     Nutrition Assessment program.
@@ -46,8 +47,8 @@ def push_child_entities(children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    settings = {s.key: s.value for s in Setting.objects.all()}
-    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+    dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
+                         settings.dhis2.top_org_unit_name)
     # nutrition_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
     nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
 
@@ -100,7 +101,7 @@ def push_child_entities(children):
         submit_case_blocks(casexml, commcare_user.project.name)
 
 
-def pull_child_entities(domain, dhis2_children):
+def pull_child_entities(settings, dhis2_children):
     """
     Create new child cases for nutrition tracking in CommCare.
 
@@ -108,7 +109,7 @@ def pull_child_entities(domain, dhis2_children):
     tracked entity instances. (CCHQ Case ID is initially unset because the
     case is new and does not exist in CommCare.)
 
-    :param domain: The domain/project of the application
+    :param settings: DHIS2 settings, incl. relevant domain
     :param dhis2_children: A list of dictionaries of Child tracked entities
                            from the DHIS2 API where CCHQ Case ID is unset
 
@@ -117,15 +118,16 @@ def pull_child_entities(domain, dhis2_children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    settings = {s.key: s.value for s in Setting.objects.all()}
-    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+    dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
+                         settings.dhis2.top_org_unit_name)
     for dhis2_child in dhis2_children:
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
-        case = get_case_by_external_id(domain, dhis2_child['Instance'])  # Instance is DHIS2's friendly name for id
+        # ("Instance" is DHIS2's friendly name for "id")
+        case = get_case_by_external_id(settings.domain, dhis2_child['Instance'])
         if case:
             case_id = case['case_id']
         else:
-            user = get_user_by_org_unit(domain, dhis2_child['Org unit'])
+            user = get_user_by_org_unit(settings.domain, dhis2_child['Org unit'])
             if not user:
                 # No user is assigned to this organisation unit (i.e. region or facility). Now what?
                 # TODO: Now what? Ascend to parent org unit?
@@ -148,7 +150,7 @@ def pull_child_entities(domain, dhis2_children):
                 }
             )
             casexml = ElementTree.tostring(caseblock.as_xml())
-            submit_case_blocks(casexml, domain)
+            submit_case_blocks(casexml, settings.domain)
         dhis2_child['CCHQ Case ID'] = case_id
         dhis2_api.update_te_inst(dhis2_child)
 
@@ -175,13 +177,13 @@ def get_case_by_external_id(domain, external_id):
     return get_case_by_identifier(domain, external_id)
 
 
-def get_children_only_theirs():
+def get_children_only_theirs(settings):
     """
     Returns a list of child entities that are enrolled in Paediatric Nutrition
     Assessment and don't have CCHQ Case ID set.
     """
-    settings = {s.key: s.value for s in Setting.objects.all()}
-    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+    dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
+                         settings.dhis2.top_org_unit_name)
     for inst in dhis2_api.gen_instances_in_program('Paediatric Nutrition Assessment'):
         if not inst.get('CCHQ Case ID'):
             yield inst
@@ -209,13 +211,16 @@ def sync_cases():
     CommCare child cases with DHIS2 child entities and enroll them in the
     Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
     """
-    if not is_dhis2_enabled():
-        return
-    children = get_children_only_theirs()
-    pull_child_entities(DOMAIN, children)
+    for domain in Domain.get_all():
+        settings = Dhis2Settings.for_domain(domain.name)
+        if settings is None or not settings.is_enabled():
+            continue
 
-    children = gen_children_only_ours(DOMAIN)
-    push_child_entities(children)
+        children = get_children_only_theirs(settings)
+        pull_child_entities(settings, children)
+
+        children = gen_children_only_ours(domain.name)
+        push_child_entities(settings, children)
 
 
 @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
@@ -233,20 +238,25 @@ def sync_org_units():
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
 
     """
-    if not is_dhis2_enabled():
-        return
-    settings = {s.key: s.value for s in Setting.objects.all()}
-    dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
-    # TODO: Is it a bad idea to read all org units into dictionaries and sync them ...
-    their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units()}
-    # ... or should we rather just drop all ours and import all theirs every time?
-    our_org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}
-    # Add new org units
-    for id_, ou in their_org_units.iteritems():
-        if id_ not in our_org_units:
-            org_unit = Dhis2OrgUnit(id=id_, name=ou['name'])
-            org_unit.save()
-    # Delete former org units
-    for id_, ou in our_org_units.iteritems():
-        if id_ not in their_org_units:
-            ou.delete()
+    # Loop through all enabled domains
+    for domain in Domain.get_all():
+        settings = Dhis2Settings.for_domain(domain.name)
+        if settings is None or not settings.is_enabled():
+            continue
+
+        dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
+                             settings.dhis2.top_org_unit_name)
+        # Is it a bad idea to read all org units into dictionaries and sync them ...
+        their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units_with_parents()}
+        # ... or should we rather just drop all ours and import all theirs every time?
+        org_unit_objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
+        our_org_units = {ou.id: ou for ou in org_unit_objects.all()}
+        # Add new org units
+        for id_, ou in their_org_units.iteritems():
+            if id_ not in our_org_units:
+                org_unit = Dhis2OrgUnit(id=id_, name=ou['name'], parent_id=ou['parent_id'])
+                org_unit.save()
+        # Delete former org units
+        for id_, ou in our_org_units.iteritems():
+            if id_ not in their_org_units:
+                ou.delete()

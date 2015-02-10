@@ -1014,6 +1014,7 @@ COUCHDB_APPS = [
     'crs_reports',
     'grapevine',
     'uth',
+    'dhis2',
 
     # custom reports
     'penn_state',

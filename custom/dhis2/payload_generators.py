@@ -21,8 +21,8 @@ from datetime import date
 import json
 from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
-from custom.dhis2.models import Dhis2Api, json_serializer, is_dhis2_enabled, Setting
-from custom.dhis2.const import DOMAIN, NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
+from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings
+from custom.dhis2.const import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS
 
 
@@ -31,19 +31,19 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
 
     @staticmethod
     def enabled_for_domain(domain):
-        return domain == DOMAIN
+        return Dhis2Settings.is_enabled_for_domain(domain)
 
     def get_headers(self, repeat_record, payload_doc):
         return {'Content-type': 'application/json'}
 
     def get_payload(self, repeat_record, form):
-        if not is_dhis2_enabled():
+        if not Dhis2Settings.is_enabled_for_domain(form['domain']):
             return
 
-        # avoid circular import
-        from casexml.apps.case.models import CommCareCase
-        settings = {s.key: s.value for s in Setting.objects.all()}
-        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+        from casexml.apps.case.models import CommCareCase  # avoid circular import
+        settings = Dhis2Settings.for_domain(form['domain'])
+        dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
+                             settings.dhis2.top_org_unit_name)
         if form['xmlns'] == 'http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40':
             # This is a growth monitoring form. It needs to be converted into
             # a paediatric nutrition assessment event.
