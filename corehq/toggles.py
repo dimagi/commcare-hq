@@ -217,10 +217,11 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-BATCHED_RESTORE = StaticToggle(
+BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    0.1
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
