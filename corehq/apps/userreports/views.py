@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
 from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
@@ -193,6 +194,7 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
+@login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     filter = report.get_ui_filter(filter_id)
