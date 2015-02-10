@@ -82,11 +82,13 @@ def excel_config(request, domain):
 
     case_types_from_apps = []
     # load types from all modules
-    for row in ApplicationBase.view('app_manager/types_by_module',
-                                 reduce=True,
-                                 group=True,
-                                 startkey=[domain],
-                                 endkey=[domain,{}]).all():
+    for row in ApplicationBase.view(
+        'app_manager/types_by_module',
+        reduce=True,
+        group=True,
+        startkey=[domain],
+        endkey=[domain, {}]
+    ).all():
         if not row['key'][1] in case_types_from_apps:
             case_types_from_apps.append(row['key'][1])
 
@@ -96,7 +98,7 @@ def excel_config(request, domain):
                                  reduce=True,
                                  group=True,
                                  startkey=[domain],
-                                 endkey=[domain,{}]).all():
+                                 endkey=[domain, {}]).all():
         if row['key'][1] and not row['key'][1] in case_types_from_cases:
             case_types_from_cases.append(row['key'][1])
 
@@ -104,21 +106,29 @@ def excel_config(request, domain):
     case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
 
     if len(case_types_from_apps) == 0 and len(case_types_from_cases) == 0:
-        return render_error(request, domain,
-                            'No cases have been submitted to this domain and there are no '
-                            'applications yet. You cannot import case details from an Excel '
-                            'file until you have existing cases or applications.')
+        return render_error(
+            request,
+            domain,
+            'No cases have been submitted to this domain and there are no '
+            'applications yet. You cannot import case details from an Excel '
+            'file until you have existing cases or applications.'
+        )
 
-    return render(request, "importer/excel_config.html", {
-                                'named_columns': named_columns,
-                                'columns': columns,
-                                'case_types_from_cases': case_types_from_cases,
-                                'case_types_from_apps': case_types_from_apps,
-                                'domain': domain,
-                                'report': {
-                                    'name': 'Import: Configuration'
-                                 },
-                                'slug': base.ImportCases.slug})
+    return render(
+        request,
+        "importer/excel_config.html", {
+            'named_columns': named_columns,
+            'columns': columns,
+            'case_types_from_cases': case_types_from_cases,
+            'case_types_from_apps': case_types_from_apps,
+            'domain': domain,
+            'report': {
+                'name': 'Import: Configuration'
+            },
+            'slug': base.ImportCases.slug
+        }
+    )
+
 
 @require_POST
 @require_can_edit_data
@@ -221,22 +231,27 @@ def excel_fields(request, domain):
     except:
         pass
 
-    return render(request, "importer/excel_fields.html", {
-                                'named_columns': named_columns,
-                                'case_type': case_type,
-                                'search_column': search_column,
-                                'search_field': search_field,
-                                'create_new_cases': create_new_cases,
-                                'key_column': key_column,
-                                'value_column': value_column,
-                                'columns': columns,
-                                'excel_fields': excel_fields,
-                                'case_fields': case_fields,
-                                'domain': domain,
-                                'report': {
-                                    'name': 'Import: Match columns to fields'
-                                 },
-                                'slug': base.ImportCases.slug})
+    return render(
+        request,
+        "importer/excel_fields.html", {
+            'named_columns': named_columns,
+            'case_type': case_type,
+            'search_column': search_column,
+            'search_field': search_field,
+            'create_new_cases': create_new_cases,
+            'key_column': key_column,
+            'value_column': value_column,
+            'columns': columns,
+            'excel_fields': excel_fields,
+            'case_fields': case_fields,
+            'domain': domain,
+            'report': {
+                'name': 'Import: Match columns to fields'
+            },
+            'slug': base.ImportCases.slug
+        }
+    )
+
 
 @require_POST
 @require_can_edit_data
@@ -281,14 +296,19 @@ def excel_commit(request, domain):
     except KeyError:
         pass
 
-    return render(request, "importer/excel_commit.html", {
-                                'download_id': download.download_id,
-                                'template': 'importer/partials/import_status.html',
-                                'domain': domain,
-                                'report': {
-                                    'name': 'Import: Completed'
-                                 },
-                                'slug': base.ImportCases.slug})
+    return render(
+        request,
+        "importer/excel_commit.html", {
+            'download_id': download.download_id,
+            'template': 'importer/partials/import_status.html',
+            'domain': domain,
+            'report': {
+                'name': 'Import: Completed'
+            },
+            'slug': base.ImportCases.slug
+        }
+    )
+
 
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="importer/partials/import_status.html"):
