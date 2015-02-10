@@ -387,6 +387,16 @@ class Dhis2Api(object):
             else:
                 break
 
+    def gen_org_units_with_parents(self):
+        """
+        Yields organisation units with parent IDs
+        """
+        # I didn't find a way to do this with a single request. :-|
+        for ou in self.gen_org_units():
+            __, details = self._request.get('organisationUnits/' + ou['id'])
+            ou['parent_id'] = details['parent']['id'] if details.get('parent') else None
+            yield ou
+
     def enroll_in(self, te_inst_id, program, when=None, data=None):
         """
         Enroll the given tracked entity instance in the given program
@@ -682,11 +692,12 @@ class Dhis2OrgUnit(object):
     # the class to the manager
     objects = None
 
-    def __init__(self, id, name, _fixture_id=None):
+    def __init__(self, id, name, parent_id, _fixture_id=None):
         # It's not nice to shadow the "id" built-in, but naming the param "id"
         # allows us to pass values in from CouchDB as kwargs with less fuss.
         self.id = id
         self.name = name
+        self.parent_id = parent_id
         self._fixture_id = _fixture_id
 
     def get_id(self):
@@ -705,7 +716,8 @@ class Dhis2OrgUnit(object):
             domain=self.objects.domain,
             fields={
                 'id': to_field_list(self.id),
-                'name': to_field_list(self.name)
+                'name': to_field_list(self.name),
+                'parent_id': to_field_list(self.parent_id)
             })
         data_item.save()
         self._fixture_id = data_item.get_id

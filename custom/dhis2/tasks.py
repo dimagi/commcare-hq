@@ -127,7 +127,7 @@ def pull_child_entities(settings, dhis2_children):
         if case:
             case_id = case['case_id']
         else:
-            user = get_user_by_org_unit(settings.domain, dhis2_child['Org unit'])
+            user = get_user_by_org_unit(settings.domain, dhis2_child['Org unit'], settings.dhis2.top_org_unit_name)
             if not user:
                 # No user is assigned to this organisation unit (i.e. region or facility). Now what?
                 # TODO: Now what? Ascend to parent org unit?
@@ -155,18 +155,29 @@ def pull_child_entities(settings, dhis2_children):
         dhis2_api.update_te_inst(dhis2_child)
 
 
-def get_user_by_org_unit(domain, org_unit):
+def get_user_by_org_unit(domain, org_unit_id, top_org_unit_name):
     """
     Look up user ID by a DHIS2 organisation unit ID
     """
     result = (UserES()
               .domain(domain)
-              .term('user_data.dhis_org_id', org_unit)
+              .term('user_data.dhis_org_id', org_unit_id)
               .run())
     if result.total:
-        # Don't just assign all cases to the first user
+        # Don't just assign all cases to the first user. Spread them fairly.
         i = random.randrange(result.total)
         return CommCareUser.wrap(result.hits[i])
+    # No user is assigned to this organisation unit (i.e. region or facility).
+    # Try its parent org unit.
+    org_unit_objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
+    org_units = {ou.id: ou for ou in org_unit_objects.all()}
+    if (
+        org_unit_id in org_units and
+        org_units[org_unit_id]['name'] != top_org_unit_name and
+        org_units[org_unit_id]['parent_id']
+    ):
+        return get_user_by_org_unit(domain, org_units[org_unit_id]['parent_id'], top_org_unit_name)
+    # We don't know that org unit ID, or we're at the top for this project, or we're at the top of DHIS2
     return None
 
 
