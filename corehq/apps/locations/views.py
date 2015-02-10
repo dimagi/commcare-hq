@@ -70,12 +70,14 @@ class LocationsListView(BaseLocationView):
     @property
     def page_context(self):
         selected_id = self.request.GET.get('selected')
+        has_location_types = len(self.domain_object.location_types) > 0
         return {
             'selected_id': selected_id,
             'locations': load_locs_json(
                 self.domain, selected_id, self.show_inactive
             ),
             'show_inactive': self.show_inactive,
+            'has_location_types': has_location_types
         }
 
 
@@ -180,7 +182,7 @@ class NewLocationView(BaseLocationView):
 
     @property
     def products_form(self):
-        if self.location.location_type_object.administrative:
+        if not self.location._id or self.location.location_type_object.administrative:
             return None
 
         form = MultipleSelectionForm(
