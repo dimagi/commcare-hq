@@ -4,7 +4,7 @@ from math import ceil
 from corehq.apps.es import UserES
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -80,12 +80,13 @@ class StockLevelsSubmissionData(EWSData):
             }
             product_ids = []
             if self.config['program'] != '' and self.config['products'] == '':
-                product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
-                                                                                   self.config['program'])]
+                product_ids = [product.product_id for product in SQLProduct.objects.filter(
+                    program_id=self.config['program'], domain=self.config['domain'])]
             elif self.config['program'] != '' and self.config['products'] != '':
                 product_ids = [self.config['products']]
             else:
-                product_ids = Product.ids_by_domain(self.config['domain'])
+                product_ids = [product.product_id for product in SQLProduct.objects.filter(
+                    domain=self.config['domain'])]
 
             for product in state_grouping.values():
                 if product['id'] in product_ids:
@@ -178,12 +179,13 @@ class FacilityReportData(EWSData):
 
         state_grouping = {}
         if self.config['program'] and not self.config['products']:
-            product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
-                                                                               self.config['program'])]
+            product_ids = [product.product_id for product in SQLProduct.objects.filter(
+                program_id=self.config['program'], domain=self.config['domain'])]
         elif self.config['program'] and self.config['products']:
             product_ids = self.config['products']
         else:
-            product_ids = Product.ids_by_domain(self.config['domain'])
+            product_ids = [product.product_id for product in SQLProduct.objects.filter(
+                domain=self.config['domain'])]
 
         stock_states = StockState.objects.filter(
             case_id__in=get_relevant_supply_point_ids(self.config['domain'], self.sublocations[0]),
@@ -191,11 +193,13 @@ class FacilityReportData(EWSData):
             product_id__in=product_ids
         ).order_by('-last_modified_date')
 
+        product_names = {product.product_id:product.name for product in SQLProduct.objects.filter(
+                        product_id__in=product_ids)}
         for state in stock_states:
             monthly_consumption = int(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
-                    'commodity': Product.get(state.product_id).name,
+                    'commodity': product_names[state.product_id],
                     'months_until_stockout': "%.2f" % (state.stock_on_hand / monthly_consumption)
                     if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': timesince(state.last_modified_date) if state.stock_on_hand == 0 else '',
@@ -251,12 +255,13 @@ class InventoryManagementData(EWSData):
 
     def get_products(self):
         if self.config['program'] and not self.config['products']:
-            product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
-                                                                               self.config['program'])]
+            product_ids = [product.product_id for product in SQLProduct.objects.filter(
+                program_id=self.config['program'], domain=self.config['domain'])]
         elif self.config['program'] and self.config['products']:
             product_ids = self.config['products']
         else:
-            product_ids = Product.ids_by_domain(self.config['domain'])
+            product_ids = [product.product_id for product in SQLProduct.objects.filter(
+                domain=self.config['domain'])]
         return product_ids
 
     @property
@@ -285,8 +290,10 @@ class InventoryManagementData(EWSData):
         ).order_by('last_modified_date')
 
         rows = {}
+        product_names = {product.product_id:product.name for product in SQLProduct.objects.filter(
+                        product_id__in=self.get_products())}
         for state in stock_states:
-            product = Product.get(state.product_id)
+            product = product_names[state.product_id]
             product_name = product.name + ' (%s)' % product.code
             rows[product_name] = []
             weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
