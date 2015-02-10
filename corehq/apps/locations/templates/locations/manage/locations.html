@@ -80,6 +80,17 @@ $(function() {
     <div class="row-fluid">
         <div class="span8">
             <h2>{% trans "Manage Locations" %}</h2>
+            <p>
+                {% blocktrans %}
+                  Location Types allow you to configure the different types
+                  of locations within your project (districts, facilities,
+                  front line workers, etc.). Locations can own data and
+                  cases, view child location's data or simply be used for
+                  aggregation. Once you've defined your location types,
+                  you'll be able to add locations for your project.
+                  Learn more about locations on our <a href="https://confluence.dimagi.com/display/commtrack/Location+Types">Help Site</a>.
+                {% endblocktrans %}
+            </p>
             {% if show_inactive %}
             <p class="alert alert-info">
                 {% if show_inactive %}{% trans 'Showing the Inactive Location List.' %}{% endif %}
