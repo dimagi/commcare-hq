@@ -29,6 +29,7 @@ require.config({
             "vellum/itemset", 
             "vellum/javaRosa", 
             "vellum/lock", 
+            "vellum/modeliteration", 
             "vellum/uploader", 
             "vellum/window", 
             "vellum/polyfills"
@@ -48,6 +49,7 @@ define([
     'vellum/itemset',
     'vellum/javaRosa',
     'vellum/lock',
+    'vellum/modeliteration',
     'vellum/uploader',
     'vellum/window',
     'vellum/polyfills'

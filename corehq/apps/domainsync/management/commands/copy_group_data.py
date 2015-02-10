@@ -21,8 +21,8 @@ class Command(LabelCommand):
     args = '<sourcedb> <group_id>'
     label = ""
     option_list = LabelCommand.option_list + (
-        make_option('--include-user-owned',
-            action='store_true', dest='include_user_owned', default=False,
+        make_option('--exclude-user-owned',
+            action='store_true', dest='exclude_user_owned', default=False,
             help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),
         make_option('--include-sync-logs',
             action='store_true', dest='include_sync_logs', default=False,
@@ -44,7 +44,7 @@ class Command(LabelCommand):
 
         sourcedb = Database(args[0])
         group_id = args[1]
-        include_user_owned = options["include_user_owned"]
+        exclude_user_owned = options["exclude_user_owned"]
 
         print 'getting group'
         group = Group.wrap(sourcedb.get(group_id))
@@ -59,7 +59,7 @@ class Command(LabelCommand):
         save(dt, Domain.get_db())
 
         owners = [group_id]
-        if include_user_owned:
+        if not exclude_user_owned:
             owners.extend(group.users)
 
         def keys_for_owner(domain, owner_id):
@@ -97,7 +97,7 @@ class Command(LabelCommand):
 
             self.lenient_bulk_save(CommCareCase, cases)
 
-        if include_user_owned:
+        if not exclude_user_owned:
             # also grab submissions that may not have included any case data
             for user_id in group.users:
                 xform_ids.update(res['id'] for res in sourcedb.view(

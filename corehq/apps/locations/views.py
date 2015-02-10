@@ -5,6 +5,7 @@ import logging
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -14,6 +15,7 @@ from couchdbkit import ResourceNotFound, MultipleResultsFound
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from soil.exceptions import TaskFailedError
 from soil.util import expose_download, get_download_context
 
 from corehq import toggles
@@ -166,6 +168,27 @@ class NewLocationView(BaseLocationView):
         return LocationForm(self.location, is_new=True)
 
     @property
+    def all_products(self):
+        return [(p.product_id, p.name)
+                for p in SQLProduct.by_domain(self.domain)]
+
+    @property
+    def products_at_location(self):
+        return [p.product_id for p in self.sql_location.products.all()]
+
+    @property
+    def products_form(self):
+        if self.location.location_type_object.administrative:
+            return None
+
+        form = MultipleSelectionForm(
+            initial={'selected_ids': self.products_at_location},
+            submit_label=_("Update Product List")
+        )
+        form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
     def page_context(self):
         try:
             consumption = self.consumption
@@ -179,19 +202,40 @@ class NewLocationView(BaseLocationView):
             ))
         return {
             'form': self.location_form,
+            'products_per_location_form': self.products_form,
             'location': self.location,
             'consumption': consumption,
         }
 
-    def post(self, request, *args, **kwargs):
+    def form_valid(self):
+        messages.success(self.request, _('Location saved!'))
+        return HttpResponseRedirect(
+            reverse(self.urlname,
+                    args=[self.domain, self.location_form.location._id]),
+        )
+
+    def settings_form_post(self, request, *args, **kwargs):
         if self.location_form.is_valid():
             self.location_form.save()
-            messages.success(request, _('Location saved!'))
-            return HttpResponseRedirect('%s?%s' % (
-                reverse(LocationsListView.urlname, args=[self.domain]),
-                urllib.urlencode({'selected': self.location_form.location._id})
-            ))
+            return self.form_valid()
         return self.get(request, *args, **kwargs)
+
+    def products_form_post(self, request, *args, **kwargs):
+        products = SQLProduct.objects.filter(
+            product_id__in=request.POST.getlist('selected_ids', [])
+        )
+        self.sql_location.products = products
+        self.sql_location.save()
+        return self.form_valid()
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "location-settings":
+            return self.settings_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "location-products"
+              and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
+            return self.products_form_post(request, *args, **kwargs)
+        else:
+            raise Http404
 
 
 @domain_admin_required
@@ -220,7 +264,10 @@ def unarchive_location(request, domain, loc_id):
     })
 
 
-class IndividualLocationMixin(object):
+class EditLocationView(NewLocationView):
+    urlname = 'edit_location'
+    page_title = ugettext_noop("Edit Location")
+
     @property
     def location_id(self):
         return self.kwargs['loc_id']
@@ -234,6 +281,7 @@ class IndividualLocationMixin(object):
             raise Http404()
 
     @property
+    @memoized
     def sql_location(self):
         return self.location.sql_location
 
@@ -245,15 +293,9 @@ class IndividualLocationMixin(object):
         except MultipleResultsFound:
             raise MultipleSupplyPointException
 
-
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.location_id])
-
-
-class EditLocationView(IndividualLocationMixin, NewLocationView):
-    urlname = 'edit_location'
-    page_title = ugettext_noop("Edit Location")
 
     @property
     @memoized
@@ -270,6 +312,8 @@ class EditLocationView(IndividualLocationMixin, NewLocationView):
                 self.domain,
                 product._id,
                 self.location.location_type,
+                # FIXME accessing this value from the sql location
+                # would be faster
                 self.supply_point._id if self.supply_point else None,
             )
             if consumption:
@@ -406,9 +450,14 @@ class LocationImportView(BaseLocationView):
             )
         )
 
+
 @login_and_domain_required
 def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
-    context = get_download_context(download_id, check_state=True)
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
     context.update({
         'on_complete_short': _('Import complete.'),
         'on_complete_long': _('Location importing has finished'),
@@ -491,51 +540,3 @@ def sync_openlmis(request, domain):
     # todo: error handling, if we care.
     bootstrap_domain_task.delay(domain)
     return HttpResponse('OK')
-
-
-class ProductsPerLocationView(IndividualLocationMixin, BaseLocationView):
-    """
-    Manage products stocked at each location
-    """
-    urlname = 'products_per_location'
-    page_title = ugettext_noop("Products Per Location")
-    template_name = 'locations/manage/products_per_location.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.PRODUCTS_PER_LOCATION.enabled(request.domain):
-            raise Http404
-        # TODO verify that this location stocks products
-        return super(ProductsPerLocationView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def products_at_location(self):
-        return [p.product_id for p in self.sql_location.products.all()]
-
-    @property
-    def all_products(self):
-        return [(p.product_id, p.name)
-                for p in SQLProduct.by_domain(self.domain)]
-
-    @property
-    def products_form(self):
-        form = MultipleSelectionForm(initial={
-            'selected_ids': self.products_at_location
-        })
-        form.fields['selected_ids'].choices = self.all_products
-        return form
-
-    @property
-    def page_context(self):
-        return {
-            'products_per_location_form': self.products_form,
-        }
-
-    def post(self, request, *args, **kwargs):
-        products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('selected_ids', [])
-        )
-        self.sql_location.products = products
-        self.sql_location.save()
-        msg = _("Products updated for {}").format(self.location.name)
-        messages.success(request, msg)
-        return self.get(request, *args, **kwargs)

@@ -7,7 +7,8 @@ from sqlagg.columns import (
     YearColumn,
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue
+from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue, \
+    NumericFilterValue
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 
@@ -30,6 +31,7 @@ class ReportFilter(JsonObject):
     def create_filter_value(self, value):
         return {
             'date': DateFilterValue,
+            'numeric': NumericFilterValue,
             'choice_list': ChoiceListFilterValue,
             'dynamic_choice_list': ChoiceListFilterValue,
         }[self.type](self, value)
@@ -84,7 +86,7 @@ class FilterSpec(JsonObject):
     This is the spec for a report filter - a thing that should show up as a UI filter element
     in a report (like a date picker or a select list).
     """
-    type = StringProperty(required=True, choices=['date', 'choice_list', 'dynamic_choice_list'])
+    type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
     slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = StringProperty()
@@ -107,6 +109,10 @@ class DynamicChoiceListFilterSpec(FilterSpec):
     @property
     def choices(self):
         return []
+
+
+class NumericFilterSpec(FilterSpec):
+    type = TypeProperty('numeric')
 
 
 class ChartSpec(JsonObject):
