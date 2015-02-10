@@ -121,7 +121,7 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
             "domain": self.domain,
             'report': {"title": self.report_title},
             'form': self.report_form,
-            'property_options': self.report_form.data_source_properties
+            'property_options': self.report_form.data_source_properties.values()
         }
         return context
 

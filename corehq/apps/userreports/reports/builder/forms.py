@@ -22,7 +22,8 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.builder import make_case_property_indicator, \
-    FORM_METADATA_PROPERTIES, DEFAULT_CASE_PROPERTY_DATATYPES
+    FORM_METADATA_PROPERTIES, DEFAULT_CASE_PROPERTY_DATATYPES, \
+    make_form_question_indicator
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -105,6 +106,7 @@ class ConfigureNewReportBase(forms.Form):
 
         if self.source_type == "form":
             self.source_form = Form.get_form(self.report_source_id)
+            self.source_xform = XForm(self.source_form.source)
         elif self.source_type == "case":
             property_builder = ParentCasePropertyBuilder(
                 self.app, DEFAULT_CASE_PROPERTY_DATATYPES.keys()
@@ -166,11 +168,7 @@ class ConfigureNewReportBase(forms.Form):
             referenced_doc_type=self.doc_type_map[self.source_type],
             # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
-            configured_filter={
-                'type': 'property_match',  # TODO - use boolean_expression
-                'property_name': 'type',
-                'property_value': self.report_source_id,
-            },
+            configured_filter=self._data_source_filter,
             configured_indicators=self._data_source_indicators
         )
         # TODO: Does validate check for unique table ids? It should I think.
@@ -202,6 +200,29 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _data_source_indicators(self):
         return []
+
+    @property
+    def _data_source_filter(self):
+        if self.source_type == "case":
+            return {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": self.report_source_id,
+            }
+        if self.source_type == "form":
+            return {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "xmlns"
+                },
+                "property_value": self.source_xform.data_node.tag_xmlns,
+            }
 
     @property
     def _report_filters(self):
@@ -238,30 +259,72 @@ class ConfigureNewReportBase(forms.Form):
     @property
     @memoized
     def data_source_properties(self):
-        '''
-        Return dictionaries representing the various properties that may be
-        present as indicators or columns in the data source or report.
-        '''
+        """
+        A dictionary containing the various properties that may be used as indicators
+        or columns in the data source or report.
+
+        Keys are strings that uniquely identify properties.
+        Values are dicts representing the properties, ex:
+
+        >> self.data_source_properties
+        {
+            "data/question1": {
+                "type": "question",
+                "id": "data/question1"
+                "text": "Enter the child's name"
+                "source": {
+                    'repeat': None,
+                    'group': None,
+                    'value': '/data/question1',
+                    'label': 'question1',
+                    'tag': 'input',
+                    'type': 'Text'
+                }
+            },
+            "meta/deviceID": {
+                "type": "meta",
+                "id": "meta/deviceID",
+                "text": "deviceID",
+                "source": "deviceID"
+            }
+        }
+
+        "id" is used as the value in selects/select2s in the form.
+        "text" will be used as the visible text in selects/select2s
+        "type" is "question", "case_property", or "meta"
+        For questions, "source" is the dict returned by Xform.get_questions, for
+        case properties and form metadata it is simply the name of the property.
+        """
         if self.source_type == 'case':
-            return [{'id': cp, 'text': cp} for cp in self.case_properties]
+            return {
+                cp: {
+                    'type': 'case_property',
+                    'id': cp,
+                    'text': cp,
+                    'source': cp
+                } for cp in self.case_properties
+            }
+
         if self.source_type == 'form':
-            xform = XForm(self.source_form.source)
-            questions = xform.get_questions([])
-            return [
-                {
+            ret = {}
+            questions = self.source_xform.get_questions([])
+            ret.update({
+                q['value']: {
                     "type": "question",
-                    "value": q,
                     "id": q['value'],
-                    'text': q['label']
+                    'text': q['label'],
+                    "source": q,
                 } for q in questions
-            ] + [
-                {
+            })
+            ret.update({
+                p[0]: {
                     "type": "meta",
-                    "value": p[0],
-                    'id': p[0],
-                    'text': p[0]
+                    "id": p[0],
+                    'text': p[0],
+                    "source": p[0],
                 } for p in FORM_METADATA_PROPERTIES
-            ]
+            })
+            return ret
 
 
 class ConfigureNewBarChartReport(ConfigureNewReportBase):
@@ -289,12 +352,19 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
         DataSourceConfiguration used by the ReportConfiguration that this form
         produces.
         '''
-        indicators = set(
+        indicator_maker = None
+        if self.source_type == "case":
+            indicator_maker = make_case_property_indicator
+        elif self.source_type == "form":
+            indicator_maker = make_form_question_indicator
+
+        indicator_ids = set(
             [f['field'] for f in self._report_filters] +
             [self.cleaned_data["group_by"]]
         )
+        indicators = [self.data_source_properties[id]['source'] for id in indicator_ids]
 
-        return [make_case_property_indicator(cp) for cp in indicators] + [
+        return [indicator_maker(cp) for cp in indicators] + [
             {
                 "display_name": "Count",
                 "type": "count",
@@ -335,7 +405,7 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
 
     @property
     def _group_by_choices(self):
-        return [(p['id'], p['text']) for p in self.data_source_properties]
+        return [(p['id'], p['text']) for p in self.data_source_properties.values()]
 
 # Should ConfigureNewBarChartReport and this class inherit from a
 # common ancestor instead?

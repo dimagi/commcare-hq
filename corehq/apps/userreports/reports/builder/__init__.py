@@ -44,7 +44,8 @@ def make_form_question_indicator(question):
     options = question.get('options')
     ret = {
         "type": "raw",
-        "column_id": path[-1],
+        # TODO: Test that this change didn't break the other thing that uses it.
+        "column_id": question['value'],
         'property_path': ['form'] + path[2:],
         "display_name": path[-1],
     }
