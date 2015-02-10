@@ -14,11 +14,20 @@ from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
 
 
+class LocationType(models.Model):
+    domain = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255)
+    code = models.SlugField(db_index=False)
+    parent_type = models.ForeignKey('self', null=True)
+    administrative = models.BooleanField(default=False)
+
+
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    location_type = models.CharField(max_length=255)
+    location_type = models.ForeignKey(LocationType, null=True)
+    tmp_location_type = models.CharField(max_length=255, null=True)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = json_field.JSONField(default={})
@@ -84,6 +93,11 @@ class SQLLocation(MPTTModel):
     def root_locations(cls, domain, include_archive_ancestors=False):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
+
+    @property
+    @memoized
+    def couch_location(self):
+        return Location.get(self.location_id)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
