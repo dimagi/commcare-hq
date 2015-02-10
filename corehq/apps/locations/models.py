@@ -21,13 +21,21 @@ class LocationType(models.Model):
     parent_type = models.ForeignKey('self', null=True)
     administrative = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        if not self.code:
+            from corehq.apps.commtrack.util import unicode_slug
+            self.code = unicode_slug(self.name)
+        return super(LocationType, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return u"{} ({})".format(self.name, self.domain)
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
     location_type = models.ForeignKey(LocationType, null=True)
-    tmp_location_type = models.CharField(max_length=255, null=True)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
     metadata = json_field.JSONField(default={})
@@ -120,7 +128,6 @@ def _filter_for_archived(locations, include_archive_ancestors):
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
-    location_type = StringProperty()
     site_code = StringProperty() # should be unique, not yet enforced
     # unique id from some external data source
     external_id = StringProperty()
@@ -154,14 +161,13 @@ class Location(CachedCouchDocumentMixin, Document):
         super(Document, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "%s (%s)" % (self.name, self.location_type)
+        return "%s (%s)" % (self.name, self.location_type_object.name)
 
     def _sync_location(self):
         properties_to_sync = [
             ('location_id', '_id'),
             'domain',
             'name',
-            'location_type',
             'site_code',
             'external_id',
             'latitude',
@@ -423,16 +429,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def location_type_object(self):
-        """
-        Brute force lookup for the LocationType object
-        that corresponds to this locations type.
-        This could definitely use a more efficient way,
-        but no domains at this point have a large list of
-        types.
-        """
-        for loc_type in Domain.get_by_name(self.domain).location_types:
-            if loc_type.name == self.location_type:
-                return loc_type
+        self.sql_location.location_type
 
 
 def root_locations(domain):
