@@ -1,7 +1,9 @@
 import json
+import os
+import tempfile
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
@@ -16,6 +18,10 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm, \
     ConfigurableDataSourceFromAppForm, ConfigurableFormDataSourceFromAppForm
 from corehq.util.couch import get_document_or_404
+from couchexport.export import export_from_tables
+from couchexport.files import Temp
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from dimagi.utils.web import json_response
 
 
@@ -192,6 +198,33 @@ def preview_data_source(request, domain, config_id):
         'total_rows': q.count(),
     })
     return render(request, "userreports/preview_data.html", context)
+
+
+@login_and_domain_required
+def export_data_source(request, domain, config_id):
+    format = request.GET.get('format', Format.UNZIPPED_CSV)
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    table = get_indicator_table(config)
+    q = Session.query(table)
+    column_headers = [col['name'] for col in q.column_descriptions]
+
+    # apply filtering if any
+    filter_values = {key: value for key, value in request.GET.items() if key != 'format'}
+    for key in filter_values:
+        if key not in column_headers:
+            return HttpResponse('Invalid filter parameter: {}'.format(key), status=400)
+    q = q.filter_by(**filter_values)
+
+    # build export
+    def get_table(q):
+        yield column_headers
+        for row in q:
+            yield row
+
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'wb') as temp:
+        export_from_tables([[config.table_id, get_table(q)]], temp, format)
+        return export_response(Temp(path), format, config.display_name)
 
 
 @login_and_domain_required
