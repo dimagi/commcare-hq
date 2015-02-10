@@ -402,6 +402,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     fix_left_col = False
     emailable = True
+    exportable_all = True
     is_cacheable = False
     ajax_pagination = True
 

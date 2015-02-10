@@ -120,11 +120,6 @@ APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
     'Include multimedia in ODK deploy'
 )
 
-PRBAC_DEMO = StaticToggle(
-    'prbacdemo',
-    'Roles and permissions'
-)
-
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
@@ -140,7 +135,6 @@ DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -192,12 +186,10 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-
 VIEW_SYNC_HISTORY = StaticToggle(
     'sync_history_report',
     'Enable sync history report'
 )
-
 
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
@@ -233,11 +225,6 @@ CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
-)
-
-VELLUM_HELP_TEXT = StaticToggle(
-    'add_help_text',
-    "Adds a help text in the form builder"
 )
 
 STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
