@@ -269,6 +269,12 @@ CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LOCATION_TYPE_STOCK_RATES = StaticToggle(
+    'location_type_stock_rates',
+    "Specify stock rates per location type.",
+    [NAMESPACE_DOMAIN]
+)
+
 APP_SUMMARY = StaticToggle(
     'app_summary',
     'Form and Case summary of an application',
