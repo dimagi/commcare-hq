@@ -480,6 +480,9 @@ def location_export(request, domain):
 @domain_admin_required
 @require_POST
 def sync_facilities(request, domain):
+    # TODO this is believed to be obsolete and should
+    # likely be removed, just need to make sure it isn't
+    # magically used by ils/ews first..
     # create Facility Registry and Facility LocationTypes if they don't exist
     if not any(lt.name == 'Facility Registry'
                for lt in request.project.location_types):
