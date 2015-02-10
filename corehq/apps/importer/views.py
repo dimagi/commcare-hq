@@ -22,17 +22,19 @@ require_can_edit_data = require_permission(Permissions.edit_data)
 
 EXCEL_SESSION_ID = "excel_id"
 
+
 def render_error(request, domain, message):
     """ Load error message and reload page for excel file load errors """
     messages.error(request, _(message))
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
+
 
 @require_can_edit_data
 def excel_config(request, domain):
     """
     Step one of three.
 
-    This post uploads the file and is when the user enters:
+    This is the initial post when the user uploads the excel file
 
     named_columns:
         Whether or not the first row of the excel sheet contains
@@ -122,7 +124,7 @@ def excel_config(request, domain):
 @require_can_edit_data
 def excel_fields(request, domain):
     """
-    Step one of three.
+    Step two of three.
 
     Important values that are grabbed from the POST or defined by
     the user on this page:
@@ -135,9 +137,7 @@ def excel_fields(request, domain):
         this is the type they will be created as. When updating
         existing cases, this is the type that we will search for.
         If the wrong case type is used when looking up existing cases,
-        we will not up date them.
-
-    search_field:
+        we will not update them.
 
     create_new_cases:
         A boolean that controls whether or not the user wanted
@@ -157,7 +157,6 @@ def excel_fields(request, domain):
     key_column/value_column:
         These correspond to an advanced feature allowing a user
         to modify a single case with multiple rows.
-
     """
     named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
@@ -321,7 +320,6 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
                                       'a new one.'))
             return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
 
-
     if download_data.task.state == 'SUCCESS':
         is_ready = True
         context['result'] = download_data.task.result
@@ -331,6 +329,7 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     context['progress'] = download_data.get_progress()
     context['download_id'] = download_id
     return render_to_response(template, context_instance=context)
+
 
 def _spreadsheet_expired(req, domain):
     messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
