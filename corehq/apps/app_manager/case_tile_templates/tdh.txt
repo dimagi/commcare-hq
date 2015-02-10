@@ -20,7 +20,7 @@
     </action>
 
     <variables>
-        <ageindays function="today() - date({dob[prop_name]})"/>
+        <ageindays function="today() - date({bottom_right[prop_name]})"/>
     </variables>
     <field>
       <style
@@ -57,17 +57,17 @@
        </style>
       <header>
         <text>
-          <locale id="{child_name[locale_id]}"/>
+          <locale id="{header[locale_id]}"/>
         </text>
       </header>
       <template>
         <text>
-          &lt;b&gt;{child_name[prefix]} &lt;/b&gt; <xpath function="{child_name[prop_name]}"/>
+          &lt;b&gt;{header[prefix]} &lt;/b&gt; <xpath function="{header[prop_name]}"/>
         </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{child_name[prop_name]}"/>
+          <xpath function="{header[prop_name]}"/>
         </text>
       </sort>
     </field>
@@ -84,15 +84,15 @@
        </style>
       <header>
         <text>
-          <locale id="{village[locale_id]}"/>
+          <locale id="{top_left[locale_id]}"/>
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{village[prefix]} &lt;/b&gt; <xpath function="{village[prop_name]}"/></text>
+        <text>&lt;b&gt;{top_left[prefix]} &lt;/b&gt; <xpath function="{top_left[prop_name]}"/></text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{village[prop_name]}"/>
+          <xpath function="{top_left[prop_name]}"/>
         </text>
       </sort>
     </field>
@@ -109,16 +109,16 @@
        </style>
       <header>
         <text>
-          <locale id="{sex[locale_id]}"/>
+          <locale id="{top_right[locale_id]}"/>
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{sex[prefix]} &lt;/b&gt;<xpath function="if({sex[prop_name]} = 'male', $kmale, if({sex[prop_name]} = 'female', $kfemale, ''))">
+        <text>&lt;b&gt;{top_right[prefix]} &lt;/b&gt;<xpath function="if({top_right[prop_name]} = 'male', $kmale, if({top_right[prop_name]} = 'female', $kfemale, ''))">
             <variable name="kfemale">
-              <locale id="{sex[enum_keys][female]}"/>
+              <locale id="{top_right[enum_keys][female]}"/>
             </variable>
             <variable name="kmale">
-              <locale id="{sex[enum_keys][male]}"/>
+              <locale id="{top_right[enum_keys][male]}"/>
             </variable>
           </xpath></text>
       </template>
@@ -136,15 +136,15 @@
        </style>
       <header>
         <text>
-          <locale id="{child_name[locale_id]}"/>
+          <locale id="{header[locale_id]}"/>
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{mother_name[prefix]} &lt;/b&gt; <xpath function="{mother_name[prop_name]}"/></text>
+        <text>&lt;b&gt;{bottom_left[prefix]} &lt;/b&gt; <xpath function="{bottom_left[prop_name]}"/></text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{mother_name[prop_name]}"/>
+          <xpath function="{bottom_left[prop_name]}"/>
         </text>
       </sort>
     </field>
@@ -161,11 +161,11 @@
        </style>
       <header>
         <text>
-          <locale id="{child_name[locale_id]}"/>
+          <locale id="{header[locale_id]}"/>
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{dob[prefix]} &lt;/b&gt; <xpath function="if($ageindays &gt; 30, concat(int($ageindays div 30.25), ' Mois'), concat(int($ageindays), ' Jours'))"/></text>
+        <text>&lt;b&gt;{bottom_right[prefix]} &lt;/b&gt; <xpath function="if($ageindays &gt; 30, concat(int($ageindays div 30.25), ' Mois'), concat(int($ageindays), ' Jours'))"/></text>
       </template>
     </field>
   </detail>
