@@ -11,7 +11,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
-from corehq import IS_DEVELOPER, Domain
+from corehq import toggles, Domain
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
 
@@ -121,7 +121,7 @@ class BaseConfigView(BaseCommTrackManageView):
             'sync_url': self.sync_urlname,
             'sync_stock_url': self.sync_stock_url,
             'clear_stock_url': self.clear_stock_url,
-            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username),
+            'is_developer': toggles.IS_DEVELOPER.enabled(self.request.couch_user.username),
             'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
         }
 
