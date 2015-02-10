@@ -168,27 +168,6 @@ class NewLocationView(BaseLocationView):
         return LocationForm(self.location, is_new=True)
 
     @property
-    def all_products(self):
-        return [(p.product_id, p.name)
-                for p in SQLProduct.by_domain(self.domain)]
-
-    @property
-    def products_at_location(self):
-        return [p.product_id for p in self.sql_location.products.all()]
-
-    @property
-    def products_form(self):
-        if self.location.location_type_object.administrative:
-            return None
-
-        form = MultipleSelectionForm(
-            initial={'selected_ids': self.products_at_location},
-            submit_label=_("Update Product List")
-        )
-        form.fields['selected_ids'].choices = self.all_products
-        return form
-
-    @property
     def page_context(self):
         try:
             consumption = self.consumption
@@ -202,7 +181,6 @@ class NewLocationView(BaseLocationView):
             ))
         return {
             'form': self.location_form,
-            'products_per_location_form': self.products_form,
             'location': self.location,
             'consumption': consumption,
         }
@@ -210,7 +188,7 @@ class NewLocationView(BaseLocationView):
     def form_valid(self):
         messages.success(self.request, _('Location saved!'))
         return HttpResponseRedirect(
-            reverse(self.urlname,
+            reverse(EditLocationView.urlname,
                     args=[self.domain, self.location_form.location._id]),
         )
 
@@ -220,22 +198,8 @@ class NewLocationView(BaseLocationView):
             return self.form_valid()
         return self.get(request, *args, **kwargs)
 
-    def products_form_post(self, request, *args, **kwargs):
-        products = SQLProduct.objects.filter(
-            product_id__in=request.POST.getlist('selected_ids', [])
-        )
-        self.sql_location.products = products
-        self.sql_location.save()
-        return self.form_valid()
-
     def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "location-settings":
-            return self.settings_form_post(request, *args, **kwargs)
-        elif (self.request.POST['form_type'] == "location-products"
-              and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
-            return self.products_form_post(request, *args, **kwargs)
-        else:
-            raise Http404
+        return self.settings_form_post(request, *args, **kwargs)
 
 
 @domain_admin_required
@@ -321,10 +285,59 @@ class EditLocationView(NewLocationView):
         return consumptions
 
     @property
+    def products_form(self):
+        if (
+            self.location.location_type_object.administrative or
+            not toggles.PRODUCTS_PER_LOCATION.enabled(self.request.domain)
+        ):
+            return None
+
+        form = MultipleSelectionForm(
+            initial={'selected_ids': self.products_at_location},
+            submit_label=_("Update Product List")
+        )
+        form.fields['selected_ids'].choices = self.all_products
+        return form
+
+    @property
+    def all_products(self):
+        return [(p.product_id, p.name)
+                for p in SQLProduct.by_domain(self.domain)]
+
+    @property
+    def products_at_location(self):
+        return [p.product_id for p in self.sql_location.products.all()]
+
+    @property
     def page_name(self):
         return mark_safe(_("Edit {name} <small>{type}</small>").format(
             name=self.location.name, type=self.location.location_type
         ))
+
+    @property
+    def page_context(self):
+        context = super(EditLocationView, self).page_context
+        context.update({
+            'products_per_location_form': self.products_form,
+        })
+        return context
+
+    def products_form_post(self, request, *args, **kwargs):
+        products = SQLProduct.objects.filter(
+            product_id__in=request.POST.getlist('selected_ids', [])
+        )
+        self.sql_location.products = products
+        self.sql_location.save()
+        return self.form_valid()
+
+    def post(self, request, *args, **kwargs):
+        if self.request.POST['form_type'] == "location-settings":
+            return self.settings_form_post(request, *args, **kwargs)
+        elif (self.request.POST['form_type'] == "location-products"
+              and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
+            return self.products_form_post(request, *args, **kwargs)
+        else:
+            raise Http404
 
 
 class BaseSyncView(BaseLocationView):
