@@ -257,6 +257,12 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+DOCUMENTATION_FILE = StaticToggle(
+    'doc_file',
+    "Allows users to optionally add a supporting file to explain applications",
+    [NAMESPACE_DOMAIN]
+)
+
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",

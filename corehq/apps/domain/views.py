@@ -1557,8 +1557,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def snapshot_settings_form(self):
         if self.request.method == 'POST':
-            form = SnapshotSettingsForm(self.request.POST, self.request.FILES)
-            form.dom = self.domain_object
+            form = SnapshotSettingsForm(self.request.POST, self.request.FILES, domain=self.domain_object)
             return form
 
         proj = self.published_snapshot if self.published_snapshot else self.domain_object
@@ -1575,7 +1574,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         for attr in init_attribs:
             initial[attr] = getattr(proj, attr)
 
-        return SnapshotSettingsForm(initial=initial)
+        return SnapshotSettingsForm(initial=initial, domain=self.domain_object)
 
     @property
     @memoized
@@ -1658,6 +1657,23 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             else:
                 new_domain.published = False
                 new_domain.save()
+
+            if toggles.DOCUMENTATION_FILE.enabled(request.domain):
+                doc_file = self.snapshot_settings.cleaned_data['doc_file']
+                if doc_file:
+                    new_domain.doc_file_path = doc_file.name
+                    new_domain.doc_file_type = doc_file.content_type
+                elif request.POST.get('old_doc_file', False):
+                    new_domain.doc_file_path = old.doc_file_path
+                    new_domain.doc_file_type = old.doc_file_type
+                new_domain.save()
+
+            if publish_on_submit:
+                _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
+            else:
+                new_domain.published = False
+                new_domain.save()
+
 
             if image:
                 im = Image.open(image)
