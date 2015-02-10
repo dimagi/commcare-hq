@@ -56,7 +56,7 @@ class PredicatablyRandomToggle(StaticToggle):
     """
 
     def __init__(self, slug, label, namespace, randomness):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, [namespace])
+        super(PredicatablyRandomToggle, self).__init__(slug, label, list(namespace))
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
