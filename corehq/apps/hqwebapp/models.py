@@ -553,7 +553,7 @@ class SetupTab(UITab):
                     'title': FacilitySyncView.page_title,
                     'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
                 },
-                #
+                # stock levels
                 {
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
