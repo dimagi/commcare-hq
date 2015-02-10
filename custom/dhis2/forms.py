@@ -27,7 +27,6 @@ class Dhis2SettingsForm(forms.Form):
         settings = Dhis2Settings.for_domain(domain.name)
         fields = ('enabled', 'host', 'username', 'password', 'top_org_unit_name')
         if settings is None:
-            dhis2_data = {f: self.cleaned_data[f] for f in fields}
             settings = Dhis2Settings()
             settings.domain = domain.name
             for field in fields:
