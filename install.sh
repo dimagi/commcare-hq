@@ -181,34 +181,6 @@ if [ ! -f /etc/init.d/couchdb ]; then
     sudo chown -R couchdb:couchdb /usr/local/etc/couchdb
 fi
 
-## Install couchdb-lucene
-if [ ! -f /etc/init.d/couchdb-lucene ]; then
-    if [ ! -f v0.8.0.zip ]; then
-        wget https://github.com/rnewson/couchdb-lucene/archive/v0.8.0.zip
-    fi
-
-    if [[ ! $(command -v unzip) ]]; then
-        sudo apt-get install unzip
-    fi
-    unzip v0.8.0.zip
-    sudo mv couchdb-lucene-0.8.0 /usr/local
-    sudo cp /usr/local/couchdb-lucene-0.8.0/src/main/tools/etc/init.d/couchdb-lucene /etc/init.d/
-    sudo chmod 755 /etc/init.d/couchdb-lucene
-fi
-
-if [ -e /usr/local/etc/couchdb/local.ini ] && [[ ! $(grep _fti /usr/local/etc/couchdb/local.ini) ]]; then
-    config=/usr/local/etc/couchdb/local.ini
-    sudo sed -i '/\[couchdb\]/ a\os_process_timeout=60000' $config
-
-    echo "
-[external]
-fti=/usr/bin/python /usr/local/couchdb-lucene-0.8.0/tools/couchdb-external-hook.py
-
-[httpd_db_handlers]
-_fti = {couch_httpd_external, handle_external_req, <<\"fti\">>}
-" | sudo tee -a $config
-fi
-
 ## Install elastic-search ##
 if [ ! -f /etc/init.d/elasticsearch ]; then
     if [ "$PM" = "apt-ubuntu" ]; then
