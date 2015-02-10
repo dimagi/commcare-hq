@@ -1,0 +1,44 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load i18n %}
+
+{% block main_column %}
+    <h2>Supervision Documents</h2>
+    <table class="table table-striped">
+        {% for document in documents %}
+            <tr>
+                <td>
+                    <a href="{% url 'supervision_document' domain document.id %}">{{ document.name }}</a>
+                    {% if is_user_domain_admin or user.is_superuser %}
+                        <a class='delete btn btn-mini' href='#'>Delete</a>
+                        <div class="modal hide fade">
+                            <div class="modal-header">
+                                Confirmation
+                            </div>
+                            <div class="modal-body">
+                                Are you sure want to delete this document?
+                            </div>
+                            <div class="modal-footer">
+                                <a href="{% url 'delete_supervision_document' domain document.id %}" class="btn btn-warning">Delete</a>
+                                <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    {% if is_user_domain_admin or user.is_superuser %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <p><input class="btn" type="submit" value="{% trans 'Upload' %}" /></p>
+        </form>
+    {% endif %}
+
+    <script>
+        $('.delete').click(function() {
+            $(this).parent().find('.modal').modal();
+        })
+    </script>
+{% endblock %}

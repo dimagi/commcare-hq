@@ -562,6 +562,7 @@ var DetailScreenConfig = (function () {
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
             this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
+            this.allowsEmptyColumns = options.allowsEmptyColumns;
 
             this.fireChange = function() {
                 that.fire('change');
@@ -830,7 +831,8 @@ var DetailScreenConfig = (function () {
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
                         containsCustomXMLConfiguration: columnType == "short",
-                        allowsTabs: columnType == 'long'
+                        allowsTabs: columnType == 'long',
+                        allowsEmptyColumns: columnType == 'long'
                     }
                 );
                 that.screens.push(screen);
