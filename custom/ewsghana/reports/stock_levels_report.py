@@ -4,7 +4,7 @@ from math import ceil
 from corehq.apps.es import UserES
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -193,8 +193,8 @@ class FacilityReportData(EWSData):
             product_id__in=product_ids
         ).order_by('-last_modified_date')
 
-        product_names = {product.product_id:product.name for product in SQLProduct.objects.filter(
-                        product_id__in=product_ids)}
+        product_names = {product.product_id: product.name for product in SQLProduct.objects.filter(
+            product_id__in=product_ids)}
         for state in stock_states:
             monthly_consumption = int(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
             if state.product_id not in state_grouping:
@@ -290,8 +290,8 @@ class InventoryManagementData(EWSData):
         ).order_by('last_modified_date')
 
         rows = {}
-        product_names = {product.product_id:product.name for product in SQLProduct.objects.filter(
-                        product_id__in=self.get_products())}
+        product_names = {product.product_id: product.name for product in SQLProduct.objects.filter(
+            product_id__in=self.get_products())}
         for state in stock_states:
             product = product_names[state.product_id]
             product_name = product.name + ' (%s)' % product.code
