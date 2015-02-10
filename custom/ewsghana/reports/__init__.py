@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from corehq import Domain
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
+from corehq.apps.reports.graph_models import LineChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
@@ -13,6 +14,10 @@ MAXIMUM_LEVEL = 3
 
 def get_url(view_name, text, domain):
     return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
+
+
+class EWSLineChart(LineChart):
+    template_partial = 'ewsghana/partials/ews_line_chart.html'
 
 
 class EWSData(object):
@@ -124,7 +129,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'split': self.split,
-            'exportable': self.is_exportable
+            'exportable': self.is_exportable,
+            'location_id': self.request.GET.get('location_id'),
         }
         return context
 

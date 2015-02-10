@@ -310,15 +310,16 @@ class StockStatus(MultiReport):
                 StockoutsProduct(config=config),
                 StockoutTable(config=config)
             ]
-        elif report_type == 'pa':
-            return [
-                ProductAvailabilityData(config=config),
-                MonthOfStockProduct(config=config)
-            ]
-        else:
+        elif report_type == 'asi':
             return [
                 ProductAvailabilityData(config=config),
                 MonthOfStockProduct(config=config),
                 StockoutsProduct(config=config),
                 StockoutTable(config=config)
             ]
+        else:
+            return [
+                ProductAvailabilityData(config=config),
+                MonthOfStockProduct(config=config)
+            ]
+

@@ -3299,7 +3299,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_user_registration(self):
         form = self.user_registration
         form._app = self
-        if not form.source:
+        if not (self._id and self._attachments and form.source):
             form.source = load_form_template('register_user.xhtml')
         return form
 
