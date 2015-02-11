@@ -133,7 +133,7 @@
         $scope.hierarchy = {};
         $scope.loading = true;
         $scope.lang = 'en';
-        $scope.typeSearch = {name: ''};
+        $scope.typeSearch = null;
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
         $scope.showConditions = true;
@@ -141,7 +141,7 @@
         $scope.showLabels = true;
 
         $scope.filterCaseTypes = function (caseType) {
-            $scope.typeSearch.name = caseType;
+            $scope.typeSearch = caseType ? {'name': caseType} : null;
         };
 
         $scope.hasErrors = function (caseTypeName) {
