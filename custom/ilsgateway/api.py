@@ -5,8 +5,7 @@ from jsonobject.properties import StringProperty, BooleanProperty, DecimalProper
 from requests.exceptions import ConnectionError
 from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.schema import LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
@@ -126,16 +125,15 @@ class ILSGatewayAPI(APISynchronization):
     PRODUCT_CUSTOM_FIELDS = []
 
     def prepare_commtrack_config(self):
-        domain = Domain.get_by_name(self.domain)
-        domain.location_types = []
-        for i, value in enumerate(LOCATION_TYPES):
-            if not any(lt.name == value
-                       for lt in domain.location_types):
-                allowed_parents = [LOCATION_TYPES[i - 1]] if i > 0 else [""]
-                domain.location_types.append(
-                    LocationType(name=value, allowed_parents=allowed_parents,
-                                 administrative=(value.lower() != 'facility')))
-        domain.save()
+        previous = None
+        for loc_type in LOCATION_TYPES:
+            previous, _ = LocationType.objects.get_or_create(
+                domain=self.domain,
+                name=loc_type,
+                parent_type=previous,
+                administrative=(loc_type != 'FACILITY'),
+            )
+
         config = CommtrackConfig.for_domain(self.domain)
         config.location_types = []
         actions = [action.keyword for action in config.actions]
