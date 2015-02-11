@@ -506,17 +506,20 @@ class StockTransaction(object):
         section_id = action_node.attrib.get('section-id', None)
         grouped_entries = section_id is not None
         if grouped_entries:
-            quantity = float(product_node.attrib.get('quantity'))
-            for txn in _yield_txns(section_id, quantity):
-                yield txn
-
+            quantity = product_node.attrib.get('quantity')
+            # make sure quantity is not an empty, unset node value
+            if str(quantity).strip() != '':
+                for txn in _yield_txns(section_id, float(quantity)):
+                    yield txn
         else:
             values = [child for child in product_node]
             for value in values:
                 section_id = value.attrib.get('section-id')
-                quantity = float(value.attrib.get('quantity'))
-                for txn in _yield_txns(section_id, quantity):
-                    yield txn
+                quantity = value.attrib.get('quantity')
+                # make sure quantity is not an empty, unset node value
+                if str(quantity).strip() != '':
+                    for txn in _yield_txns(section_id, flaot(quantity)):
+                        yield txn
 
     def to_xml(self, E=None, **kwargs):
         if not E:
