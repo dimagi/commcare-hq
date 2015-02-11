@@ -222,6 +222,6 @@ class APISynchronization(object):
                                   logistics_sms_user.id)
         username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
         user = CouchUser.get_by_username(username)
-        if user:
+        if user and user.language != logistics_sms_user.language:
             user.language = logistics_sms_user.language
             user.save()
