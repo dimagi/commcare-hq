@@ -966,7 +966,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                                         template_args[template_field]["enum_keys"] = {}
                                         for mapping in column.enum:
                                             key = mapping.key
-                                            template_args[template_field]["enum_keys"][key] = self.id_strings.detail_column_enum_variable(module, detail_type, column, key)
+                                            template_args[template_field]["enum_keys"][key] = \
+                                                self.id_strings.detail_column_enum_variable(
+                                                    module, detail_type, column, key
+                                                )
 
                                 # Populate the template
                                 with open(os.path.join(
