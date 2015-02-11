@@ -7,15 +7,25 @@ Replace this with more appropriate tests for your application.
 from contextlib import contextmanager
 from unittest import skip
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
-from corehq.apps.receiverwrapper.models import RepeatRecord
-from corehq.apps.receiverwrapper.signals import create_repeat_records
 from couchdbkit import ResourceNotFound
-from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, DOMAIN, \
-    Setting, is_dhis2_enabled
+from custom.dhis2.const import ORG_UNIT_FIXTURES
+from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, \
+    FixtureManager
 from custom.dhis2.tasks import sync_cases, sync_org_units
 from django.test import TestCase
+from django.test.testcases import SimpleTestCase
 from mock import patch, Mock
 from couchforms.models import XFormInstance
+
+
+DOMAIN = 'sheel-wvlanka-test'
+SETTINGS = {
+    'dhis2_enabled': False,
+    'dhis2_host': '',
+    'dhis2_username': '',
+    'dhis2_password': '',
+    'dhis2_top_org_unit_name': None
+}
 
 
 @contextmanager
@@ -35,7 +45,7 @@ def fixture_type_context():
 
 @contextmanager
 def org_unit_context():
-    org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West')
+    org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West', parent_id=None)
     org_unit.save()
     try:
         yield org_unit
@@ -82,7 +92,7 @@ def growth_monitoring_forms_context():
     yield forms
 
 
-class JsonApiRequestTest(TestCase):
+class JsonApiRequestTest(SimpleTestCase):
 
     def test_json_or_error_returns(self):
         """
@@ -178,7 +188,7 @@ class JsonApiRequestTest(TestCase):
             self.assertEqual(data, {'spam': True})
 
 
-class Dhis2ApiTest(TestCase):
+class Dhis2ApiTest(SimpleTestCase):
 
     def test__fetch_tracked_entity_attributes(self):
         """
@@ -210,12 +220,11 @@ class Dhis2ApiTest(TestCase):
         """
         get_top_org_unit should return the name and ID of the org unit specified in settings
         """
-        settings = {s.key: s.value for s in Setting.objects.all()}
-        if not settings['dhis2_top_org_unit_name']:
+        if not SETTINGS['dhis2_top_org_unit_name']:
             self.skipTest('An org unit is not set in settings.py')
-        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+        dhis2_api = Dhis2Api(SETTINGS['dhis2_host'], SETTINGS['dhis2_username'], SETTINGS['dhis2_password'])
         org_unit = dhis2_api.get_top_org_unit()
-        self.assertEqual(org_unit['name'], settings.DHIS2_ORG_UNIT)
+        self.assertEqual(org_unit['name'], SETTINGS['dhis2_top_org_unit_name'])
         self.assertTrue(bool(org_unit['id']))
 
     @skip('Requires settings for live DHIS2 server')
@@ -223,9 +232,8 @@ class Dhis2ApiTest(TestCase):
         """
         get_top_org_unit should return the name and ID of the top org unit
         """
-        settings = {s.key: s.value for s in Setting.objects.all()}
         # TODO: Make sure get_top_org_unit navigates up tree of org units
-        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+        dhis2_api = Dhis2Api(SETTINGS['dhis2_host'], SETTINGS['dhis2_username'], SETTINGS['dhis2_password'])
         org_unit = dhis2_api.get_top_org_unit()
         self.assertTrue(bool(org_unit['name']))
         self.assertTrue(bool(org_unit['id']))
@@ -234,13 +242,12 @@ class Dhis2ApiTest(TestCase):
         """
         get_resource_id should query the API for the details of a named resource, and return the ID
         """
-        if not is_dhis2_enabled():
+        if not SETTINGS['dhis2_enabled']:
             self.skipTest('DHIS2 is not configured')
         resources = {'Knights': [
             {'name': 'Michael Palin', 'id': 'c0ffee'},
         ]}
-        settings = {s.key: s.value for s in Setting.objects.all()}
-        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+        dhis2_api = Dhis2Api(SETTINGS['dhis2_host'], SETTINGS['dhis2_username'], SETTINGS['dhis2_password'])
         dhis2_api._request.get = Mock(return_value=('foo', resources))
 
         result = dhis2_api.get_resource_id('Knights', 'Who Say "Ni!"')
@@ -252,11 +259,10 @@ class Dhis2ApiTest(TestCase):
         """
         get_resource_id should return None if none found
         """
-        if not is_dhis2_enabled():
+        if not SETTINGS['dhis2_enabled']:
             self.skipTest('DHIS2 is not configured')
         resources = {'Knights': []}
-        settings = {s.key: s.value for s in Setting.objects.all()}
-        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+        dhis2_api = Dhis2Api(SETTINGS['dhis2_host'], SETTINGS['dhis2_username'], SETTINGS['dhis2_password'])
         dhis2_api._request.get = Mock(return_value=('foo', resources))
 
         result = dhis2_api.get_resource_id('Knights', 'Who Say "Ni!"')
@@ -267,14 +273,13 @@ class Dhis2ApiTest(TestCase):
         """
         get_resource_id should raise Dhis2ApiQueryError if multiple found
         """
-        if not is_dhis2_enabled():
+        if not SETTINGS['dhis2_enabled']:
             self.skipTest('DHIS2 is not configured')
         resources = {'Knights': [
             {'name': 'Michael Palin', 'id': 'c0ffee'},
             {'name': 'John Cleese', 'id': 'deadbeef'}
         ]}
-        settings = {s.key: s.value for s in Setting.objects.all()}
-        dhis2_api = Dhis2Api(settings['dhis2_host'], settings['dhis2_username'], settings['dhis2_password'])
+        dhis2_api = Dhis2Api(SETTINGS['dhis2_host'], SETTINGS['dhis2_username'], SETTINGS['dhis2_password'])
         dhis2_api._request.get = Mock(return_value=('foo', resources))
 
         with self.assertRaises(Dhis2ApiQueryError):
@@ -294,7 +299,7 @@ class Dhis2ApiTest(TestCase):
         pass
 
 
-class FixtureManagerTest(TestCase):
+class FixtureManagerTest(SimpleTestCase):
     pass
 
 
@@ -312,7 +317,7 @@ class Dhis2OrgUnitTest(TestCase):
         #     data_item_mock.get_id = '123'
         #     data_item_patch.return_value = data_item_mock
         #
-        #     org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West')
+        #     org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West', parent_id=None)
         #     id_ = org_unit.save()
         #
         #     data_item_patch.assert_called()
@@ -324,7 +329,8 @@ class Dhis2OrgUnitTest(TestCase):
         # TODO: Figure out why mocks above don't work.
         # In the meantime ...
         with fixture_type_context():
-            org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West')
+            Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, DOMAIN, ORG_UNIT_FIXTURES)
+            org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West', parent_id=None)
             id_ = org_unit.save()
             self.assertIsNotNone(id_)
             self.assertIsNotNone(org_unit._fixture_id)
@@ -338,7 +344,8 @@ class Dhis2OrgUnitTest(TestCase):
             data_item_mock = Mock()
             mock_get.return_value = data_item_mock
 
-            org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West')
+            Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, DOMAIN, ORG_UNIT_FIXTURES)
+            org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West', parent_id=None)
             org_unit.delete()
 
             self.assertFalse(mock_get.called)
@@ -357,7 +364,8 @@ class Dhis2OrgUnitTest(TestCase):
             doc_mock = Mock()
             get_patch.return_value = data_item_mock
 
-            org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West')
+            Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, DOMAIN, ORG_UNIT_FIXTURES)
+            org_unit = Dhis2OrgUnit(id='QXOOG2Foong', name='Somerset West', parent_id=None)
             org_unit.save()
             org_unit.delete()
 
@@ -365,7 +373,7 @@ class Dhis2OrgUnitTest(TestCase):
             data_item_mock.delete.assert_called()
 
 
-class TaskTest(TestCase):
+class TaskTest(SimpleTestCase):
 
     def setUp(self):
         # TODO: Enable DHIS2
@@ -449,7 +457,7 @@ class TaskTest(TestCase):
         pass
 
 
-class UtilTest(TestCase):
+class UtilTest(SimpleTestCase):
 
     @skip('Finish writing this test')
     def test_push_child_entities(self):
@@ -481,7 +489,7 @@ class UtilTest(TestCase):
 # def test_nutrition_get_payload():
 #
 #     xform = XFormInstance.get('01111de1-5e36-4b7a-a4ce-19ef544710f0')  # Growth monitoring/nutrition assessment
-#     create_repeat_records(JsonFormRepeater, xform)                     # There are no risk assessment forms atm
+#     create_repeat_records(FormRepeater, xform)                     # There are no risk assessment forms atm
 #     repeat_records = RepeatRecord.all()
 #     for repeat_record in repeat_records:
 #         repeat_record.fire()
