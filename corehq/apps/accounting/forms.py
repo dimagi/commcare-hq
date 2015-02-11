@@ -62,6 +62,7 @@ from corehq.apps.accounting.models import (
     CreditAdjustmentReason,
     SubscriptionType,
     ProBonoStatus,
+    EntryPoint,
 )
 
 
@@ -93,6 +94,10 @@ class BillingAccountBasicForm(forms.Form):
         max_length=BillingAccount._meta.get_field('dimagi_contact').max_length,
         required=False,
     )
+    entry_point = forms.ChoiceField(
+        label=_("Entry Point"),
+        choices=EntryPoint.CHOICES,
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -105,10 +110,12 @@ class BillingAccountBasicForm(forms.Form):
                 'emails': contact_info.emails,
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
+                'entry_point': account.entry_point,
             }
         else:
             kwargs['initial'] = {
                 'currency': Currency.get_default().code,
+                'entry_point': EntryPoint.CONTRACTED,
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
@@ -139,6 +146,7 @@ class BillingAccountBasicForm(forms.Form):
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
+                'entry_point',
                 crispy.Div(*additional_fields),
             ),
             FormActions(
@@ -192,6 +200,7 @@ class BillingAccountBasicForm(forms.Form):
             name=name,
             salesforce_account_id=salesforce_account_id,
             currency=currency,
+            entry_point=self.cleaned_data['entry_point'],
         )
         account.save()
 
@@ -218,6 +227,7 @@ class BillingAccountBasicForm(forms.Form):
             code=self.cleaned_data['currency'],
         )
         account.dimagi_contact = self.cleaned_data['dimagi_contact']
+        account.entry_point = self.cleaned_data['entry_point']
         account.save()
 
         contact_info, _ = BillingContactInfo.objects.get_or_create(
