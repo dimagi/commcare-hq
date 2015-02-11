@@ -112,7 +112,7 @@ class ConfigureNewReportBase(forms.Form):
                 self.app, DEFAULT_CASE_PROPERTY_DATATYPES.keys()
             )
             self.case_properties = list(
-                property_builder.get_properties(self.report_source_id)
+                property_builder.get_properties(self.report_source_id) | {'closed'}
             )
 
         self.helper = FormHelper()
