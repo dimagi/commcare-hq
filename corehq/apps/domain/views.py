@@ -47,6 +47,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod,
+    EntryPoint,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -1034,8 +1035,10 @@ class CreditsStripePaymentView(BaseStripePaymentView):
     @memoized
     def account(self):
         return BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.user.username,
+            self.domain,
+            created_by=self.request.user.username,
             account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )[0]
 
     def get_payment_handler(self):
@@ -1308,7 +1311,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         if self.current_subscription:
             return self.current_subscription.account
         account, self.is_new = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.couch_user.username, account_type=BillingAccountType.USER_CREATED,
+            self.domain,
+            created_by=self.request.couch_user.username,
+            account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )
         return account
 
