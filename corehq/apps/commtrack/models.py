@@ -1,5 +1,6 @@
 from decimal import Decimal
 import uuid
+import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
@@ -503,6 +504,12 @@ class StockTransaction(object):
                     yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
                                section_id=section_id, quantity=quantity)
 
+        def _log_blank_quantity_error(config, section_id):
+            logging.error((
+                "Blank transaction quantity submitted on domain %s for "
+                "a %s ledger" % (config.domain, section_id)
+            ))
+
         section_id = action_node.attrib.get('section-id', None)
         grouped_entries = section_id is not None
         if grouped_entries:
@@ -511,6 +518,8 @@ class StockTransaction(object):
             if str(quantity).strip() != '':
                 for txn in _yield_txns(section_id, float(quantity)):
                     yield txn
+            else:
+                _log_blank_quantity_error(config, section_id)
         else:
             values = [child for child in product_node]
             for value in values:
@@ -520,6 +529,8 @@ class StockTransaction(object):
                 if str(quantity).strip() != '':
                     for txn in _yield_txns(section_id, flaot(quantity)):
                         yield txn
+                else:
+                    _log_blank_quantity_error(config, section_id)
 
     def to_xml(self, E=None, **kwargs):
         if not E:
