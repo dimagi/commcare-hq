@@ -7,6 +7,19 @@
     {% include "imports/hq-oldstyle-js.html" %}
     {# needed for the knockout typeahead binding #}
     <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+    <style>
+        {% comment %}
+            This style gets applied to elements in this template:
+                apps/userreports/templates/userreports/partials/report_filter_configuration.html
+            This might not be imediately obvious because that snippet is injected into the page
+            through crispy forms.
+        {% endcomment %}
+        .table tbody + tbody.add-prop,
+        tbody.add-prop td
+        {
+            border-top-width: 0px;
+        }
+    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -46,7 +59,7 @@
 
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
-            this.columns = ko.observableArray([new PropertyListItem()]);
+            this.columns = ko.observableArray([]);
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
                     _.map(that.columns(), function(c){return c.toJS()})

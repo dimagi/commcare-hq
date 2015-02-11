@@ -1,4 +1,9 @@
 {% load i18n %}
+{% comment %}
+It might not be imediately obvious where this snippet is used because it is
+injected into a template through crispy forms. It's "parent" html is found
+here: apps/userreports/templates/userreports/partials/report_builder_configure_chart.html
+{% endcomment %}
 
 {% comment %}
 TODO:
@@ -11,7 +16,7 @@ TODO:
 {# Is it bad to inline this style? #}
 <table class="table table-condensed" style="display: inline-block">
 
-    <thead>
+    <thead data-bind="visible: columns().length > 0">
         <tr>
             <th></th>
             <th>{% trans "Property" %}</th>
@@ -56,7 +61,7 @@ TODO:
     {# there must be no whitespace between <tbody> and <tr> #}
     {# the .hide().fadeIn() will fail badly on FireFox #}
     </tr></tbody>
-    <tbody data-bind="visible: columns().length < 10">
+    <tbody data-bind="visible: columns().length < 10" class="add-prop">
         <tr>
             <td></td>
             <td colspan="4">
