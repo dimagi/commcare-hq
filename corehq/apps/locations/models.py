@@ -28,7 +28,7 @@ class LocationType(models.Model):
         return super(LocationType, self).save(*args, **kwargs)
 
     def __unicode__(self):
-        return u"{} ({})".format(self.name, self.domain)
+        return self.name
 
 
 class SQLLocation(MPTTModel):
@@ -128,6 +128,7 @@ def _filter_for_archived(locations, include_archive_ancestors):
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
+    location_type = StringProperty()
     site_code = StringProperty() # should be unique, not yet enforced
     # unique id from some external data source
     external_id = StringProperty()
@@ -176,13 +177,19 @@ class Location(CachedCouchDocumentMixin, Document):
             'metadata'
         ]
 
-        sql_location, _ = SQLLocation.objects.get_or_create(
+        sql_location, is_new = SQLLocation.objects.get_or_create(
             location_id=self._id,
             defaults={
                 'domain': self.domain,
                 'site_code': self.site_code
             }
         )
+
+        if is_new or (sql_location.location_type.name != self.location_type):
+            sql_location.location_type, _ = LocationType.objects.get_or_create(
+                domain=self.domain,
+                name=self.location_type,
+            )
 
         for prop in properties_to_sync:
             if isinstance(prop, tuple):
@@ -429,7 +436,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
     @property
     def location_type_object(self):
-        self.sql_location.location_type
+        return self.sql_location.location_type
 
 
 def root_locations(domain):

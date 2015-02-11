@@ -1,5 +1,4 @@
-from corehq.apps.locations.models import Location
-from corehq.apps.locations.schema import LocationType
+from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.users.models import CommCareUser
@@ -13,13 +12,12 @@ class LocationProducts(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.locations_enabled = True
-        self.domain.location_types = [
-            LocationType(
-                name='outlet',
-                allowed_parents=[]
-            ),
-        ]
         self.domain.save()
+
+        LocationType.objects.get_or_create(
+            domain=self.domain.name,
+            name='outlet',
+        )
 
         make_product(self.domain.name, 'apple', 'apple')
         make_product(self.domain.name, 'orange', 'orange')

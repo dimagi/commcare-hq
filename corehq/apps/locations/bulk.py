@@ -9,9 +9,9 @@ from corehq.apps.products.models import Product
 from corehq.apps.custom_data_fields.edit_entity import add_prefix
 
 from .exceptions import LocationImportError
-from .models import Location
+from .models import Location, LocationType
 from .forms import LocationForm
-from .util import defined_location_types, parent_child
+from .util import parent_child
 
 
 class LocationCache(object):
@@ -93,7 +93,10 @@ class LocationImporter(object):
     def import_worksheet(self, worksheet):
         location_type = worksheet.worksheet.title
 
-        if location_type not in defined_location_types(self.domain):
+        if not LocationType.objects.filter(
+            domain=self.domain,
+            name=location_type,
+        ).exists():
             self.results.append(_(
                 "Location with type {location_type} not found, this worksheet \
                 will not be imported"

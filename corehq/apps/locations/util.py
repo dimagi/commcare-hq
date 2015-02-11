@@ -25,7 +25,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
     def loc_to_json(loc):
         return {
             'name': loc.name,
-            'location_type': loc.location_type,
+            'location_type': loc.location_type.name,
             'uuid': loc.location_id,
             'is_archived': loc.is_archived,
         }
@@ -61,12 +61,9 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False):
 
 
 def location_hierarchy_config(domain):
-    return [(loc_type.name, [p or None for p in loc_type.allowed_parents])
+    return [(loc_type.name, [loc_type.parent_type.name
+                             if loc_type.parent_type else None])
             for loc_type in Domain.get_by_name(domain).location_types]
-
-
-def defined_location_types(domain):
-    return [k for k, v in location_hierarchy_config(domain)]
 
 
 def parent_child(domain):

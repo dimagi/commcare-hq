@@ -332,6 +332,9 @@ class Domain(Document, SnapshotMixin):
             data["hr_name"] = data["slug"]
             del data["slug"]
 
+        if 'location_types' in data:
+            del data['location_types']
+
         if 'is_test' in data and isinstance(data["is_test"], bool):
             data["is_test"] = "true" if data["is_test"] else "false"
             should_save = True
@@ -1022,11 +1025,17 @@ class Domain(Document, SnapshotMixin):
     def name_of_publisher(self):
         return self.published_by.human_friendly_name if self.published_by else ""
 
+    @property
+    def location_types(self):
+        from corehq.apps.locations.models import LocationType
+        return LocationType.objects.filter(domain=self.name).all()
+
+
 class DomainCounter(Document):
     domain = StringProperty()
     name = StringProperty()
     count = IntegerProperty()
-    
+
     @classmethod
     def get_or_create(cls, domain, name):
         #TODO: Need to make this atomic
@@ -1042,7 +1051,7 @@ class DomainCounter(Document):
             )
             counter.save()
         return counter
-    
+
     @classmethod
     def increment(cls, domain, name, amount=1):
         num_tries = 0

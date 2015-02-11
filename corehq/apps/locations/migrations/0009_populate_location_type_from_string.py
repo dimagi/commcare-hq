@@ -25,10 +25,12 @@ class Migration(DataMigration):
 
     @memoized
     def domain_loc_types(self, domain):
+        # I need the unwrapped domain doc, and get_by_name is cached anyways...
+        domain = Domain.get_db().get(Domain.get_by_name(domain)._id)
         return {
             # It looks like code is what I should use, not name
-            loc_type.code: loc_type
-            for loc_type in Domain.get_by_name(domain).location_types
+            loc_type['code']: loc_type
+            for loc_type in domain.get('location_types', [])
         }
 
     def iter_relevant_locations(self):
@@ -45,7 +47,7 @@ class Migration(DataMigration):
         except LocationType.DoesNotExist:
             couch_loc_type = self.domain_loc_types(domain)[code]
 
-            parents = couch_loc_type.allowed_parents
+            parents = couch_loc_type['allowed_parents']
             if parents and parents[0]:
                 # I sure hope there are no cycles...
                 parent_type = self.get_loc_type(domain, parents[0])
@@ -54,10 +56,10 @@ class Migration(DataMigration):
 
             loc_type = LocationType(
                 domain=domain,
-                name=couch_loc_type.name,
-                code=couch_loc_type.code,
+                name=couch_loc_type['name'],
+                code=couch_loc_type['code'],
                 parent_type=parent_type,
-                administrative=couch_loc_type.administrative or False,
+                administrative=couch_loc_type['administrative'] or False,
             )
             loc_type.save()
 
@@ -71,7 +73,6 @@ class Migration(DataMigration):
         for loc in self.iter_relevant_locations():
             loc_type = self.get_loc_type(loc.domain, loc.tmp_location_type)
             loc.location_type = loc_type
-            # Should I do a bulk save of some sort?
             loc.save()
 
     def backwards(self, orm):

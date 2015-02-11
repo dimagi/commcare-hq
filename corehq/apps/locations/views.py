@@ -33,10 +33,9 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
 from custom.openlmis.tasks import bootstrap_domain_task
 
-from .models import Location
+from .models import Location, LocationType
 from .forms import LocationForm
 from .util import load_locs_json, location_hierarchy_config, dump_locations
-from .schema import LocationType
 
 
 @domain_admin_required
@@ -100,37 +99,59 @@ class LocationSettingsView(BaseCommTrackManageView):
     @property
     def settings_context(self):
         return {
-            'loc_types': [self._get_loctype_info(l) for l in self.domain_object.location_types],
+            'loc_types': map(
+                self._get_loctype_info,
+                LocationType.objects.filter(domain=self.domain).all()
+            )
         }
 
     def _get_loctype_info(self, loctype):
         return {
             'name': loctype.name,
             'code': loctype.code,
-            'allowed_parents': [p or None for p in loctype.allowed_parents],
+            'allowed_parents': [loctype.parent_type.code
+                                if loctype.parent_type else None],
             'administrative': loctype.administrative,
         }
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
 
-        def mk_loctype(loctype):
-            loctype['allowed_parents'] = [p or '' for p in loctype['allowed_parents']]
-            cleaned_code = unicode_slug(loctype['code'])
-            if cleaned_code != loctype['code']:
-                err = _(
-                    'Location type code "{code}" is invalid. No spaces or special characters are allowed. '
-                    'It has been replaced with "{new_code}".'
+        def mk_loctype(name, code, allowed_parents, administrative):
+            parents = allowed_parents
+            if len(parents) > 1:
+                messages.warning(request, _("Location types cannot have "
+                                            "multiple parent types, using {}"
+                                            .format(parents[0])))
+            if parents and parents[0]:
+                parent, _ = LocationType.objects.get_or_create(
+                    domain=self.domain,
+                    name=parents[0],
                 )
-                messages.warning(request, err.format(code=loctype['code'], new_code=cleaned_code))
-                loctype['code'] = cleaned_code
-            return LocationType(**loctype)
+            else:
+                parent = None
+
+            location_type, _ = LocationType.objects.get_or_create(
+                domain=self.domain,
+                name=name,
+            )
+
+            cleaned_code = unicode_slug(code)
+            if cleaned_code != code:
+                err = _('Location type code "{code}" is invalid. No spaces or '
+                        'special characters are allowed. It has been replaced '
+                        'with "{new_code}".')
+                messages.warning(request, err.format(code=code, new_code=cleaned_code))
+
+            location_type.code = code
+            location_type.administrative = administrative
+            location_type.parent_type = parent
+            location_type.save()
 
         #TODO add server-side input validation here (currently validated on client)
 
-        self.domain_object.location_types = [mk_loctype(l) for l in payload['loc_types']]
-
-        self.domain_object.save()
+        for loc_type in payload['loc_types']:
+            mk_loctype(**loc_type)
 
         return self.get(request, *args, **kwargs)
 
@@ -492,13 +513,18 @@ def location_export(request, domain):
 @require_POST
 def sync_facilities(request, domain):
     # create Facility Registry and Facility LocationTypes if they don't exist
-    if not any(lt.name == 'Facility Registry'
-               for lt in request.project.location_types):
-        request.project.location_types.extend([
-            LocationType(name='Facility Registry', allowed_parents=['']),
-            LocationType(name='Facility', allowed_parents=['Facility Registry'])
-        ])
-        request.project.save()
+    facility_registry, is_new = LocationType.objects.get_or_create(
+        domain=domain,
+        name='Facility Registry',
+    )
+    if is_new:
+        LocationType.objects.get_or_create(
+            domain=domain,
+            name='Facility',
+            defaults={
+                'parent_type': facility_registry,
+            },
+        )
 
     registry_locs = {
         l.external_id: l
