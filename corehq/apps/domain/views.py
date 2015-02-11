@@ -642,6 +642,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
         next_subscription = {
             'exists': False,
             'can_renew': False,
+            'name': None,
+            'price': None,
         }
         cards = None
         general_credits = None
@@ -652,10 +654,27 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
             if subscription.date_end is not None:
                 if subscription.is_renewed:
+
+                    next_products = self.get_product_summary(subscription.next_subscription.plan_version,
+                                                             self.account,
+                                                             subscription)
+
+                    if len(next_products) > 1:
+                        accounting_logger.error(
+                            "[BILLING] "
+                            "There seem to be multiple ACTIVE NEXT subscriptions for the "
+                            "subscriber %s. Odd, right? The latest one by "
+                            "date_created was used, but consider this an issue."
+                            % self.account
+                        )
+
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime("%d %B %Y"),
+                        'name': subscription.next_subscription.plan_version.plan.name,
+                        'price': next_products[0]['monthly_fee'],
                     })
+
                 else:
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
