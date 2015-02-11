@@ -7,8 +7,7 @@ from dimagi.utils.logging import notify_exception
 
 def case_changed_receiver(sender, case, **kwargs):
     try:
-        handler_ids = CaseReminderHandler.get_handlers(case.domain,
-            ids_only=True)
+        handler_ids = CaseReminderHandler.get_handler_ids(case.domain)
         if len(handler_ids) > 0:
             case_changed.delay(case._id, handler_ids)
     except Exception:
