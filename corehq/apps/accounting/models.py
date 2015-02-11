@@ -204,6 +204,17 @@ class ProBonoStatus(object):
     )
 
 
+class EntryPoint(object):
+    CONTRACTED = "CONTRACTED"
+    SELF_STARTED = "SELF_STARTED"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (CONTRACTED, "Contracted"),
+        (SELF_STARTED, "Self-started"),
+        (NOT_SET, "Not Set"),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
@@ -281,6 +292,11 @@ class BillingAccount(models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
+    entry_point = models.CharField(
+        max_length=25,
+        default=EntryPoint.NOT_SET,
+        choices=EntryPoint.CHOICES,
+    )
 
     @property
     def balance(self):
@@ -290,7 +306,8 @@ class BillingAccount(models.Model):
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
-                                        created_by_invoicing=False):
+                                        created_by_invoicing=False,
+                                        entry_point=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -300,12 +317,14 @@ class BillingAccount(models.Model):
         if account is None:
             is_new = True
             account_type = account_type or BillingAccountType.INVOICE_GENERATED
+            entry_point = entry_point or EntryPoint.NOT_SET
             account = BillingAccount(
                 name="Account for Project %s" % domain,
                 created_by=created_by,
                 created_by_domain=domain,
                 currency=Currency.get_default(),
                 account_type=account_type,
+                entry_point=entry_point,
             )
             account.save()
             if not created_by_invoicing:
