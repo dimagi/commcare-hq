@@ -158,7 +158,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 class ArchiveFormView(DataInterfaceSection):
     template_name = 'data_interfaces/interfaces/import_forms.html'
     urlname = 'archive_forms'
-    page_title = ugettext_noop("Archive Forms")
+    page_title = ugettext_noop("Bulk Archive Forms")
 
     ONE_MB = 1000000
     MAX_SIZE = 3 * ONE_MB

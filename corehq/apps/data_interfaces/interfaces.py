@@ -31,15 +31,6 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project])
 
 
-class ArchiveFormInterface(DataInterface):
-    name = ugettext_noop("Bulk Archive Forms")
-    slug = "archive_forms"
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return BULK_ARCHIVE_FORMS.enabled(user.username)
-
-
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
