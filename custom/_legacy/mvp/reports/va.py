@@ -20,7 +20,10 @@ class VerbalAutopsyReport(MVPIndicatorReport):
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.select.GroupFilter']
     emailable = True
-    use_new_db = True
+
+    @property
+    def use_new_db(self):
+        return True
 
     @property
     def timezone(self):
