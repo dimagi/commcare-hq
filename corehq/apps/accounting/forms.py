@@ -60,6 +60,8 @@ from corehq.apps.accounting.models import (
     Subscription,
     Invoice,
     CreditAdjustmentReason,
+    SubscriptionType,
+    ProBonoStatus,
 )
 
 
@@ -341,6 +343,16 @@ class SubscriptionForm(forms.Form):
         label=_("Transfer Subscription To"),
         required=False,
     )
+    service_type = forms.ChoiceField(
+        label=_("Type"),
+        choices=SubscriptionType.CHOICES,
+        initial=SubscriptionType.CONTRACTED,
+    )
+    pro_bono_status = forms.ChoiceField(
+        label=_("Pro-Bono"),
+        choices=ProBonoStatus.CHOICES,
+        initial=ProBonoStatus.NO,
+    )
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -421,6 +433,8 @@ class SubscriptionForm(forms.Form):
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
+            self.fields['service_type'].initial = subscription.service_type
+            self.fields['pro_bono_status'].initial = subscription.pro_bono_status
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
@@ -492,6 +506,8 @@ class SubscriptionForm(forms.Form):
                 'salesforce_contract_id',
                 'do_not_invoice',
                 'auto_generate_credits',
+                'service_type',
+                'pro_bono_status'
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -528,6 +544,8 @@ class SubscriptionForm(forms.Form):
         is_active = is_active_subscription(date_start, date_end)
         do_not_invoice = self.cleaned_data['do_not_invoice']
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
+        service_type = self.cleaned_data['service_type']
+        pro_bono_status = self.cleaned_data['pro_bono_status']
         sub = Subscription.new_domain_subscription(
             account, domain, plan_version,
             date_start=date_start,
@@ -538,6 +556,8 @@ class SubscriptionForm(forms.Form):
             do_not_invoice=do_not_invoice,
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
+            service_type=service_type,
+            pro_bono_status=pro_bono_status,
         )
         return sub
 
@@ -556,7 +576,9 @@ class SubscriptionForm(forms.Form):
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             auto_generate_credits=self.cleaned_data['auto_generate_credits'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
-            web_user=self.web_user
+            web_user=self.web_user,
+            service_type=self.cleaned_data['service_type'],
+            pro_bono_status=self.cleaned_data['pro_bono_status'],
         )
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
@@ -583,6 +605,16 @@ class ChangeSubscriptionForm(forms.Form):
     new_date_end = forms.DateField(
         label=_("End Date"), widget=forms.DateInput(), required=False
     )
+    service_type = forms.ChoiceField(
+        label=_("Type"),
+        choices=SubscriptionType.CHOICES,
+        initial=SubscriptionType.CONTRACTED,
+    )
+    pro_bono_status = forms.ChoiceField(
+        label=_("Pro-Bono"),
+        choices=ProBonoStatus.CHOICES,
+        initial=ProBonoStatus.NO,
+    )
 
     def __init__(self, subscription, web_user, *args, **kwargs):
         self.subscription = subscription
@@ -604,6 +636,8 @@ class ChangeSubscriptionForm(forms.Form):
                     'new_plan_version', css_class="input-xxlarge",
                     placeholder="Search for Software Plan"
                 ),
+                'service_type',
+                'pro_bono_status',
                 'subscription_change_note',
             ),
             FormActions(
@@ -618,8 +652,11 @@ class ChangeSubscriptionForm(forms.Form):
     def change_subscription(self):
         new_plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['new_plan_version'])
         return self.subscription.change_plan(
-            new_plan_version, date_end=self.cleaned_data['new_date_end'],
-            web_user=self.web_user
+            new_plan_version,
+            date_end=self.cleaned_data['new_date_end'],
+            web_user=self.web_user,
+            service_type=self.cleaned_data['service_type'],
+            pro_bono_status=self.cleaned_data['pro_bono_status'],
         )
 
 
