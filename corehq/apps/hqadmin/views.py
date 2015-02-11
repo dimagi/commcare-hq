@@ -32,6 +32,7 @@ from django.http import (
     Http404,
 )
 from restkit import Resource
+from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
@@ -304,7 +305,11 @@ def system_ajax(request):
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
     if type == "_active_tasks":
-        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        try:
+            tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        except Unauthorized:
+            return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+
         if not is_bigcouch():
             return json_response(tasks)
         else:
@@ -348,8 +353,7 @@ def system_ajax(request):
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
             except Exception, ex:
-                all_tasks = {}
-                logging.error("Error with getting from celery_flower: %s" % ex)
+                return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]

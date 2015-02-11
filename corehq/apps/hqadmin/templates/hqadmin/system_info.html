@@ -43,7 +43,10 @@
 
         function RefreshableViewModel(url, model, sort_by) {
             var self = this;
+            self.error = ko.observable();
             self.models = ko.observableArray();
+            self.autoRefreshModel = null;
+
             self.refresh = function () {
                 $.getJSON(url, function (data) {
                     var objects = _(data).map(function (item) {
@@ -53,9 +56,23 @@
                         objects = _(objects).sortBy(function (x) { return x[sort_by]; })
                     }
                     self.models(objects);
+                })
+                .fail(function (jqxhr, textStatus, error) {
+                    var err = 'Unknown server error';
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {}
+                    self.error("Error: " + err);
+                    if (self.autoRefreshModel) {
+                        self.autoRefreshModel.removeModel(self);
+                    }
                 });
             };
             self.refresh();
+
+            self.setAutoRefreshModel = function(autoRefreshModel) {
+                 self.autoRefreshModel = autoRefreshModel;
+            };
         }
 
         function ActiveTaskModel(data) {
@@ -154,24 +171,37 @@
             self.timers = [];
 
             self.addModel = function (model, refreshInterval) {
+                model.setAutoRefreshModel(self);
                 self.models.push({
                     'model': model,
-                    'interval': refreshInterval
+                    'interval': refreshInterval,
+                    'timer': null
                 });
+            };
+
+            self.removeModel = function (to_remove) {
+                var model = _.findWhere(self.models, {'model': to_remove});
+                if (model.timer) {
+                    clearInterval(model.timer);
+                }
+                self.models = _.without(self.models, model);
             };
 
             self.toggleRefresh = function () {
                 self.refreshStatus(!self.refreshStatus());
                 self.refreshStatusText(self.refreshStatus() ? 'on' : 'off');
-                var model, timer;
                 if (self.refreshStatus()) {
                     $.each(self.models, function (index, model) {
-                        self.timers.push(setInterval(function () { model.model.refresh(); }, model.interval));
+                        if (!model.timer) {
+                            model.timer = setInterval(function () { model.model.refresh(); }, model.interval);
+                        }
                     });
                 } else {
-                    while(self.timers.length > 0) {
-                        clearInterval(self.timers.pop());
-                    }
+                    $.each(self.models, function (index, model) {
+                        if (model.timer) {
+                            clearInterval(model.timer);
+                        }
+                    });
                 }
             };
         };
@@ -209,7 +239,6 @@
     </div>
     <div class="row-fluid">
         <table class="table table-striped">
-
             <thead>
                 <tr>
                     <th></th>
@@ -295,7 +324,8 @@
     </div>
     <div class="row-fluid" id="pillowtop-status">
         <h3>Pillowtop Status</h3>
-        <table class="table">
+        <p class="text-error" data-bind="visible: error, text: error"></p>
+        <table class="table table-striped" data-bind="visible: !error()">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -337,7 +367,8 @@
 
     <div class="row-fluid" id="elastic-vs-couch">
         <h3>Elasticsearch/Couch/Postgres comparison</h3>
-        <table class="table">
+        <p class="text-error" data-bind="visible: error, text: error"></p>
+        <table class="table table-striped" data-bind="visible: !error()">
             <thread>
             <tr>
                 <th>Description</th>
@@ -359,7 +390,8 @@
     {% if is_bigcouch %}
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>
-        <div class="row" data-bind="foreach: models">
+        <p class="text-error" data-bind="visible: error, text: error"></p>
+        <div class="row" data-bind="visible: !error(), foreach: models">
             <strong data-bind="text: design_document"></strong>
              (<span data-bind="text: tasks().length"></span>)
             <a href="#" data-bind="click: showDetails"> <i class="icon-plus-sign"></i></a>
@@ -392,7 +424,8 @@
     {% else %}
     <div class="row-fluid" id="couchblock">
         <h3>Couch Tasks</h3>
-        <table class="table">
+        <p class="text-error" data-bind="visible: error, text: error"></p>
+        <table class="table table-striped" data-bind="visible: !error()">
             <thead>
             <tr>
                 <th>PID</th>
@@ -429,7 +462,8 @@
 
     <div class="row-fluid" id="celeryblock">
         <h3>Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small></h3>
-        <table class="table table-striped">
+        <p class="text-error" data-bind="visible: error, text: error"></p>
+        <table class="table table-striped" data-bind="visible: !error()">
             <thead>
             <tr>
                 <th>Task Name</th>
