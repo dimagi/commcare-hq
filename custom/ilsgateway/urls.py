@@ -21,4 +21,3 @@ urlpatterns = patterns('custom.ilsgateway.views',
         name='delete_supervision_document'),
     url(r'^supervision/(?P<document_id>\d+)/$', SupervisionDocumentView.as_view(), name='supervision_document')
 )
-
