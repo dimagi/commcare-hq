@@ -4,6 +4,7 @@ from couchdbkit.ext.django.schema import (
     Document, DocumentSchema, ListProperty, StringProperty,
     IntegerProperty, SetProperty, SchemaDictProperty
 )
+from corehq.apps.app_manager.exceptions import AppManagerException
 
 from corehq.apps.app_manager.models import Application
 
@@ -31,6 +32,7 @@ class FormQuestionSchema(Document):
 
     last_processed_version = IntegerProperty(default=0)
     processed_apps = SetProperty(unicode)
+    apps_with_errors = SetProperty(unicode)
     question_schema = SchemaDictProperty(QuestionMeta)
 
     @classmethod
@@ -92,13 +94,18 @@ class FormQuestionSchema(Document):
             skip=(1 if self.last_processed_version else 0)
         ).all()
 
-        to_process = [app['id'] for app in all_apps if app['id'] not in self.processed_apps]
-        if self.app_id not in self.processed_apps:
+        all_seen_apps = self.apps_with_errors | self.processed_apps
+        to_process = [app['id'] for app in all_apps if app['id'] not in all_seen_apps]
+        if self.app_id not in all_seen_apps:
             to_process.append(self.app_id)
 
         for app_doc in iter_docs(Application.get_db(), to_process):
             app = Application.wrap(app_doc)
-            self.update_for_app(app)
+            try:
+                self.update_for_app(app)
+            except AppManagerException:
+                self.apps_with_errors.add(app.get_id)
+                self.last_processed_version = app.version
 
         if to_process:
             self.save()
