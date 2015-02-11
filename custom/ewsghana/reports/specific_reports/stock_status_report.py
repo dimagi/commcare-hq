@@ -75,7 +75,7 @@ class ProductAvailabilityData(EWSData):
                 for k in ['Stocked out', 'Not Stocked out', 'No Stock Data']:
 
                     def calculate_percent(x, y):
-                        return float(x)/float((y or 1))
+                        return float(x) / float((y or 1))
 
                     datalist = []
                     for row in rows:
@@ -83,7 +83,7 @@ class ProductAvailabilityData(EWSData):
                         if k == 'No Stock Data':
                             datalist.append([row['product_code'], calculate_percent(row['without_data'], total)])
                         elif k == 'Stocked out':
-                            datalist.append([row['product_code'],  calculate_percent(row['without_stock'], total)])
+                            datalist.append([row['product_code'], calculate_percent(row['without_stock'], total)])
                         elif k == 'Not Stocked out':
                             datalist.append([row['product_code'], calculate_percent(row['with_stock'], total)])
                     ret_data.append({'color': chart_config['label_color'][k], 'label': k, 'data': datalist})
