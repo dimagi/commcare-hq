@@ -107,7 +107,7 @@ class SQLXFormsSession(models.Model):
     start_time = models.DateTimeField()
     modified_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True)
-    completed = models.BooleanField()
+    completed = models.BooleanField(default=False)
 
     # HQ specific properties
     domain = models.CharField(null=True, blank=True, db_index=True, max_length=100)
