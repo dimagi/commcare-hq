@@ -381,47 +381,47 @@ class AWCHealthStatus(object):
 
     @property
     def anm_present(self):
-        return self.service_available('vhnd_anm_present')
+        return self.service_available('attend_ANM')
 
     @property
     def asha_present(self):
-        return self.service_available('vhnd_asha_present')
+        return self.service_available('attend_ASHA')
 
     @property
     def cmg_present(self):
-        return self.service_available('vhnd_cmg_present')
+        return self.service_available('attend_cmg')
 
     @property
     def adult_scale_available(self):
-        return self.service_available('vhnd_adult_scale_available')
+        return self.service_available('big_weight_machine_avail')
 
     @property
     def adult_scale_functional(self):
-        return self.service_available('vhnd_adult_scale_functional')
+        return self.service_available('func_bigweighmach')
 
     @property
     def child_scale_available(self):
-        return self.service_available('vhnd_child_scale_available')
+        return self.service_available('child_weight_machine_avail')
 
     @property
     def child_scale_functional(self):
-        return self.service_available('vhnd_child_scale_functional')
+        return self.service_available('func_childweighmach')
 
     @property
     def ifa_stock_available(self):
-        return self.service_available('vhnd_ifa_available')
+        return self.service_available('stock_ifatab')
 
     @property
     def ors_stock_available(self):
-        return self.service_available('vhnd_ors_available')
+        return self.service_available('stock_ors')
 
     @property
     def zinc_stock_available(self):
-        return self.service_available('vhnd_zn_available')
+        return self.service_available('stock_zntab')
 
     @property
     def measles_stock_available(self):
-        return self.service_available('vhnd_measles_vacc_available')
+        return self.service_available('stock_measlesvacc')
 
     @property
     def birth_spacing_bonus(self):

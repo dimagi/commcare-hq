@@ -440,6 +440,7 @@ class SetupTab(UITab):
             CommTrackSettingsView,
             DefaultConsumptionView,
             SMSSettingsView,
+            StockLevelsView,
         )
         from corehq.apps.programs.views import (
             ProgramListView,
@@ -461,7 +462,6 @@ class SetupTab(UITab):
             LocationImportStatusView,
             LocationSettingsView,
             LocationFieldsView,
-            ProductsPerLocationView,
         )
 
         locations_config = {
@@ -487,10 +487,6 @@ class SetupTab(UITab):
                 {
                     'title': LocationFieldsView.page_name(),
                     'urlname': LocationFieldsView.urlname,
-                },
-                {
-                    'title': ProductsPerLocationView.page_title,
-                    'urlname': ProductsPerLocationView.urlname,
                 },
             ]
         }
@@ -556,6 +552,11 @@ class SetupTab(UITab):
                 {
                     'title': FacilitySyncView.page_title,
                     'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+                },
+                # stock levels
+                {
+                    'title': StockLevelsView.page_title,
+                    'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
             ]]]
 

@@ -122,6 +122,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
 class ILSGatewayAPI(APISynchronization):
 
+    LOCATION_CUSTOM_FIELDS = ['groups']
+    SMS_USER_CUSTOM_FIELDS = ['role', 'backend']
+    PRODUCT_CUSTOM_FIELDS = []
+
     def prepare_commtrack_config(self):
         domain = Domain.get_by_name(self.domain)
         domain.location_types = []

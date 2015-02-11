@@ -152,7 +152,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             yield [
                 self.make_traceback_link(error),
                 self.make_search_link(error),
-                error.pillow,
+                error.pillow.split('.')[-1],
                 naturaltime(error.date_created),
                 naturaltime(error.date_last_attempt),
                 naturaltime(error.date_next_attempt),

@@ -1180,6 +1180,7 @@ PILLOWTOPS = {
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
         'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
+        'corehq.apps.userreports.pillow.CustomDataSourcePillow',
     ],
     'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
@@ -1232,6 +1233,12 @@ PILLOWTOPS = {
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
 }
+
+
+CUSTOM_DATA_SOURCES = [
+    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json')
+]
+
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
