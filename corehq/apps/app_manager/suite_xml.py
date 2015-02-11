@@ -942,7 +942,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                                 }
 
                                 # Get field/case property mappings
-                                for template_field in ["header", "top_left", "top_right", "bottom_left", "bottom_right"]:
+                                for template_field in ["header", "top_left", "sex", "bottom_left", "date"]:
                                     column = None
                                     for col in detail.columns:
                                         if col.case_tile_field == template_field:

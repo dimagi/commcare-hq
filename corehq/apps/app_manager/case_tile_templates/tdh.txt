@@ -20,7 +20,7 @@
     </action>
 
     <variables>
-        <ageindays function="today() - date({bottom_right[prop_name]})"/>
+        <ageindays function="today() - date({date[prop_name]})"/>
     </variables>
     <field>
       <style
@@ -109,16 +109,16 @@
        </style>
       <header>
         <text>
-          <locale id="{top_right[locale_id]}"/>
+          <locale id="{sex[locale_id]}"/>
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{top_right[prefix]} &lt;/b&gt;<xpath function="if({top_right[prop_name]} = 'male', $kmale, if({top_right[prop_name]} = 'female', $kfemale, ''))">
+        <text>&lt;b&gt;{sex[prefix]} &lt;/b&gt;<xpath function="if({sex[prop_name]} = 'male', $kmale, if({sex[prop_name]} = 'female', $kfemale, ''))">
             <variable name="kfemale">
-              <locale id="{top_right[enum_keys][female]}"/>
+              <locale id="{sex[enum_keys][female]}"/>
             </variable>
             <variable name="kmale">
-              <locale id="{top_right[enum_keys][male]}"/>
+              <locale id="{sex[enum_keys][male]}"/>
             </variable>
           </xpath></text>
       </template>
@@ -165,7 +165,7 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{bottom_right[prefix]} &lt;/b&gt; <xpath function="if($ageindays &gt; 30, concat(int($ageindays div 30.25), ' Mois'), concat(int($ageindays), ' Jours'))"/></text>
+        <text>&lt;b&gt;{date[prefix]} &lt;/b&gt; <xpath function="if($ageindays &gt; 30, concat(int($ageindays div 30.25), ' Mois'), concat(int($ageindays), ' Jours'))"/></text>
       </template>
     </field>
   </detail>
