@@ -21,9 +21,12 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
-from corehq.apps.userreports.reports.builder import make_case_property_indicator, \
-    FORM_METADATA_PROPERTIES, DEFAULT_CASE_PROPERTY_DATATYPES, \
+from corehq.apps.userreports.reports.builder import (
+    DEFAULT_CASE_PROPERTY_DATATYPES,
+    FORM_METADATA_PROPERTIES,
+    make_case_property_indicator,
     make_form_question_indicator
+)
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -232,9 +235,10 @@ class ConfigureNewReportBase(forms.Form):
         '''
 
         def _make_report_filter(conf):
+            col_id = self.data_source_properties[conf["property"]]['column_id']
             filter = {
-                "field": conf["property"],
-                "slug": conf["property"],
+                "field": col_id,
+                "slug": col_id,
                 "display": conf["display_text"]
             }
             if conf['format'] == "Choice":
@@ -268,10 +272,11 @@ class ConfigureNewReportBase(forms.Form):
 
         >> self.data_source_properties
         {
-            "data/question1": {
+            "/data/question1": {
                 "type": "question",
-                "id": "data/question1"
-                "text": "Enter the child's name"
+                "id": "/data/question1",
+                "text": "Enter the child's name",
+                "column_id": "data--question1",
                 "source": {
                     'repeat': None,
                     'group': None,
@@ -285,21 +290,30 @@ class ConfigureNewReportBase(forms.Form):
                 "type": "meta",
                 "id": "meta/deviceID",
                 "text": "deviceID",
+                "column_id": "meta--deviceID",
                 "source": "deviceID"
             }
         }
 
-        "id" is used as the value in selects/select2s in the form.
+        "id" is used as the value in selects/select2s in the form. Uniquely identifies questions.
+        "column_id" is used as the column name for this indicator. There are bugs
+        with slashes which requires this to be different from "id"
         "text" will be used as the visible text in selects/select2s
         "type" is "question", "case_property", or "meta"
         For questions, "source" is the dict returned by Xform.get_questions, for
         case properties and form metadata it is simply the name of the property.
         """
+
+        def escape_id(id):
+            # TODO: This is fairly naive escaping
+            return id.strip("/").replace("/", "--")
+
         if self.source_type == 'case':
             return {
                 cp: {
                     'type': 'case_property',
                     'id': cp,
+                    'column_id': escape_id(cp),
                     'text': cp,
                     'source': cp
                 } for cp in self.case_properties
@@ -312,6 +326,7 @@ class ConfigureNewReportBase(forms.Form):
                 q['value']: {
                     "type": "question",
                     "id": q['value'],
+                    "column_id": escape_id(q['value']),
                     'text': q['label'],
                     "source": q,
                 } for q in questions
@@ -320,6 +335,7 @@ class ConfigureNewReportBase(forms.Form):
                 p[0]: {
                     "type": "meta",
                     "id": p[0],
+                    "column_id": escape_id(p[0]),
                     'text': p[0],
                     "source": p[0],
                 } for p in FORM_METADATA_PROPERTIES
@@ -359,12 +375,18 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
             indicator_maker = make_form_question_indicator
 
         indicator_ids = set(
-            [f['field'] for f in self._report_filters] +
+            [f['property'] for f in json.loads(self.cleaned_data['filters'])] +
             [self.cleaned_data["group_by"]]
         )
-        indicators = [self.data_source_properties[id]['source'] for id in indicator_ids]
+        indicators = [
+            (
+                self.data_source_properties[id]['source'],
+                self.data_source_properties[id]['column_id']
+            )
+            for id in indicator_ids
+        ]
 
-        return [indicator_maker(cp) for cp in indicators] + [
+        return [indicator_maker(i[0], i[1]) for i in indicators] + [
             {
                 "display_name": "Count",
                 "type": "count",
@@ -374,25 +396,32 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
 
     @property
     def _report_aggregation_cols(self):
-        return [self.cleaned_data["group_by"]]
+        agg = self.cleaned_data["group_by"]
+        return [
+            self.data_source_properties[agg]['column_id']
+        ]
 
     @property
     def _report_charts(self):
+        agg_col = self.data_source_properties[self.cleaned_data["group_by"]]['column_id']
         return [{
             "type": "multibar",
-            "x_axis_column": self.cleaned_data["group_by"],
+            "x_axis_column": agg_col,
             "y_axis_columns": ["count"],
         }]
 
     @property
     def _report_columns(self):
+        agg_id = self.cleaned_data["group_by"]
+        agg_col_id = self.data_source_properties[agg_id]['column_id']
+        agg_disp = self.data_source_properties[agg_id]['text']
         return [
             {
                 "format": "default",
                 "aggregation": "simple",
-                "field": self.cleaned_data["group_by"],
+                "field": agg_col_id,
                 "type": "field",
-                "display": self.cleaned_data["group_by"]
+                "display": agg_disp
             },
             {
                 "format": "default",
@@ -414,9 +443,10 @@ class ConfigureNewPieChartReport(ConfigureNewBarChartReport):
 
     @property
     def _report_charts(self):
+        agg = self.data_source_properties[self.cleaned_data["group_by"]]['column_id']
         return [{
             "type": "pie",
-            "aggregation_column": self.cleaned_data["group_by"],
+            "aggregation_column": agg,
             "value_column": "count",
         }]
 
@@ -444,7 +474,7 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
             return {
                 "format": "default",
                 "aggregation": "simple",
-                "field": conf['property'],
+                "field": self.data_source_properties[conf['property']]['column_id'],
                 "type": "field",
                 "display": conf['display_text']
             }
@@ -454,7 +484,7 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
     def _data_source_indicators(self):
         property_name = set(
             [conf['property'] for conf in json.loads(self.cleaned_data['columns'])] +
-            [f['field'] for f in self._report_filters]
+            [f['property'] for f in json.loads(self.cleaned_data['filters'])]
         )
         return [make_case_property_indicator(p) for p in property_name]
 

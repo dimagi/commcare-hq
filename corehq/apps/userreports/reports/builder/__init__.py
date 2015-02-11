@@ -20,21 +20,21 @@ FORM_METADATA_PROPERTIES = [
 ]
 
 
-def make_case_property_indicator(property_name):
+def make_case_property_indicator(property_name, column_id=None):
     '''
     Return a data source indicator configuration (a dict) for the given case
     property.
     '''
     return {
         "type": "raw",
-        "column_id": property_name,
+        "column_id": column_id or property_name,
         "datatype": DEFAULT_CASE_PROPERTY_DATATYPES.get(property_name, "string"),
         'property_name': property_name,
         "display_name": property_name,
     }
 
 
-def make_form_question_indicator(question):
+def make_form_question_indicator(question, column_id=None):
     '''
     Return a data source indicator configuration (a dict) for the given form
     question.
@@ -44,8 +44,9 @@ def make_form_question_indicator(question):
     options = question.get('options')
     ret = {
         "type": "raw",
+        # TODO: Maybe the right answer is to just escape all the question ids everywhere (with double dashses or something)
         # TODO: Test that this change didn't break the other thing that uses it.
-        "column_id": question['value'],
+        "column_id": column_id or question['value'],
         'property_path': ['form'] + path[2:],
         "display_name": path[-1],
     }
