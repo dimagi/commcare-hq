@@ -56,7 +56,7 @@ class PredicatablyRandomToggle(StaticToggle):
     """
 
     def __init__(self, slug, label, namespace, randomness):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, [namespace])
+        super(PredicatablyRandomToggle, self).__init__(slug, label, list(namespace))
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
@@ -209,10 +209,11 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-BATCHED_RESTORE = StaticToggle(
+BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    0.1
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -269,6 +270,12 @@ CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+LOCATION_TYPE_STOCK_RATES = StaticToggle(
+    'location_type_stock_rates',
+    "Specify stock rates per location type.",
+    [NAMESPACE_DOMAIN]
+)
+
 APP_SUMMARY = StaticToggle(
     'app_summary',
     'Form and Case summary of an application',
@@ -279,4 +286,10 @@ DHIS2_DOMAIN = StaticToggle(
     'dhis2_domain',
     'Enable DHIS2 integration for this domain',
     [NAMESPACE_DOMAIN]
+)
+
+PRIME_RESTORE = StaticToggle(
+    'prime_restore',
+    'Prime restore cache',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

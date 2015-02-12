@@ -1,3 +1,4 @@
+from datetime import datetime
 from corehq import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
@@ -17,6 +18,9 @@ from django.utils.translation import ugettext as _
 
 
 # TODO Implement this when alerts (moving from EWS) will be finished
+from dimagi.utils.dates import DateSpan
+
+
 class AlertsData(EWSData):
     pass
 
@@ -54,14 +58,16 @@ class ReportingRates(EWSData):
             chart_data = [
                 dict(value=reported_percent,
                      label=_('Reported'),
-                     description=_("%.2f%% (%d) Reported (last 7 days)" % (reported_percent, data['total']))),
+                     description=_("%.2f%% (%d) Reported (last 7 days)" % (reported_percent, data['total'])),
+                     color='green'),
                 dict(value=non_reported_percent,
                      label=_('Non-Reported'),
                      description=_("%.2f%% (%d) Non-Reported (last 7 days)" %
-                                   (non_reported_percent, data['total']))),
+                                   (non_reported_percent, data['total'])),
+                     color='red'),
             ]
 
-        return [PieChart('', '', chart_data)]
+        return [PieChart('', '', chart_data, ['green', 'red'])]
 
 
 class ReportingDetails(EWSData):
@@ -106,14 +112,16 @@ class ReportingDetails(EWSData):
                 dict(value=complete_percent,
                      label=_('Completed'),
                      description=_("%.2f%% (%d) Complete Reports in last 7 days" %
-                                   (complete_percent, data['total']))),
+                                   (complete_percent, data['total'])),
+                     color='green'),
                 dict(value=incomplete_percent,
                      label=_('Incompleted'),
                      description=_("%.2f%% (%d) Incomplete Reports in last 7 days" %
-                                   (incomplete_percent, data['total']))),
+                                   (incomplete_percent, data['total'])),
+                     color='purple'),
             ]
 
-        return [PieChart('', '', chart_data)]
+        return [PieChart('', '', chart_data, ['green', 'purple'])]
 
 
 class SummaryReportingRates(EWSData):
@@ -325,3 +333,10 @@ class ReportingRatesReport(MultiReport):
             InCompleteReports(config=config)
         ])
         return data_providers
+
+    @property
+    def default_datespan(self):
+        last_period_st, last_period_end = calculate_last_period(datetime.now())
+        datespan = DateSpan(startdate=last_period_st, enddate=last_period_end)
+        datespan.is_default = True
+        return datespan
