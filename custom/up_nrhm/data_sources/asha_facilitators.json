@@ -15,6 +15,15 @@
         },
         "configured_indicators": [
             {
+                "column_id": "date",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["received_on"]
+                },
+                "datatype": "datetime"
+            },
+            {
                 "column_id": "case_id",
                 "type": "expression",
                 "expression": {
