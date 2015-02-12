@@ -77,4 +77,3 @@ class ProductFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return SQLProduct.objects.filter(domain=self.domain).values_list('product_id', 'name').order_by('name')
-

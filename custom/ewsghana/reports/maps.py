@@ -60,7 +60,10 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
                 quantity = "No data"
                 months_until_stockout = None
             else:
-                monthly_consumption = int(stock_states[0].get_monthly_consumption()) if stock_states[0].get_monthly_consumption() else 0
+                if stock_states[0].get_monthly_consumption():
+                    monthly_consumption = int(stock_states[0].get_monthly_consumption())
+                else:
+                    monthly_consumption = 0
                 quantity = stock_states[0].stock_on_hand
                 if quantity == 0 or not monthly_consumption:
                     months_until_stockout = 0
@@ -93,7 +96,8 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
 
 
 class EWSMapReport(CustomProjectReport, StockStatusMapReport):
-    name = ugettext_noop("Map report")
+    name = ugettext_noop("Maps")
+    title = ugettext_noop("Maps")
     slug = "ews_mapreport"
 
     data_source = {
@@ -122,13 +126,13 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                     {'id': 'months_until_stockout', 'title': 'Months Until Stockout'},
                     {'id': 'category', 'name': 'Stock status'}
                 ],
-                }),
+            }),
             'metrics': [
                 {
                     'color': {
                         'column': 'type',
-                        },
                     },
+                },
                 {
                     'default': True,
                     'color': {
@@ -142,11 +146,11 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
                         },
                     }
                 }
-                ],
+            ],
             'display': {
                 'table': False
             }
 
-            }
+        }
 
         return conf
