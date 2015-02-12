@@ -270,6 +270,10 @@ def default_start_date():
 
 def _get_test_locations(domain):
     from custom.ilsgateway.tasks import ILS_FACILITIES
+    sql_locations = SQLLocation.objects.filter(
+        domain=domain,
+        external_id__in=ILS_FACILITIES
+    ).order_by('id').only('location_id')
     sql_locations = SQLLocation.objects.filter(domain=domain, external_id__in=ILS_FACILITIES).only('location_id')
     return [Location.get(sql_location.location_id) for sql_location in sql_locations]
 
