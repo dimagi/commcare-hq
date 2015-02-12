@@ -54,9 +54,10 @@
         /**
          * Knockout view model controlling the filter property list.
          */
-        var propertyList = function() {
+        var propertyList = function(options) {
             var that = this;
-
+            options = options || {};
+            this.hasFormatCol = ko.observable(options.hasFormatCol != undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             this.columns = ko.observableArray([]);
@@ -66,6 +67,6 @@
                 );
             });
         };
-        ko.applyBindings(new propertyList(), $("#filters-table").parent().get(0));
+        ko.applyBindings(new propertyList({hasFormatCol: true}), $("#filters-table").parent().get(0));
     </script>
 {% endblock %}

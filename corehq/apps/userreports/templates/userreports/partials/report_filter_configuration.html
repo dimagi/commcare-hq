@@ -21,7 +21,9 @@ TODO:
             <th></th>
             <th>{% trans "Property" %}</th>
             <th>{% trans "Display Text" %}</th>
+            <!--ko if: $data.hasFormatCol -->
             <th>{% trans "Format" %}</th>
+            <!--/ko-->
             <th></th>
         </tr>
     </thead>
@@ -46,9 +48,11 @@ TODO:
         <td class="control-group">
             <input type="text" data-bind="value: displayText">
         </td>
+        <!--ko if: $parent.hasFormatCol -->
         <td>
             <select data-bind="options: $parent.formatOptions, value: format"></select>
         </td>
+        <!--/ko-->
 
         <td class="span1">
             <i style="cursor: pointer;"

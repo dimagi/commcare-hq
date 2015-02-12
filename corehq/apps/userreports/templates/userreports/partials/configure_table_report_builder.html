@@ -3,6 +3,6 @@
 {% load hq_shared_tags %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        ko.applyBindings(new propertyList(), $("#columns-table").parent().get(0));
+        ko.applyBindings(new propertyList({hasFormatCol:false}), $("#columns-table").parent().get(0));
     </script>
 {% endblock %}
