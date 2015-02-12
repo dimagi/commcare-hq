@@ -249,7 +249,13 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
     def get_sync_token(self):
         from casexml.apps.phone.models import SyncLog
         if self.last_sync_token:
-            return SyncLog.get(self.last_sync_token)
+            try:
+                return SyncLog.get(self.last_sync_token)
+            except ResourceNotFound:
+                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
+                    self.last_sync_token, self._id, self.domain,
+                ))
+                raise
         return None
 
     def get_xml(self):
