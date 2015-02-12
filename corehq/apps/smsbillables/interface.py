@@ -169,6 +169,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Specific Gateway"),
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
+            DataTablesColumn("Prefix"),
             DataTablesColumn("Fee (Amount, Currency)")
         )
 
@@ -184,6 +185,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
                 criteria.direction,
                 (criteria.country_code
                  if criteria.country_code is not None else "Any"),
+                criteria.prefix or "Any",
                 "%(amount)s %(currency)s" % {
                     'amount': str(gateway_fee.amount),
                     'currency': gateway_fee.currency.code,
