@@ -92,6 +92,13 @@ class DimagiContactFilter(BaseAccountingSingleOptionFilter):
     async_action = 'dimagi_contact'
 
 
+class EntryPointFilter(BaseSingleOptionFilter):
+    slug = 'entry_point'
+    label = _('Entry Point')
+    default_text = _("Any")
+    options = EntryPoint.CHOICES
+
+
 INVOICE = "SEND_INVOICE"
 DO_NOT_INVOICE = "DO_NOT_INVOICE"
 

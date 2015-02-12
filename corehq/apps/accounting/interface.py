@@ -49,6 +49,7 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.AccountTypeFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
               'corehq.apps.accounting.interface.DimagiContactFilter',
+              'corehq.apps.accounting.interface.EntryPointFilter',
               ]
     hide_filters = False
 
@@ -106,6 +107,11 @@ class AccountingInterface(AddItemInterface):
         if dimagi_contact is not None:
             filters.update(
                 dimagi_contact=dimagi_contact,
+            )
+        entry_point = EntryPointFilter.get_value(self.request, self.domain)
+        if entry_point is not None:
+            filters.update(
+                entry_point=entry_point,
             )
 
         for account in BillingAccount.objects.filter(**filters):
