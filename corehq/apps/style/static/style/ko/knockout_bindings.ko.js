@@ -655,7 +655,7 @@ ko.bindingHandlers.select2 = new function(){
         });
     };
 
-    this.update = function(element, valueAccessor){
+    this.update = function(element, valueAccessor, allBindings){
         var $el = $(element);
         var source = $el.data(that.SOURCE_KEY);
 
@@ -670,6 +670,9 @@ ko.bindingHandlers.select2 = new function(){
             var id = newItems[i].id || newItems[i];
             source.push({id: id, text: text});
         }
+
+        // Update the selected item
+        $el.val(ko.unwrap(allBindings()['value'])).trigger("change");
     };
 }();
 
