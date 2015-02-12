@@ -1224,6 +1224,7 @@ class CaseReminderHandler(Document):
             include_docs=False,
             reduce=False,
         )
+
         def filter_fcn(reminder_type):
             if reminder_type_filter is None:
                 return True
