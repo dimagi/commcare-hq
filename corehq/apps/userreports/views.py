@@ -264,7 +264,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 
 def _shared_context(domain):
-    custom_data_sources = list(CustomDataSourceConfiguration.all(domain))
+    custom_data_sources = list(CustomDataSourceConfiguration.by_domain(domain))
     return {
         'domain': domain,
         'reports': ReportConfiguration.by_domain(domain),
