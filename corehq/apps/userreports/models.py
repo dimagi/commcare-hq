@@ -265,6 +265,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
 
 class CustomDataSourceConfiguration(JsonObject):
+    _datasource_id_prefix = 'custom-'
     domains = ListProperty()
     config = DictProperty()
 
@@ -276,4 +277,16 @@ class CustomDataSourceConfiguration(JsonObject):
                 for domain in wrapped.domains:
                     doc = copy(wrapped.config)
                     doc['domain'] = domain
+                    doc['_id'] = '{}{}'.format(cls._datasource_id_prefix, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
+
+    @classmethod
+    def by_domain(cls, domain):
+        return [ds for ds in cls.all() if ds.domain == domain]
+
+    @classmethod
+    def by_id(cls, config_id):
+        matching = [ds for ds in cls.all() if ds.get_id == config_id]
+        if not matching:
+            return None
+        return matching[0]
