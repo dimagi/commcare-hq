@@ -281,6 +281,7 @@ class CaseReminderEvent(DocumentSchema):
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
 
+
 def run_rule(case_id, handler, schedule_changed, prev_definition):
     case = CommCareCase.get(case_id)
     try:
@@ -300,9 +301,11 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
     except:
         pass
 
+
 def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
     r.retire()
+
 
 def get_case_ids(domain):
     """
@@ -322,6 +325,7 @@ def get_case_ids(domain):
         except Exception:
             if i == (max_tries - 1):
                 raise
+
 
 class CaseReminderHandler(Document):
     """
