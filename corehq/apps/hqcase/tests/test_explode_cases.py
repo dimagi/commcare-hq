@@ -108,7 +108,11 @@ class ExplodeCasesDbTest(TestCase):
     def setUp(self):
         delete_all_cases()
         self.domain = uuid.uuid4().hex
-        self.user_id = CommCareUser.create(self.domain, 'somebody', 'password')._id
+        self.user = CommCareUser.create(self.domain, 'somebody', 'password')
+        self.user_id = self.user._id
+
+    def tearDown(self):
+        self.user.delete()
 
     def test_simple(self):
         caseblock = CaseBlock(
