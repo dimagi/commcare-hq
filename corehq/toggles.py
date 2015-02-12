@@ -293,3 +293,8 @@ PRIME_RESTORE = StaticToggle(
     'Prime restore cache',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+VELLUM_HELP_TEXT = StaticToggle(
+    'add_help_text',
+    "Adds a help text in the form builder"
+)
