@@ -3,7 +3,7 @@ from pillowtop.run_pillowtop import start_pillows, start_pillow
 from optparse import make_option
 import sys
 from django.conf import settings
-from pillowtop.utils import import_pillow_string
+from pillowtop.utils import import_pillow_string, get_all_pillows
 from django.core.management.base import NoArgsCommand
 
 
@@ -20,6 +20,11 @@ class Command(NoArgsCommand):
                     dest='list_all',
                     default=False,
                     help="List pillowtop names"),
+        make_option('--list-checkpoints',
+                    action='store_true',
+                    dest='list_checkpoints',
+                    default=False,
+                    help="Print all pillow doc ids."),
         make_option('--pillow-key',
                     action='store',
                     dest='pillow_key',
@@ -31,9 +36,11 @@ class Command(NoArgsCommand):
                     default=None,
                     help="Run a single specific pillow name from settings.PILLOWTOPS list"),
     )
+
     def handle_noargs(self, **options):
         run_all = options['run_all']
         list_all = options['list_all']
+        list_checkpoints = options['list_checkpoints']
         pillow_name = options['pillow_name']
         pillow_key = options['pillow_key']
         all_pillows = [pillow for group_key, items in settings.PILLOWTOPS.items() for pillow in items]
@@ -69,6 +76,10 @@ class Command(NoArgsCommand):
             else:
                 pillow_idx = abbreviated_pillows.index(pillow_name)
                 start_pillow(import_pillow_string(all_pillows[pillow_idx]))
+            sys.exit()
+        elif list_checkpoints:
+            for pillow in get_all_pillows():
+                print pillow.get_checkpoint_doc_name()
             sys.exit()
         else:
             print "\nNo command set, please see --help for runtime instructions"
