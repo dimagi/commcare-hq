@@ -45,6 +45,7 @@ def _build_dynamic_choice_list_filter(spec):
     wrapped = DynamicChoiceListFilterSpec.wrap(spec)
     return DynamicChoiceListFilter(
         name=wrapped.slug,
+        field=wrapped.field,
         label=wrapped.display,
         required=wrapped.required,
         show_all=wrapped.show_all,
