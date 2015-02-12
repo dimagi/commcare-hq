@@ -12,7 +12,7 @@ from lxml import etree
 from django.utils.datastructures import SortedDict
 from couchdbkit.exceptions import PreconditionFailed
 from couchdbkit.ext.django.schema import *
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit import ResourceNotFound
 from lxml.etree import XMLSyntaxError
 from couchforms.jsonobject_extensions import GeoPointProperty
 from dimagi.utils.couch import CouchDocLockableMixIn
