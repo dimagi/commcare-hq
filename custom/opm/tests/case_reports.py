@@ -7,11 +7,11 @@ from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
-from ..reports import SharedDataProvider
 from dimagi.utils.dates import DateSpan, add_months
 
 from ..beneficiary import OPMCaseRow
-from ..reports import CaseReportMixin
+from ..constants import *
+from ..reports import CaseReportMixin, SharedDataProvider
 
 
 class AggressiveDefaultDict(defaultdict):
@@ -35,7 +35,12 @@ class MockDataProvider(SharedDataProvider):
         super(MockDataProvider, self).__init__()
 
         if explicit_map is not None:
-            self.service_map = explicit_map
+            # convert map to a defaultdict
+            results = defaultdict(lambda: defaultdict(lambda: set()))
+            for owner, availability in explicit_map.items():
+                for prop, dates in availability.items():
+                    results[owner][prop].update(dates)
+            self.service_map = results
 
         else:
             get_default_set = lambda: {default_date} if default_date is not None else set()
