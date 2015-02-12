@@ -22,13 +22,27 @@ require_can_edit_data = require_permission(Permissions.edit_data)
 
 EXCEL_SESSION_ID = "excel_id"
 
+
 def render_error(request, domain, message):
     """ Load error message and reload page for excel file load errors """
     messages.error(request, _(message))
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
 
+
 @require_can_edit_data
 def excel_config(request, domain):
+    """
+    Step one of three.
+
+    This is the initial post when the user uploads the excel file
+
+    named_columns:
+        Whether or not the first row of the excel sheet contains
+        header strings for the columns. This defaults to True and
+        should potentially not be an option as it is always used
+        due to how important it is to see column headers
+        in the rest of the importer.
+    """
     if request.method != 'POST':
         return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
 
@@ -68,11 +82,13 @@ def excel_config(request, domain):
 
     case_types_from_apps = []
     # load types from all modules
-    for row in ApplicationBase.view('app_manager/types_by_module',
-                                 reduce=True,
-                                 group=True,
-                                 startkey=[domain],
-                                 endkey=[domain,{}]).all():
+    for row in ApplicationBase.view(
+        'app_manager/types_by_module',
+        reduce=True,
+        group=True,
+        startkey=[domain],
+        endkey=[domain, {}]
+    ).all():
         if not row['key'][1] in case_types_from_apps:
             case_types_from_apps.append(row['key'][1])
 
@@ -82,7 +98,7 @@ def excel_config(request, domain):
                                  reduce=True,
                                  group=True,
                                  startkey=[domain],
-                                 endkey=[domain,{}]).all():
+                                 endkey=[domain, {}]).all():
         if row['key'][1] and not row['key'][1] in case_types_from_cases:
             case_types_from_cases.append(row['key'][1])
 
@@ -90,25 +106,68 @@ def excel_config(request, domain):
     case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
 
     if len(case_types_from_apps) == 0 and len(case_types_from_cases) == 0:
-        return render_error(request, domain,
-                            'No cases have been submitted to this domain and there are no '
-                            'applications yet. You cannot import case details from an Excel '
-                            'file until you have existing cases or applications.')
+        return render_error(
+            request,
+            domain,
+            'No cases have been submitted to this domain and there are no '
+            'applications yet. You cannot import case details from an Excel '
+            'file until you have existing cases or applications.'
+        )
 
-    return render(request, "importer/excel_config.html", {
-                                'named_columns': named_columns,
-                                'columns': columns,
-                                'case_types_from_cases': case_types_from_cases,
-                                'case_types_from_apps': case_types_from_apps,
-                                'domain': domain,
-                                'report': {
-                                    'name': 'Import: Configuration'
-                                 },
-                                'slug': base.ImportCases.slug})
+    return render(
+        request,
+        "importer/excel_config.html", {
+            'named_columns': named_columns,
+            'columns': columns,
+            'case_types_from_cases': case_types_from_cases,
+            'case_types_from_apps': case_types_from_apps,
+            'domain': domain,
+            'report': {
+                'name': 'Import: Configuration'
+            },
+            'slug': base.ImportCases.slug
+        }
+    )
+
 
 @require_POST
 @require_can_edit_data
 def excel_fields(request, domain):
+    """
+    Step two of three.
+
+    Important values that are grabbed from the POST or defined by
+    the user on this page:
+
+    named_columns:
+        Passed through from last step, see that for documentation
+
+    case_type:
+        The type of case we are matching to. When creating new cases,
+        this is the type they will be created as. When updating
+        existing cases, this is the type that we will search for.
+        If the wrong case type is used when looking up existing cases,
+        we will not update them.
+
+    create_new_cases:
+        A boolean that controls whether or not the user wanted
+        to create new cases for any case that doesn't have a matching
+        case id in the upload.
+
+    search_column:
+        Which column of the excel file we are using to specify either
+        case ids or external ids. This is, strangely, required. If
+        creating new cases only you would expect these to be blank with
+        the create_new_cases flag set.
+
+    search_field:
+        Either case id or external id, determines which type of
+        identification we are using to match to cases.
+
+    key_column/value_column:
+        These correspond to an advanced feature allowing a user
+        to modify a single case with multiple rows.
+    """
     named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
     try:
@@ -172,26 +231,42 @@ def excel_fields(request, domain):
     except:
         pass
 
-    return render(request, "importer/excel_fields.html", {
-                                'named_columns': named_columns,
-                                'case_type': case_type,
-                                'search_column': search_column,
-                                'search_field': search_field,
-                                'create_new_cases': create_new_cases,
-                                'key_column': key_column,
-                                'value_column': value_column,
-                                'columns': columns,
-                                'excel_fields': excel_fields,
-                                'case_fields': case_fields,
-                                'domain': domain,
-                                'report': {
-                                    'name': 'Import: Match columns to fields'
-                                 },
-                                'slug': base.ImportCases.slug})
+    return render(
+        request,
+        "importer/excel_fields.html", {
+            'named_columns': named_columns,
+            'case_type': case_type,
+            'search_column': search_column,
+            'search_field': search_field,
+            'create_new_cases': create_new_cases,
+            'key_column': key_column,
+            'value_column': value_column,
+            'columns': columns,
+            'excel_fields': excel_fields,
+            'case_fields': case_fields,
+            'domain': domain,
+            'report': {
+                'name': 'Import: Match columns to fields'
+            },
+            'slug': base.ImportCases.slug
+        }
+    )
+
 
 @require_POST
 @require_can_edit_data
 def excel_commit(request, domain):
+    """
+    Step three of three.
+
+    This page is submitted with the list of column to
+    case property mappings for this upload.
+
+    The config variable is an ImporterConfig object that
+    has everything gathered from previous steps, with the
+    addition of all the field data. See that class for
+    more information.
+    """
     config = importer_util.ImporterConfig.from_request(request)
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
@@ -221,14 +296,19 @@ def excel_commit(request, domain):
     except KeyError:
         pass
 
-    return render(request, "importer/excel_commit.html", {
-                                'download_id': download.download_id,
-                                'template': 'importer/partials/import_status.html',
-                                'domain': domain,
-                                'report': {
-                                    'name': 'Import: Completed'
-                                 },
-                                'slug': base.ImportCases.slug})
+    return render(
+        request,
+        "importer/excel_commit.html", {
+            'download_id': download.download_id,
+            'template': 'importer/partials/import_status.html',
+            'domain': domain,
+            'report': {
+                'name': 'Import: Completed'
+            },
+            'slug': base.ImportCases.slug
+        }
+    )
+
 
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="importer/partials/import_status.html"):
@@ -260,7 +340,6 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
                                       'a new one.'))
             return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
 
-
     if download_data.task.state == 'SUCCESS':
         is_ready = True
         context['result'] = download_data.task.result
@@ -270,6 +349,7 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     context['progress'] = download_data.get_progress()
     context['download_id'] = download_id
     return render_to_response(template, context_instance=context)
+
 
 def _spreadsheet_expired(req, domain):
     messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))

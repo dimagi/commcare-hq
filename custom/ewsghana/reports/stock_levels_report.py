@@ -10,11 +10,10 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.graph_models import LineChart, Axis
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter
-from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url
+from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url, EWSLineChart
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
@@ -178,11 +177,11 @@ class FacilityReportData(EWSData):
                 return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}
-        if self.config['program'] and not self.config['product']:
+        if self.config['program'] and not self.config['products']:
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
-        elif self.config['program'] and self.config['product']:
-            product_ids = self.config['product']
+        elif self.config['program'] and self.config['products']:
+            product_ids = self.config['products']
         else:
             product_ids = Product.ids_by_domain(self.config['domain'])
 
@@ -251,11 +250,12 @@ class InventoryManagementData(EWSData):
     chart_y_label = 'MOS'
 
     def get_products(self):
-        if self.config['program'] and not self.config['product']:
+        print self.config
+        if self.config['program'] and not self.config['products']:
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
-        elif self.config['program'] and self.config['product']:
-            product_ids = [self.config['product']]
+        elif self.config['program'] and self.config['products']:
+            product_ids = [self.config['products']]
         else:
             product_ids = Product.ids_by_domain(self.config['domain'])
         return product_ids
@@ -298,8 +298,8 @@ class InventoryManagementData(EWSData):
     @property
     def charts(self):
         if self.show_chart:
-            chart = LineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
-                              y_axis=Axis(self.chart_y_label, '.1f'))
+            chart = EWSLineChart("Inventory Management Trends", x_axis=Axis(self.chart_x_label, 'd'),
+                                 y_axis=Axis(self.chart_y_label, '.1f'))
             for product, value in self.chart_data.iteritems():
                 chart.add_dataset(product, value)
             return [chart]
@@ -403,7 +403,7 @@ class StockLevelsReport(MultiReport):
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
             program=program if program != ALL_OPTION else None,
-            product=products if products and products[0] != ALL_OPTION else [],
+            products=products if products and products[0] != ALL_OPTION else [],
         )
 
     @property

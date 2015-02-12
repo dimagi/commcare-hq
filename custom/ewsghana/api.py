@@ -47,6 +47,7 @@ class SMSUser(JsonObject):
     backend = StringProperty()
     family_name = StringProperty()
     to = StringProperty()
+    language = StringProperty()
 
 
 class EWSUser(JsonObject):
@@ -116,6 +117,9 @@ class GhanaEndpoint(LogisticsEndpoint):
 
 
 class EWSApi(APISynchronization):
+    LOCATION_CUSTOM_FIELDS = ['created_at', 'supervised_by']
+    SMS_USER_CUSTOM_FIELDS = ['to']
+    PRODUCT_CUSTOM_FIELDS = []
 
     def _create_location_type_if_not_exists(self, supply_point, location):
         domain = Domain.get_by_name(self.domain)

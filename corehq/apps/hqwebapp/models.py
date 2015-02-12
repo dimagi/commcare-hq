@@ -40,7 +40,6 @@ from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
                                         ADMSectionDispatcher)
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
-from corehq.toggles import IS_DEVELOPER
 
 
 class GaTracker(namedtuple('GaTracking', 'category action label')):
@@ -440,6 +439,7 @@ class SetupTab(UITab):
             CommTrackSettingsView,
             DefaultConsumptionView,
             SMSSettingsView,
+            StockLevelsView,
         )
         from corehq.apps.programs.views import (
             ProgramListView,
@@ -461,7 +461,6 @@ class SetupTab(UITab):
             LocationImportStatusView,
             LocationSettingsView,
             LocationFieldsView,
-            ProductsPerLocationView,
         )
 
         locations_config = {
@@ -487,10 +486,6 @@ class SetupTab(UITab):
                 {
                     'title': LocationFieldsView.page_name(),
                     'urlname': LocationFieldsView.urlname,
-                },
-                {
-                    'title': ProductsPerLocationView.page_title,
-                    'urlname': ProductsPerLocationView.urlname,
                 },
             ]
         }
@@ -556,6 +551,11 @@ class SetupTab(UITab):
                 {
                     'title': FacilitySyncView.page_title,
                     'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
+                },
+                # stock levels
+                {
+                    'title': StockLevelsView.page_title,
+                    'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
             ]]]
 
@@ -1237,6 +1237,17 @@ class ProjectSettingsTab(UITab):
                     )
                 items.append((_('Subscription'), subscription))
 
+        if any(toggles.PRIME_RESTORE.enabled(item) for item in [self.couch_user.username, self.domain]):
+            from corehq.apps.ota.views import PrimeRestoreCacheView
+            project_tools = [
+                {
+                    'title': _(PrimeRestoreCacheView.page_title),
+                    'url': reverse(PrimeRestoreCacheView.urlname,
+                                   args=[self.domain])
+                },
+            ]
+            items.append((_('Project Tools'), project_tools))
+
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, \
                 EditInternalCalculationsView
@@ -1301,17 +1312,14 @@ class AdminReportsTab(UITab):
         # todo: convert these to dispatcher-style like other reports
         if (self.couch_user and
                 (not self.couch_user.is_superuser and
-                 IS_DEVELOPER.enabled(self.couch_user.username))):
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
             return [
                 (_('Administrative Reports'), [
                     {'title': _('System Info'),
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = [
-            {'title': _('View/Update Domain Information'),
-             'url': reverse('domain_update')},
-        ]
+        admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
             admin_operations.extend([
@@ -1329,20 +1337,12 @@ class AdminReportsTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('Domain Activity Report'),
-                 'url': reverse('domain_activity_report')},
                 {'title': _('Message Logs Across All Domains'),
                  'url': reverse('message_log_report')},
-                {'title': _('Global Statistics'),
-                 'url': reverse('global_report')},
                 {'title': _('CommCare Versions'),
                  'url': reverse('commcare_version_report')},
-                {'title': _('Submissions & Error Statistics per Domain'),
-                 'url': reverse('global_submissions_errors')},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
-                {'title': _('Mobile User Reports'),
-                 'url': reverse('mobile_user_reports')},
                 {'title': _('Loadtest Report'),
                  'url': reverse('loadtest_report')},
             ]),
@@ -1365,7 +1365,7 @@ class AdminReportsTab(UITab):
     def is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
-                 IS_DEVELOPER.enabled(self.couch_user.username)))
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
 
 
 class GlobalADMConfigTab(UITab):
@@ -1483,7 +1483,7 @@ class AdminTab(UITab):
     @property
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
-                and (IS_DEVELOPER.enabled(self.couch_user.username))):
+                and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
             return [format_submenu_context(_("System Info"),
                     url=reverse("system_info"))]
 
@@ -1528,7 +1528,7 @@ class AdminTab(UITab):
     def is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
-                 IS_DEVELOPER.enabled(self.couch_user.username)))
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
 
 
 class ExchangeTab(UITab):

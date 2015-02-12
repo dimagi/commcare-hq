@@ -3,7 +3,7 @@ from .models import (Message, METHOD_SMS, METHOD_SMS_CALLBACK,
     RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, CaseReminder,
     CaseReminderHandler)
 from corehq.apps.smsforms.app import submit_unfinished_form
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import XFormsSession, get_session_by_session_id
 from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
     CommCareMobileContactMixin, InvalidFormatException)
 from touchforms.formplayer.api import current_question
@@ -263,7 +263,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers):
         else:
             # Resend current question
             for session_id in reminder.xforms_session_ids:
-                session = XFormsSession.by_session_id(session_id)
+                session = get_session_by_session_id(session_id)
                 if session.end_time is None:
                     vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
                                              key=session.connection_id,

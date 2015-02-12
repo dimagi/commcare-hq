@@ -22,7 +22,7 @@ from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
 from custom.common import ALL_OPTION
 
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
@@ -38,6 +38,7 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
+from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -416,6 +417,42 @@ class SharedDataProvider(object):
     Data provider for report data that can be shared across rows in an instance
     of a report.
     """
+    vhnd_form_props = [
+        'attend_ANM',
+        'attend_ASHA',
+        'attend_cmg',
+        'big_weight_machine_avail',
+        'child_weight_machine_avail',
+        'func_bigweighmach',
+        'func_childweighmach',
+        'stock_ifatab',
+        'stock_measlesvacc',
+        'stock_ors',
+        'stock_zntab',
+    ]
+
+    def get_all_vhnd_forms(self):
+        key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
+        return get_db().view(
+            'reports_forms/all_forms',
+            startkey=key,
+            endkey=key+[{}],
+            reduce=False,
+            include_docs=True
+        ).all()
+
+    @property
+    @memoized
+    def case_owners(self):
+        q = (case_es.CaseES()
+             .domain(DOMAIN)
+             .case_type('vhnd')
+             .fields(['owner_id', '_id']))
+        return {
+            case['_id']: case['owner_id']
+            for case in q.run().hits
+            if (case.get('_id') and case.get('owner_id'))
+        }
 
     @property
     @memoized
@@ -429,18 +466,22 @@ class SharedDataProvider(object):
             }
         }
         """
-        # TODO: this will load one row per every VHND in history.
-        # If this gets too big we'll have to make the queries more targeted (which would be
-        # easy to do in the get_dates_in_range function) but if the dataset is small this will
-        # avoid significantly fewer DB trips.
-        # If things start getting slow or memory intensive this would be a good place to look.
-        data = VhndAvailabilitySqlData().data
+        forms = self.get_all_vhnd_forms()
         results = defaultdict(lambda: defaultdict(lambda: set()))
-        for (owner_id, date), row in data.iteritems():
-            if row['vhnd_available'] > 0:
-                for prop in VHND_PROPERTIES:
-                    if row[prop] == 1 or prop == 'vhnd_available':
-                        results[owner_id][prop].add(date)
+        for form in forms:
+            source = form['doc'].get('form', {})
+            raw_date = source.get('date_vhnd_held', None)
+            if not raw_date:
+                continue
+            vhnd_date = parser.parse(raw_date).date()
+            case_id = source.get('case', {}).get('@case_id')
+            # case_id might be for a deleted case :(
+            if case_id in self.case_owners:
+                owner_id = self.case_owners[case_id]
+                results[owner_id]['vhnd_available'].add(vhnd_date)
+                for prop in self.vhnd_form_props:
+                    if source.get(prop, None) == '1':
+                        results[owner_id][prop].add(vhnd_date)
         return results
 
     def get_dates_in_range(self, owner_id, startdate, enddate, prop='vhnd_available'):
@@ -1057,7 +1098,8 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             return DataTablesHeader(*headers)
 
         def rows():
-            for awc in map(AWCHealthStatus, self.awc_data().values()):
+            for awc_name, cases in self.awc_data().items():
+                awc = AWCHealthStatus(awc_name, cases)
                 row = []
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)
