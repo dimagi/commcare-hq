@@ -1,5 +1,4 @@
 import json
-import urllib
 import logging
 
 from django.contrib import messages
@@ -124,14 +123,14 @@ class LocationSettingsView(BaseCommTrackManageView):
                                             "multiple parent types, using {}"
                                             .format(parents[0])))
             if parents and parents[0]:
-                parent, _ = LocationType.objects.get_or_create(
+                parent, __ = LocationType.objects.get_or_create(
                     domain=self.domain,
                     name=parents[0],
                 )
             else:
                 parent = None
 
-            location_type, _ = LocationType.objects.get_or_create(
+            location_type, __ = LocationType.objects.get_or_create(
                 domain=self.domain,
                 name=name,
             )
@@ -141,14 +140,13 @@ class LocationSettingsView(BaseCommTrackManageView):
                 err = _('Location type code "{code}" is invalid. No spaces or '
                         'special characters are allowed. It has been replaced '
                         'with "{new_code}".')
-                messages.warning(request, err.format(code=code, new_code=cleaned_code))
+                messages.warning(request,
+                                 err.format(code=code, new_code=cleaned_code))
 
             location_type.code = code
             location_type.administrative = administrative
             location_type.parent_type = parent
             location_type.save()
-
-        #TODO add server-side input validation here (currently validated on client)
 
         for loc_type in payload['loc_types']:
             mk_loctype(**loc_type)

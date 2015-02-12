@@ -14,11 +14,12 @@ from couchdbkit.ext.django.schema import (
 from django.core.cache import cache
 from corehq.apps.appstore.models import SnapshotMixin
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import (
+    iter_docs, get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
+)
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.html import format_html
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs, apply_update, iter_bulk_delete
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
