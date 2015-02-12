@@ -333,9 +333,6 @@ class Domain(Document, SnapshotMixin):
             data["hr_name"] = data["slug"]
             del data["slug"]
 
-        if 'location_types' in data:
-            del data['location_types']
-
         if 'is_test' in data and isinstance(data["is_test"], bool):
             data["is_test"] = "true" if data["is_test"] else "false"
             should_save = True
