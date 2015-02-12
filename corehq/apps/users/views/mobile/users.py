@@ -7,6 +7,7 @@ import re
 from couchdbkit import ResourceNotFound
 
 from django.contrib.auth.forms import SetPasswordForm
+from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
@@ -21,7 +22,12 @@ from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
-from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    BillingAccountAdmin,
+    BillingAccountType,
+    EntryPoint,
+)
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import (
@@ -46,6 +52,7 @@ from dimagi.utils.html import format_html
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound, JSONReaderError, HeaderValueError
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
+from soil.exceptions import TaskFailedError
 from soil.util import get_download_context, expose_download
 from .custom_data_fields import UserFieldsView
 
@@ -456,7 +463,10 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
     @memoized
     def account(self):
         account = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.couch_user.username, account_type=BillingAccountType.USER_CREATED,
+            self.domain,
+            created_by=self.couch_user.username,
+            account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )[0]
         return account
 
@@ -776,7 +786,11 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 
 @require_can_edit_commcare_users
 def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
-    context = get_download_context(download_id, check_state=True)
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
     context.update({
         'on_complete_short': _('Bulk upload complete.'),
         'on_complete_long': _('Mobile Worker upload has finished'),
