@@ -8,18 +8,19 @@ from soil import DownloadBase
 
 @task
 def explode_case_task(user_id, domain, factor):
+    explode_cases(user_id, domain, factor, explode_case_task)
+
+
+def explode_cases(user_id, domain, factor, task=None):
     user = CommCareUser.get_by_user_id(user_id, domain)
     keys = [[domain, owner_id, False] for owner_id in user.get_owner_ids()]
     messages = list()
-    DownloadBase.set_progress(explode_case_task, 0, 0)
+    if task:
+        DownloadBase.set_progress(explode_case_task, 0, 0)
     count = 0
 
-    salt = uuid.uuid4().hex
     old_to_new = dict()
     child_cases = list()
-
-    def _id_transform(salt, old_id, index):
-        return hashlib.sha1(str(salt) + str(old_id) + str(index))
 
     # copy parents
     for case in CommCareCase.view('hqcase/by_owner',
@@ -30,14 +31,15 @@ def explode_case_task(user_id, domain, factor):
         if case.indices:
             child_cases.append(case)
             continue
-        old_to_new[case_.id] = list()
+        old_to_new[case._id] = list()
         for i in range(factor - 1):
-            new_case_id = _id_transform(salt, case._id, index)
+            new_case_id = uuid.uuid4().hex
             #add new parent ids to the old to new id mapping
-            old_to_new[case_.id].append(new_case_id)
+            old_to_new[case._id].append(new_case_id)
             submit_case(case, new_case_id, domain)
             count += 1
-            DownloadBase.set_progress(explode_case_task, count, 0)
+            if task:
+                DownloadBase.set_progress(explode_case_task, count, 0)
 
     while len(child_cases) > 0:
         # take the first case
@@ -59,15 +61,16 @@ def explode_case_task(user_id, domain, factor):
         if not can_process:
             continue
 
-        old_to_new[case_.id] = list()
+        old_to_new[case._id] = list()
         for i in range(factor - 1):
             # grab the parents for this round of exploding
-            parents = {k: v[i] for k, v in parent_ids}
-            new_case_id = _id_transform(salt, case._id, index)
-            old_to_new[case_.id].append(new_case_id)
+            parents = {k: v[i] for k, v in parent_ids.items()}
+            new_case_id = uuid.uuid4().hex
+            old_to_new[case._id].append(new_case_id)
             submit_case(case, new_case_id, domain, parents)
             count += 1
-            DownloadBase.set_progress(explode_case_task, count, 0)
+            if task:
+                DownloadBase.set_progress(explode_case_task, count, 0)
 
 
     messages.append("All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
