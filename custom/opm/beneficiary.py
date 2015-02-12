@@ -349,12 +349,12 @@ class OPMCaseRow(object):
             )
 
         if self.preg_month == 6:
-            if not self.is_service_available('vhnd_adult_scale_available', months=3):
+            if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
             return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
         elif self.preg_month == 9:
-            if not self.is_service_available('vhnd_adult_scale_available', months=3):
+            if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
             return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
@@ -400,7 +400,7 @@ class OPMCaseRow(object):
     @property
     def child_growth_calculated(self):
         if self.child_age and self.child_age % 3 == 0:
-            if not self.is_service_available('vhnd_child_scale_available', months=3):
+            if not self.is_service_available('func_childweighmach', months=3):
                 return True
 
             xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
@@ -413,7 +413,7 @@ class OPMCaseRow(object):
     def preg_received_ifa(self):
         if self.preg_month == 6:
             if self.block == "atri":
-                if not self.is_service_available('vhnd_ifa_available', months=3):
+                if not self.is_service_available('stock_ifatab', months=3):
                     return True
 
                 def _from_case():
@@ -430,7 +430,7 @@ class OPMCaseRow(object):
     @property
     def child_received_ors(self):
         if self.child_age % 3 == 0:
-            if not self.is_service_available('vhnd_ors_available', months=3):
+            if not self.is_service_available('stock_ors', months=3):
                 return True
 
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
@@ -467,7 +467,7 @@ class OPMCaseRow(object):
     @property
     def child_received_measles_vaccine(self):
         if self.child_age == 12:
-            if not self.is_service_available('vhnd_measles_vacc_available', months=3):
+            if not self.is_service_available('stock_measlesvacc', months=3):
                 return True
 
             def _test(form):

@@ -57,7 +57,7 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
 
 
 class ViewReportFilter(BaseSingleOptionFilter):
-    default_text = ugettext_noop("All Stock Information")
+    default_text = ugettext_noop("Product Availability")
     slug = 'report_type'
     label = 'View'
 
@@ -65,7 +65,7 @@ class ViewReportFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('stockouts', 'Stockouts'),
-            ('pa', 'Product Availability')
+            ('asi', 'All Stock Information')
         ]
 
 

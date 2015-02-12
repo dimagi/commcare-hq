@@ -1,15 +1,18 @@
+import json
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.domain.decorators import domain_admin_required
 from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.models import EWSGhanaConfig
+from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     EWS_FACILITIES
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction
 from custom.ilsgateway.views import GlobalStats, BaseConfigView
 from custom.logistics.tasks import stock_data_task
 from custom.logistics.tasks import resync_webusers_passwords_task
+from dimagi.utils.dates import force_to_datetime
 
 
 class EWSGlobalStats(GlobalStats):
@@ -64,3 +67,19 @@ def ews_resync_passwords(request, domain):
     endpoint = GhanaEndpoint.from_config(config)
     resync_webusers_passwords_task.delay(config, endpoint)
     return HttpResponse('OK')
+
+
+@require_GET
+def inventory_management(request, domain):
+
+    inventory_management_ds = InventoryManagementData(
+        config=dict(
+            program=None, product=None, domain=domain,
+            startdate=force_to_datetime(request.GET.get('startdate')),
+            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id')
+        )
+    )
+    return HttpResponse(
+        json.dumps(inventory_management_ds.charts[0].data),
+        mimetype='application/json'
+    )

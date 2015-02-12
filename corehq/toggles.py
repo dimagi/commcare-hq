@@ -56,7 +56,7 @@ class PredicatablyRandomToggle(StaticToggle):
     """
 
     def __init__(self, slug, label, namespace, randomness):
-        super(PredicatablyRandomToggle, self).__init__(slug, label, [namespace])
+        super(PredicatablyRandomToggle, self).__init__(slug, label, list(namespace))
         assert namespace, 'namespace must be defined!'
         self.namespace = namespace
         assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
@@ -120,11 +120,6 @@ APP_BUILDER_INCLUDE_MULTIMEDIA_ODK = StaticToggle(
     'Include multimedia in ODK deploy'
 )
 
-PRBAC_DEMO = StaticToggle(
-    'prbacdemo',
-    'Roles and permissions'
-)
-
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
@@ -140,7 +135,6 @@ DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -192,12 +186,10 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-
 VIEW_SYNC_HISTORY = StaticToggle(
     'sync_history_report',
     'Enable sync history report'
 )
-
 
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
@@ -217,10 +209,11 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-BATCHED_RESTORE = StaticToggle(
+BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    0.1
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -233,11 +226,6 @@ CAN_EDIT_EULA = StaticToggle(
     'can_edit_eula',
     "Whether this user can set the custom eula and data sharing internal project options. "
     "This should be a small number of DIMAGI ONLY users",
-)
-
-VELLUM_HELP_TEXT = StaticToggle(
-    'add_help_text',
-    "Adds a help text in the form builder"
 )
 
 STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
@@ -280,6 +268,12 @@ CASEDETAILS_IN_CLOUDCARE_FORMS = StaticToggle(
     'case_details_in_cloudcare_forms',
     'Display details of the selected case on top in CloudCare if a form uses Case Management',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+LOCATION_TYPE_STOCK_RATES = StaticToggle(
+    'location_type_stock_rates',
+    "Specify stock rates per location type.",
+    [NAMESPACE_DOMAIN]
 )
 
 APP_SUMMARY = StaticToggle(
