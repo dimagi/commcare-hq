@@ -177,12 +177,14 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         r = self.report_context['reports'][0]['report_table']
         return [self._export_table(r['title'], r['headers'], r['rows'])]
 
+    # Export for Facility Page Report, which occurs in every multireport
     def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
         def _unformat_row(row):
             return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
 
         table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
+        # Removing html icon tag from MOS column
         for row in rows:
             row[1] = row[1][:row[1].index('<')]
         replace = ''
