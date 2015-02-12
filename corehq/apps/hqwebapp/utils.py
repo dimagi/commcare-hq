@@ -313,4 +313,4 @@ def format_second_level_context(title, url, menu):
 
 def divider_and_more_menu(url):
     return [format_submenu_context('placeholder', is_divider=True),
-            format_submenu_context(_('More'), url=url)]
+            format_submenu_context(_('View All'), url=url)]

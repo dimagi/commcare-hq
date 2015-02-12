@@ -1,5 +1,4 @@
 from django.conf.urls import *
-from corehq.apps.hqadmin.views import PrimeRestoreCache
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import FlagBrokenBuilds
 
@@ -28,7 +27,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^reset_pillow_checkpoint/$', 'reset_pillow_checkpoint', name="reset_pillow_checkpoint"),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
-    url(r'^prime_restore/$', PrimeRestoreCache.as_view(), name="prime_restore_cache"),
     (r'^api/', include(admin_api_urlpatterns)),
 
     AdminReportDispatcher.url_pattern(),

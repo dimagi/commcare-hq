@@ -73,20 +73,26 @@ class ProductAvailabilityData(EWSData):
             def convert_product_data_to_stack_chart(rows, chart_config):
                 ret_data = []
                 for k in ['Stocked out', 'Not Stocked out', 'No Stock Data']:
+
+                    def calculate_percent(x, y):
+                        return float(x) / float((y or 1))
+
                     datalist = []
                     for row in rows:
+                        total = row['total']
                         if k == 'No Stock Data':
-                            datalist.append([row['product_code'], row['without_data']])
+                            datalist.append([row['product_code'], calculate_percent(row['without_data'], total)])
                         elif k == 'Stocked out':
-                            datalist.append([row['product_code'], row['without_stock']])
+                            datalist.append([row['product_code'], calculate_percent(row['without_stock'], total)])
                         elif k == 'Not Stocked out':
-                            datalist.append([row['product_code'], row['with_stock']])
+                            datalist.append([row['product_code'], calculate_percent(row['with_stock'], total)])
                     ret_data.append({'color': chart_config['label_color'][k], 'label': k, 'data': datalist})
                 return ret_data
-            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
+            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             chart.stacked = False
+            chart.forceY = [0, 1]
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1]}

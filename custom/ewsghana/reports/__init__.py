@@ -71,6 +71,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
     split = True
+    base_template = 'ewsghana/base_template.html'
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
