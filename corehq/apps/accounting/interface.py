@@ -69,6 +69,7 @@ class AccountingInterface(AddItemInterface):
             DataTablesColumn("Account Type"),
             DataTablesColumn("Active Status"),
             DataTablesColumn("Dimagi Contact"),
+            DataTablesColumn("Entry Point"),
         )
 
     @property
@@ -115,6 +116,7 @@ class AccountingInterface(AddItemInterface):
                 account.account_type,
                 "Active" if account.is_active else "Inactive",
                 account.dimagi_contact,
+                account.entry_point,
             ])
         return rows
 
@@ -174,6 +176,8 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("End Date"),
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
+            DataTablesColumn("Type"),
+            DataTablesColumn("Pro-Bono"),
         )
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
@@ -261,6 +265,8 @@ class SubscriptionInterface(AddItemInterface):
                 subscription.date_end,
                 subscription.do_not_invoice,
                 created_by,
+                subscription.service_type,
+                subscription.pro_bono_status,
             ]
             if not self.is_rendered_as_email:
                 columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
