@@ -527,7 +527,7 @@ class StockTransaction(object):
                 quantity = value.attrib.get('quantity')
                 # make sure quantity is not an empty, unset node value
                 if str(quantity).strip() != '':
-                    for txn in _yield_txns(section_id, flaot(quantity)):
+                    for txn in _yield_txns(section_id, float(quantity)):
                         yield txn
                 else:
                     _log_blank_quantity_error(config, section_id)
