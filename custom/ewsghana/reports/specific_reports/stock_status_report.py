@@ -273,6 +273,7 @@ class StockStatus(MultiReport):
     fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
     split = False
     exportable = True
+    is_exportable = True
 
     @property
     def report_config(self):
@@ -323,3 +324,35 @@ class StockStatus(MultiReport):
                 MonthOfStockProduct(config=config)
             ]
 
+    @property
+    def export_table(self):
+        if self.is_reporting_type():
+            return super(StockStatus, self).export_table
+
+        report_type = self.request.GET.get('report_type', None)
+        if report_type == 'stockouts' or not report_type:
+            r = self.report_context['reports'][1]['report_table']
+            return [self._export(r['title'], r['headers'], r['rows'])]
+        else:
+            reports = [self.report_context['reports'][1]['report_table'],
+                       self.report_context['reports'][3]['report_table']]
+            return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
+
+    def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        replace = ''
+
+        for k, v in enumerate(table[0]):
+            if v != ' ':
+                replace = v
+            else:
+                table[0][k] = replace
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]

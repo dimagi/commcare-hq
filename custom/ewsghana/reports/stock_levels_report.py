@@ -290,10 +290,10 @@ class InventoryManagementData(EWSData):
         ).order_by('last_modified_date')
 
         rows = {}
-        product_names = {product.product_id: product.name for product in SQLProduct.objects.filter(
+        products = {product.product_id: product for product in SQLProduct.objects.filter(
             product_id__in=self.get_products())}
         for state in stock_states:
-            product = product_names[state.product_id]
+            product = products[state.product_id]
             product_name = product.name + ' (%s)' % product.code
             rows[product_name] = []
             weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
