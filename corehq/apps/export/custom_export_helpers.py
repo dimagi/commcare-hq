@@ -295,6 +295,7 @@ class FormCustomExportHelper(CustomExportHelper):
             for col in case_cols:
                 if col['index'] == FORM_CASE_ID_PATH:
                     col['tag'], col['show'], col['selected'] = 'deleted', False, False
+                    col['allOptions'] = []
         elif not case_cols:
             column_conf.append({
                 'index': FORM_CASE_ID_PATH,
@@ -303,7 +304,10 @@ class FormCustomExportHelper(CustomExportHelper):
                 'selected': True,
                 'transform': None,
                 'tag': None,
-                'display': ''
+                'display': '',
+                'doc_type': None,
+                'allOptions': None,
+                'options': []
             })
 
         # This adds [info] location.#text to the standard list of columns to export, even if no forms have been

@@ -1509,6 +1509,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
+    use_case_tiles = params.get('useCaseTiles', None)
+    persist_tile_on_forms = params.get("persistTileOnForms", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1527,16 +1529,19 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     if short is not None:
         detail.short.columns = map(DetailColumn.wrap, short)
+        if use_case_tiles is not None:
+            detail.short.use_case_tiles = use_case_tiles
+        if persist_tile_on_forms is not None:
+            detail.short.persist_tile_on_forms = persist_tile_on_forms
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
-    if tabs is not None and long is not None:
-        # Tabs only apply to the case detail page
-        detail.long.tabs = map(DetailTab.wrap, tabs)
+        if tabs is not None:
+            detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
-    if custom_xml != None:
+    if custom_xml is not None:
         detail.short.custom_xml = custom_xml
     if sort_elements is not None:
         detail.short.sort_elements = []

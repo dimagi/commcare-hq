@@ -3,12 +3,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
-{% endblock %}
-
 {% block reportcontent %}
 {% block pretable %}
     {% if not report.needs_filters %}

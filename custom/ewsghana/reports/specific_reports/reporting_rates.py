@@ -19,6 +19,9 @@ from dimagi.utils.dates import DateSpan
 
 
 # TODO Implement this when alerts (moving from EWS) will be finished
+from dimagi.utils.dates import DateSpan
+
+
 class AlertsData(EWSData):
     pass
 

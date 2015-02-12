@@ -68,6 +68,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     split = True
     exportable = True
     is_exportable = False
+    base_template = 'ewsghana/base_template.html'
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):

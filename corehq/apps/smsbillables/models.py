@@ -98,6 +98,10 @@ class SmsGatewayFee(models.Model):
         criteria = SmsGatewayFeeCriteria.get_most_specific(backend_api_id, direction,
                                                            backend_instance=backend_instance,
                                                            country_code=country_code)
+        return cls.get_by_criteria_obj(criteria)
+
+    @classmethod
+    def get_by_criteria_obj(cls, criteria):
         if not criteria:
             return None
         return cls.objects.filter(criteria=criteria.id).latest('date_created')

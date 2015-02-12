@@ -180,6 +180,41 @@ class PaymentMethodType(object):
     )
 
 
+class SubscriptionType(object):
+    CONTRACTED = "CONTRACTED"
+    SELF_SERVICE = "SELF_SERVICE"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (CONTRACTED, "Contracted"),
+        (SELF_SERVICE, "Self-service"),
+        (NOT_SET, "Not Set"),
+    )
+
+
+class ProBonoStatus(object):
+    YES = "YES"
+    NO = "NO"
+    DISCOUNTED = "DISCOUNTED"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (YES, "Yes"),
+        (NO, "No"),
+        (DISCOUNTED, "Discounted"),
+        (NOT_SET, "Not Set"),
+    )
+
+
+class EntryPoint(object):
+    CONTRACTED = "CONTRACTED"
+    SELF_STARTED = "SELF_STARTED"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (CONTRACTED, "Contracted"),
+        (SELF_STARTED, "Self-started"),
+        (NOT_SET, "Not Set"),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
@@ -257,6 +292,11 @@ class BillingAccount(models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
+    entry_point = models.CharField(
+        max_length=25,
+        default=EntryPoint.NOT_SET,
+        choices=EntryPoint.CHOICES,
+    )
 
     @property
     def balance(self):
@@ -266,7 +306,8 @@ class BillingAccount(models.Model):
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
-                                        created_by_invoicing=False):
+                                        created_by_invoicing=False,
+                                        entry_point=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -276,12 +317,14 @@ class BillingAccount(models.Model):
         if account is None:
             is_new = True
             account_type = account_type or BillingAccountType.INVOICE_GENERATED
+            entry_point = entry_point or EntryPoint.NOT_SET
             account = BillingAccount(
                 name="Account for Project %s" % domain,
                 created_by=created_by,
                 created_by_domain=domain,
                 currency=Currency.get_default(),
                 account_type=account_type,
+                entry_point=entry_point,
             )
             account.save()
             if not created_by_invoicing:
@@ -723,6 +766,16 @@ class Subscription(models.Model):
     do_not_invoice = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
+    service_type = models.CharField(
+        max_length=25,
+        choices=SubscriptionType.CHOICES,
+        default=SubscriptionType.NOT_SET,
+    )
+    pro_bono_status = models.CharField(
+        max_length=25,
+        choices=ProBonoStatus.CHOICES,
+        default=SubscriptionType.NOT_SET,
+    )
 
     def __str__(self):
         return ("Subscription to %(plan_version)s for %(subscriber)s. "
@@ -809,7 +862,8 @@ class Subscription(models.Model):
                             date_delay_invoicing=None, do_not_invoice=False,
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
-                            web_user=None, note=None, adjustment_method=None):
+                            web_user=None, note=None, adjustment_method=None,
+                            service_type=None, pro_bono_status=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -838,6 +892,10 @@ class Subscription(models.Model):
         self.do_not_invoice = do_not_invoice
         self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
+        if service_type is not None:
+            self.service_type = service_type
+        if pro_bono_status is not None:
+            self.pro_bono_status = pro_bono_status
         self.save()
 
         SubscriptionAdjustment.record_adjustment(
@@ -846,7 +904,8 @@ class Subscription(models.Model):
         )
 
     def change_plan(self, new_plan_version, date_end=None,
-                    note=None, web_user=None, adjustment_method=None):
+                    note=None, web_user=None, adjustment_method=None,
+                    service_type=None, pro_bono_status=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -873,6 +932,8 @@ class Subscription(models.Model):
             date_delay_invoicing=self.date_delay_invoicing,
             is_active=self.is_active,
             do_not_invoice=self.do_not_invoice,
+            service_type=(service_type or SubscriptionType.NOT_SET),
+            pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
         )
         new_subscription.save()
 
@@ -926,7 +987,8 @@ class Subscription(models.Model):
         )
 
     def renew_subscription(self, date_end=None, note=None, web_user=None,
-                           adjustment_method=None):
+                           adjustment_method=None,
+                           service_type=None, pro_bono_status=None):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
@@ -964,6 +1026,10 @@ class Subscription(models.Model):
             date_start=self.date_end,
             date_end=date_end,
         )
+        if service_type is not None:
+            renewed_subscription.service_type = service_type
+        if pro_bono_status is not None:
+            renewed_subscription.pro_bono_status = pro_bono_status
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.save()
