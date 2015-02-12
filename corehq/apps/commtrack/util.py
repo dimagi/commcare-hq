@@ -156,13 +156,14 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
         ('village', True),
         ('outlet', False),
     ]:
-        location_type = LocationType(
+        location_type, _ = LocationType.objects.get_or_create(
             domain=domain.name,
             name=name,
-            parent_type=previous,
-            administrative=administrative,
+            defaults={
+                'parent_type': previous,
+                'administrative': administrative,
+            },
         )
-        location_type.save()
         previous = location_type
 
     # Enable feature flags if necessary - this is required by exchange

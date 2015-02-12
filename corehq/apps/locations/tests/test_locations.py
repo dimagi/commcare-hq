@@ -30,6 +30,7 @@ class LocationProducts(TestCase):
     def tearDown(self):
         # domain delete cascades to everything else
         self.domain.delete()
+        LocationType.objects.filter(domain=self.domain.name).delete()
 
     def test_start_state(self):
         self.assertTrue(self.loc.stocks_all_products)
