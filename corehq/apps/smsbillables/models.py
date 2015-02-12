@@ -77,13 +77,16 @@ class SmsGatewayFee(models.Model):
 
     @classmethod
     def create_new(cls, backend_api_id, direction, amount,
-                   currency=None, backend_instance=None, country_code=None, save=True):
+                   currency=None, backend_instance=None, country_code=None, save=True,
+                   fee_class=None, criteria_class=None):
+        fee_class = fee_class or cls
+        criteria_class = criteria_class or SmsGatewayFeeCriteria
         currency = currency or Currency.get_default()
-        criteria, _ = SmsGatewayFeeCriteria.objects.get_or_create(
+        criteria, _ = criteria_class.objects.get_or_create(
             backend_api_id=backend_api_id, direction=direction,
             backend_instance=backend_instance, country_code=country_code
         )
-        new_fee = SmsGatewayFee(
+        new_fee = fee_class(
             currency=currency,
             amount=amount,
             criteria=criteria
