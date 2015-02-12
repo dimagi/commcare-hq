@@ -1659,8 +1659,8 @@ class RemindersListView(BaseMessagingSectionView):
 
     @property
     def reminders(self):
-        all_handlers = CaseReminderHandler.get_handlers(self.domain)
-        all_handlers = filter(lambda x : x.reminder_type == REMINDER_TYPE_DEFAULT, all_handlers)
+        all_handlers = CaseReminderHandler.get_handlers(self.domain,
+            reminder_type_filter=REMINDER_TYPE_DEFAULT)
         if not self.can_use_survey:
             all_handlers = filter(
                 lambda x: x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
