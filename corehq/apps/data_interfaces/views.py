@@ -4,6 +4,8 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -162,6 +164,12 @@ class ArchiveFormView(DataInterfaceSection):
 
     ONE_MB = 1000000
     MAX_SIZE = 3 * ONE_MB
+
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
+            raise Http404()
+        return super(ArchiveFormView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

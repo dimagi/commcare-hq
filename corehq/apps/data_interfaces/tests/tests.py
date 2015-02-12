@@ -5,9 +5,12 @@ from django.test import TestCase
 from django.test import Client
 
 from couchforms.models import XFormInstance
+from django_prbac.models import UserRole, Role, Grant
 from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms
 from dimagi.utils.excel import WorkbookJSONReader
+from corehq import privileges, toggles
+from corehq.apps.accounting import generator
 
 THISDIR = dirname(abspath(__file__))
 BASE_PATH = join(THISDIR, 'files')
@@ -26,28 +29,52 @@ class BulkArchiveForms(TestCase):
         email = "ben@domain.com"
 
         self.client = Client()
-        self.user = WebUser.create(self.domain_name, username, self.password, email)
-        self.user.is_superuser = True
-        self.user.save()
+        self.user = WebUser.create(self.domain_name, username, self.password, email, is_admin=True)
         self.url = '/a/{}/data/edit/archive_forms/'.format(self.domain_name)
 
+        django_user = self.user.get_django_user()
+        try:
+            self.user_role = UserRole.objects.get(user=django_user)
+        except UserRole.DoesNotExist:
+            user_privs = Role.objects.get_or_create(
+                name="Privileges for %s" % django_user.username,
+                slug="%s_privileges" % django_user.username,
+            )[0]
+            self.user_role = UserRole.objects.create(
+                user=django_user,
+                role=user_privs,
+            )
+
+        # Setup default roles and plans
+        generator.instantiate_accounting_for_tests()
+
+        self.bulk_role = Role.objects.filter(slug=privileges.BULK_CASE_MANAGEMENT)[0]
+        Grant.objects.create(from_role=self.user_role.role, to_role=self.bulk_role)
+
         self.client.login(username=self.user.username, password=self.password)
+
+        toggles.BULK_ARCHIVE_FORMS.set(self.user.username, True)
 
     def tearDown(self):
         self.user.delete()
 
     def test_bulk_archive_get_form(self):
 
-        # Logged in and super user
+        # Logged in
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['bulk_upload']['download_url'],
                          '/static/data_interfaces/files/forms_bulk_example.xlsx')
 
-        # Logged out user
-        self.client.logout()
+        grant = Grant.objects.get(
+            from_role=self.user_role.role,
+            to_role=self.bulk_role
+        )
+        grant.delete()
+
+        # Revoked privileges should not render form
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 302, "Should redirect to login")
+        self.assertFalse('bulk_upload' in response.context)
 
     def test_bulk_archive_missing_file(self):
         response = self.client.post(self.url, follow=True)
