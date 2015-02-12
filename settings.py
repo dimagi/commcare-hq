@@ -1236,7 +1236,8 @@ PILLOWTOPS = {
 
 
 CUSTOM_DATA_SOURCES = [
-    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json')
+    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
+    os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
 ]
 
 
