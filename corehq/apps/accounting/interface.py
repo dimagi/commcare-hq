@@ -159,6 +159,8 @@ class SubscriptionInterface(AddItemInterface):
         'corehq.apps.accounting.interface.DoNotInvoiceFilter',
         'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
         'corehq.apps.accounting.interface.TrialStatusFilter',
+        'corehq.apps.accounting.interface.SubscriptionTypeFilter',
+        'corehq.apps.accounting.interface.ProBonoStatusFilter',
     ]
     hide_filters = False
 
@@ -245,6 +247,18 @@ class SubscriptionInterface(AddItemInterface):
         if trial_status_filter is not None:
             is_trial = trial_status_filter == TrialStatusFilter.TRIAL
             filters.update(is_trial=is_trial)
+
+        service_type = SubscriptionTypeFilter.get_value(self.request, self.domain)
+        if service_type is not None:
+            filters.update(
+                service_type=service_type,
+            )
+
+        pro_bono_status = ProBonoStatusFilter.get_value(self.request, self.domain)
+        if pro_bono_status is not None:
+            filters.update(
+                pro_bono_status=pro_bono_status,
+            )
 
         for subscription in Subscription.objects.filter(**filters):
             try:

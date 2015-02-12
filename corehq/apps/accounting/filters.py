@@ -125,6 +125,20 @@ class TrialStatusFilter(BaseSingleOptionFilter):
     ]
 
 
+class SubscriptionTypeFilter(BaseSingleOptionFilter):
+    slug = 'service_type'
+    label = _("Type")
+    default_text = _("Any")
+    options = SubscriptionType.CHOICES
+
+
+class ProBonoStatusFilter(BaseSingleOptionFilter):
+    slug = 'pro_bono_status'
+    label = _("Pro-Bono")
+    default_text = _("Any")
+    options = ProBonoStatus.CHOICES
+
+
 class IsHiddenFilter(BaseSingleOptionFilter):
     slug = 'is_hidden'
     label = _('Is Hidden')
