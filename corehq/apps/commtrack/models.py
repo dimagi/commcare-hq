@@ -504,33 +504,41 @@ class StockTransaction(object):
                     yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
                                section_id=section_id, quantity=quantity)
 
-        def _log_blank_quantity_error(config, section_id):
-            logging.error((
-                "Blank transaction quantity submitted on domain %s for "
-                "a %s ledger" % (config.domain, section_id)
-            ))
+        def _quantity_or_none(value, config, section_id):
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                logging.error((
+                    "Non-numeric quantity submitted on domain %s for "
+                    "a %s ledger" % (config.domain, section_id)
+                ))
+                return None
 
         section_id = action_node.attrib.get('section-id', None)
         grouped_entries = section_id is not None
         if grouped_entries:
-            quantity = product_node.attrib.get('quantity')
+            quantity = _quantity_or_none(
+                product_node.attrib.get('quantity'),
+                config,
+                section_id
+            )
             # make sure quantity is not an empty, unset node value
-            if str(quantity).strip() != '':
-                for txn in _yield_txns(section_id, float(quantity)):
+            if quantity is not None:
+                for txn in _yield_txns(section_id, quantity):
                     yield txn
-            else:
-                _log_blank_quantity_error(config, section_id)
         else:
             values = [child for child in product_node]
             for value in values:
                 section_id = value.attrib.get('section-id')
-                quantity = value.attrib.get('quantity')
+                quantity = _quantity_or_none(
+                    value.attrib.get('quantity'),
+                    config,
+                    section_id
+                )
                 # make sure quantity is not an empty, unset node value
-                if str(quantity).strip() != '':
-                    for txn in _yield_txns(section_id, float(quantity)):
+                if quantity is not None:
+                    for txn in _yield_txns(section_id, quantity):
                         yield txn
-                else:
-                    _log_blank_quantity_error(config, section_id)
 
     def to_xml(self, E=None, **kwargs):
         if not E:
