@@ -208,10 +208,11 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
     return [c._id for c in filtered_cases]
 
 
-def make_creating_casexml(case, new_case_id, new_parent_ids=dict()):
+def make_creating_casexml(case, new_case_id, new_parent_ids=None):
+    new_parent_ids = new_parent_ids or {}
     old_case_id = case._id
     case._id = new_case_id
-    local_move_back = dict()
+    local_move_back = {}
     for index in case.indices:
         new = new_parent_ids[index.referenced_id]
         old = index.referenced_id
