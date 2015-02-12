@@ -34,14 +34,19 @@ def explode_cases(user_id, domain, factor, task=None):
         old_to_new[case._id] = list()
         for i in range(factor - 1):
             new_case_id = uuid.uuid4().hex
-            #add new parent ids to the old to new id mapping
+            # add new parent ids to the old to new id mapping
             old_to_new[case._id].append(new_case_id)
             submit_case(case, new_case_id, domain)
             count += 1
             if task:
                 DownloadBase.set_progress(explode_case_task, count, 0)
 
+    max_iterations = len(child_cases) ** 2
+    iterations = 0
     while len(child_cases) > 0:
+        if iterations > max_iterations:
+            raise Exception('cases had inconsistent references to each other')
+        iterations += 1
         # take the first case
         case = child_cases.pop(0)
         can_process = True
@@ -72,10 +77,10 @@ def explode_cases(user_id, domain, factor, task=None):
             if task:
                 DownloadBase.set_progress(explode_case_task, count, 0)
 
-
     messages.append("All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
 
     return {'messages': messages}
+
 
 def submit_case(case, new_case_id, domain, new_parent_ids=dict()):
     case_block, attachments = make_creating_casexml(case, new_case_id, new_parent_ids)
