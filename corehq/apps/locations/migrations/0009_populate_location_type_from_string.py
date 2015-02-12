@@ -3,7 +3,6 @@ from south.v2 import DataMigration
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.database import get_db, iter_docs
 from dimagi.utils.chunked import chunked
-from corehq.apps.domain.models import Domain
 
 
 EXCLUDE_DOMAINS = (
@@ -22,8 +21,8 @@ class Migration(DataMigration):
 
     @memoized
     def domain_loc_types(self, domain):
-        # I need the unwrapped domain doc, and get_by_name is cached anyways...
-        domain = get_db().get(Domain.get_by_name(domain)._id)
+        domain = get_db().view("domain/domains", key=domain, reduce=False,
+                               include_docs=True).one()
         return {
             # It looks like code is what I should use, not name
             loc_type['code']: loc_type
@@ -86,8 +85,9 @@ class Migration(DataMigration):
 
         # Clean the 'location_types' field off all domains.
         # Note that this is not reversible
-        all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
         db = get_db()
+        all_domain_ids = [d['id'] for d in db.view("domain/not_snapshots",
+                                                   include_docs=False).all()]
         for domain_docs in chunked(iter_docs(db, all_domain_ids), 100):
             for domain_doc in domain_docs:
                 if 'location_types' in domain_doc:
@@ -101,8 +101,9 @@ class Migration(DataMigration):
         """
         self.orm = orm
         for loc in self.iter_relevant_locations():
-            loc.tmp_location_type = loc.location_type.code
-            loc.save()
+            if loc.location_type:
+                loc.tmp_location_type = loc.location_type.code
+                loc.save()
 
     models = {
         u'locations.locationtype': {

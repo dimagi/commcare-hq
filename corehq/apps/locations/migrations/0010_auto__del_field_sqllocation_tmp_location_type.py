@@ -21,7 +21,11 @@ class Migration(SchemaMigration):
         db.create_index(u'locations_locationtype', ['code'])
 
         # Adding field 'SQLLocation.tmp_location_type'
-        db.add_column(u'locations_sqllocation', 'tmp_location_type', self.gf('django.db.models.fields.CharField')(max_length=255, null=True), keep_default=False)
+        db.add_column(
+            u'locations_sqllocation', 'tmp_location_type',
+            self.gf('django.db.models.fields.CharField')(max_length=255, null=True),
+            keep_default=False
+        )
 
 
     models = {
