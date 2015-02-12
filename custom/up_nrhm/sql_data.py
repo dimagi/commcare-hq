@@ -1,11 +1,87 @@
-from sqlagg.columns import CountUniqueColumn
+from sqlagg.base import CustomQueryColumn, QueryMeta
+from sqlagg.columns import CountUniqueColumn, SumWhen
 from sqlagg.filters import BETWEEN, EQ, GTE, LTE
-from sqlagg.queries.alchemy_extensions import InsertFromSelect
 import sqlalchemy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.models import CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name, get_indicator_table
-from corehq.db import Session
+
+DOMAIN = 'up-nrhm'
+
+TABLE_ID = 'asha_facilitators'
+
+
+class FunctionalityChecklistMeta(QueryMeta):
+    def __init__(self, table_name, filters, group_by):
+        super(FunctionalityChecklistMeta, self).__init__(table_name, filters, group_by)
+        self.columns = []
+
+    def append_column(self, column):
+        self.columns.append(column.sql_column)
+
+    def get_asha_table(self, metadata):
+        config = CustomDataSourceConfiguration.by_id(CustomDataSourceConfiguration.get_doc_id(TABLE_ID))
+        return get_indicator_table(config, custom_metadata=metadata)
+
+    def real_table_name(self):
+        return get_table_name(DOMAIN, self.table_name)
+
+    def execute(self, metadata, connection, filter_values):
+        """
+        select
+            sum(case when hv_fx_vhnd = 1 then 1 else 0 end) as hv_fx_vhnd,
+            sum(case when hv_fx_dots = 1 then 1 else 0 end) as hv_fx_dots
+        from "config_report_up-nrhm_asha_facilitators_faeb40fd" rd,
+            (
+                select max(date) date, case_id as cid
+                from "config_report_up-nrhm_asha_facilitators_faeb40fd"
+                where date between '2015-01-01' and '2015-02-01'
+                group by case_id
+            ) as max
+        where
+            case_id = max.cid and rd.date = max.date
+        """
+        asha_table = self.get_asha_table(metadata)
+
+        max_date_query = sqlalchemy.select([
+            sqlalchemy.func.max(asha_table.c.date).label('date'),
+            asha_table.c.case_id.label('case_id')
+        ]).where(
+            asha_table.c.date.between(filter_values['startdate'], filter_values['enddate'])
+        ).group_by(
+            asha_table.c.case_id
+        )
+
+        max_date_subquery = sqlalchemy.alias(max_date_query, 'max_date')
+
+        checklist_query = sqlalchemy.select()
+        for column in self.columns:
+            checklist_query.append_column(column.build_column(asha_table))
+
+        checklist_query = checklist_query.where(
+            asha_table.c.case_id == max_date_subquery.c.case_id
+        ).where(
+            asha_table.c.date == max_date_subquery.c.date
+        )
+
+        return connection.execute(checklist_query, **filter_values).fetchall()
+
+
+class FunctionalityChecklistColumn(CustomQueryColumn):
+    query_cls = FunctionalityChecklistMeta
+    name = "functionality_checklist"
+
+    def __init__(self, key, whens, *args, **kwargs):
+        self.whens = whens
+        super(FunctionalityChecklistColumn, self).__init__(key, *args, **kwargs)
+
+    @property
+    def sql_column(self):
+        return SumWhen(self.key, whens=self.whens, else_=0, alias=self.alias).sql_column
+
+    @property
+    def column_key(self):
+        return self.name, self.table_name, str(self.filters), str(self.group_by)
 
 
 class ASHAFacilitatorsData(SqlData):
@@ -134,104 +210,31 @@ class ASHAFacilitatorsData(SqlData):
 
 
 class ASHAFacilitatorsDataNew(SqlData):
-    """
-    CREATE TEMPORARY TABLE asha AS
-    select case_id, hv_fx_vhnd = 1 as hv_fx_vhnd from "config_report_up-nrhm_asha_facilitators_faeb40fd" rd,
-    (
-        select max(date) date, case_id as cid
-        from "config_report_up-nrhm_asha_facilitators_faeb40fd"
-        where date between '2015-01-01' and '2015-02-01'
-        group by case_id
-        ) as max
-
-    where case_id = max.cid and rd.date = max.date and case_id = 'b77bc08a-6453-43b1-8d17-6d9d9e45feac'
-
-
-    select case_id, count(case_id)
-        from "config_report_up-nrhm_asha_facilitators_faeb40fd"
-        where date between '2015-01-01' and '2015-02-01'
-        group by case_id
-
-    select *
-    from "config_report_up-nrhm_asha_facilitators_faeb40fd"
-    where case_id = 'b77bc08a-6453-43b1-8d17-6d9d9e45feac'
-
-    "2015-01-03", hv_fx_vhnd = 0
-    "2015-01-21", hv_fx_vhnd = 88
-
-
-    select 1 FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n ON n.oid
-    = c.relnamespace
-    where n.nspname like 'pg_temp_%' AND pg_catalog.pg_table_is_visible(c.oid)
-    AND Upper(relname) = Upper('asaha');
-
-    """
     slug = 'asha_facilitators'
     title = 'ASHA Facilitators report'
     show_total = False
 
     @property
     def table_name(self):
-        return get_table_name(self.config['domain'], 'asha_facilitators')
-
-    def _get_temp_table_name(self):
-        start_date = self.config["startdate"].strftime("%Y-%m-%d")
-        end_date = self.config["enddate"].strftime("%Y-%m-%d")
-        return "tmp_{name}_{start}_{end}".format(
-            name=self.table_name,
-            start=start_date,
-            end=end_date
-        )
+        return get_table_name(self.config['domain'], self.slug)
 
     @property
     def columns(self):
         return [
-            sqlalchemy.Column('hv_fx_vhnd', sqlalchemy.BOOLEAN)
+            DatabaseColumn(
+                "Attending VHNDs/Promoting immunization",
+                FunctionalityChecklistColumn('hv_fx_vhnd', whens={1: 1}),
+            ),
+            DatabaseColumn(
+                "Acting as DOTS provider",
+                FunctionalityChecklistColumn('hv_fx_dots', whens={1: 1}),
+            ),
         ]
 
-    def get_sql_table(self, metadata):
-        config = CustomDataSourceConfiguration.by_id(CustomDataSourceConfiguration.get_doc_id(self.slug))
-        return get_indicator_table(config, custom_metadata=metadata)
+    @property
+    def filters(self):
+        return []
 
-    def data(self):
-        session = Session()
-        try:
-            data = self._get_sql_data(session)
-        except:
-            session.rollback()
-            raise
-
-    def _get_sql_data(self, session):
-        metadata = sqlalchemy.MetaData()
-        metadata.bind = session.connection()
-
-        # todo: check if temp table exists
-        temp_table = sqlalchemy.Table(self._get_temp_table_name(), metadata,
-                             sqlalchemy.Column("case_id", sqlalchemy.VARCHAR, primary_key=True),
-                             prefixes=['TEMPORARY'])
-
-        for column in self.columns:
-            temp_table.append_column(column)
-
-        asha_table = self.get_sql_table(metadata)
-        max_date_query = sqlalchemy.select(
-            sqlalchemy.func.max(asha_table.c.date).label('date'),
-            asha_table.c.case_id.label('case_id')
-        ).where(
-            asha_table.date.between(':startdate', ':enddate')
-        ).group_by(
-            asha_table.c.case_id
-        )
-
-        temp_table_query = sqlalchemy.select(
-            asha_table.c.case_id,
-            (asha_table.c.hv_fx_vhnd == 1).label('hv_fx_vhnd')
-        ).join(
-            max_date_query,
-            asha_table.c.case_id == max_date_query.c.case_id,
-            asha_table.c.date == max_date_query.c.date,
-        )
-
-        # create temp table
-        from_select = InsertFromSelect(temp_table, temp_table_query, self.columns)
-        session.execute(from_select)
+    @property
+    def group_by(self):
+        return []
