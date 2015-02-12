@@ -1,12 +1,9 @@
 # encoding: utf-8
-import datetime
-from south.db import db
 from south.v2 import DataMigration
-from django.db import models
-
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.couch.database import get_db, iter_docs
+from dimagi.utils.chunked import chunked
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation, LocationType
 
 
 EXCLUDE_DOMAINS = (
@@ -26,7 +23,7 @@ class Migration(DataMigration):
     @memoized
     def domain_loc_types(self, domain):
         # I need the unwrapped domain doc, and get_by_name is cached anyways...
-        domain = Domain.get_db().get(Domain.get_by_name(domain)._id)
+        domain = get_db().get(Domain.get_by_name(domain)._id)
         return {
             # It looks like code is what I should use, not name
             loc_type['code']: loc_type
@@ -34,8 +31,8 @@ class Migration(DataMigration):
         }
 
     def iter_relevant_locations(self):
-        return (SQLLocation.objects.exclude(domain__in=EXCLUDE_DOMAINS)
-                                   .iterator())
+        return (self.orm.SQLLocation.objects.exclude(domain__in=EXCLUDE_DOMAINS)
+                                       .iterator())
 
     @memoized
     def get_loc_type(self, domain, code):
@@ -43,9 +40,20 @@ class Migration(DataMigration):
         Get or create relevant SQL location type
         """
         try:
-            loc_type = LocationType.objects.get(domain=domain, code=code)
-        except LocationType.DoesNotExist:
-            couch_loc_type = self.domain_loc_types(domain)[code]
+            loc_type = self.orm.LocationType.objects.get(domain=domain, code=code)
+        except self.orm.LocationType.DoesNotExist:
+            loc_types = self.domain_loc_types(domain)
+            if not loc_types:
+                couch_loc_type = {
+                    'allowed_parents': [''],
+                    'name': 'state',
+                    'code': 'state',
+                    'administrative': False,
+                }
+            elif code in loc_types:
+                couch_loc_type = loc_types[code]
+            else:
+                couch_loc_type = loc_types.values()[0]
 
             parents = couch_loc_type['allowed_parents']
             if parents and parents[0]:
@@ -54,7 +62,7 @@ class Migration(DataMigration):
             else:
                 parent_type = None
 
-            loc_type = LocationType(
+            loc_type = self.orm.LocationType(
                 domain=domain,
                 name=couch_loc_type['name'],
                 code=couch_loc_type['code'],
@@ -70,20 +78,31 @@ class Migration(DataMigration):
         Get all SQLLocations, get or create the appropriate location_type,
         based on the old location_type string, save a foreign key to it.
         """
+        self.orm = orm
         for loc in self.iter_relevant_locations():
             loc_type = self.get_loc_type(loc.domain, loc.tmp_location_type)
             loc.location_type = loc_type
             loc.save()
+
+        # Clean the 'location_types' field off all domains.
+        # Note that this is not reversible
+        all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
+        db = get_db()
+        for domain_docs in chunked(iter_docs(db, all_domain_ids), 100):
+            for domain_doc in domain_docs:
+                if 'location_types' in domain_doc:
+                    del domain_doc['location_types']
+            db.bulk_save(domain_docs)
 
     def backwards(self, orm):
         """
         Get all SQLLocations, populate the tmp_location_type field with the
         location_type.code
         """
+        self.orm = orm
         for loc in self.iter_relevant_locations():
             loc.tmp_location_type = loc.location_type.code
             loc.save()
-
 
     models = {
         u'locations.locationtype': {
