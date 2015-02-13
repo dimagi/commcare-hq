@@ -1,6 +1,5 @@
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.up_nrhm.filters import DrillDownOptionFilter
