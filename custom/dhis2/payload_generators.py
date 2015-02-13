@@ -42,8 +42,8 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
 
         from casexml.apps.case.models import CommCareCase  # avoid circular import
         settings = Dhis2Settings.for_domain(form['domain'])
-        dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
-                             settings.dhis2.top_org_unit_name)
+        dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
+                             settings.dhis2['top_org_unit_name'])
         if form['xmlns'] == 'http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40':
             # This is a growth monitoring form. It needs to be converted into
             # a paediatric nutrition assessment event.

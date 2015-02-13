@@ -47,8 +47,8 @@ def push_child_entities(settings, children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
-                         settings.dhis2.top_org_unit_name)
+    dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
+                         settings.dhis2['top_org_unit_name'])
     # nutrition_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
     nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
 
@@ -118,8 +118,8 @@ def pull_child_entities(settings, dhis2_children):
 
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
     """
-    dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
-                         settings.dhis2.top_org_unit_name)
+    dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
+                         settings.dhis2['top_org_unit_name'])
     for dhis2_child in dhis2_children:
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
         # ("Instance" is DHIS2's friendly name for "id")
@@ -127,7 +127,8 @@ def pull_child_entities(settings, dhis2_children):
         if case:
             case_id = case['case_id']
         else:
-            user = get_user_by_org_unit(settings.domain, dhis2_child['Org unit'], settings.dhis2.top_org_unit_name)
+            user = get_user_by_org_unit(settings.domain, dhis2_child['Org unit'],
+                                        settings.dhis2['top_org_unit_name'])
             if not user:
                 # No user is assigned to this organisation unit (i.e. region or facility). Now what?
                 # TODO: Now what? Ascend to parent org unit?
@@ -193,8 +194,8 @@ def get_children_only_theirs(settings):
     Returns a list of child entities that are enrolled in Paediatric Nutrition
     Assessment and don't have CCHQ Case ID set.
     """
-    dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
-                         settings.dhis2.top_org_unit_name)
+    dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
+                         settings.dhis2['top_org_unit_name'])
     for inst in dhis2_api.gen_instances_in_program('Paediatric Nutrition Assessment'):
         if not inst.get('CCHQ Case ID'):
             yield inst
@@ -255,8 +256,8 @@ def sync_org_units():
         if settings is None or not settings.is_enabled():
             continue
 
-        dhis2_api = Dhis2Api(settings.dhis2.host, settings.dhis2.username, settings.dhis2.password,
-                             settings.dhis2.top_org_unit_name)
+        dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
+                             settings.dhis2['top_org_unit_name'])
         # Is it a bad idea to read all org units into dictionaries and sync them ...
         their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units_with_parents()}
         # ... or should we rather just drop all ours and import all theirs every time?
