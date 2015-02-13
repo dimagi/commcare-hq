@@ -288,6 +288,12 @@ APP_SUMMARY = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DHIS2_DOMAIN = StaticToggle(
+    'dhis2_domain',
+    'Enable DHIS2 integration for this domain',
+    [NAMESPACE_DOMAIN]
+)
+
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
