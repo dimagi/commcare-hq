@@ -288,6 +288,11 @@ APP_SUMMARY = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+BULK_ARCHIVE_FORMS = StaticToggle(
+    'bulk_archive_forms',
+    'Bulk archive forms with excel',
+)
+
 DHIS2_DOMAIN = StaticToggle(
     'dhis2_domain',
     'Enable DHIS2 integration for this domain',
