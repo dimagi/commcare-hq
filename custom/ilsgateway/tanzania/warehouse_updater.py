@@ -270,7 +270,10 @@ def default_start_date():
 
 def _get_test_locations(domain):
     from custom.ilsgateway.tasks import ILS_FACILITIES
-    sql_locations = SQLLocation.objects.filter(domain=domain, external_id__in=ILS_FACILITIES).only('location_id')
+    sql_locations = SQLLocation.objects.filter(
+        domain=domain,
+        external_id__in=ILS_FACILITIES
+    ).order_by('id').only('location_id')
     return [Location.get(sql_location.location_id) for sql_location in sql_locations]
 
 
@@ -452,9 +455,10 @@ def process_facility_product_reports(facility, reports):
     assert facility.location_type == "FACILITY"
     months_updated = {}
     for report in reports:
-        stock_transaction = report.stocktransaction_set.get(type='stockonhand')
-        assert stock_transaction.case_id == facility.linked_supply_point()._id
-        assert stock_transaction.type
+        stock_transactions = report.stocktransaction_set.filter(type='stockonhand')
+        assert stock_transactions.count() > 0
+        assert stock_transactions[0].case_id == facility.linked_supply_point()._id
+
         warehouse_date = _get_window_date(SupplyPointStatusTypes.SOH_FACILITY, report.date)
 
         if warehouse_date in months_updated:

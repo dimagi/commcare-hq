@@ -160,15 +160,14 @@ class AWCHealthStatus(object):
           "attended at least one growth monitoring session in the last 3 "
           "months.  Exempt if no scale was available at the VHND."),
          'child_mult_3_months'),
-        # TODO ors is hard, skipping for now
-        # ('ors_received',
-         # _("ORS received"),
-        # _("Number of children who contracted diarrhea and received ORS and "
-          # "Zinc treatment."),
-         # 'children_with_diarrhea'),
+        ('ors_received',
+         _("ORS received"),
+         _("Number of children who contracted diarrhea and received ORS and "
+           "Zinc treatment."),
+         'has_diarhea'),
         ('child_breastfed',
          _("Children Breastfed"),
-        _("Number of Children 6 months old reported to have exclusively breastfed"),
+         _("Number of Children 6 months old reported to have exclusively breastfed"),
          'child_6_months'),
         ('measles_vaccine',
          _("Measles Vaccine"),
@@ -340,6 +339,14 @@ class AWCHealthStatus(object):
     @property
     def child_3_months(self):
         return len([c for c in self.all_cases if c.child_age == 3])
+
+    @property
+    def ors_received(self):
+        return len([c for c in self.all_cases if c.child_with_diarhea_received_ors])
+
+    @property
+    def has_diarhea(self):
+        return len([c for c in self.all_cases if c.child_has_diarhea])
 
     @property
     def children_registered(self):

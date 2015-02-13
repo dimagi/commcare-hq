@@ -7,7 +7,6 @@ from corehq.apps.fixtures.exceptions import FixtureVersionError
 from couchdbkit.ext.django.schema import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 

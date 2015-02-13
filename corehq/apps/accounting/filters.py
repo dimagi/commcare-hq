@@ -92,6 +92,13 @@ class DimagiContactFilter(BaseAccountingSingleOptionFilter):
     async_action = 'dimagi_contact'
 
 
+class EntryPointFilter(BaseSingleOptionFilter):
+    slug = 'entry_point'
+    label = _('Entry Point')
+    default_text = _("Any")
+    options = EntryPoint.CHOICES
+
+
 INVOICE = "SEND_INVOICE"
 DO_NOT_INVOICE = "DO_NOT_INVOICE"
 
@@ -116,6 +123,20 @@ class TrialStatusFilter(BaseSingleOptionFilter):
         (TRIAL, _("Show Non-Trial Subscriptions")),
         (NON_TRIAL, _("Show Only Trial Subscriptions")),
     ]
+
+
+class SubscriptionTypeFilter(BaseSingleOptionFilter):
+    slug = 'service_type'
+    label = _("Type")
+    default_text = _("Any")
+    options = SubscriptionType.CHOICES
+
+
+class ProBonoStatusFilter(BaseSingleOptionFilter):
+    slug = 'pro_bono_status'
+    label = _("Pro-Bono")
+    default_text = _("Any")
+    options = ProBonoStatus.CHOICES
 
 
 class IsHiddenFilter(BaseSingleOptionFilter):
