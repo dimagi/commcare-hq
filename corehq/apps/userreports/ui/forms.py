@@ -14,12 +14,13 @@ class DocumentFormBase(forms.Form):
     HQ specific document base form. Loosely modeled off of Django's ModelForm
     """
 
-    def __init__(self, instance=None, *args, **kwargs):
+    def __init__(self, instance=None, read_only=False, *args, **kwargs):
         self.instance = instance
         object_data = instance._doc if instance is not None else {}
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', _('Save Changes')))
+        if not read_only:
+            self.helper.add_input(Submit('submit', _('Save Changes')))
         super(DocumentFormBase, self).__init__(initial=object_data, *args, **kwargs)
 
     def save(self, commit=False):
