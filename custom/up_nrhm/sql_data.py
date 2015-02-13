@@ -146,7 +146,7 @@ class ASHAFacilitatorsData(SqlData):
                 FunctionalityChecklistColumn('hv_fx_home_birth_visits', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Set of home visits for newborn care as specified in the HBNC guidelines"
+                "Set of home visits for newborn care as specified in the HBNC guidelines<br/>"
                 "(six visits in case of Institutional delivery and seven in case of a home delivery)",
                 FunctionalityChecklistColumn('hv_fx_newborns_visited', whens={1: 1}),
             ),

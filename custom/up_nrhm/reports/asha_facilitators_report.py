@@ -22,6 +22,7 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
     printable = True
     report_template_path = "up_nrhm/asha_report.html"
     extra_context_providers = [total_rows]
+    no_value = '--'
 
     @property
     def report_config(self):
@@ -47,10 +48,18 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
 
     @property
     def rows(self):
+        def format_val(val):
+            return self.no_value if val is None else val
+
         model = self.model
         model_data = model.data
 
-        self.total_under_facilitator = model.columns[0].get_raw_value(model_data)
-        self.total_with_checklist = model.columns[1].get_raw_value(model_data)
+        self.total_under_facilitator = format_val(model.columns[0].get_raw_value(model_data))
+        self.total_with_checklist = format_val(model.columns[1].get_raw_value(model_data))
 
-        return [[column.header, column.get_value(model_data), '', '']for column in model.columns[2:]]
+        return [[
+            column.header,
+            format_val(column.get_value(model_data)),
+            '',
+            ''
+        ] for column in model.columns[2:]]
