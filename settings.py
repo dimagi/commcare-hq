@@ -465,6 +465,7 @@ BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
+CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 

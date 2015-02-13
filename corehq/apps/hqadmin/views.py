@@ -6,7 +6,9 @@ from datetime import timedelta, datetime, date
 from collections import defaultdict
 from StringIO import StringIO
 import dateutil
+from django.core.mail import send_mail
 from django.utils.datastructures import SortedDict
+from django.views.decorators.csrf import csrf_exempt
 
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
@@ -200,6 +202,16 @@ def message_log_report(request):
 
     context['layout_flush_content'] = True
     return render(request, "hqadmin/message_log_report.html", context)
+
+
+@require_POST
+@csrf_exempt
+def contact_email(request):
+    from_email = request.POST['email']
+    description = request.POST['description']
+    message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
+    send_mail(description[:60], message, from_email, [settings.CONTACT_EMAIL])
+    return HttpResponse('success')
 
 
 @require_superuser
