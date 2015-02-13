@@ -7,30 +7,13 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
 class HierarchySqlData(SqlData):
-    table_name = "fluff_UpNRHMLocationHierarchyFluff"
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], 'location_hierarchy')
 
     @property
     def filters(self):
         return []
-
-    @property
-    def group_by(self):
-        return ['block', 'district', 'username', 'user_id']
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('block', SimpleColumn('block')),
-            DatabaseColumn('district', SimpleColumn('district')),
-            DatabaseColumn('username', SimpleColumn('username')),
-            DatabaseColumn('user_id', SimpleColumn('user_id'))
-        ]
-
-
-class NewHierarchySqlData(HierarchySqlData):
-    @property
-    def table_name(self):
-        return get_table_name(self.config['domain'], 'location_hierarchy')
 
     @property
     def group_by(self):
@@ -101,8 +84,6 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
 
     @property
     def data_source(self):
-        if self.use_new_ds:
-            return NewHierarchySqlData
         return HierarchySqlData
 
     def get_hierarchy(self):
@@ -110,11 +91,8 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
         for location in self.data_source(config={'domain': self.domain}).get_data():
             district = location['district']
             block = location['block']
-            if self.use_new_ds:
-                user = (u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip()
-            else:
-                user = location['username']
-            user_id = location['doc_id' if self.use_new_ds else 'user_id']
+            user = (u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip()
+            user_id = location['doc_id']
             if not (district and block and user):
                 continue
             hierarchy[district] = hierarchy.get(district, {})
