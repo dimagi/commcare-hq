@@ -309,5 +309,6 @@ VELLUM_HELP_TEXT = StaticToggle(
 
 VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     'transaction_question_types',
-    "Adds transaction-related question types in the form builder"
+    "Adds transaction-related question types in the form builder",
+    [NAMESPACE_DOMAIN]
 )
