@@ -50,6 +50,7 @@ class SMSUser(JsonObject):
     phone_numbers = ListProperty()
     backend = StringProperty()
     date_updated = StringProperty()
+    language = StringProperty()
 
 
 class Location(JsonObject):
@@ -120,6 +121,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
 
 class ILSGatewayAPI(APISynchronization):
+
+    LOCATION_CUSTOM_FIELDS = ['groups']
+    SMS_USER_CUSTOM_FIELDS = ['role', 'backend']
+    PRODUCT_CUSTOM_FIELDS = []
 
     def prepare_commtrack_config(self):
         domain = Domain.get_by_name(self.domain)

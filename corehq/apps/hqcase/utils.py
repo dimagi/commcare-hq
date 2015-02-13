@@ -208,14 +208,23 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
     return [c._id for c in filtered_cases]
 
 
-def make_creating_casexml(case, new_case_id):
+def make_creating_casexml(case, new_case_id, new_parent_ids=None):
+    new_parent_ids = new_parent_ids or {}
     old_case_id = case._id
     case._id = new_case_id
+    local_move_back = {}
+    for index in case.indices:
+        new = new_parent_ids[index.referenced_id]
+        old = index.referenced_id
+        local_move_back[new] = old
+        index.referenced_id = new
     try:
         case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
         case_block, attachments = _process_case_block(case_block, case.case_attachments, old_case_id)
     finally:
         case._id = old_case_id
+        for index in case.indices:
+            index.referenced_id = local_move_back[index.referenced_id]
     return case_block, attachments
 
 

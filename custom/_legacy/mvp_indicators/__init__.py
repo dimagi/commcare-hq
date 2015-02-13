@@ -9,4 +9,5 @@ CouchAppsPreindexPlugin.register('mvp_indicators', __file__, {
     'mvp_deaths_indicators': settings.MVP_INDICATOR_DB,
     'mvp_maternal_health_indicators': settings.MVP_INDICATOR_DB,
     'mvp_over5_indicators': settings.MVP_INDICATOR_DB,
+    'mvp_verbal_autopsy_indicators': settings.MVP_INDICATOR_DB,
 })

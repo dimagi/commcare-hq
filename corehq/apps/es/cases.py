@@ -28,4 +28,4 @@ def is_closed(closed=True):
 
 
 def case_type(type_):
-    return filters.term('type', type_)
+    return filters.term('type.exact', type_)
