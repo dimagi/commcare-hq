@@ -43,22 +43,27 @@
 trunk: master
 name: autostaging
 branches:
-  - fab-directory
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
+  - lwyszomi:ils_staging
+  - lwyszomi:ews_staging
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
-  - hq-dropdown # sravan 5/7
   - vellum-staging # J$ 11/13
-  - custom_location_data  # Ethan & tw 11/17
   - quickview # Simon 11/25
-  - master+double-management # Nick P 12/31
-  - double-management # SK 12/1
-  - lwyszomi:migration-optimization
-  - master+caseDetailsInCC  # Nick P 1/7
-  - caseDetailsInCC # sravan 2/1/15
-  - logo-to-android # Nick P 1/7
+#  - master+double-management # Nick P 12/31
+#  - double-management # SK 12/1
+  - vellum-model-iteration # daniel 1/22
+  - locations-as-groups # tw 1/20
+  - fixtures-spike  # cz 1/29
+  - tdh-tiles # Noah 2/1
+  - graph-bulk-translations # Noah 2/5
+  - static-updates # Biyeun 2/9
+  - dhis2+project-settings-update # Noah 2/11
+  - dhis2 # Norman 2/6
+  - project-settings-update # sravan 1/30
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+    - master

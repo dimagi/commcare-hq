@@ -59,6 +59,6 @@ def supply_points_with_latest_status_by_datespan(sps, status_type, status_value,
 
 
 def ils_bootstrap_domain_test_task(domain, endpoint):
-    ils_config = ILSGatewayConfig.for_domain(domain)
     from custom.logistics.commtrack import bootstrap_domain
-    return bootstrap_domain(ils_config, endpoint)
+    from custom.ilsgateway.api import ILSGatewayAPI
+    return bootstrap_domain(ILSGatewayAPI(domain, endpoint))

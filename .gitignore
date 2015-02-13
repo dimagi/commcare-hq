@@ -34,6 +34,7 @@ app_builder_live_test/*/
 dump.rdb
 **/less/*.css
 /staticmedia*
+.transifexrc
 
 submodules/formdesigner
 submodules/vellum/Vellum

@@ -12,8 +12,6 @@ import djcelery
 
 djcelery.setup_loader()
 
-CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
-
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
@@ -178,7 +176,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',
     'south',
     'djcelery',
     'djtables',
@@ -187,7 +184,7 @@ DEFAULT_APPS = (
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'django.contrib.markup',
+    'markup_deprecated',
     'gunicorn',
     'raven.contrib.django.raven_compat',
     'compressor',
@@ -309,6 +306,8 @@ HQ_APPS = (
     'hsph',
     'mvp',
     'mvp_apps',
+    'mvp_docs',
+    'mvp_indicators',
     'custom.opm',
     'pathfinder',
     'pathindia',
@@ -338,7 +337,10 @@ HQ_APPS = (
     'custom.up_nrhm',
 
     'custom.care_pathways',
+    'custom.common',
     'bootstrap3_crispy',
+
+    'custom.dhis2',
 )
 
 TEST_APPS = ()
@@ -463,6 +465,7 @@ BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
+CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
@@ -500,6 +503,10 @@ SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&
 
 # celery
 BROKER_URL = 'django://'  # default django db based
+
+from settingshelper import celery_failure_handler
+
+CELERY_ANNOTATIONS = {'*': {'on_failure': celery_failure_handler}}
 
 CELERY_MAIN_QUEUE = 'celery'
 
@@ -878,6 +885,9 @@ MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
 
+# override for production
+DEFAULT_PROTOCOL = 'http'
+
 try:
     # try to see if there's an environmental variable set for local_settings
     if os.environ.get('CUSTOMSETTINGS', None) == "demo":
@@ -920,6 +930,13 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
         **db_settings
     )
+
+MVP_INDICATOR_DB = 'mvp-indicators'
+
+INDICATOR_CONFIG = {
+    "mvp-sauri": ['mvp_indicators'],
+    "mvp-potou": ['mvp_indicators'],
+}
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
@@ -998,6 +1015,7 @@ COUCHDB_APPS = [
     'crs_reports',
     'grapevine',
     'uth',
+    'dhis2',
 
     # custom reports
     'penn_state',
@@ -1006,6 +1024,7 @@ COUCHDB_APPS = [
     'gsid',
     'hsph',
     'mvp',
+    ('mvp_docs', MVP_INDICATOR_DB),
     'pathfinder',
     'pathindia',
     'pact',
@@ -1133,11 +1152,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
-INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
-}
-
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
@@ -1161,6 +1175,7 @@ PILLOWTOPS = {
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
         'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
+        'corehq.apps.userreports.pillow.CustomDataSourcePillow',
     ],
     'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
@@ -1188,6 +1203,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecapPassagePillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
+        'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
@@ -1207,7 +1223,17 @@ PILLOWTOPS = {
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
         'corehq.apps.indicators.pillows.CaseIndicatorPillow',
     ],
+    'mvp_indicators': [
+        'mvp_docs.pillows.MVPFormIndicatorPillow',
+        'mvp_docs.pillows.MVPCaseIndicatorPillow',
+    ],
 }
+
+
+CUSTOM_DATA_SOURCES = [
+    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json')
+]
+
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -1308,6 +1334,7 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ews-ghana-test': 'custom.ewsghana',
     'ewsghana-test-1': 'custom.ewsghana',
+    'stock-status-test-1': 'custom.ewsghana',
     'test-pathfinder': 'custom.m4change',
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',

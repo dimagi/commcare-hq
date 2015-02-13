@@ -1,5 +1,6 @@
 from StringIO import StringIO
 import datetime
+import re
 from celery.utils.log import get_task_logger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
@@ -14,6 +15,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.users.models import CouchUser
+from corehq.util.view_utils import absolute_reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -497,7 +499,6 @@ class GenericReportView(CacheableRequestMixIn):
         self.context.update(self._validate_context_dict(self.report_context))
 
     @property
-    @request_cache("default")
     def view_response(self):
         """
             Intention: Not to be overridden in general.
@@ -646,11 +647,16 @@ class GenericReportView(CacheableRequestMixIn):
         url_args = [domain] if domain is not None else []
         if render_as is not None:
             url_args.append(render_as+'/')
-        return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
+        return absolute_reverse(cls.dispatcher.name(),
+                                args=url_args + [cls.slug])
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        return False
 
     @classmethod
     def get_subpages(cls):
@@ -826,6 +832,21 @@ class GenericTabularReport(GenericReportView):
         """
         return dict(num=1, width=200)
 
+    @staticmethod
+    def _strip_tags(value):
+        """
+        Strip HTML tags from a value
+        """
+        # Uses regex. Regex is much faster than using an HTML parser, but will
+        # strip "<2 && 3>" from a value like "1<2 && 3>2". A parser will treat
+        # each cell like an HTML document, which might be overkill, but if
+        # using regex breaks values then we should use a parser instead, and
+        # take the knock. Assuming we won't have values with angle brackets,
+        # using regex for now.
+        if isinstance(value, basestring):
+            return re.sub('<[^>]*?>', '', value)
+        return value
+
     @property
     def override_export_sheet_name(self):
         """
@@ -857,7 +878,7 @@ class GenericTabularReport(GenericReportView):
             def _unformat_val(val):
                 if isinstance(val, dict):
                     return val.get('raw', val.get('sort_key', val))
-                return val
+                return self._strip_tags(val)
 
             return [_unformat_val(val) for val in row]
 
@@ -883,6 +904,7 @@ class GenericTabularReport(GenericReportView):
             return self.rows
 
     @property
+    @request_cache("report_context")
     def report_context(self):
         """
             Don't override.
@@ -943,10 +965,11 @@ class GenericTabularReport(GenericReportView):
             context.update(provider_function(self))
         return context
 
-    def table_cell(self, value, html=None):
+    def table_cell(self, value, html=None, zerostyle=False):
+        styled_value = '<span class="muted">0</span>' if zerostyle and value == 0 else value
         return dict(
             sort_key=value,
-            html="%s" % value if html is None else html
+            html="%s" % styled_value if html is None else html
         )
 
 

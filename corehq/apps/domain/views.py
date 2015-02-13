@@ -4,9 +4,12 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from custom.dhis2.forms import Dhis2SettingsForm
+from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.forms.forms import get_declared_fields
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
@@ -33,7 +36,6 @@ from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
@@ -48,6 +50,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod,
+    EntryPoint,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -75,7 +78,7 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 
-from dimagi.utils.web import get_ip, json_response
+from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
@@ -88,7 +91,6 @@ import cStringIO
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop
 from toggle.models import Toggle
-from toggle.shortcuts import update_toggle_cache, namespaced_item
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -483,6 +485,35 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+class EditDhis2SettingsView(BaseProjectSettingsView):
+    template_name = 'domain/admin/dhis2_settings.html'
+    urlname = 'dhis2_settings'
+    page_title = ugettext_noop("DHIS2 API settings")
+
+    @property
+    @memoized
+    def dhis2_settings_form(self):
+        settings_ = Dhis2Settings.for_domain(self.domain_object.name)
+        initial = settings_.dhis2 if settings_ else {'enabled': False}
+        if self.request.method == 'POST':
+            return Dhis2SettingsForm(self.request.POST, initial=initial)
+        return Dhis2SettingsForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'dhis2_settings_form': self.dhis2_settings_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.dhis2_settings_form.is_valid():
+            if self.dhis2_settings_form.save(self.domain_object):
+                messages.success(request, _('DHIS2 API settings successfully updated'))
+            else:
+                messages.error(request, _('There seems to have been an error. Please try again.'))
+        return self.get(request, *args, **kwargs)
+
+
 @require_POST
 @require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
@@ -644,6 +675,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
         next_subscription = {
             'exists': False,
             'can_renew': False,
+            'name': None,
+            'price': None,
         }
         cards = None
         general_credits = None
@@ -654,10 +687,27 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
             if subscription.date_end is not None:
                 if subscription.is_renewed:
+
+                    next_products = self.get_product_summary(subscription.next_subscription.plan_version,
+                                                             self.account,
+                                                             subscription)
+
+                    if len(next_products) > 1:
+                        accounting_logger.error(
+                            "[BILLING] "
+                            "There seem to be multiple ACTIVE NEXT subscriptions for the "
+                            "subscriber %s. Odd, right? The latest one by "
+                            "date_created was used, but consider this an issue."
+                            % self.account
+                        )
+
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime("%d %B %Y"),
+                        'name': subscription.next_subscription.plan_version.plan.name,
+                        'price': next_products[0]['monthly_fee'],
                     })
+
                 else:
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
@@ -1017,8 +1067,10 @@ class CreditsStripePaymentView(BaseStripePaymentView):
     @memoized
     def account(self):
         return BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.user.username,
+            self.domain,
+            created_by=self.request.user.username,
             account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )[0]
 
     def get_payment_handler(self):
@@ -1291,7 +1343,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         if self.current_subscription:
             return self.current_subscription.account
         account, self.is_new = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.couch_user.username, account_type=BillingAccountType.USER_CREATED,
+            self.domain,
+            created_by=self.request.couch_user.username,
+            account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )
         return account
 
@@ -1839,6 +1894,9 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
+            use_basic_auth=self.add_repeater_form.cleaned_data['use_basic_auth'],
+            username=self.add_repeater_form.cleaned_data['username'],
+            password=self.add_repeater_form.cleaned_data['password'],
             format=self.add_repeater_form.cleaned_data['format']
         )
         return repeater
@@ -1863,6 +1921,7 @@ class AddFormRepeaterView(AddRepeaterView):
     def make_repeater(self):
         repeater = super(AddFormRepeaterView, self).make_repeater()
         repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
+        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 
 
@@ -2060,19 +2119,25 @@ def _publish_snapshot(request, domain, published_snapshot=None):
         _notification_email_on_publish(domain, published_snapshot, request.couch_user)
     return True
 
+
 def _notification_email_on_publish(domain, snapshot, published_by):
-    url_base = Site.objects.get_current().domain
-    params = {"domain": domain, "snapshot": snapshot, "published_by": published_by, "url_base": url_base}
-    text_content = render_to_string("domain/email/published_app_notification.txt", params)
-    html_content = render_to_string("domain/email/published_app_notification.html", params)
+    params = {"domain": domain, "snapshot": snapshot,
+              "published_by": published_by, "url_base": get_site_domain()}
+    text_content = render_to_string(
+        "domain/email/published_app_notification.txt", params)
+    html_content = render_to_string(
+        "domain/email/published_app_notification.html", params)
     recipients = settings.EXCHANGE_NOTIFICATION_RECIPIENTS
     subject = "New App on Exchange: %s" % snapshot.title
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+            send_HTML_email(subject, recipient, html_content,
+                            text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
-        logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
+        logging.warning("Can't send notification email, "
+                        "but the message was:\n%s" % text_content)
+
 
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):
@@ -2272,16 +2337,22 @@ def org_request(request, domain):
         messages.error(request, "The organization '%s' does not exist" % org_name)
     return HttpResponseRedirect(reverse('domain_org_settings', args=[domain]))
 
+
 def _send_request_notification_email(request, org, dom):
-    url_base = Site.objects.get_current().domain
-    params = {"org": org, "dom": dom, "requestee": request.couch_user, "url_base": url_base}
-    text_content = render_to_string("domain/email/org_request_notification.txt", params)
-    html_content = render_to_string("domain/email/org_request_notification.html", params)
-    recipients = [member.email for member in org.get_members() if member.is_org_admin(org.name)]
+    params = {"org": org, "dom": dom, "requestee": request.couch_user,
+              "url_base": get_site_domain()}
+    text_content = render_to_string(
+        "domain/email/org_request_notification.txt", params)
+    html_content = render_to_string(
+        "domain/email/org_request_notification.html", params)
+    recipients = [member.email for member in org.get_members()
+                  if member.is_org_admin(org.name)]
     subject = "New request to add a project to your organization! -- CommcareHQ"
     try:
         for recipient in recipients:
-            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+            send_HTML_email(subject, recipient, html_content,
+                            text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
-        logging.warning("Can't send notification email, but the message was:\n%s" % text_content)
+        logging.warning("Can't send notification email, "
+                        "but the message was:\n%s" % text_content)

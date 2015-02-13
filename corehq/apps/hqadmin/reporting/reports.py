@@ -150,6 +150,15 @@ def get_project_spaces(facets=None):
     return domain_names
 
 
+def get_mobile_users(domains):
+    return set(
+        UserES()
+        .show_inactive()
+        .mobile_users()
+        .domain(domains)
+        .run().doc_ids
+    )
+
 def get_sms_query(begin, end, facet_name, facet_terms, domains, size):
     return (SMSES()
             .domain(domains)
@@ -278,13 +287,8 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
     30 days before each timestamp
     """
     histo_data = []
-    mobile_users = set(
-        UserES()
-        .show_inactive()
-        .mobile_users()
-        .domain(domains)
-        .run().doc_ids
-    )
+    mobile_users = get_mobile_users(domains)
+
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
@@ -915,7 +919,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 'form.meta.userID': list(get_user_ids(user_type_mobile))
             }
         })
-    if histo_type == 'active_cases':
+    if histo_type == 'active_cases' and not supply_points:
         additional_filters.append(get_case_owner_filters())
     if supply_points:
         additional_filters.append({'terms': {'type': ['supply-point']}})
@@ -960,9 +964,11 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
     if all_domains:
         histo_data = {"All Domains": dict()}
         init_ret = {"All Domains": 0}
+        ret = {"All Domains": list()}
     else:
         histo_data = {d: dict() for d in domains}
         init_ret = {d: 0 for d in domains}
+        ret = {d: list() for d in domains}
 
     for data in sql_data:
         tstamp = get_timestamp_millis(data['timestamp'])
@@ -976,7 +982,6 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
             else:
                 histo_data[domain][tstamp] += 1
 
-    ret = {d: list() for d in domains}
     for k, v in histo_data.iteritems():
         for l, w in v.iteritems():
             ret[k].append({'count': w, 'time': l})

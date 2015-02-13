@@ -1,17 +1,15 @@
 from django.core.management.base import LabelCommand, CommandError
-from django.contrib.sites.models import Site
-from django.core.exceptions import ObjectDoesNotExist
 from corehq import Domain
+from django.conf import settings
 
 
 class Command(LabelCommand):
     help = "Bootstrap a domain and user who owns it."
     args = "<domain> <email> <password>"
     label = ""
-     
+
     def handle(self, *args, **options):
         from corehq.apps.users.models import WebUser
-        from corehq.apps.domain.shortcuts import create_domain
         if len(args) != 3:
             raise CommandError('Usage: manage.py bootstrap <domain> <email> <password>')
         domain_name, username, passwd = args
@@ -21,14 +19,11 @@ class Command(LabelCommand):
         couch_user.is_superuser = True
         couch_user.is_staff = True
         couch_user.save()
-        
+
         print "user %s created and added to domain %s" % (couch_user.username, domain)
 
-        try:
-            site = Site.objects.get(pk=1)
-        except ObjectDoesNotExist:
-            site = Site()
-            site.save()
-        site.name = 'localhost:8000'
-        site.domain = 'localhost:8000'
-        site.save()
+        if not getattr(settings, 'BASE_ADDRESS', None):
+            print ("Warning: You must set BASE_ADDRESS setting "
+                   "in your localsettings.py file in order for commcare-hq "
+                   "to be able to generate absolute urls. "
+                   "This is necessary for a number of features.")

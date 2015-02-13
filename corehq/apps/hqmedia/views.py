@@ -11,13 +11,13 @@ from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound
 
-from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
 from django.shortcuts import render
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.models import get_app, RemoteApp
+from corehq.apps.app_manager.models import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.controller import MultimediaBulkUploadController, MultimediaImageUploadController, MultimediaAudioUploadController, MultimediaVideoUploadController
 from corehq.apps.hqmedia.decorators import login_with_permission_from_post
@@ -322,8 +322,10 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
             )
         if self.file_ext.lower() not in possible_extensions(self.form_path):
             raise BadMediaFileException(
-                _("File %s has an incorrect file type (%s).")
-                % (self.uploaded_file.name, self.file_ext)
+                _("File {name}s has an incorrect file type {ext}.").format(
+                    name=self.uploaded_file.name,
+                    ext=self.file_ext,
+                )
             )
 
     def process_upload(self):
@@ -363,7 +365,7 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
 
     @property
     def form_path(self):
-        return ("jr://file/commcare/image/%s%s"
+        return ("jr://file/commcare/logo/data/%s%s"
                 % (self.filename, self.file_ext))
 
     @property

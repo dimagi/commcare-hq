@@ -1,0 +1,48 @@
+{
+    "domains": ["up-nrhm"],
+    "config": {
+        "referenced_doc_type": "CommCareUser",
+        "table_id": "location_hierarchy",
+        "display_name": "Location Hierarchy",
+        "configured_filter":  {
+        },
+        "configured_indicators": [
+            {
+                "column_id": "district",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["user_data", "district"]
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "block",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["user_data", "block"]
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "first_name",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "first_name"
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "last_name",
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "last_name"
+                },
+                "datatype": "string"
+            }
+        ]
+    }
+}

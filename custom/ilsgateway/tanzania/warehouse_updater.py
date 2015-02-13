@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+import itertools
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.dates import get_business_day_of_month, add_months, months_between
@@ -269,11 +270,14 @@ def default_start_date():
 
 def _get_test_locations(domain):
     from custom.ilsgateway.tasks import ILS_FACILITIES
-    sql_locations = SQLLocation.objects.filter(domain=domain, external_id__in=ILS_FACILITIES).only('location_id')
+    sql_locations = SQLLocation.objects.filter(
+        domain=domain,
+        external_id__in=ILS_FACILITIES
+    ).order_by('id').only('location_id')
     return [Location.get(sql_location.location_id) for sql_location in sql_locations]
 
 
-def populate_report_data(start_date, end_date, domain=None):
+def populate_report_data(start_date, end_date, domain, runner):
     # first populate all the warehouse tables for all facilities
     # hard coded to know this is the first date with data
     start_date = max(start_date, default_start_date())
@@ -283,20 +287,40 @@ def populate_report_data(start_date, end_date, domain=None):
         locations = _get_test_locations(domain)
         facilities = filter(lambda location: location.location_type == 'FACILITY', locations)
         non_facilities_types = ['DISTRICT', 'REGION', 'MOHSW']
-        non_facilities = filter(lambda location: location.location_type in non_facilities_types, locations)
+        non_facilities = []
+        for location_type in non_facilities_types:
+            non_facilities.extend(filter(lambda location: location.location_type == location_type, locations))
     else:
         facilities = Location.filter_by_type(domain, 'FACILITY')
         non_facilities = list(Location.filter_by_type(domain, 'DISTRICT'))
         non_facilities += list(Location.filter_by_type(domain, 'REGION'))
         non_facilities += list(Location.filter_by_type(domain, 'MOHSW'))
 
+    if runner.location:
+        if runner.location.location_type != 'FACILITY':
+            facilities = []
+            non_facilities = itertools.dropwhile(
+                lambda location: location._id != runner.location.location_id,
+                non_facilities
+            )
+        else:
+            facilities = itertools.dropwhile(
+                lambda location: location._id != runner.location.location_id,
+                facilities
+            )
+
     for fac in facilities:
+        runner.location = fac.sql_location
+        runner.save()
         process_facility_warehouse_data(fac, start_date, end_date)
 
     # then populate everything above a facility off a warehouse table
     for org in non_facilities:
+        runner.location = org.sql_location
+        runner.save()
         process_non_facility_warehouse_data(org, start_date, end_date)
-
+    runner.location = None
+    runner.save()
     # finally go back through the history and initialize empty data for any
     # newly created facilities
     update_historical_data(domain)
@@ -431,9 +455,10 @@ def process_facility_product_reports(facility, reports):
     assert facility.location_type == "FACILITY"
     months_updated = {}
     for report in reports:
-        stock_transaction = report.stocktransaction_set.get(type='stockonhand')
-        assert stock_transaction.case_id == facility.linked_supply_point()._id
-        assert stock_transaction.type
+        stock_transactions = report.stocktransaction_set.filter(type='stockonhand')
+        assert stock_transactions.count() > 0
+        assert stock_transactions[0].case_id == facility.linked_supply_point()._id
+
         warehouse_date = _get_window_date(SupplyPointStatusTypes.SOH_FACILITY, report.date)
 
         if warehouse_date in months_updated:

@@ -1,10 +1,12 @@
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
+from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
 
+from corehq.apps.hqwebapp.forms import FormListForm
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
+from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from django.core.urlresolvers import reverse
 
 
@@ -58,6 +60,8 @@ class CommTrackSettingsForm(forms.Form):
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
+        from .views import StockLevelsView
+        domain = kwargs.pop('domain')
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.layout = Layout(
@@ -66,6 +70,12 @@ class CommTrackSettingsForm(forms.Form):
                 'stock_emergency_level',
                 'stock_understock_threshold',
                 'stock_overstock_threshold'
+            ) if not LOCATION_TYPE_STOCK_RATES.enabled(domain) else Fieldset(
+                _('Stock Levels'),
+                ButtonHolder(
+                    HTML('<a href="{}" class="btn btn-primary">{}</a>'.format(
+                        reverse(StockLevelsView.urlname, args=[domain]),
+                        _('Configure Stock Levels')))),
             ),
             Fieldset(
                 _('Consumption Settings'),
@@ -87,7 +97,7 @@ class CommTrackSettingsForm(forms.Form):
 
         from corehq.apps.locations.views import LocationImportView
         url = reverse(
-            LocationImportView.urlname, args=[kwargs.pop('domain')]
+            LocationImportView.urlname, args=[domain]
         )
 
         forms.Form.__init__(self, *args, **kwargs)
@@ -128,3 +138,34 @@ class ConsumptionForm(forms.Form):
                 product._id,
                 val,
             )
+
+
+class LocationTypeStockLevels(forms.Form):
+    """
+    Sub form for configuring stock levels for a specific location type
+    """
+    emergency_level = forms.DecimalField(
+        label=ugettext_noop("Emergency Level (months)"),
+        required=True,
+    )
+    understock_threshold = forms.DecimalField(
+        label=ugettext_noop("Low Stock Level (months)"),
+        required=True,
+    )
+    overstock_threshold = forms.DecimalField(
+        label=ugettext_noop("Overstock Level (months)"),
+        required=True,
+    )
+
+
+class StockLevelsForm(FormListForm):
+    """
+    Form for specifying stock levels per location type
+    """
+    child_form_class = LocationTypeStockLevels
+    columns = [
+        {'label': _("Location Type"), 'key': 'loc_type'},
+        'emergency_level',
+        'understock_threshold',
+        'overstock_threshold',
+    ]

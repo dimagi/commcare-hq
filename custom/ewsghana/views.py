@@ -1,13 +1,18 @@
+import json
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.domain.decorators import domain_admin_required
-from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_stock_data_task, ews_clear_stock_data_task
+from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
+from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
+    EWS_FACILITIES
+from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction
 from custom.ilsgateway.views import GlobalStats, BaseConfigView
-from custom.logistics.commtrack import resync_password
-from custom.logistics.tasks import resync_webusers_passwords_task
+from custom.logistics.tasks import language_fix
+from custom.logistics.tasks import stock_data_task
+from dimagi.utils.dates import force_to_datetime
 
 
 class EWSGlobalStats(GlobalStats):
@@ -37,7 +42,14 @@ def sync_ewsghana(request, domain):
 @domain_admin_required
 @require_POST
 def ews_sync_stock_data(request, domain):
-    ews_stock_data_task.delay(domain)
+    apis = (
+        ('product_stock', get_product_stock),
+        ('stock_transaction', get_stock_transaction)
+    )
+    config = EWSGhanaConfig.for_domain(domain)
+    domain = config.domain
+    endpoint = GhanaEndpoint.from_config(config)
+    stock_data_task.delay(domain, endpoint, apis, EWS_FACILITIES)
     return HttpResponse('OK')
 
 
@@ -50,8 +62,24 @@ def ews_clear_stock_data(request, domain):
 
 @domain_admin_required
 @require_POST
-def ews_resync_passwords(request, domain):
+def ews_fix_languages(request, domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
-    resync_webusers_passwords_task.delay(config, endpoint)
+    language_fix.delay(EWSApi(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
+
+
+@require_GET
+def inventory_management(request, domain):
+
+    inventory_management_ds = InventoryManagementData(
+        config=dict(
+            program=None, product=None, domain=domain,
+            startdate=force_to_datetime(request.GET.get('startdate')),
+            enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id')
+        )
+    )
+    return HttpResponse(
+        json.dumps(inventory_management_ds.charts[0].data),
+        mimetype='application/json'
+    )

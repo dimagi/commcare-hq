@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from corehq.apps.export.views import (CreateCustomFormExportView, CreateCustomCaseExportView,
                                       EditCustomFormExportView, EditCustomCaseExportView,
                                       DeleteCustomExportView)

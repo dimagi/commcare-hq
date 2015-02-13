@@ -1,3 +1,4 @@
+from django.views.generic.base import TemplateView
 from corehq.apps.app_manager.models import get_app
 from corehq.apps.domain.views import DomainViewMixin
 from dimagi.utils.decorators.memoized import memoized
@@ -26,3 +27,9 @@ class ApplicationViewMixin(DomainViewMixin):
         except Exception:
             pass
         return None
+
+
+class DynamicTemplateView(TemplateView):
+
+    def get_template_names(self):
+        return ['app_manager/ng_partials/%s.html' % self.kwargs['template']]

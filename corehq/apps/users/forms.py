@@ -1,10 +1,10 @@
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from crispy_forms.layout import ButtonHolder, Div, Fieldset, HTML, Layout, Submit
+from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 from django import forms
-from django.core.validators import EmailValidator, email_re
+from django.core.validators import EmailValidator
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.safestring import mark_safe
@@ -347,7 +347,12 @@ class CommCareAccountForm(forms.Form):
             self.cleaned_data['username'] = username
         return self.cleaned_data
 
-validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
+import django
+if django.VERSION < (1, 6):
+    from django.core.validators import email_re
+    validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
+else:
+    validate_username = EmailValidator(message=_(u'Username contains invalid characters.'))
 
 
 class MultipleSelectionForm(forms.Form):
@@ -362,7 +367,8 @@ class MultipleSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.add_input(Submit('submit', 'Update'))
+        submit_label = kwargs.pop('submit_label', "Update")
+        self.helper.add_input(Submit('submit', submit_label))
         super(MultipleSelectionForm, self).__init__(*args, **kwargs)
 
 

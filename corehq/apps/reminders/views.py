@@ -35,6 +35,7 @@ from corehq.apps.reminders.forms import (
     KEYWORD_RECIPIENT_CHOICES,
     ComplexScheduleCaseReminderForm,
     NewKeywordForm,
+    NO_RESPONSE,
 )
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
@@ -61,6 +62,7 @@ from corehq.apps.reminders.models import (
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
+    get_events_scheduling_info,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
@@ -375,22 +377,6 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'timezone_now': timezone_now,
     })
 
-def get_events_scheduling_info(events):
-    """
-    Return a list of events as dictionaries, only with information pertinent to scheduling changes.
-    """
-    result = []
-    for e in events:
-        result.append({
-            "day_num" : e.day_num,
-            "fire_time" : e.fire_time,
-            "fire_time_aux" : e.fire_time_aux,
-            "fire_time_type" : e.fire_time_type,
-            "time_window_length" : e.time_window_length,
-            "callback_timeout_intervals" : e.callback_timeout_intervals,
-            "form_unique_id" : e.form_unique_id,
-        })
-    return result
 
 @reminders_framework_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):
@@ -944,7 +930,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                 self.keyword.initiator_doc_type_filter.append('CommCareCase')
 
             self.keyword.actions = []
-            if self.keyword_form.cleaned_data['sender_content_type'] != 'none':
+            if self.keyword_form.cleaned_data['sender_content_type'] != NO_RESPONSE:
                 self.keyword.actions.append(
                     SurveyKeywordAction(
                         recipient=RECIPIENT_SENDER,
@@ -964,7 +950,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                         named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
                     )
                 )
-            if self.keyword_form.cleaned_data['other_recipient_content_type'] != 'none':
+            if self.keyword_form.cleaned_data['other_recipient_content_type'] != NO_RESPONSE:
                 self.keyword.actions.append(
                     SurveyKeywordAction(
                         recipient=self.keyword_form.cleaned_data['other_recipient_type'],
@@ -1030,6 +1016,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             'description': self.keyword.description,
             'delimiter': self.keyword.delimiter,
             'override_open_sessions': self.keyword.override_open_sessions,
+            'sender_content_type': NO_RESPONSE,
         }
         is_case_filter = "CommCareCase" in self.keyword.initiator_doc_type_filter
         is_user_filter = "CommCareUser" in self.keyword.initiator_doc_type_filter

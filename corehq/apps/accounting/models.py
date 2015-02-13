@@ -7,13 +7,13 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import DateTimeProperty, StringProperty
 
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.web import get_site_domain
 
 from django_prbac.models import Role
 
@@ -22,7 +22,6 @@ from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.couch.database import SafeSaveDocument
 
-from corehq import toggles
 from corehq.apps.users.models import WebUser
 
 from corehq.apps.accounting.exceptions import (
@@ -181,6 +180,41 @@ class PaymentMethodType(object):
     )
 
 
+class SubscriptionType(object):
+    CONTRACTED = "CONTRACTED"
+    SELF_SERVICE = "SELF_SERVICE"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (CONTRACTED, "Contracted"),
+        (SELF_SERVICE, "Self-service"),
+        (NOT_SET, "Not Set"),
+    )
+
+
+class ProBonoStatus(object):
+    YES = "YES"
+    NO = "NO"
+    DISCOUNTED = "DISCOUNTED"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (YES, "Yes"),
+        (NO, "No"),
+        (DISCOUNTED, "Discounted"),
+        (NOT_SET, "Not Set"),
+    )
+
+
+class EntryPoint(object):
+    CONTRACTED = "CONTRACTED"
+    SELF_STARTED = "SELF_STARTED"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (CONTRACTED, "Contracted"),
+        (SELF_STARTED, "Self-started"),
+        (NOT_SET, "Not Set"),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
@@ -258,6 +292,11 @@ class BillingAccount(models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
+    entry_point = models.CharField(
+        max_length=25,
+        default=EntryPoint.NOT_SET,
+        choices=EntryPoint.CHOICES,
+    )
 
     @property
     def balance(self):
@@ -267,7 +306,8 @@ class BillingAccount(models.Model):
     @classmethod
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
-                                        created_by_invoicing=False):
+                                        created_by_invoicing=False,
+                                        entry_point=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -277,12 +317,14 @@ class BillingAccount(models.Model):
         if account is None:
             is_new = True
             account_type = account_type or BillingAccountType.INVOICE_GENERATED
+            entry_point = entry_point or EntryPoint.NOT_SET
             account = BillingAccount(
                 name="Account for Project %s" % domain,
                 created_by=created_by,
                 created_by_domain=domain,
                 currency=Currency.get_default(),
                 account_type=account_type,
+                entry_point=entry_point,
             )
             account.save()
             if not created_by_invoicing:
@@ -724,6 +766,16 @@ class Subscription(models.Model):
     do_not_invoice = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
+    service_type = models.CharField(
+        max_length=25,
+        choices=SubscriptionType.CHOICES,
+        default=SubscriptionType.NOT_SET,
+    )
+    pro_bono_status = models.CharField(
+        max_length=25,
+        choices=ProBonoStatus.CHOICES,
+        default=SubscriptionType.NOT_SET,
+    )
 
     def __str__(self):
         return ("Subscription to %(plan_version)s for %(subscriber)s. "
@@ -810,7 +862,8 @@ class Subscription(models.Model):
                             date_delay_invoicing=None, do_not_invoice=False,
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
-                            web_user=None, note=None, adjustment_method=None):
+                            web_user=None, note=None, adjustment_method=None,
+                            service_type=None, pro_bono_status=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -839,6 +892,10 @@ class Subscription(models.Model):
         self.do_not_invoice = do_not_invoice
         self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
+        if service_type is not None:
+            self.service_type = service_type
+        if pro_bono_status is not None:
+            self.pro_bono_status = pro_bono_status
         self.save()
 
         SubscriptionAdjustment.record_adjustment(
@@ -847,7 +904,8 @@ class Subscription(models.Model):
         )
 
     def change_plan(self, new_plan_version, date_end=None,
-                    note=None, web_user=None, adjustment_method=None):
+                    note=None, web_user=None, adjustment_method=None,
+                    service_type=None, pro_bono_status=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -874,6 +932,8 @@ class Subscription(models.Model):
             date_delay_invoicing=self.date_delay_invoicing,
             is_active=self.is_active,
             do_not_invoice=self.do_not_invoice,
+            service_type=(service_type or SubscriptionType.NOT_SET),
+            pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
         )
         new_subscription.save()
 
@@ -927,7 +987,8 @@ class Subscription(models.Model):
         )
 
     def renew_subscription(self, date_end=None, note=None, web_user=None,
-                           adjustment_method=None):
+                           adjustment_method=None,
+                           service_type=None, pro_bono_status=None):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
@@ -965,6 +1026,10 @@ class Subscription(models.Model):
             date_start=self.date_end,
             date_end=date_end,
         )
+        if service_type is not None:
+            renewed_subscription.service_type = service_type
+        if pro_bono_status is not None:
+            renewed_subscription.pro_bono_status = pro_bono_status
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.save()
@@ -1065,18 +1130,14 @@ class Subscription(models.Model):
             template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
 
         from corehq.apps.domain.views import DomainSubscriptionView
-        base_url = Site.objects.get_current().domain
         context = {
             'domain': domain_name,
             'plan_name': plan_name,
             'product': product,
             'ending_on': ending_on,
-            'subscription_url': "http://%s%s" % (
-                base_url,
-                reverse(DomainSubscriptionView.urlname,
-                        args=[self.subscriber.domain]),
-            ),
-            'base_url': base_url,
+            'subscription_url': absolute_reverse(
+                DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
+            'base_url': get_site_domain(),
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
@@ -1100,21 +1161,23 @@ class Subscription(models.Model):
 
     @classmethod
     def _get_plan_by_subscriber(cls, subscriber):
-        try:
-            active_subscriptions = cls.objects.filter(subscriber=subscriber, is_active=True)
-            if active_subscriptions.count() > 1:
-                logger.error(
-                    "[BILLING] "
-                    "There seem to be multiple ACTIVE subscriptions for the "
-                    "subscriber %s. Odd, right? The latest one by "
-                    "date_created was used, but consider this an issue."
-                    % subscriber
-                )
-            current_subscription = active_subscriptions.latest('date_created')
-            return current_subscription.plan_version, current_subscription
-        except Subscription.DoesNotExist:
-            pass
-        return None, None
+        active_subscriptions = cls.objects\
+            .filter(subscriber=subscriber, is_active=True)\
+            .order_by('-date_created')[:2]
+
+        if not active_subscriptions:
+            return None, None
+
+        if len(active_subscriptions) > 1:
+            logger.error(
+                "[BILLING] "
+                "There seem to be multiple ACTIVE subscriptions for the "
+                "subscriber %s. Odd, right? The latest one by "
+                "date_created was used, but consider this an issue."
+                % subscriber
+            )
+        current_subscription = active_subscriptions[0]
+        return current_subscription.plan_version, current_subscription
 
     @classmethod
     def get_subscribed_plan_by_organization(cls, organization):
@@ -1249,6 +1312,9 @@ class Invoice(models.Model):
     date_start = models.DateField()
     date_end = models.DateField()
     is_hidden = models.BooleanField(default=False)
+    # If set to True invoice will not appear in invoice report. There is no UI to
+    # control this filter
+    is_hidden_to_ops = models.BooleanField(default=False)
 
     @property
     def subtotal(self):
@@ -1435,18 +1501,14 @@ class BillingRecord(models.Model):
                 'name': self.invoice.subscription.plan_version.plan.edition,
             },
             'domain': domain,
-            'domain_url': "http://%s%s" % (
-                Site.objects.get_current().domain,
-                reverse(DefaultProjectSettingsView.urlname, args=[domain])
-            ),
+            'domain_url': absolute_reverse(DefaultProjectSettingsView.urlname,
+                                           args=[domain]),
             'statement_number': self.invoice.invoice_number,
             'payment_status': (_("Paid") if self.invoice.date_paid is not None
                                else _("Payment Required")),
             'amount_due': fmt_dollar_amount(self.invoice.balance),
-            'statements_url': "http://%s%s" % (
-                Site.objects.get_current().domain,
-                reverse(DomainBillingStatementsView.urlname,args=[domain])
-            ),
+            'statements_url': absolute_reverse(
+                DomainBillingStatementsView.urlname, args=[domain]),
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients
