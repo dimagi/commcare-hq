@@ -29,6 +29,7 @@ class Migration(SchemaMigration):
             'date_confirmed_extra_charges': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'date_created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'dimagi_contact': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True', 'blank': 'True'}),
+            'entry_point': ('django.db.models.fields.CharField', [], {'default': "'NOT_SET'", 'max_length': '25'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_auto_invoiceable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -218,7 +219,9 @@ class Migration(SchemaMigration):
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_trial': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'plan_version': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.SoftwarePlanVersion']"}),
+            'pro_bono_status': ('django.db.models.fields.CharField', [], {'default': "'NOT_SET'", 'max_length': '25'}),
             'salesforce_contract_id': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True', 'blank': 'True'}),
+            'service_type': ('django.db.models.fields.CharField', [], {'default': "'NOT_SET'", 'max_length': '25'}),
             'subscriber': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounting.Subscriber']"})
         },
         u'accounting.subscriptionadjustment': {
