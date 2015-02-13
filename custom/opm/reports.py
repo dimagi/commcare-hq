@@ -793,18 +793,26 @@ class CaseReportMixin(object):
     @property
     def rows(self):
         rows = []
-        for row in self.row_objects + self.extra_row_objects:
+        sorted_objects = self.sort_and_set_serial_numbers(self.row_objects + self.extra_row_objects)
+        for row in sorted_objects:
             rows.append([getattr(row, method) for
-                method, header, visible in self.model.method_map])
+                        method, header, visible in self.model.method_map])
 
-        sorted_rows = sorted(rows, key=lambda item: item[0])
         if self.debug:
             def _debug_item_to_row(debug_val):
                 num_cols = len(self.model.method_map) - 3
                 return [debug_val['case_id'], debug_val['message'], debug_val['traceback']] + [''] * num_cols
 
-            sorted_rows.extend([_debug_item_to_row(dbv) for dbv in self._debug_data])
+            rows.extend([_debug_item_to_row(dbv) for dbv in self._debug_data])
 
+        return rows
+
+    def sort_and_set_serial_numbers(self, case_objects):
+        # sets serial_number for each row as the index in cases list sorted by awc_name, name
+        from operator import attrgetter
+        sorted_rows = sorted(case_objects, key=attrgetter('awc_name', 'name'))
+        for count, row in enumerate(sorted_rows, 1):
+            row.serial_number = count
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
@@ -888,7 +896,7 @@ class MetReport(CaseReportMixin, BaseReport):
         self._debug_data = []
         for index, row in enumerate(self.get_rows(self.datespan), 1):
             try:
-                rows.append(self.get_row_data(row, index=index))
+                rows.append(self.get_row_data(row, index=1))
             except InvalidRow as e:
                 if self.debug:
                     import sys
@@ -902,7 +910,7 @@ class MetReport(CaseReportMixin, BaseReport):
         return rows
 
     def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 0))
+        return self.model(row, self, child_index=kwargs.get('index', 1))
 
     def get_rows(self, datespan):
         result = super(MetReport, self).get_rows(datespan)
