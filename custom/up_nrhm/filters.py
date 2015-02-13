@@ -71,16 +71,15 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
     @memoized
     def drilldown_map(self):
         def make_drilldown(hierarchy):
-            return [{
+            hierarchy = [{
                 "val": current[0] if isinstance(current, tuple) else current,
                 "text": current[1] if isinstance(current, tuple) else current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
-        return make_drilldown(self.get_hierarchy())
 
-    @property
-    def use_new_ds(self):
-        return self.request.GET.get('ucr')
+            return sorted(hierarchy, key=lambda r: r['text'])
+
+        return make_drilldown(self.get_hierarchy())
 
     @property
     def data_source(self):
