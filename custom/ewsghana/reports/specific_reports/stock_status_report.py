@@ -4,13 +4,13 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.graph_models import MultiBarChart, Axis, LineChart
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
     FacilityInChargeUsers, FacilityUsers, FacilitySMSUsers, StockLevelsLegend, FacilityReportData
-from custom.ewsghana.reports import MultiReport, EWSData
+from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
 from custom.ewsghana.utils import get_supply_points, get_products, make_url, get_second_week
@@ -88,8 +88,7 @@ class ProductAvailabilityData(EWSData):
                             datalist.append([row['product_code'], calculate_percent(row['with_stock'], total)])
                     ret_data.append({'color': chart_config['label_color'][k], 'label': k, 'data': datalist})
                 return ret_data
-
-            chart = MultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '.2%'))
+            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             chart.stacked = False
@@ -219,8 +218,8 @@ class StockoutsProduct(EWSData):
     def charts(self):
         rows = self.rows
         if self.show_chart:
-            chart = LineChart("Stockout by Product", x_axis=Axis(self.chart_x_label, dateFormat='%b %Y'),
-                              y_axis=Axis(self.chart_y_label, 'd'))
+            chart = EWSLineChart("Stockout by Product", x_axis=Axis(self.chart_x_label, dateFormat='%b %Y'),
+                                 y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
@@ -338,11 +337,13 @@ class StockStatus(MultiReport):
         self.split = False
         if report_type == 'stockouts':
             return [
+                ProductSelectionPane(config=config),
                 StockoutsProduct(config=config),
                 StockoutTable(config=config)
             ]
         elif report_type == 'asi':
             return [
+                ProductSelectionPane(config=config),
                 ProductAvailabilityData(config=config),
                 MonthOfStockProduct(config=config),
                 StockoutsProduct(config=config),
@@ -350,6 +351,7 @@ class StockStatus(MultiReport):
             ]
         else:
             return [
+                ProductSelectionPane(config=config),
                 ProductAvailabilityData(config=config),
                 MonthOfStockProduct(config=config)
             ]
