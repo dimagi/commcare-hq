@@ -9,7 +9,6 @@ from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.forms.forms import get_declared_fields
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
