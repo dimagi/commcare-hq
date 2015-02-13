@@ -139,6 +139,15 @@
                 "datatype": "integer"
             },
             {
+                "column_id": "hv_fx_vhsnc",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_vhsnc"]
+                },
+                "datatype": "integer"
+            },
+            {
                 "column_id": "hv_fx_fp",
                 "type": "expression",
                 "expression": {

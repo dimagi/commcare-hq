@@ -2,6 +2,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.filters import DrillDownOptionFilter
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
@@ -54,12 +55,16 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
         model = self.model
         model_data = model.data
 
-        self.total_under_facilitator = format_val(model.columns[0].get_raw_value(model_data))
-        self.total_with_checklist = format_val(model.columns[1].get_raw_value(model_data))
+        total = model.columns[0].get_raw_value(model_data)
+        reporting = model.columns[1].get_raw_value(model_data)
 
+        self.total_under_facilitator = format_val(total)
+        self.total_with_checklist = format_val(reporting)
+
+        not_reporting = total - (reporting or 0)
         return [[
             column.header,
             format_val(column.get_value(model_data)),
-            '',
+            format_datatables_data(not_reporting, not_reporting),
             ''
         ] for column in model.columns[2:]]

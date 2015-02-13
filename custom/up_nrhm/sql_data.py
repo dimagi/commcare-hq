@@ -174,10 +174,10 @@ class ASHAFacilitatorsData(SqlData):
                 "Acting as DOTS provider",
                 FunctionalityChecklistColumn('hv_fx_dots', whens={1: 1}),
             ),
-            # DatabaseColumn(
-            #     "Holding or attending village/VHSNC meeting",
-            #     FunctionalityChecklistColumn('hv_fx_vhnd', whens={1: 1}), # TODO: duplicate field
-            # ),
+            DatabaseColumn(
+                "Holding or attending village/VHSNC meeting",
+                FunctionalityChecklistColumn('hv_fx_vhsnc', whens={1: 1}),
+            ),
             DatabaseColumn(
                 "Successful referral of the IUD, "
                 "female sterilization or male sterilization cases and/or providing OCPs/Condoms",
