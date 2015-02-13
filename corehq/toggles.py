@@ -245,6 +245,11 @@ VELLUM_HELP_TEXT = StaticToggle(
     "Adds a help text in the form builder"
 )
 
+VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
+    'transaction_question_types',
+    "Adds transaction-related question types in the form builder"
+)
+
 STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     'stock_and_sms_handler',
     "Enable the stock report handler to accept both stock and receipt values "
