@@ -305,6 +305,9 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             safe_only=safe_only
         )
 
+        if export_type == 'form':
+            filter &= SerializableFunction(instances)
+
         return export_helper.prepare_export(export_tags, filter)
 
     elif export_id:
