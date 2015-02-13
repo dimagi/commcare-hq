@@ -94,7 +94,7 @@ def all_toggles():
 
 def toggles_dict(username=None, domain=None):
     """
-    Loads all toggles into a dictonary for use in JS
+    Loads all toggles into a dictionary for use in JS
     """
     return {t.slug: True for t in all_toggles() if (t.enabled(username) or
                                                     t.enabled(domain))}
@@ -293,12 +293,20 @@ BULK_ARCHIVE_FORMS = StaticToggle(
     'Bulk archive forms with excel',
 )
 
+DHIS2_DOMAIN = StaticToggle(
+    'dhis2_domain',
+    'Enable DHIS2 integration for this domain',
+    [NAMESPACE_DOMAIN]
+)
+
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+# not referenced in code directly but passed through to vellum
+# see toggles_dict
 VELLUM_HELP_TEXT = StaticToggle(
     'add_help_text',
     "Adds a help text in the form builder"

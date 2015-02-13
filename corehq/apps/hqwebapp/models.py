@@ -1138,6 +1138,13 @@ class ProjectSettingsTab(UITab):
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
+        if toggles.DHIS2_DOMAIN.enabled(self.domain):
+            from corehq.apps.domain.views import EditDhis2SettingsView
+            project_info.append({
+                'title': _(EditDhis2SettingsView.page_title),
+                'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
+            })
+
         can_view_orgs = (user_is_admin
                          and self.project and self.project.organization
                          and has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS))
