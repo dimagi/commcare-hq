@@ -5,9 +5,11 @@ import logging
 import uuid
 from couchdbkit import ResourceNotFound
 from custom.dhis2.forms import Dhis2SettingsForm
+from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.forms.forms import get_declared_fields
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
@@ -491,7 +493,8 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
     @property
     @memoized
     def dhis2_settings_form(self):
-        initial = {'enabled': False}
+        settings_ = Dhis2Settings.for_domain(self.domain_object.name)
+        initial = settings_.dhis2 if settings_ else {'enabled': False}
         if self.request.method == 'POST':
             return Dhis2SettingsForm(self.request.POST, initial=initial)
         return Dhis2SettingsForm(initial=initial)

@@ -1,6 +1,11 @@
+from __future__ import print_function
+import logging
 from custom.dhis2.models import Dhis2Settings
 from django import forms
 from django.utils.translation import ugettext as _
+
+
+logger = logging.getLogger(__name__)
 
 
 class Dhis2SettingsForm(forms.Form):
@@ -24,16 +29,33 @@ class Dhis2SettingsForm(forms.Form):
         required=False)
 
     def save(self, domain):
-        settings = Dhis2Settings.for_domain(domain.name)
-        fields = ('enabled', 'host', 'username', 'password', 'top_org_unit_name')
-        if settings is None:
-            settings = Dhis2Settings()
-            settings.domain = domain.name
-            for field in fields:
-                setattr(settings.dhis2, field, self.cleaned_data[field])
-            settings.save()
-        else:
-            for field in fields:
-                setattr(settings.dhis2, field, self.cleaned_data[field])
-            settings.save()
-        return True
+        try:
+            settings = Dhis2Settings.for_domain(domain.name)
+            if settings is None:
+                # Create settings
+                settings = Dhis2Settings()
+                settings.domain = domain.name
+                settings.dhis2 = {
+                    'enabled': self.cleaned_data['enabled'],
+                    'host': self.cleaned_data['host'],
+                    'username': self.cleaned_data['username'],
+                    'password': self.cleaned_data['password'],
+                    'top_org_unit_name': self.cleaned_data['top_org_unit_name'],
+                }
+                settings.save()
+            else:
+                # Update settings
+                settings.dhis2.update({
+                    'enabled': self.cleaned_data['enabled'],
+                    'host': self.cleaned_data['host'],
+                    'username': self.cleaned_data['username'],
+                    'top_org_unit_name': self.cleaned_data['top_org_unit_name'],
+                })
+                # Only update the password if it has been set
+                if self.cleaned_data['password']:
+                    settings.dhis2['password'] = self.cleaned_data['password']
+                settings.save()
+            return True
+        except Exception as err:  # TODO: What Exception?
+            logger.error('Unable to save DHIS2 API settings: %s' % err)
+            return False

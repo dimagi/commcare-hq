@@ -8,17 +8,9 @@ from dimagi.utils.couch.cache import cache_core
 import requests
 
 
-class Dhis2SettingsSchema(DocumentSchema):
-    enabled = BooleanProperty()
-    host = StringProperty()  # e.g. "http://dhis2.changeme.com:8123/dhis" (Do not include "/api" at the end.)
-    username = StringProperty()
-    password = StringProperty()
-    top_org_unit_name = StringProperty()  # Value may be empty or the name of an org unit. e.g. "Fermathe Clinic"
-
-
 class Dhis2Settings(Document):
     domain = StringProperty()
-    dhis2 = SchemaDictProperty(Dhis2SettingsSchema)
+    dhis2 = DictProperty()
 
     @classmethod
     def for_domain(cls, domain):
