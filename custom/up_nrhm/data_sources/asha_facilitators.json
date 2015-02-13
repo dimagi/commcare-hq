@@ -67,7 +67,7 @@
                 "datatype": "date"
             },
             {
-                "column_id": "home_birth_last_month_visited",
+                "column_id": "hv_fx_home_birth_visits",
                 "type": "expression",
                 "expression": {
                     "type": "property_path",
