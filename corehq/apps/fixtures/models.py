@@ -289,7 +289,7 @@ class FixtureDataItem(Document):
 
     def get_groups(self, wrap=True):
         group_ids = set(
-            get_db().view(
+            FixtureOwnership.get_db().view(
                 'fixtures/ownership',
                 key=[self.domain, 'group by data_item', self.get_id],
                 reduce=False,
