@@ -306,7 +306,7 @@ class ConfigureNewReportBase(forms.Form):
 
         def escape_id(id):
             # TODO: This is fairly naive escaping
-            return id.strip("/").replace("/", "--")
+            return id.strip("/").replace("/", "__")
 
         if self.source_type == 'case':
             return {
