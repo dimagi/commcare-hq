@@ -343,7 +343,7 @@ class ShortFormRepeater(Repeater):
         return XFormInstance.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
-        headers = super(CaseRepeater, self).get_headers(repeat_record)
+        headers = super(ShortFormRepeater, self).get_headers(repeat_record)
         headers.update({
             "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
         })
