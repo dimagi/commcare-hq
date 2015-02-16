@@ -213,7 +213,7 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, required, label, show_all, url_generator, css_id=None):
+    def __init__(self, name, field, required, label, show_all, url_generator, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -222,6 +222,7 @@ class DynamicChoiceListFilter(BaseFilter):
             FilterParam(name, True),
         ]
         super(DynamicChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        self.field = field
         self.label = label
         self.show_all = show_all
         self.css_id = css_id or self.name

@@ -45,3 +45,17 @@ class BuildErrorsTest(TestCase):
             errors = app.validate_app()
 
             self.assertIn(cycle_error, errors)
+
+    def test_case_tile_configuration_errors(self):
+        case_tile_error = {
+            'type': "invalid tile configuration",
+            'module': {'id': 0, 'name': {u'en': u'View'}},
+            'reason': 'A case property must be assigned to the "sex" tile field.'
+        }
+        with open(os.path.join(
+            os.path.dirname(__file__), 'data', 'bad_case_tile_config.json'
+        )) as f:
+            source = json.load(f)
+            app = Application.wrap(source)
+            errors = app.validate_app()
+            self.assertIn(case_tile_error, errors)

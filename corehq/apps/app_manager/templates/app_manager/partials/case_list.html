@@ -25,6 +25,16 @@
 </legend>
 
 <div data-bind="with: shortScreen">
+    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
+    <select data-bind="value: useCaseTiles">
+        <option value="no">Don't Use Case Tiles</option>
+        <option value="yes">Use Case Tiles</option>
+    </select>
+    <label class="checkbox" data-bind="visible: useCaseTiles() == 'yes'">
+        <input type="checkbox" data-bind="checked: persistTileOnForms">
+        Use this case list tile persistently in forms
+    </label>
+    {% endif %}
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
 
