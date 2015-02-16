@@ -36,19 +36,21 @@
 {% endblock %}
 
 {% block main_column %}
-    <div class="span8">
-        <h2>{% trans "Location Hierarchy" %}</h2>
-        <p>
-            {% blocktrans %}
-                Location Types allow you to configure the different types
-                of locations within your project (districts, facilities,
-                front line workers, etc.). Locations can own data and
-                cases, view child location's data or simply be used for
-                aggregation. Once you've defined your location types,
-                you'll be able to add locations for your project.
-                Learn more about locations on our <a href="https://confluence.dimagi.com/display/commtrack/Locations">Help Site</a>.
-            {% endblocktrans %}
-        </p>
+    <div class="row-fluid">
+        <div class="span8">
+            <h2>{% trans "Location Hierarchy" %}</h2>
+            <p>
+                {% blocktrans %}
+                    Location Types allow you to configure the different types
+                    of locations within your project (districts, facilities,
+                    front line workers, etc.). Locations can own data and
+                    cases, view child location's data or simply be used for
+                    aggregation. Once you've defined your location types,
+                    you'll be able to add locations for your project.
+                    Learn more about locations on our <a href="https://confluence.dimagi.com/display/commtrack/Locations">Help Site</a>.
+                {% endblocktrans %}
+            </p>
+        </div>
     </div>
     <form id="settings" class="form form-horizontal" method="post">
         <fieldset>
