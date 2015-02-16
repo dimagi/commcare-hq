@@ -240,7 +240,7 @@ class ImportErrorDetail(object):
         try:
             self.errors[error]['description'] = self.ERROR_MSG[error]
         except KeyError:
-            self.errors[error]['description'] = ERROR_MSG[ImportErrors.CaseGeneration]
+            self.errors[error]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
 
         if 'rows' not in self.errors[error]:
             self.errors[error]['rows'] = []

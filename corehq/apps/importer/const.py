@@ -1,6 +1,7 @@
 class LookupErrors:
     NotFound, MultipleResults = range(2)
 
+
 class ImportErrors:
     InvalidOwnerName = 'Invalid Owner Name'
     InvalidOwnerId = 'Invalid Owner ID'
