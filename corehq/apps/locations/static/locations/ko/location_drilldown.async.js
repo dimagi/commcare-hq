@@ -41,11 +41,11 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
 
   // add a new level of drill-down to the tree
   this.path_push = function(loc) {
-    if (this.selected_path().length != this.location_types.length) {
-        this.selected_path.push(loc);
-        if (this.auto_drill && loc.num_children() == 1) {
-            loc.selected_child(loc.get_child(0));
-        }
+    if (this.selected_path().length != this.location_types.length && this.selected_path.indexOf(loc) === -1) {
+      this.selected_path.push(loc);
+      if (this.auto_drill && loc.num_children() == 1) {
+        loc.selected_child(loc.get_child(0));
+      }
     }
   }
 

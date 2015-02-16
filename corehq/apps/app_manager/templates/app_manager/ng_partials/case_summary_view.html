@@ -60,7 +60,7 @@
 <div>
     <loading></loading>
     <div class="row-fluid" ng-hide="loading">
-        <div ng-repeat="caseType in caseTypes|filter:typeSearch">
+        <div ng-repeat="caseType in caseTypes|filter:typeSearch:true">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <div class="row">

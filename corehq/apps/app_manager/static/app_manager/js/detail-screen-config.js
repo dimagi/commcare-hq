@@ -554,6 +554,7 @@ var DetailScreenConfig = (function () {
             this.containsFilterConfiguration = options.containsFilterConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
+            this.allowsEmptyColumns = options.allowsEmptyColumns;
 
             this.fireChange = function() {
                 that.fire('change');
@@ -813,7 +814,8 @@ var DetailScreenConfig = (function () {
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
                         containsCustomXMLConfiguration: columnType == "short",
-                        allowsTabs: columnType == 'long'
+                        allowsTabs: columnType == 'long',
+                        allowsEmptyColumns: columnType == 'long'
                     }
                 );
                 that.screens.push(screen);
