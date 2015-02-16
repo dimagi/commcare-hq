@@ -1,4 +1,6 @@
 import logging
+from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataField
 
 from corehq.apps.products.models import Product
 from dimagi.utils.dates import force_to_datetime
@@ -88,12 +90,34 @@ class LogisticsEndpoint(EndpointMixin):
 
 class APISynchronization(object):
 
+    LOCATION_CUSTOM_FIELDS = []
+    SMS_USER_CUSTOM_FIELDS = []
+    PRODUCT_CUSTOM_FIELDS = []
+
     def __init__(self, domain, endpoint):
         self.domain = domain
         self.endpoint = endpoint
 
     def prepare_commtrack_config(self):
         raise NotImplemented("Not implemented yet")
+
+    def prepare_custom_fields(self):
+        self.save_custom_fields('LocationFields', self.LOCATION_CUSTOM_FIELDS)
+        self.save_custom_fields('UserFields', self.SMS_USER_CUSTOM_FIELDS)
+        self.save_custom_fields('ProductFields', self.PRODUCT_CUSTOM_FIELDS)
+
+    def save_custom_fields(self, definition_name, custom_fields):
+        fields_definitions = CustomDataFieldsDefinition.get_or_create(self.domain, definition_name)
+        for custom_field in custom_fields:
+            if not filter(lambda field: field.slug == custom_field, fields_definitions.fields):
+                fields_definitions.fields.append(
+                    CustomDataField(
+                        slug=custom_field,
+                        label=custom_field,
+                        is_required=False,
+                    )
+                )
+        fields_definitions.save()
 
     def location_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")
@@ -171,6 +195,8 @@ class APISynchronization(object):
         if not last_name:
             last_name = splitted_value[1][:30] if len(splitted_value) > 1 else ''
 
+        language = ilsgateway_smsuser.language
+
         user_dict = {
             'first_name': first_name,
             'last_name': last_name,
@@ -194,6 +220,7 @@ class APISynchronization(object):
                                            password_hashed=bool(password))
                 user.first_name = first_name
                 user.last_name = last_name
+                user.language = language
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
                 if "phone_numbers" in user_dict:
@@ -212,3 +239,13 @@ class APISynchronization(object):
             if apply_updates(user, user_dict):
                 user.save()
         return user
+
+    def add_language_to_user(self, logistics_sms_user):
+        domain_part = "%s.commcarehq.org" % self.domain
+        username_part = "%s%d" % (logistics_sms_user.name.strip().replace(' ', '.').lower(),
+                                  logistics_sms_user.id)
+        username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
+        user = CouchUser.get_by_username(username)
+        if user and user.language != logistics_sms_user.language:
+            user.language = logistics_sms_user.language
+            user.save()

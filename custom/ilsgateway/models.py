@@ -432,3 +432,10 @@ class RequisitionReport(models.Model):
     location_id = models.CharField(max_length=100, db_index=True)
     submitted = models.BooleanField(default=False)
     report_date = models.DateTimeField(default=datetime.utcnow)
+
+
+class SupervisionDocument(models.Model):
+    document = models.TextField()
+    domain = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+    data_type = models.CharField(max_length=100)

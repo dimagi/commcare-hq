@@ -7,6 +7,18 @@ from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSession, XFORMS_
 
 class SQLSessionTestCase(TestCase):
 
+    def test_get_by_session_id(self):
+        session_id = uuid.uuid4().hex
+        sql_session = SQLXFormsSession.objects.create(
+            session_id=session_id,
+            start_time=datetime.utcnow(),
+            modified_time=datetime.utcnow(),
+        )
+        self.assertEqual(sql_session.pk, SQLXFormsSession.by_session_id(session_id).pk)
+
+    def test_get_by_session_id_not_found(self):
+        self.assertEqual(None, SQLXFormsSession.by_session_id(uuid.uuid4().hex))
+
     def test_sync_from_creation(self):
         properties = _arbitrary_session_properties()
         couch_session = XFormsSession(**properties)
