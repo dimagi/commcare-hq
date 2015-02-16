@@ -906,7 +906,7 @@ def retry_on_connection_failure(fn):
     def _inner(*args, **kwargs):
         retry = kwargs.pop('retry', True)
         try:
-            fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         except db.utils.DatabaseError:
             # we have to do this manually to avoid issues with
             # open transactions and already closed connections
