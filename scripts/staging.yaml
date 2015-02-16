@@ -61,6 +61,7 @@ branches:
   - dhis2+project-settings-update # Noah 2/11
   - dhis2 # Norman 2/6
   - project-settings-update # sravan 1/30
+  - report-builder # Noah 2/16
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
