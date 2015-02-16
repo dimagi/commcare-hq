@@ -164,7 +164,6 @@ class ConfigureNewReportBase(forms.Form):
         """
         Creates data source and report config.
         """
-
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             display_name="{} source".format(self.cleaned_data['report_name']),
@@ -176,8 +175,25 @@ class ConfigureNewReportBase(forms.Form):
         )
         # TODO: Does validate check for unique table ids? It should I think.
         data_source_config.validate()
-        data_source_config.save()
-        tasks.rebuild_indicators.delay(data_source_config._id)
+
+        # Check if a suitable data source already exists.
+        # This checking is pretty naive. Do something better.
+        # Also inefficient. Consider writing a new couch view.
+        sources = DataSourceConfiguration.by_domain(self.domain)
+        match = None
+        for s in sources:
+            if (
+                s.referenced_doc_type == data_source_config.referenced_doc_type and
+                s.configured_filter == data_source_config.configured_filter and
+                s.configured_indicators == data_source_config.configured_indicators
+            ):
+                match = s
+                break
+        if not match:
+            data_source_config.save()
+            tasks.rebuild_indicators.delay(data_source_config._id)
+        else:
+            data_source_config = match
 
         report = ReportConfiguration(
             domain=self.domain,
