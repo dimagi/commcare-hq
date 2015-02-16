@@ -210,8 +210,6 @@ class SQLSessionTestCase(TestCase):
             self.assertEqual(couch_session.session_id, session.session_id)
 
 
-
-
 def _make_session(**kwargs):
     properties = _arbitrary_session_properties(**kwargs)
     couch_session = XFormsSession(**properties)
