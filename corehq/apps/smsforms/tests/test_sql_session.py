@@ -1,6 +1,7 @@
 from datetime import datetime
 import random
 import uuid
+from couchdbkit import MultipleResultsFound
 from django.test import TestCase
 from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS, \
@@ -175,6 +176,40 @@ class SQLSessionTestCase(TestCase):
         self.assertEqual(None, session)
         self.assertEqual(0, len(XFormsSession.get_all_open_sms_sessions(domain, contact)))
         self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
+
+    def test_get_open_sms_session_no_results(self):
+        for cls in (XFormsSession, SQLXFormsSession):
+            self.assertEqual(None, cls.get_open_sms_session(uuid.uuid4().hex, uuid.uuid4().hex))
+
+    def test_get_open_sms_session_multiple_results(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        for i in range(3):
+            _make_session(
+                domain=domain,
+                connection_id=contact,
+                end_time=None,
+                session_type=XFORMS_SESSION_SMS,
+            )
+
+        for cls in (XFormsSession, SQLXFormsSession):
+            with self.assertRaises(MultipleResultsFound):
+                cls.get_open_sms_session(domain, contact)
+
+    def test_get_open_sms_session_one_result(self):
+        domain = uuid.uuid4().hex
+        contact = uuid.uuid4().hex
+        couch_session = _make_session(
+            domain=domain,
+            connection_id=contact,
+            end_time=None,
+            session_type=XFORMS_SESSION_SMS,
+        )
+        for cls in (XFormsSession, SQLXFormsSession):
+            session = cls.get_open_sms_session(domain, contact)
+            self.assertEqual(couch_session.session_id, session.session_id)
+
+
 
 
 def _make_session(**kwargs):
