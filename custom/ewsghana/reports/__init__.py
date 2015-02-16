@@ -65,6 +65,20 @@ class EWSData(object):
                 Domain.get_by_name(self.config['domain']).location_types
                 )]
 
+    @property
+    def products(self):
+        if self.config['program'] and not self.config['products']:
+            product_ids = SQLProduct.objects.filter(domain=self.config['domain'],
+                                                    program_id=self.config['program']).values_list(*['product_id'],
+                                                                                                   flat=True)
+
+        elif self.config['program'] and self.config['products']:
+            product_ids = self.config['products']
+        else:
+            product_ids = SQLProduct.objects.filter(domain=self.config['domain']).values_list(*['product_id'],
+                                                                                              flat=True)
+        return product_ids
+
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
     title = ''

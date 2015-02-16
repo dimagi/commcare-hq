@@ -16,112 +16,7 @@ from custom.ewsghana.filters import ProductByProgramFilter
 from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, MultiReport, get_url, EWSLineChart
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
-from corehq.apps.locations.models import Location
-from custom.ewsghana.utils import get_products_ids_assigned_to_rel_sp
-
-
-class StockLevelsSubmissionData(EWSData):
-    title = 'Aggregate Stock Report'
-    slug = 'stock_levels_submission'
-    show_table = True
-    use_datatables = True
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(*[
-            DataTablesColumn(_('Location')),
-            DataTablesColumn(_('Stockout')),
-            DataTablesColumn(_('Low Stock')),
-            DataTablesColumn(_('Adequate Stock')),
-            DataTablesColumn(_('Overstock')),
-            DataTablesColumn(_('Total'))])
-
-        if self.config['product'] != '':
-            headers.add_column(DataTablesColumn(_('AMC')))
-        return headers
-
-    def get_prod_data(self):
-
-        for sublocation in self.sublocations:
-            sp_ids = get_relevant_supply_point_ids(self.config['domain'], sublocation)
-            stock_states = StockState.include_archived.filter(
-                case_id__in=sp_ids,
-                last_modified_date__lte=self.config['enddate'],
-                last_modified_date__gte=self.config['startdate'],
-                section_id=STOCK_SECTION_TYPE
-            )
-
-            stock_states = stock_states.order_by('product_id')
-            state_grouping = {}
-            for state in stock_states:
-                status = state.stock_category
-                if state.product_id in state_grouping:
-                    state_grouping[state.product_id][status] += 1
-                else:
-                    state_grouping[state.product_id] = {
-                        'id': state.product_id,
-                        'stockout': 0,
-                        'understock': 0,
-                        'overstock': 0,
-                        'adequate': 0,
-                        'nodata': 0,
-                        'facility_count': 1,
-                        'amc': int(state.get_monthly_consumption() or 0)
-                    }
-                    state_grouping[state.product_id][status] = 1
-
-            location_grouping = {
-                'location': sublocation.name,
-                'stockout': 0,
-                'understock': 0,
-                'adequate': 0,
-                'overstock': 0,
-                'total': 0,
-                'amc': 0
-            }
-            product_ids = []
-            if self.config['program'] != '' and self.config['product'] == '':
-                product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
-                                                                                   self.config['program'])]
-            elif self.config['program'] != '' and self.config['product'] != '':
-                product_ids = [self.config['product']]
-            else:
-                product_ids = Product.ids_by_domain(self.config['domain'])
-
-            for product in state_grouping.values():
-                if product['id'] in product_ids:
-                    location_grouping['stockout'] += product['stockout']
-                    location_grouping['understock'] += product['understock']
-                    location_grouping['adequate'] += product['adequate']
-                    location_grouping['overstock'] += product['overstock']
-                    location_grouping['total'] += sum([product['stockout'], product['understock'],
-                                                       product['adequate'], product['overstock']])
-                    location_grouping['amc'] += product['amc']
-
-            location_grouping['stockout'] = self.percent_fn(location_grouping['total'],
-                                                            location_grouping['stockout'])
-            location_grouping['understock'] = self.percent_fn(location_grouping['total'],
-                                                              location_grouping['understock'])
-            location_grouping['adequate'] = self.percent_fn(location_grouping['total'],
-                                                            location_grouping['adequate'])
-            location_grouping['overstock'] = self.percent_fn(location_grouping['total'],
-                                                             location_grouping['overstock'])
-
-            yield location_grouping
-
-    @property
-    def rows(self):
-        for location_grouping in self.get_prod_data():
-            row = [location_grouping['location'],
-                   location_grouping['stockout'],
-                   location_grouping['understock'],
-                   location_grouping['adequate'],
-                   location_grouping['overstock'],
-                   location_grouping['total']]
-            if self.config['product'] != '':
-                row.append(location_grouping['amc'])
-
-            yield row
+from corehq.apps.locations.models import Location, SQLLocation
 
 
 class StockLevelsLegend(EWSData):
@@ -179,24 +74,12 @@ class FacilityReportData(EWSData):
 
         state_grouping = {}
 
-        prds = set(get_products_ids_assigned_to_rel_sp(self.config['domain'], self.sublocations[0]))
-
-        if self.config['program'] and not self.config['products']:
-            product_ids = SQLProduct.objects.filter(domain=self.config['domain'],
-                                                    program_id=self.config['program'],
-                                                    id__in=prds).values_list(*['product_id'], flat=True)
-
-        elif self.config['program'] and self.config['products']:
-            product_ids = set(self.config['products']) & prds
-        else:
-            product_ids = SQLProduct.objects.filter(id_in=prds,
-                                                    domain=self.config['domain']).values_list(*['product_id'],
-                                                                                              flat=True)
+        loc = SQLLocation.objects.get(location_id=self.config['location_id'])
 
         stock_states = StockState.objects.filter(
-            case_id__in=get_relevant_supply_point_ids(self.config['domain'], self.sublocations[0]),
+            case_id__in=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            product_id__in=product_ids
+            product_id__in=set(self.products) & loc.products
         ).order_by('-last_modified_date')
 
         for state in stock_states:
@@ -257,16 +140,6 @@ class InventoryManagementData(EWSData):
     chart_x_label = 'Weeks'
     chart_y_label = 'MOS'
 
-    def get_products(self):
-        if self.config['program'] and not self.config['products']:
-            product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
-                                                                               self.config['program'])]
-        elif self.config['program'] and self.config['products']:
-            product_ids = [self.config['products']]
-        else:
-            product_ids = Product.ids_by_domain(self.config['domain'])
-        return product_ids
-
     @property
     def rows(self):
         return []
@@ -284,11 +157,11 @@ class InventoryManagementData(EWSData):
                 if consumption and consumption > 0 and quantity > 0:
                     return quantity / consumption
             return 0
-
+        loc = SQLLocation.objects.get(location_id=self.config['location_id'])
         stock_states = StockState.include_archived.filter(
-            case_id__in=get_relevant_supply_point_ids(self.config['domain'], self.sublocations[0]),
+            case_id__in=get_relevant_supply_point_ids(self.config['domain'], loc.supply_point_id),
             section_id=STOCK_SECTION_TYPE,
-            product_id__in=self.get_products(),
+            product_id__in=set(self.products) & loc.products,
             last_modified_date__lte=self.config['enddate'],
         ).order_by('last_modified_date')
 
@@ -429,7 +302,6 @@ class StockLevelsReport(MultiReport):
                     FacilityUsers(config),
                     FacilityInChargeUsers(config),
                     InventoryManagementData(config)]
-        return [StockLevelsSubmissionData(config)]
 
     @property
     def export_table(self):
