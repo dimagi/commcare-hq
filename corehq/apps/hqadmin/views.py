@@ -211,7 +211,12 @@ def contact_email(request):
     description = request.POST['description']
     message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
     send_mail(description[:60], message, from_email, [settings.CONTACT_EMAIL])
-    return HttpResponse('success')
+    response = HttpResponse('success')
+    response["Access-Control-Allow-Origin"] = "http://www.commcarehq.org"
+    response["Access-Control-Allow-Methods"] = "POST"
+    response["Access-Control-Max-Age"] = "1000"
+    response["Access-Control-Allow-Headers"] = "*"
+    return response
 
 
 @require_superuser
