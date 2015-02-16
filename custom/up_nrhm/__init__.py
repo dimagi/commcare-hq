@@ -7,8 +7,6 @@ CUSTOM_REPORTS = (
     )),
 )
 
-ASHA_FUNCTIONALITY_CHECKLIST_XMLNS = 'http://openrosa.org/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505'
-
 hierarchy_config = {
     'lvl_1': {
         'prop': 'district',

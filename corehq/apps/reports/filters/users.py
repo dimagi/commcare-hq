@@ -545,9 +545,9 @@ class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
 
 
 def get_user_toggle(request):
-    request_obj = request.POST if request.method == 'POST' else request.GET
     ufilter = group = individual = show_commtrack = None
     try:
+        request_obj = request.POST if request.method == 'POST' else request.GET
         if request_obj.get('ufilter', ''):
             ufilter = request_obj.getlist('ufilter')
         group = request_obj.get('group', '')
