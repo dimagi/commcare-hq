@@ -21,7 +21,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID_AUTOGEN, RETURN_TO
+    CASE_ID, RETURN_TO
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
@@ -935,7 +935,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 )
                 frame = PushFrame()
                 frame.add_command(self.id_strings.form_command(form))
-                frame.add_datum(StackDatum(id=CASE_ID_AUTOGEN, value='uuid()'))
+                frame.add_datum(StackDatum(id=CASE_ID, value='uuid()'))
                 frame.add_datum(StackDatum(id=RETURN_TO, value=self.id_strings.menu(module)))
                 d.action.stack.add_frame(frame)
 
@@ -1358,9 +1358,9 @@ class SuiteGenerator(SuiteGeneratorBase):
         )
 
     def configure_entry_as_case_list_form(self, entry):
-        entry.datums.append(SessionDatum(id=CASE_ID_AUTOGEN, function='uuid()'))
+        entry.datums.append(SessionDatum(id=CASE_ID, function='uuid()'))
         entry.stack = Stack()
-        case_id = session_var(CASE_ID_AUTOGEN)
+        case_id = session_var(CASE_ID)
         case_count = CaseIDXPath(case_id).case().count()
         return_to = session_var(RETURN_TO)
         frame_case_created = CreateFrame(if_clause='{} and {} > 0'.format(return_to, case_count))

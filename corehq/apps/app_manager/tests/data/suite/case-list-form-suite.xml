@@ -184,7 +184,7 @@
         <stack>
             <push>
                 <command>m1-f0</command>
-                <datum id="case_id_autogen" value="uuid()"/>
+                <datum id="case_id" value="uuid()"/>
                 <datum id="return_to" value="m0"/>
             </push>
         </stack>
@@ -368,14 +368,14 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <session>
-        <datum id="case_id_autogen" function="uuid()"/>
+        <datum id="case_id" function="uuid()"/>
     </session>
     <stack>
-        <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_autogen]) &gt; 0">
+        <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) &gt; 0">
             <command>instance('commcaresession')/session/data/return_to</command>
-            <datum id="case_id" value="instance('commcaresession')/session/data/case_id_autogen"/>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
         </create>
-        <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_autogen]) = 0">
+        <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
             <command>instance('commcaresession')/session/data/return_to</command>
         </create>
     </stack>

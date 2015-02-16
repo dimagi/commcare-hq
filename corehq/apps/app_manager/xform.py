@@ -2,7 +2,7 @@ from collections import defaultdict
 import logging
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
-    CASE_ID_AUTOGEN
+    CASE_ID
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
@@ -70,7 +70,7 @@ def relative_path(from_path, to_path):
             return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
 
 
-SESSION_CASE_ID = CaseIDXPath(session_var('case_id'))
+SESSION_CASE_ID = CaseIDXPath(session_var(CASE_ID))
 
 
 class WrappedAttribs(object):
@@ -1173,9 +1173,9 @@ class XForm(WrappedNode):
                 case_list_modules = (
                     mod for mod in form.get_app().get_modules() if mod.case_list_form.form_id == form.get_unique_id()
                 )
-                if module.module_type == 'basic' and not module.parent_select.active and \
+                if not (hasattr(module, 'parent_select') and module.parent_select.active) and \
                         any(case_list_modules):
-                    case_id = session_var(CASE_ID_AUTOGEN)
+                    case_id = session_var(CASE_ID)
 
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
