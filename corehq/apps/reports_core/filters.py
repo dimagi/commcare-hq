@@ -4,6 +4,7 @@ from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext_lazy as _
 
 
 class FilterException(Exception):
@@ -137,6 +138,44 @@ class DatespanFilter(BaseFilter):
         }
 
 
+class NumericFilter(BaseFilter):
+    template = "reports_core/filters/numeric_filter.html"
+
+    def __init__(self, name, required=True, label=_('Numeric Filter'), css_id=None):
+        self.label = label
+        self.css_id = css_id or name
+        params = [
+            FilterParam(self.operator_param_name, True),
+            FilterParam(self.operand_param_name, True),
+        ]
+        super(NumericFilter, self).__init__(required=required, name=name, params=params)
+
+    @property
+    def operator_param_name(self):
+        return "{}-operator".format(self.css_id)
+
+    @property
+    def operand_param_name(self):
+        return "{}-operand".format(self.css_id)
+
+    @memoized
+    def value(self, **kwargs):
+        operator = kwargs[self.operator_param_name]
+        operand = kwargs[self.operand_param_name]
+        if operand == "":
+            return None
+        try:
+            assert operator in ["=", "!=", "<", "<=", ">", ">="]
+            assert isinstance(operand, float) or isinstance(operand, int)
+        except AssertionError as e:
+            raise FilterValueException('Error parsing numeric filter parameters: {}'.format(e.message))
+
+        return {"operator": operator, "operand": operand}
+
+    def default_value(self):
+        return None
+
+
 Choice = namedtuple('Choice', ['value', 'display'])
 
 
@@ -174,7 +213,7 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, required, label, show_all, url_generator, css_id=None):
+    def __init__(self, name, field, required, label, show_all, url_generator, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -183,6 +222,7 @@ class DynamicChoiceListFilter(BaseFilter):
             FilterParam(name, True),
         ]
         super(DynamicChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        self.field = field
         self.label = label
         self.show_all = show_all
         self.css_id = css_id or self.name

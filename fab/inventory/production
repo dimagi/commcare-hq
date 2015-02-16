@@ -7,6 +7,9 @@ hqdjango3.internal.commcarehq.org
 hqdjango4.internal.commcarehq.org
 hqdjango5.internal.commcarehq.org
 
+[webworkers:vars]
+newrelic_app_name=django
+
 [couchdb]
 hqdb0.internal.commcarehq.org
 
@@ -19,8 +22,11 @@ hqdb0.internal.commcarehq.org
 [celery]
 hqcelery1.internal.commcarehq.org
 
+[celery:vars]
+newrelic_app_name=celery
+
 [pillowtop]
-hqdb0.internal.commcarehq.org
+hqpillowtop0.internal.commcarehq.org
 
 [touchforms]
 hqtouch1.internal.commcarehq.org

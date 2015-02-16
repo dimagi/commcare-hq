@@ -71,20 +71,21 @@ COMPRESS_ENABLED = False  # this will allow less.js to compile less files on the
 
 ####### Bitly ########
 
-BITLY_LOGIN = 'dimagi'  # set to None to disable bitly app url shortening (useful offline)
+BITLY_LOGIN = None  # set to None to disable bitly app url shortening (useful offline) set to 'dimagi' if you are using the api key
 BITLY_APIKEY = '*******'
 
 
 ####### Jar signing config ########
 
 _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-JAR_SIGN = {
-    'jad_tool': os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    'key_store': os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
-    'key_alias': "javarosakey",
-    'store_pass': "*******",
-    'key_pass': "*******",
-}
+# Uncomment below when signing the JAR
+# JAR_SIGN = {
+#     'jad_tool': os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
+#     'key_store': os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
+#     'key_alias': "javarosakey",
+#     'store_pass': "*******",
+#     'key_pass': "*******",
+# }
 
 ####### SMS Config ########
 
@@ -175,16 +176,14 @@ SOIL_BACKEND = "soil.CachedDownload"
 # reports cache
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
+redis_cache = {
+    'BACKEND': 'redis_cache.cache.RedisCache',
+    'LOCATION': 'localhost:6379:0',
+    'OPTIONS': {},
+}
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': 'localhost:11211',
-    },
-    'redis': {
-        'BACKEND': 'redis_cache.cache.RedisCache',
-        'LOCATION': 'localhost:6379:0',
-        'OPTIONS': {},
-    },
+    'default': redis_cache,
+    'redis': redis_cache,
 }
 
 # on both a local and a distributed environment this should be localhost

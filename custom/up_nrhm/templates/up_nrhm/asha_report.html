@@ -1,0 +1,21 @@
+{% extends "reports/async/tabular.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block pretable %}
+    {{ block.super }}
+    <div class="row hq-flush-content">
+        <div class="span6">
+            <table class="table table-striped">
+                <tr>
+                    <td><strong>Total number of ASHAs under the Facilitator</strong></td>
+                    <td>{{ total_under_facilitator }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total number of ASHAs for whom the functionality checklist was filled</strong></td>
+                    <td>{{ total_with_checklist }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+{% endblock pretable %}

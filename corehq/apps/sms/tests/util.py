@@ -35,6 +35,7 @@ from casexml.apps.case.xml import V2
 def time_parser(value):
     return parse(value).time()
 
+
 class TouchformsTestCase(LiveServerTestCase):
     """
     For now, these test cases need to be run manually. Before running, the 

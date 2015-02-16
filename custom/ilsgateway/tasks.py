@@ -274,7 +274,7 @@ def report_run(domain):
     if running.count() > 0:
         raise Exception("Warehouse already running, will do nothing...")
 
-    if last_run.has_error:
+    if last_run and last_run.has_error:
         run = last_run
         run.complete = False
         run.save()

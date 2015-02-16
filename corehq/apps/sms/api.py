@@ -1,34 +1,21 @@
 import logging
 from django.conf import settings
-from celery.task import task
-import math
 
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.sms.util import (clean_phone_number, format_message_list,
-    clean_text, get_available_backends)
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, ForwardingRule,
-    FORWARD_ALL, FORWARD_BY_KEYWORD, WORKFLOW_KEYWORD, PhoneNumber,
-    ERROR_PHONE_NUMBER_OPTED_OUT)
+from corehq.apps.sms.util import (clean_phone_number, clean_text,
+    get_available_backends)
+from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
+    PhoneNumber, ERROR_PHONE_NUMBER_OPTED_OUT)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT)
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
-from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
-from corehq.apps.smsforms.models import XFormsSession
-from corehq.apps.smsforms.app import _get_responses, start_session, \
-    _responses_to_text
-from corehq.apps.app_manager.models import Form
 from corehq.apps.sms.util import register_sms_contact, strip_plus
-from corehq.apps.reminders.util import create_immediate_reminder
-from touchforms.formplayer.api import current_question
-from dateutil.parser import parse
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.groups.models import Group
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -40,8 +27,10 @@ REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 class DomainScopeValidationError(Exception):
     pass
 
+
 class BackendAuthorizationException(Exception):
     pass
+
 
 class MessageMetadata(object):
     def __init__(self, *args, **kwargs):
@@ -50,6 +39,7 @@ class MessageMetadata(object):
         self.reminder_id = kwargs.get("reminder_id", None)
         self.chat_user_id = kwargs.get("chat_user_id", None)
 
+
 def add_msg_tags(msg, metadata):
     if msg and metadata:
         msg.workflow = metadata.workflow
@@ -57,6 +47,7 @@ def add_msg_tags(msg, metadata):
         msg.reminder_id = metadata.reminder_id
         msg.chat_user_id = metadata.chat_user_id
         msg.save()
+
 
 def log_sms_exception(msg):
     direction = "OUT" if msg.direction == OUTGOING else "IN"
@@ -93,6 +84,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
 
     return queue_outgoing_sms(msg)
 
+
 def send_sms_to_verified_number(verified_number, text, metadata=None):
     """
     Sends an sms using the given verified phone number entry.
@@ -117,6 +109,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None):
 
     return queue_outgoing_sms(msg)
 
+
 def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None):
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(
@@ -130,6 +123,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
     add_msg_tags(msg, metadata)
 
     return queue_outgoing_sms(msg)
+
 
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
@@ -146,6 +140,7 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadat
 
     return queue_outgoing_sms(msg)
 
+
 def enqueue_directly(msg):
     try:
         from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
@@ -154,6 +149,7 @@ def enqueue_directly(msg):
         # If this direct enqueue fails, no problem, it will get picked up
         # shortly.
         pass
+
 
 def queue_outgoing_sms(msg):
     if settings.SMS_QUEUE_ENABLED:
@@ -217,6 +213,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         log_sms_exception(msg)
         return False
 
+
 def process_sms_registration(msg):
     """
     This method handles registration via sms.
@@ -276,7 +273,8 @@ def process_sms_registration(msg):
 
     return registration_processed
 
-def incoming(phone_number, text, backend_api, timestamp=None, 
+
+def incoming(phone_number, text, backend_api, timestamp=None,
              domain_scope=None, backend_message_id=None, delay=True,
              backend_attributes=None, raw_text=None):
     """

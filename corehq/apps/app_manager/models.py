@@ -1139,6 +1139,7 @@ class DetailColumn(IndexedSchema):
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
+    case_tile_field = StringProperty()
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
@@ -1235,6 +1236,8 @@ class Detail(IndexedSchema):
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
     custom_xml = StringProperty()
+    use_case_tiles = BooleanProperty()
+    persist_tile_on_forms = BooleanProperty()
 
     def get_tab_spans(self):
         '''
@@ -1563,6 +1566,22 @@ class Module(ModuleBase):
                 'type': 'no parent select id',
                 'module': self.get_module_info()
             })
+        for detail in [self.case_details.short, self.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -3236,6 +3255,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
+            'uniqueid': self.copy_of or self.id,
+            'name': self.name,
             'descriptor': u"Profile File"
         }).decode('utf-8')
 
@@ -3299,7 +3320,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def get_user_registration(self):
         form = self.user_registration
         form._app = self
-        if not form.source:
+        if not (self._id and self._attachments and form.source):
             form.source = load_form_template('register_user.xhtml')
         return form
 
@@ -3644,6 +3665,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def has_careplan_module(self):
         return any((module for module in self.modules if isinstance(module, CareplanModule)))
 
+    @quickcache(['self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
         builder = ParentCasePropertyBuilder(self)
@@ -3658,7 +3680,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 
+        seen_types = []
         def get_children(case_type):
+            seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]
 
         def get_hierarchy(case_type):
@@ -3667,6 +3691,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         roots = [type_ for type_ in meta.case_types if not type_.relationships]
         for type_ in roots:
             meta.type_hierarchy[type_.name] = get_hierarchy(type_.name)
+
+        for type_ in meta.case_types:
+            if type_.name not in seen_types:
+                meta.type_hierarchy[type_.name] = {}
+                type_.error = _("Error in case type hierarchy")
 
         return meta
 

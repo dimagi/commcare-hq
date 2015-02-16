@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext_noop
+from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
@@ -6,7 +7,9 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
 class HierarchySqlData(SqlData):
-    table_name = "fluff_UpNRHMLocationHierarchyFluff"
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], 'location_hierarchy')
 
     @property
     def filters(self):
@@ -14,15 +17,16 @@ class HierarchySqlData(SqlData):
 
     @property
     def group_by(self):
-        return ['block', 'district', 'username', 'user_id']
+        return ['doc_id']
 
     @property
     def columns(self):
         return [
             DatabaseColumn('block', SimpleColumn('block')),
             DatabaseColumn('district', SimpleColumn('district')),
-            DatabaseColumn('username', SimpleColumn('username')),
-            DatabaseColumn('user_id', SimpleColumn('user_id'))
+            DatabaseColumn('first_name', SimpleColumn('first_name')),
+            DatabaseColumn('last_name', SimpleColumn('last_name')),
+            DatabaseColumn('user_id', SimpleColumn('doc_id'))
         ]
 
 
@@ -67,20 +71,27 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
     @memoized
     def drilldown_map(self):
         def make_drilldown(hierarchy):
-            return [{
+            hierarchy = [{
                 "val": current[0] if isinstance(current, tuple) else current,
                 "text": current[1] if isinstance(current, tuple) else current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
+
+            return sorted(hierarchy, key=lambda r: r['text'])
+
         return make_drilldown(self.get_hierarchy())
+
+    @property
+    def data_source(self):
+        return HierarchySqlData
 
     def get_hierarchy(self):
         hierarchy = {}
-        for location in HierarchySqlData().get_data():
+        for location in self.data_source(config={'domain': self.domain}).get_data():
             district = location['district']
             block = location['block']
-            user = location['username']
-            user_id = location['user_id']
+            user = (u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip()
+            user_id = location['doc_id']
             if not (district and block and user):
                 continue
             hierarchy[district] = hierarchy.get(district, {})

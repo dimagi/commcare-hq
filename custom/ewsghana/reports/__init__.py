@@ -1,7 +1,9 @@
 from django.core.urlresolvers import reverse
 from corehq import Domain
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
+from corehq.apps.reports.graph_models import LineChart, MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
@@ -13,6 +15,14 @@ MAXIMUM_LEVEL = 3
 
 def get_url(view_name, text, domain):
     return '<a href="%s">%s</a>' % (reverse(view_name, args=[domain]), text)
+
+
+class EWSLineChart(LineChart):
+    template_partial = 'ewsghana/partials/ews_line_chart.html'
+
+
+class EWSMultiBarChart(MultiBarChart):
+    template_partial = 'ewsghana/partials/ews_multibar_chart.html'
 
 
 class EWSData(object):
@@ -61,6 +71,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
     split = True
+    base_template = 'ewsghana/base_template.html'
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
@@ -121,7 +132,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
-            'split': self.split
+            'split': self.split,
+            'location_id': self.request.GET.get('location_id'),
         }
         return context
 
@@ -162,3 +174,25 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             if not location_type.administrative
         ]
         return sql_location.location_type in reporting_types
+
+
+class ProductSelectionPane(EWSData):
+    slug = 'product_selection_pane'
+    show_table = True
+    title = 'Product Selection Pane'
+
+    @property
+    def rows(self):
+        if self.config['program'] and not self.config['products']:
+            products = [product for product in SQLProduct.objects.filter(
+                program_id=self.config['program'], domain=self.config['domain'])]
+        elif self.config['program'] and self.config['products']:
+            products = [product for product in SQLProduct.objects.filter(
+                domain=self.config['domain'], product_id__in=self.config['products'])]
+        else:
+            products = [product for product in SQLProduct.objects.filter(
+                domain=self.config['domain'])]
+        result = [['<input value=\"{0}\" type=\"checkbox\">{1} ({0})</input>'.format(p.code, p.name)]
+                  for p in products]
+        result.append(['<button id=\"selection_pane_apply\" class=\"filters btn\">Apply</button>'])
+        return result

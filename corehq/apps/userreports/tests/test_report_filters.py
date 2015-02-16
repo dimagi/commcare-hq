@@ -1,5 +1,6 @@
 from django.test import SimpleTestCase
-from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter
+from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
+    NumericFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
@@ -53,6 +54,20 @@ class DateFilterTestCase(SimpleTestCase):
         self.assertEqual(DatespanFilter, type(filter))
         self.assertEqual('modified_on_slug', filter.name)
         self.assertEqual('Date Modified', filter.label)
+
+
+class NumericFilterTestCase(SimpleTestCase):
+
+    def test_numeric_filter(self):
+        filter = ReportFilterFactory.from_spec({
+            "type": "numeric",
+            "field": "number_of_children_field",
+            "slug": "number_of_children_slug",
+            "display": "Number of Children",
+        })
+        self.assertEqual(NumericFilter, type(filter))
+        self.assertEqual("number_of_children_slug", filter.name)
+        self.assertEqual("Number of Children", filter.label)
 
 
 class ChoiceListFilterTestCase(SimpleTestCase):

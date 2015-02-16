@@ -1509,6 +1509,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
+    use_case_tiles = params.get('useCaseTiles', None)
+    persist_tile_on_forms = params.get("persistTileOnForms", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1527,16 +1529,19 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     if short is not None:
         detail.short.columns = map(DetailColumn.wrap, short)
+        if use_case_tiles is not None:
+            detail.short.use_case_tiles = use_case_tiles
+        if persist_tile_on_forms is not None:
+            detail.short.persist_tile_on_forms = persist_tile_on_forms
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
-    if tabs is not None and long is not None:
-        # Tabs only apply to the case detail page
-        detail.long.tabs = map(DetailTab.wrap, tabs)
+        if tabs is not None:
+            detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
-    if custom_xml != None:
+    if custom_xml is not None:
         detail.short.custom_xml = custom_xml
     if sort_elements is not None:
         detail.short.sort_elements = []
@@ -2653,45 +2658,6 @@ def _find_name(names, langs):
         lang = names.keys()[0]
         name = names[lang]
     return name
-
-
-@require_can_edit_apps
-def app_summary(request, domain, app_id):
-    return summary(request, domain, app_id, should_edit=True)
-
-def app_summary_from_exchange(request, domain, app_id):
-    dom = Domain.get_by_name(domain)
-    if dom.is_snapshot:
-        return summary(request, domain, app_id, should_edit=False)
-    else:
-        return HttpResponseForbidden()
-
-def summary(request, domain, app_id, should_edit=True):
-    app = get_app(domain, app_id)
-    if app.doc_type == 'RemoteApp':
-        raise Http404()
-    context = get_apps_base_context(request, domain, app)
-    langs = context['langs']
-
-    modules = []
-
-    for module in app.get_modules():
-        forms = []
-        for form in module.get_forms():
-            questions, messages = _questions_for_form(request, form, langs)
-            forms.append({'name': _find_name(form.name, langs),
-                          'questions': questions,
-                          'messages': dict(messages)})
-
-        modules.append({'name': _find_name(module.name, langs), 'forms': forms})
-
-    context['modules'] = modules
-    context['summary'] = True
-
-    if should_edit:
-        return render(request, "app_manager/summary.html", context)
-    else:
-        return render(request, "app_manager/exchange_summary.html", context)
 
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):

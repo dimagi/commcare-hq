@@ -38,7 +38,7 @@ def ivr(request):
     else:
         ivr_event = IVR_EVENT_DISCONNECT
 
-    with CriticalSection([gateway_session_id]):
+    with CriticalSection([gateway_session_id], timeout=300):
         result = incoming(phone_number, backend_module, gateway_session_id,
             ivr_event, input_data=data)
     return result
@@ -61,7 +61,7 @@ def ivr_finished(request):
     
     gateway_session_id = "KOOKOO-" + sid
 
-    with CriticalSection([gateway_session_id]):
+    with CriticalSection([gateway_session_id], timeout=300):
         call_log_entry = CallLog.view("sms/call_by_session",
                                       startkey=[gateway_session_id, {}],
                                       endkey=[gateway_session_id],
