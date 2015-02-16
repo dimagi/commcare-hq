@@ -20,7 +20,7 @@
                 {% if not component.saved_version.last_accessed or component.saved_version.last_accessed < group_export_cutoff %}
                     <p class="muted">
                         <i class="icon-warning-sign"></i>
-                        <small>{% trans "This saved export has expired because it has not been used in the last 35 days. To renew daily updates, click the 'Update Data' button." %}</small>
+                        <small>{% trans "This saved export has expired because it has not been used in the last 35 days. To renew daily updates, click the 'Update Data' button and download the file." %}</small>
                     </p>
                 {% endif %}
                 {% else %}{% trans "N/A" %}{% endif %}
