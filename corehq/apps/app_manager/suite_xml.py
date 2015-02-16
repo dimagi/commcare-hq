@@ -270,7 +270,7 @@ class CreatePushBase(IdNode, BaseFrame):
 
     def add_command(self, command):
         node = etree.SubElement(self.node, 'command')
-        node.text = command
+        node.attrib['value'] = command
 
     def add_datum(self, datum):
         self.node.append(datum.node)
@@ -711,6 +711,26 @@ def generic_fixture_instances(instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
+def get_case_auto_select_xpath(form, action):
+    from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
+            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+    auto_select = action.auto_select
+    if auto_select.mode == AUTO_SELECT_USER:
+        return session_var(auto_select.value_key, subref='user')
+    elif auto_select.mode == AUTO_SELECT_CASE:
+        try:
+            ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
+            sess_var = ref.case_session_var
+        except KeyError:
+            raise ValueError("Case tag not found: %s" % auto_select.value_source)
+        return CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
+    elif auto_select.mode == AUTO_SELECT_FIXTURE:
+        xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
+        return xpath_base.slash(auto_select.value_key)
+    elif auto_select.mode == AUTO_SELECT_RAW:
+        return auto_select.value_key
+
+
 class SuiteGenerator(SuiteGeneratorBase):
     descriptor = u"Suite File"
     sections = (
@@ -757,7 +777,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 entry.stack = Stack()
             else:
                 # TODO: find a more general way of handling multiple contributions to the workflow
-                if_clause = 'not {}'.format(session_var(RETURN_TO))
+                if_clause = 'not {}'.format(session_var(RETURN_TO).count())
 
             frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
@@ -925,6 +945,24 @@ class SuiteGenerator(SuiteGeneratorBase):
                     not (hasattr(module, 'parent_select') and module.parent_select.active):
                 # add form action to detail
                 form = self.app.get_form(module.case_list_form.form_id)
+                case_session_var = CASE_ID
+                if form.form_type == 'advanced_form':
+                    # match case session variable
+                    reg_action = form.get_registration_actions(module.case_type)[0]
+                    case_session_var = reg_action.case_session_var
+
+                extra_datums = []
+                if module.module_type == 'advanced':
+                    for action in module.forms[0].actions.load_update_cases:
+                        if action.case_type == module.case_type and action.details_module == module.unique_id:
+                            break
+
+                        if not action.auto_select:
+                            # FIXME: This doesn't seem to work
+                            # Instance referenced by instance('commcaresesson')/session/data/{...} does not exist
+                            datum = StackDatum(id=action.case_session_var, value=session_var(action.case_session_var))
+                            extra_datums.append(datum)
+
                 d.action = Action(
                     display=Display(
                         text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
@@ -934,9 +972,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                     stack=Stack()
                 )
                 frame = PushFrame()
-                frame.add_command(self.id_strings.form_command(form))
-                frame.add_datum(StackDatum(id=CASE_ID, value='uuid()'))
-                frame.add_datum(StackDatum(id=RETURN_TO, value=self.id_strings.menu(module)))
+                frame.add_command(XPath.string(self.id_strings.form_command(form)))
+                frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
+                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu(module))))
+                for datum in extra_datums:
+                    frame.add_datum(datum)
+
                 d.action.stack.add_frame(frame)
 
             try:
@@ -1357,18 +1398,52 @@ class SuiteGenerator(SuiteGeneratorBase):
             'case_autoload.{0}.case_missing'.format(mode),
         )
 
-    def configure_entry_as_case_list_form(self, entry):
-        entry.datums.append(SessionDatum(id=CASE_ID, function='uuid()'))
+    def configure_entry_as_case_list_form(self, form, entry):
+        target_module = form.case_list_module
+        source_session_var = CASE_ID
+        if form.form_type == 'advanced_form':
+            # match case session variable
+            reg_action = form.get_registration_actions(target_module.case_type)[0]
+            source_session_var = reg_action.case_session_var
+
+        extra_datums_pre = []
+        extra_datums_post = []
+        post = False
+        target_session_var = 'case_id'
+        if target_module.module_type == 'advanced':
+            form = target_module.forms[0]
+            for action in form.actions.load_update_cases:
+                if action.case_type == target_module.case_type and action.details_module == target_module.unique_id:
+                    target_session_var = action.case_session_var
+                    post = True
+                    continue
+
+                if action.auto_select:
+                    xpath = get_case_auto_select_xpath(form, action)
+                    datum = StackDatum(id=action.case_session_var, value=xpath)
+                else:
+                    datum = StackDatum(id=action.case_session_var, value=session_var(action.case_session_var))
+
+                (extra_datums_post if post else extra_datums_pre).append(datum)
+
+        entry.datums.append(SessionDatum(id=source_session_var, function='uuid()'))
         entry.stack = Stack()
-        case_id = session_var(CASE_ID)
-        case_count = CaseIDXPath(case_id).case().count()
+        source_case_id = session_var(source_session_var)
+        case_count = CaseIDXPath(source_case_id).case().count()
         return_to = session_var(RETURN_TO)
-        frame_case_created = CreateFrame(if_clause='{} and {} > 0'.format(return_to, case_count))
+        frame_case_created = CreateFrame(if_clause='{} = 1 and {} > 0'.format(return_to.count(), case_count))
         frame_case_created.add_command(return_to)
-        frame_case_created.add_datum(StackDatum(id='case_id', value=case_id))
+        for datum in extra_datums_pre:
+            frame_case_created.add_datum(datum)
+
+        frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
+
+        for datum in extra_datums_post:
+            frame_case_created.add_datum(datum)
+
         entry.stack.add_frame(frame_case_created)
 
-        frame_case_not_created = CreateFrame(if_clause='{} and {} = 0'.format(return_to, case_count))
+        frame_case_not_created = CreateFrame(if_clause='{} = 1 and {} = 0'.format(return_to.count(), case_count))
         frame_case_not_created.add_command(return_to)
         entry.stack.add_frame(frame_case_not_created)
 
@@ -1383,14 +1458,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
-        if not form or form.requires == 'case':
+        if not form or form.requires_case():
             self.configure_entry_module(module, e, use_filter=True)
-        elif form:
-            case_list_modules = (
-                mod for mod in self.app.get_modules() if mod.case_list_form.form_id == form.get_unique_id()
-            )
-            if any(case_list_modules):
-                self.configure_entry_as_case_list_form(e)
+        elif form and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
@@ -1430,8 +1501,7 @@ class SuiteGenerator(SuiteGeneratorBase):
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
-        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+        from corehq.apps.app_manager.models import AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
 
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
@@ -1476,44 +1546,21 @@ class SuiteGenerator(SuiteGeneratorBase):
         for action in form.actions.load_update_cases:
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
-                if auto_select.mode == AUTO_SELECT_USER:
-                    xpath = session_var(auto_select.value_key, subref='user')
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_CASE:
-                    try:
-                        ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
-                        sess_var = ref.case_session_var
-                    except KeyError:
-                        raise ValueError("Case tag not found: %s" % auto_select.value_source)
-                    xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_FIXTURE:
+                xpath = get_case_auto_select_xpath(form, action)
+                e.datums.append(SessionDatum(
+                    id=action.case_session_var,
+                    function=xpath
+                ))
+                if auto_select.mode == AUTO_SELECT_FIXTURE:
                     xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
-                    xpath = xpath_base.slash(auto_select.value_key)
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
                     self.add_assertion(
                         e,
                         "{0} = 1".format(xpath_base.count()),
                         'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
                         [auto_select.value_source]
                     )
+                if auto_select.mode != AUTO_SELECT_RAW:
                     self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_RAW:
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=auto_select.value_key
-                    ))
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
@@ -1556,6 +1603,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     ))
             except IndexError:
                 pass
+
+        if form.is_registration_form() and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
 
         if self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)

@@ -72,6 +72,24 @@
                             <a href="{{ module_url }}">{{ module_name }}</a> module does not exist.
                             Please select another form.
                             {% endblocktrans %}
+                        {% case "inconsistent datums" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                            The <a href="{{ module_url }}">{{ module_name }}</a> module has a case registration
+                            form selected but the case management for the forms is not consistent. All forms in the
+                            module should have the same cases loaded into the form.
+                            {% endblocktrans %}
+                            {% trans "Based on the first form we exected the following cases:" %}
+                            <table class="table">
+                                <thead>
+                                    <tr><th>{% trans "Case Tag" %}</th><th>{% trans "Case Type" %}</th></tr>
+                                </thead>
+                                <tbody>
+                                {% for datum in error.datums %}
+                                    <tr><td>{{ datum.0 }}</td><td>{{ datum.1 }}</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
                         {% case "invalid filter xpath" %}
                             {% if error.filter %}
                                 Case List has invalid filter xpath <code>{{ error.filter }}</code> in module

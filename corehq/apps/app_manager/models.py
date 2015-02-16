@@ -680,6 +680,15 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
+        case_list_modules = [
+            mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
+        ]
+        if len(case_list_modules) > 1:
+            msg = _("Form referenced as the registration form for multiple modules.")
+            error = {'type': 'validation error', 'validation_message': msg}
+            error.update(meta)
+            errors.append(error)
+
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
         return errors
@@ -803,6 +812,19 @@ class FormBase(DocumentSchema):
     
     def update_app_case_meta(self, app_case_meta):
         pass
+
+    @property
+    @memoized
+    def case_list_module(self):
+        case_list_modules = [
+            mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
+        ]
+        assert len(case_list_modules) <= 1, "Form referenced my multiple modules"
+        return case_list_modules[0] if case_list_modules else  None
+
+    @property
+    def is_case_list_form(self):
+        return self.case_list_module is not None
 
 
 class IndexedFormBase(FormBase, IndexedSchema):
@@ -1718,9 +1740,15 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return 'case' if self.requires_case() else 'none'
 
     def is_registration_form(self, case_type=None):
-        return not self.requires_case() and any(
+        reg_actions = self.get_registration_actions(case_type)
+        return not self.requires_case() and reg_actions and \
+            len(reg_actions) == 1
+
+    def get_registration_actions(self, case_type=None):
+        return [
             action for action in self.actions.open_cases
-            if not action.is_subcase and (not case_type or action.case_type == case_type))
+            if not action.is_subcase and (not case_type or action.case_type == case_type)
+        ]
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -2082,6 +2110,37 @@ class AdvancedModule(ModuleBase):
             errors = self.validate_detail_columns(columns)
             for error in errors:
                 yield error
+
+    def validate_for_build(self):
+        errors = super(AdvancedModule, self).validate_for_build()
+
+        if self.case_list_form.form_id:
+            forms = self.forms
+
+            def get_datums(form):
+                return [
+                    (action.case_tag, action.case_type)
+                    for action in form.actions.load_update_cases
+                ]
+
+            datums_tempate = get_datums(forms[0])
+            for form in forms[1:]:
+                if not get_datums(form) == datums_tempate:
+                    errors.append({
+                        'type': 'inconsistent datums',
+                        'module': self.get_module_info(),
+                        'datums': datums_tempate
+                    })
+                    break
+
+            # for form in forms:
+            #     if form.get_taget_case_action()
+                    #TODO: verify that case type matches module case type
+                    #target case action = last action that isn't auto-select
+
+            # validate that all forms are using the case list from this module and not some other module
+
+        return errors
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):

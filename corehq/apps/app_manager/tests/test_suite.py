@@ -3,7 +3,7 @@ from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (Application, AutoSelectCase,
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
-    Module, AdvancedModule)
+    Module, AdvancedModule, AdvancedOpenCaseAction)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -348,6 +348,53 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             app.create_suite(),
             "./detail[@id='m0_case_short']/action"
         )
+
+    def test_case_list_registration_form_advanced(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        register_module = app.add_module(AdvancedModule.new_module('create', None))
+        register_module.unique_id = 'register_module'
+        register_module.case_type = 'dugong'
+        register_form = app.new_form(0, 'Register Case', lang='en')
+        register_form.unique_id = 'register_case_form'
+        register_form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type='dugong',
+            case_tag='open_dugong',
+            name_path='/data/name'
+        ))
+
+        case_module = app.add_module(AdvancedModule.new_module('update', None))
+        case_module.unique_id = 'case_module'
+        case_module.case_type = 'dugong'
+        update_form = app.new_form(1, 'Update Case', lang='en')
+        update_form.unique_id = 'update_case_form'
+        update_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type='manatee',
+            case_tag='load_manatee',
+        ))
+        update_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_type='dugong',
+            case_tag='load_dugong',
+            details_module=case_module.unique_id
+        ))
+        update_form.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='autoload_fish_food',
+            auto_select=AutoSelectCase(
+                mode=AUTO_SELECT_RAW,
+                value_key='xpath to fish food'
+            )
+        ))
+
+        manatee_module = app.add_module(Module.new_module('manatee', None))
+        manatee_module.unique_id = 'manatee_module'
+        manatee_module.case_type = 'manatee'
+
+
+        case_module.case_list_form.form_id = register_form.get_unique_id()
+        case_module.case_list_form.label = {
+            'en': 'Register another Dugong'
+        }
+        self.assertXmlEqual(self.get_xml('case-list-form-advanced'), app.create_suite())
 
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')

@@ -1170,11 +1170,8 @@ class XForm(WrappedNode):
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
                 case_id = 'uuid()'
-                case_list_modules = (
-                    mod for mod in form.get_app().get_modules() if mod.case_list_form.form_id == form.get_unique_id()
-                )
                 if not (hasattr(module, 'parent_select') and module.parent_select.active) and \
-                        any(case_list_modules):
+                        form.is_case_list_form:
                     case_id = session_var(CASE_ID)
 
                 case_block.add_create_block(
@@ -1414,8 +1411,16 @@ class XForm(WrappedNode):
 
             return path, subcase_node
 
+        case_registration_action = None
+        if form.is_case_list_form:
+            case_registration_action = form.get_registration_actions()[0]
+
         for action in form.actions.open_cases:
             check_case_type(action)
+
+            case_id = 'uuid()'
+            if case_registration_action == action:
+                case_id = session_var(action.case_session_var)
 
             path, subcase_node = get_action_path(action)
 
@@ -1428,6 +1433,7 @@ class XForm(WrappedNode):
                 delay_case_id=bool(action.repeat_context),
                 autoset_owner_id=('owner_id' not in action.case_properties),
                 has_case_sharing=form.get_app().case_sharing,
+                case_id=case_id
             )
 
             if action.case_properties:
