@@ -8,7 +8,7 @@ from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource
 from corehq.apps.locations.resources.v0_1 import LocationResource
 from corehq.apps.reports.resources.v0_1 import ReportResource
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
 from corehq.apps.api.es import XFormES

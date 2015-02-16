@@ -13,6 +13,7 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.domain.models import Domain
+from couchdbkit import ResourceNotFound
 
 phone_number_re = re.compile("^\d+$")
 
@@ -30,6 +31,10 @@ class BadSMSConfigException(Exception):
 
 
 class BackendProcessingException(Exception):
+    pass
+
+
+class UnrecognizedBackendException(Exception):
     pass
 
 
@@ -343,7 +348,7 @@ class SMSLoadBalancingMixin(Document):
         Defined as a property here so that subclasses can override if
         necessary.
         """
-        return self._phone_numbers
+        return self.x_phone_numbers
 
     def get_load_balancing_interval(self):
         """
@@ -458,6 +463,24 @@ class SMSBackend(MobileBackend):
 
     def send(msg, *args, **kwargs):
         raise NotImplementedError("send() method not implemented")
+
+    @classmethod
+    def get_wrapped(cls, backend_id):
+        from corehq.apps.sms.util import get_available_backends
+        backend_classes = get_available_backends()
+        try:
+            backend = SMSBackend.get(backend_id)
+        except ResourceNotFound:
+            raise UnrecognizedBackendException("Backend %s not found" %
+                backend_id)
+        doc_type = backend.doc_type
+        if doc_type in backend_classes:
+            backend = backend_classes[doc_type].wrap(backend.to_json())
+            return backend
+        else:
+            raise UnrecognizedBackendException("Backend %s has an "
+                "unrecognized doc type." % backend_id)
+
 
 class BackendMapping(Document):
     domain = StringProperty()

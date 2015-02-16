@@ -22,7 +22,7 @@ from dimagi.utils.multithreading import process_fast
 from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
-
+from dimagi.utils.couch.database import iter_docs
 
 class IllegalModelStateException(Exception):
     pass
@@ -176,6 +176,25 @@ def case_matches_criteria(case, match_type, case_property, value_to_match):
     
     return result
 
+
+def get_events_scheduling_info(events):
+    """
+    Return a list of events as dictionaries, only with information pertinent to scheduling changes.
+    """
+    result = []
+    for e in events:
+        result.append({
+            "day_num": e.day_num,
+            "fire_time": e.fire_time,
+            "fire_time_aux": e.fire_time_aux,
+            "fire_time_type": e.fire_time_type,
+            "time_window_length": e.time_window_length,
+            "callback_timeout_intervals": e.callback_timeout_intervals,
+            "form_unique_id": e.form_unique_id,
+        })
+    return result
+
+
 class MessageVariable(object):
     def __init__(self, variable):
         self.variable = variable
@@ -262,9 +281,9 @@ class CaseReminderEvent(DocumentSchema):
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
 
+
 def run_rule(case_id, handler, schedule_changed, prev_definition):
     case = CommCareCase.get(case_id)
-    handler.set_rule_checkpoint(1, incr=True)
     try:
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
@@ -273,7 +292,6 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
         # the scheduling.
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
-    handler.set_rule_checkpoint(2, incr=True)
     try:
         # It shouldn't be necessary to lock this out, but a deadlock can
         # happen in rare cases without it
@@ -282,11 +300,12 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
             client.incr("reminder-rule-processing-current-%s" % handler._id)
     except:
         pass
-    handler.set_rule_checkpoint(3, incr=True)
+
 
 def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
     r.retire()
+
 
 def get_case_ids(domain):
     """
@@ -306,6 +325,7 @@ def get_case_ids(domain):
         except Exception:
             if i == (max_tries - 1):
                 raise
+
 
 class CaseReminderHandler(Document):
     """
@@ -491,15 +511,6 @@ class CaseReminderHandler(Document):
     # and if a case other than that case triggered the reminder.
     force_surveys_to_use_triggered_case = BooleanProperty(default=False)
 
-    def set_rule_checkpoint(self, num, incr=False):
-        """ Only used for debugging. """
-        client = get_redis_client()
-        key = "reminder-rule-processing-checkpoint-%s-%s" % (num, self._id)
-        if incr:
-            client.incr(key)
-        else:
-            client.set(key, 0)
-
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
@@ -522,6 +533,21 @@ class CaseReminderHandler(Document):
             return getattr(cls, 'now')
         except Exception:
             return datetime.utcnow()
+
+    def schedule_has_changed(self, old_definition):
+        """
+        Returns True if the scheduling information in self is different from
+        the scheduling information in old_definition.
+
+        old_definition - the CaseReminderHandler to compare to
+        """
+        return (
+            get_events_scheduling_info(old_definition.events) !=
+            get_events_scheduling_info(self.events) or
+            old_definition.start_offset != self.start_offset or
+            old_definition.schedule_length != self.schedule_length or
+            old_definition.max_iteration_count != self.max_iteration_count
+        )
 
     def get_reminder(self, case):
         domain = self.domain
@@ -1170,9 +1196,6 @@ class CaseReminderHandler(Document):
                         len(case_ids))
                 except:
                     pass
-                self.set_rule_checkpoint(1)
-                self.set_rule_checkpoint(2)
-                self.set_rule_checkpoint(3)
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
                     use_critical_section=True, print_stack_interval=60)
@@ -1185,23 +1208,41 @@ class CaseReminderHandler(Document):
                 print_stack_interval=60)
 
     @classmethod
-    def get_handlers(cls, domain, case_type=None, ids_only=False):
-        key = [domain]
-        if case_type:
-            key.append(case_type)
-        result = cls.view('reminders/handlers_by_domain_case_type',
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=(not ids_only),
+    def get_handlers(cls, domain, reminder_type_filter=None):
+        ids = cls.get_handler_ids(domain,
+            reminder_type_filter=reminder_type_filter)
+        return cls.get_handlers_from_ids(ids)
+
+    @classmethod
+    def get_handlers_from_ids(cls, ids):
+        return [
+            CaseReminderHandler.wrap(doc)
+            for doc in iter_docs(cls.get_db(), ids)
+        ]
+
+    @classmethod
+    def get_handler_ids(cls, domain, reminder_type_filter=None):
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            reduce=False,
         )
-        if ids_only:
-            return [row["id"] for row in result]
-        else:
-            return result
+
+        def filter_fcn(reminder_type):
+            if reminder_type_filter is None:
+                return True
+            else:
+                return ((reminder_type or REMINDER_TYPE_DEFAULT) ==
+                    reminder_type_filter)
+        return [
+            row['id'] for row in result
+            if filter_fcn(row['key'][1])
+        ]
 
     @classmethod
     def get_referenced_forms(cls, domain):
-        handlers = cls.get_handlers(domain=domain).all()
+        handlers = cls.get_handlers(domain)
         referenced_forms = [e.form_unique_id for events in [h.events for h in handlers] for e in events]
         return filter(None, referenced_forms)
 

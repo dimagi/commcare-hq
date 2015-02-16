@@ -6,6 +6,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader,\
     DTSortType
 from corehq.apps.sms.filters import MessageTypeFilter
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
 from dimagi.utils.parsing import json_format_datetime
@@ -53,10 +54,11 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s">%(username)s</a>'
         from corehq.apps.users.views.mobile import EditCommCareUserView
-        user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
-                                                            reverse(EditCommCareUserView.urlname,
-                                                                    args=[self.domain, user._id])),
-                                          "username": user.username_in_report}
+        user_link = user_link_template % {
+            "link": absolute_reverse(EditCommCareUserView.urlname,
+                                     args=[self.domain, user._id]),
+            "username": user.username_in_report
+        }
         return self.table_cell(user.raw_username, user_link)
 
     @property

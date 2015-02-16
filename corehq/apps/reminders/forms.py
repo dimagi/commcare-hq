@@ -166,16 +166,34 @@ FORM_TYPE_CHOICES = (
     (FORM_TYPE_ALL_AT_ONCE, "All questions in one sms"),
 )
 
+
+def validate_integer(value, error_msg, nonnegative=False):
+    try:
+        assert value is not None
+        value = int(value)
+        if nonnegative:
+            assert value >= 0
+        return value
+    except (ValueError, AssertionError):
+        raise ValidationError(error_msg)
+
 def validate_date(value):
     date_regex = re.compile("^\d\d\d\d-\d\d-\d\d$")
     if date_regex.match(value) is None:
         raise ValidationError("Dates must be in yyyy-mm-dd format.")
 
 def validate_time(value):
+    if isinstance(value, time):
+        return value
+    error_msg = _("Please enter a valid time from 00:00 to 23:59.")
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
     if not isinstance(value, basestring) or time_regex.match(value) is None:
-        raise ValidationError("Times must be in hh:mm format.")
-    return parse(value).time()
+        raise ValidationError(error_msg)
+    try:
+        value = parse(value).time()
+        return value
+    except Exception:
+        raise ValidationError(error_msg)
 
 def validate_form_unique_id(form_unique_id, domain):
     try:
@@ -1581,7 +1599,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return []
 
     def clean_global_timeouts(self):
-        return self._clean_timeouts(self.cleaned_data['global_timeouts'])
+        method = self.cleaned_data['method']
+        if (self.ui_type == UI_SIMPLE_FIXED and
+            method in (METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY)):
+            return self._clean_timeouts(self.cleaned_data['global_timeouts'])
+        else:
+            return []
 
     def clean_events(self):
         method = self.cleaned_data['method']
@@ -1646,9 +1669,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
             if fire_time_type == FIRE_TIME_CASE_PROPERTY:
                 event['fire_time'] = None
                 has_fire_time_case_property = True
-
-            if event['is_immediate']:
+            elif event['is_immediate']:
                 event['fire_time'] = ONE_MINUTE_OFFSET
+            else:
+                event['fire_time'] = validate_time(event['fire_time'])
 
             # clean fire_time_aux:
             if fire_time_type != FIRE_TIME_CASE_PROPERTY:
@@ -1672,6 +1696,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # clean day_num:
             if self.ui_type == UI_SIMPLE_FIXED or event['is_immediate']:
                 event['day_num'] = 0
+            else:
+                event['day_num'] = validate_integer(event['day_num'],
+                    _('Day must be specified and must be a non-negative number.'),
+                    nonnegative=True)
 
             # clean callback_timeout_intervals:
             if (method == METHOD_SMS_CALLBACK
@@ -1837,7 +1865,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
         reminder_handler.domain = self.domain
         reminder_handler.start_condition_type = CASE_CRITERIA
 
-        reminder_handler.save()
+        # If any of the scheduling information has changed, have it recalculate
+        # the schedule for each reminder instance
+        if reminder_handler._id:
+            old_definition = CaseReminderHandler.get(reminder_handler._id)
+            save_kwargs = {
+                "schedule_changed": reminder_handler.schedule_has_changed(old_definition),
+                "prev_definition": old_definition,
+            }
+        else:
+            save_kwargs = {}
+
+        reminder_handler.save(**save_kwargs)
 
     @classmethod
     def compute_initial(cls, reminder_handler, available_languages):

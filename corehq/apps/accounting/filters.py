@@ -1,4 +1,5 @@
 import calendar
+from django.core.urlresolvers import reverse
 from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
@@ -91,6 +92,13 @@ class DimagiContactFilter(BaseAccountingSingleOptionFilter):
     async_action = 'dimagi_contact'
 
 
+class EntryPointFilter(BaseSingleOptionFilter):
+    slug = 'entry_point'
+    label = _('Entry Point')
+    default_text = _("Any")
+    options = EntryPoint.CHOICES
+
+
 INVOICE = "SEND_INVOICE"
 DO_NOT_INVOICE = "DO_NOT_INVOICE"
 
@@ -115,6 +123,20 @@ class TrialStatusFilter(BaseSingleOptionFilter):
         (TRIAL, _("Show Non-Trial Subscriptions")),
         (NON_TRIAL, _("Show Only Trial Subscriptions")),
     ]
+
+
+class SubscriptionTypeFilter(BaseSingleOptionFilter):
+    slug = 'service_type'
+    label = _("Type")
+    default_text = _("Any")
+    options = SubscriptionType.CHOICES
+
+
+class ProBonoStatusFilter(BaseSingleOptionFilter):
+    slug = 'pro_bono_status'
+    label = _("Pro-Bono")
+    default_text = _("Any")
+    options = ProBonoStatus.CHOICES
 
 
 class IsHiddenFilter(BaseSingleOptionFilter):
@@ -195,12 +217,26 @@ class DateRangeFilter(BaseReportFilter):
             datespan.enddate = self.get_end_date(self.request)
         return datespan
 
+    @classmethod
+    def shared_pagination_GET_params(cls, request):
+        return [
+            {'name': '%s_%s' % (cls.slug, date), 'value': cls.get_date_str(request, date)}
+            for date in ['startdate', 'enddate']
+        ]
+
 
 class OptionalFilterMixin(object):
     @classmethod
     def use_filter(cls, request):
-        return request.GET.get(
-            "report_filter_%s_use_filter" % cls.slug, None) == 'on'
+        return cls.optional_filter_string_value(request) == 'on'
+
+    @classmethod
+    def optional_filter_slug(cls):
+        return "report_filter_%s_use_filter" % cls.slug
+
+    @classmethod
+    def optional_filter_string_value(cls, request):
+        return request.GET.get(cls.optional_filter_slug(), None)
 
 
 class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
@@ -340,4 +376,3 @@ class PaymentTransactionIdFilter(SearchFilter):
     slug = "transaction_id"
     label = _("Transaction ID")
     search_help_inline = _("Usually begins with 'ch_'")
-

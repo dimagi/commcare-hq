@@ -251,6 +251,21 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlEqual(self.get_xml('suite-workflow-root'), app.create_suite())
 
+    def test_copy_form(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        module = app.add_module(AdvancedModule.new_module('module', None))
+        original_form = app.new_form(module.id, "Untitled Form", None)
+        original_form.source = '<source>'
+
+        app._copy_form(module, original_form, module, rename=True)
+
+        form_count = 0
+        for f in app.get_forms():
+            form_count += 1
+            if f.unique_id != original_form.unique_id:
+                self.assertEqual(f.name['en'], 'Copy of {}'.format(original_form.name['en']))
+        self.assertEqual(form_count, 2, 'Copy form has copied multiple times!')
+
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
 
@@ -324,6 +339,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
+
+    def test_case_tile_suite(self):
+        self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
 
 class RegexTest(SimpleTestCase):

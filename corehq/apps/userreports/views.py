@@ -1,21 +1,46 @@
 import json
+import os
+import tempfile
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
 from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
+from corehq.apps.userreports.models import (
+    ReportConfiguration,
+    DataSourceConfiguration,
+    CustomDataSourceConfiguration)
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.ui.forms import ConfigurableReportEditForm, ConfigurableDataSourceEditForm, \
-    ConfigurableDataSourceFromAppForm, ConfigurableFormDataSourceFromAppForm
+from corehq.apps.userreports.ui.forms import (
+    ConfigurableReportEditForm,
+    ConfigurableDataSourceEditForm,
+    ConfigurableDataSourceFromAppForm,
+    ConfigurableFormDataSourceFromAppForm)
 from corehq.util.couch import get_document_or_404
+from couchexport.export import export_from_tables
+from couchexport.files import Temp
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from dimagi.utils.web import json_response
+
+
+def get_datasource_config_or_404(config_id, domain):
+    is_static = config_id.startswith(CustomDataSourceConfiguration._datasource_id_prefix)
+    if is_static:
+        config = CustomDataSourceConfiguration.by_id(config_id)
+        if not config or config.domain != domain:
+            raise Http404()
+    else:
+        config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    return config, is_static
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -91,8 +116,8 @@ def report_source_json(request, domain, report_id):
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def edit_data_source(request, domain, config_id):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    return _edit_data_source_shared(request, domain, config)
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    return _edit_data_source_shared(request, domain, config, read_only=is_static)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -134,18 +159,19 @@ def create_form_data_source_from_app(request, domain):
     return render(request, 'userreports/data_source_from_app.html', context)
 
 
-def _edit_data_source_shared(request, domain, config):
+def _edit_data_source_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, request.POST)
         if form.is_valid():
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
     else:
-        form = ConfigurableDataSourceEditForm(domain, config)
+        form = ConfigurableDataSourceEditForm(domain, config, read_only=read_only)
     context = _shared_context(domain)
     context.update({
         'form': form,
         'data_source': config,
+        'read_only': read_only
     })
     return render(request, "userreports/edit_data_source.html", context)
 
@@ -165,7 +191,7 @@ def delete_data_source(request, domain, config_id):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def rebuild_data_source(request, domain, config_id):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config, is_static = get_datasource_config_or_404(config_id, domain)
     messages.success(
         request,
         _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
@@ -179,7 +205,7 @@ def rebuild_data_source(request, domain, config_id):
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def preview_data_source(request, domain, config_id):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config, is_static = get_datasource_config_or_404(config_id, domain)
     table = get_indicator_table(config)
 
     q = Session.query(table)
@@ -193,13 +219,41 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
+@login_and_domain_required
+def export_data_source(request, domain, config_id):
+    format = request.GET.get('format', Format.UNZIPPED_CSV)
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    table = get_indicator_table(config)
+    q = Session.query(table)
+    column_headers = [col['name'] for col in q.column_descriptions]
+
+    # apply filtering if any
+    filter_values = {key: value for key, value in request.GET.items() if key != 'format'}
+    for key in filter_values:
+        if key not in column_headers:
+            return HttpResponse('Invalid filter parameter: {}'.format(key), status=400)
+    q = q.filter_by(**filter_values)
+
+    # build export
+    def get_table(q):
+        yield column_headers
+        for row in q:
+            yield row
+
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'wb') as temp:
+        export_from_tables([[config.table_id, get_table(q)]], temp, format)
+        return export_response(Temp(path), format, config.display_name)
+
+
+@login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     filter = report.get_ui_filter(filter_id)
 
     def get_choices(data_source, filter, search_term=None, limit=20):
         table = get_indicator_table(data_source)
-        sql_column = table.c[filter.name]
+        sql_column = table.c[filter.field]
         query = Session.query(sql_column)
         if search_term:
             query = query.filter(sql_column.contains(search_term))
@@ -210,8 +264,9 @@ def choice_list_api(request, domain, report_id, filter_id):
 
 
 def _shared_context(domain):
+    custom_data_sources = list(CustomDataSourceConfiguration.by_domain(domain))
     return {
         'domain': domain,
         'reports': ReportConfiguration.by_domain(domain),
-        'data_sources': DataSourceConfiguration.by_domain(domain),
+        'data_sources': DataSourceConfiguration.by_domain(domain) + custom_data_sources,
     }

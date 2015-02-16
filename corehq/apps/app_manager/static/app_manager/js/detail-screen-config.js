@@ -83,7 +83,6 @@ var SortRow = function(params){
     CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
 
     self.showWarning = ko.observable(false);
-    self.warningElement = DetailScreenConfig.field_format_warning.clone().show();
     self.hasValidPropertyName = function(){
         return DetailScreenConfig.field_val_re.test(self.textField.val());
     };
@@ -285,13 +284,14 @@ var DetailScreenConfig = (function () {
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
             this.original.graph_configuration = this.original.graph_configuration || {};
+            this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
 
             // Tab attributes
             this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
             this.isTab = this.original.isTab;
 
-            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
-                           ? COMMCAREHQ.icons.PAPERCLIP : null);
+            this.case_tile_field = ko.observable(this.original.case_tile_field);
+
 
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 
@@ -301,6 +301,9 @@ var DetailScreenConfig = (function () {
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
+
+            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
+               ? COMMCAREHQ.icons.PAPERCLIP : null);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
 
             // Make it possible to observe changes to this.field
@@ -311,10 +314,10 @@ var DetailScreenConfig = (function () {
                 that.field.observableVal(that.field.val());
             });
 
-            this.format_warning = DetailScreenConfig.field_format_warning.clone().hide();
+            this.saveAttempted = ko.observable(false);
             this.showWarning = ko.computed(function() {
                 // True if an invalid property name warning should be displayed.
-                return this.field.observableVal() && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
+                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
             }, this);
 
             (function () {
@@ -415,6 +418,7 @@ var DetailScreenConfig = (function () {
             for (i = 0; i < elements.length; i += 1) {
                 this[elements[i]].on('change', fireChange);
             }
+            this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
             this.format.on('change', function () {
@@ -472,10 +476,6 @@ var DetailScreenConfig = (function () {
             this.format.$edit_view.on("change", function(event){
                 ga_track_event('Case List Config', 'Display Format', event.target.value);
             });
-
-            this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
-                that.screen.columns.remove(that);
-            }).css({cursor: 'pointer'}).attr('title', DetailScreenConfig.message.DELETE_COLUMN);
         }
 
         Column.init = function (col, screen) {
@@ -494,6 +494,7 @@ var DetailScreenConfig = (function () {
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
                 column.calc_xpath = this.calc_xpath_extra.val();
+                column.case_tile_field = this.case_tile_field();
                 if (this.isTab) {
                     // Note: starting_index is added by Screen.serialize
                     return {
@@ -505,18 +506,7 @@ var DetailScreenConfig = (function () {
                 return column;
             },
             setGrip: function (grip) {
-                if (this.grip !== grip) {
-                    this.grip = grip;
-                    if (grip) {
-                        this.$grip = $('<i class="grip sortable-handle"></i>').addClass(COMMCAREHQ.icons.GRIP).css({
-                            cursor: 'move'
-                        }).mousedown(function () {
-                            $(':focus').blur();
-                        });
-                    } else {
-                        this.$grip = $('<span class="sort-disabled"></span>');
-                    }
-                }
+                this.grip = grip;
             },
             copyCallback: function () {
                 var column = this.serialize();
@@ -570,6 +560,9 @@ var DetailScreenConfig = (function () {
             this.containsFilterConfiguration = options.containsFilterConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
+            this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+            this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
+            this.allowsEmptyColumns = options.allowsEmptyColumns;
 
             this.fireChange = function() {
                 that.fire('change');
@@ -592,11 +585,6 @@ var DetailScreenConfig = (function () {
                 column.field.on('change', function () {
                     column.header.val(getPropertyTitle(this.val()));
                     column.header.fire("change");
-                    if (this.val() && !DetailScreenConfig.field_val_re.test(this.val())) {
-                        column.format_warning.show().parent().addClass('error');
-                    } else {
-                        column.format_warning.hide().parent().removeClass('error');
-                    }
                 });
                 if (column.original.hasAutocomplete) {
                     CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
@@ -645,6 +633,12 @@ var DetailScreenConfig = (function () {
             this.on('change', function () {
                 this.saveButton.fire('change');
             });
+            this.useCaseTiles.subscribe(function(){
+                that.saveButton.fire('change');
+            });
+            this.persistTileOnForms.subscribe(function(){
+                that.saveButton.fire('change');
+            });
             ko.computed(function () {
                 that.columns();
             }).subscribe(function () {
@@ -662,10 +656,9 @@ var DetailScreenConfig = (function () {
                 var columns = this.columns();
                 for (i = 0; i < columns.length; i++){
                     var column = columns[i];
+                    column.saveAttempted(true);
                     if (!column.isTab) {
-                        if (!DetailScreenConfig.field_val_re.test(column.field.val())) {
-                            // column won't have format_warning showing if it's empty
-                            column.format_warning.show().parent().addClass('error');
+                        if (column.showWarning()){
                             alert("There are errors in your property names");
                             return;
                         }
@@ -727,6 +720,9 @@ var DetailScreenConfig = (function () {
                     _.filter(columns, function(c){return c.isTab;}),
                     function(c){return c.serialize();}
                 ));
+
+                data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
+                data.persistTileOnForms = this.persistTileOnForms();
 
                 if (this.containsParentConfiguration) {
                     var parentSelect;
@@ -835,7 +831,8 @@ var DetailScreenConfig = (function () {
                         containsParentConfiguration: columnType == "short",
                         containsFilterConfiguration: columnType == "short",
                         containsCustomXMLConfiguration: columnType == "short",
-                        allowsTabs: columnType == 'long'
+                        allowsTabs: columnType == 'long',
+                        allowsEmptyColumns: columnType == 'long'
                     }
                 );
                 that.screens.push(screen);
@@ -878,7 +875,6 @@ var DetailScreenConfig = (function () {
     }());
 
     DetailScreenConfig.message = {
-        EMPTY_SCREEN: 'No detail screen configured',
 
         MODEL: 'Model',
         FIELD: 'Property',
@@ -955,9 +951,7 @@ var DetailScreenConfig = (function () {
             {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
         );
     }
-
-    DetailScreenConfig.field_format_warning = $('<span/>').addClass('help-inline')
-        .text("Must begin with a letter and contain only letters, numbers, '-', and '_'");
+    DetailScreenConfig.field_format_warning_message = "Must begin with a letter and contain only letters, numbers, '-', and '_'";
 
     DetailScreenConfig.field_val_re = new RegExp(
         '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'

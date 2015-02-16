@@ -18,7 +18,17 @@ Each data source configuration maps a filtered set of the raw data to indicators
 1. A filter that determines whether the data is relevant for the data source
 2. A list of indicators in that data source
 
-In addition to these properties there are a number of relatively self-explanatory fields on a data source such as the `table_id` and `display_name`.
+In addition to these properties there are a number of relatively self-explanatory fields on a data source such as the `table_id` and `display_name`, and a few more nuanced ones. The full list of available fields is summarized in the following table:
+
+Field                | Description
+-------------------- | -----------
+filter               | Determines whether the data is relevant for the data source
+indicators           | List of indicators to save
+table_id             | A unique ID for the table
+display_name         | A display name for the table that shows up in UIs
+base_item_expression | Used for making tables off of repeat or list data
+named_filters        | A list of named filters that can be referenced in other filters and indicators
+
 
 ## Data Source Filtering
 
@@ -67,6 +77,8 @@ constant        | A constant   | `"hello"`, `4`, `2014-12-20`
 property_name   | A reference to the property in a document |  `doc["name"]`
 property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
+related_doc     | A way to reference something in another document | `form.case.owner_id`
+root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
 
 ### JSON snippets for expressions
 
@@ -104,6 +116,7 @@ This expression returns `doc["child"]["age"]`:
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 ```
 {
+    "type": "conditional",
     "test": {
         "operator": "gt",
         "expression": {
@@ -117,7 +130,6 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
         "type": "constant",
         "property_name": "legal"
     },
-    "type": "conditional",
     "expression_if_false": {
         "type": "constant",
         "property_name": "underage"
@@ -125,6 +137,25 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 }
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
+
+#### Related document expressions
+
+This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
+
+```
+{
+    "type": "related_doc",
+    "related_doc_type": "CommCareCase",
+    "doc_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "case", "@case_id"]
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "owner_id"
+    }
+}
+```
 
 ### Boolean Expression Filters
 
@@ -329,11 +360,25 @@ Similar to the boolean indicators - expression indicators leverage the expressio
 
 Property        | Description
 --------------- | -----------
-datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", and "integer".
-is_nullable     | todo
-is_primary_key  | todo
-expression      | todo
+datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", and "integer".
+is_nullable     | Whether the database column should allow null values.
+is_primary_key  | Whether the database column should be (part of?) the primary key. (TODO: this needs to be confirmed)
+expression      | Any expression.
 
+Here is a sample expression indicator that just saves the "age" property to an integer column in the database:
+
+```
+{
+    "type": "expression",
+    "expression": {
+        "type": "property_name",
+        "property_name": "age"
+    },
+    "column_id": "age",
+    "datatype": "integer",
+    "display_name": "age of patient"
+}
+```
 
 ### Practical notes for creating indicators
 
@@ -343,6 +388,70 @@ These are some practical notes for how to choose what indicators to create.
 
 All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.
 
+## Saving Repeat Data
+
+You can save data from a repeatable or child element in a form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document. You can also use the `root_doc` expression type to reference parent properties. This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide):
+
+```
+{
+    "domain": "user-reports",
+    "doc_type": "DataSourceConfiguration",
+    "referenced_doc_type": "XFormInstance",
+    "table_id": "sample-repeat",
+    "display_name": "Time Logged",
+    "base_item_expression": {
+        "type": "property_path",
+        "property_path": ["form", "time_logs"]
+    },
+    "configured_filter": {
+    },
+    "configured_indicators": [
+        {
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "start_time"
+            },
+            "column_id": "start_time",
+            "datatype": "datetime",
+            "display_name": "start time"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "end_time"
+            },
+            "column_id": "end_time",
+            "datatype": "datetime",
+            "display_name": "end time"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "person"
+            },
+            "column_id": "person",
+            "datatype": "string",
+            "display_name": "person"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "root_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "name"
+                }
+            },
+            "column_id": "name",
+            "datatype": "string",
+            "display_name": "name of ticket"
+        }
+    ]
+}
+```
 
 # Report Configurations
 
@@ -352,6 +461,14 @@ A report configuration takes data from a data source and renders it in the UI. A
 2. A list of aggregation fields. These defines how indicator data will be aggregated into rows in the report. The complete list of aggregations fields forms the *primary key* of each row in the report.
 3. A list of columns. Columns define the report columns that show up from the data source, as well as any aggregation information needed.
 
+## Samples
+
+Here are some sample configurations that can be used as a reference until we have better documentation.
+
+- [Dimagi chart report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/dimagi/dimagi-chart-report.json)
+- [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
+
+
 ## Report filters
 
 TODO: Report filters docs will go here.
@@ -359,6 +476,51 @@ TODO: Report filters docs will go here.
 **A note about report filters versus data source filters**
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
+
+#### "numeric" Filters
+Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
+Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
+
+ex:
+```
+{
+  "type": "numeric",
+  "slug": "number_of_children_slug",
+  "field": "number_of_children",
+  "display": "Number of Children"
+}
+```
+
+Here are a few examples of report filters:
+
+```
+{
+  "type": "date",
+  "slug": "modified_on",
+  "field": "modified_on",
+  "display": "Modified on",
+  "required": false
+}
+```
+```
+{
+  "type": "dynamic_choice_list",
+  "slug": "village",
+  "field": "village",
+  "display": "Village"
+}
+```
+```
+{
+  "type": "choice_list",
+  "slug": "role",
+  "field": "role",
+  "choices": [
+    {"value": "doctor", display:"Doctor"},
+    {"value": "nurse"}
+  ]
+}
+```
 
 ## Report Columns
 
@@ -401,7 +563,6 @@ Transforms can be used to transform the value returned by a column just before i
     "custom_type": "owner_display"
 }
 ```
-
 
 # Practical Notes
 

@@ -34,6 +34,7 @@ class ASHAFacilitatorsFluff(fluff.IndicatorDocument):
 
     owner_id = flat_field(partial(get_case_property, property_name='owner_id'))
     case_id = flat_field(get_case_id)
+    registration_date = flat_field(partial(get_case_property, property_name='opened_on'))
 
     home_birth_last_month_visited = PropertyCalculator(property_name="home_birth_last_month_visited")
     hv_fx_newborns_visited = PropertyCalculator(property_name="hv_fx_newborns_visited")

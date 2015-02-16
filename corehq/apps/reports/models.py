@@ -17,6 +17,8 @@ from couchdbkit.ext.django.schema import *
 from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
     default_case_filter
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.feature_previews import CALLCENTER
+from corehq.util.view_utils import absolute_reverse
 from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
@@ -412,18 +414,19 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 file_obj = None
             return json.loads(response.content)['report'], file_obj
         except PermissionDenied:
-            return _("We are sorry, but your saved report '%(config_name)s' "
-                     "is no longer accessible because your subscription does "
-                     "not allow Custom Reporting. Please talk to your Project "
-                     "Administrator about enabling Custom Reports. If you "
-                     "want CommCare HQ to stop sending this message, please "
-                     "visit %(saved_reports_url)s to remove this "
-                     "Emailed Report.") % {
-                         'config_name': self.name,
-                         'saved_reports_url': "%s%s" % (
-                             get_url_base(), reverse(
-                                 'saved_reports', args=[request.domain])),
-                     }, None
+            return _(
+                "We are sorry, but your saved report '%(config_name)s' "
+                "is no longer accessible because your subscription does "
+                "not allow Custom Reporting. Please talk to your Project "
+                "Administrator about enabling Custom Reports. If you "
+                "want CommCare HQ to stop sending this message, please "
+                "visit %(saved_reports_url)s to remove this "
+                "Emailed Report."
+            ) % {
+                'config_name': self.name,
+                'saved_reports_url': absolute_reverse('saved_reports',
+                                                      args=[request.domain]),
+            }, None
         except Http404:
             return _("We are sorry, but your saved report '%(config_name)s' "
                      "can not be generated since you do not have the correct permissions. "
@@ -751,9 +754,16 @@ class CaseExportSchema(HQExportSchema):
     @property
     def case_properties(self):
         props = set([])
+
+        if CALLCENTER.enabled(self.domain):
+            from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+            user_fields = CustomDataFieldsDefinition.get_or_create(self.domain, 'UserFields')
+            props |= {field.slug for field in user_fields.fields}
+
         for app in self.applications:
             builder = ParentCasePropertyBuilder(app, ("name",))
             props |= set(builder.get_properties(self.case_type))
+
         return props
 
 

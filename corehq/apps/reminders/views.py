@@ -62,6 +62,7 @@ from corehq.apps.reminders.models import (
     RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
+    get_events_scheduling_info,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
@@ -108,7 +109,7 @@ def default(request, domain):
 
 @reminders_framework_permission
 def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
-    all_handlers = CaseReminderHandler.get_handlers(domain=domain).all()
+    all_handlers = CaseReminderHandler.get_handlers(domain)
     all_handlers = filter(lambda x : x.reminder_type == reminder_type, all_handlers)
     if reminder_type == REMINDER_TYPE_ONE_TIME:
         all_handlers.sort(key=lambda handler : handler.start_datetime)
@@ -376,22 +377,6 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'timezone_now': timezone_now,
     })
 
-def get_events_scheduling_info(events):
-    """
-    Return a list of events as dictionaries, only with information pertinent to scheduling changes.
-    """
-    result = []
-    for e in events:
-        result.append({
-            "day_num" : e.day_num,
-            "fire_time" : e.fire_time,
-            "fire_time_aux" : e.fire_time_aux,
-            "fire_time_type" : e.fire_time_type,
-            "time_window_length" : e.time_window_length,
-            "callback_timeout_intervals" : e.callback_timeout_intervals,
-            "form_unique_id" : e.form_unique_id,
-        })
-    return result
 
 @reminders_framework_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):
@@ -1674,8 +1659,8 @@ class RemindersListView(BaseMessagingSectionView):
 
     @property
     def reminders(self):
-        all_handlers = CaseReminderHandler.get_handlers(domain=self.domain).all()
-        all_handlers = filter(lambda x : x.reminder_type == REMINDER_TYPE_DEFAULT, all_handlers)
+        all_handlers = CaseReminderHandler.get_handlers(self.domain,
+            reminder_type_filter=REMINDER_TYPE_DEFAULT)
         if not self.can_use_survey:
             all_handlers = filter(
                 lambda x: x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],

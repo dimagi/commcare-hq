@@ -231,17 +231,18 @@ $(function () {
 
         self.downloadExcels = function(element, event) {
             var tables = [];
-            var FixtureUrl = FixtureDownloadUrl;
             if (self.selectedTables().length < 1)
                 return;
             for (var i in self.selectedTables()) {
                 tables.push(self.selectedTables()[i]);
-                FixtureUrl = FixtureUrl + "table_id=" + self.selectedTables()[i] + "&";
             }
             $("#fixture-download").modal();
             if (tables.length > 0){
+                // POST, because a long querystring can overflow the request
                 $.ajax({
-                    url: FixtureUrl,
+                    url: FixtureDownloadUrl,
+                    type: 'POST',
+                    data: {'table_ids': tables},
                     dataType: 'json',
                     success: function (response) {
                         self.setupDownload(response);
@@ -263,7 +264,7 @@ $(function () {
                         if (resp.replace(/[ \t\n]/g,'')) {
                             $("#downloading").hide();
                             progress.show().html(resp);
-                            if (progress.find(".alert").length) {
+                            if (progress.find(".alert-success").length) {
                                 clearInterval(interval);
                             };
                         }

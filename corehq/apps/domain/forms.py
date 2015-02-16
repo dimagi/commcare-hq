@@ -7,7 +7,6 @@ import io
 from PIL import Image
 import uuid
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import UNUSABLE_PASSWORD
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -28,7 +27,15 @@ from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
-from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
+from corehq.apps.accounting.models import (
+    BillingAccountAdmin,
+    BillingContactInfo,
+    ProBonoStatus,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustmentMethod,
+    SubscriptionType,
+)
 from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase, get_apps_in_domain
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
@@ -43,6 +50,12 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
+import django
+
+if django.VERSION < (1, 6):
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
+else:
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -704,7 +717,7 @@ class HQPasswordResetForm(PasswordResetForm):
         if not any(user.is_active for user in self.users_cache):
             # none of the filtered users are active
             raise forms.ValidationError(self.error_messages['unknown'])
-        if any((user.password == UNUSABLE_PASSWORD)
+        if any((user.password == UNUSABLE_PASSWORD_PREFIX)
                for user in self.users_cache):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
@@ -901,7 +914,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                                                                   web_user=self.creating_user)
                 else:
                     subscription = self.current_subscription.change_plan(
-                        self.plan_version, web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
+                        self.plan_version,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.SELF_SERVICE,
+                        pro_bono_status=ProBonoStatus.NO,
                     )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
@@ -998,6 +1015,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             self.current_subscription.renew_subscription(
                 web_user=self.creating_user,
                 adjustment_method=SubscriptionAdjustmentMethod.USER,
+                service_type=SubscriptionType.SELF_SERVICE,
+                pro_bono_status=ProBonoStatus.NO,
             )
         except SubscriptionRenewalError as e:
             logger.error("[BILLING] Subscription for %(domain)s failed to "

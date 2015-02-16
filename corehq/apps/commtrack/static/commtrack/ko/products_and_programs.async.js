@@ -1,6 +1,8 @@
 var CommtrackProductsProgramsViewModel = function (o) {
     var view_model = BaseListViewModel(o);
 
+    view_model.currently_searching = ko.observable(false);
+
     view_model.colspan = ko.computed(function () {
         return 7;
     });
@@ -15,6 +17,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
         page = ko.utils.unwrapObservable(page);
 
         if (page) {
+            view_model.currently_searching(true);
             $.ajax({
                 url: format_url(page),
                 dataType: 'json',
@@ -23,6 +26,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
                     $('.hide-until-load').fadeIn();
                     $('#user-list-notification').text('Sorry, there was an problem contacting the server ' +
                         'to fetch the data. Please, try again in a little bit.');
+                    view_model.currently_searching(false);
                 },
                 success: reloadList
             });
@@ -32,6 +36,7 @@ var CommtrackProductsProgramsViewModel = function (o) {
     };
 
     var reloadList = function(data) {
+        view_model.currently_searching(false);
         if (data.success) {
             if (!view_model.initial_load()) {
                 view_model.initial_load(true);

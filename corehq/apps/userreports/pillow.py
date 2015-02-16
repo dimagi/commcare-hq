@@ -1,6 +1,8 @@
+from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter
+from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
+from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter, metadata
+from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
 
@@ -22,6 +24,9 @@ class ConfigurableIndicatorPillow(PythonPillow):
             cls._engine = get_engine()
         return cls._engine
 
+    def get_all_configs(self):
+        return DataSourceConfiguration.all()
+
     def run(self):
         self.bootstrap()
         super(ConfigurableIndicatorPillow, self).run()
@@ -29,10 +34,24 @@ class ConfigurableIndicatorPillow(PythonPillow):
     def bootstrap(self, configs=None):
         # sets up the initial stuff
         if configs is None:
-            configs = DataSourceConfiguration.all()
+            configs = self.get_all_configs()
 
         self.tables = [IndicatorSqlAdapter(self.get_sql_engine(), config) for config in configs]
+        self.rebuild_tables_if_necessary()
         self.bootstrapped = True
+
+    def rebuild_tables_if_necessary(self):
+        table_map = {t.get_table().name: t for t in self.tables}
+        engine = self.get_sql_engine()
+        with engine.begin() as connection:
+            migration_context = get_migration_context(connection, table_map.keys())
+            diffs = compare_metadata(migration_context, metadata)
+
+        tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
+
+        for table_name in tables_to_rebuild:
+            table = table_map[table_name]
+            table.rebuild_table()
 
     def python_filter(self, doc):
         # filtering is done manually per indicator set change_transport
@@ -42,9 +61,9 @@ class ConfigurableIndicatorPillow(PythonPillow):
         if not self.bootstrapped:
             self.bootstrap()
         for table in self.tables:
-            if table.config.filter.filter(doc):
+            if table.config.filter(doc):
                 table.save(doc)
-            elif table.config.deleted_filter.filter(doc):
+            elif table.config.deleted_filter(doc):
                 table.delete(doc)
 
     def set_checkpoint(self, change):
@@ -53,3 +72,9 @@ class ConfigurableIndicatorPillow(PythonPillow):
 
         # todo: may want to consider adjusting the frequency or using another mechanism for this
         self.bootstrap()
+
+
+class CustomDataSourcePillow(ConfigurableIndicatorPillow):
+
+    def get_all_configs(self):
+        return CustomDataSourceConfiguration.all()

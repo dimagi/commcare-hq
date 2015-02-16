@@ -176,6 +176,7 @@ var ExportManager = function (o) {
             url: downloadUrl,
             type: 'POST',
             data: data,
+            traditional: true,
             success: function(respData){
                 updateModal({
                     data: respData,

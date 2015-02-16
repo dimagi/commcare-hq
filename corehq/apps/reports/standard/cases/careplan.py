@@ -7,6 +7,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.utils import html
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -86,7 +87,7 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
         ret.update({
             'case_hierarchy_options': {
                 "show_view_buttons": False,
-                "get_case_url": lambda case_id: reverse('case_details', args=[self.domain, case_id]),
+                "get_case_url": lambda case_id: absolute_reverse('case_details', args=[self.domain, case_id]),
                 "columns": self.related_cases_columns,
                 "related_type_info": self.related_type_info
             },

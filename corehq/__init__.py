@@ -152,18 +152,21 @@ def _get_configurable_reports(project):
             # this is really annoying.
             # the report metadata should really be pulled outside of the report classes
             @classmethod
-            def get_url(cls, domain):
+            def get_url(cls, domain, **kwargs):
                 return reverse(ConfigurableReport.slug, args=[domain, config._id])
+
+            @classmethod
+            def show_in_navigation(cls, domain=None, project=None, user=None):
+                return config.visible or (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
 
             return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
                 'name': config.title,
                 'description': config.description or None,
                 'get_url': get_url,
+                'show_in_navigation': show_in_navigation,
             })
 
         yield (_('Project Reports'), [_make_report_class(config) for config in configs])
-
-
 
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
@@ -179,7 +182,7 @@ DATA_INTERFACES = (
 EDIT_DATA_INTERFACES = (
     (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
-        ImportCases
+        ImportCases,
     )),
 )
 

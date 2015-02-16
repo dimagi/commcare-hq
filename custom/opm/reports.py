@@ -20,8 +20,9 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import RawFilter, IN, EQFilter
 from couchexport.models import Format
+from custom.common import ALL_OPTION
 
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
@@ -37,6 +38,7 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
+from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -46,7 +48,7 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (HierarchyFilter, MetHierarchyFilter,
+from .filters import (get_hierarchy, HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -181,9 +183,14 @@ class OpmFormSqlData(SqlData):
 
 VHND_PROPERTIES = [
     "vhnd_available",
+    "vhnd_anm_present",
+    "vhnd_asha_present",
+    "vhnd_cmg_present",
     "vhnd_ifa_available",
     "vhnd_adult_scale_available",
     "vhnd_child_scale_available",
+    "vhnd_adult_scale_functional",
+    "vhnd_child_scale_functional",
     "vhnd_ors_available",
     "vhnd_zn_available",
     "vhnd_measles_vacc_available",
@@ -410,6 +417,42 @@ class SharedDataProvider(object):
     Data provider for report data that can be shared across rows in an instance
     of a report.
     """
+    vhnd_form_props = [
+        'attend_ANM',
+        'attend_ASHA',
+        'attend_cmg',
+        'big_weight_machine_avail',
+        'child_weight_machine_avail',
+        'func_bigweighmach',
+        'func_childweighmach',
+        'stock_ifatab',
+        'stock_measlesvacc',
+        'stock_ors',
+        'stock_zntab',
+    ]
+
+    def get_all_vhnd_forms(self):
+        key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
+        return get_db().view(
+            'reports_forms/all_forms',
+            startkey=key,
+            endkey=key+[{}],
+            reduce=False,
+            include_docs=True
+        ).all()
+
+    @property
+    @memoized
+    def case_owners(self):
+        q = (case_es.CaseES()
+             .domain(DOMAIN)
+             .case_type('vhnd')
+             .fields(['owner_id', '_id']))
+        return {
+            case['_id']: case['owner_id']
+            for case in q.run().hits
+            if (case.get('_id') and case.get('owner_id'))
+        }
 
     @property
     @memoized
@@ -423,18 +466,22 @@ class SharedDataProvider(object):
             }
         }
         """
-        # TODO: this will load one row per every VHND in history.
-        # If this gets too big we'll have to make the queries more targeted (which would be
-        # easy to do in the get_dates_in_range function) but if the dataset is small this will
-        # avoid significantly fewer DB trips.
-        # If things start getting slow or memory intensive this would be a good place to look.
-        data = VhndAvailabilitySqlData().data
+        forms = self.get_all_vhnd_forms()
         results = defaultdict(lambda: defaultdict(lambda: set()))
-        for (owner_id, date), row in data.iteritems():
-            if row['vhnd_available'] > 0:
-                for prop in VHND_PROPERTIES:
-                    if row[prop] == '1' or prop == 'vhnd_available':
-                        results[owner_id][prop].add(date)
+        for form in forms:
+            source = form['doc'].get('form', {})
+            raw_date = source.get('date_vhnd_held', None)
+            if not raw_date:
+                continue
+            vhnd_date = parser.parse(raw_date).date()
+            case_id = source.get('case', {}).get('@case_id')
+            # case_id might be for a deleted case :(
+            if case_id in self.case_owners:
+                owner_id = self.case_owners[case_id]
+                results[owner_id]['vhnd_available'].add(vhnd_date)
+                for prop in self.vhnd_form_props:
+                    if source.get(prop, None) == '1':
+                        results[owner_id][prop].add(vhnd_date)
         return results
 
     def get_dates_in_range(self, owner_id, startdate, enddate, prop='vhnd_available'):
@@ -516,7 +563,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                 keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and
                         user.user_data['gp'] and user.user_data['gp'] in keys]
             if keys and value not in keys:
-                raise InvalidRow
+                raise InvalidRow("Case does not match filters")
 
     @property
     def filter_fields(self):
@@ -696,6 +743,8 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
+        # TODO for consistency, we could always filter on awc using
+        # get_matching_awcs from the NewHealthStatusReport
         if self.awcs:
             query = query.filter(get_awc_filter(self.awcs))
         elif self.gp:
@@ -744,18 +793,26 @@ class CaseReportMixin(object):
     @property
     def rows(self):
         rows = []
-        for row in self.row_objects + self.extra_row_objects:
+        sorted_objects = self.sort_and_set_serial_numbers(self.row_objects + self.extra_row_objects)
+        for row in sorted_objects:
             rows.append([getattr(row, method) for
-                method, header, visible in self.model.method_map])
+                        method, header, visible in self.model.method_map])
 
-        sorted_rows = sorted(rows, key=lambda item: item[0])
         if self.debug:
             def _debug_item_to_row(debug_val):
                 num_cols = len(self.model.method_map) - 3
                 return [debug_val['case_id'], debug_val['message'], debug_val['traceback']] + [''] * num_cols
 
-            sorted_rows.extend([_debug_item_to_row(dbv) for dbv in self._debug_data])
+            rows.extend([_debug_item_to_row(dbv) for dbv in self._debug_data])
 
+        return rows
+
+    def sort_and_set_serial_numbers(self, case_objects):
+        # sets serial_number for each row as the index in cases list sorted by awc_name, name
+        from operator import attrgetter
+        sorted_rows = sorted(case_objects, key=attrgetter('awc_name', 'name'))
+        for count, row in enumerate(sorted_rows, 1):
+            row.serial_number = count
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
@@ -767,12 +824,12 @@ class CaseReportMixin(object):
                 case_key = fn(key)['#value'] if isinstance(fn(key), dict) else fn(key)
                 if field == 'is_open':
                     if case_key != (keys == 'closed'):
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
                 else:
                     if field == 'gp':
                         keys = [user._id for user in self.users if 'user_data' in user and 'gp' in user.user_data and user.user_data['gp'] in keys]
                     if case_key not in keys:
-                        raise InvalidRow
+                        raise InvalidRow("Case doesn't match filters")
 
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
@@ -799,6 +856,8 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         return map(self.join_rows, accounts.values())
 
     def join_rows(self, rows):
+        if len(rows) == 1:
+            return rows[0]
         def zip_fn((i, values)):
             if isinstance(values[0], int):
                 return sum(values)
@@ -808,6 +867,11 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
                     return ''.join('<p>{}</p>'.format(v) for v in unique_values)
                 else:
                     return ','.join(unique_values)
+            elif i == self.column_index('issues'):
+                sep = ', '
+                msg = _("Duplicate account number")
+                all_issues = sep.join(filter(None, values + (msg,)))
+                return sep.join(set(all_issues.split(sep)))
             else:
                 return sorted(values)[-1]
         return map(zip_fn, enumerate(zip(*rows)))
@@ -822,6 +886,36 @@ class MetReport(CaseReportMixin, BaseReport):
     default_rows = 5
     ajax_pagination = True
     cache_key = 'opm-report'
+
+    @property
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
+        rows = []
+        self._debug_data = []
+        for index, row in enumerate(self.get_rows(self.datespan), 1):
+            try:
+                rows.append(self.get_row_data(row, index=1))
+            except InvalidRow as e:
+                if self.debug:
+                    import sys
+                    import traceback
+                    type, exc, tb = sys.exc_info()
+                    self._debug_data.append({
+                        'case_id': row._id,
+                        'message': e,
+                        'traceback': ''.join(traceback.format_tb(tb)),
+                    })
+        return rows
+
+    def get_row_data(self, row, **kwargs):
+        return self.model(row, self, child_index=kwargs.get('index', 1))
+
+    def get_rows(self, datespan):
+        result = super(MetReport, self).get_rows(datespan)
+        result.sort(key=lambda case: [case.block_name, case.village_name, case.awc_name])
+        return result
 
     @property
     def redis_key(self):
@@ -873,11 +967,18 @@ class MetReport(CaseReportMixin, BaseReport):
         Strip user_id and owner_id columns
         """
         for row in rows:
+            with localize('hin'):
+                row[self.column_index('readable_status')] = _(row[self.column_index('readable_status')])
+                row[self.column_index('cash_received_last_month')] = _(row[self.column_index(
+                    'cash_received_last_month')])
             del row[self.column_index('closed_date')]
             del row[self.column_index('case_id')]
-            link_text = re.search('<a href=.*>(.*)</a>', row[0])
+            link_text = re.search('<a href=.*>(.*)</a>', row[self.column_index('name')])
             if link_text:
-                row[0] = link_text.group(1)
+                row[self.column_index('name')] = link_text.group(1)
+
+        if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
+            rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])
 
         self.context['report_table'].update(
             rows=rows
@@ -930,7 +1031,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     # report_template_path = "opm/hsr_report.html"
     model = AWCHealthStatus
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
 
     @property
@@ -940,11 +1041,20 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
+    def get_matching_awcs(self):
+        filter_on = 'awc' if self.awcs else 'gp' if self.gp else 'block'
+        for block, gps in get_hierarchy().items():
+            if not filter_on == 'block' or block == self.block:
+                for gp, awcs in gps.items():
+                    if not filter_on == 'gp' or gp in self.gp:
+                        for awc in awcs.keys():
+                            if not filter_on == 'awc' or awc in self.awcs:
+                                yield awc
+
     def awc_data(self):
-        # TODO use all awcs, not just ones with data
         case_objects = self.row_objects + self.extra_row_objects
-        # Consolidate rows with the same awc
-        awcs = {}
+        awcs = {awc: [] for awc in self.get_matching_awcs()}
+        # populate awcs with cases from that awc
         for case_object in case_objects:
             awc = case_object.awc_name
             awcs[awc] = awcs.get(awc, []) + [case_object]
@@ -952,14 +1062,31 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 
     @property
     def rows(self):
-        for awc in map(AWCHealthStatus, self.awc_data().values()):
-            yield [self.format_cell(getattr(awc, method),
-                                    getattr(awc, denom))
-                   for method, _, _, denom in self.model.method_map]
+
+        totals = [[None, None] for i in range(len(self.model.method_map))]
+        def add_to_totals(col, val, denom):
+            for i, num in enumerate([val, denom]):
+                if isinstance(num, int):
+                    total = totals[col][i]
+                    totals[col][i] = total + num if total is not None else num
+
+        rows = []
+        for awc in [AWCHealthStatus(awc, cases)
+                    for awc, cases in self.awc_data().items()]:
+            row = []
+            for col, (method, __, __, denom) in enumerate(self.model.method_map):
+                val = getattr(awc, method)
+                denominator = getattr(awc, denom)
+                row.append(self.format_cell(val, denominator))
+                add_to_totals(col, val, denominator)
+            rows.append(row)
+
+        self.total_row = [self.format_cell(v, d) for v, d in totals]
+        return rows
 
     def format_cell(self, val, denom):
         if denom is None:
-            return val
+            return val if val is not None else ""
         pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
         return "{} / {}{}".format(val, denom, pct)
 
@@ -979,7 +1106,8 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             return DataTablesHeader(*headers)
 
         def rows():
-            for awc in map(AWCHealthStatus, self.awc_data().values()):
+            for awc_name, cases in self.awc_data().items():
+                awc = AWCHealthStatus(awc_name, cases)
                 row = []
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)
@@ -1051,12 +1179,12 @@ class IncentivePaymentReport(BaseReport):
         for lvl in ['awc', 'gp', 'block']:
             req_prop = 'hierarchy_%s' % lvl
             request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == '0':
+            if request_param and not request_param[0] == ALL_OPTION:
                 config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
                 break
         return UsersIdsData(config=config).get_data()
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
         form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
         return self.model(row, self, case_sql_data.data, form_sql_data.data)
@@ -1210,7 +1338,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
     def get_rows(self, dataspan):
         return self.es_results['hits'].get('hits', [])
 
-    def get_row_data(self, row):
+    def get_row_data(self, row, **kwargs):
         def empty_health_status(row):
             model = HealthStatus()
             model.awc = row['_source']['user_data']['awc']
@@ -1228,7 +1356,7 @@ class HealthStatusReport(DatespanMixin, BaseReport):
             else:
                 return empty_health_status(row)
         else:
-            raise InvalidRow
+            raise InvalidRow("AWC not found for case")
 
     @property
     def fixed_cols_spec(self):
