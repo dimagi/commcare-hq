@@ -173,10 +173,10 @@ def get_user_by_org_unit(domain, org_unit_id, top_org_unit_name):
     org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}
     if (
         org_unit_id in org_units and
-        org_units[org_unit_id]['name'] != top_org_unit_name and
-        org_units[org_unit_id]['parent_id']
+        org_units[org_unit_id].name != top_org_unit_name and
+        org_units[org_unit_id].parent_id
     ):
-        return get_user_by_org_unit(domain, org_units[org_unit_id]['parent_id'], top_org_unit_name)
+        return get_user_by_org_unit(domain, org_units[org_unit_id].parent_id, top_org_unit_name)
     # We don't know that org unit ID, or we're at the top for this project, or we're at the top of DHIS2
     return None
 
