@@ -3,6 +3,7 @@ from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
@@ -192,7 +193,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
         rows = [_unformat_row(row) for row in formatted_rows]
         # Removing html icon tag from MOS column
         for row in rows:
-            row[1] = row[1][:row[1].index('<')]
+            row[1] = GenericTabularReport._strip_tags(row[1])
         replace = ''
 
         for k, v in enumerate(table[0]):
