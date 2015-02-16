@@ -207,6 +207,21 @@ def _edit_report_shared(request, domain, config):
 @require_POST
 def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
+
+    # Delete the data source too if it's not being used by any other reports.
+    # If we decide to go this route, we most likely should write a new couch
+    # view to quickly get the ReportConfigurations that reference this data
+    # source.
+    data_source_id = config.config_id
+    delete_data_source = True
+    reports = ReportConfiguration.by_domain(domain)
+    for r in reports:
+        if r.config_id == data_source_id and r._id != report_id:
+            delete_data_source = False
+            break
+    if delete_data_source:
+        _delete_data_source_shared(request, domain, data_source_id)
+
     config.delete()
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
@@ -306,13 +321,18 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
+    _delete_data_source_shared(request, domain, config_id)
+    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+
+
+def _delete_data_source_shared(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = IndicatorSqlAdapter(get_engine(), config)
     adapter.drop_table()
     config.delete()
     messages.success(request,
                      _(u'Data source "{}" has been deleted.'.format(config.display_name)))
-    return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
+
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
