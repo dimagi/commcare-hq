@@ -467,18 +467,18 @@ class SMSBackend(MobileBackend):
     @classmethod
     def get_opt_in_keywords(cls):
         """
-        Override to specify a different set of opt-in keywords to use for this
+        Override to specify a set of opt-in keywords to use for this
         backend type.
         """
-        return ["START"]
+        return []
 
     @classmethod
     def get_opt_out_keywords(cls):
         """
-        Override to specify a different set of opt-out keywords to use for this
+        Override to specify a set of opt-out keywords to use for this
         backend type.
         """
-        return ["STOP"]
+        return []
 
     @classmethod
     def get_wrapped(cls, backend_id):
