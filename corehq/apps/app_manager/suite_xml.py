@@ -921,8 +921,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ).fields
                 d.fields.extend(fields)
 
-            if module.module_type == 'basic' and not module.parent_select.active and \
-                    module.case_list_form.form_id and detail_type.endswith('short'):
+            if module.case_list_form.form_id and detail_type.endswith('short') and \
+                    not (hasattr(module, 'parent_select') and module.parent_select.active):
                 # add form action to detail
                 form = self.app.get_form(module.case_list_form.form_id)
                 d.action = Action(

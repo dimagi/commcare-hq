@@ -2041,7 +2041,7 @@ class AdvancedModule(ModuleBase):
                 return True
 
     def all_forms_require_a_case(self):
-        return all(form.requires == 'case' for form in self.forms)
+        return all(form.requires_case() for form in self.forms)
 
     def get_details(self):
         return (

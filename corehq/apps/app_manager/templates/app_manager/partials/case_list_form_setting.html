@@ -46,7 +46,11 @@
                     </ul>
                 </div>
                 <div class="alert alert-info" data-bind="visible: messageVisible">
-                    <div>{% trans "Registrion forms are not supported for modules that have parent case selection configured." %}</div>
+                    <div>
+                        {% blocktrans %}
+                        Registration forms are only support on modules that do not have parent case selection configured and where all forms in the module update or close a case.
+                        {% endblocktrans %}
+                    </div>
                     <a href="#" class="btn btn-mini" data-bind="click: toggleMessage">
                         {% trans "OK, close this" %}
                     </a>
