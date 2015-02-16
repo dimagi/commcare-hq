@@ -120,6 +120,8 @@ class ConfigureNewReportBase(forms.Form):
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
+        self.helper.attrs['data_bind'] = "submit: submitHandler"
+        self.helper.form_id = "report-config-form"
 
         self.helper.layout = crispy.Layout(
             self.top_fieldset,
@@ -155,8 +157,8 @@ class ConfigureNewReportBase(forms.Form):
     def configuration_tables(self):
         return crispy.Fieldset(
             _("Filters Available in this Report"),
-            crispy.Div(crispy.HTML(self.column_config_template), id="filters-table"),
-            crispy.Hidden('filters', None, data_bind="value: serializedProperties")
+            crispy.Div(crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'),
+            crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
 
     def create_report(self):
@@ -463,8 +465,8 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
             parent_tables,
             crispy.Fieldset(
                 _("Columns to Display"),
-                crispy.Div(crispy.HTML(self.column_config_template), id="columns-table"),
-                crispy.Hidden('columns', None, data_bind="value: serializedProperties")
+                crispy.Div(crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'),
+                crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
             )
         )
 

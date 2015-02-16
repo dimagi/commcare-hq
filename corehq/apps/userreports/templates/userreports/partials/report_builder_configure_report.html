@@ -67,6 +67,16 @@
                 );
             });
         };
-        ko.applyBindings(new propertyList({hasFormatCol: true}), $("#filters-table").parent().get(0));
+
+        var configForm = function(){
+            this.filtersList = new propertyList({hasFormatCol: true});
+            this.columnsList = new propertyList({hasFormatCol:false});
+            this.submitHandler = function(){
+                // TODO: Validate the configuration and return False if invalid.
+                return true;
+            }
+        };
+        var formViewModel = new configForm();
+        ko.applyBindings(formViewModel, $("#report-config-form").get(0));
     </script>
 {% endblock %}

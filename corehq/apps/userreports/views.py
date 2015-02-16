@@ -112,7 +112,7 @@ class CreateNewReportBuilderView(ReportBuilderView):
 
 
 class ConfigureBarChartReportBuilderView(ReportBuilderView):
-    template_name = "userreports/partials/report_builder_configure_chart.html"
+    template_name = "userreports/partials/report_builder_configure_report.html"
     configure_report_form_class = ConfigureNewBarChartReport
     report_title = _("Create New Report > Configure Bar Chart Report")
 
@@ -156,7 +156,6 @@ class ConfigurePieChartReportBuilderView(ConfigureBarChartReportBuilderView):
 class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
     # Temporarily building this view off of ConfigureBarChartReportBuilderView.
     # We'll probably want to inherit from a common ancestor in the end?
-    template_name = "userreports/partials/configure_table_report_builder.html"
     configure_report_form_class = ConfigureNewTableReport
     report_title = _("Create New Report > Configure Table Report")
 
