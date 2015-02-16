@@ -8,6 +8,7 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
+from custom.ewsghana.utils import get_supply_points
 
 REORDER_LEVEL = 1.5
 MAXIMUM_LEVEL = 3
@@ -66,18 +67,22 @@ class EWSData(object):
                 )]
 
     @property
+    @memoized
     def products(self):
-        if self.config['program'] and not self.config['products']:
-            product_ids = SQLProduct.objects.filter(domain=self.config['domain'],
-                                                    program_id=self.config['program']).values_list(*['product_id'],
-                                                                                                   flat=True)
-
-        elif self.config['program'] and self.config['products']:
-            product_ids = self.config['products']
+        if self.config['products']:
+            return SQLProduct.objects.filter(product_id__in=self.config['products'])
+        elif self.config['program']:
+            return SQLProduct.objects.filter(program_id=self.config['program'])
         else:
-            product_ids = SQLProduct.objects.filter(domain=self.config['domain']).values_list(*['product_id'],
-                                                                                              flat=True)
-        return product_ids
+            return SQLProduct.objects.filter(is_archived=False, domain=self.config['domain'])
+
+    @memoized
+    def unique_products(self, locations):
+        products = list(self.products)
+        for loc in locations:
+            products.extend(loc.products)
+        return sorted(set(products), key=lambda p: p.code)
+
 
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):

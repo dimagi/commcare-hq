@@ -4,9 +4,8 @@ from math import ceil
 from corehq.apps.es import UserES
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import Product
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
@@ -79,7 +78,7 @@ class FacilityReportData(EWSData):
         stock_states = StockState.objects.filter(
             case_id__in=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            product_id__in=set(self.products) & loc.products
+            sql_product__in=set(self.products) & set(loc.products)
         ).order_by('-last_modified_date')
 
         for state in stock_states:
@@ -159,9 +158,9 @@ class InventoryManagementData(EWSData):
             return 0
         loc = SQLLocation.objects.get(location_id=self.config['location_id'])
         stock_states = StockState.include_archived.filter(
-            case_id__in=get_relevant_supply_point_ids(self.config['domain'], loc.supply_point_id),
+            case_id__in=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            product_id__in=set(self.products) & loc.products,
+            sql_product__in=set(self.products) & set(loc.products),
             last_modified_date__lte=self.config['enddate'],
         ).order_by('last_modified_date')
 

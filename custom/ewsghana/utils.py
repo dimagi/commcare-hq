@@ -21,7 +21,7 @@ def get_supply_points(location_id, domain):
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
         locations = SQLLocation.objects.filter(domain=domain, location_type__in=location_types)
-    return locations.exclude(supply_point_id__isnull=True).values_list(*['supply_point_id'], flat=True)
+    return locations.exclude(supply_point_id__isnull=True)
 
 
 def get_second_week(start_date, end_date):
@@ -31,15 +31,6 @@ def get_second_week(start_date, end_date):
             'start_date': monday,
             'end_date': monday + timedelta(days=6)
         }
-
-
-def get_products(program_id, products_id, domain):
-    if products_id:
-        return SQLProduct.objects.filter(product_id__in=products_id)
-    elif program_id:
-        return SQLProduct.objects.filter(program_id=program_id)
-    else:
-        return SQLProduct.objects.filter(is_archived=False, domain=domain)
 
 
 def make_url(report_class, domain, string_params, args):
