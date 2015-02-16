@@ -396,25 +396,26 @@ def system_info(request):
 @cache_page(60 * 5)
 @require_superuser_or_developer
 def db_comparisons(request):
+
+    def _simple_view_couch_query(db, view_name):
+        return db.view(view_name, reduce=True).one()['value']
+
     comparison_config = [
         {
             'description': 'Users (base_doc is "CouchUser")',
-            'couch_db': CommCareUser.get_db(),
-            'view_name': 'users/by_username',
+            'couch_docs': _simple_view_couch_query(CommCareUser.get_db(), 'users/by_username'),
             'es_query': UserES().remove_default_filter('active').size(0),
             'sql_rows': User.objects.count(),
         },
         {
             'description': 'Domains (doc_type is "Domain")',
-            'couch_db': Domain.get_db(),
-            'view_name': 'domain/by_status',
+            'couch_docs': _simple_view_couch_query(Domain.get_db(), 'domain/by_status'),
             'es_query': DomainES().size(0),
             'sql_rows': None,
         },
         {
             'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_db': XFormInstance.get_db(),
-            'view_name': 'couchforms/by_xmlns',
+            'couch_docs': _simple_view_couch_query(XFormInstance.get_db(), 'couchforms/by_xmlns'),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
@@ -422,8 +423,7 @@ def db_comparisons(request):
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_db': CommCareCase.get_db(),
-            'view_name': 'case/by_owner',
+            'couch_docs': _simple_view_couch_query(CommCareCase.get_db(), 'case/by_owner'),
             'es_query': CaseES().size(0),
             'sql_rows': CaseData.objects.count(),
         }
@@ -433,10 +433,7 @@ def db_comparisons(request):
     for comp in comparison_config:
         comparisons.append({
             'description': comp['description'],
-            'couch_docs': comp['couch_db'].view(
-                    comp['view_name'],
-                    reduce=True,
-                ).one()['value'],
+            'couch_docs': comp['couch_docs'],
             'es_docs': comp['es_query'].run().total,
             'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
         })
