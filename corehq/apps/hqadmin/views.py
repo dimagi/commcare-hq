@@ -68,7 +68,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, D
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
@@ -425,7 +425,7 @@ def db_comparisons(request):
             'couch_db': CommCareCase.get_db(),
             'view_name': 'case/by_owner',
             'es_query': CaseES().size(0),
-            'sql_rows': None,
+            'sql_rows': CaseData.objects.count(),
         }
     ]
 
