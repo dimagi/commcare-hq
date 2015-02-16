@@ -34,6 +34,7 @@
          * @constructor
          */
         var PropertyListItem = function() {
+            var that = this;
             this.property = ko.observable("");
             this.displayText = ko.observable("");
             this.format = ko.observable("");
@@ -49,7 +50,9 @@
                     format: this.format()
                 };
             };
-
+            this.isValid= ko.computed(function(){
+                return that.property() != "";
+            });
         };
         /**
          * Knockout view model controlling the filter property list.
@@ -66,14 +69,25 @@
                     _.map(that.columns(), function(c){return c.toJS()})
                 );
             });
+            this.showWarnings = ko.observable(false);
+            this.validate = function(){
+                that.showWarnings(true);
+                return !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
+            };
         };
 
         var configForm = function(){
+            var that = this;
             this.filtersList = new propertyList({hasFormatCol: true});
             this.columnsList = new propertyList({hasFormatCol:false});
             this.submitHandler = function(){
-                // TODO: Validate the configuration and return False if invalid.
-                return true;
+                var isValid = true;
+                isValid = that.filtersList.validate() && isValid;
+                isValid = that.columnsList.validate() && isValid;
+                if (!isValid){
+                    alert('Invalid report configuration. Please fix the issues and try again.');
+                }
+                return isValid;
             }
         };
         var formViewModel = new configForm();

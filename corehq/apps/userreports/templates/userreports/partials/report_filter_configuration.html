@@ -42,8 +42,9 @@ TODO:
             "></i>
         </td>
 
-        <td class="control-group">
+        <td class="control-group" data-bind="css:{'error': $parent.showWarnings() && !isValid()}">
             <input type="text" data-bind="select2: $parent.propertyOptions, value: property">
+            <label class="help-block" data-bind="if: $parent.showWarnings() && !isValid()">Property may not be blank!</label>
         </td>
         <td class="control-group">
             <input type="text" data-bind="value: displayText">
