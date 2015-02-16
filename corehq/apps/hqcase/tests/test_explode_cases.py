@@ -108,9 +108,9 @@ class ExplodeCasesDbTest(TestCase):
 
     def setUp(self):
         delete_all_cases()
-        self.domain = Domain(name='somedomain')
+        self.domain = Domain(name='foo')
         self.domain.save()
-        self.user = CommCareUser.create(self.domain._id, 'somebody', 'password')
+        self.user = CommCareUser.create(self.domain.name, 'somebody', 'password')
         self.user_id = self.user._id
 
     def tearDown(self):
@@ -126,10 +126,10 @@ class ExplodeCasesDbTest(TestCase):
             case_type='exploder-type',
             version=V2
         ).as_string()
-        submit_case_blocks([caseblock], self.domain._id)
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain._id)))
-        explode_cases(self.user_id, self.domain._id, 10)
-        cases_back = list(get_cases_in_domain(self.domain._id))
+        submit_case_blocks([caseblock], self.domain.name)
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain.name)))
+        explode_cases(self.user_id, self.domain.name, 10)
+        cases_back = list(get_cases_in_domain(self.domain.name))
         self.assertEqual(10, len(cases_back))
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
@@ -157,11 +157,11 @@ class ExplodeCasesDbTest(TestCase):
             version=V2
         ).as_string()
 
-        submit_case_blocks([parent_block, child_block], self.domain._id)
-        self.assertEqual(2, len(get_case_ids_in_domain(self.domain._id)))
+        submit_case_blocks([parent_block, child_block], self.domain.name)
+        self.assertEqual(2, len(get_case_ids_in_domain(self.domain.name)))
 
-        explode_cases(self.user_id, self.domain._id, 5)
-        cases_back = list(get_cases_in_domain(self.domain._id))
+        explode_cases(self.user_id, self.domain.name, 5)
+        cases_back = list(get_cases_in_domain(self.domain.name))
         self.assertEqual(10, len(cases_back))
         parent_cases = {p._id: p for p in filter(lambda case: case.type == parent_type, cases_back)}
         self.assertEqual(5, len(parent_cases))
