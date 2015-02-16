@@ -25,7 +25,8 @@ from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
     make_case_property_indicator,
-    make_form_question_indicator
+    make_form_meta_block_indicator,
+    make_form_question_indicator,
 )
 from dimagi.utils.decorators.memoized import memoized
 
@@ -86,9 +87,7 @@ class CreateNewReportForm(forms.Form):
             ),
         )
 
-# TODO: Format types for the columns table don't make sense?
 # TODO: Add some documentation
-
 
 class ConfigureNewReportBase(forms.Form):
     report_name = forms.CharField()
@@ -164,7 +163,6 @@ class ConfigureNewReportBase(forms.Form):
     def create_report(self):
         """
         Creates data source and report config.
-        Returns report config id. #TODO: Does it?
         """
 
         data_source_config = DataSourceConfiguration(
@@ -204,7 +202,30 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def _data_source_indicators(self):
-        return []
+        '''
+        Return all the json data source indicator configurations that could be
+        used by a report that uses the same case type/form as a data source.
+        '''
+        ret = []
+        for prop in self.data_source_properties.values():
+            if prop['type'] == 'meta':
+                ret.append(make_form_meta_block_indicator(
+                    prop['source'][0], prop['source'][1]
+                ))
+            elif prop['type'] == "question":
+                ret.append(make_form_question_indicator(
+                    prop['source'], prop['column_id']
+                ))
+            elif prop['type'] == 'case_property':
+                ret.append(make_case_property_indicator(
+                    prop['source'], prop['column_id']
+                ))
+        ret.append({
+            "display_name": "Count",
+            "type": "count",
+            "column_id": "count"
+        })
+        return ret
 
     @property
     def _data_source_filter(self):
@@ -293,7 +314,7 @@ class ConfigureNewReportBase(forms.Form):
                 "id": "meta/deviceID",
                 "text": "deviceID",
                 "column_id": "meta--deviceID",
-                "source": "deviceID"
+                "source": ("deviceID", "string")
             }
         }
 
@@ -339,7 +360,7 @@ class ConfigureNewReportBase(forms.Form):
                     "id": p[0],
                     "column_id": escape_id(p[0]),
                     'text': p[0],
-                    "source": p[0],
+                    "source": p,
                 } for p in FORM_METADATA_PROPERTIES
             })
             return ret
@@ -362,39 +383,6 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
             'group_by',
             self.configuration_tables
         )
-
-    @property
-    def _data_source_indicators(self):
-        '''
-        Return the json data source indicator configurations to be used by the
-        DataSourceConfiguration used by the ReportConfiguration that this form
-        produces.
-        '''
-        indicator_maker = None
-        if self.source_type == "case":
-            indicator_maker = make_case_property_indicator
-        elif self.source_type == "form":
-            indicator_maker = make_form_question_indicator
-
-        indicator_ids = set(
-            [f['property'] for f in json.loads(self.cleaned_data['filters'])] +
-            [self.cleaned_data["group_by"]]
-        )
-        indicators = [
-            (
-                self.data_source_properties[id]['source'],
-                self.data_source_properties[id]['column_id']
-            )
-            for id in indicator_ids
-        ]
-
-        return [indicator_maker(i[0], i[1]) for i in indicators] + [
-            {
-                "display_name": "Count",
-                "type": "count",
-                "column_id": "count"
-            }
-        ]
 
     @property
     def _report_aggregation_cols(self):
@@ -482,13 +470,6 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
             }
         return [_make_column(conf) for conf in json.loads(self.cleaned_data['columns'])]
 
-    @property
-    def _data_source_indicators(self):
-        property_name = set(
-            [conf['property'] for conf in json.loads(self.cleaned_data['columns'])] +
-            [f['property'] for f in json.loads(self.cleaned_data['filters'])]
-        )
-        return [make_case_property_indicator(p) for p in property_name]
 
     @property
     def _report_aggregation_cols(self):
