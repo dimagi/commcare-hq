@@ -65,15 +65,6 @@
                             This form is not a registration form. You needs to select a form which opens a case and
                             does not update an existing case. Please select a different form.
                             {% endblocktrans %}
-                        {% case "case list form workflow" %}
-                            {% url "view_module" domain app.id error.module.id as module_url %}
-                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
-                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
-                            You have selected form <a href="{{ form_url }}">{{ form_name }}</a>
-                            as the case registration form for the <a href="{{ module_url }}">{{ module_name }}</a> module.
-                            This form also has its end of form navigation set. These two settings are incompatible.
-                            Please disable one or the other.
-                            {% endblocktrans %}
                         {% case "case list form missing" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}

@@ -1449,12 +1449,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                         'module': self.get_module_info(),
                         'form': form,
                     })
-                if form.post_form_workflow != WORKFLOW_DEFAULT:
-                    errors.append({
-                        'type': 'case list form workflow',
-                        'module': self.get_module_info(),
-                        'form': form,
-                    })
 
         return errors
 

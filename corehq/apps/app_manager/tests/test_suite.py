@@ -329,6 +329,18 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlEqual(self.get_xml('case-list-form-suite'), app.create_suite())
 
+    def test_case_list_registration_form_end_for_form_nav(self):
+        app = self._prep_case_list_form_app()
+        app.build_spec.version = '2.9'
+        registration_form = app.get_module(1).get_form(0)
+        registration_form.post_form_workflow = WORKFLOW_MODULE
+
+        self.assertXmlPartialEqual(
+            self.get_xml('case-list-form-suite-form-nav-entry'),
+            app.create_suite(),
+            "./entry[3]"
+        )
+
     def test_case_list_registration_form_no_media(self):
         app = self._prep_case_list_form_app()
         self.assertXmlPartialEqual(

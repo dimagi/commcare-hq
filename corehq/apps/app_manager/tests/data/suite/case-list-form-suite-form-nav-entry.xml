@@ -1,0 +1,26 @@
+<partial>
+    <entry>
+        <command id="m1-f0">
+          <text>
+            <locale id="forms.m1f0"/>
+          </text>
+        </command>
+        <instance id="casedb" src="jr://instance/casedb"/>
+        <instance id="commcaresession" src="jr://instance/session"/>
+        <session>
+            <datum id="case_id_autogen" function="uuid()"/>
+        </session>
+        <stack>
+            <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_autogen]) &gt; 0">
+                <command>instance('commcaresession')/session/data/return_to</command>
+                <datum id="case_id" value="instance('commcaresession')/session/data/case_id_autogen"/>
+            </create>
+            <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_autogen]) = 0">
+                <command>instance('commcaresession')/session/data/return_to</command>
+            </create>
+            <create if="not instance('commcaresession')/session/data/return_to">
+              <command>m1</command>
+            </create>
+        </stack>
+    </entry>
+</partial>

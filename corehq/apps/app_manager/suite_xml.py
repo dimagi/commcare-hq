@@ -752,8 +752,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                 return
 
             entry = self.get_form_entry(suite, form_command)
-            entry.stack = Stack()
-            frame = CreateFrame()
+            if_clause = None
+            if not entry.stack:
+                entry.stack = Stack()
+            else:
+                # TODO: find a more general way of handling multiple contributions to the workflow
+                if_clause = 'not {}'.format(session_var(RETURN_TO))
+
+            frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
 
             for child in frame_children:
