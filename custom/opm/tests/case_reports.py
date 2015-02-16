@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime, date
 from unittest import TestCase
 
-from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
+from jsonobject import (JsonObject, DateTimeProperty,
     StringProperty, IntegerProperty, BooleanProperty)
 
 from casexml.apps.case.models import CommCareCase
@@ -10,7 +10,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, add_months
 
 from ..beneficiary import OPMCaseRow
-from ..constants import *
+from .. import constants
 from ..reports import CaseReportMixin, SharedDataProvider
 
 
@@ -157,7 +157,7 @@ def make_case_row(form_props=None, vhnd_props=None):
     forms = [XFormInstance(
         form={'child_1': {prop: '1' for prop in form_props or []}},
         received_on=date_in_month,
-        xmlns=CFU1_XMLNS,
+        xmlns=constants.CFU1_XMLNS,
     )]
 
     dod_year, dod_month = add_months(report_year, report_month, -child_age)
