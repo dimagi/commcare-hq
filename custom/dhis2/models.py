@@ -654,6 +654,10 @@ class Dhis2Api(object):
         return entities
 
 
+class FixtureManagerError(Exception):
+    pass
+
+
 def to_field_list(value):
     """
     Return a field value as a FieldList
@@ -665,7 +669,10 @@ def to_field_value(field_list):
     """
     Return the first field value in a FieldList
     """
-    return field_list.field_list[0].field_value
+    try:
+        return field_list.field_list[0].field_value
+    except IndexError:
+        return None
 
 
 class FixtureManager(object):
@@ -713,6 +720,10 @@ class Dhis2OrgUnit(object):
         return self._fixture_id
 
     def save(self):
+        if self.objects is None:
+            raise FixtureManagerError(
+                'FixtureManager not set. '
+                'e.g. `Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)`')
         data_type = FixtureDataType.by_domain_tag(self.objects.domain, self.objects.tag).one()
         if data_type is None:
             raise Dhis2ConfigurationError(
@@ -739,5 +750,5 @@ class Dhis2OrgUnit(object):
 # To use Dhis2OrgUnit with FixtureManager, create a manager instance, and use
 # it to fetch org units. You need to do it at runtime in order to create your
 # FixtureManager instance with the right domain. e.g.:
-#     org_unit_objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
-#     our_org_units = {ou.id: ou for ou in org_unit_objects.all()}
+#     Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
+#     our_org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}

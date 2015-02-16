@@ -169,8 +169,8 @@ def get_user_by_org_unit(domain, org_unit_id, top_org_unit_name):
         return CommCareUser.wrap(result.hits[i])
     # No user is assigned to this organisation unit (i.e. region or facility).
     # Try its parent org unit.
-    org_unit_objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
-    org_units = {ou.id: ou for ou in org_unit_objects.all()}
+    Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
+    org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}
     if (
         org_unit_id in org_units and
         org_units[org_unit_id]['name'] != top_org_unit_name and
@@ -251,8 +251,8 @@ def sync_org_units():
         # Is it a bad idea to read all org units into dictionaries and sync them ...
         their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units_with_parents()}
         # ... or should we rather just drop all ours and import all theirs every time?
-        org_unit_objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
-        our_org_units = {ou.id: ou for ou in org_unit_objects.all()}
+        Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, settings.domain, ORG_UNIT_FIXTURES)
+        our_org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}
         # Add new org units
         for id_, ou in their_org_units.iteritems():
             if id_ not in our_org_units:
