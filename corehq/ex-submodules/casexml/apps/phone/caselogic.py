@@ -353,9 +353,15 @@ class CaseSyncBatch(object):
 
     def _case_sync_updates(self, all_potential_to_sync):
         case_updates_to_sync = []
+
+        def _approximate_domain_match(case):
+            # if both objects have a domain then make sure they're the same, but if
+            # either is empty then just assume it's a match (this is just for legacy tests)
+            return self.domain == case.domain if self.domain and case.domain else True
+
         for case in all_potential_to_sync:
             sync_update = CaseSyncUpdate(case, self.last_sync)
-            if sync_update.required_updates:
+            if sync_update.required_updates and _approximate_domain_match(case):
                 case_updates_to_sync.append(sync_update)
 
         return case_updates_to_sync
