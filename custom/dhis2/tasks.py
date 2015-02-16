@@ -24,7 +24,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from celery.schedules import crontab
 from celery.task import periodic_task
-from corehq import Domain
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
@@ -216,22 +215,18 @@ def gen_children_only_ours(domain):
 
 
 # TODO: Use case forwarding, or form forwarding of registration forms
-# @periodic_task(run_every=timedelta(minutes=5))  # Run every 5 minutes to match forwarded forms
+@periodic_task(run_every=timedelta(minutes=5))  # Run every 5 minutes to match forwarded forms
 def sync_cases():
     """
     Create new child cases in CommCare for nutrition tracking, and associate
     CommCare child cases with DHIS2 child entities and enroll them in the
     Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
     """
-    for domain in Domain.get_all():
-        settings = Dhis2Settings.for_domain(domain.name)
-        if settings is None or not settings.is_enabled():
-            continue
-
+    for settings in Dhis2Settings.all_enabled():
         children = get_children_only_theirs(settings)
         pull_child_entities(settings, children)
 
-        children = gen_children_only_ours(domain.name)
+        children = gen_children_only_ours(settings.domain)
         push_child_entities(settings, children)
 
 
@@ -250,12 +245,7 @@ def sync_org_units():
     .. _DHIS2 Integration: https://www.dropbox.com/s/8djk1vh797t6cmt/WV Sri Lanka Detailed Requirements.docx
 
     """
-    # Loop through all enabled domains
-    for domain in Domain.get_all():
-        settings = Dhis2Settings.for_domain(domain.name)
-        if settings is None or not settings.is_enabled():
-            continue
-
+    for settings in Dhis2Settings.all_enabled():
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])
         # Is it a bad idea to read all org units into dictionaries and sync them ...

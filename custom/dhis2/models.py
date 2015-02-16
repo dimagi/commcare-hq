@@ -6,6 +6,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldL
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.cache import cache_core
 import requests
+from toggle.models import Toggle
 
 
 class Dhis2Settings(Document):
@@ -24,12 +25,26 @@ class Dhis2Settings(Document):
         return res[0] if len(res) > 0 else None
 
     @classmethod
+    def all_enabled(cls):
+        """
+        Yields settings of all domains for which "enabled" is true
+        """
+        toggle = Toggle.get('dhis2_domain')
+        for domain in toggle.enabled_users:
+            if domain.startswith('domain:'):
+                # If the "domain" namespace is given, strip it off
+                domain = domain.split(':')[1]
+            settings = cls.for_domain(domain)
+            if settings and settings.is_enabled():
+                yield settings
+
+    @classmethod
     def is_enabled_for_domain(cls, domain):
         settings = cls.for_domain(domain)
         return settings is not None and settings.is_enabled()
 
     def is_enabled(self):
-        return self.dhis2.enabled
+        return self.dhis2['enabled']
 
 
 class JsonApiError(Exception):
