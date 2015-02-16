@@ -1,5 +1,6 @@
 import logging
 from django.core.validators import validate_email
+from corehq.apps.products.models import SQLProduct
 from custom.logistics.commtrack import add_location
 from dimagi.utils.dates import force_to_datetime
 from corehq import Domain
@@ -34,6 +35,7 @@ class SupplyPoint(JsonObject):
     supplied_by = IntegerProperty()
     type = StringProperty()
     location_id = IntegerProperty()
+    products = ListProperty()
 
 
 class SMSUser(JsonObject):
@@ -145,6 +147,9 @@ class EWSApi(APISynchronization):
             if supply_point.supervised_by:
                 new_location.metadata['supervised_by'] = supply_point.supervised_by
             new_location.save()
+            sql_loc = new_location.sql_location
+            sql_loc.products = SQLProduct.objects.filter(code__in=supply_point.products)
+            sql_loc.save()
             return new_location
 
     def _create_supply_point_from_location(self, supply_point, location):
@@ -152,6 +157,9 @@ class EWSApi(APISynchronization):
             if supply_point.supervised_by:
                 location.metadata['supervised_by'] = supply_point.supervised_by
                 location.save()
+                sql_loc = location.sql_location
+                sql_loc.products = SQLProduct.objects.filter(code__in=supply_point.products)
+                sql_loc.save()
             SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
                                                           name=supply_point.name,
                                                           external_id=str(supply_point.id),
