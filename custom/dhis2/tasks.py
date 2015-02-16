@@ -216,7 +216,7 @@ def gen_children_only_ours(domain):
 
 
 # TODO: Use case forwarding, or form forwarding of registration forms
-@periodic_task(run_every=timedelta(minutes=5))  # Run every 5 minutes to match forwarded forms
+# @periodic_task(run_every=timedelta(minutes=5))  # Run every 5 minutes to match forwarded forms
 def sync_cases():
     """
     Create new child cases in CommCare for nutrition tracking, and associate

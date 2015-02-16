@@ -22,7 +22,7 @@ from dimagi.utils.multithreading import process_fast
 from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
-
+from dimagi.utils.couch.database import iter_docs
 
 class IllegalModelStateException(Exception):
     pass
@@ -1208,23 +1208,41 @@ class CaseReminderHandler(Document):
                 print_stack_interval=60)
 
     @classmethod
-    def get_handlers(cls, domain, case_type=None, ids_only=False):
-        key = [domain]
-        if case_type:
-            key.append(case_type)
-        result = cls.view('reminders/handlers_by_domain_case_type',
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=(not ids_only),
+    def get_handlers(cls, domain, reminder_type_filter=None):
+        ids = cls.get_handler_ids(domain,
+            reminder_type_filter=reminder_type_filter)
+        return cls.get_handlers_from_ids(ids)
+
+    @classmethod
+    def get_handlers_from_ids(cls, ids):
+        return [
+            CaseReminderHandler.wrap(doc)
+            for doc in iter_docs(cls.get_db(), ids)
+        ]
+
+    @classmethod
+    def get_handler_ids(cls, domain, reminder_type_filter=None):
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            reduce=False,
         )
-        if ids_only:
-            return [row["id"] for row in result]
-        else:
-            return result
+
+        def filter_fcn(reminder_type):
+            if reminder_type_filter is None:
+                return True
+            else:
+                return ((reminder_type or REMINDER_TYPE_DEFAULT) ==
+                    reminder_type_filter)
+        return [
+            row['id'] for row in result
+            if filter_fcn(row['key'][1])
+        ]
 
     @classmethod
     def get_referenced_forms(cls, domain):
-        handlers = cls.get_handlers(domain=domain).all()
+        handlers = cls.get_handlers(domain)
         referenced_forms = [e.form_unique_id for events in [h.events for h in handlers] for e in events]
         return filter(None, referenced_forms)
 

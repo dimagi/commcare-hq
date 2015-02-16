@@ -348,12 +348,13 @@ def users_matching_filter(domain, user_filters):
 
 
 def create_export_filter(request, domain, export_type='form'):
+    request_obj = request.POST if request.method == 'POST' else request.GET
     from corehq.apps.reports.filters.users import UserTypeFilter
-    app_id = request.GET.get('app_id', None)
+    app_id = request_obj.get('app_id', None)
 
     user_filters, use_user_filters = UserTypeFilter.get_user_filter(request)
     use_user_filters &= bool(user_filters)
-    group = None if use_user_filters else get_group(**json_request(request.GET))
+    group = None if use_user_filters else get_group(**json_request(request_obj))
 
     if export_type == 'case':
         if use_user_filters:

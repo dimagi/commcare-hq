@@ -250,7 +250,6 @@ class InventoryManagementData(EWSData):
     chart_y_label = 'MOS'
 
     def get_products(self):
-        print self.config
         if self.config['program'] and not self.config['products']:
             product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
                                                                                self.config['program'])]
