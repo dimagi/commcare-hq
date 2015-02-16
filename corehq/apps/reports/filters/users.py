@@ -485,10 +485,11 @@ class ExpandedMobileWorkerFilterWithAllData(ExpandedMobileWorkerFilter):
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
     try:
-        if request.GET.get('ufilter', ''):
-            ufilter = request.GET.getlist('ufilter')
-        group = request.GET.get('group', '')
-        individual = request.GET.get('individual', '')
+        request_obj = request.POST if request.method == 'POST' else request.GET
+        if request_obj.get('ufilter', ''):
+            ufilter = request_obj.getlist('ufilter')
+        group = request_obj.get('group', '')
+        individual = request_obj.get('individual', '')
         show_commtrack = request.project.commtrack_enabled
     except (KeyError, AttributeError):
         pass

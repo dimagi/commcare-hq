@@ -21,6 +21,9 @@ class BasePayloadGenerator(object):
     def get_payload(self, repeat_record, payload_doc):
         raise NotImplementedError()
 
+    def get_headers(self, repeat_record, payload_doc):
+        return {}
+
 
 @RegisterGenerator(FormRepeater, 'form_xml', 'XML', is_default=True)
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):

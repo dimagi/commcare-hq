@@ -713,8 +713,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     )
 
     def post_process(self, suite):
-        if self.app.build_version >= "2.10":
-            # Isn't there a better way to version-limit a feature
+        if self.app.enable_post_form_workflow:
             self.add_form_workflow(suite)
 
         details_by_id = self.get_detail_mapping()

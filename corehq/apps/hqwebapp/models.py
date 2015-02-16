@@ -605,7 +605,7 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
             from corehq.apps.data_interfaces.views \
-                import CaseGroupListView, CaseGroupCaseManagementView
+                import CaseGroupListView, CaseGroupCaseManagementView, ArchiveFormView
             edit_section[0][1].append({
                 'title': CaseGroupListView.page_title,
                 'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
@@ -617,6 +617,11 @@ class ProjectDataTab(UITab):
                 ]
             })
 
+            if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
+                edit_section[0][1].append({
+                    'title': ArchiveFormView.page_title,
+                    'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
+                })
             items.extend(edit_section)
 
         return items
@@ -1132,6 +1137,13 @@ class ProjectSettingsTab(UITab):
             'title': _(EditMyProjectSettingsView.page_title),
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
+
+        if toggles.DHIS2_DOMAIN.enabled(self.domain):
+            from corehq.apps.domain.views import EditDhis2SettingsView
+            project_info.append({
+                'title': _(EditDhis2SettingsView.page_title),
+                'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
+            })
 
         can_view_orgs = (user_is_admin
                          and self.project and self.project.organization
