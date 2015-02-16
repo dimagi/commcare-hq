@@ -4,7 +4,7 @@ from math import ceil
 from corehq.apps.es import UserES
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -17,6 +17,7 @@ from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, Multi
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
+from custom.ewsghana.utils import get_products_ids_assigned_to_rel_sp
 
 
 class StockLevelsSubmissionData(EWSData):
@@ -177,13 +178,20 @@ class FacilityReportData(EWSData):
                 return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}
+
+        prds = set(get_products_ids_assigned_to_rel_sp(self.config['domain'], self.sublocations[0]))
+
         if self.config['program'] and not self.config['products']:
-            product_ids = [product.get_id for product in Product.by_program_id(self.config['domain'],
-                                                                               self.config['program'])]
+            product_ids = SQLProduct.objects.filter(domain=self.config['domain'],
+                                                    program_id=self.config['program'],
+                                                    id__in=prds).values_list(*['product_id'], flat=True)
+
         elif self.config['program'] and self.config['products']:
-            product_ids = self.config['products']
+            product_ids = set(self.config['products']) & prds
         else:
-            product_ids = Product.ids_by_domain(self.config['domain'])
+            product_ids = SQLProduct.objects.filter(id_in=prds,
+                                                    domain=self.config['domain']).values_list(*['product_id'],
+                                                                                              flat=True)
 
         stock_states = StockState.objects.filter(
             case_id__in=get_relevant_supply_point_ids(self.config['domain'], self.sublocations[0]),
@@ -195,7 +203,7 @@ class FacilityReportData(EWSData):
             monthly_consumption = int(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
-                    'commodity': Product.get(state.product_id).name,
+                    'commodity': state.product.name,
                     'months_until_stockout': "%.2f" % (state.stock_on_hand / monthly_consumption)
                     if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': timesince(state.last_modified_date) if state.stock_on_hand == 0 else '',

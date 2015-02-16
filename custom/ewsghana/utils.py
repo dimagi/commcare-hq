@@ -57,3 +57,27 @@ def calculate_last_period(enddate):
     last_th = enddate - timedelta(days=enddate.weekday()) + timedelta(days=3, weeks=-1)
     fr_before = last_th - timedelta(days=6)
     return fr_before, last_th
+
+
+def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
+
+    def filter_relevant(queryset):
+        return queryset.filter(
+            supply_point_id__isnull=False
+        ).values_list(
+            'products__product_id',
+            flat=True
+        )
+
+    if active_location:
+        sql_location = active_location.sql_location
+        products = []
+        if sql_location.supply_point_id:
+            products.append(sql_location.products.value_list(*['product_id'], flat=True))
+        products += list(
+            filter_relevant(sql_location.get_descendants())
+        )
+
+        return products
+    else:
+        return filter_relevant(SQLLocation.objects.filter(domain=domain))
