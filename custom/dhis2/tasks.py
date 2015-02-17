@@ -55,10 +55,6 @@ def push_child_entities(settings, children):
                          settings.dhis2['top_org_unit_name'])
     # nutrition_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
     nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
-
-    # For testing
-    # fallback_org_unit = dhis2_api.get_resource_id('organisationUnits', 'Fermathe Clinic')
-
     today = date.today()
     for child in children:
         if getattr(child, 'dhis_org_id', None):
@@ -66,10 +62,6 @@ def push_child_entities(settings, children):
         else:
             # This is an old case, or org unit is not set. Skip it
             continue
-
-            # For testing:
-            # ou_id = fallback_org_unit
-
         try:
             # Search for CCHQ Case ID in case previous attempt to register failed.
             dhis2_child = next(dhis2_api.gen_instances_with_equals(TRACKED_ENTITY, CCHQ_CASE_ID, child['_id']))
@@ -86,7 +78,12 @@ def push_child_entities(settings, children):
         program_data = {dhis2_attr: child[cchq_attr]
                         for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
                         if getattr(child, cchq_attr, None)}
-        # TODO: DHIS2 says CHDR Number is optional, but throws an error if it's not passed
+        if (
+            'CHDR Number' in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.values() and  # May not be required in production
+            'CHDR Number' not in program_data
+        ):
+            # CHDR Number must have a unique value. If we don't have one, we have to fake it.
+            program_data['CHDR Number'] = 'cchq-' + child['_id']
         response = dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, date_of_visit, program_data)
         if response['status'] != 'SUCCESS':
             logger.error('Failed to push CCHQ case "%s" to DHIS2 program "%s". DHIS2 API error: %s',

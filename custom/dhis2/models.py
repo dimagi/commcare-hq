@@ -345,6 +345,10 @@ class Dhis2Api(object):
         top_ou = self.get_top_org_unit()
         te_id = self.get_te_id(te_name)
         attr_id = self.get_te_attr_id(attr_name)
+        if attr_id is None:
+            raise Dhis2ConfigurationError(
+                'DHIS2 tracked entity attribute name "%s" unknown on host "%s"',
+                attr_name, self._request.baseurl)
         page = 1
         while True:
             __, response = self._request.get(
