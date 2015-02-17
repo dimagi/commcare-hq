@@ -258,7 +258,10 @@ class FixtureDataItem(Document):
 
     def to_xml(self):
         def _serialize(val):
-            return unicode(val) if isinstance(val, (int, Decimal)) else val
+            if isinstance(val, (int, Decimal)):
+                return unicode(val)
+            else:
+                return val if val is not None else ""
 
         xData = ElementTree.Element(self.data_type.tag)
         for attribute in self.data_type.item_attributes:
@@ -278,7 +281,7 @@ class FixtureDataItem(Document):
             else:
                 for field_with_attr in self.fields[field.field_name].field_list:
                     xField = ElementTree.SubElement(xData, field.field_name)
-                    xField.text = field_with_attr.field_value or ""
+                    xField.text = _serialize(field_with_attr.field_value)
                     for attribute in field_with_attr.properties:
                         val = field_with_attr.properties[attribute]
                         xField.attrib[attribute] = _serialize(val)
