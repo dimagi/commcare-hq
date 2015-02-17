@@ -88,9 +88,9 @@ def locations_fix(domain):
             sp.save()
         else:
             fake_location = Location(
-                    _id=loc.location_id,
-                    name=loc.name,
-                    domain=domain
+                _id=loc.location_id,
+                name=loc.name,
+                domain=domain
             )
             SupplyPointCase.get_or_create_by_location(fake_location)
 
@@ -99,4 +99,3 @@ def locations_fix(domain):
 def add_products_to_loc(api):
     endpoint = api.endpoint
     synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0)
-

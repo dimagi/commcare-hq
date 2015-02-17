@@ -68,12 +68,12 @@ def ews_fix_languages(request, domain):
     language_fix.delay(EWSApi(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
+
 @domain_admin_required
 @require_POST
 def ews_fix_locations(request, domain):
     locations_fix.delay(domain=domain)
     return HttpResponse('OK')
-
 
 
 @domain_admin_required

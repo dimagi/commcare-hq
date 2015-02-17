@@ -233,10 +233,9 @@ class EWSApi(APISynchronization):
                 )
                 SupplyPointCase.get_or_create_by_location(fake_location)
                 created_location.save()
-            fake_location = Loc(
-                    _id=location._id,
-                    name=location.name,
-                    domain=self.domain
+            fake_location = Loc(_id=location._id,
+                                name=location.name,
+                                domain=self.domain
             )
             SupplyPointCase.get_or_create_by_location(fake_location)
         elif ews_location.supply_points:
@@ -289,16 +288,16 @@ class EWSApi(APISynchronization):
                 location.save()
             for loc in ews_location.supply_points:
                 sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(loc.id)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
+                                          key=[self.domain, str(loc.id)],
+                                          reduce=False,
+                                          include_docs=True,
+                                          limit=1).first()
                 if sp:
                     sqlloc = sp.location.sql_location
                     sqlloc.stocks_all_products = False
-                    # if not sqlloc.products:
-                    sqlloc.products = SQLProduct.objects.filter(domain=self.domain, code__in=loc.products)
-                    sqlloc.save()
+                    if not sqlloc.products:
+                        sqlloc.products = SQLProduct.objects.filter(domain=self.domain, code__in=loc.products)
+                        sqlloc.save()
         return location
 
     def convert_web_user_to_sms_user(self, ews_webuser):
