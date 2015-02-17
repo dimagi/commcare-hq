@@ -296,9 +296,9 @@ class EWSApi(APISynchronization):
                 if sp:
                     sqlloc = sp.location.sql_location
                     sqlloc.stocks_all_products = False
-                    if not sqlloc.products:
-                        sqlloc.products = SQLProduct.objects.filter(code__in=loc.products)
-                        sqlloc.save()
+                    # if not sqlloc.products:
+                    sqlloc.products = SQLProduct.objects.filter(domain=self.domain, code__in=loc.products)
+                    sqlloc.save()
         return location
 
     def convert_web_user_to_sms_user(self, ews_webuser):

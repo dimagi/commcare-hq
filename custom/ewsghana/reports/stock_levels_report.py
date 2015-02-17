@@ -76,16 +76,16 @@ class FacilityReportData(EWSData):
         loc = SQLLocation.objects.get(location_id=self.config['location_id'])
 
         stock_states = StockState.objects.filter(
-            case_id__in=loc.supply_point_id,
+            case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=set(self.products) & set(loc.products)
+            sql_product__in=self.unique_products([loc])
         ).order_by('-last_modified_date')
 
         for state in stock_states:
             monthly_consumption = int(state.get_monthly_consumption()) if state.get_monthly_consumption() else 0
             if state.product_id not in state_grouping:
                 state_grouping[state.product_id] = {
-                    'commodity': state.product.name,
+                    'commodity': state.sql_product.name,
                     'months_until_stockout': "%.2f" % (state.stock_on_hand / monthly_consumption)
                     if state.stock_on_hand and monthly_consumption else 0,
                     'stockout_duration': timesince(state.last_modified_date) if state.stock_on_hand == 0 else '',
@@ -158,15 +158,15 @@ class InventoryManagementData(EWSData):
             return 0
         loc = SQLLocation.objects.get(location_id=self.config['location_id'])
         stock_states = StockState.include_archived.filter(
-            case_id__in=loc.supply_point_id,
+            case_id=loc.supply_point_id,
             section_id=STOCK_SECTION_TYPE,
-            sql_product__in=set(self.products) & set(loc.products),
+            sql_product__in=self.unique_products([loc]),
             last_modified_date__lte=self.config['enddate'],
         ).order_by('last_modified_date')
 
         rows = {}
         for state in stock_states:
-            product_name = Product.get(state.product_id).name
+            product_name = state.sql_product.name
             rows[product_name] = []
             weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
             for i in range(1, int(weeks + 1)):

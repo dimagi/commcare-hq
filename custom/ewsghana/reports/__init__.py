@@ -69,20 +69,19 @@ class EWSData(object):
     @property
     @memoized
     def products(self):
+        print self.config
         if self.config['products']:
             return SQLProduct.objects.filter(product_id__in=self.config['products'])
         elif self.config['program']:
             return SQLProduct.objects.filter(program_id=self.config['program'])
         else:
-            return SQLProduct.objects.filter(is_archived=False, domain=self.config['domain'])
+            return []
 
-    @memoized
     def unique_products(self, locations):
         products = list(self.products)
         for loc in locations:
             products.extend(loc.products)
         return sorted(set(products), key=lambda p: p.code)
-
 
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
@@ -202,15 +201,17 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rows(self):
-        if self.config['program'] and not self.config['products']:
-            products = [product for product in SQLProduct.objects.filter(
-                program_id=self.config['program'], domain=self.config['domain'])]
-        elif self.config['program'] and self.config['products']:
-            products = [product for product in SQLProduct.objects.filter(
-                domain=self.config['domain'], product_id__in=self.config['products'])]
-        else:
-            products = [product for product in SQLProduct.objects.filter(
-                domain=self.config['domain'])]
+        # if self.config['program'] and not self.config['products']:
+        #     products = [product for product in SQLProduct.objects.filter(
+        #         program_id=self.config['program'], domain=self.config['domain'])]
+        # elif self.config['program'] and self.config['products']:
+        #     products = [product for product in SQLProduct.objects.filter(
+        #         domain=self.config['domain'], product_id__in=self.config['products'])]
+        # else:
+        #     products = [product for product in SQLProduct.objects.filter(
+        #         domain=self.config['domain'])]
+        locations = get_supply_points(self.config['location_id'], self.config['domain'])
+        products = self.unique_products(locations)
         result = [['<input value=\"{0}\" type=\"checkbox\">{1} ({0})</input>'.format(p.code, p.name)]
                   for p in products]
         result.append(['<button id=\"selection_pane_apply\" class=\"filters btn\">Apply</button>'])
