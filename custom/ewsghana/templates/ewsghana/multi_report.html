@@ -102,6 +102,26 @@
             {% endwith %}
         {% endfor %}
     {% endfor %}
+
+    <script>
+        function updateExportButton() {
+            var button = $("#export-report-excel");
+            if ({{ split|yesno:"true,false" }}) {
+                button.text("Export Chart to Excel");
+                button.css('display', 'inline-block');
+            } else if ({{ exportable|yesno:"true,false" }}){
+                button.text("Export to Excel");
+                button.css('display', 'inline-block');
+            } else {
+                button.css('display', 'None');
+            }
+        }
+        $("#apply-filters").on('click', function(){
+            updateExportButton();
+        });
+        updateExportButton()
+    </script>
+
     <script>
         $('#selection_pane_apply').on('click', function(e) {
             e.preventDefault();

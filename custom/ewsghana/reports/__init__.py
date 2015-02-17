@@ -3,6 +3,7 @@ from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
@@ -89,6 +90,8 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     report_template_path = "ewsghana/multi_report.html"
     flush_layout = True
     split = True
+    exportable = True
+    is_exportable = False
     base_template = 'ewsghana/base_template.html'
 
     @classmethod
@@ -151,6 +154,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
             'title': self.title,
             'split': self.split,
+            'exportable': self.is_exportable,
             'location_id': self.request.GET.get('location_id'),
         }
         return context
@@ -192,6 +196,34 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             if not location_type.administrative
         ]
         return sql_location.location_type in reporting_types
+
+    @property
+    def export_table(self):
+        r = self.report_context['reports'][0]['report_table']
+        return [self._export_table(r['title'], r['headers'], r['rows'])]
+
+    # Export for Facility Page Report, which occurs in every multireport
+    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_export_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        # Removing html icon tag from MOS column
+        for row in rows:
+            row[1] = GenericTabularReport._strip_tags(row[1])
+        replace = ''
+
+        for k, v in enumerate(table[0]):
+            if v != ' ':
+                replace = v
+            else:
+                table[0][k] = replace
+        table.extend(rows)
+        if total_row:
+            table.append(_unformat_row(total_row))
+
+        return [export_sheet_name, table]
 
 
 class ProductSelectionPane(EWSData):

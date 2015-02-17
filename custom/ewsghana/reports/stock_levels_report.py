@@ -4,7 +4,7 @@ from math import ceil
 from corehq.apps.es import UserES
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -16,6 +16,7 @@ from custom.ewsghana.reports import EWSData, REORDER_LEVEL, MAXIMUM_LEVEL, Multi
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location
 
 
 class StockLevelsLegend(EWSData):
@@ -48,7 +49,7 @@ class FacilityReportData(EWSData):
     def headers(self):
         return DataTablesHeader(*[
             DataTablesColumn(_('Commodity')),
-            DataTablesColumn(_('Months Until Stockout')),
+            DataTablesColumn(_('Months of Stock')),
             DataTablesColumn(_('Stockout Duration')),
             DataTablesColumn(_('Current Stock')),
             DataTablesColumn(_('Monthly Consumption')),
@@ -165,8 +166,9 @@ class InventoryManagementData(EWSData):
         ).order_by('last_modified_date')
 
         rows = {}
+
         for state in stock_states:
-            product_name = state.sql_product.name
+            product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
             rows[product_name] = []
             weeks = ceil((self.config['enddate'] - self.config['startdate']).days / 7.0)
             for i in range(1, int(weeks + 1)):
@@ -270,7 +272,7 @@ class StockLevelsReport(MultiReport):
     name = "Stock Levels Report"
     slug = 'ews_stock_levels_report'
     exportable = True
-    base_template = "ewsghana/facility_report_base_template.html"
+    is_exportable = True
 
     @property
     def report_config(self):
@@ -301,32 +303,6 @@ class StockLevelsReport(MultiReport):
                     FacilityUsers(config),
                     FacilityInChargeUsers(config),
                     InventoryManagementData(config)]
-
-    @property
-    def export_table(self):
-        r = self.report_context['reports'][0]['report_table']
-        return [self._export_table(r['title'], r['headers'], r['rows'])]
-
-    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
-        def _unformat_row(row):
-            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
-
-        table = headers.as_export_table
-        rows = [_unformat_row(row) for row in formatted_rows]
-        for row in rows:
-            row[1] = row[1][:row[1].index('<')]
-        replace = ''
-
-        for k, v in enumerate(table[0]):
-            if v != ' ':
-                replace = v
-            else:
-                table[0][k] = replace
-        table.extend(rows)
-        if total_row:
-            table.append(_unformat_row(total_row))
-
-        return [export_sheet_name, table]
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

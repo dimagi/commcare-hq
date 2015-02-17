@@ -8,7 +8,7 @@ from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.reports import MultiReport, EWSData
 from casexml.apps.stock.models import StockTransaction
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
-    FacilityUsers, FacilityInChargeUsers, InventoryManagementData
+    FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
 from custom.ewsghana.utils import calculate_last_period, get_supply_points
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.ilsgateway.tanzania import make_url
@@ -316,6 +316,7 @@ class ReportingRatesReport(MultiReport):
             return [
                 FacilityReportData(config),
                 StockLevelsLegend(config),
+                InputStock(config),
                 FacilitySMSUsers(config),
                 FacilityUsers(config),
                 FacilityInChargeUsers(config),

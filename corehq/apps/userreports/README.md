@@ -598,6 +598,30 @@ There is a second example based off the "gsid" domain as well using forms.
 
 The tests are also a good source of documentation for the various filter and indicator formats that are supported.
 
+## Static data sources
+
+As well as being able to define data sources via the UI which are stored in the database you
+can also define static data sources which live as JSON documents in the source repository.
+
+These are mainly useful for custom reports.
+
+They conform to a slightly different style:
+```
+{
+    "domains": ["live-domain", "test-domain"],
+    "config": {
+        ... put the normal data source configuration here
+    }
+}
+```
+
+Having defined the data source you need to add the path to the data source file to the `CUSTOM_DATA_SOURCES`
+setting in `settings.py`. Now when the `CustomDataSourcePillow` is run it will pick up the data source
+and rebuild it.
+
+Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
+can use the UI to rebuild the data source (requires Celery to be running).
+
 
 ## Inspecting database tables
 
