@@ -351,14 +351,20 @@ def process_incoming(msg, delay=True):
             )
 
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
-    if is_opt_message(msg.text, opt_out_keywords):
+    if (
+        is_opt_message(msg.text, opt_out_keywords) and
+        PhoneNumber.can_receive_sms(msg.phone_number)
+    ):
         text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
         if v:
             send_sms_to_verified_number(v, text)
         else:
             send_sms(msg.domain, None, msg.phone_number, text)
         PhoneNumber.opt_out_sms(msg.phone_number)
-    elif is_opt_message(msg.text, opt_in_keywords):
+    elif (
+        is_opt_message(msg.text, opt_in_keywords) and
+        not PhoneNumber.can_receive_sms(msg.phone_number)
+    ):
         PhoneNumber.opt_in_sms(msg.phone_number)
         text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
         if v:
