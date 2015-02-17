@@ -9,8 +9,8 @@ from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 def total_rows(report):
     return {
-        "total_under_facilitator": report.total_under_facilitator,
-        "total_with_checklist": report.total_with_checklist
+        "total_under_facilitator": getattr(report, 'total_under_facilitator', 0),
+        "total_with_checklist": getattr(report, 'total_with_checklist', 0)
     }
 
 
