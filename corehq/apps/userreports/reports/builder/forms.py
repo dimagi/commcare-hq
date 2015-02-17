@@ -30,7 +30,16 @@ from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
+from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
+
+
+class FilterField(JsonField):
+    def validate(self, value):
+        super(FilterField, self).validate(value)
+        for filter_conf in value:
+            if filter_conf.get('format', None) not in ['Choice', 'Date', 'Numeric']:
+                raise forms.ValidationError("Invalid filter format!")
 
 
 class CreateNewReportForm(forms.Form):
@@ -134,7 +143,7 @@ class CreateNewReportForm(forms.Form):
 # TODO: Add some documentation
 class ConfigureNewReportBase(forms.Form):
     report_name = forms.CharField()
-    filters = forms.CharField()
+    filters = FilterField()
     form_title = 'Configure Report'
     button_text = 'Save Report'
 
@@ -300,27 +309,22 @@ class ConfigureNewReportBase(forms.Form):
         Return the dict filter configurations to be used by the
         ReportConfiguration that this form produces.
         """
+        filter_type_map = {
+            'Choice': 'dynamic_choice_list',
+            'Date': 'date',
+            'Numeric': 'numeric'
+        }
 
         def _make_report_filter(conf):
             col_id = self.data_source_properties[conf["property"]]['column_id']
-            filter = {
+            return {
                 "field": col_id,
                 "slug": col_id,
-                "display": conf["display_text"]
+                "display": conf["display_text"],
+                "type": filter_type_map[conf['format']]
             }
-            if conf['format'] == "Choice":
-                filter["type"] = "dynamic_choice_list"
-            elif conf['format'] == "Date":
-                filter["type"] = "date"
-            elif conf['format'] == "Numeric":
-                filter["type"] = "numeric"
-            else:
-                # TODO: Raise something more specific or catch earlier
-                raise Exception
 
-            return filter
-
-        filter_configs = json.loads(self.cleaned_data['filters'])
+        filter_configs = self.cleaned_data['filters']
         return [_make_report_filter(f) for f in filter_configs]
 
     @property
@@ -487,7 +491,7 @@ class ConfigureNewPieChartReport(ConfigureNewBarChartReport):
 
 class ConfigureNewTableReport(ConfigureNewReportBase):
     form_title = "Configure Table Report"
-    columns = forms.CharField(required=False)
+    columns = JsonField(required=False)
 
     @property
     def configuration_tables(self):
@@ -512,7 +516,7 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
                 "type": "field",
                 "display": conf['display_text']
             }
-        return [_make_column(conf) for conf in json.loads(self.cleaned_data['columns'])]
+        return [_make_column(conf) for conf in self.cleaned_data['columns']]
 
 
     @property

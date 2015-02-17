@@ -24,6 +24,7 @@ class JsonField(forms.CharField):
         self.expected_type = expected_type
         super(JsonField, self).__init__(*args, **kwargs)
 
+    # Is this doing anything?
     def prepare_value(self, value):
         if isinstance(value, basestring):
             try:
@@ -33,14 +34,14 @@ class JsonField(forms.CharField):
         else:
             return value
 
+    def to_python(self, value):
+        val = super(JsonField, self).to_python(value)
+        try:
+            return json.loads(val)
+        except:
+            raise forms.ValidationError(_(u'Please enter valid JSON. This is not valid: {}'.format(value)))
+
     def validate(self, value):
         super(JsonField, self).validate(value)
-        try:
-            value = json.loads(value)
-        except ValueError:
-            raise forms.ValidationError(_(u'Please enter valid JSON. This is not valid: {}'.format(value)))
         if self.expected_type and not isinstance(value, self.expected_type):
             raise forms.ValidationError(_(u'Expected {} but was {}'.format(self.expected_type, type(value))))
-
-    def clean(self, value):
-        return json.loads(super(JsonField, self).clean(value))

@@ -63,13 +63,14 @@ def make_form_question_indicator(question, column_id=None):
     Return a data source indicator configuration (a dict) for the given form
     question.
     '''
+    # NOTE: This function doesn't do the exact same thing that the "Form data source from application"
+    #       view was doing. The column ids have "/" in them; previously they were just the last part
+    #       of the path.
     path = question['value'].split('/')
     data_type = question['type']
     options = question.get('options')
     ret = {
         "type": "raw",
-        # TODO: Maybe the right answer is to just escape all the question ids everywhere (with double dashses or something)
-        # TODO: Test that this change didn't break the other thing that uses it.
         "column_id": column_id or question['value'],
         'property_path': ['form'] + path[2:],
         "display_name": path[-1],
