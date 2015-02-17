@@ -1,15 +1,15 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 
-XFORM_INDEX="xforms_1cce1f049a1b4d864c9c25dc42648a45"
+XFORM_INDEX = "xforms_056aecf0b52b11e4b89e3c970e7be43b"
 
 
 XFORM_MAPPING = {
     "date_detection": False,
-    "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
+    "date_formats": DATE_FORMATS_ARR,  # for parsing the explicitly defined dates
     'ignore_malformed': True,
     'dynamic': False,
     "_meta": {
-        "created": '2013-08-13', #record keeping on the index.
+        "created": '2013-08-13',
     },
     "properties": {
         'doc_type': {'type': 'string'},
@@ -18,7 +18,7 @@ XFORM_MAPPING = {
             "fields": {
                 "domain": {"type": "string", "index": "analyzed"},
                 "exact": {"type": "string", "index": "not_analyzed"}
-                #exact is full text string match - hyphens get parsed in standard
+                # exact is full text string match - hyphens get parsed in standard
                 # analyzer
                 # in queries you can access by domain.exact
             }
