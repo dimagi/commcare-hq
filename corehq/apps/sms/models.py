@@ -487,8 +487,9 @@ class PhoneNumber(models.Model):
     def opt_in_sms(cls, phone_number):
         try:
             phone_obj = cls.get_by_phone_number(phone_number)
-            phone_obj.send_sms = True
-            phone_obj.save()
+            if phone_obj.can_opt_in:
+                phone_obj.send_sms = True
+                phone_obj.save()
         except cls.DoesNotExist:
             pass
 
