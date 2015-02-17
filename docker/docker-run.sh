@@ -20,13 +20,13 @@ docker run --rm --link couchdb:couchdb klaemo/couchdb curl -X PUT "http://couchd
 docker run --rm --link couchdb:couchdb klaemo/couchdb curl -X PUT "http://couchdb:5984/_config/admins/commcarehq" -d \"commcarehq\"
 
 
-docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcarehq python manage.py syncdb --noinput
+docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcare-hq python manage.py syncdb --noinput
 
-docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcarehq python manage.py migrate --noinput
+docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcare-hq python manage.py migrate --noinput
 
-docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcarehq python manage.py collectstatic --noinput
+docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcare-hq python manage.py collectstatic --noinput
 
-docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcarehq python manage.py bootstrap example example@example.com example
+docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcare-hq python manage.py bootstrap example example@example.com example
 
 
-docker run --name commcarehq --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch -p 8000:8000 -d charlesfleche/commcarehq
+docker run --name commcare-hq --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch -p 8000:8000 -d charlesfleche/commcare-hq

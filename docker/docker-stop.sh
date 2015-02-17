@@ -1,6 +1,6 @@
 #!/bin/sh
 
-docker stop commcarehq
+docker stop commcare-hq
 docker stop elasticsearch
 docker stop redis
 docker stop couchdb

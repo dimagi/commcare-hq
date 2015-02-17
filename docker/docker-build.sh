@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t charlesfleche/commcarehq .
+docker build -t charlesfleche/commcare-hq .

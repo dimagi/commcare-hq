@@ -4,4 +4,4 @@ docker start postgres
 docker start couchdb
 docker start redis
 docker start elasticsearch
-docker start commcarehq
+docker start commcare-hq
