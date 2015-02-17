@@ -19,7 +19,6 @@ from corehq.apps.programs.forms import ProgramForm
 def delete_program(request, domain, prog_id):
     program = Program.get(prog_id)
     program.delete()
-    print "get deleted yo"
     return json_response({
         'success': True,
         'message': _("Program '{program_name}' has successfully been deleted.").format(
