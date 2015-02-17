@@ -186,7 +186,7 @@ CACHES = {
 }
 
 # on both a local and a distributed environment this should be localhost
-ELASTICSEARCH_HOST = 'localhost'
+ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
 
 # our production logstash aggregation
