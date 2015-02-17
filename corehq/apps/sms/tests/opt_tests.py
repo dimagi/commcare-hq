@@ -3,10 +3,15 @@ from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.api import incoming, send_sms
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.apps.domain.models import Domain
+
 
 class OptTestCase(TestCase):
     def setUp(self):
         self.domain = "opt-test"
+
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
 
         self.backend = TestSMSBackend(is_global=True)
         self.backend.save()
@@ -45,3 +50,4 @@ class OptTestCase(TestCase):
     def tearDown(self):
         self.backend_mapping.delete()
         self.backend.delete()
+        self.domain_obj.delete()

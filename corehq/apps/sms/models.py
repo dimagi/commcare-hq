@@ -460,6 +460,11 @@ class PhoneNumber(models.Model):
     can_opt_in = models.BooleanField(null=False, default=True)
 
     @classmethod
+    def get_by_phone_number(cls, phone_number):
+        phone_number = smsutil.strip_plus(phone_number)
+        return cls.objects.get(phone_number=phone_number)
+
+    @classmethod
     def get_or_create(cls, phone_number):
         """
         phone_number - should be a string of digits
@@ -472,7 +477,7 @@ class PhoneNumber(models.Model):
     @classmethod
     def can_receive_sms(cls, phone_number):
         try:
-            phone_obj = cls.objects.get(phone_number=phone_number)
+            phone_obj = cls.get_by_phone_number(phone_number)
             return phone_obj.send_sms
         except cls.DoesNotExist:
             # This means the phone number has not opted-out
@@ -481,7 +486,7 @@ class PhoneNumber(models.Model):
     @classmethod
     def opt_in_sms(cls, phone_number):
         try:
-            phone_obj = cls.objects.get(phone_number=phone_number)
+            phone_obj = cls.get_by_phone_number(phone_number)
             phone_obj.send_sms = True
             phone_obj.save()
         except cls.DoesNotExist:
@@ -489,6 +494,7 @@ class PhoneNumber(models.Model):
 
     @classmethod
     def opt_out_sms(cls, phone_number):
-        phone_obj = cls.get_or_create(phone_number)
-        phone_obj.send_sms = False
-        phone_obj.save()
+        phone_obj = cls.get_or_create(phone_number)[0]
+        if phone_obj:
+            phone_obj.send_sms = False
+            phone_obj.save()

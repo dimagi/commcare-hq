@@ -327,7 +327,7 @@ def is_opt_message(text, keyword_list):
 
 
 def get_opt_keywords(msg):
-    backends_classes = get_available_backends(index_by_api_id=True)
+    backend_classes = get_available_backends(index_by_api_id=True)
     backend_class = backend_classes.get(msg.backend_api, SMSBackend)
     return (backend_class.get_opt_in_keywords(),
         backend_class.get_opt_out_keywords())
