@@ -220,7 +220,12 @@ def delete_report(request, domain, report_id):
             delete_data_source = False
             break
     if delete_data_source:
-        _delete_data_source_shared(request, domain, data_source_id)
+        try:
+            _delete_data_source_shared(request, domain, data_source_id)
+        except Http404:
+            # It's possible the data source has already been deleted, but
+            # that's fine with us.
+            pass
 
     config.delete()
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
