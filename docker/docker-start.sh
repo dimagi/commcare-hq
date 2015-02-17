@@ -5,18 +5,11 @@ docker run -P --name couchdb -d klaemo/couchdb
 docker run -P --name redis   -d redis
 
 echo "Waiting for databases to be initialized"
-echo 5
-sleep 1
-echo 4
-sleep 1
-echo 3
-sleep 1
-echo 2
-sleep 1
-echo 1
-sleep 1
-echo 0
-sleep 1
+for i in `seq 10 -1 0`
+do
+  echo $i
+  sleep 1
+done
 
 docker run --rm --link postgres:postgres postgres psql postgres://commcarehq:commcarehq@postgres -c "CREATE DATABASE commcarehq_reporting;"
 
