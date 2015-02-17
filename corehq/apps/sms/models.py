@@ -470,6 +470,13 @@ class PhoneNumber(models.Model):
         return cls.objects.get(phone_number=phone_number)
 
     @classmethod
+    def get_by_phone_number_or_none(cls, phone_number):
+        try:
+            return cls.get_by_phone_number(phone_number)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def get_or_create(cls, phone_number):
         """
         phone_number - should be a string of digits

@@ -186,9 +186,18 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     except Exception:
         logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
     try:
-        if not PhoneNumber.can_receive_sms(msg.phone_number) and not msg.ignore_opt_out:
-            msg.set_system_error(ERROR_PHONE_NUMBER_OPTED_OUT)
-            return False
+        phone_obj = PhoneNumber.get_by_phone_number_or_none(msg.phone_number)
+        if phone_obj and not phone_obj.send_sms:
+            if msg.ignore_opt_out and phone_obj.can_opt_in:
+                # If ignore_opt_out is True on the message, then we'll still
+                # send it. However, if we're not letting the phone number
+                # opt back in and it's in an opted-out state, we will not
+                # send anything to it no matter the state of the ignore_opt_out
+                # flag.
+                pass
+            else:
+                msg.set_system_error(ERROR_PHONE_NUMBER_OPTED_OUT)
+                return False
 
         if not backend:
             backend = msg.outbound_backend
@@ -352,11 +361,9 @@ def process_incoming(msg, delay=True):
                 'verified with this domain'
             )
 
+    can_receive_sms = PhoneNumber.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
-    if (
-        is_opt_message(msg.text, opt_out_keywords) and
-        PhoneNumber.can_receive_sms(msg.phone_number)
-    ):
+    if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
         if PhoneNumber.opt_out_sms(msg.phone_number):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
@@ -364,10 +371,7 @@ def process_incoming(msg, delay=True):
                 send_sms_to_verified_number(v, text, metadata=metadata)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
-    elif (
-        is_opt_message(msg.text, opt_in_keywords) and
-        not PhoneNumber.can_receive_sms(msg.phone_number)
-    ):
+    elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
         if PhoneNumber.opt_in_sms(msg.phone_number):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
