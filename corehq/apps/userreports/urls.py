@@ -21,6 +21,8 @@ urlpatterns = patterns('corehq.apps.userreports.views',
         name='preview_configurable_data_source'),
     url(r'^data_sources/export/(?P<config_id>[\w-]+)/$', 'export_data_source',
         name='export_configurable_data_source'),
+    url(r'^data_sources/status/(?P<config_id>[\w-]+)/$', 'data_source_status',
+        name='configurable_data_source_status'),
 
     # apis
     url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$', 'choice_list_api', name='choice_list_api'),

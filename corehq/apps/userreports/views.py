@@ -394,6 +394,11 @@ def export_data_source(request, domain, config_id):
 
 
 @login_and_domain_required
+def data_source_status(request, domain, config_id):
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    return json_response({'isBuilt': config.built})
+
+@login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     filter = report.get_ui_filter(filter_id)

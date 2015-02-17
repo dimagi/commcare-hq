@@ -87,8 +87,8 @@ class CreateNewReportForm(forms.Form):
             ),
         )
 
-# TODO: Add some documentation
 
+# TODO: Add some documentation
 class ConfigureNewReportBase(forms.Form):
     report_name = forms.CharField()
     filters = forms.CharField()
@@ -98,7 +98,6 @@ class ConfigureNewReportBase(forms.Form):
     def __init__(self, app_id, source_type, report_source_id, *args, **kwargs):
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
 
-        # Following attributes are needed for the create_report method
         assert source_type in ['case', 'form']
         self.source_type = source_type
         self.doc_type_map = {"case": "CommCareCase", "form": "XFormInstance"}
@@ -218,10 +217,10 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def _data_source_indicators(self):
-        '''
-        Return all the json data source indicator configurations that could be
+        """
+        Return all the dict data source indicator configurations that could be
         used by a report that uses the same case type/form as a data source.
-        '''
+        """
         ret = []
         for prop in self.data_source_properties.values():
             if prop['type'] == 'meta':
@@ -268,10 +267,10 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def _report_filters(self):
-        '''
-        Return the json filter configurations to be used by the
+        """
+        Return the dict filter configurations to be used by the
         ReportConfiguration that this form produces.
-        '''
+        """
 
         def _make_report_filter(conf):
             col_id = self.data_source_properties[conf["property"]]['column_id']

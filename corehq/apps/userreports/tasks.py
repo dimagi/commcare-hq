@@ -31,6 +31,8 @@ def rebuild_indicators(indicator_config_id):
         except DataError as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
     adapter.engine.dispose()
+    config.built = True
+    config.save()
 
 
 def _get_db(doc_type):
