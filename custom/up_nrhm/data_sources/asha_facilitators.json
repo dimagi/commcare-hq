@@ -164,6 +164,15 @@
                     "property_path": ["form", "hv_percent_functionality"]
                 },
                 "datatype": "integer"
+            },
+            {
+                "column_id": "hv_asha_name",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_asha_name"]
+                },
+                "datatype": "string"
             }
         ]
     }
