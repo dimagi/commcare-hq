@@ -1508,7 +1508,7 @@ class Module(ModuleBase):
         else:
             raise IncompatibleFormTypeException()
 
-        if index:
+        if index is not None:
             self.forms.insert(index, new_form)
         else:
             self.forms.append(new_form)
