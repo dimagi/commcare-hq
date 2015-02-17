@@ -232,15 +232,6 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rows(self):
-        # if self.config['program'] and not self.config['products']:
-        #     products = [product for product in SQLProduct.objects.filter(
-        #         program_id=self.config['program'], domain=self.config['domain'])]
-        # elif self.config['program'] and self.config['products']:
-        #     products = [product for product in SQLProduct.objects.filter(
-        #         domain=self.config['domain'], product_id__in=self.config['products'])]
-        # else:
-        #     products = [product for product in SQLProduct.objects.filter(
-        #         domain=self.config['domain'])]
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations)
         result = [['<input value=\"{0}\" type=\"checkbox\">{1} ({0})</input>'.format(p.code, p.name)]

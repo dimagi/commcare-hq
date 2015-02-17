@@ -33,7 +33,7 @@ class ReportingRates(EWSData):
         rows = {}
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain']).values_list(
-                *['supply_point_id'], flat=True
+                'supply_point_id', flat=True
             )
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             reports = StockTransaction.objects.filter(case_id__in=supply_points,
@@ -81,7 +81,7 @@ class ReportingDetails(EWSData):
         if self.config['location_id']:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             supply_points = get_supply_points(self.config['location_id'], self.config['domain']).values_list(
-                *['supply_point_id'], flat=True
+                'supply_point_id', flat=True
             )
             complete = 0
             incomplete = 0
@@ -162,7 +162,7 @@ class SummaryReportingRates(EWSData):
         if self.config['location_id']:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             for loc in self.get_locations:
-                supply_points = get_supply_points(loc.location_id, loc.domain).values_list(*['supply_point_id'],
+                supply_points = get_supply_points(loc.location_id, loc.domain).values_list('supply_point_id',
                                                                                            flat=True)
                 sites = len(supply_points)
 
@@ -214,13 +214,13 @@ class NonReporting(EWSData):
         rows = []
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain']).values_list(
-                *['supply_point_id'], flat=True
+                'supply_point_id', flat=True
             )
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             reported = StockTransaction.objects.filter(case_id__in=supply_points,
                                                        report__date__range=[last_period_st,
                                                                             last_period_end]
-                                                       ).values_list(*['case_id'], flat=True)
+                                                       ).values_list('case_id', flat=True)
 
             not_reported = SQLLocation.objects.filter(location_type__in=self.location_types,
                                                       parent__location_id=self.config['location_id'])\

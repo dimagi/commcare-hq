@@ -36,7 +36,7 @@ class ProductAvailabilityData(EWSData):
         if self.config['location_id']:
             locations = get_supply_points(self.config['location_id'], self.config['domain'])
             for p in self.unique_products(locations):
-                supply_points = locations.values_list(*['supply_point_id'], flat=True)
+                supply_points = locations.values_list('supply_point_id', flat=True)
                 if supply_points:
                     stocks = StockState.objects.filter(sql_product=p, case_id__in=supply_points)
                     total = supply_points.count()
@@ -201,7 +201,7 @@ class StockoutsProduct(EWSData):
             for d in get_second_week(self.config['startdate'], self.config['enddate']):
                 for product in products:
                     st = StockTransaction.objects.filter(
-                        case_id__in=supply_points.values_list(*['supply_point_id'], flat=True),
+                        case_id__in=supply_points.values_list('supply_point_id', flat=True),
                         sql_product=product,
                         report__date__range=[d['start_date'], d['end_date']],
                         type='stockonhand',
@@ -259,7 +259,7 @@ class StockoutTable(EWSData):
             for supply_point in supply_points:
                 stockout = StockState.objects.filter(sql_product__in=supply_point.products,
                                                      case_id=supply_point.supply_point_id,
-                                                     stock_on_hand=0).values_list(*['sql_product__name'],
+                                                     stock_on_hand=0).values_list('sql_product__name',
                                                                                   flat=True)
                 if stockout:
                     rows.append([supply_point.name, ', '.join(stockout)])

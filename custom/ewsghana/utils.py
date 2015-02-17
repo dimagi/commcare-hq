@@ -64,7 +64,7 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
         sql_location = active_location.sql_location
         products = []
         if sql_location.supply_point_id:
-            products.append(sql_location.products.value_list(*['product_id'], flat=True))
+            products.append(sql_location.products.values_list('product_id', flat=True))
         products += list(
             filter_relevant(sql_location.get_descendants())
         )
