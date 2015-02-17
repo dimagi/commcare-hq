@@ -66,6 +66,10 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     # TODO: For now this is a placeholder and needs to be implemented
     in_reply_to = StringProperty()
     system_phone_number = StringProperty()
+    # Set to True to send the message regardless of whether the destination
+    # phone number has opted-out. Should only be used to send opt-out
+    # replies or other info-related queries while opted-out.
+    ignore_opt_out = BooleanProperty(default=False)
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -485,17 +489,29 @@ class PhoneNumber(models.Model):
 
     @classmethod
     def opt_in_sms(cls, phone_number):
+        """
+        Opts a phone number in to receive SMS.
+        Returns True if the number was actually opted-in, False if not.
+        """
         try:
             phone_obj = cls.get_by_phone_number(phone_number)
             if phone_obj.can_opt_in:
                 phone_obj.send_sms = True
                 phone_obj.save()
+                return True
         except cls.DoesNotExist:
             pass
+        return False
 
     @classmethod
     def opt_out_sms(cls, phone_number):
+        """
+        Opts a phone number out from receiving SMS.
+        Returns True if the number was actually opted-out, False if not.
+        """
         phone_obj = cls.get_or_create(phone_number)[0]
         if phone_obj:
             phone_obj.send_sms = False
             phone_obj.save()
+            return True
+        return False
