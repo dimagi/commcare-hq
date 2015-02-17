@@ -13,7 +13,6 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, Cust
     report_template_path = "up_nrhm/asha_functionality.html"
     show_all_rows = True
     default_rows = 20
-    printable = True
     no_value = '--'
 
     @property
