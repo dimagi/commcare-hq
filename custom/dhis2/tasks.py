@@ -276,15 +276,15 @@ def sync_org_units():
                     settings.domain, settings.dhis2['host'])
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])
-        # Is it a bad idea to read all org units into dictionaries and sync them ...
-        their_org_units = {ou['id']: ou for ou in dhis2_api.gen_org_units_with_parents()}
-        # ... or should we rather just drop all ours and import all theirs every time?
         Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, settings.domain, ORG_UNIT_FIXTURES)
         our_org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}
+        their_org_units = {}
         # Add new org units
-        for id_, ou in their_org_units.iteritems():
-            if id_ not in our_org_units:
-                org_unit = Dhis2OrgUnit(id=id_, name=ou['name'], parent_id=ou['parent_id'])
+        for ou in dhis2_api.gen_org_units_with_parents():
+            their_org_units[ou['id']] = ou
+            if ou['id'] not in our_org_units:
+                logger.info('DHIS2: Adding org unit "%s"', ou['name'])
+                org_unit = Dhis2OrgUnit(id=ou['id'], name=ou['name'], parent_id=ou['parent_id'])
                 org_unit.save()
         # Delete former org units
         for id_, ou in our_org_units.iteritems():
