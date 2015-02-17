@@ -1,10 +1,12 @@
 # DHIS2 API integration constants
 
-# TODO: Get rid of all of these
+# TODO: Move all of these to per-domain config
 
 ORG_UNIT_FIXTURES = 'dhis2_org_unit'
-
-# 'child_gmp': 'Child'
+# CCHQ_CASE_ID = 'CCHQ Case ID'
+CCHQ_CASE_ID = 'cchq_id'
+CASE_TYPE = 'child_gmp'
+TRACKED_ENTITY = 'Child'
 
 NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
     # CCHQ child_gmp case attribute: DHIS2 paediatric nutrition assessment program attribute

@@ -28,7 +28,8 @@ from celery.task import periodic_task
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
-from custom.dhis2.const import NUTRITION_ASSESSMENT_PROGRAM_FIELDS, ORG_UNIT_FIXTURES
+from custom.dhis2.const import CCHQ_CASE_ID, NUTRITION_ASSESSMENT_PROGRAM_FIELDS, ORG_UNIT_FIXTURES, CASE_TYPE, \
+    TRACKED_ENTITY
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Dhis2Settings, FixtureManager
 
 
@@ -71,14 +72,14 @@ def push_child_entities(settings, children):
 
         try:
             # Search for CCHQ Case ID in case previous attempt to register failed.
-            dhis2_child = next(dhis2_api.gen_instances_with_equals('Child', 'CCHQ Case ID', child['_id']))
+            dhis2_child = next(dhis2_api.gen_instances_with_equals(TRACKED_ENTITY, CCHQ_CASE_ID, child['_id']))
             dhis2_child_id = dhis2_child['Instance']
         except StopIteration:
             # Register child entity in DHIS2, and set CCHQ Case ID.
             dhis2_child = {
-                'CCHQ Case ID': child['_id'],
+                CCHQ_CASE_ID: child['_id'],
             }
-            dhis2_child_id = dhis2_api.add_te_inst(dhis2_child, 'Child', ou_id=ou_id)
+            dhis2_child_id = dhis2_api.add_te_inst(dhis2_child, TRACKED_ENTITY, ou_id=ou_id)
 
         # Enroll in Pediatric Nutrition Assessment
         date_of_visit = child['date_of_visit'] if getattr(child, 'date_of_visit', None) else today
@@ -88,7 +89,8 @@ def push_child_entities(settings, children):
         # TODO: DHIS2 says CHDR Number is optional, but throws an error if it's not passed
         response = dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, date_of_visit, program_data)
         if response['status'] != 'SUCCESS':
-            # TODO: Log the error
+            logger.error('Failed to push CCHQ case "%s" to DHIS2 program "%s". DHIS2 API error: %s',
+                         child['_id'], 'Paediatric Nutrition Assessment', response)
             # Skip to the next case
             continue
 
@@ -113,8 +115,9 @@ def pull_child_entities(settings, dhis2_children):
     case is new and does not exist in CommCare.)
 
     :param settings: DHIS2 settings, incl. relevant domain
-    :param dhis2_children: A list of dictionaries of Child tracked entities
-                           from the DHIS2 API where CCHQ Case ID is unset
+    :param dhis2_children: A list of dictionaries of TRACKED_ENTITY (i.e.
+                           "Child") tracked entities from the DHIS2 API where
+                           CCHQ Case ID is unset
 
     This fulfills the third requirement of `DHIS2 Integration`_.
 
@@ -156,7 +159,7 @@ def pull_child_entities(settings, dhis2_children):
             )
             casexml = ElementTree.tostring(caseblock.as_xml())
             submit_case_blocks(casexml, settings.domain)
-        dhis2_child['CCHQ Case ID'] = case_id
+        dhis2_child[CCHQ_CASE_ID] = case_id
         dhis2_api.update_te_inst(dhis2_child)
 
 
@@ -201,7 +204,7 @@ def get_children_only_theirs(settings):
     dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                          settings.dhis2['top_org_unit_name'])
     for inst in dhis2_api.gen_instances_in_program('Paediatric Nutrition Assessment'):
-        if not inst.get('CCHQ Case ID'):
+        if not inst.get(CCHQ_CASE_ID):
             yield inst
 
 
@@ -211,7 +214,7 @@ def gen_children_only_ours(domain):
     """
     result = (CaseES()
               .domain(domain)
-              .case_type('child_gmp')
+              .case_type(CASE_TYPE)
               .empty('external_id')
               .run())
     if result.total:
