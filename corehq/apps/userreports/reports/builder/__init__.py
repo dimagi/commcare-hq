@@ -20,6 +20,30 @@ FORM_METADATA_PROPERTIES = [
 ]
 
 
+def make_case_data_source_filter(case_type):
+    return {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "expression": {
+        "type": "property_name",
+            "property_name": "type"
+        },
+        "property_value": case_type,
+    }
+
+
+def make_form_data_source_filter(xmlns):
+    return {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+        },
+        "property_value": xmlns,
+    }
+
+
 def make_case_property_indicator(property_name, column_id=None):
     '''
     Return a data source indicator configuration (a dict) for the given case

@@ -24,7 +24,9 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
+    make_case_data_source_filter,
     make_case_property_indicator,
+    make_form_data_source_filter,
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
@@ -50,6 +52,7 @@ class CreateNewReportForm(forms.Form):
     def __init__(self, domain, *args, **kwargs):
         super(CreateNewReportForm, self).__init__(*args, **kwargs)
 
+        self.domain = domain
         apps = get_apps_in_domain(domain, full=True, include_remote=False)
         self.fields['application'].choices = [
             (app._id, app.name) for app in apps
@@ -87,6 +90,46 @@ class CreateNewReportForm(forms.Form):
             ),
         )
 
+    def clean(self):
+        # TODO: Should we show there error on the report_source field specifically?
+        # example here: https://docs.djangoproject.com/en/1.5/ref/forms/validation/#cleaning-and-validating-fields-that-depend-on-each-other
+        # TODO:
+        # This sort of repeats the logic that happens below when creating the report
+        # Also it uses different logic to check if the DataSourceConfiguration is equal or not.
+        # The right answer might be to use this more permissive logic in the create function.
+        cleaned_data = super(CreateNewReportForm, self).clean()
+        source_type = cleaned_data.get('source_type')
+        report_source = cleaned_data.get('report_source')
+
+        if source_type == "case":
+            data_source_filter = make_case_data_source_filter(report_source)
+            data_source_doc_type = "CommCareCase"
+        if source_type == "form":
+            data_source_filter = make_form_data_source_filter(report_source)
+            data_source_doc_type = "XFormInstance"
+
+        sources = DataSourceConfiguration.by_domain(self.domain)
+        if len(sources) >= 5:
+            # Check if a suitable source already exists, otherwise raise a validation error.
+            suitable_source_exists = False
+            for s in sources:
+                if (
+                    s.referenced_doc_type == data_source_doc_type and
+                    s.configured_filter == data_source_filter
+                ):
+                    suitable_source_exists = True
+                    break
+            if not suitable_source_exists:
+                raise forms.ValidationError(_(
+                    "Too many data sources!\n"
+                    "Creating this report would cause you to go over the maximum "
+                    "number of data sources allowed in this domain. The current "
+                    "limit is 5. Each case type and form that you have a user "
+                    "configurable report for count towards your limit. To continue, "
+                    "delete all the reports using a particular data source (or "
+                    "the data source itself) and try again."
+                ))
+        return cleaned_data
 
 # TODO: Add some documentation
 class ConfigureNewReportBase(forms.Form):
@@ -244,26 +287,12 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def _data_source_filter(self):
+
         if self.source_type == "case":
-            return {
-                "type": "boolean_expression",
-                "operator": "eq",
-                "expression": {
-                "type": "property_name",
-                    "property_name": "type"
-                },
-                "property_value": self.report_source_id,
-            }
+            return make_case_data_source_filter(self.report_source_id)
         if self.source_type == "form":
-            return {
-                "type": "boolean_expression",
-                "operator": "eq",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "xmlns"
-                },
-                "property_value": self.source_xform.data_node.tag_xmlns,
-            }
+            return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
+
 
     @property
     def _report_filters(self):

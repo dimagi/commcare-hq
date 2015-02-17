@@ -4,7 +4,9 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
+    make_case_data_source_filter,
     make_case_property_indicator,
+    make_form_data_source_filter,
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
@@ -27,15 +29,7 @@ def get_case_data_source(app, case_type):
         referenced_doc_type='CommCareCase',
         table_id=_clean_table_name(app.domain, case_type),
         display_name=case_type,
-        configured_filter={
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": {
-                "type": "property_name",
-                "property_name": "type"
-            },
-            "property_value": case_type
-        },
+        configured_filter=make_case_data_source_filter(case_type),
         configured_indicators=[
             make_case_property_indicator(property) for property in property_builder.get_properties(case_type)
         ]
@@ -67,15 +61,7 @@ def get_form_data_source(app, form):
         referenced_doc_type='XFormInstance',
         table_id=_clean_table_name(app.domain, form_name),
         display_name=form_name,
-        configured_filter={
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": {
-                "type": "property_name",
-                "property_name": "xmlns"
-            },
-            "property_value": xform.data_node.tag_xmlns,
-        },
+        configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns),
         configured_indicators=[
             make_form_question_indicator(q) for q in questions
         ] + [
