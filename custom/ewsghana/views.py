@@ -90,7 +90,7 @@ def inventory_management(request, domain):
 
     inventory_management_ds = InventoryManagementData(
         config=dict(
-            program=None, product=None, domain=domain,
+            program=None, products=None, domain=domain,
             startdate=force_to_datetime(request.GET.get('startdate')),
             enddate=force_to_datetime(request.GET.get('enddate')), location_id=request.GET.get('location_id')
         )

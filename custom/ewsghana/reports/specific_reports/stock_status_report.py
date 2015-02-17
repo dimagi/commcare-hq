@@ -200,7 +200,8 @@ class StockoutsProduct(EWSData):
 
             for d in get_second_week(self.config['startdate'], self.config['enddate']):
                 for product in products:
-                    st = StockTransaction.objects.filter(case_id__in=supply_points,
+                    st = StockTransaction.objects.filter(case_id__in=supply_points.values_list(*['supply_point_id']
+                                                                                               , flat=True),
                                                          sql_product=product,
                                                          report__date__range=[d['start_date'],
                                                                               d['end_date']],

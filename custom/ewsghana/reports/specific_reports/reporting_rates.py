@@ -304,7 +304,7 @@ class ReportingRatesReport(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            product=None,
+            products=None,
             program=None
         )
 

@@ -70,7 +70,6 @@ class EWSData(object):
     @property
     @memoized
     def products(self):
-        print self.config
         if self.config['products']:
             return SQLProduct.objects.filter(product_id__in=self.config['products'])
         elif self.config['program']:
