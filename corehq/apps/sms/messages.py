@@ -49,10 +49,9 @@ _MESSAGES = {
     MSG_MULTIPLE_CASES_FOUND: ugettext_noop("More than one case was found with the given external id."),
     MSG_FIELD_DESCRIPTOR: ugettext_noop("Field '{0}': "),
     MSG_OPTED_IN: ugettext_noop("You have opted-in to receive messages from"
-        " CommCareHQ. To opt-out, reply to this number with STOP"),
+        " CommCareHQ. To opt-out, reply to this number with {0}"),
     MSG_OPTED_OUT: ugettext_noop("You have opted-out from receiving"
-        " messages from CommCareHQ. To opt-in, reply to this number with"
-        " START"),
+        " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
 }
 
 def get_message(msg_id, verified_number=None, context=None):
