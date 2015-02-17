@@ -505,10 +505,10 @@ def update_case_list_translations(sheet, rows, app):
             if ok_to_delete_translations:
                 for lang in app.langs:
                     translation = row['default_%s' % lang]
-                if translation:
-                    language_dict[lang] = translation
-                else:
-                    language_dict.pop(lang, None)
+                    if translation:
+                        language_dict[lang] = translation
+                    else:
+                        language_dict.pop(lang, None)
             else:
                 msgs.append((
                     messages.error,
