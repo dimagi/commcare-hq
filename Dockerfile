@@ -11,9 +11,7 @@ COPY requirements/requirements.txt /tmp/requirements.txt
 
 RUN apt-get update \
  && apt-get -y install \
-      mysql-client \
       postgresql-client \
-      sqlite3 \
       libxml2-dev \
       libxslt-dev \
       libpq-dev \
