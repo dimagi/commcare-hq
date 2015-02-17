@@ -362,7 +362,7 @@ class ReportsTab(UITab):
             if counter < MAX_DISPLAYABLE_SAVED_REPORTS
         ]
         rest_as_second_level_items = [
-            dropdown_dict("...", "#", second_level_dropdowns=[
+            dropdown_dict("More Saved Reports", "#", second_level_dropdowns=[
                 dropdown_dict(saved_report.name, url=saved_report.url)
                 for counter, saved_report in enumerate(saved_reports_list)
                 if counter >= MAX_DISPLAYABLE_SAVED_REPORTS
@@ -1502,7 +1502,7 @@ class AdminTab(UITab):
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
                 and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [format_submenu_context(_("System Info"),
+            return [dropdown_dict(_("System Info"),
                     url=reverse("system_info"))]
 
         submenu_context = [

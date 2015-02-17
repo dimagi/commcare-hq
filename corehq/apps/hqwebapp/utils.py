@@ -312,5 +312,5 @@ def submenu_dropdown_dict(title, url, menu):
 
 
 def divider_and_more_menu(url):
-    return [format_submenu_context('placeholder', is_divider=True),
-            format_submenu_context(_('View All'), url=url)]
+    return [dropdown_dict('placeholder', is_divider=True),
+            dropdown_dict(_('View All'), url=url)]
