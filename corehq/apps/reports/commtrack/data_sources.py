@@ -440,7 +440,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 ).values_list(
                     'form_id',
                     'date'
-                ).order_by('-date').distinct()  # not truly distinct due to ordering
+                ).distinct()  # not truly distinct due to ordering
 
                 matched = False
                 for form_id, date in results:
@@ -464,6 +464,11 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         ))
 
                 if not matched:
+                    result = StockReport.objects.filter(
+                        stocktransaction__case_id=spoint_id
+                    ).values_list(
+                        'date'
+                    ).order_by('-date')[:1]
                     yield {
                         'loc': loc,
                         'loc_id': loc._id,
@@ -472,5 +477,5 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         'type': loc.location_type,
                         'reporting_status': 'nonreporting',
                         'geo': loc._geopoint,
-                        'last_reporting_date': results[0][1] if results else ''
+                        'last_reporting_date': result[0][0] if results else ''
                     }
