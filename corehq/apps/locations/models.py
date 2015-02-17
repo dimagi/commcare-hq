@@ -9,9 +9,53 @@ from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
-from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
+
+
+class LocationTypeManager(models.Manager):
+    def full_heirarchy(self, domain):
+        """
+        Returns a graph of the form
+        {
+           '<loc_type_id>: (
+               loc_type,
+               {'<child_loc_type_id>': (child_loc_type, [...])}
+           )
+        }
+        """
+        heirarchy = {}
+
+        def insert_loc_type(loc_type):
+            """
+            Get parent location's heirarchy, insert loc_type into it, and return
+            heirarchy below loc_type
+            """
+            if not loc_type.parent_type:
+                lt_heirarchy = heirarchy
+            else:
+                lt_heirarchy = insert_loc_type(loc_type.parent_type)
+            if not loc_type.id in lt_heirarchy:
+                lt_heirarchy[loc_type.id] = (loc_type, {})
+            return lt_heirarchy[loc_type.id][1]
+
+        for loc_type in self.filter(domain=domain).all():
+            insert_loc_type(loc_type)
+
+        return heirarchy
+
+    def by_domain(self, domain):
+        """
+        Sorts location types by heirarchy
+        """
+        ordered_loc_types = []
+        def step_through_graph(heirarchy):
+            for _, (loc_type, children) in heirarchy.items():
+                ordered_loc_types.append(loc_type)
+                step_through_graph(children)
+
+        step_through_graph(self.full_heirarchy(domain))
+        return ordered_loc_types
 
 
 class LocationType(models.Model):
@@ -20,6 +64,8 @@ class LocationType(models.Model):
     code = models.SlugField(db_index=False)
     parent_type = models.ForeignKey('self', null=True)
     administrative = models.BooleanField(default=False)
+
+    objects = LocationTypeManager()
 
     def save(self, *args, **kwargs):
         if not self.code:
