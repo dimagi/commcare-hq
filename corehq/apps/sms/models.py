@@ -372,6 +372,7 @@ class MessageLogOld(models.Model):
 
     class Meta(): 
         db_table = "sms_messagelog"
+        managed = False
          
     def __unicode__(self):
 
