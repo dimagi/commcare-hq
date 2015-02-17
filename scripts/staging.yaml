@@ -64,7 +64,13 @@ branches:
   - project-settings-update # sravan 1/30
   - report-builder # Noah 2/16
 submodules:
-  submodules/dimagi-utils-src:
+  submodules/touchforms-src:
+    # let's leave this here even when empty
+    # just so we always get latest master
+    branches:
+    - master
+    
+submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
