@@ -9,6 +9,7 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
+from custom.ewsghana.utils import get_supply_points
 
 REORDER_LEVEL = 1.5
 MAXIMUM_LEVEL = 3
@@ -65,6 +66,22 @@ class EWSData(object):
                 lambda loc_type: not loc_type.administrative,
                 Domain.get_by_name(self.config['domain']).location_types
                 )]
+
+    @property
+    @memoized
+    def products(self):
+        if self.config['products']:
+            return SQLProduct.objects.filter(product_id__in=self.config['products'])
+        elif self.config['program']:
+            return SQLProduct.objects.filter(program_id=self.config['program'])
+        else:
+            return []
+
+    def unique_products(self, locations):
+        products = list(self.products)
+        for loc in locations:
+            products.extend(loc.products)
+        return sorted(set(products), key=lambda p: p.code)
 
 
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
@@ -215,15 +232,8 @@ class ProductSelectionPane(EWSData):
 
     @property
     def rows(self):
-        if self.config['program'] and not self.config['products']:
-            products = [product for product in SQLProduct.objects.filter(
-                program_id=self.config['program'], domain=self.config['domain'])]
-        elif self.config['program'] and self.config['products']:
-            products = [product for product in SQLProduct.objects.filter(
-                domain=self.config['domain'], product_id__in=self.config['products'])]
-        else:
-            products = [product for product in SQLProduct.objects.filter(
-                domain=self.config['domain'])]
+        locations = get_supply_points(self.config['location_id'], self.config['domain'])
+        products = self.unique_products(locations)
         result = [['<input value=\"{0}\" type=\"checkbox\">{1} ({0})</input>'.format(p.code, p.name)]
                   for p in products]
         result.append(['<button id=\"selection_pane_apply\" class=\"filters btn\">Apply</button>'])

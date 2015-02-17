@@ -92,6 +92,24 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="fix_locations">
+                        {% trans "Fix locations" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="ews_add_products_to_locs">
+                        {% trans "Add Products to Locations" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -131,6 +149,18 @@
 
         $("#fix_languages").click(function() {
             var url = '{% url 'ews_fix_languages' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#fix_locations").click(function() {
+            var url = '{% url 'ews_fix_locations' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#ews_add_products_to_locs").click(function() {
+            var url = '{% url 'ews_add_products_to_locs' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
