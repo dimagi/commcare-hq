@@ -5,10 +5,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
+        'USER': os.environ['POSTGRES_ENV_POSTGRES_USER'],
+        'PASSWORD': os.environ['POSTGRES_ENV_POSTGRES_PASSWORD'],
         'HOST': 'postgres',
-        'PORT': '5432'
+        'PORT': os.environ['POSTGRES_PORT_5432_TCP_PORT']
     }
 }
 
@@ -17,7 +17,7 @@ SQL_REPORTING_DATABASE_URL = "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT
 
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
-COUCH_SERVER_ROOT = 'couchdb:5984' #6984 for https couch
+COUCH_SERVER_ROOT = 'couchdb:{}'.format(os.environ['COUCHDB_PORT_5984_TCP_PORT']) #6984 for https couch
 COUCH_USERNAME = 'commcarehq'
 COUCH_PASSWORD = 'commcarehq'
 COUCH_DATABASE_NAME = 'commcarehq'
@@ -177,7 +177,7 @@ REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 redis_cache = {
     'BACKEND': 'redis_cache.cache.RedisCache',
-    'LOCATION': 'redis:6379:0',
+    'LOCATION': 'redis:{}:0'.format(os.environ['REDIS_PORT_6379_TCP_PORT']),
     'OPTIONS': {},
 }
 CACHES = {
