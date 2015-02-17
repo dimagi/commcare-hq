@@ -92,15 +92,7 @@ def push_child_entities(settings, children):
             continue
 
         # Set external_id in CCHQ to flag the case as pushed.
-        commcare_user = CommCareUser.get(child['owner_id'])
-        caseblock = CaseBlock(
-            create=False,
-            case_id=child['_id'],
-            version=V2,
-            external_id=dhis2_child_id
-        )
-        casexml = ElementTree.tostring(caseblock.as_xml())
-        submit_case_blocks(casexml, commcare_user.project.name)
+        update_case_external_id(child, dhis2_child_id)
 
 
 def pull_child_entities(settings, dhis2_children):
@@ -134,28 +126,9 @@ def pull_child_entities(settings, dhis2_children):
             user = get_user_by_org_unit(settings.domain, dhis2_child['Org unit'],
                                         settings.dhis2['top_org_unit_name'])
             if not user:
-                # No user is assigned to this organisation unit (i.e. region or facility). Now what?
-                # TODO: Now what? Ascend to parent org unit?
+                # No user is assigned to this or any higher organisation unit
                 continue
-            case_id = uuid.uuid4().hex
-            caseblock = CaseBlock(
-                create=True,
-                case_id=case_id,
-                owner_id=user.userID,
-                user_id=user.userID,
-                version=V2,
-                case_type='child_gmp',  # TODO: Move to a constant / setting
-                external_id=dhis2_child['Instance'],
-                update={
-                    'name': dhis2_child['Name'],
-                    'height': dhis2_child['Height'],
-                    'weight': dhis2_child['Weight'],
-                    'age': dhis2_child['Age at time of visit'],
-                    'bmi': dhis2_child['Body-mass index'],
-                }
-            )
-            casexml = ElementTree.tostring(caseblock.as_xml())
-            submit_case_blocks(casexml, settings.domain)
+            case_id = create_case_from_dhis2(dhis2_child, settings.domain, user)
         dhis2_child[CCHQ_CASE_ID] = case_id
         dhis2_api.update_te_inst(dhis2_child)
 
@@ -191,6 +164,52 @@ def get_case_by_external_id(domain, external_id):
     Filter cases by external_id
     """
     return get_case_by_identifier(domain, external_id)
+
+
+def create_case_from_dhis2(dhis2_child, domain, user):
+    """
+    Create a new case using the data pulled from DHIS2
+
+    :param dhis2_child: TRACKED_ENTITY (i.e. "Child") from DHIS2
+    :param domain: (str) The name of the domain
+    :param user: (Document) The owner of the new case
+    :return: New case ID
+    """
+    case_id = uuid.uuid4().hex
+    caseblock = CaseBlock(
+        create=True,
+        case_id=case_id,
+        owner_id=user.userID,
+        user_id=user.userID,
+        version=V2,
+        case_type=CASE_TYPE,
+        external_id=dhis2_child['Instance'],
+        update={
+            'name': dhis2_child['Name'],
+            'height': dhis2_child['Height'],
+            'weight': dhis2_child['Weight'],
+            'age': dhis2_child['Age at time of visit'],
+            'bmi': dhis2_child['Body-mass index'],
+        }
+    )
+    casexml = ElementTree.tostring(caseblock.as_xml())
+    submit_case_blocks(casexml, domain)
+    return case_id
+
+
+def update_case_external_id(case, external_id):
+    """
+    Update the external_id of a case
+    """
+    commcare_user = CommCareUser.get(case['owner_id'])
+    caseblock = CaseBlock(
+        create=False,
+        case_id=case['_id'],
+        version=V2,
+        external_id=external_id
+    )
+    casexml = ElementTree.tostring(caseblock.as_xml())
+    submit_case_blocks(casexml, commcare_user.project.name)
 
 
 def get_children_only_theirs(settings):
