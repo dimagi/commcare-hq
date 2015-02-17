@@ -7,7 +7,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LocationType
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
 from django.contrib import messages
@@ -270,29 +270,36 @@ class StockLevelsView(BaseCommTrackManageView):
     template_name = 'commtrack/manage/stock_levels.html'
 
     def get_existing_stock_levels(self):
-        """
-        Returns a list of dicts of this form:
-        {
-            'loc_type': 'district,
-            'emergency_level': 0.5,
-            'understock_threshold': 1.5,
-            'overstock_threshold': 3,
-        }
-        """
+        loc_types = LocationType.objects.by_domain(self.domain)
         return [{
             'loc_type': loc_type.name,
-            'emergency_level': 0.5,
-            'understock_threshold': 1.5,
-            'overstock_threshold': 3,
-        } for loc_type in self.domain_object.location_types]
+            'emergency_level': loc_type.emergency_level,
+            'understock_threshold': loc_type.understock_threshold,
+            'overstock_threshold': loc_type.overstock_threshold,
+        } for loc_type in loc_types]
 
     def save_stock_levels(self, levels):
         """
-        Accepts a dict of the form returned by get_existing_stock_levels
+        Accepts a list of dicts of the form returned by
+        get_existing_stock_levels and writes to the appropriate LocationType
         """
-        for d in levels:
-            print d.values()
-            print "saved levels for {}".format(d['loc_type'])
+        levels = {level['loc_type']: level for level in levels}
+        for loc_type in LocationType.objects.filter(domain=self.domain).all():
+            if loc_type.name not in levels:
+                continue
+
+            stock_levels = levels[loc_type.name]
+            changed = False
+            for threshold in [
+                'emergency_level',
+                'understock_threshold',
+                'overstock_threshold'
+            ]:
+                if getattr(loc_type, threshold) != stock_levels[threshold]:
+                    setattr(loc_type, threshold, stock_levels[threshold])
+                    changed = True
+            if changed:
+                loc_type.save()
 
     @property
     def page_context(self):

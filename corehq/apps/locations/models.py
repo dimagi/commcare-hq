@@ -1,3 +1,4 @@
+from functools import partial
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 import itertools
@@ -62,6 +63,9 @@ class LocationTypeManager(models.Manager):
         return ordered_loc_types
 
 
+StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
+
+
 class LocationType(models.Model):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255)
@@ -70,6 +74,10 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+
+    emergency_level = StockLevelField(default=0.5)
+    understock_threshold = StockLevelField(default=1.5)
+    overstock_threshold = StockLevelField(default=3.0)
 
     objects = LocationTypeManager()
 
