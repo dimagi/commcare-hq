@@ -1,5 +1,20 @@
 from django.contrib import admin
-from .models import SQLLocation
+from .models import SQLLocation, LocationType
+
+
+class LocationTypeAdmin(admin.ModelAdmin):
+    model = LocationType
+    list_display = [
+        'domain',
+        'name',
+        'code',
+        'parent_type',
+        'administrative',
+    ]
+    list_filter = [
+        'domain',
+        'administrative',
+    ]
 
 
 class LocationAdmin(admin.ModelAdmin):
@@ -8,6 +23,7 @@ class LocationAdmin(admin.ModelAdmin):
     list_display = [
         'domain',
         'name',
+        'location_type',
         'is_archived',
         'location_id',
         'supply_point_id'
@@ -24,3 +40,4 @@ class LocationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(SQLLocation, LocationAdmin)
+admin.site.register(LocationType, LocationTypeAdmin)
