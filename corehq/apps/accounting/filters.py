@@ -170,6 +170,9 @@ class DateRangeFilter(BaseReportFilter):
     template = 'reports/filters/daterange.html'
     default_days = 7
 
+    START_DATE = 'startdate'
+    END_DATE = 'enddate'
+
     @property
     def datepicker_config(self):
         return {
@@ -193,17 +196,25 @@ class DateRangeFilter(BaseReportFilter):
     def get_date(cls, request, date_type):
         date_str = cls.get_date_str(request, date_type)
         if date_str is not None:
-            return datetime.datetime.strptime(date_str, "%Y-%m-%d")
+            try:
+                return datetime.datetime.strptime(date_str, "%Y-%m-%d")
+            except ValueError:
+                if date_type == cls.START_DATE:
+                    return datetime.datetime.today() - datetime.timedelta(days=cls.default_days)
+                elif date_type == cls.END_DATE:
+                    return datetime.datetime.today()
+                else:
+                    return None
         else:
             return None
 
     @classmethod
     def get_start_date(cls, request):
-        return cls.get_date(request, 'startdate')
+        return cls.get_date(request, cls.START_DATE)
 
     @classmethod
     def get_end_date(cls, request):
-        return cls.get_date(request, 'enddate')
+        return cls.get_date(request, cls.END_DATE)
 
     @property
     def datespan(self):
@@ -221,7 +232,7 @@ class DateRangeFilter(BaseReportFilter):
     def shared_pagination_GET_params(cls, request):
         return [
             {'name': '%s_%s' % (cls.slug, date), 'value': cls.get_date_str(request, date)}
-            for date in ['startdate', 'enddate']
+            for date in [cls.START_DATE, cls.END_DATE]
         ]
 
 
