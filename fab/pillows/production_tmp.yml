@@ -11,15 +11,15 @@ include_pillows:
   - custom.opm.models.OpmHealthStatusAllInfoFluffPillow
   - custom.opm.models.OPMHierarchyFluffPillow
   - custom.opm.models.VhndAvailabilityFluffPillow
-#  - custom.apps.cvsu.models.UnicefMalawiFluffPillow
-#  - custom.reports.care_sa.models.CareSAFluffPillow
+  - custom.apps.cvsu.models.UnicefMalawiFluffPillow
+  - custom.reports.care_sa.models.CareSAFluffPillow
 #  - custom.reports.mc.models.MalariaConsortiumFluffPillow
-#  - custom.m4change.models.AncHmisCaseFluffPillow
-#  - custom.m4change.models.LdHmisCaseFluffPillow
-#  - custom.m4change.models.ImmunizationHmisCaseFluffPillow
-#  - custom.m4change.models.ProjectIndicatorsCaseFluffPillow
-#  - custom.m4change.models.McctMonthlyAggregateFormFluffPillow
-#  - custom.m4change.models.AllHmisCaseFluffPillow
+  - custom.m4change.models.AncHmisCaseFluffPillow
+  - custom.m4change.models.LdHmisCaseFluffPillow
+  - custom.m4change.models.ImmunizationHmisCaseFluffPillow
+  - custom.m4change.models.ProjectIndicatorsCaseFluffPillow
+  - custom.m4change.models.McctMonthlyAggregateFormFluffPillow
+  - custom.m4change.models.AllHmisCaseFluffPillow
   - custom.intrahealth.models.CouvertureFluffPillow
   - custom.intrahealth.models.TauxDeSatisfactionFluffPillow
   - custom.intrahealth.models.IntraHealthFluffPillow
@@ -27,11 +27,11 @@ include_pillows:
   - custom.intrahealth.models.TauxDeRuptureFluffPillow
   - custom.intrahealth.models.LivraisonFluffPillow
   - custom.intrahealth.models.RecouvrementFluffPillow
-#  - custom.care_pathways.models.GeographyFluffPillow
-#  - custom.care_pathways.models.FarmerRecordFluffPillow
-#  - custom.world_vision.models.WorldVisionMotherFluffPillow
-#  - custom.world_vision.models.WorldVisionChildFluffPillow
-#  - custom.world_vision.models.WorldVisionHierarchyFluffPillow
+  - custom.care_pathways.models.GeographyFluffPillow
+  - custom.care_pathways.models.FarmerRecordFluffPillow
+  - custom.world_vision.models.WorldVisionMotherFluffPillow
+  - custom.world_vision.models.WorldVisionChildFluffPillow
+  - custom.world_vision.models.WorldVisionHierarchyFluffPillow
 #  - custom.tdh.models.TDHEnrollChildFluffPillow
 #  - custom.tdh.models.TDHInfantClassificationFluffPillow
 #  - custom.tdh.models.TDHInfantTreatmentFluffPillow
