@@ -16,6 +16,7 @@ details.
 
 """
 from datetime import date, timedelta
+import logging
 import random
 import uuid
 from xml.etree import ElementTree
@@ -29,6 +30,9 @@ from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
 from custom.dhis2.const import NUTRITION_ASSESSMENT_PROGRAM_FIELDS, ORG_UNIT_FIXTURES
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Dhis2Settings, FixtureManager
+
+
+logger = logging.getLogger(__name__)
 
 
 def push_child_entities(settings, children):
@@ -122,6 +126,7 @@ def pull_child_entities(settings, dhis2_children):
     for dhis2_child in dhis2_children:
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
         # ("Instance" is DHIS2's friendly name for "id")
+        logger.info('DHIS2: Syncing DHIS2 child "%s"', dhis2_child['Instance'])
         case = get_case_by_external_id(settings.domain, dhis2_child['Instance'])
         if case:
             case_id = case['case_id']
@@ -223,6 +228,8 @@ def sync_cases():
     Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
     """
     for settings in Dhis2Settings.all_enabled():
+        logger.info('DHIS2: Syncing cases for domain "%s" with "%s"',
+                    settings.domain, settings.dhis2['host'])
         children = get_children_only_theirs(settings)
         pull_child_entities(settings, children)
 
@@ -246,6 +253,8 @@ def sync_org_units():
 
     """
     for settings in Dhis2Settings.all_enabled():
+        logger.info('DHIS2: Syncing org units for domain "%s" with "%s"',
+                    settings.domain, settings.dhis2['host'])
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])
         # Is it a bad idea to read all org units into dictionaries and sync them ...
@@ -261,4 +270,5 @@ def sync_org_units():
         # Delete former org units
         for id_, ou in our_org_units.iteritems():
             if id_ not in their_org_units:
+                logger.info('DHIS2: Deleting org unit "%s"', ou['name'])
                 ou.delete()

@@ -1,12 +1,16 @@
-# from django.db import models
+from __future__ import print_function
 from datetime import date
 import json
+import logging
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.cache import cache_core
 import requests
 from toggle.models import Toggle
+
+
+logger = logging.getLogger(__name__)
 
 
 class Dhis2Settings(Document):
@@ -100,6 +104,10 @@ class JsonApiRequest(object):
                                (response.url, response.status_code, response.text))
 
     def get(self, path, **kwargs):
+        logger.debug('DHIS2: GET %s: \n'
+                     '    Headers: %s\n'
+                     '    kwargs: %s',
+                     self.baseurl + path, self.headers, kwargs)
         try:
             response = requests.get(self.baseurl + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
@@ -111,6 +119,11 @@ class JsonApiRequest(object):
         headers = self.headers.copy()
         headers['Content-type'] = 'application/json'
         json_data = json.dumps(data, default=json_serializer)
+        logger.debug('DHIS2: POST %s: \n'
+                     '    Headers: %s\n'
+                     '    Data: %s\n'
+                     '    kwargs: %s',
+                     self.baseurl + path, self.headers, json_data, kwargs)
         try:
             response = requests.post(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
@@ -121,6 +134,11 @@ class JsonApiRequest(object):
         headers = self.headers.copy()
         headers['Content-type'] = 'application/json'
         json_data = json.dumps(data, default=json_serializer)
+        logger.debug('DHIS2: PUT %s: \n'
+                     '    Headers: %s\n'
+                     '    Data: %s\n'
+                     '    kwargs: %s',
+                     self.baseurl + path, self.headers, json_data, kwargs)
         try:
             response = requests.put(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
