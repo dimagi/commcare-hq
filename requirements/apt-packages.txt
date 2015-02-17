@@ -13,8 +13,12 @@ apache2
 redis-server # [travis_ignore]
 
 # dependencies for the pip modules
+libfreetype6-dev
+libjpeg-dev
+libtiff-dev
+libwebp-dev
 libxml2-dev
-libxslt-dev 
+libxslt-dev
 
 # dependencies for couchdb and building it (as done in install.sh)
 g++
