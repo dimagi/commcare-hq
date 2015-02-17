@@ -157,11 +157,15 @@ def close_task(domain, subcase_guid, submitting_user_id):
     submit_xml(domain, "sms/xml/close_task.xml", context)
 
 
-def get_available_backends():
+def get_available_backends(index_by_api_id=False):
     result = {}
     for backend_class in settings.SMS_LOADED_BACKENDS:
         klass = to_function(backend_class)
-        result[klass.__name__] = klass
+        if index_by_api_id:
+            api_id = klass.get_api_id()
+            result[api_id] = klass
+        else:
+            result[klass.__name__] = klass
     return result
 
 CLEAN_TEXT_REPLACEMENTS = (
