@@ -498,17 +498,17 @@ def update_case_list_translations(sheet, rows, app):
             continue
 
         def _update_translation(row, language_dict, require_translation=True):
-            ok_to_delete_translations = has_at_least_one_translation(
-                row, 'default', app.langs
-            ) or not require_translation
+            ok_to_delete_translations = (
+                not require_translation or has_at_least_one_translation(
+                    row, 'default', app.langs
+                ))
             if ok_to_delete_translations:
                 for lang in app.langs:
                     translation = row['default_%s' % lang]
                 if translation:
                     language_dict[lang] = translation
                 else:
-                    if lang in language_dict:
-                        del language_dict[lang]
+                    language_dict.pop(lang, None)
             else:
                 msgs.append((
                     messages.error,
