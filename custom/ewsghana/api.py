@@ -47,6 +47,7 @@ class SMSUser(JsonObject):
     backend = StringProperty()
     family_name = StringProperty()
     to = StringProperty()
+    language = StringProperty()
 
 
 class EWSUser(JsonObject):

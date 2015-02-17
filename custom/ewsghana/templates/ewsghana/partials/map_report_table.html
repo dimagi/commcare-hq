@@ -1,0 +1,47 @@
+{% comment %}
+this template generates an underscore.js template used by the maps report
+{% endcomment %}
+<style>
+.stock-status-detail td,
+.stock-status-detail th {
+    padding: 0.25em 0.5em;
+}
+.stock-status-detail .loctype {
+    color: #666;
+    font-size: 75%;
+    text-transform: uppercase;
+}
+.stock-status-detail .data {
+    font-weight: bold;
+    max-width: 6em;
+    vertical-align: top;
+}
+.stock-status-detail th {
+    font-weight: normal;
+    vertical-align: bottom;
+}
+.stock-status-detail th.header {
+    max-width: 6em;
+}
+</style>
+
+<div class="stock-status-detail">
+<h3><%= name %> <span class="loctype">(<%= props.type %>)</span></h3>
+<span>Last reported on: <%= props.last_reported %></span>
+<hr />
+<table>
+  <tr>
+      <th class="header">Product</th>
+      <th class="header">Quantity</th>
+      <th class="header">Months Until Stockout</th>
+  </tr>
+  <tr>
+      <td>{{ product.name }}</td>
+      <td><%= props['quantity'] %></td>
+      <td>
+          <%= props['months_until_stockout'] %>
+          <span class="icon-<%= props['icon'] %>" style="color:<%= props['color'] %>"/>
+      </td>
+  </tr>
+</table>
+</div>

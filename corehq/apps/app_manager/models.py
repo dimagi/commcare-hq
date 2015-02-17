@@ -1139,6 +1139,7 @@ class DetailColumn(IndexedSchema):
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
+    case_tile_field = StringProperty()
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
@@ -1235,6 +1236,8 @@ class Detail(IndexedSchema):
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
     custom_xml = StringProperty()
+    use_case_tiles = BooleanProperty()
+    persist_tile_on_forms = BooleanProperty()
 
     def get_tab_spans(self):
         '''
@@ -1563,6 +1566,22 @@ class Module(ModuleBase):
                 'type': 'no parent select id',
                 'module': self.get_module_info()
             })
+        for detail in [self.case_details.short, self.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -3236,6 +3255,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
+            'uniqueid': self.copy_of or self.id,
+            'name': self.name,
             'descriptor': u"Profile File"
         }).decode('utf-8')
 

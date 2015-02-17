@@ -3,11 +3,9 @@ import itertools
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway import TEST
-from custom.logistics.commtrack import save_stock_data_checkpoint
+from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
-import logging
-from custom.logistics.commtrack import resync_password
 
 
 @task
@@ -75,11 +73,6 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
 
 
 @task
-def resync_webusers_passwords_task(config, endpoint):
-    logging.info("Logistics: Webusers passwords resyncing started")
-    _, webusers = endpoint.get_webusers(limit=2000)
-
-    for webuser in webusers:
-        resync_password(config, webuser)
-
-    logging.info("Logistics: Webusers passwords resyncing finished")
+def language_fix(api):
+    endpoint = api.endpoint
+    synchronization(None, endpoint.get_smsusers, api.add_language_to_user, None, None, 100, 0)

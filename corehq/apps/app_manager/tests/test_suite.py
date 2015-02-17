@@ -307,6 +307,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_case_detail_tabs(self):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
+    def test_case_tile_suite(self):
+        self._test_generic_suite("app_case_tiles", "suite-case-tiles")
+
 
 class RegexTest(SimpleTestCase):
 

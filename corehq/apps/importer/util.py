@@ -1,9 +1,11 @@
 import json
 import xlrd
+from collections import defaultdict
+from datetime import date
+from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 from dimagi.utils.couch.database import get_db
-from corehq.apps.importer.const import LookupErrors
-from datetime import date
+from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
 from xlrd import xldate_as_tuple
 from corehq.apps.groups.models import Group
@@ -202,6 +204,51 @@ def convert_custom_fields_to_struct(config):
 
 class InvalidDateException(Exception):
     pass
+
+
+class ImportErrorDetail(object):
+
+    ERROR_MSG = {
+        ImportErrors.InvalidOwnerId: _("Owner ID was used in the mapping but there were errors "
+                                       "when uploading because of these values. Make sure "
+                                       "the values in this column are ID's for users or "
+                                       "case sharing groups."),
+
+        ImportErrors.InvalidOwnerName: _("Owner name was used in the mapping but there were errors "
+                                         "when uploading because of these values."),
+
+        ImportErrors.InvalidDate: _("Date fields were specified that caused an error during"
+                                    "conversion. This is likely caused by a value from "
+                                    "excel having the wrong type or not being formatted "
+                                    "properly."),
+
+        ImportErrors.BlankExternalId: _("Blank external ids were found in these rows causing as "
+                                        "error when importing cases."),
+
+        ImportErrors.CaseGeneration: _("These rows failed to generate cases for unknown reasons"),
+
+        ImportErrors.InvalidParentId: _("An invalid or unknown parent case was specified for the "
+                                        "uploaded case.")
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.errors = defaultdict(dict)
+
+    def add(self, error, row_number):
+        self.errors[error]['error'] = _(error)
+
+        try:
+            self.errors[error]['description'] = self.ERROR_MSG[error]
+        except KeyError:
+            self.errors[error]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
+
+        if 'rows' not in self.errors[error]:
+            self.errors[error]['rows'] = []
+
+        self.errors[error]['rows'].append(row_number)
+
+    def as_dict(self):
+        return dict(self.errors)
 
 
 def parse_excel_date(date_val, datemode):

@@ -45,6 +45,8 @@ name: autostaging
 branches:
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
+  - lwyszomi:ils_staging
+  - lwyszomi:ews_staging
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
   - quickview # Simon 11/25
@@ -59,6 +61,7 @@ branches:
   - dhis2+project-settings-update # Noah 2/11
   - dhis2 # Norman 2/6
   - project-settings-update # sravan 1/30
+  - report-builder # Noah 2/16
 submodules:
   submodules/dimagi-utils-src:
     # let's leave this here even when empty
