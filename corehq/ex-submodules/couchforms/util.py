@@ -465,11 +465,6 @@ class SubmissionPost(object):
                             instance._id = new_id
                             instance.problem = error_message
                             instance.save()
-                            if instance.orig_id == "8410bd60-2269-4c5d-b262-5cf828cfddee":
-                                response = self._get_open_rosa_response(
-                                    instance, None, None)
-                                return response, instance, cases
-
                             raise
                         now = datetime.datetime.utcnow()
                         unfinished_submission_stub = UnfinishedSubmissionStub(
