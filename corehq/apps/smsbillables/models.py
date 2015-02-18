@@ -27,6 +27,7 @@ class SmsGatewayFeeCriteria(models.Model):
     backend_instance = models.CharField(max_length=255, db_index=True, null=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     country_code = models.IntegerField(max_length=5, null=True, blank=True, db_index=True)
+    prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
 
     @classmethod
     def get_most_specific(cls, backend_api_id, direction, backend_instance=None, country_code=None):
