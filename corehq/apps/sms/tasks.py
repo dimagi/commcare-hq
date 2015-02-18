@@ -6,7 +6,10 @@ from celery.task import task
 from time import sleep
 from redis_cache.cache import RedisCache
 from corehq.apps.sms.mixin import SMSLoadBalancingMixin
-from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
+from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
+    ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS, ERROR_MESSAGE_IS_STALE,
+    ERROR_INVALID_DIRECTION)
+
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception)
 from django.conf import settings
@@ -16,21 +19,13 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.couch.cache import cache_core
 from threading import Thread
 
-ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = "TOO_MANY_UNSUCCESSFUL_ATTEMPTS"
-ERROR_MESSAGE_IS_STALE = "MESSAGE_IS_STALE"
-ERROR_INVALID_DIRECTION = "INVALID_DIRECTION"
-
-def set_error(msg, system_error_message=None):
-    msg.error = True
-    msg.system_error_message = system_error_message
-    msg.save()
 
 def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
     else:
-        set_error(msg, ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+        msg.set_system_error(ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
 
 def handle_successful_processing_attempt(msg):
     utcnow = datetime.utcnow()
@@ -153,10 +148,13 @@ def handle_outgoing(msg):
             orig_phone_number=orig_phone_number)
         if use_rate_limit:
             wait_and_release_lock(lock, sms_interval)
-        if result:
-            handle_successful_processing_attempt(msg)
-        else:
-            handle_unsuccessful_processing_attempt(msg)
+
+        # Only do the following if an unrecoverable error did not happen
+        if not msg.error:
+            if result:
+                handle_successful_processing_attempt(msg)
+            else:
+                handle_unsuccessful_processing_attempt(msg)
         return False
     else:
         # We're using rate limiting, but couldn't acquire the lock, so
@@ -199,7 +197,7 @@ def process_sms(message_id):
         msg = SMSLog.get(message_id)
 
         if message_is_stale(msg, utcnow):
-            set_error(msg, ERROR_MESSAGE_IS_STALE)
+            msg.set_system_error(ERROR_MESSAGE_IS_STALE)
             message_lock.release()
             return
 
@@ -226,7 +224,7 @@ def process_sms(message_id):
             elif msg.direction == INCOMING:
                 handle_incoming(msg)
             else:
-                set_error(msg, ERROR_INVALID_DIRECTION)
+                msg.set_system_error(ERROR_INVALID_DIRECTION)
 
             if recipient_block:
                 recipient_lock.release()

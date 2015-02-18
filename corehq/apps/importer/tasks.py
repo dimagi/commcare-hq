@@ -5,7 +5,7 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.importer.const import LookupErrors
+from corehq.apps.importer.const import LookupErrors, ImportErrors
 from corehq.apps.importer import util as importer_util
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
@@ -33,11 +33,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
 
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
-    match_count = created_count = too_many_matches = errors = num_chunks = 0
-    blank_external_ids = []
-    invalid_dates = []
-    owner_id_errors = []
-    owner_name_errors = []
+    match_count = created_count = too_many_matches = num_chunks = 0
+    errors = importer_util.ImportErrorDetail()
     prime_offset = 1  # used to prevent back-to-back priming
 
     user = CouchUser.get_by_user_id(config.couch_user_id, domain)
@@ -78,7 +75,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         search_id = importer_util.parse_search_id(config, columns, row)
         if config.search_field == 'external_id' and not search_id:
             # do not allow blank external id since we save this
-            blank_external_ids.append(i + 1)
+            errors.add(ImportErrors.BlankExternalId, i + 1)
             continue
 
         try:
@@ -92,7 +89,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 # if the row was blank, just skip it, no errors
                 continue
         except importer_util.InvalidDateException:
-            invalid_dates.append(i + 1)
+            errors.add(ImportErrors.InvalidDate, i + 1)
             continue
 
         external_id = fields_to_update.pop('external_id', None)
@@ -138,7 +135,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             # uploaded_owner_id with the id of the provided group or owner
             uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, domain, name_cache)
             if not uploaded_owner_id:
-                owner_name_errors.append(i + 1)
+                errors.add(ImportErrors.InvalidOwnerName, i + 1)
                 continue
         if uploaded_owner_id:
             # If an owner_id mapping exists, verify it is a valid user
@@ -147,7 +144,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 owner_id = uploaded_owner_id
                 id_cache[uploaded_owner_id] = True
             else:
-                owner_id_errors.append(i + 1)
+                errors.add(ImportErrors.InvalidOwnerId, i + 1)
                 id_cache[uploaded_owner_id] = False
                 continue
         else:
@@ -165,6 +162,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                         parent_ref: (parent_case.type, parent_id)
                     }
             except ResourceNotFound:
+                errors.add(ImportErrors.InvalidParentId, i + 1)
                 continue
         elif parent_external_id:
             parent_case, error = importer_util.lookup_case(
@@ -200,7 +198,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 if external_id:
                     ids_seen.add(external_id)
             except CaseBlockError:
-                errors += 1
+                errors.add(ImportErrors.CaseGeneration, i + 1)
         else:
             if external_id:
                 extras['external_id'] = external_id
@@ -220,7 +218,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 caseblocks.append(caseblock)
                 match_count += 1
             except CaseBlockError:
-                errors += 1
+                errors.add(ImportErrors.CaseGeneration, i + 1)
 
         # check if we've reached a reasonable chunksize
         # and if so submit
@@ -237,10 +235,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         'created_count': created_count,
         'match_count': match_count,
         'too_many_matches': too_many_matches,
-        'blank_externals': blank_external_ids,
-        'invalid_dates': invalid_dates,
-        'owner_id_errors': owner_id_errors,
-        'owner_name_errors': owner_name_errors,
-        'errors': errors,
+        'errors': errors.as_dict(),
         'num_chunks': num_chunks,
     }

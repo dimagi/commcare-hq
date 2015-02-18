@@ -29,6 +29,13 @@ DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
 
+
+ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = "TOO_MANY_UNSUCCESSFUL_ATTEMPTS"
+ERROR_MESSAGE_IS_STALE = "MESSAGE_IS_STALE"
+ERROR_INVALID_DIRECTION = "INVALID_DIRECTION"
+ERROR_PHONE_NUMBER_OPTED_OUT = "PHONE_NUMBER_OPTED_OUT"
+
+
 class MessageLog(SafeSaveDocument, UnicodeMixIn):
     base_doc                    = "MessageLog"
     couch_recipient_doc_type    = StringProperty() # "CommCareCase", "CommCareUser", "WebUser"
@@ -59,10 +66,19 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     # TODO: For now this is a placeholder and needs to be implemented
     in_reply_to = StringProperty()
     system_phone_number = StringProperty()
+    # Set to True to send the message regardless of whether the destination
+    # phone number has opted-out. Should only be used to send opt-out
+    # replies or other info-related queries while opted-out.
+    ignore_opt_out = BooleanProperty(default=False)
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "Message %s %s" % (to_from, self.phone_number)
+
+    def set_system_error(self, message=None):
+        self.error = True
+        self.system_error_message = message
+        self.save()
 
     @property
     def username(self):
@@ -356,6 +372,7 @@ class MessageLogOld(models.Model):
 
     class Meta(): 
         db_table = "sms_messagelog"
+        managed = False
          
     def __unicode__(self):
 
@@ -427,3 +444,82 @@ def case_changed_receiver(sender, case, **kwargs):
 
 case_post_save.connect(case_changed_receiver, CommCareCase)
 
+
+class PhoneNumber(models.Model):
+    """
+    Represents a single phone number. This is not intended to be a
+    comprehensive list of phone numbers in the system (yet). For
+    now, it's only used to prevent sending SMS/IVR to phone numbers who
+    have opted out.
+    """
+    phone_number = models.CharField(max_length=30, unique=True, null=False, db_index=True)
+
+    # True if it's ok to send SMS to this phone number, False if not
+    send_sms = models.BooleanField(null=False, default=True)
+
+    # True if it's ok to call this phone number, False if not
+    # This is not yet implemented but will be in the future.
+    send_ivr = models.BooleanField(null=False, default=True)
+
+    # True to allow this phone number to opt back in, False if not
+    can_opt_in = models.BooleanField(null=False, default=True)
+
+    @classmethod
+    def get_by_phone_number(cls, phone_number):
+        phone_number = smsutil.strip_plus(phone_number)
+        return cls.objects.get(phone_number=phone_number)
+
+    @classmethod
+    def get_by_phone_number_or_none(cls, phone_number):
+        try:
+            return cls.get_by_phone_number(phone_number)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def get_or_create(cls, phone_number):
+        """
+        phone_number - should be a string of digits
+        """
+        phone_number = smsutil.strip_plus(phone_number)
+        if not phone_number:
+            return (None, False)
+        return cls.objects.get_or_create(phone_number=phone_number)
+
+    @classmethod
+    def can_receive_sms(cls, phone_number):
+        try:
+            phone_obj = cls.get_by_phone_number(phone_number)
+            return phone_obj.send_sms
+        except cls.DoesNotExist:
+            # This means the phone number has not opted-out
+            return True
+
+    @classmethod
+    def opt_in_sms(cls, phone_number):
+        """
+        Opts a phone number in to receive SMS.
+        Returns True if the number was actually opted-in, False if not.
+        """
+        try:
+            phone_obj = cls.get_by_phone_number(phone_number)
+            if phone_obj.can_opt_in:
+                phone_obj.send_sms = True
+                phone_obj.save()
+                return True
+        except cls.DoesNotExist:
+            pass
+        return False
+
+    @classmethod
+    def opt_out_sms(cls, phone_number):
+        """
+        Opts a phone number out from receiving SMS.
+        Returns True if the number was actually opted-out, False if not.
+        """
+        phone_obj = cls.get_or_create(phone_number)[0]
+        if phone_obj:
+            phone_obj.send_sms = False
+            phone_obj.save()
+            return True
+        return False

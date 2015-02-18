@@ -1508,7 +1508,7 @@ class Module(ModuleBase):
         else:
             raise IncompatibleFormTypeException()
 
-        if index:
+        if index is not None:
             self.forms.insert(index, new_form)
         else:
             self.forms.append(new_form)
@@ -3255,6 +3255,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
+            'uniqueid': self.copy_of or self.id,
+            'name': self.name,
             'descriptor': u"Profile File"
         }).decode('utf-8')
 

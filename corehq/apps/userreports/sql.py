@@ -44,14 +44,14 @@ class IndicatorSqlAdapter(object):
             connection.execute(delete)
 
 
-def get_indicator_table(indicator_config):
+def get_indicator_table(indicator_config, custom_metadata=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
     # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
     # is that valid?
     return sqlalchemy.Table(
         table_name,
-        metadata,
+        custom_metadata or metadata,
         extend_existing=True,
         *sql_columns
     )

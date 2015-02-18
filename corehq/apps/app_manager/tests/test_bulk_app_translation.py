@@ -1,6 +1,4 @@
 import codecs
-import json
-import os
 
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
@@ -54,23 +52,38 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
             text
         )
 
+    def assert_case_property_label(self, text, field, module_id, short_or_long, language):
+        module = self.app.get_module(module_id)
+        cols = module.case_details[short_or_long].columns
+        col = next(col for col in cols if col.field == field)
+        self.assertEqual(text, col.header.get(language, None))
+
 
 class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     file_path = "data", "bulk_app_translation", "basic"
 
     def test_set_up(self):
-        self.assert_question_label("question1", 0, 0, "en", "/data/question1")
+        self._shared_test_initial_set_up()
 
     def test_no_change_upload(self):
         self.do_upload("upload_no_change")
+        self._shared_test_initial_set_up()
+
+    def _shared_test_initial_set_up(self):
         self.assert_question_label("question1", 0, 0, "en", "/data/question1")
+        self.assert_case_property_label("Autre Prop", "other-prop", 0, "long", "fra")
 
     def test_change_upload(self):
         self.do_upload("upload")
 
         self.assert_question_label("in english", 0, 0, "en", "/data/question1")
         self.assert_question_label("in french", 0, 0, "fra", "/data/question1")
+
+        # Test that translations can be deleted.
+        self.assert_question_label("English Label", 0, 0, "fra", "/data/question3/question5")
+        self.assert_case_property_label(None, "other-prop", 0, "long", "fra")
+        self.assert_case_property_label(None, "name", 0, "long", "en")
 
         module = self.app.get_module(0)
         self.assertEqual(

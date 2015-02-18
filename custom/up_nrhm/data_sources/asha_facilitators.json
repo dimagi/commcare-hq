@@ -1,0 +1,179 @@
+{
+    "domains": ["up-nrhm"],
+    "config": {
+        "referenced_doc_type": "XFormInstance",
+        "table_id": "asha_facilitators",
+        "display_name": "ASHA Facilitators",
+        "configured_filter":  {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+            },
+            "property_value": "http://openrosa.org/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505"
+        },
+        "configured_indicators": [
+            {
+                "column_id": "date",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["received_on"]
+                },
+                "datatype": "datetime"
+            },
+            {
+                "column_id": "case_id",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "case", "@case_id"]
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "owner_id",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "case", "@case_id"]
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "registration_date",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "case", "@case_id"]
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "datatype": "date"
+            },
+            {
+                "column_id": "hv_fx_home_birth_visits",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_home_birth_visits"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_newborns_visited",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_newborns_visited"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_vhnd",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_vhnd"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_support_inst_delivery",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_support_inst_delivery"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_child_illness_mgmt",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_child_illness_mgmt"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_nut_counseling",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_nut_counseling"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_malaria",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_malaria"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_dots",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_dots"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_vhsnc",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_vhsnc"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_fx_fp",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_fx_fp"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_percent_functionality",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_percent_functionality"]
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "hv_asha_name",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "hv_asha_name"]
+                },
+                "datatype": "string"
+            }
+        ]
+    }
+}

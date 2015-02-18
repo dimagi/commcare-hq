@@ -19,7 +19,9 @@ class ProgramForm(forms.Form):
             self.fields['name'].widget.attrs['readonly'] = True
 
     def clean_name(self):
-        name = self.cleaned_data['name']
+        name = self.cleaned_data['name'].strip()
+        if not name:
+            raise forms.ValidationError(_('This field is required.'))
 
         other_program_names = [
             p['name'] for p in Program.by_domain(self.program.domain, wrap=False)

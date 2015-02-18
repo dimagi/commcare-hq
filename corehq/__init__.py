@@ -168,8 +168,6 @@ def _get_configurable_reports(project):
 
         yield (_('Project Reports'), [_make_report_class(config) for config in configs])
 
-
-
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 from corehq.apps.importer.base import ImportCases
 
@@ -184,7 +182,7 @@ DATA_INTERFACES = (
 EDIT_DATA_INTERFACES = (
     (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
-        ImportCases
+        ImportCases,
     )),
 )
 

@@ -232,14 +232,14 @@ def sidebar_to_dropdown(sidebar_items, domain=None, current_url_name=None):
     dropdown_items = []
     more_items_in_sidebar = False
     for side_header, side_list in sidebar_items:
-        dropdown_header = format_submenu_context(side_header, is_header=True)
+        dropdown_header = dropdown_dict(side_header, is_header=True)
         current_dropdown_items = []
         for side_item in side_list:
             show_in_dropdown = side_item.get("show_in_dropdown", False)
             if show_in_dropdown:
                 second_level_dropdowns = subpages_as_dropdowns(
                     side_item.get('subpages', []), level=2, domain=domain)
-                dropdown_item = format_submenu_context(
+                dropdown_item = dropdown_dict(
                     side_item['title'],
                     url=side_item['url'],
                     second_level_dropdowns=second_level_dropdowns,
@@ -271,27 +271,27 @@ def subpages_as_dropdowns(subpages, level, domain=None):
         elif subpage.get('show_in_dropdown', False) and level == 2:
             return not subpage.get('show_in_first_level', False)
 
-    return [format_submenu_context(
+    return [dropdown_dict(
             subpage['title'],
             url=reverse(subpage['urlname'], args=[domain]))
             for subpage in subpages if is_dropdown(subpage)]
 
 
-def format_submenu_context(title, url=None, html=None,
-                           is_header=False, is_divider=False, data_id=None,
-                           second_level_dropdowns=[]):
+def dropdown_dict(title, url=None, html=None,
+                  is_header=False, is_divider=False, data_id=None,
+                  second_level_dropdowns=[]):
     if second_level_dropdowns:
-        return format_second_level_context(title, url, second_level_dropdowns)
+        return submenu_dropdown_dict(title, url, second_level_dropdowns)
     else:
-        return format_first_level_context(title, url=url, html=html,
-                                          is_header=is_header,
-                                          is_divider=is_divider,
-                                          data_id=data_id,)
+        return main_menu_dropdown_dict(title, url=url, html=html,
+                                       is_header=is_header,
+                                       is_divider=is_divider,
+                                       data_id=data_id,)
 
 
-def format_first_level_context(title, url=None, html=None,
-                               is_header=False, is_divider=False, data_id=None,
-                               second_level_dropdowns=[]):
+def main_menu_dropdown_dict(title, url=None, html=None,
+                            is_header=False, is_divider=False, data_id=None,
+                            second_level_dropdowns=[]):
     return {
         'title': title,
         'url': url,
@@ -302,7 +302,7 @@ def format_first_level_context(title, url=None, html=None,
     }
 
 
-def format_second_level_context(title, url, menu):
+def submenu_dropdown_dict(title, url, menu):
     return {
         'title': title,
         'url': url,
@@ -312,5 +312,5 @@ def format_second_level_context(title, url, menu):
 
 
 def divider_and_more_menu(url):
-    return [format_submenu_context('placeholder', is_divider=True),
-            format_submenu_context(_('View All'), url=url)]
+    return [dropdown_dict('placeholder', is_divider=True),
+            dropdown_dict(_('View All'), url=url)]
