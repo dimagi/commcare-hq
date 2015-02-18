@@ -680,10 +680,9 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
-        case_list_modules = [
-            mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
-        ]
-        if len(case_list_modules) > 1:
+        try:
+            self.case_list_module
+        except AssertionError:
             msg = _("Form referenced as the registration form for multiple modules.")
             error = {'type': 'validation error', 'validation_message': msg}
             error.update(meta)
@@ -1740,6 +1739,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return 'case' if self.requires_case() else 'none'
 
     def is_registration_form(self, case_type=None):
+        """
+        Defined as form that opens a single case. Excludes forms that register
+        sub-cases and forms that require a case.
+        """
         reg_actions = self.get_registration_actions(case_type)
         return not self.requires_case() and reg_actions and \
             len(reg_actions) == 1
@@ -2117,28 +2120,47 @@ class AdvancedModule(ModuleBase):
         if self.case_list_form.form_id:
             forms = self.forms
 
-            def get_datums(form):
-                return [
-                    (action.case_tag, action.case_type)
-                    for action in form.actions.load_update_cases
-                ]
+            case_tag = None
+            for form in forms:
+                info = self.get_module_info()
+                form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
 
-            datums_tempate = get_datums(forms[0])
-            for form in forms[1:]:
-                if not get_datums(form) == datums_tempate:
+                if not form.requires_case():
                     errors.append({
-                        'type': 'inconsistent datums',
-                        'module': self.get_module_info(),
-                        'datums': datums_tempate
+                        'type': 'case list module form must require case',
+                        'module': info,
+                        'form': form_info,
                     })
-                    break
+                elif len(form.actions.load_update_cases) != 1:
+                    errors.append({
+                        'type': 'case list module form must require only one case',
+                        'module': info,
+                        'form': form_info,
+                    })
 
-            # for form in forms:
-            #     if form.get_taget_case_action()
-                    #TODO: verify that case type matches module case type
-                    #target case action = last action that isn't auto-select
+                case_action = form.actions.load_update_cases[0] if form.requires_case() else None
+                if case_action and case_action.case_type != self.case_type:
+                    errors.append({
+                        'type': 'case list module form must match module case type',
+                        'module': info,
+                        'form': form_info,
+                    })
 
-            # validate that all forms are using the case list from this module and not some other module
+                case_tag = case_action.case_tag if not case_tag and case_action else None
+                if case_action and case_action.case_tag != case_tag:
+                    errors.append({
+                        'type': 'all forms in case list module must have same case management',
+                        'module': info,
+                        'form': form_info,
+                        'expected_tag': case_tag
+                    })
+
+                if case_action and case_action.details_module != self.unique_id:
+                    errors.append({
+                        'type': 'forms in case list module must use modules details',
+                        'module': info,
+                        'form': form_info,
+                    })
 
         return errors
 
