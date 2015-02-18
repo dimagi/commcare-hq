@@ -140,12 +140,16 @@ def get_user_by_org_unit(domain, org_unit_id, top_org_unit_name):
     """
     result = (UserES()
               .domain(domain)
-              .term('user_data.dhis_org_id', org_unit_id)
+              .mobile_users()
+              # .term('user_data.dhis_org_id', org_unit_id)
+              # .filter({'term': {'user_data.dhis_org_id.exact': org_unit_id}})
               .run())
-    if result.total:
-        # Don't just assign all cases to the first user. Spread them fairly.
-        i = random.randrange(result.total)
-        return CommCareUser.wrap(result.hits[i])
+    # user_data is a dynamic mapping. Despite documentation ...
+    # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-dynamic-mapping.html
+    # ... it seems not to be filtering on it. We have to do this ourselves.
+    for doc in result.hits:
+        if doc['user_data'].get('dhis_org_id') == org_unit_id:
+            return CommCareUser.wrap(doc)
     # No user is assigned to this organisation unit (i.e. region or facility).
     # Try its parent org unit.
     Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, domain, ORG_UNIT_FIXTURES)
