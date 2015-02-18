@@ -17,13 +17,12 @@ details.
 """
 from datetime import date, timedelta
 import logging
-import random
 import uuid
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-from celery.schedules import crontab
+# from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
@@ -127,6 +126,8 @@ def pull_child_entities(settings, dhis2_children):
                                         settings.dhis2['top_org_unit_name'])
             if not user:
                 # No user is assigned to this or any higher organisation unit
+                logger.error('DHIS2: Unable to import DHIS2 instance "%s"; there is no user at org unit "%s" or '
+                             'above to assign the case to.', dhis2_child['Instance'], dhis2_child['Org unit'])
                 continue
             case_id = create_case_from_dhis2(dhis2_child, settings.domain, user)
         dhis2_child[CCHQ_CASE_ID] = case_id
@@ -250,7 +251,8 @@ def sync_cases():
         push_child_entities(settings, children)
 
 
-@periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
+# @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
+# dhis.pgim.cmb.ac.lk has over 10 000 org units. Not practical to store on handsets.
 def sync_org_units():
     """
     Synchronize DHIS2 Organization Units with local data.
