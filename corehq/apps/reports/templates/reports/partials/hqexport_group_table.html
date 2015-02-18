@@ -17,7 +17,7 @@
             <td>{{ component.config.name }} {{ component.config.get_id }}</td>
             <td>{% if component.saved_version.has_file %}
                 {{ component.saved_version.last_updated|naturaltime }}
-                {% if not component.saved_version.last_accessed or component.saved_version.last_accessed < group_export_cutoff %}
+                {% if component.saved_version.last_accessed and component.saved_version.last_accessed < group_export_cutoff %}
                     <p class="muted">
                         <i class="icon-warning-sign"></i>
                         <small>{% trans "This saved export has expired because it has not been used in the last 35 days. To renew daily updates, click the 'Update Data' button and download the file." %}</small>
