@@ -3616,7 +3616,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             unique_id = form['unique_id']
             new_unique_id = FormBase.generate_id()
             form['unique_id'] = new_unique_id
-            if source['_attachments'].has_key("%s.xml" % unique_id):
+            if ("%s.xml" % unique_id) in source['_attachments']:
                 source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
             return new_unique_id
 
