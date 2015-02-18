@@ -21,6 +21,7 @@ def stock_category(stock, daily_consumption, domain):
 
     months_left = months_of_stock_remaining(stock, daily_consumption)
 
+    # This will need access to the product, not just the stock level
     stock_levels = domain.commtrack_settings.stock_levels_config
 
     if months_left is None:

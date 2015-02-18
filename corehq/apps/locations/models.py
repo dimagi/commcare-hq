@@ -10,7 +10,9 @@ from django.db import models
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
+from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey
 
 
@@ -81,10 +83,23 @@ class LocationType(models.Model):
 
     objects = LocationTypeManager()
 
+    def populate_stock_levels(self):
+        if (
+            (not Domain.get_by_name(self.domain).commtrack_enabled)
+            or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
+        ):
+            return
+        from corehq.apps.commtrack.models import CommtrackConfig
+        config = CommtrackConfig.for_domain(self.domain).stock_levels_config
+        self.emergency_level = config.emergency_level
+        self.understock_threshold = config.understock_threshold
+        self.overstock_threshold = config.overstock_threshold
+
     def save(self, *args, **kwargs):
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
+        self.populate_stock_levels()
         return super(LocationType, self).save(*args, **kwargs)
 
     def __unicode__(self):

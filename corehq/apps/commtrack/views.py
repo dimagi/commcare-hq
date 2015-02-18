@@ -111,6 +111,9 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 if data.get('stock_' + field):
                     setattr(self.commtrack_settings.stock_levels_config, field,
                             data['stock_' + field])
+            # touch the location_types to update their stock levels config
+            for loc_type in LocationType.objects.filter(domain=self.domain).all():
+                loc_type.save()
 
             consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
             for field in consumption_fields:
