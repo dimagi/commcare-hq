@@ -1,11 +1,13 @@
+from django.utils.translation import ugettext_noop
+
 class LookupErrors:
     NotFound, MultipleResults = range(2)
 
 
 class ImportErrors:
-    InvalidOwnerName = 'Invalid Owner Name'
-    InvalidOwnerId = 'Invalid Owner ID'
-    InvalidParentId = 'Invalid Parent ID'
-    InvalidDate = 'Invalid Date'
-    BlankExternalId = 'Blank External ID'
-    CaseGeneration = 'Case Generation Error'
+    InvalidOwnerName = ugettext_noop('Invalid Owner Name')
+    InvalidOwnerId = ugettext_noop('Invalid Owner ID')
+    InvalidParentId = ugettext_noop('Invalid Parent ID')
+    InvalidDate = ugettext_noop('Invalid Date')
+    BlankExternalId = ugettext_noop('Blank External ID')
+    CaseGeneration = ugettext_noop('Case Generation Error')
