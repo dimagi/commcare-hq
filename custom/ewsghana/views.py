@@ -69,19 +69,19 @@ class RemindersTester(BaseDomainView):
             if v and v.verified:
                 user = v.owner
                 if reminder == 'first_soh':
-                    first_soh_process_user(user)
+                    first_soh_process_user(user, test=True)
                 elif reminder == 'second_soh':
                     now = datetime.datetime.utcnow()
                     date = now - datetime.timedelta(days=5)
-                    second_soh_process_user(user, date)
+                    second_soh_process_user(user, date, test=True)
                 elif reminder == 'third_soh':
-                    third_soh_process_users_and_facilities([user], [user.location])
+                    third_soh_process_users_and_facilities([user], [user.location.sql_location], test=True)
                 elif reminder == 'stockout':
-                    stockout_process_user(user)
+                    stockout_process_user(user, test=True)
                 elif reminder == 'rrirv':
-                    rrirv_process_user(user)
+                    rrirv_process_user(user, test=True)
                 elif reminder == 'visit_website':
-                    visit_website_process_user(user)
+                    visit_website_process_user(user, test=True)
         messages.success(request, "Reminder was sent successfully")
         return self.get(request, *args, **kwargs)
 
