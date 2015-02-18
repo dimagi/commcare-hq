@@ -9,7 +9,7 @@ from dimagi.utils.dates import force_to_datetime
 def asha_af_report(request, domain):
     report = ASHAAFChecklistData(
         config=dict(
-            case_id=request.GET.get('case_id'),
+            doc_id=request.GET.get('doc_id'),
             date=force_to_datetime(request.GET.get('date')),
             domain=domain
         )

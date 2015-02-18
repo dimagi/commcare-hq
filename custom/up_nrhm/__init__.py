@@ -1,10 +1,10 @@
 from django.utils.translation import ugettext_noop as _
-from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
 from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunctionalityChecklistReport
+from custom.up_nrhm.reports.asha_reports import ASHAReports
 
 CUSTOM_REPORTS = (
     (_('Custom Reports'), (
-        ASHAFacilitatorsReport,
+        ASHAReports,
         ASHAFunctionalityChecklistReport,
     )),
 )

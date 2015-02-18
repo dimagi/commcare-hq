@@ -4,6 +4,7 @@
 
 {% block pretable %}
     {{ block.super }}
+    {% if sf == "" %}
     <div class="row hq-flush-content">
         <div class="span6">
             <table class="table table-striped">
@@ -18,4 +19,26 @@
             </table>
         </div>
     </div>
+    {% endif %}
 {% endblock pretable %}
+
+{% block js-inline %}
+    <script>
+        function hideFilters(sf) {
+            if (sf === "") {
+                $('#fieldset_datespan').css('display', 'block');
+                $('#fieldset_year').css('display', 'none');
+                $('#fieldset_month').css('display', 'none');
+            } else if (sf === "sf3") {
+                $('#fieldset_datespan').css('display', 'none');
+                $('#fieldset_year').css('display', 'block');
+                $('#fieldset_month').css('display', 'block');
+            }
+        }
+
+        $('#report_filter_sf').on('change', function() {
+           hideFilters($(this).select2('data').id);
+        });
+        hideFilters($('#report_filter_sf').select2('data').id);
+    </script>
+{% endblock %}

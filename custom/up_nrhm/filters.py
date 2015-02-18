@@ -2,7 +2,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
@@ -98,3 +98,18 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
             hierarchy[district][block] = hierarchy[district].get(block, {})
             hierarchy[district][block][(user_id, user)] = None
         return hierarchy
+
+
+class SampleFormatFilter(BaseSingleOptionFilter):
+    slug = 'sf'
+    label = 'Report type'
+    default_text = "ASHA Facilitators"
+
+    @property
+    def options(self):
+        return [
+            ('sf3', 'Block Level-Month wise'),
+            # TODO:
+            # ('sf4', 'Block Level-AF wise'),
+            # ('sf5', 'District (Functionality of ASHAs)'),
+        ]

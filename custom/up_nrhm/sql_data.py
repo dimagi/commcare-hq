@@ -207,14 +207,11 @@ class ASHAFunctionalityChecklistData(SqlData):
     def table_name(self):
         return get_table_name(self.config['domain'], TABLE_ID)
 
-    def _qualify_column(self, column):
-        return '"{}".{}'.format(self.table_name, column)
-
     @property
     def columns(self):
         return [
-            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("case_id",)),
-            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("hv_asha_name",)),
+            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("doc_id",)),
+            DatabaseColumn("ASHA name", SimpleColumn("hv_asha_name",)),
             DatabaseColumn("Date of last for submission", SimpleColumn("date",)),
         ]
 
@@ -224,7 +221,7 @@ class ASHAFunctionalityChecklistData(SqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'date', 'hv_asha_name']
+        return ['doc_id', 'date', 'hv_asha_name']
 
 
 class ASHAAFChecklistData(SqlData):
@@ -233,9 +230,6 @@ class ASHAAFChecklistData(SqlData):
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], TABLE_ID)
-
-    def _qualify_column(self, column):
-        return '"{}".{}'.format(self.table_name, column)
 
     @property
     def columns(self):
@@ -274,7 +268,7 @@ class ASHAAFChecklistData(SqlData):
 
     @property
     def filters(self):
-        return [EQ("date", "date"), EQ('case_id', 'case_id')]
+        return [EQ('doc_id', 'doc_id')]
 
     @property
     def group_by(self):
