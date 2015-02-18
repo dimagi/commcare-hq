@@ -11,7 +11,7 @@ TRACKED_ENTITY = 'Child'
 NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
     # CCHQ child_gmp case attribute: DHIS2 paediatric nutrition assessment program attribute
 
-    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/yKSaDwadHTv.json
+    # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/HiHLy0f1C1q.json
     #      programTrackedEntityAttributes
 
     # NOTE: CHDR Number must be unique. "Optional" but defaults to null and

@@ -176,6 +176,7 @@ def create_case_from_dhis2(dhis2_child, domain, user):
     :return: New case ID
     """
     case_id = uuid.uuid4().hex
+    update = {k: dhis2_child[v] for k, v in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()}
     caseblock = CaseBlock(
         create=True,
         case_id=case_id,
@@ -184,13 +185,7 @@ def create_case_from_dhis2(dhis2_child, domain, user):
         version=V2,
         case_type=CASE_TYPE,
         external_id=dhis2_child['Instance'],
-        update={
-            'name': dhis2_child['Name'],
-            'height': dhis2_child['Height'],
-            'weight': dhis2_child['Weight'],
-            'age': dhis2_child['Age at time of visit'],
-            'bmi': dhis2_child['Body-mass index'],
-        }
+        update=update
     )
     casexml = ElementTree.tostring(caseblock.as_xml())
     submit_case_blocks(casexml, domain)
