@@ -16,7 +16,10 @@ class Command(BaseCommand):
 
         to_save = []
 
-        for user_doc in iter_docs(CouchUser.get_db(), relevant_ids):
+        for user_doc in iter_docs(CommCareUser.get_db(), relevant_ids):
+            if user_doc['doc_type'] == 'WebUser':
+                continue
+
             user = CommCareUser.get(user_doc['_id'])
 
             if user._locations:
