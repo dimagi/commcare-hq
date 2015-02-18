@@ -109,35 +109,36 @@ class CreateNewReportForm(forms.Form):
         cleaned_data = super(CreateNewReportForm, self).clean()
         source_type = cleaned_data.get('source_type')
         report_source = cleaned_data.get('report_source')
+        
+        if source_type and report_source:
+            if source_type == "case":
+                data_source_filter = make_case_data_source_filter(report_source)
+                data_source_doc_type = "CommCareCase"
+            if source_type == "form":
+                data_source_filter = make_form_data_source_filter(report_source)
+                data_source_doc_type = "XFormInstance"
 
-        if source_type == "case":
-            data_source_filter = make_case_data_source_filter(report_source)
-            data_source_doc_type = "CommCareCase"
-        if source_type == "form":
-            data_source_filter = make_form_data_source_filter(report_source)
-            data_source_doc_type = "XFormInstance"
-
-        sources = DataSourceConfiguration.by_domain(self.domain)
-        if len(sources) >= 5:
-            # Check if a suitable source already exists, otherwise raise a validation error.
-            suitable_source_exists = False
-            for s in sources:
-                if (
-                    s.referenced_doc_type == data_source_doc_type and
-                    s.configured_filter == data_source_filter
-                ):
-                    suitable_source_exists = True
-                    break
-            if not suitable_source_exists:
-                raise forms.ValidationError(_(
-                    "Too many data sources!\n"
-                    "Creating this report would cause you to go over the maximum "
-                    "number of data sources allowed in this domain. The current "
-                    "limit is 5. Each case type and form that you have a user "
-                    "configurable report for count towards your limit. To continue, "
-                    "delete all the reports using a particular data source (or "
-                    "the data source itself) and try again."
-                ))
+            sources = DataSourceConfiguration.by_domain(self.domain)
+            if len(sources) >= 5:
+                # Check if a suitable source already exists, otherwise raise a validation error.
+                suitable_source_exists = False
+                for s in sources:
+                    if (
+                        s.referenced_doc_type == data_source_doc_type and
+                        s.configured_filter == data_source_filter
+                    ):
+                        suitable_source_exists = True
+                        break
+                if not suitable_source_exists:
+                    raise forms.ValidationError(_(
+                        "Too many data sources!\n"
+                        "Creating this report would cause you to go over the maximum "
+                        "number of data sources allowed in this domain. The current "
+                        "limit is 5. Each case type and form that you have a user "
+                        "configurable report for count towards your limit. To continue, "
+                        "delete all the reports using a particular data source (or "
+                        "the data source itself) and try again."
+                    ))
         return cleaned_data
 
 # TODO: Add some documentation
