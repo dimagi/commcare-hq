@@ -243,6 +243,10 @@
 
 .section-home-last {
 
+  a, a:link, a:hover, a:visited {
+    color: @cc-brand-hi;
+  }
+
   @media (min-width: @screen-sm-min) {
     > .container {
       margin-top: @grid-gutter-width*5;
@@ -264,5 +268,103 @@
 
   @media (min-width: @screen-lg-min) {
     height: 720px;
+  }
+}
+
+.section-impact-lead {
+
+  .btn-primary-dark {
+    border-color: @cc-brand-mid;
+    margin-bottom: 5px;
+    margin-right: 4px;
+  }
+
+  @media (min-width: @screen-xs-min) {
+    header {
+      margin-top: 0px;
+    }
+  }
+
+  @media (min-width: @screen-sm-min) {
+
+    header {
+      margin-top: 80px;
+    }
+  }
+
+  @media (min-width: @screen-md-min) {
+    header {
+      margin-top: 140px;
+    }
+  }
+
+  @media (min-width: @screen-lg-min) {
+    header {
+      margin-top: 180px;
+    }
+  }
+}
+
+.change-container-top(@sm-margin, @md-margin, @lg-margin) {
+  > .container {
+    margin-top: @md-margin;
+
+    @media (min-width: @screen-sm-min) {
+      margin-top: @sm-margin;
+    }
+
+    @media (min-width: @screen-md-min) {
+      margin-top: @md-margin;
+    }
+
+    @media (min-width: @screen-lg-min) {
+      margin-top: @lg-margin;
+    }
+  }
+}
+
+.section-impact-sectors {
+  .change-container-top(27px, 27px, 27px);
+}
+
+.section-impact-studies {
+  .change-container-top(20px, 30px, 30px);
+}
+
+.section-impact-partners {
+  .change-container-top(40px, 50px, 65px);
+}
+
+.section-impact-last {
+
+  @media (min-width: @screen-sm-min) {
+    height: 1180px;
+  }
+
+  @media (min-width: @screen-md-min) {
+    height: 1010px;
+  }
+
+  @media (min-width: @screen-lg-min) {
+    height: 970px;
+  }
+  > .container {
+    margin-top: 20px;
+  }
+  .col-sm-6 > ul {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 300;
+
+    a, a:link, a:hover, a:visited {
+      color: @cc-light-cool-accent-hi;
+    }
+
+    > li {
+      padding: 5px 0;
+    }
   }
 }

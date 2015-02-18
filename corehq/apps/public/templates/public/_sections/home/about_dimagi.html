@@ -1,18 +1,46 @@
 {% load i18n %}
-<div class="section section-primary section-detail section-home-last">
+<section class="section section-primary section-detail section-home-last">
     <div class="container">
         <div class="row">
             <div class="col-sm-6 col-sm-offset-3">
                 <div class="dimagi-commcare-together"></div>
-                <h2 class="text-center">
+                <h2 class="text-center" style="margin-bottom: 1em;">
                     {% blocktrans %}
-                        Open. Reliable. Free.
+                    CommCare is powered by
+                    <a href="http://www.dimagi.com/">Dimagi</a>.
                     {% endblocktrans %}
                 </h2>
-                <p class="lead text-center">
+            </div>
+        </div>
+        <div class="row" style="margin-bottom: 20px;">
+            <div class="col-sm-4 col-sm-offset-2">
+                <p>
                     {% blocktrans %}
-                        CommCare is developed by Dimagi, a social enterprise.
+                        CommCare Users is a community-supported Google Group
+                        for questions related to using CommCare.
                     {% endblocktrans %}
+                </p>
+                <p>
+                    <a href="https://groups.google.com/forum/#!forum/commcare-users/join"
+                       class="btn btn-primary-dark btn-lg btn-block">
+                        {% trans 'Visit CommCare Users' %}
+                    </a>
+                </p>
+            </div>
+            <div class="col-sm-4">
+                <p>
+                    {% blocktrans %}
+                        If you have questions about CommCare in general or
+                        about your specific CommCare project, please contact
+                        Dimagi directly.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    <a href="#contactDimagi"
+                       data-toggle="modal"
+                       class="btn btn-primary-dark btn-lg btn-block">
+                        {% trans 'Contact Dimagi' %}
+                    </a>
                 </p>
             </div>
         </div>
@@ -20,32 +48,32 @@
             <div class="col-sm-4 col-sm-offset-2">
                 <p>
                     {% blocktrans %}
-                        We are dedicated to keeping our source open and core
-                        features free of charge.
+                        The CommCare Help Site is the main source of
+                        documentation for CommCare tools.
                     {% endblocktrans %}
                 </p>
                 <p>
-                    <a href="#"
+                    <a href="http://help.commcarehq.org/"
                        class="btn btn-primary-dark btn-lg btn-block">
-                        <i class="fa fa-github"></i>
-                        {% trans 'Find us on GitHub' %}
+                        {% trans 'Visit the Help Site' %}
                     </a>
                 </p>
             </div>
             <div class="col-sm-4">
                 <p>
                     {% blocktrans %}
-                        Our software is used by more than 170 active projects
-                        in over 40 countries.
+                        We are dedicated to keeping our source open and core
+                        features free of charge.
                     {% endblocktrans %}
                 </p>
                 <p>
-                    <a href="http://www.dimagi.com/"
+                    <a href="https://github.com/dimagi"
                        class="btn btn-primary-dark btn-lg btn-block">
-                        {% trans 'Learn more about us' %}
+                        <i class="fa fa-github"></i>
+                        {% trans 'Find us on GitHub' %}
                     </a>
                 </p>
             </div>
         </div>
     </div>
-</div>
+</section>
