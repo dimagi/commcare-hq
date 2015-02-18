@@ -6,6 +6,7 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter
 from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
+from custom.up_nrhm.reports.block_level_af import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 
 
@@ -32,19 +33,8 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
     @property
     def report_config(self):
         config = {
-            'domain': self.domain,
-            'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
             'sf': self.request.GET.get('sf'),
-            'year': self.request.GET.get('year'),
-            'month': self.request.GET.get('month'),
-            'af': self.request.GET.get('hierarchy_af'),
-            'block': self.request.GET.get('hierarchy_block'),
         }
-        if config['sf'] == 'sf3' and not self.needs_filters:
-            year = int(config['year'])
-            month = int(config['month'])
-            config['startdate'] = datetime.date(year, month, 1) - relativedelta(months=2)
         return config
 
     @property
