@@ -1,0 +1,36 @@
+{% load i18n %}
+<section class="section section-primary section-lead section-impact-lead">
+    <div class="container">
+        <div class="map-container"><div class="map-of-commcare"></div></div>
+        <div class="row">
+            <div class="col-sm-6">
+                <header>
+                    <h1>
+                        {% trans 'CommCare is:' %}<br />
+                        {% trans 'Field tested. Trusted.' %}
+                    </h1>
+                    <p class="lead">
+                        {% blocktrans %}
+                            Deployed in over 40 countries
+                            <br />by more than 180 active projects.
+                        {% endblocktrans %}
+                    </p>
+                </header>
+                <p style="margin-left: -2px;">
+                    <a href="#impact-sectors" class="btn btn-primary-dark btn-lg">
+                        {% trans 'Sectors' %}
+                    </a>
+                    <a href="#impact-partners" class="btn btn-primary-dark btn-lg">
+                        {% trans 'Partners' %}
+                    </a>
+                    <a href="#impact-studies" class="btn btn-primary-dark btn-lg">
+                        {% trans 'Case Studies' %}
+                    </a>
+                    <a href="#impact-publications" class="btn btn-primary-dark btn-lg">
+                        {% trans 'Publications' %}
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>

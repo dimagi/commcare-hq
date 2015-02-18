@@ -1,0 +1,30 @@
+{% load i18n %}
+<section id="impact-publications" class="section section-primary section-detail section-impact-last">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <h2 class="text-center">
+                    {% blocktrans %}
+                        CommCare Publications
+                    {% endblocktrans %}
+                </h2>
+                <p class="lead text-center">
+                    {% blocktrans %}
+                        Over 30+ peer-reviewed publications have been written
+                        about CommCare. For an overview of all CommCare
+                        publications, please see the
+                        <a href="#" class="btn-primary-dark">CommCare Evidence Base</a>.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                {{ pub_first_col }}
+            </div>
+            <div class="col-sm-6">
+                {{ pub_second_col }}
+            </div>
+        </div>
+    </div>
+</section>

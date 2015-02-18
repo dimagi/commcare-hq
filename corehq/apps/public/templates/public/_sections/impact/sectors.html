@@ -1,0 +1,59 @@
+{% load i18n %}
+<div id="impact-sectors" class="section section-default section-detail section-impact-sectors">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <h2 class="text-center">
+                    {% blocktrans %}
+                        CommCare is flexible across a variety of sectors.
+                    {% endblocktrans %}
+                </h2>
+                <p class="lead text-center">
+                    {% blocktrans %}
+                        <a href="#diamgiSectors">Learn more</a> about how
+                        programs are using CommCare.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="sector-bucket sector-cool-dark">
+                    <div class="commcare-sector-flower"></div>
+                    <div class="sector-bucket-detail-outer">
+                        <div class="sector-bucket-detail-inner"></div>
+                    </div>
+                    <div class="sector-bucket-container">
+                        <h3>{% trans 'Health' %}</h3>
+                        <ul>
+                            <li>{% trans 'Child Health' %}</li>
+                            <li>{% trans 'HIV/AIDS' %}</li>
+                            <li>{% trans 'Nutrition' %}</li>
+                            <li>{% trans 'Malaria' %}</li>
+                            <li>{% trans 'Labor Monitoring' %}</li>
+                            <li>{% trans 'Maternal &amp; Newborn' %}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="sector-bucket sector-attention-positive">
+                    <div class="sector-bucket-detail-outer">
+                        <div class="sector-bucket-detail-inner"></div>
+                    </div>
+                    <div class="sector-bucket-container">
+                        <h3>{% trans 'Development' %}</h3>
+                        <ul>
+                            <li>{% trans 'Agriculture' %}</li>
+                            <li>{% trans 'Emergency Response' %}</li>
+                            <li>{% trans 'Gender Based Violence' %}</li>
+                            <li>{% trans 'Reproductive Health' %}</li>
+                            <li>{% trans 'Small Business' %}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

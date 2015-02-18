@@ -5,4 +5,5 @@ urlpatterns = patterns(
     'corehq.apps.public.views',
     url(r'^$', 'public_default', name='public_default'),
     url(r'^home/$', HomePublicView.as_view(), name=HomePublicView.urlname),
+    url(r'^impact/$', ImpactPublicView.as_view(), name=ImpactPublicView.urlname),
 )

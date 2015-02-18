@@ -1,0 +1,83 @@
+{% load i18n %}{% load hq_shared_tags %}
+<div id="impact-studies" class="section section-default section-detail section-impact-studies">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <h2 class="text-center">
+                    {% blocktrans %}
+                        CommCare Case Studies
+                    {% endblocktrans %}
+                </h2>
+                <p class="lead text-center">
+                    {% blocktrans %}
+                        Read how organizations around the world use
+                        CommCare to improve frontline service delivery.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3 col-xs-center">
+                <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_TulaSalud_Guatemala.pdf' %}"
+                   class="case-study case-study-tula">
+                    <span>
+                        {% trans 'Read Case Study' %}
+                    </span>
+                </a>
+                <h3>{% trans 'Improving Community Health in Guatemala' %}</h3>
+                <p class="xs-lower-padding">
+                    <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_TulaSalud_Guatemala.pdf' %}"
+                       class="btn btn-default" target="_blank">
+                        <i class="fa fa-download"></i> PDF
+                    </a>
+                </p>
+            </div>
+            <div class="col-sm-3 col-xs-center">
+                <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_TerreDesHommes_BurkinaFaso.pdf' %}"
+                   class="case-study case-study-tdh">
+                    <span>
+                        {% trans 'Read Case Study' %}
+                    </span>
+                </a>
+                <h3>{% trans 'An Integrated eDiagnostic Approach in Burkina Faso' %}</h3>
+                <p class="xs-lower-padding">
+                    <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_TerreDesHommes_BurkinaFaso.pdf' %}"
+                       class="btn btn-default" target="_blank">
+                        <i class="fa fa-download"></i> PDF
+                    </a>
+                </p>
+            </div>
+            <div class="col-sm-3 col-xs-center">
+                <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_LataMedicalResearchFoundation_India.pdf' %}"
+                   class="case-study case-study-lmrf">
+                    <span>
+                        {% trans 'Read Case Study' %}
+                    </span>
+                </a>
+                <h3>{% trans 'Improving Maternal and Child Health in India' %}</h3>
+                <p class="xs-lower-padding">
+                    <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_LataMedicalResearchFoundation_India.pdf' %}"
+                       class="btn btn-default" target="_blank">
+                        <i class="fa fa-download"></i> PDF
+                    </a>
+                </p>
+            </div>
+            <div class="col-sm-3 col-xs-center">
+                <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_MalariaConsortium.pdf' %}"
+                   class="case-study case-study-mc">
+                    <span>
+                        {% trans 'Read Case Study' %}
+                    </span>
+                </a>
+                <h3>{% trans 'iCCM for Child Health in Mozambique' %}</h3>
+                <p class="xs-lower-padding">
+                    <a href="{% new_static '/public/case-studies/CommCare_CaseStudy_MalariaConsortium.pdf' %}"
+                       class="btn btn-default" target="_blank">
+                        <i class="fa fa-download"></i> PDF
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
