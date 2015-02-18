@@ -201,7 +201,6 @@ def update_case_external_id(case, external_id):
     """
     Update the external_id of a case
     """
-    commcare_user = CommCareUser.get(case['owner_id'])
     caseblock = CaseBlock(
         create=False,
         case_id=case['_id'],
@@ -209,7 +208,7 @@ def update_case_external_id(case, external_id):
         external_id=external_id
     )
     casexml = ElementTree.tostring(caseblock.as_xml())
-    submit_case_blocks(casexml, commcare_user.project.name)
+    submit_case_blocks(casexml, case['domain'])
 
 
 def get_children_only_theirs(settings):
