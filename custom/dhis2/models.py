@@ -493,6 +493,34 @@ class Dhis2Api(object):
         # TODO: Find a better DHIS2 API search instead of iterating instances
         return any(inst['Instance'] == te_inst_id for inst in self.gen_instances_in_program(program))
 
+    def _get_event_data_values(self, xform, data_element_names):
+        """
+        Return event dataElement-value pairs.
+
+        The data_element_names map caters for both a simple mapping, and
+        mapping dropdown field-value tuples to DHIS2 boolean dataElements. See
+        RISK_ASSESSMENT_EVENT_FIELDS for an example.
+        """
+        # data_values = [{
+        #     'dataElement': self._data_elements[element_name],
+        #     'value': xform.form[field_name],
+        # } for field_name, element_name in data_element_names.iteritems() if field_name in xform.form]
+        data_values = []
+        for field, element_name in data_element_names.iteritems():
+            if isinstance(field, tuple):
+                # field is (field_name, field_value) of a dropdown
+                field_name, field_value = field
+                value = xform.form.get(field_name) == field_value
+            else:
+                field_name = field
+                value = xform.form.get(field_name)
+            if field_name in xform.form:
+                data_values.append({
+                    'dataElement': self._data_elements[element_name],
+                    'value': value
+                })
+        return data_values
+
     def form_to_event(self, program_id, xform, data_element_names, te_inst_id=None):
         """
         Builds a dict representing a DHIS2 event
@@ -543,21 +571,14 @@ class Dhis2Api(object):
                 org_unit = case['dhis_org_id']
             else:
                 # The case doesn't have an org unit.
-                # TODO: log it
                 return
-                # For testing, fake it
-                # org_unit = self.get_resource_id('organisationUnits', 'Fermathe Clinic')
-        data_values = [{
-            'dataElement': self._data_elements[element_name],
-            'value': xform.form[field_name],
-        } for field_name, element_name in data_element_names.iteritems() if field_name in xform.form]
         event = {
             'program': program_id,
             'orgUnit': org_unit,
             'eventDate': xform.received_on,
             'status': 'COMPLETED',
             'storedBy': self._username,
-            'dataValues': data_values
+            'dataValues': self._get_event_data_values(xform, data_element_names)
         }
         if te_inst_id:
             event['trackedEntityInstance'] = te_inst_id
