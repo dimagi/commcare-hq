@@ -2146,7 +2146,8 @@ class AdvancedModule(ModuleBase):
                         'form': form_info,
                     })
 
-                case_tag = case_action.case_tag if not case_tag and case_action else None
+                # set case_tag if not already set
+                case_tag = case_action.case_tag if not case_tag and case_action else case_tag
                 if case_action and case_action.case_tag != case_tag:
                     errors.append({
                         'type': 'all forms in case list module must have same case management',
