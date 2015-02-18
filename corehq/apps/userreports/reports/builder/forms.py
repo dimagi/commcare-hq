@@ -224,7 +224,6 @@ class ConfigureNewReportBase(forms.Form):
             configured_filter=self._data_source_filter,
             configured_indicators=self._data_source_indicators
         )
-        # TODO: Does validate check for unique table ids? It should I think.
         data_source_config.validate()
 
         # Check if a suitable data source already exists.
@@ -474,8 +473,7 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
     def _group_by_choices(self):
         return [(p['id'], p['text']) for p in self.data_source_properties.values()]
 
-# Should ConfigureNewBarChartReport and this class inherit from a
-# common ancestor instead?
+
 class ConfigureNewPieChartReport(ConfigureNewBarChartReport):
     form_title = "Configure Pie Chart Report"
 
@@ -521,6 +519,4 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
 
     @property
     def _report_aggregation_cols(self):
-        # TODO: Why is this needed?
-        #       Does it aggregate on everything by default?
         return ['doc_id']

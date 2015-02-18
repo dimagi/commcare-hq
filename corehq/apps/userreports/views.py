@@ -109,18 +109,13 @@ class CreateNewReportBuilderView(ReportBuilderView):
 
     def post(self, request, *args, **kwargs):
         if self.create_new_report_builder_form.is_valid():
-            url_name = None
             report_type = self.create_new_report_builder_form.cleaned_data['report_type']
-            # TODO: This logic is not very DRY
-            if report_type == 'bar_chart':
-                url_name = 'configure_bar_chart_report_builder'
-            elif report_type == 'table':
-                url_name = 'configure_table_report_builder'
-            elif report_type == 'pie_chart':
-                url_name = 'configure_pie_chart_report_builder'
-            else:
-                # TODO: Better error please
-                raise Exception
+            url_names_map = {
+                'bar_chart': 'configure_bar_chart_report_builder',
+                'pie_chart': 'configure_pie_chart_report_builder',
+                'table': 'configure_table_report_builder',
+            }
+            url_name = url_names_map[report_type]
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + '&'.join([
                     '%(key)s=%(value)s' % {
