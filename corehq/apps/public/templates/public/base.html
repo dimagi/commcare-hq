@@ -73,8 +73,8 @@
                         {% trans 'Sign In' %}
                     </button>
                     <ul class="nav navbar-nav">
-                        <li class="active"><a href="#">CommCare</a></li>
-                        <li><a href="#">{% trans "Impact" %}</a></li>
+                        <li{% if is_home %} class="active"{% endif %}><a href="{% url 'public_home' %}">CommCare</a></li>
+                        <li{% if is_impact %} class="active"{% endif %}><a href="{% url 'public_impact' %}">{% trans "Impact" %}</a></li>
                         <li><a href="#">{% trans "Services" %}</a></li>
                         <li><a href="#">{% trans "Pricing" %}</a></li>
                     </ul>
