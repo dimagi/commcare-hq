@@ -2,6 +2,7 @@
 [files]
 ignore = */migrations/*
          *.min.js
+         localsettings.py
 
 [tools]
 linters = flake8, jshint

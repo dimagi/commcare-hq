@@ -77,14 +77,14 @@ BITLY_APIKEY = '*******'
 
 ####### Jar signing config ########
 
-_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-JAR_SIGN = {
-    'jad_tool': os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    'key_store': os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
-    'key_alias': "javarosakey",
-    'store_pass': "*******",
-    'key_pass': "*******",
-}
+#_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+#JAR_SIGN = {
+#    'jad_tool': os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
+#    'key_store': os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
+#    'key_alias': "javarosakey",
+#    'store_pass': "*******",
+#    'key_pass': "*******",
+#}
 
 ####### SMS Config ########
 
@@ -125,7 +125,7 @@ OVERRIDE_LOCATION = "https://www.commcarehq.org"
 
 # Set to something like "192.168.1.5:8000" (with your IP address).
 # See corehq/apps/builds/README.md for more information.
-BASE_ADDRESS = 'localhost:8000'
+BASE_ADDRESS = '{}:8000'.format(os.environ.get('BASE_HOST', 'localhost'))
 
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
