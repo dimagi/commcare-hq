@@ -422,9 +422,12 @@ class Dhis2Api(object):
         """
         # I didn't find a way to do this with a single request. :-|
         for ou in self.gen_org_units():
-            __, details = self._request.get('organisationUnits/' + ou['id'])
-            ou['parent_id'] = details['parent']['id'] if details.get('parent') else None
+            ou['parent_id'] = self.get_org_unit_parent_id(ou['id'])
             yield ou
+
+    def get_org_unit_parent_id(self, ou_id):
+        __, details = self._request.get('organisationUnits/' + ou_id)
+        return details['parent']['id'] if details.get('parent') else None
 
     def enroll_in(self, te_inst_id, program, when=None, data=None):
         """

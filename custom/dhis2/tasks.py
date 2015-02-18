@@ -280,14 +280,15 @@ def sync_org_units():
         our_org_units = {ou.id: ou for ou in Dhis2OrgUnit.objects.all()}
         their_org_units = {}
         # Add new org units
-        for ou in dhis2_api.gen_org_units_with_parents():
+        for ou in dhis2_api.gen_org_units():
             their_org_units[ou['id']] = ou
             if ou['id'] not in our_org_units:
                 logger.info('DHIS2: Adding org unit "%s"', ou['name'])
-                org_unit = Dhis2OrgUnit(id=ou['id'], name=ou['name'], parent_id=ou['parent_id'])
+                org_unit = Dhis2OrgUnit(id=ou['id'], name=ou['name'],
+                                        parent_id=dhis2_api.get_org_unit_parent_id(ou['id']))
                 org_unit.save()
         # Delete former org units
         for id_, ou in our_org_units.iteritems():
             if id_ not in their_org_units:
-                logger.info('DHIS2: Deleting org unit "%s"', ou['name'])
+                logger.info('DHIS2: Deleting org unit "%s"', ou.name)
                 ou.delete()
