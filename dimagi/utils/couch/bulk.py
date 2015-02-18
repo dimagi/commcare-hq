@@ -79,7 +79,7 @@ class CouchTransaction(object):
 
 
 def get_docs(db, keys):
-    payload = json.dumps({'keys': keys})
+    payload = json.dumps({'keys': filter(None, keys)})
     url = db.uri + '/_all_docs?include_docs=true'
 
     r = requests.post(url, data=payload,
