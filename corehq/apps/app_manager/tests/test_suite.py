@@ -369,26 +369,10 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         update_form = app.new_form(1, 'Update Case', lang='en')
         update_form.unique_id = 'update_case_form'
         update_form.actions.load_update_cases.append(LoadUpdateAction(
-            case_type='manatee',
-            case_tag='load_manatee',
-        ))
-        update_form.actions.load_update_cases.append(LoadUpdateAction(
             case_type='dugong',
             case_tag='load_dugong',
             details_module=case_module.unique_id
         ))
-        update_form.actions.load_update_cases.append(LoadUpdateAction(
-            case_tag='autoload_fish_food',
-            auto_select=AutoSelectCase(
-                mode=AUTO_SELECT_RAW,
-                value_key='xpath to fish food'
-            )
-        ))
-
-        manatee_module = app.add_module(Module.new_module('manatee', None))
-        manatee_module.unique_id = 'manatee_module'
-        manatee_module.case_type = 'manatee'
-
 
         case_module.case_list_form.form_id = register_form.get_unique_id()
         case_module.case_list_form.label = {

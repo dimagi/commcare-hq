@@ -5,9 +5,9 @@
         </display>
         <stack>
             <push>
-                <command>m1-f0</command>
+                <command value="'m1-f0'"/>
                 <datum id="case_id" value="uuid()"/>
-                <datum id="return_to" value="m0"/>
+                <datum id="return_to" value="'m0'"/>
             </push>
         </stack>
     </action>

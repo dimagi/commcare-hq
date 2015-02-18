@@ -276,9 +276,9 @@
     </session>
     <stack>
       <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal_new][@status='open']) = 1">
-        <command>m0</command>
+        <command value="'m0'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal_new"/>
       </create>
     </stack>
@@ -298,9 +298,9 @@
     </session>
     <stack>
       <create if="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_goal][@status='open']) = 1">
-        <command>m0</command>
+        <command value="'m0'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
       </create>
     </stack>
@@ -320,9 +320,9 @@
     </session>
     <stack>
       <create>
-        <command>m0</command>
+        <command value="'m0'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
       </create>
     </stack>
@@ -343,11 +343,11 @@
     </session>
     <stack>
       <create if="count(instance('casedb')/casedb/case[@case_type='careplan_task'][index/goal=instance('commcaresession')/session/data/case_id_goal][@status='open']) &gt;= 1">
-        <command>m0</command>
+        <command value="'m0'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id_goal" value="instance('commcaresession')/session/data/case_id_goal"/>
-        <command>m1-f3</command>
+        <command value="'m1-f3'"/>
       </create>
     </stack>
   </entry>

@@ -302,7 +302,7 @@
     </command>
     <stack>
       <create>
-        <command>m0</command>
+        <command value="'m0'"/>
       </create>
     </stack>
   </entry>
@@ -315,7 +315,7 @@
     </command>
     <stack>
       <create>
-        <command>m0</command>
+        <command value="'m0'"/>
       </create>
     </stack>
   </entry>
@@ -328,7 +328,7 @@
     </command>
     <stack>
       <create>
-        <command>m1</command>
+        <command value="'m1'"/>
       </create>
     </stack>
   </entry>
@@ -345,7 +345,7 @@
     </session>
     <stack>
       <create>
-        <command>m1</command>
+        <command value="'m1'"/>
       </create>
     </stack>
   </entry>
@@ -362,7 +362,7 @@
     </session>
     <stack>
       <create>
-        <command>m2</command>
+        <command value="'m2'"/>
       </create>
     </stack>
   </entry>
@@ -379,7 +379,7 @@
     </session>
     <stack>
       <create>
-        <command>m2</command>
+        <command value="'m2'"/>
       </create>
     </stack>
   </entry>
@@ -398,7 +398,7 @@
     </session>
     <stack>
       <create>
-        <command>m3</command>
+        <command value="'m3'"/>
       </create>
     </stack>
   </entry>
@@ -417,7 +417,7 @@
     </session>
     <stack>
       <create>
-        <command>m3</command>
+        <command value="'m3'"/>
       </create>
     </stack>
   </entry>
@@ -435,7 +435,7 @@
     </session>
     <stack>
       <create>
-        <command>m4</command>
+        <command value="'m4'"/>
       </create>
     </stack>
   </entry>
@@ -454,7 +454,7 @@
     </session>
     <stack>
       <create>
-        <command>m4</command>
+        <command value="'m4'"/>
       </create>
     </stack>
   </entry>
@@ -473,7 +473,7 @@
     </session>
     <stack>
       <create>
-        <command>m4</command>
+        <command value="'m4'"/>
       </create>
     </stack>
   </entry>

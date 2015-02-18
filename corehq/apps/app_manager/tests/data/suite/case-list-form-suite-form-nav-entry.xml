@@ -11,15 +11,15 @@
             <datum id="case_id" function="uuid()"/>
         </session>
         <stack>
-            <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) &gt; 0">
-                <command>instance('commcaresession')/session/data/return_to</command>
+            <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) &gt; 0">
+                <command value="instance('commcaresession')/session/data/return_to"/>
                 <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             </create>
-            <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
-                <command>instance('commcaresession')/session/data/return_to</command>
+            <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+                <command value="instance('commcaresession')/session/data/return_to"/>
             </create>
-            <create if="not instance('commcaresession')/session/data/return_to">
-              <command>m1</command>
+            <create if="count(instance('commcaresession')/session/data/return_to) = 0">
+              <command value="'m1'"/>
             </create>
         </stack>
     </entry>

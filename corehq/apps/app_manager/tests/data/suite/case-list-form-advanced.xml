@@ -86,10 +86,9 @@
         </display>
         <stack>
             <push>
-                <command>m0-f0</command>
+                <command value="'m0-f0'"/>
                 <datum id="case_id_open_dugong" value="uuid()"/>
-                <datum id="return_to" value="m1"/>
-                <datum id="case_id_load_manatee" value="instance('commcaresession')/session/data/case_id_load_manatee"/>
+                <datum id="return_to" value="'m1'"/>
             </push>
         </stack>
     </action>
@@ -113,44 +112,6 @@
       </template>
     </field>
   </detail>
-  <detail id="m2_case_short">
-    <title>
-      <text>
-        <locale id="m2.case_short.title"/>
-      </text>
-    </title>
-    <field sort="default">
-      <header>
-        <text>
-          <locale id="m2.case_short.case_name_1.header"/>
-        </text>
-      </header>
-      <template>
-        <text>
-          <xpath function="case_name"/>
-        </text>
-      </template>
-    </field>
-  </detail>
-  <detail id="m2_case_long">
-    <title>
-      <text>
-        <locale id="m2.case_long.title"/>
-      </text>
-    </title>
-    <field sort="default">
-      <header>
-        <text>
-          <locale id="m2.case_long.case_name_1.header"/>
-        </text>
-      </header>
-      <template>
-        <text>
-          <xpath function="case_name"/>
-        </text>
-      </template>
-    </field>
-  </detail>
   <entry>
     <command id="m0-f0">
       <text>
@@ -163,14 +124,12 @@
         <datum id="case_id_open_dugong" function="uuid()"/>
     </session>
     <stack>
-        <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_open_dugong]) &gt; 0">
-            <command>instance('commcaresession')/session/data/return_to</command>
-            <datum id="case_id_load_manatee" value="instance('commcaresession')/session/data/case_id_load_manatee"/>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_open_dugong]) &gt; 0">
+            <command value="instance('commcaresession')/session/data/return_to"/>
             <datum id="case_id_load_dugong" value="instance('commcaresession')/session/data/case_id_open_dugong"/>
-            <datum value="xpath to fish food" id="case_id_autoload_fish_food"/>
         </create>
-        <create if="instance('commcaresession')/session/data/return_to and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_open_dugong]) = 0">
-            <command>instance('commcaresession')/session/data/return_to</command>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_open_dugong]) = 0">
+            <command value="instance('commcaresession')/session/data/return_to"/>
         </create>
     </stack>
   </entry>
@@ -182,9 +141,7 @@
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
     <session>
-      <datum id="case_id_load_manatee" nodeset="instance('casedb')/casedb/case[@case_type='manatee'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
       <datum id="case_id_load_dugong" nodeset="instance('casedb')/casedb/case[@case_type='dugong'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
-      <datum id="case_id_autoload_fish_food" function="xpath to fish food"/>
     </session>
   </entry>
   <menu id="m0">
@@ -198,10 +155,5 @@
       <locale id="modules.m1"/>
     </text>
     <command id="m1-f0"/>
-  </menu>
-  <menu id="m2">
-    <text>
-      <locale id="modules.m2"/>
-    </text>
   </menu>
 </suite>

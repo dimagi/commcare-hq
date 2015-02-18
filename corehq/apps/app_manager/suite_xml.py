@@ -777,14 +777,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                 entry.stack = Stack()
             else:
                 # TODO: find a more general way of handling multiple contributions to the workflow
-                if_clause = 'not {}'.format(session_var(RETURN_TO).count())
+                if_clause = '{} = 0'.format(session_var(RETURN_TO).count())
 
             frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
 
             for child in frame_children:
                 if isinstance(child, basestring):
-                    frame.add_command(child)
+                    frame.add_command(XPath.string(child))
                 else:
                     frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
             return frame
@@ -951,18 +951,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                     reg_action = form.get_registration_actions(module.case_type)[0]
                     case_session_var = reg_action.case_session_var
 
-                extra_datums = []
-                if module.module_type == 'advanced':
-                    for action in module.forms[0].actions.load_update_cases:
-                        if action.case_type == module.case_type and action.details_module == module.unique_id:
-                            break
-
-                        if not action.auto_select:
-                            # FIXME: This doesn't seem to work
-                            # Instance referenced by instance('commcaresesson')/session/data/{...} does not exist
-                            datum = StackDatum(id=action.case_session_var, value=session_var(action.case_session_var))
-                            extra_datums.append(datum)
-
                 d.action = Action(
                     display=Display(
                         text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
@@ -975,9 +963,6 @@ class SuiteGenerator(SuiteGeneratorBase):
                 frame.add_command(XPath.string(self.id_strings.form_command(form)))
                 frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
                 frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu(module))))
-                for datum in extra_datums:
-                    frame.add_datum(datum)
-
                 d.action.stack.add_frame(frame)
 
             try:
@@ -1406,25 +1391,11 @@ class SuiteGenerator(SuiteGeneratorBase):
             reg_action = form.get_registration_actions(target_module.case_type)[0]
             source_session_var = reg_action.case_session_var
 
-        extra_datums_pre = []
-        extra_datums_post = []
-        post = False
         target_session_var = 'case_id'
         if target_module.module_type == 'advanced':
+            # match case session variable for target module
             form = target_module.forms[0]
-            for action in form.actions.load_update_cases:
-                if action.case_type == target_module.case_type and action.details_module == target_module.unique_id:
-                    target_session_var = action.case_session_var
-                    post = True
-                    continue
-
-                if action.auto_select:
-                    xpath = get_case_auto_select_xpath(form, action)
-                    datum = StackDatum(id=action.case_session_var, value=xpath)
-                else:
-                    datum = StackDatum(id=action.case_session_var, value=session_var(action.case_session_var))
-
-                (extra_datums_post if post else extra_datums_pre).append(datum)
+            target_session_var = form.actions.load_update_cases[0].case_session_var
 
         entry.datums.append(SessionDatum(id=source_session_var, function='uuid()'))
         entry.stack = Stack()
@@ -1433,14 +1404,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         return_to = session_var(RETURN_TO)
         frame_case_created = CreateFrame(if_clause='{} = 1 and {} > 0'.format(return_to.count(), case_count))
         frame_case_created.add_command(return_to)
-        for datum in extra_datums_pre:
-            frame_case_created.add_datum(datum)
-
         frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
-
-        for datum in extra_datums_post:
-            frame_case_created.add_datum(datum)
-
         entry.stack.add_frame(frame_case_created)
 
         frame_case_not_created = CreateFrame(if_clause='{} = 1 and {} = 0'.format(return_to.count(), case_count))
@@ -1646,19 +1610,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if not module.display_separately:
                     open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
                     frame.if_clause = '{count} = 1'.format(count=open_goal.count())
-                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
                 else:
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
             elif form.case_type == CAREPLAN_TASK:
                 if not module.display_separately:
-                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
                     if form.mode == 'update':
                         count = CaseTypeXpath(CAREPLAN_TASK).case().select(
@@ -1666,9 +1630,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                         ).select('@status', 'open').count()
                         frame.if_clause = '{count} >= 1'.format(count=count)
 
-                        frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
+                        frame.add_command(XPath.string(
+                            self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
+                        ))
                 else:
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
                 if form.mode == 'create':

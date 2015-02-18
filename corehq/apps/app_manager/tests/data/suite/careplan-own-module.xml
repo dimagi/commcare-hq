@@ -276,7 +276,7 @@
     </session>
     <stack>
       <create>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
@@ -296,7 +296,7 @@
     </session>
     <stack>
       <create>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
@@ -316,7 +316,7 @@
     </session>
     <stack>
       <create>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
@@ -337,7 +337,7 @@
     </session>
     <stack>
       <create>
-        <command>m1</command>
+        <command value="'m1'"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
     </stack>
