@@ -711,26 +711,6 @@ def generic_fixture_instances(instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-def get_case_auto_select_xpath(form, action):
-    from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-        AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
-    auto_select = action.auto_select
-    if auto_select.mode == AUTO_SELECT_USER:
-        return session_var(auto_select.value_key, subref='user')
-    elif auto_select.mode == AUTO_SELECT_CASE:
-        try:
-            ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
-            sess_var = ref.case_session_var
-        except KeyError:
-            raise ValueError("Case tag not found: %s" % auto_select.value_source)
-        return CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
-    elif auto_select.mode == AUTO_SELECT_FIXTURE:
-        xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
-        return xpath_base.slash(auto_select.value_key)
-    elif auto_select.mode == AUTO_SELECT_RAW:
-        return auto_select.value_key
-
-
 class SuiteGenerator(SuiteGeneratorBase):
     descriptor = u"Suite File"
     sections = (
@@ -1465,7 +1445,8 @@ class SuiteGenerator(SuiteGeneratorBase):
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
-        from corehq.apps.app_manager.models import AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
+            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
 
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
@@ -1510,21 +1491,44 @@ class SuiteGenerator(SuiteGeneratorBase):
         for action in form.actions.load_update_cases:
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
-                xpath = get_case_auto_select_xpath(form, action)
-                e.datums.append(SessionDatum(
-                    id=action.case_session_var,
-                    function=xpath
-                ))
-                if auto_select.mode == AUTO_SELECT_FIXTURE:
+                if auto_select.mode == AUTO_SELECT_USER:
+                    xpath = session_var(auto_select.value_key, subref='user')
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=xpath
+                    ))
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+                elif auto_select.mode == AUTO_SELECT_CASE:
+                    try:
+                        ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
+                        sess_var = ref.case_session_var
+                    except KeyError:
+                        raise ValueError("Case tag not found: %s" % auto_select.value_source)
+                    xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=xpath
+                    ))
+                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+                elif auto_select.mode == AUTO_SELECT_FIXTURE:
                     xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
+                    xpath = xpath_base.slash(auto_select.value_key)
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=xpath
+                    ))
                     self.add_assertion(
                         e,
                         "{0} = 1".format(xpath_base.count()),
                         'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
                         [auto_select.value_source]
                     )
-                if auto_select.mode != AUTO_SELECT_RAW:
                     self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+                elif auto_select.mode == AUTO_SELECT_RAW:
+                    e.datums.append(SessionDatum(
+                        id=action.case_session_var,
+                        function=auto_select.value_key
+                    ))
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
