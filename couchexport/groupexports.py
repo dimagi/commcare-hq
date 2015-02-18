@@ -46,9 +46,11 @@ def rebuild_export(config, schema, output_dir, last_access_cutoff=None):
         if output_dir == "couch":
             if not saved:
                 saved = SavedBasicExport(configuration=config)
-                saved.last_accessed = datetime.utcnow()
             else:
                 saved.configuration = config
+
+            if saved.last_accessed is None:
+                saved.last_accessed = datetime.utcnow()
             saved.last_updated = datetime.utcnow()
             saved.save()
             saved.set_payload(payload)
