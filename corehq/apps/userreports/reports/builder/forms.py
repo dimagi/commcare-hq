@@ -33,10 +33,12 @@ from corehq.apps.userreports.reports.builder import (
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
-# TODO: Add some documentation
-
 
 class FilterField(JsonField):
+    """
+    A form field with a little bit of validation for report builder report
+    filter configuration.
+    """
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
@@ -84,6 +86,9 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def filter(self):
+        """
+        Return the filter configuration for the DataSourceConfiguration.
+        """
         if self.source_type == "case":
             return make_case_data_source_filter(self.source_id)
         if self.source_type == "form":
@@ -94,7 +99,7 @@ class DataSourceBuilder(object):
     def indicators(self):
         """
         Return all the dict data source indicator configurations that could be
-        used by a report that uses the same case type/form as a data source.
+        used by a report that uses the same case type/form as this DataSourceConfiguration.
         """
         ret = []
         for prop in self.data_source_properties.values():
@@ -201,6 +206,10 @@ class DataSourceBuilder(object):
 
 
 class CreateNewReportForm(forms.Form):
+    """
+    A form for the first page of the report builder.
+    Allows user to specify report type, application, and source.
+    """
     report_type = forms.ChoiceField(
         choices=[
             ('bar_chart', _("Bar Chart")),
@@ -258,6 +267,10 @@ class CreateNewReportForm(forms.Form):
         )
 
     def clean(self):
+        """
+        Raise a validation error if there are already 5 data sources and this
+        report won't be able to use one of the existing ones.
+        """
         cleaned_data = super(CreateNewReportForm, self).clean()
         source_type = cleaned_data.get('source_type')
         report_source = cleaned_data.get('report_source')
@@ -288,7 +301,7 @@ class CreateNewReportForm(forms.Form):
                         "delete all the reports using a particular data source (or "
                         "the data source itself) and try again."
                     ))
-                    # TODO: Should we show there error on the report_source field specifically?
+                    # Should we show there error on the report_source field specifically?
                     # example here: https://docs.djangoproject.com/en/1.5/ref/forms/validation/#cleaning-and-validating-fields-that-depend-on-each-other
 
         return cleaned_data
@@ -344,6 +357,9 @@ class ConfigureNewReportBase(forms.Form):
     # TODO: I don't love the name of this property...
     @property
     def top_fieldset(self):
+        """
+        Return the first fieldset in the form.
+        """
         return crispy.Fieldset(
             _(self.form_title),
             'report_name',
@@ -352,6 +368,10 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def configuration_tables(self):
+        """
+        Return a fieldset representing the markup used for configuring the
+        report filters.
+        """
         return crispy.Fieldset(
             _("Filters Available in this Report"),
             crispy.Div(crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'),
