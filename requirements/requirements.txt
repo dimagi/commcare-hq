@@ -16,7 +16,7 @@ defusedxml==0.4.1
 diff-match-patch==20120106
 django-kombu==0.9.1
 django-rosetta==0.7.1
-django-tastypie==0.9.14
+django-tastypie==0.12.1
 djtables==0.1.1
 #egenix-mx-base==3.2.8
 eulxml==0.18.0
