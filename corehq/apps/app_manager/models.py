@@ -80,6 +80,7 @@ from .exceptions import (
     XFormValidationError,
 )
 from corehq.apps.app_manager import id_strings
+from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'
 WORKFLOW_MODULE = 'module'
@@ -101,24 +102,30 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_login': 'brand-banner-login',
 }
 
+
+def jsonpath_update(datum_context, value):
+    field = datum_context.path.fields[0]
+    parent = jsonpath.Parent().find(datum_context)[0]
+    parent.value[field] = value
+
 # store a list of references to form ID's so that
 # when an app is copied we can update the references
 # with the new values
-form_id_references = {
-    'app': [],
-    'module': [],
-    'form': [],
-}
+form_id_references = []
 
 
-def FormIdProperty(level, path, **kwargs):
+def FormIdProperty(expression, **kwargs):
     """
     Create a StringProperty that references a form ID.
     :param level:   From where is the form referenced? One of 'app', 'module', 'form'
-    :param path:    List of dictionary keys used to get from the app / module / form to
-                    the property.
+    :param path:    jsonpath to field that holds the form ID
     """
-    form_id_references[level].append(path)
+    path_expression = parse(expression)
+    assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
+    field = path_expression.right
+    assert len(field.fields) == 1, 'path expression can only reference a single field'
+
+    form_id_references.append(path_expression)
     return StringProperty(**kwargs)
 
 
@@ -1353,7 +1360,7 @@ class DetailPair(DocumentSchema):
 
 
 class CaseListForm(NavMenuItemMediaMixin):
-    form_id = FormIdProperty('module', ('case_list_form', 'form_id'))
+    form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
 
     def rename_lang(self, old_lang, new_lang):
@@ -3628,23 +3635,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 new_id = change_unique_id(source['modules'][m]['forms'][f])
                 id_changes[old_id] = new_id
 
-        def check_form_id(level, app_part):
-            for path in form_id_references[level]:
-                old_id = dict_get_path(app_part, path)
-                if old_id in id_changes:
-                    dict_set_path(app_part, path, id_changes[old_id])
-
-        if form_id_references['app']:
-            check_form_id('app', source)
-
-        if form_id_references['module']:
-            for module in source['modules']:
-                check_form_id('module', module)
-
-        if form_id_references['form']:
-            for m, module in source['modules']:
-                for form in module['forms']:
-                    check_form_id('form', form)
+        for reference_path in form_id_references:
+            for reference in reference_path.find(source):
+                if reference.value in id_changes:
+                    jsonpath_update(reference, id_changes[reference.value])
 
     def copy_form(self, module_id, form_id, to_module_id):
         """

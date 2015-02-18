@@ -72,6 +72,7 @@ django-compressor==1.4
 django-angular==0.7.8
 Pycco==0.3.0
 django-mptt==0.6.1
+jsonpath-rw==1.3.0
 
 # required by ctable
 SQLAlchemy==0.8.2
