@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
@@ -82,6 +83,16 @@ def ews_add_products_to_locs(request, domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
     add_products_to_loc.delay(EWSApi(domain=domain, endpoint=endpoint))
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def clear_products(request, domain):
+    locations = SQLLocation.objects.filter(domain=domain)
+    for loc in locations:
+        loc.products = []
+        loc.save()
     return HttpResponse('OK')
 
 
