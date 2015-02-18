@@ -307,7 +307,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def _prep_case_list_form_app(self):
         app = Application.wrap(self.get_json('app'))
         case_module = app.get_module(0)
-        form = case_module.get_form(0)
+        case_module.get_form(0)
 
         register_module = app.add_module(Module.new_module('register', None))
         register_module.unique_id = 'register_case_module'
