@@ -22,4 +22,5 @@
 ---
 exclude_groups:
   - mvp
+  - mvp_indicators
   - fluff

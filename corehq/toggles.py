@@ -288,6 +288,17 @@ APP_SUMMARY = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+BULK_ARCHIVE_FORMS = StaticToggle(
+    'bulk_archive_forms',
+    'Bulk archive forms with excel',
+)
+
+DHIS2_DOMAIN = StaticToggle(
+    'dhis2_domain',
+    'Enable DHIS2 integration for this domain',
+    [NAMESPACE_DOMAIN]
+)
+
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
@@ -299,4 +310,10 @@ PRIME_RESTORE = StaticToggle(
 VELLUM_HELP_TEXT = StaticToggle(
     'add_help_text',
     "Adds a help text in the form builder"
+)
+
+VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
+    'transaction_question_types',
+    "Adds transaction-related question types in the form builder",
+    [NAMESPACE_DOMAIN]
 )

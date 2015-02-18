@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from custom.common import ALL_OPTION
@@ -17,7 +17,7 @@ class ProductByProgramFilter(BaseDrilldownOptionFilter):
         for program in Program.by_domain(self.domain):
             products = [{"val": ALL_OPTION, "text": "All", "next": []}]
             for product in Product.by_program_id(self.domain, program._id):
-                products.append({"val": product.get_id, "text": product.name})
+                products.append({"val": product.get_id, "text": product.name + ' (%s)' % product.code})
             options.append({"val": program.get_id, "text": program.name, "next": products})
         return options
 
@@ -67,3 +67,13 @@ class ViewReportFilter(BaseSingleOptionFilter):
             ('stockouts', 'Stockouts'),
             ('asi', 'All Stock Information')
         ]
+
+
+class ProductFilter(BaseSingleOptionFilter):
+    slug = 'product_id'
+    label = 'Product'
+    default_text = ''
+
+    @property
+    def options(self):
+        return SQLProduct.objects.filter(domain=self.domain).values_list('product_id', 'name').order_by('name')

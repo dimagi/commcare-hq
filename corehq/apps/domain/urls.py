@@ -20,7 +20,7 @@ from corehq.apps.domain.views import (
     FeaturePreviewsView, ConfirmSubscriptionRenewalView,
     InvoiceStripePaymentView, CreditsStripePaymentView, SMSRatesView,
     AddFormRepeaterView, AddOpsUserAsDomainAdminView,
-    FeatureFlagsView)
+    FeatureFlagsView, EditDhis2SettingsView)
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -92,6 +92,7 @@ domain_settings = patterns(
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
+    url(r'^dhis2/$', EditDhis2SettingsView.as_view(), name=EditDhis2SettingsView.urlname),
     url(r'^subscription/change/$', SelectPlanView.as_view(), name=SelectPlanView.urlname),
     url(r'^subscription/change/confirm/$', ConfirmSelectedPlanView.as_view(),
         name=ConfirmSelectedPlanView.urlname),

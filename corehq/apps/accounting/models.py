@@ -961,17 +961,11 @@ class Subscription(models.Model):
     def reactivate_subscription(self, date_end=None, note=None, web_user=None,
                                 adjustment_method=None, **kwargs):
         """
-        This assumes that a subscription was cancelled then recreated the
-        same day as the cancellation (with no other subscriptions
+        This assumes that a subscription was cancelled then recreated with the
+        same date_start as the last subscription's date_end (with no other subscriptions
         created in between).
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        today = datetime.date.today()
-        if self.date_end is not None and today > self.date_end:
-            raise SubscriptionAdjustmentError(
-                "Tried to reactivate a subscription, but the end date for "
-                "this subscription already passed."
-            )
         self.subscriber.apply_upgrades_and_downgrades(
             new_plan_version=self.plan_version, web_user=web_user,
         )
@@ -1312,6 +1306,9 @@ class Invoice(models.Model):
     date_start = models.DateField()
     date_end = models.DateField()
     is_hidden = models.BooleanField(default=False)
+    # If set to True invoice will not appear in invoice report. There is no UI to
+    # control this filter
+    is_hidden_to_ops = models.BooleanField(default=False)
 
     @property
     def subtotal(self):

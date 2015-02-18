@@ -2,7 +2,14 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<h2>{% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Upload {{ plural_noun }} Using Excel{% endblocktrans %}</h2>
+<h2>
+    {% blocktrans with verb=bulk_upload.verb|default:"Upload"|title %}
+        {{ verb }}
+    {% endblocktrans %}
+    {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+        {{ plural_noun }} Using Excel
+    {% endblocktrans %}
+</h2>
 <p>
     <ol>
         <li id="download_block">

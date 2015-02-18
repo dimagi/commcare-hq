@@ -3,6 +3,7 @@ from .test_birth_spacing import *
 from .test_case_properties import *
 from .test_child_condition_four import *
 from .test_child_conditions import *
+from .test_consistency import *
 from .test_multiple_children import *
 from .test_preg_conditions import *
 from .test_prior_month_references import *

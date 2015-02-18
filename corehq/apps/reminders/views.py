@@ -109,7 +109,7 @@ def default(request, domain):
 
 @reminders_framework_permission
 def list_reminders(request, domain, reminder_type=REMINDER_TYPE_DEFAULT):
-    all_handlers = CaseReminderHandler.get_handlers(domain=domain).all()
+    all_handlers = CaseReminderHandler.get_handlers(domain)
     all_handlers = filter(lambda x : x.reminder_type == reminder_type, all_handlers)
     if reminder_type == REMINDER_TYPE_ONE_TIME:
         all_handlers.sort(key=lambda handler : handler.start_datetime)
@@ -1659,8 +1659,8 @@ class RemindersListView(BaseMessagingSectionView):
 
     @property
     def reminders(self):
-        all_handlers = CaseReminderHandler.get_handlers(domain=self.domain).all()
-        all_handlers = filter(lambda x : x.reminder_type == REMINDER_TYPE_DEFAULT, all_handlers)
+        all_handlers = CaseReminderHandler.get_handlers(self.domain,
+            reminder_type_filter=REMINDER_TYPE_DEFAULT)
         if not self.can_use_survey:
             all_handlers = filter(
                 lambda x: x.method not in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],

@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 import logging
+from datetime import timedelta, datetime
 from django.conf import settings
 
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -286,6 +287,7 @@ class ExcelExportReport(FormExportReportBase):
             edit=self.request.GET.get('edit') == 'true',
             group_exports=[group.form_exports for group in groups
                 if group.form_exports],
+            group_export_cutoff=datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF),
             report_slug=self.slug,
             property_hash=self.properties(size_hash),
             exports_has_media=size_hash,

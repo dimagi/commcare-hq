@@ -6,7 +6,9 @@ from datetime import timedelta, datetime, date
 from collections import defaultdict
 from StringIO import StringIO
 import dateutil
+from django.core.mail import send_mail
 from django.utils.datastructures import SortedDict
+from django.views.decorators.csrf import csrf_exempt
 
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
@@ -34,6 +36,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance
 from pillowtop import get_all_pillows_json, get_pillow_by_name
 
@@ -66,7 +69,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, D
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
@@ -200,6 +203,21 @@ def message_log_report(request):
 
     context['layout_flush_content'] = True
     return render(request, "hqadmin/message_log_report.html", context)
+
+
+@require_POST
+@csrf_exempt
+def contact_email(request):
+    from_email = request.POST['email']
+    description = request.POST['description']
+    message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
+    send_mail(description[:60], message, from_email, [settings.CONTACT_EMAIL])
+    response = HttpResponse('success')
+    response["Access-Control-Allow-Origin"] = "http://www.commcarehq.org"
+    response["Access-Control-Allow-Methods"] = "POST"
+    response["Access-Control-Max-Age"] = "1000"
+    response["Access-Control-Allow-Headers"] = "*"
+    return response
 
 
 @require_superuser
@@ -379,25 +397,31 @@ def system_info(request):
 @cache_page(60 * 5)
 @require_superuser_or_developer
 def db_comparisons(request):
+
+    def _simple_view_couch_query(db, view_name):
+        return db.view(view_name, reduce=True).one()['value']
+
+    def _count_real_forms():
+        all_forms = _simple_view_couch_query(XFormInstance.get_db(), 'couchforms/by_xmlns')
+        device_logs = XFormInstance.get_db().view('couchforms/by_xmlns', key=DEVICE_LOG_XMLNS).one()['value']
+        return all_forms - device_logs
+
     comparison_config = [
         {
             'description': 'Users (base_doc is "CouchUser")',
-            'couch_db': CommCareUser.get_db(),
-            'view_name': 'users/by_username',
+            'couch_docs': _simple_view_couch_query(CommCareUser.get_db(), 'users/by_username'),
             'es_query': UserES().remove_default_filter('active').size(0),
             'sql_rows': User.objects.count(),
         },
         {
             'description': 'Domains (doc_type is "Domain")',
-            'couch_db': Domain.get_db(),
-            'view_name': 'domain/by_status',
+            'couch_docs': _simple_view_couch_query(Domain.get_db(), 'domain/by_status'),
             'es_query': DomainES().size(0),
             'sql_rows': None,
         },
         {
             'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_db': XFormInstance.get_db(),
-            'view_name': 'couchforms/by_xmlns',
+            'couch_docs': _count_real_forms(),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
@@ -405,10 +429,9 @@ def db_comparisons(request):
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_db': CommCareCase.get_db(),
-            'view_name': 'case/by_owner',
+            'couch_docs': _simple_view_couch_query(CommCareCase.get_db(), 'case/by_owner'),
             'es_query': CaseES().size(0),
-            'sql_rows': None,
+            'sql_rows': CaseData.objects.count(),
         }
     ]
 
@@ -416,10 +439,7 @@ def db_comparisons(request):
     for comp in comparison_config:
         comparisons.append({
             'description': comp['description'],
-            'couch_docs': comp['couch_db'].view(
-                    comp['view_name'],
-                    reduce=True,
-                ).one()['value'],
+            'couch_docs': comp['couch_docs'],
             'es_docs': comp['es_query'].run().total,
             'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
         })

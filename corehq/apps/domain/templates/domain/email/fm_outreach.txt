@@ -5,7 +5,7 @@ I'm emailing you because you are a web user on the project with a Dimagi email
 address, and I'm really curious what kind of project I'm hosting. 
 
 If this is a test project space, go to the project settings page {{ settings_link }} and
-change the "test project?" setting to "test" and I'll stop bothering you.
+change the "test project" setting to "test" and I'll stop bothering you.
 
 If this project space does represent a new real project, let me know by updating
 a few of my settings as described on the wiki:  

@@ -5,9 +5,7 @@ from couchdbkit.ext.django.schema import (
     IntegerProperty, SetProperty, SchemaDictProperty
 )
 from corehq.apps.app_manager.exceptions import AppManagerException
-
 from corehq.apps.app_manager.models import Application
-
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -100,6 +98,8 @@ class FormQuestionSchema(Document):
             to_process.append(self.app_id)
 
         for app_doc in iter_docs(Application.get_db(), to_process):
+            if app_doc['doc_type'] == 'RemoteApp':
+                continue
             app = Application.wrap(app_doc)
             try:
                 self.update_for_app(app)

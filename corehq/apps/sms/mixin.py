@@ -465,6 +465,22 @@ class SMSBackend(MobileBackend):
         raise NotImplementedError("send() method not implemented")
 
     @classmethod
+    def get_opt_in_keywords(cls):
+        """
+        Override to specify a set of opt-in keywords to use for this
+        backend type.
+        """
+        return []
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        """
+        Override to specify a set of opt-out keywords to use for this
+        backend type.
+        """
+        return []
+
+    @classmethod
     def get_wrapped(cls, backend_id):
         from corehq.apps.sms.util import get_available_backends
         backend_classes = get_available_backends()

@@ -1,10 +1,10 @@
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from custom.ewsghana.reports import MultiReport
+from custom.ewsghana.reports import MultiReport, ProductSelectionPane
 from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRates, ReportingDetails
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, FacilitySMSUsers, \
-    FacilityUsers, FacilityInChargeUsers, InventoryManagementData
+    FacilityUsers, FacilityInChargeUsers, InventoryManagementData, InputStock
 
 
 class DashboardReport(MultiReport):
@@ -34,6 +34,7 @@ class DashboardReport(MultiReport):
             return [
                 FacilityReportData(config),
                 StockLevelsLegend(config),
+                InputStock(config),
                 FacilitySMSUsers(config),
                 FacilityUsers(config),
                 FacilityInChargeUsers(config),
@@ -41,6 +42,7 @@ class DashboardReport(MultiReport):
             ]
         self.split = False
         return [
+            ProductSelectionPane(config=self.report_config),
             ProductAvailabilityData(config=self.report_config),
             ReportingRates(config=self.report_config),
             ReportingDetails(config=self.report_config)

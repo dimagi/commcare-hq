@@ -1152,6 +1152,8 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
     vellum_plugins = ["modeliteration"]
     if settings.VELLUM_PRERELEASE:
         vellum_plugins.append("itemset")
+    if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
+        vellum_plugins.append("commtrack")
 
     vellum_features = toggles.toggles_dict(username=req.user.username,
                                            domain=domain)
@@ -2908,6 +2910,8 @@ def download_bulk_app_translations(request, domain, app_id):
                 field_name = detail.field
                 if detail.format == "enum":
                     field_name += " (ID Mapping Text)"
+                elif detail.format == "graph":
+                    field_name += " (graph)"
 
                 # Add a row for this case detail
                 rows[module_string].append(
@@ -2924,6 +2928,26 @@ def download_bulk_app_translations(request, domain, app_id):
                                 list_or_detail
                             ) + tuple(
                                 mapping.value.get(lang, "")
+                                for lang in app.langs
+                            )
+                        )
+
+                # Add rows for graph configuration
+                if detail.format == "graph":
+                    for key, val in detail.graph_configuration.locale_specific_config.iteritems():
+                        rows[module_string].append(
+                            (
+                                key + " (graph config)",
+                                list_or_detail
+                            ) + tuple(val.get(lang, "") for lang in app.langs)
+                        )
+                    for i, annotation in enumerate(detail.graph_configuration.annotations):
+                        rows[module_string].append(
+                            (
+                                "graph annotation {}".format(i + 1),
+                                list_or_detail
+                            ) + tuple(
+                                annotation.display_text.get(lang, "")
                                 for lang in app.langs
                             )
                         )

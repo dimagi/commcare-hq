@@ -28,9 +28,6 @@ def incomplete_domains():
                       filters.missing("internal.area"),
                       filters.missing("internal.notes"),
                       filters.missing("internal.organization_name"),
-                      filters.missing("internal.platform"),
-                      filters.missing("internal.phone_model"),
-                      filters.missing("internal.project_manager"),
                       filters.missing("internal.sub_area"),
                       )
 
