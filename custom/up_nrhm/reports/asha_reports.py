@@ -1,9 +1,10 @@
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
+from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
-from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter
+from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter, ASHAMonthFilter
 from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
+from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 
 
@@ -17,7 +18,7 @@ def total_rows(report):
 
 
 class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    fields = [SampleFormatFilter, DatespanFilter, DrillDownOptionFilter, MonthFilter, YearFilter]
+    fields = [SampleFormatFilter, DatespanFilter, DrillDownOptionFilter, ASHAMonthFilter, YearFilter]
     name = "ASHA Reports"
     slug = "asha_reports"
     show_all_rows = True
@@ -46,7 +47,7 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
         if config.get('sf') == 'sf5':
             return []
         elif config.get('sf') == 'sf4':
-            return []
+            return BlockLevelAFReport(self.request, domain=self.domain)
         elif config.get('sf') == 'sf3':
             return BlockLevelMonthReport(self.request, domain=self.domain)
         else:
@@ -62,5 +63,5 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
         if not config.get('sf'):
             rows, self.total_under_facilitator, total_with_checklist = self.model.rows
         else:
-            rows = self.model.rows
+            rows = self.model.rows[0]
         return rows

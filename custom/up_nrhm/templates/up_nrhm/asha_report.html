@@ -33,12 +33,21 @@
                 $('#fieldset_datespan').css('display', 'none');
                 $('#fieldset_year').css('display', 'block');
                 $('#fieldset_month').css('display', 'block');
+            } else if (sf === "sf4") {
+                $('#fieldset_datespan').css('display', 'none');
+                $('#fieldset_year').css('display', 'block');
+                $('#fieldset_month').css('display', 'block');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'none')
             }
         }
-
         $('#report_filter_sf').on('change', function() {
-           hideFilters($(this).select2('data').id);
+            sf = $(this).select2('data').id;
+            hideFilters(sf);
         });
-        hideFilters($('#report_filter_sf').select2('data').id);
+        $('#hq-report-filters').on('change', function() {
+            hideFilters(sf);
+        });
+        sf = $('#report_filter_sf').select2('data').id;
+        hideFilters(sf);
     </script>
 {% endblock %}

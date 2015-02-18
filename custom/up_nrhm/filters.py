@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext_noop
+from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
@@ -109,7 +110,11 @@ class SampleFormatFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('sf3', 'Block Level-Month wise'),
+            ('sf4', 'Block Level-AF wise'),
             # TODO:
-            # ('sf4', 'Block Level-AF wise'),
             # ('sf5', 'District (Functionality of ASHAs)'),
         ]
+
+
+class ASHAMonthFilter(MonthFilter):
+    label = "Last month of the quarter"

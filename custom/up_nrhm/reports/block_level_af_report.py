@@ -1,0 +1,75 @@
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.select import YearFilter, MonthFilter
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
+from corehq.apps.reports.util import format_datatables_data
+from custom.up_nrhm.filters import DrillDownOptionFilter, HierarchySqlData
+from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
+from custom.up_nrhm.sql_data import ASHAFacilitatorsData
+
+
+class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
+    fields = [DrillDownOptionFilter, MonthFilter, YearFilter]
+    name = "Block Level-Month wise Report"
+    slug = "block_level_month_wise"
+    show_all_rows = True
+    default_rows = 20
+    use_datatables = False
+    printable = True
+    no_value = '--'
+
+    def get_afs_for_block(self):
+        afs = []
+        for location in HierarchySqlData(config={'domain': self.domain}).get_data():
+            if location['block'] == self.report_config['block']:
+                afs.append([(u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip(),
+                            location['doc_id']])
+        return afs
+
+    @property
+    def headers(self):
+        columns = [DataTablesColumn('Average Number of ASHAs functional on', sortable=False)]
+        columns.extend([DataTablesColumn(af[0], sortable=False) for af in self.get_afs_for_block()])
+        columns.append(DataTablesColumn('Total of the block', sortable=False))
+        return DataTablesHeader(*columns)
+
+    @property
+    def report_config(self):
+        return {
+            'domain': self.domain,
+            'year': self.request.GET.get('year'),
+            'month': self.request.GET.get('month'),
+            'block': self.request.GET.get('hierarchy_block'),
+            'district': self.request.GET.get('hierarchy_district'),
+        }
+
+    @property
+    def model(self):
+        return ASHAFacilitatorsData(config=self.report_config)
+
+    @property
+    def rows(self):
+        rows = [[column.header] for column in self.model.columns[2:]]
+        rows.append(["Total number of ASHAs who did not report/not known"])
+        last_row = ["Total ASHAs"]
+        sums = [0] * len(rows)
+        total = 0
+
+        for af in self.get_afs_for_block():
+            self.request_params['hierarchy_af'] = af[1]
+            q = self.request.GET.copy()
+            q['hierarchy_af'] = af[1]
+            self.request.GET = q
+            rs, afs_count = BlockLevelMonthReport(self.request, domain=self.domain).rows
+            total += afs_count
+            last_row.append(format_datatables_data(afs_count, afs_count))
+            for index, row in enumerate(rs):
+                rows[index].append(row[-1])
+                sums[index] += float(row[-1]['sort_key'])
+
+        for index, sum in enumerate(sums):
+            rows[index].append(format_datatables_data(sum, sum))
+
+        last_row.append(format_datatables_data(total, total))
+        rows.append(last_row)
+        return rows, total

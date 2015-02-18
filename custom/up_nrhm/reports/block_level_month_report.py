@@ -84,4 +84,4 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
         not_reporting = [format_datatables_data(i - (j or 0), i - (j or 0)) for i, j in zip(total, reporting)]
 
         rows.append(["Total number of ASHAs who did not report/not known"] + not_reporting + [avg(not_reporting)])
-        return rows
+        return rows, sum(total) / len(total)
