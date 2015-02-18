@@ -819,7 +819,7 @@ class FormBase(DocumentSchema):
             mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
         ]
         assert len(case_list_modules) <= 1, "Form referenced my multiple modules"
-        return case_list_modules[0] if case_list_modules else  None
+        return case_list_modules[0] if case_list_modules else None
 
     @property
     def is_case_list_form(self):

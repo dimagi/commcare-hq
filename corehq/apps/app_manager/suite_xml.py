@@ -713,7 +713,7 @@ def generic_fixture_instances(instance_name):
 
 def get_case_auto_select_xpath(form, action):
     from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+        AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
     auto_select = action.auto_select
     if auto_select.mode == AUTO_SELECT_USER:
         return session_var(auto_select.value_key, subref='user')
