@@ -31,7 +31,7 @@ from corehq.apps.reminders.forms import (
     KEYWORD_CONTENT_CHOICES,
     KEYWORD_RECIPIENT_CHOICES,
     ComplexScheduleCaseReminderForm,
-    NewKeywordForm,
+    KeywordForm,
     NO_RESPONSE,
 )
 from corehq.apps.reminders.models import (
@@ -716,11 +716,11 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     @memoized
     def keyword_form(self):
         if self.request.method == 'POST':
-            return NewKeywordForm(
+            return KeywordForm(
                 self.request.POST, domain=self.domain,
                 process_structured=self.process_structured_message,
             )
-        return NewKeywordForm(
+        return KeywordForm(
             domain=self.domain,
             process_structured=self.process_structured_message,
         )
@@ -808,13 +808,13 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
     def keyword_form(self):
         initial = self.get_initial_values()
         if self.request.method == 'POST':
-            form = NewKeywordForm(
+            form = KeywordForm(
                 self.request.POST, domain=self.domain, initial=initial,
                 process_structured=self.process_structured_message,
             )
             form._sk_id = self.keyword_id
             return form
-        return NewKeywordForm(
+        return KeywordForm(
             domain=self.domain, initial=initial,
             process_structured=self.process_structured_message,
         )

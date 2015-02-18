@@ -850,7 +850,7 @@ def api_last_read_message(request, domain):
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
-    urlname = 'list_domain_backends_new'
+    urlname = 'list_domain_backends'
     page_title = ugettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
@@ -1319,8 +1319,8 @@ def upload_sms_translations(request, domain):
 
 
 class SMSSettingsView(BaseMessagingSectionView):
-    urlname = "sms_settings_new"
-    template_name = "sms/settings_new.html"
+    urlname = "sms_settings"
+    template_name = "sms/settings.html"
     page_title = ugettext_noop("SMS Settings")
 
     @property

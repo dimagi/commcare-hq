@@ -2020,7 +2020,7 @@ class RemindersInErrorForm(Form):
     selected_reminders = ListField(required=False)
 
 
-class NewKeywordForm(Form):
+class KeywordForm(Form):
     _cchq_domain = None
     _sk_id = None
     keyword = CharField(label=ugettext_noop("Keyword"))
@@ -2115,7 +2115,7 @@ class NewKeywordForm(Form):
         if 'process_structured' in kwargs:
             self.process_structured_sms = kwargs.pop('process_structured')
 
-        super(NewKeywordForm, self).__init__(*args, **kwargs)
+        super(KeywordForm, self).__init__(*args, **kwargs)
 
         self.fields['sender_content_type'].choices = self.content_type_choices
         self.fields['other_recipient_content_type'].choices = self.content_type_choices
