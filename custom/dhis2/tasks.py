@@ -22,7 +22,7 @@ from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-# from celery.schedules import crontab
+from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
@@ -255,8 +255,8 @@ def sync_cases():
         push_child_entities(settings, children)
 
 
-# @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
-# dhis.pgim.cmb.ac.lk has over 10 000 org units. Not practical to store on handsets.
+# There is a large number of org units, but the lookup table is not deployed to handsets.
+@periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
 def sync_org_units():
     """
     Synchronize DHIS2 Organization Units with local data.
