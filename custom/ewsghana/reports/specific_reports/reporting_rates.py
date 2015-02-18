@@ -1,7 +1,6 @@
 from datetime import datetime
 from corehq import Domain
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import PieChart
@@ -19,9 +18,6 @@ from dimagi.utils.dates import DateSpan
 
 
 # TODO Implement this when alerts (moving from EWS) will be finished
-from dimagi.utils.dates import DateSpan
-
-
 class AlertsData(EWSData):
     pass
 
@@ -36,7 +32,9 @@ class ReportingRates(EWSData):
     def rows(self):
         rows = {}
         if self.config['location_id']:
-            supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
+            supply_points = get_supply_points(self.config['location_id'], self.config['domain']).values_list(
+                'supply_point_id', flat=True
+            )
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             reports = StockTransaction.objects.filter(case_id__in=supply_points,
                                                       report__date__range=[last_period_st,
@@ -82,11 +80,13 @@ class ReportingDetails(EWSData):
         rows = {}
         if self.config['location_id']:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
-            supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
-            products_count = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).count()
+            supply_points = get_supply_points(self.config['location_id'], self.config['domain']).values_list(
+                'supply_point_id', flat=True
+            )
             complete = 0
             incomplete = 0
             for sp in supply_points:
+                products_count = len(SQLLocation.objects.get(supply_point_id=sp).products)
                 st = StockTransaction.objects.filter(case_id=sp,
                                                      report__date__range=[last_period_st,
                                                                           last_period_end]
@@ -162,7 +162,8 @@ class SummaryReportingRates(EWSData):
         if self.config['location_id']:
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             for loc in self.get_locations:
-                supply_points = get_supply_points(loc.location_id, loc.domain)
+                supply_points = get_supply_points(loc.location_id, loc.domain).values_list('supply_point_id',
+                                                                                           flat=True)
                 sites = len(supply_points)
 
                 reported = StockTransaction.objects.filter(case_id__in=supply_points,
@@ -212,12 +213,14 @@ class NonReporting(EWSData):
     def rows(self):
         rows = []
         if self.config['location_id']:
-            supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
+            supply_points = get_supply_points(self.config['location_id'], self.config['domain']).values_list(
+                'supply_point_id', flat=True
+            )
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             reported = StockTransaction.objects.filter(case_id__in=supply_points,
                                                        report__date__range=[last_period_st,
                                                                             last_period_end]
-                                                       ).values_list(*['case_id'], flat=True)
+                                                       ).values_list('case_id', flat=True)
 
             not_reported = SQLLocation.objects.filter(location_type__in=self.location_types,
                                                       parent__location_id=self.config['location_id'])\
@@ -265,14 +268,13 @@ class InCompleteReports(EWSData):
             last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
                                                    location_type__in=self.location_types)
-            products_count = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).count()
             for loc in locations:
                 st = StockTransaction.objects.filter(case_id=loc.supply_point_id,
                                                      report__date__range=[last_period_st,
                                                                           last_period_end]
                                                      ).order_by('-report__date')
                 st_count = st.distinct('product_id').count()
-                if products_count != st_count:
+                if len(loc.products) != st_count:
                     if st:
                         date = st[0].report.date
                     else:
@@ -302,7 +304,7 @@ class ReportingRatesReport(MultiReport):
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
             location_id=self.request.GET.get('location_id'),
-            product=None,
+            products=None,
             program=None
         )
 

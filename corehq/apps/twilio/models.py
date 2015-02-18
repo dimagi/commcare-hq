@@ -26,6 +26,14 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
     def get_form_class(cls):
         return TwilioBackendForm
 
+    @classmethod
+    def get_opt_in_keywords(cls):
+        return ["START", "YES"]
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        return ["STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END", "QUIT"]
+
     def get_load_balancing_interval(self):
         # Twilio automatically rate limits at 1 sms/sec, but we'll also
         # balance the sms load evenly between the phone numbers used by

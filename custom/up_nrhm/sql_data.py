@@ -1,5 +1,5 @@
 from sqlagg.base import CustomQueryColumn, QueryMeta
-from sqlagg.columns import CountUniqueColumn, SumWhen
+from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
 from sqlagg.filters import BETWEEN, EQ, LTE
 import sqlalchemy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
@@ -184,7 +184,7 @@ class ASHAFacilitatorsData(SqlData):
                 FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Acting as DOTS provider",
+                "Total number of ASHAs who are functional on at least 6/10 tasks",
                 FunctionalityChecklistColumn(
                     whens={'hv_percent_functionality >= 60': 1},
                     alias='percent_functionality'),
@@ -198,3 +198,89 @@ class ASHAFacilitatorsData(SqlData):
     @property
     def group_by(self):
         return []
+
+
+class ASHAFunctionalityChecklistData(SqlData):
+    slug = 'asha_functionality_checklist'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], TABLE_ID)
+
+    def _qualify_column(self, column):
+        return '"{}".{}'.format(self.table_name, column)
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("case_id",)),
+            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("hv_asha_name",)),
+            DatabaseColumn("Date of last for submission", SimpleColumn("date",)),
+        ]
+
+    @property
+    def filters(self):
+        return [BETWEEN("date", "startdate", "enddate"), EQ('owner_id', 'af')]
+
+    @property
+    def group_by(self):
+        return ['case_id', 'date', 'hv_asha_name']
+
+
+class ASHAAFChecklistData(SqlData):
+    slug = 'asha_af_checklist'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], TABLE_ID)
+
+    def _qualify_column(self, column):
+        return '"{}".{}'.format(self.table_name, column)
+
+    @property
+    def columns(self):
+        def convert_value(value):
+            value_map = {1: 'Functional', 0: 'Not Functional', 88: 'Not Applicable'}
+            return value_map.get(value)
+
+        def percent(value):
+            return "%d%%" % value
+
+        return [
+            DatabaseColumn("Newborn visits within first day of birth in case of home deliveries",
+                           SimpleColumn("hv_fx_home_birth_visits"), format_fn=convert_value),
+            DatabaseColumn("Set of home visits for newborn care as specified in the HBNC guidelines "
+                           "(six visits in case of Institutional delivery and seven in case of a home delivery)",
+                           SimpleColumn("hv_fx_newborns_visited",), format_fn=convert_value),
+            DatabaseColumn("Attending VHNDs/Promoting immunization",
+                           SimpleColumn("hv_fx_vhnd",), format_fn=convert_value),
+            DatabaseColumn("Supporting institutional delivery",
+                           SimpleColumn("hv_fx_support_inst_delivery",), format_fn=convert_value),
+            DatabaseColumn("Management of childhood illness - especially diarrhea and pneumonia",
+                           SimpleColumn("hv_fx_child_illness_mgmt",), format_fn=convert_value),
+            DatabaseColumn("Household visits with nutrition counseling",
+                           SimpleColumn("hv_fx_nut_counseling",), format_fn=convert_value),
+            DatabaseColumn("Fever cases seen/malaria slides made in malaria endemic area",
+                           SimpleColumn("hv_fx_malaria",), format_fn=convert_value),
+            DatabaseColumn("Acting as DOTS provider",
+                           SimpleColumn("hv_fx_dots",), format_fn=convert_value),
+            DatabaseColumn("Holding or attending village/VHSNC meeting",
+                           SimpleColumn("hv_fx_vhsnc",), format_fn=convert_value),
+            DatabaseColumn("Successful referral of the IUD, female sterilization or male sterilization cases "
+                           "and/or providing OCPs/Condoms",
+                           SimpleColumn("hv_fx_fp",), format_fn=convert_value),
+            DatabaseColumn("Functionality Score", SimpleColumn("hv_percent_functionality",), format_fn=percent)
+        ]
+
+    @property
+    def filters(self):
+        return [EQ("date", "date"), EQ('case_id', 'case_id')]
+
+    @property
+    def group_by(self):
+        return []
+
+    @property
+    def rows(self):
+        return [[index + 1, column.header, column.get_value(self.data)]
+                for index, column in enumerate(self.columns)]

@@ -1,7 +1,7 @@
 from datetime import datetime
 import itertools
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 from custom.ilsgateway import TEST
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
@@ -76,3 +76,26 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
 def language_fix(api):
     endpoint = api.endpoint
     synchronization(None, endpoint.get_smsusers, api.add_language_to_user, None, None, 100, 0)
+
+
+@task
+def locations_fix(domain):
+    locations = SQLLocation.objects.filter(domain=domain, location_type__in=['country', 'region', 'district'])
+    for loc in locations:
+        sp = Location.get(loc.location_id).linked_supply_point()
+        if sp:
+            sp.external_id = None
+            sp.save()
+        else:
+            fake_location = Location(
+                _id=loc.location_id,
+                name=loc.name,
+                domain=domain
+            )
+            SupplyPointCase.get_or_create_by_location(fake_location)
+
+
+@task
+def add_products_to_loc(api):
+    endpoint = api.endpoint
+    synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0)

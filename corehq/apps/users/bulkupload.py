@@ -286,7 +286,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
-            phone_number = row.get('phone_number')
+            phone_number = row.get('phone-number')
             uncategorized_data = row.get('uncategorized_data')
             user_id = row.get('user_id')
             username = row.get('username')

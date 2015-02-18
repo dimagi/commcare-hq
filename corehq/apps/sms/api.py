@@ -5,9 +5,13 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.sms.util import clean_phone_number, clean_text
-from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
-from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
+from corehq.apps.sms.util import (clean_phone_number, clean_text,
+    get_available_backends)
+from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
+    PhoneNumber, ERROR_PHONE_NUMBER_OPTED_OUT)
+from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
+    MSG_OPTED_OUT)
+from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
@@ -34,6 +38,7 @@ class MessageMetadata(object):
         self.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
         self.reminder_id = kwargs.get("reminder_id", None)
         self.chat_user_id = kwargs.get("chat_user_id", None)
+        self.ignore_opt_out = kwargs.get("ignore_opt_out", False)
 
 
 def add_msg_tags(msg, metadata):
@@ -42,6 +47,7 @@ def add_msg_tags(msg, metadata):
         msg.xforms_session_couch_id = metadata.xforms_session_couch_id
         msg.reminder_id = metadata.reminder_id
         msg.chat_user_id = metadata.chat_user_id
+        msg.ignore_opt_out = metadata.ignore_opt_out
         msg.save()
 
 
@@ -180,6 +186,19 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     except Exception:
         logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
     try:
+        phone_obj = PhoneNumber.get_by_phone_number_or_none(msg.phone_number)
+        if phone_obj and not phone_obj.send_sms:
+            if msg.ignore_opt_out and phone_obj.can_opt_in:
+                # If ignore_opt_out is True on the message, then we'll still
+                # send it. However, if we're not letting the phone number
+                # opt back in and it's in an opted-out state, we will not
+                # send anything to it no matter the state of the ignore_opt_out
+                # flag.
+                pass
+            else:
+                msg.set_system_error(ERROR_PHONE_NUMBER_OPTED_OUT)
+                return False
+
         if not backend:
             backend = msg.outbound_backend
             # note: this will handle "verified" contacts that are still pending
@@ -310,6 +329,21 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     return msg
 
 
+def is_opt_message(text, keyword_list):
+    if not isinstance(text, basestring):
+        return False
+
+    text = text.strip().upper()
+    return text in keyword_list
+
+
+def get_opt_keywords(msg):
+    backend_classes = get_available_backends(index_by_api_id=True)
+    backend_class = backend_classes.get(msg.backend_api, SMSBackend)
+    return (backend_class.get_opt_in_keywords(),
+        backend_class.get_opt_out_keywords())
+
+
 def process_incoming(msg, delay=True):
     v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
 
@@ -327,7 +361,24 @@ def process_incoming(msg, delay=True):
                 'verified with this domain'
             )
 
-    if v is not None and v.verified:
+    can_receive_sms = PhoneNumber.can_receive_sms(msg.phone_number)
+    opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
+    if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
+        if PhoneNumber.opt_out_sms(msg.phone_number):
+            metadata = MessageMetadata(ignore_opt_out=True)
+            text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
+            if v:
+                send_sms_to_verified_number(v, text, metadata=metadata)
+            else:
+                send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
+    elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
+        if PhoneNumber.opt_in_sms(msg.phone_number):
+            text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
+            if v:
+                send_sms_to_verified_number(v, text)
+            else:
+                send_sms(msg.domain, None, msg.phone_number, text)
+    elif v is not None and v.verified:
         if domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
             for h in settings.SMS_HANDLERS:
                 try:

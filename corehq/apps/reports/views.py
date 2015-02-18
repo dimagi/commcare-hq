@@ -5,6 +5,7 @@ import tempfile
 import re
 import zipfile
 import cStringIO
+import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
 from unidecode import unidecode
@@ -397,7 +398,9 @@ def hq_download_saved_export(req, domain, export_id):
                 assert domain == group_config.domain
                 all_config_indices = [schema.index for schema in group_config.all_configs]
                 list_index = all_config_indices.index(export.configuration.index)
-                schema = group_config.all_export_schemas[list_index]
+                schema = next(itertools.islice(group_config.all_export_schemas,
+                                               list_index,
+                                               list_index+1))
                 rebuild_export_async.delay(export.configuration, schema, 'couch')
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
