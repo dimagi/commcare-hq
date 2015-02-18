@@ -326,3 +326,15 @@ def commtrack_ledger_sections(mode):
         sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
 
     return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
+
+
+def dict_get_path(dictionary, path):
+    for item in path:
+        dictionary = dictionary[item]
+    return dictionary
+
+
+def dict_set_path(dictionary, path, value):
+    key = path[-1]
+    dictionary = dict_get_path(dictionary, path[:-1])
+    dictionary[key] = value

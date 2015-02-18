@@ -60,7 +60,8 @@ from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
 from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
-from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder
+from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder, \
+    dict_get_path, dict_set_path
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -99,6 +100,27 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
 }
+
+# store a list of references to form ID's so that
+# when an app is copied we can update the references
+# with the new values
+form_id_references = {
+    'app': [],
+    'module': [],
+    'form': [],
+}
+
+
+def FormIdProperty(level, path, **kwargs):
+    """
+    Create a StringProperty that references a form ID.
+    :param level:   From where is the form referenced? One of 'app', 'module', 'form'
+    :param path:    List of dictionary keys used to get from the app / module / form to
+                    the property.
+    """
+    form_id_references[level].append(path)
+    return StringProperty(**kwargs)
+
 
 def _rename_key(dct, old, new):
     if old in dct:
@@ -1331,7 +1353,7 @@ class DetailPair(DocumentSchema):
 
 
 class CaseListForm(NavMenuItemMediaMixin):
-    form_id = StringProperty()
+    form_id = FormIdProperty('module', ('case_list_form', 'form_id'))
     label = DictProperty()
 
     def rename_lang(self, old_lang, new_lang):
@@ -1457,8 +1479,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 needs_case_detail=True
             ))
         if self.case_list_form.form_id:
-            form = self.get_app().get_form(self.case_list_form.form_id)
-            if not form:
+            try:
+                form = self.get_app().get_form(self.case_list_form.form_id)
+            except FormNotFoundException:
                 errors.append({
                     'type': 'case list form missing',
                     'module': self.get_module_info()
@@ -3595,11 +3618,33 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form['unique_id'] = new_unique_id
             if source['_attachments'].has_key("%s.xml" % unique_id):
                 source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
+            return new_unique_id
 
         change_unique_id(source['user_registration'])
+        id_changes = {}
         for m, module in enumerate(source['modules']):
             for f, form in enumerate(module['forms']):
-                change_unique_id(source['modules'][m]['forms'][f])
+                old_id = form['unique_id']
+                new_id = change_unique_id(source['modules'][m]['forms'][f])
+                id_changes[old_id] = new_id
+
+        def check_form_id(level, app_part):
+            for path in form_id_references[level]:
+                old_id = dict_get_path(app_part, path)
+                if old_id in id_changes:
+                    dict_set_path(app_part, path, id_changes[old_id])
+
+        if form_id_references['app']:
+            check_form_id('app', source)
+
+        if form_id_references['module']:
+            for module in source['modules']:
+                check_form_id('module', module)
+
+        if form_id_references['form']:
+            for m, module in source['modules']:
+                for form in module['forms']:
+                    check_form_id('form', form)
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
