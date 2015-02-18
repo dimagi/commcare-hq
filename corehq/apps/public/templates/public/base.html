@@ -106,9 +106,13 @@
             </div>
         </footer>
 
+        {% block modals %}{% endblock modals %}
+
         {# Javascript #}
         {% compress js %}
             <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-route.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-resource.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'style/lib/angular-1.2.27/angular-sanitize.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'djangular/js/django-angular.min.js' %}"></script>
