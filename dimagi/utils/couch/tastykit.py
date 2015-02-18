@@ -226,7 +226,7 @@ class CouchdbkitResource(Resource):
     #not implemented yet are the create/update/delete
     def obj_create(self, bundle, request=None, **kwargs):
         try:
-            j = simplejson.loads(request.raw_post_data)
+            j = simplejson.loads(request.body)
         except:
             pass
         bundle.obj = self._meta.doc_class.wrap(j)
@@ -240,7 +240,7 @@ class CouchdbkitResource(Resource):
         """
         Initial version works ok, though more verification is needed here
         """
-        j = simplejson.loads(request.raw_post_data)
+        j = simplejson.loads(request.body)
         res  = self._meta.doc_class.get_db().save_doc(j)
         bundle.obj = self._meta.doc_class.get(j['_id'])
         return bundle

@@ -32,8 +32,8 @@ def get_file(filename):
                         if key != filename:
                             request.other_files[key] = item
                 else:
-                    # I have had some trouble with request.raw_post_data not preserving newlines...
-                    request.file = StringIO(request.raw_post_data)
+                    # I have had some trouble with request.body not preserving newlines...
+                    request.file = StringIO(request.body)
                     request.other_files = {}
             return view(request, *args, **kwargs)
         return view_prime
