@@ -3,7 +3,6 @@ from corehq.apps.locations.models import SQLLocation
 from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
-from corehq.apps.products.models import SQLProduct
 from django.utils import html
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING

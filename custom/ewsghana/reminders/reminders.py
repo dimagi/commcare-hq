@@ -4,7 +4,7 @@ import datetime
 from casexml.apps.stock.models import StockTransaction
 from corehq import Domain
 from corehq.apps.commtrack.models import SupplyPointCase, StockState
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
