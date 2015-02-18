@@ -46,9 +46,10 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
         }[value]
 
     def get_data(self):
+        sql_product = SQLProduct.objects.get(product_id=self.active_product.get_id)
         filtered_locations = [
             location for location in self.locations
-            if SQLProduct.objects.get(product_id=self.active_product.get_id) in location.sql_location.products
+            if sql_product in location.sql_location.products
         ]
         for loc in filtered_locations:
             case = loc.linked_supply_point()
