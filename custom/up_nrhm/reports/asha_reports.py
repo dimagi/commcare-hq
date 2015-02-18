@@ -1,12 +1,9 @@
-import datetime
-from dateutil.relativedelta import relativedelta
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter
 from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
-from custom.up_nrhm.reports.block_level_af import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 
 
