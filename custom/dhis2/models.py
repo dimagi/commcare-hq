@@ -153,16 +153,16 @@ class Dhis2Api(object):
         self.top_org_unit_name = top_org_unit_name
         self._top_org_unit = None
         self._request = JsonApiRequest(host, username, password)
-        self._tracked_entity_attributes = {  # Cached known tracked entity attribute names and IDs
-            # Prepopulate with attributes that are not tracked entity attributes. This allows us to treat all
-            # attributes the same when adding tracked entity instances, and avoid trying to look up tracked entity
-            # attribute IDs for attributes that are not tracked entity attributes.
-            'Instance': 'instance',
-            'Created': 'created',
-            'Last updated': 'lastupdated',
-            'Org unit': 'ou',
-            'Tracked entity': 'te',
-        }
+        self._tracked_entity_attributes = {}  # Cache known tracked entity attribute names and IDs
+        self._not_tracked_entity_attributes = (
+            # These fields are returned by DHIS2, but cannot be sent in a POST
+            # or PUT request as tracked entity attributes. DHIS2 will 500.
+            'Instance',
+            'Created',
+            'Last updated',
+            'Org unit',
+            'Tracked entity',
+        )
         self._data_elements = {}  # Like _tracked_entity_attributes, but for events data
 
     def _fetch_tracked_entity_attributes(self):
@@ -175,13 +175,32 @@ class Dhis2Api(object):
         for de in response['dataElements']:
             self._data_elements[de['name']] = de['id']
 
-    def add_te_inst(self, entity_data, te_name, ou_id):
+    def _data_to_attributes(self, data):
+        """
+        Convert tracked entity instance data, as returned by DHIS2, into a
+        list of attributes, as accepted by DHIS2.
+        """
+        for attr in self._not_tracked_entity_attributes:
+            data.pop(attr, None)
+        # Convert data keys to tracked entity attribute IDs
+        if any(key not in self._tracked_entity_attributes for key in data):
+            # We are going to have to fetch at least one tracked entity
+            # attribute ID. Fetch them all to avoid multiple API requests.
+            self._fetch_tracked_entity_attributes()
+        # Create a list of attributes, looking up the attribute ID of each one
+        attributes = [{
+            'attribute': self.get_te_attr_id(key),
+            'value': value
+        } for key, value in data.iteritems()]
+        return attributes
+
+    def add_te_inst(self, te_name, ou_id, instance_data):
         """
         Add a tracked entity instance
 
-        :param entity_data: A dictionary of entity attributes and values
         :param te_name: Name of the tracked entity. Add or override its ID in data.
         :param ou_id: Add or override organisation unit ID in data.
+        :param instance_data: A dictionary of entity attributes and values
         :return: New tracked entity instance ID
 
         .. Note:: If te_name is not specified, then `data` must include the
@@ -458,13 +477,7 @@ class Dhis2Api(object):
             "dateOfIncident": when
         }
         if data:
-            if any(key not in self._tracked_entity_attributes for key in data):
-                self._fetch_tracked_entity_attributes()
-            attributes = [{
-                'attribute': self.get_te_attr_id(key),
-                'value': value
-            } for key, value in data.iteritems()]
-            request_data['attributes'] = attributes
+            request_data['attributes'] = self._data_to_attributes(data)
         __, response = self._request.post('enrollments', request_data)
         return response
 

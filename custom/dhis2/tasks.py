@@ -71,7 +71,7 @@ def push_child_entities(settings, children):
             dhis2_child = {
                 CCHQ_CASE_ID: child['_id'],
             }
-            dhis2_child_id = dhis2_api.add_te_inst(dhis2_child, TRACKED_ENTITY, ou_id=ou_id)
+            dhis2_child_id = dhis2_api.add_te_inst(TRACKED_ENTITY, ou_id, dhis2_child)
 
         # Enroll in Pediatric Nutrition Assessment
         date_of_visit = child['date_of_visit'] if getattr(child, 'date_of_visit', None) else today
