@@ -51,7 +51,7 @@ branches:
   - vellum-staging # J$ 11/13
   - quickview # Simon 11/25
 #  - master+double-management # Nick P 12/31
-#  - double-management # SK 12/1
+  - double-management # SK 18/2
   - vellum-model-iteration # daniel 1/22
   - locations-as-groups # tw 1/20
   - locations-as-groups-ui # tw 2/17
