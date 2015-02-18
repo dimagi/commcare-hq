@@ -272,7 +272,7 @@
             });
         };
         if ($.cookie('suppress_build_errors')) {
-            $.cookie('suppress_build_errors', null, {path: '/'});
+            $.removeCookie('suppress_build_errors', { path: '/' });
         } else {
             COMMCAREHQ.app_manager.fetchAndShowFormValidation();
         }
