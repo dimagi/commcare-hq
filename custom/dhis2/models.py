@@ -151,6 +151,7 @@ class Dhis2Api(object):
     def __init__(self, host, username, password, top_org_unit_name=None):
         self._username = username  # Used when creating DHIS2 events from CCHQ form data
         self.top_org_unit_name = top_org_unit_name
+        self._top_org_unit = None
         self._request = JsonApiRequest(host, username, password)
         self._tracked_entity_attributes = {  # Cached known tracked entity attribute names and IDs
             # Prepopulate with attributes that are not tracked entity attributes. This allows us to treat all
@@ -212,63 +213,58 @@ class Dhis2Api(object):
 
 
         """
-        # Convert data keys to tracked entity attribute IDs
-        if any(key not in self._tracked_entity_attributes for key in entity_data):
-            # We are going to have to fetch at least one tracked entity attribute ID. Fetch them all to avoid
-            # multiple API requests.
-            self._fetch_tracked_entity_attributes()
-        # Create a list of attributes, looking up the attribute ID of each one
-        attributes = [{
-            'attribute': self.get_te_attr_id(key),
-            'value': value
-        } for key, value in entity_data.iteritems()]
         request_data = {
             'trackedEntity': self.get_te_id(te_name),
             'orgUnit': ou_id,
-            'attributes': attributes
+            'attributes': self._data_to_attributes(instance_data)
         }
         __, response = self._request.post('trackedEntityInstances', request_data)
         return response['reference']
 
-    def update_te_inst(self, data):
+    def update_te_inst(self, instance_data):
         """
         Update a tracked entity instance with the given data
 
-        :param data: Tracked entity instance data. Must include its ID,
+        :param instance_data: Tracked entity instance data. Must include its ID,
                      organisation unit and tracked entity type
         """
-        for attr in ('id', 'orgUnit', 'trackedEntity'):
-            if attr not in data:
-                raise KeyError('Mandatory attribute "%s" missing from tracked entity instance data' % attr)
-        # Convert data keys to tracked entity attribute IDs
-        if any(key not in self._tracked_entity_attributes for key in data):
-            self._fetch_tracked_entity_attributes()
-        # Set instance data keys to attribute IDs
-        inst = {self.get_te_attr_id(k): v for k, v in data.iteritems()}
-        __, response = self._request.put('trackedEntityInstances/' + inst['id'], inst)
+        try:
+            te_inst_id = instance_data.pop('Instance')
+            ou_id = instance_data.pop('Org unit')
+        except KeyError as err:
+            raise KeyError('Mandatory attribute missing from tracked entity instance data: %s' % err)
+        request_data = {
+            'trackedEntityInstance': te_inst_id,
+            'orgUnit': ou_id,
+            'attributes': self._data_to_attributes(instance_data)
+        }
+        __, response = self._request.put('trackedEntityInstances/' + te_inst_id, request_data)
         return response
 
     def get_top_org_unit(self):
         """
         Return the top-most organisation unit.
         """
-        if self.top_org_unit_name:
-            # A top organisation unit has been specified in the settings. Use that
-            __, response = self._request.get('organisationUnits',
-                                             params={'links': 'false',
-                                                     'query': self.top_org_unit_name})
-            return response['organisationUnits'][0]
-        # Traverse up the tree of organisation units
-        __, org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
-        org_unit = org_units_json['organisationUnits'][0]
-        # The List response doesn't include parent (even if you ask for it :-| ). Request org_unit details.
-        __, org_unit = self._request.get('organisationUnits/' + org_unit['id'])
-        while True:
-            if not org_unit.get('parent'):
-                # The organisation unit with no parent is the top-most organisation unit
-                break
-            __, org_unit = self._request.get('organisationUnits/' + org_unit['parent']['id'])
-        return org_unit
+        if self._top_org_unit is None:
+            if self.top_org_unit_name:
+                # A top organisation unit has been specified in the settings. Use that
+                __, response = self._request.get('organisationUnits',
+                                                 params={'links': 'false',
+                                                         'query': self.top_org_unit_name})
+                self._top_org_unit = response['organisationUnits'][0]
+            else:
+                # Traverse up the tree of organisation units
+                __, org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
+                org_unit = org_units_json['organisationUnits'][0]
+                # The List response doesn't include parent (even if you ask for it :-| ). Request org_unit details.
+                __, org_unit = self._request.get('organisationUnits/' + org_unit['id'])
+                while True:
+                    if not org_unit.get('parent'):
+                        # The organisation unit with no parent is the top-most organisation unit
+                        break
+                    __, org_unit = self._request.get('organisationUnits/' + org_unit['parent']['id'])
+                self._top_org_unit = org_unit
+        return self._top_org_unit
 
     def get_resource_id(self, resource, name):
         """
