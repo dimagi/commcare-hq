@@ -13,8 +13,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View, TemplateView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.app_manager.models import get_apps_in_domain, Application
-from corehq.apps.app_manager.util import ParentCasePropertyBuilder
+from corehq.apps.app_manager.models import get_apps_in_domain
 from corehq import Session, ConfigurableReport
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -31,7 +30,6 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     CustomDataSourceConfiguration,
 )
-from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
 from corehq.apps.userreports.sql import get_indicator_table, IndicatorSqlAdapter, get_engine
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.ui.forms import (
@@ -91,11 +89,18 @@ class CreateNewReportBuilderView(ReportBuilderView):
             "sources_map": {
                 app._id: {
                     "case": [{"text": t, "value": t} for t in app.get_case_types()],
-                    "form": [{"text": form.default_name(), "value": form.get_unique_id()} for form in app.get_forms()]
+                    "form": [
+                        {
+                            "text": form.default_name(),
+                            "value": form.get_unique_id()
+                        } for form in app.get_forms()
+                    ]
                 } for app in apps
             },
             "domain": self.domain,
-            'report': {"title": _("Create New Report")},
+            'report': {
+                "title": _("Create New Report"),
+            },
             'form': self.create_new_report_builder_form,
         }
         return context
@@ -397,6 +402,7 @@ def export_data_source(request, domain, config_id):
 def data_source_status(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     return json_response({'isBuilt': config.built})
+
 
 @login_and_domain_required
 def choice_list_api(request, domain, report_id, filter_id):

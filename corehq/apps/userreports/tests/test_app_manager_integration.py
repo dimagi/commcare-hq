@@ -55,9 +55,9 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
             starred='yes',
             estimate=2,
         )
+
         def _get_column_property(column):
             return column.id if column.id != 'doc_id' else '_id'
-
 
         default_case_property_datatypes = DEFAULT_CASE_PROPERTY_DATATYPES
         [row] = data_source.get_all_values(sample_doc)

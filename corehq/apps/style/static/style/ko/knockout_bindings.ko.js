@@ -672,7 +672,7 @@ ko.bindingHandlers.select2 = new function(){
         }
 
         // Update the selected item
-        $el.val(ko.unwrap(allBindings()['value'])).trigger("change");
+        $el.val(ko.unwrap(allBindings().value)).trigger("change");
     };
 }();
 

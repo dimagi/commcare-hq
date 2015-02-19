@@ -300,8 +300,6 @@ class CreateNewReportForm(forms.Form):
                         "delete all the reports using a particular data source (or "
                         "the data source itself) and try again."
                     ))
-                    # Should we show there error on the report_source field specifically?
-                    # example here: https://docs.djangoproject.com/en/1.5/ref/forms/validation/#cleaning-and-validating-fields-that-depend-on-each-other
 
         return cleaned_data
 
@@ -334,12 +332,12 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.layout = crispy.Layout(
             self.top_fieldset,
             FormActions(
-               crispy.ButtonHolder(
-                   crispy.Submit(
-                       'submit',
-                       _(self.button_text)
-                   )
-               ),
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        'submit',
+                        _(self.button_text)
+                    )
+                ),
             ),
         )
 
@@ -373,7 +371,9 @@ class ConfigureNewReportBase(forms.Form):
         """
         return crispy.Fieldset(
             _("Filters Available in this Report"),
-            crispy.Div(crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'),
+            crispy.Div(
+                crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'
+            ),
             crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
 
@@ -469,7 +469,6 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
         super(ConfigureNewBarChartReport, self).__init__(app_id, source_type, report_source_id, *args, **kwargs)
         self.fields['group_by'].choices = self._group_by_choices
 
-
     @property
     def top_fieldset(self):
         return crispy.Fieldset(
@@ -547,7 +546,9 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
             parent_tables,
             crispy.Fieldset(
                 _("Columns to Display"),
-                crispy.Div(crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'),
+                crispy.Div(
+                    crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
+                ),
                 crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
             )
         )
