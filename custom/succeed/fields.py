@@ -1,13 +1,10 @@
 from django.utils.translation import ugettext_noop
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
-from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query
 from corehq.apps.es import CaseES
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import SUBMISSION_SELECT_FIELDS
-from casexml.apps.case.models import CommCareCase
 from custom.succeed.utils import (
     CONFIG
 )
