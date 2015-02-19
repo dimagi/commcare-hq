@@ -10,7 +10,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX
 
 
 def get_case_properties(domain, case_type=None):
@@ -353,11 +353,14 @@ def is_location_group(owner_id, domain):
     Return yes if the specified owner_id is one of the
     faked location groups.
     """
-    group_ids = [
-        loc.case_sharing_group_object()._id
-        for loc in SQLLocation.objects.filter(domain=domain)
-    ]
-    return owner_id in group_ids
+    if not owner_id.startswith(LOCATION_SHARING_PREFIX):
+        return False
+
+    results = SQLLocation.objects.filter(
+        domain=domain,
+        location_id=owner_id.replace(LOCATION_SHARING_PREFIX, '')
+    )
+    return results.exists()
 
 
 def is_user_or_case_sharing_group(owner):
