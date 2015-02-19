@@ -1401,7 +1401,7 @@ class LocationUserMixin(DocumentSchema):
                 "Attempting to access multiple locations for a user in a domain that does not support this."
             )
 
-        return self._locations()
+        return self._locations
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
