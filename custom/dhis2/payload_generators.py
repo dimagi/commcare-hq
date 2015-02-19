@@ -76,7 +76,8 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # Update tracked entity instance
             instance = dhis2_api.get_te_inst(case['external_id'])
             instance.update({dhis2_attr: case[cchq_attr]
-                             for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()})
+                             for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
+                             if getattr(case, cchq_attr, None)})
             dhis2_api.update_te_inst(instance)
             # Create a paediatric nutrition assessment event.
             nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
@@ -90,7 +91,8 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # Update tracked entity instance
             instance = dhis2_api.get_te_inst(case['external_id'])
             instance.update({dhis2_attr: case[cchq_attr]
-                             for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()})
+                             for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()
+                             if getattr(case, cchq_attr, None)})
             dhis2_api.update_te_inst(instance)
             # Check whether the case needs to be enrolled in the Risk Assessment Program
             risk_id = dhis2_api.get_program_id('Underlying Risk Assessment')
