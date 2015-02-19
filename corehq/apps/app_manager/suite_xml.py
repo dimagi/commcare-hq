@@ -269,7 +269,7 @@ class CreatePushBase(IdNode, BaseFrame):
 
     def add_command(self, command):
         node = etree.SubElement(self.node, 'command')
-        node.text = command
+        node.attrib['value'] = command
 
     def add_datum(self, datum):
         self.node.append(datum.node)
@@ -748,7 +748,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             for child in frame_children:
                 if isinstance(child, basestring):
-                    frame.add_command(child)
+                    frame.add_command(XPath.string(child))
                 else:
                     frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
             return frame
@@ -1540,19 +1540,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if not module.display_separately:
                     open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
                     frame.if_clause = '{count} = 1'.format(count=open_goal.count())
-                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
                 else:
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
             elif form.case_type == CAREPLAN_TASK:
                 if not module.display_separately:
-                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
                     if form.mode == 'update':
                         count = CaseTypeXpath(CAREPLAN_TASK).case().select(
@@ -1560,9 +1560,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                         ).select('@status', 'open').count()
                         frame.if_clause = '{count} >= 1'.format(count=count)
 
-                        frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
+                        frame.add_command(XPath.string(
+                            self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
+                        ))
                 else:
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
                 if form.mode == 'create':

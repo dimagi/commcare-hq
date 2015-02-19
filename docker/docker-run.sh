@@ -29,4 +29,4 @@ docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:red
 docker run --rm --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch charlesfleche/commcare-hq python manage.py bootstrap example example@example.com example
 
 
-docker run --name commcare-hq --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch -p 8000:8000 -d charlesfleche/commcare-hq
+docker run --name commcare-hq --link postgres:postgres --link couchdb:couchdb --link redis:redis --link elasticsearch:elasticsearch -p 8000:8000 -e BASE_HOST=`hostname -I | awk '{print $1}'` -d charlesfleche/commcare-hq

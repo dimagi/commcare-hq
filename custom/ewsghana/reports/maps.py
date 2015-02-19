@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_noop
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointDataSource
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
@@ -19,7 +19,6 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
         ]
         return SQLLocation.objects.filter(domain=self.domain,
                                           location_type__in=reporting_types,
-                                          product__code=self.active_product.code_,
                                           **kwargs)
 
     @property
@@ -47,7 +46,15 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
         }[value]
 
     def get_data(self):
-        for loc in self.locations:
+        if self.active_product:
+            sql_product = SQLProduct.objects.get(product_id=self.active_product.get_id)
+            filtered_locations = [
+                location for location in self.locations
+                if sql_product in location.sql_location.products
+            ]
+        else:
+            filtered_locations = []
+        for loc in filtered_locations:
             case = loc.linked_supply_point()
             if case:
                 stock_states = StockState.objects.filter(

@@ -58,13 +58,13 @@ class DomainMigrations(DocumentSchema):
             domain.save()
 
 LICENSES = {
-    'cc': 'Creative Commons Attribution',
-    'cc-sa': 'Creative Commons Attribution, Share Alike',
-    'cc-nd': 'Creative Commons Attribution, No Derivatives',
-    'cc-nc': 'Creative Commons Attribution, Non-Commercial',
-    'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike',
-    'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives',
-    }
+    'cc': 'Creative Commons Attribution (CC BY)',
+    'cc-sa': 'Creative Commons Attribution, Share Alike (CC BY-SA)',
+    'cc-nd': 'Creative Commons Attribution, No Derivatives (CC BY-ND)',
+    'cc-nc': 'Creative Commons Attribution, Non-Commercial (CC BY-NC)',
+    'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-SA)',
+    'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-NC-ND)'
+}
 
 LICENSE_LINKS = {
     'cc': 'http://creativecommons.org/licenses/by/4.0',

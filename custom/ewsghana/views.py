@@ -8,6 +8,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reminders.reminders import first_soh_process_user, second_soh_process_user, \
@@ -136,6 +137,16 @@ def ews_add_products_to_locs(request, domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
     add_products_to_loc.delay(EWSApi(domain=domain, endpoint=endpoint))
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def clear_products(request, domain):
+    locations = SQLLocation.objects.filter(domain=domain)
+    for loc in locations:
+        loc.products = []
+        loc.save()
     return HttpResponse('OK')
 
 

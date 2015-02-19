@@ -50,14 +50,11 @@ branches:
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
   - quickview # Simon 11/25
-#  - master+double-management # Nick P 12/31
-  - double-management # SK 18/2
-  - vellum-model-iteration # daniel 1/22
+  - doubleman-clean # SK 18/2
   - locations-as-groups # tw 1/20
   - locations-as-groups-ui # tw 2/17
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
-  - dhis2+project-settings-update # Noah 2/11
   - dhis2 # Norman 2/6
   - project-settings-update # sravan 1/30
   - report-builder # Noah 2/16

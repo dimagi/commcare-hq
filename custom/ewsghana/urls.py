@@ -14,4 +14,5 @@ urlpatterns = patterns('custom.ewsghana.views',
     url(r'^reminder_test/(?P<phone_number>\d+)/$', RemindersTester.as_view(), name='reminders_tester'),
     url(r'^ews_fix_locations/$', 'ews_fix_locations', name='ews_fix_locations'),
     url(r'^ews_add_products_to_locs/$', 'ews_add_products_to_locs', name='ews_add_products_to_locs'),
+    url(r'^clear_products/$', 'clear_products', name='clear_products')
 )

@@ -284,7 +284,9 @@ cloudCare.CaseListView = Backbone.View.extend({
             bSort: true,
             oLanguage: {
                 "sSearch": "Filter cases:"
-            }
+            },
+            sScrollX: $('#case-list').css('width'),
+            bScrollCollapse: true
         });
         var $dataTablesFilter = $(".dataTables_filter");
         $dataTablesFilter.css('float', 'none').css('padding', '3px').addClass('span12');

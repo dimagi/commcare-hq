@@ -120,7 +120,7 @@ class GhanaEndpoint(LogisticsEndpoint):
 
 class EWSApi(APISynchronization):
     LOCATION_CUSTOM_FIELDS = ['created_at', 'supervised_by']
-    SMS_USER_CUSTOM_FIELDS = ['to']
+    SMS_USER_CUSTOM_FIELDS = ['to', 'backend', 'role']
     PRODUCT_CUSTOM_FIELDS = []
 
     def _create_location_type_if_not_exists(self, supply_point, location):
@@ -148,7 +148,7 @@ class EWSApi(APISynchronization):
                 new_location.metadata['supervised_by'] = supply_point.supervised_by
             new_location.save()
             sql_loc = new_location.sql_location
-            sql_loc.products = SQLProduct.objects.filter(code__in=supply_point.products)
+            sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
             sql_loc.save()
             return new_location
 
@@ -158,7 +158,7 @@ class EWSApi(APISynchronization):
                 location.metadata['supervised_by'] = supply_point.supervised_by
                 location.save()
                 sql_loc = location.sql_location
-                sql_loc.products = SQLProduct.objects.filter(code__in=supply_point.products)
+                sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
                 sql_loc.save()
             SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
                                                           name=supply_point.name,
