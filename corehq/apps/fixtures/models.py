@@ -297,6 +297,9 @@ class FixtureDataItem(Document):
         )
 
         if wrap:
+            # if any fixtures are referencing location group IDs,
+            # make sure that those get wrapped properly as group-looking
+            # things
             location_group_ids = set([
                 gid for gid in group_ids
                 if gid.startswith('locationgroup-') or gid.startswith('locationreportinggroup-')
