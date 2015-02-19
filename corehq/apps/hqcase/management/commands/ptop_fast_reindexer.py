@@ -47,6 +47,11 @@ class PtopReindexer(NoArgsCommand):
                     dest='bulk',
                     default=False,
                     help='Do a bulk load'),
+        make_option('--in-place',
+                    action='store_true',
+                    dest='in_place',
+                    default=False,
+                    help='Run the reindex in place - assuming it is against a live index.'),
         make_option('--sequence',
                     type="int",
                     action='store',
@@ -155,7 +160,7 @@ class PtopReindexer(NoArgsCommand):
         # finish.
 
         current_db_seq = self.pillow.couch_db.info()['update_seq']
-        self.pillow.set_checkpoint({'seq': current_db_seq})
+
 
         # Write sequence file to disk
         seq_filename = self.get_seq_filename()
@@ -172,14 +177,10 @@ class PtopReindexer(NoArgsCommand):
                 fout.write('{}\n'.format(simplejson.dumps(row)))
         self.log("View and sequence written to disk: %s" % datetime.utcnow().isoformat())
 
-    def load_seq_from_disk(self):
-        """
-        Main load of view data from disk.
-        """
+    def _load_seq_from_disk(self):
         self.log("Loading from disk: %s" % datetime.utcnow().isoformat())
         with open(self.get_seq_filename(), 'r') as fin:
-            current_db_seq = fin.read()
-            self.pillow.set_checkpoint({'seq': current_db_seq})
+            return fin.read()
 
     def view_data_file_iter(self):
         with open(self.get_dump_filename(), 'r') as fin:
@@ -195,6 +196,7 @@ class PtopReindexer(NoArgsCommand):
         self.runfile = options['runfile']
         self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
         self.start_num = options.get('seq', 0)
+        self.in_place = options['in_place']
 
     def handle(self, *args, **options):
         if not options['noinput']:
@@ -221,7 +223,6 @@ class PtopReindexer(NoArgsCommand):
 
         self._bootstrap(options)
         start = datetime.utcnow()
-
         self.log("using chunk size %s" % self.chunk_size)
 
         if not self.resume:
@@ -239,7 +240,10 @@ class PtopReindexer(NoArgsCommand):
                 sys.exit()
 
             self.set_seq_prefix(runparts[-1])
-        seq = self.load_seq_from_disk()
+
+        if not self.in_place:
+            seq = self._load_seq_from_disk()
+            self.pillow.set_checkpoint({'seq': seq})
 
         self.post_load_hook()
 
@@ -341,7 +345,7 @@ class ElasticReindexer(PtopReindexer):
     own_index_exists = True
 
     def pre_load_hook(self):
-        if self.own_index_exists:
+        if not self.in_place and self.own_index_exists:
             # delete the existing index.
             self.log("Deleting index")
             self.indexing_pillow.delete_index()
@@ -350,10 +354,12 @@ class ElasticReindexer(PtopReindexer):
             self.indexing_pillow.seen_types = {}
 
     def post_load_hook(self):
-        # configure index to indexing mode
-        self.indexing_pillow.set_index_reindex_settings()
+        if not self.in_place:
+            # configure index to indexing mode
+            self.indexing_pillow.set_index_reindex_settings()
 
     def pre_complete_hook(self):
-        self.log("setting index settings to normal search configuration and refreshing index")
-        self.indexing_pillow.set_index_normal_settings()
+        if not self.in_place:
+            self.log("setting index settings to normal search configuration and refreshing index")
+            self.indexing_pillow.set_index_normal_settings()
         self.indexing_pillow.refresh_index()
