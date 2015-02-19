@@ -60,7 +60,10 @@ def location_fixture_generator(user, version, last_sync=None):
     else:
         locations = []
         if user.location:
+            # add users location (and ancestors) to fixture
             locations.append(user.location)
+
+            # optionally add all descendants as well
             if user.location.location_type_object.view_descendants:
                 locations += user.location.descendants
 
