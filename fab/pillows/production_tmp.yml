@@ -1,10 +1,10 @@
 # fab/pillows/production_tmp.yml
 ---
 include_groups:
-#  - mvp
+  - mvp
   - mvp_indicators
 include_pillows:
-#  - custom.bihar.models.CareBiharFluffPillow
+  - custom.bihar.models.CareBiharFluffPillow
   - custom.opm.models.OpmCaseFluffPillow
   - custom.opm.models.OpmUserFluffPillow
   - custom.opm.models.OpmFormFluffPillow
@@ -13,7 +13,7 @@ include_pillows:
   - custom.opm.models.VhndAvailabilityFluffPillow
   - custom.apps.cvsu.models.UnicefMalawiFluffPillow
   - custom.reports.care_sa.models.CareSAFluffPillow
-#  - custom.reports.mc.models.MalariaConsortiumFluffPillow
+  - custom.reports.mc.models.MalariaConsortiumFluffPillow
   - custom.m4change.models.AncHmisCaseFluffPillow
   - custom.m4change.models.LdHmisCaseFluffPillow
   - custom.m4change.models.ImmunizationHmisCaseFluffPillow
