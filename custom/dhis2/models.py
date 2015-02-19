@@ -533,15 +533,17 @@ class Dhis2Api(object):
             if isinstance(field, tuple):
                 # field is (field_name, field_value) of a dropdown
                 field_name, field_value = field
-                value = xform.form.get(field_name) == field_value
+                if xform.form.get(field_name) == field_value:
+                    data_values.append({
+                        'dataElement': self._data_elements[element_name],
+                        'value': True
+                    })
             else:
-                field_name = field
-                value = xform.form.get(field_name)
-            if field_name in xform.form:
-                data_values.append({
-                    'dataElement': self._data_elements[element_name],
-                    'value': value
-                })
+                if field in xform.form:
+                    data_values.append({
+                        'dataElement': self._data_elements[element_name],
+                        'value': xform.form[field]
+                    })
         return data_values
 
     def form_to_event(self, program_id, xform, data_element_names, te_inst_id=None):
