@@ -31,7 +31,8 @@ class SmsGatewayFeeCriteria(models.Model):
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
 
     @classmethod
-    def get_most_specific(cls, backend_api_id, direction, backend_instance=None, country_code=None, national_number=None):
+    def get_most_specific(cls, backend_api_id, direction,
+                          backend_instance=None, country_code=None, national_number=None):
         """
         Gets the most specific criteria available based on (and in order of preference for optional):
         - backend_api_id
@@ -137,7 +138,8 @@ class SmsGatewayFee(models.Model):
 
 
     @classmethod
-    def get_by_criteria(cls, backend_api_id, direction, backend_instance=None, country_code=None, national_number=None):
+    def get_by_criteria(cls, backend_api_id, direction,
+                        backend_instance=None, country_code=None, national_number=None):
         criteria = SmsGatewayFeeCriteria.get_most_specific(
             backend_api_id,
             direction,
