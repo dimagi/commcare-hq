@@ -11,6 +11,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.elastic import es_query, ES_URLS
 from corehq.util import remove_dups
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.commtrack.models import SQLLocation
 
 from .. import util
 from ..models import HQUserType, HQUserToggle
@@ -247,8 +248,6 @@ class EmwfMixin(object):
                 loc_type for loc_type in Domain.get_by_name(self.domain).location_types
                 if loc_type.shares_cases
             ]
-
-        from corehq.apps.commtrack.models import SQLLocation
 
         locations = SQLLocation.objects.filter(
             name__icontains=self.q.lower(),
