@@ -62,7 +62,7 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
     def rows(self):
         config = self.report_config
         if not config.get('sf'):
-            rows, self.total_under_facilitator, total_with_checklist = self.model.rows
+            rows, self.total_under_facilitator, self.total_with_checklist = self.model.rows
         else:
             rows = self.model.rows[0]
         return rows
