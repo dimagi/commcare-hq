@@ -257,4 +257,3 @@ class APISynchronization(object):
                     v.delete()
                 user.save_verified_number(self.domain, phone_number, True,
                                           logistics_sms_user.backend)
-
