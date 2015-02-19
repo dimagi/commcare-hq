@@ -3,8 +3,8 @@ from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
 from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
-from corehq.apps.smsforms.models import XFormsSession, XFORMS_SESSION_IVR
-from corehq.apps.app_manager.models import get_app, Form
+from corehq.apps.smsforms.models import XFORMS_SESSION_IVR, get_session_by_session_id
+from corehq.apps.app_manager.models import Form
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from django.http import HttpResponse
 from django.conf import settings
@@ -133,7 +133,7 @@ def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_
         if hang_up:
             if call_log_entry.xforms_session_id is not None:
                 # Process disconnect
-                session = XFormsSession.by_session_id(call_log_entry.xforms_session_id)
+                session = get_session_by_session_id(call_log_entry.xforms_session_id)
                 if session.end_time is None:
                     if call_log_entry.submit_partial_form:
                         submit_unfinished_form(session.session_id, call_log_entry.include_case_side_effects)
