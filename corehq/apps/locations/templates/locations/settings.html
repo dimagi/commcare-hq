@@ -31,102 +31,90 @@
             }
         });
     };
-    $("#sync_facilities").click(function() {
-        var url = '{% url "sync_facilities_with_locations" domain %}';
-        _post(this, url);
-    });
 
 </script>
 {% endblock %}
 
 {% block main_column %}
+    <div class="row-fluid">
+        <div class="span8">
+            <h2>{% trans "Location Hierarchy" %}</h2>
+            <p>
+                {% blocktrans %}
+                    Location Types allow you to configure the different types
+                    of locations within your project (districts, facilities,
+                    front line workers, etc.). Locations can own data and
+                    cases, view child location's data or simply be used for
+                    aggregation. Once you've defined your location types,
+                    you'll be able to add locations for your project.
+                    Learn more about locations on our <a href="https://confluence.dimagi.com/display/commtrack/Locations">Help Site</a>.
+                {% endblocktrans %}
+            </p>
+        </div>
+    </div>
     <form id="settings" class="form form-horizontal" method="post">
         <fieldset>
-            <legend>{% trans "Location Hierarchy" %}</legend>
             <div class="control-group">
-                <label class="control-label">{% trans 'Edit Locations' %}</label>
-                <div class="controls">
-                   <div class="text-error" data-bind="text: loc_types_error"></div>
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>{% trans "Location Type" %}</th>
-                                <th>{% trans "Location Type Code" %}</th>
-                                <th>{% trans "Allowed Parent Type" %}</th>
-                                {% if commtrack_enabled %}
-                                <th>{% trans "Tracks Stock" %}</th>
-                                {% endif %}
-                                <th>{% trans "Shares Cases" %}</th>
-                                <th>{% trans "View Child Cases" %}</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody data-bind="foreach: loc_types">
-                            <tr data-bind="bind_element: Object()">
-                                <td class="control-group" data-bind="css: { 'error': name_error }">
-                                    <input class="loctype_name" data-bind="value: name" type="text" />
-                                    <div class="help-inline" data-bind="text: name_error"></div>
-                                </td>
-                                <td class="control-group" data-bind="css: { 'error': code_error }">
-                                    <input class="loctype_code" data-bind="value: code" type="text" />
-                                    <div class="help-inline" data-bind="text: code_error"></div>
-                                </td>
-                                <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
-                                    <select data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">
-                                    </select>
-                                    <div class="help-inline" data-bind="text: allowed_parents_error"></div>
-                                </td>
-                                {% if commtrack_enabled %}
-                                <td>
-                                    <input data-bind="checked: tracks_stock" type="checkbox" />
-                                </td>
-                                {% endif %}
-                                <td>
-                                    <input data-bind="checked: shares_cases" type="checkbox" />
-                                </td>
-                                <td>
-                                    <input data-bind="checked: view_descendants" type="checkbox" />
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
-                                        <i class="icon-trash icon-white"></i> {% trans "Remove" %}
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <button type="button" class="btn" data-bind="click: new_loctype">
-                        <i class="icon-plus"></i> {% trans "New Location Type" %}
-                    </button>
-                </div>
+                <button type="button" class="btn btn-success" data-bind="click: new_loctype">
+                    <i class="icon-plus"></i> {% trans "New Location Type" %}
+                </button>
+                <hr />
+                <div class="text-error" data-bind="text: loc_types_error"></div>
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Location Type" %}</th>
+                            <th>{% trans "Location Type Code" %}</th>
+                            <th>{% trans "Allowed Parent Type" %}</th>
+                            {% if commtrack_enabled %}
+                            <th>{% trans "Tracks Stock" %}</th>
+                            {% endif %}
+                            <th>{% trans "Shares Cases" %}</th>
+                            <th>{% trans "View Child Cases" %}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: loc_types">
+                    <tr data-bind="bind_element: Object()">
+                        <td class="control-group" data-bind="css: { 'error': name_error }">
+                            <input class="loctype_name" data-bind="value: name" type="text" />
+                            <div class="help-inline" data-bind="text: name_error"></div>
+                        </td>
+                        <td class="control-group" data-bind="css: { 'error': code_error }">
+                            <input class="loctype_code" data-bind="value: code" type="text" />
+                            <div class="help-inline" data-bind="text: code_error"></div>
+                        </td>
+                        <td class="control-group" data-bind="css: { 'error': allowed_parents_error }">
+                            <select data-bind="options: $root.loc_types, optionsText: 'name', optionsValue: 'name', selectedOptions: allowed_parents, optionsCaption: '\u2013top level\u2013'">
+                            </select>
+                            <div class="help-inline" data-bind="text: allowed_parents_error"></div>
+                        </td>
+                        {% if commtrack_enabled %}
+                        <td>
+                            <input data-bind="checked: tracks_stock" type="checkbox" />
+                        </td>
+                        {% endif %}
+                        <td>
+                            <input data-bind="checked: shares_cases" type="checkbox" />
+                        </td>
+                        <td>
+                            <input data-bind="checked: view_descendants" type="checkbox" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
+                                <i class="icon-trash icon-white"></i> {% trans "Remove" %}
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </fieldset>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                {% trans "Save Location Hierarchy" %}
-            </button>
-        </div>
+        <button type="submit" class="btn btn-primary">
+            {% trans "Save Location Hierarchy" %}
+        </button>
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
-
-    {% if request.couch_user.is_previewer %}
-    <header>
-        <div class="row-fluid">
-            <div class="span8">
-                <h2>{% trans "Sync Locations with Facility Registry" %}</h2>
-            </div>
-        </div>
-    </header>
-    <div class="row-fluid">
-        <div class="span12">
-            <div class="btn-toolbar">
-                <a class="btn" id="sync_facilities">
-                    {% trans "Sync Now" %}
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
 {% endblock %}
