@@ -8,7 +8,7 @@
             <label class="control-label">{% trans "Form Name" %}</label>
             <div class="controls">
                 {% if edit %}
-                    {{ form.name|input_trans:langs|safe }}
+                    {% input_trans form.name langs %}
                 {% else %}
                     {{ form.name|html_trans:langs|safe }}
                 {% endif %}

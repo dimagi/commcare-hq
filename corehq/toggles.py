@@ -215,6 +215,12 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DOUBLE_MANAGEMENT = StaticToggle(
+    'double_management',
+    'Case list actions a.k.a. double management',
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
+)
+
 BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',

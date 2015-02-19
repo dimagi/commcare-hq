@@ -1,0 +1,69 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% if app.application_version == '2.0' and request|toggle_enabled:'DOUBLE_MANAGEMENT' %}
+    <div class="control-group">
+        <label class="control-label">
+            {% trans "Registration Form Accessible from Case List" %}
+            <span class="hq-help-template"
+                  data-title="{% trans "Registration Form Accessible from Case List" %}"
+                  data-content="{% blocktrans %}This option can minimize duplicate case registrations by requiring
+                  mobile users to search the case list (and confirm that it doesn’t exist already) before they
+                  can enter the registration form to create a new case.{% endblocktrans %}"
+            ></span>
+        </label>
+        <div id="case-list-form" class="controls error">
+            {% if edit %}
+                <div data-bind="visible: caseListForm() || allowed, css: { 'alert alert-error': formMissing() || !allowed}">
+                    <select data-bind="
+                        optstr: caseListFormOptstr,
+                        value: caseListFormProxy
+                        "></select>
+                    <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
+                    <span id="case_list_form-label">
+                        with label: {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
+                    </span>
+                    <div data-bind="visible: !allowed">
+                        {% trans "Error! Registration form will be ignored since this module has parent case selection configured." %}
+                    </div>
+                    <div data-bind="visible: formMissing()">
+                        {% trans "Error! The selected form does not exist." %}
+                    </div>
+                </div>
+                <div class="btn-group" data-bind="visible: !allowed && !caseListForm()">
+                    <button class="btn disabled" disabled="disabled">
+                        <span>{% trans "Don't show" %}</span>
+                    </button>
+                    <button class="btn dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="#" data-bind="click: toggleMessage">
+                                {% trans "Why can't I select a registration form?" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="alert alert-info" data-bind="visible: messageVisible">
+                    <div>
+                        {% blocktrans %}
+                        Registration forms are only support on modules that do not have parent case selection configured and where all forms in the module update or close a case.
+                        {% endblocktrans %}
+                    </div>
+                    <a href="#" class="btn btn-mini" data-bind="click: toggleMessage">
+                        {% trans "OK, close this" %}
+                    </a>
+                </div>
+            {% else %}
+                <span data-bind="text: caseListFormDisplay"></span>
+                {% if module.case_list_form.form_id %}
+                    with label: {{ module.case_list_form.label|trans:langs }}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <div id="case_list_media">
+        {% include "app_manager/partials/nav_menu_media.old.html" with item=module.case_list_form qualifier='case_list_form_'  ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
+    </div>
+{% endif %}
