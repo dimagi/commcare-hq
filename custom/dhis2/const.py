@@ -7,7 +7,7 @@ CCHQ_CASE_ID = 'cchq_id'
 CASE_TYPE = 'child_gmp'
 TRACKED_ENTITY = 'Child'
 
-REGISTER_CHILD_XMLNS = '"http://openrosa.org/formdesigner/6A5D0A79-E945-4F62-A737-3D4E6998685C'
+REGISTER_CHILD_XMLNS = 'http://openrosa.org/formdesigner/6A5D0A79-E945-4F62-A737-3D4E6998685C'
 GROWTH_MONITORING_XMLNS = 'http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40'
 RISK_ASSESSMENT_XMLNS = 'http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC'
 
