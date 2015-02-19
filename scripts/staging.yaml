@@ -52,7 +52,6 @@ branches:
   - quickview # Simon 11/25
   - doubleman-clean # SK 18/2
   - locations-as-groups # tw 1/20
-  - locations-as-groups-ui # tw 2/17
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
   - dhis2 # Norman 2/6
