@@ -681,6 +681,14 @@ class FormBase(DocumentSchema):
                     error.update(meta)
                     errors.append(error)
 
+        try:
+            self.case_list_module
+        except AssertionError:
+            msg = _("Form referenced as the registration form for multiple modules.")
+            error = {'type': 'validation error', 'validation_message': msg}
+            error.update(meta)
+            errors.append(error)
+
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
         return errors
@@ -1487,6 +1495,22 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                 needs_case_type=True,
                 needs_case_detail=True
             ))
+        if self.case_list_form.form_id:
+            try:
+                form = self.get_app().get_form(self.case_list_form.form_id)
+            except FormNotFoundException:
+                errors.append({
+                    'type': 'case list form missing',
+                    'module': self.get_module_info()
+                })
+            else:
+                if not form.is_registration_form(self.case_type):
+                    errors.append({
+                        'type': 'case list form not registration',
+                        'module': self.get_module_info(),
+                        'form': form,
+                    })
+
         return errors
 
     @memoized
@@ -2136,6 +2160,57 @@ class AdvancedModule(ModuleBase):
             errors = self.validate_detail_columns(columns)
             for error in errors:
                 yield error
+
+    def validate_for_build(self):
+        errors = super(AdvancedModule, self).validate_for_build()
+
+        if self.case_list_form.form_id:
+            forms = self.forms
+
+            case_tag = None
+            for form in forms:
+                info = self.get_module_info()
+                form_info = {"id": form.id if hasattr(form, 'id') else None, "name": form.name}
+
+                if not form.requires_case():
+                    errors.append({
+                        'type': 'case list module form must require case',
+                        'module': info,
+                        'form': form_info,
+                    })
+                elif len(form.actions.load_update_cases) != 1:
+                    errors.append({
+                        'type': 'case list module form must require only one case',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+                case_action = form.actions.load_update_cases[0] if form.requires_case() else None
+                if case_action and case_action.case_type != self.case_type:
+                    errors.append({
+                        'type': 'case list module form must match module case type',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+                # set case_tag if not already set
+                case_tag = case_action.case_tag if not case_tag and case_action else case_tag
+                if case_action and case_action.case_tag != case_tag:
+                    errors.append({
+                        'type': 'all forms in case list module must have same case management',
+                        'module': info,
+                        'form': form_info,
+                        'expected_tag': case_tag
+                    })
+
+                if case_action and case_action.details_module != self.unique_id:
+                    errors.append({
+                        'type': 'forms in case list module must use modules details',
+                        'module': info,
+                        'form': form_info,
+                    })
+
+        return errors
 
 
 class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
