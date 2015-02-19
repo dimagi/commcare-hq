@@ -24,6 +24,10 @@ def set_log_level(level):
 notify_logger = logging.getLogger('notify')
 
 
+def notify_error(message):
+    notify_logger.error(message)
+
+
 def notify_exception(request, message=None, details=None):
     notify_logger.error(
         'Notify Exception: %s' % (message or request.path),
