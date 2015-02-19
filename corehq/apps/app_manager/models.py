@@ -311,6 +311,10 @@ class AdvancedAction(DocumentSchema):
     def case_session_var(self):
         return 'case_id_{0}'.format(self.case_tag)
 
+    @property
+    def is_subcase(self):
+        return self.parent_tag
+
 
 class AutoSelectCase(DocumentSchema):
     """
@@ -790,8 +794,30 @@ class FormBase(DocumentSchema):
         else:
             return False
 
+    def is_registration_form(self, case_type=None):
+        """
+        Should return True if this form passes the following tests:
+         * does not require a case
+         * registers a case of type 'case_type' if supplied
+        """
+        raise NotImplementedError()
+    
     def update_app_case_meta(self, app_case_meta):
         pass
+
+    @property
+    @memoized
+    def case_list_module(self):
+        case_list_modules = [
+            mod for mod in self.get_app().get_modules() if mod.case_list_form.form_id == self.unique_id
+        ]
+        assert len(case_list_modules) <= 1, "Form referenced my multiple modules"
+        return case_list_modules[0] if case_list_modules else None
+
+    @property
+    def is_case_list_form(self):
+        return self.case_list_module is not None
+
 
 class IndexedFormBase(FormBase, IndexedSchema):
     def get_app(self):
@@ -993,6 +1019,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def requires_referral(self):
         return self.requires == "referral"
+
+    def is_registration_form(self, case_type=None):
+        return not self.requires_case() and 'open_case' in self.active_actions() and \
+            (not case_type or self.get_module().case_type == case_type)
 
     def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
         errors = []
@@ -1296,7 +1326,7 @@ class Detail(IndexedSchema):
 
     @parse_int([1])
     def get_column(self, i):
-        return self.columns[i].with_id(i%len(self.columns), self)
+        return self.columns[i].with_id(i % len(self.columns), self)
 
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
@@ -1309,8 +1339,7 @@ class CaseList(IndexedSchema):
     show = BooleanProperty(default=False)
 
     def rename_lang(self, old_lang, new_lang):
-        for dct in (self.label,):
-            _rename_key(dct, old_lang, new_lang)
+        _rename_key(self.label, old_lang, new_lang)
 
 
 class ParentSelect(DocumentSchema):
@@ -1332,10 +1361,19 @@ class DetailPair(DocumentSchema):
         return self
 
 
+class CaseListForm(NavMenuItemMediaMixin):
+    form_id = StringProperty()
+    label = DictProperty()
+
+    def rename_lang(self, old_lang, new_lang):
+        _rename_key(self.label, old_lang, new_lang)
+
+
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     name = DictProperty(unicode)
     unique_id = StringProperty()
     case_type = StringProperty()
+    case_list_form = SchemaProperty(CaseListForm)
 
     @classmethod
     def wrap(cls, data):
@@ -1431,6 +1469,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
                         'module': self.get_module_info(),
                         'column': column,
                     }
+
+    def get_form_by_unique_id(self, unique_id):
+        for form in self.get_forms():
+            if form.get_unique_id() == unique_id:
+                return form
 
     def validate_for_build(self):
         errors = []
@@ -1704,9 +1747,27 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta_advanced(self)
 
+    def requires_case(self):
+        return bool(self.actions.load_update_cases)
+
     @property
     def requires(self):
-        return 'case' if self.actions.load_update_cases else 'none'
+        return 'case' if self.requires_case() else 'none'
+
+    def is_registration_form(self, case_type=None):
+        """
+        Defined as form that opens a single case. Excludes forms that register
+        sub-cases and forms that require a case.
+        """
+        reg_actions = self.get_registration_actions(case_type)
+        return not self.requires_case() and reg_actions and \
+            len(reg_actions) == 1
+
+    def get_registration_actions(self, case_type=None):
+        return [
+            action for action in self.actions.open_cases
+            if not action.is_subcase and (not case_type or action.case_type == case_type)
+        ]
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
@@ -2034,7 +2095,7 @@ class AdvancedModule(ModuleBase):
                 return True
 
     def all_forms_require_a_case(self):
-        return all(form.requires == 'case' for form in self.forms)
+        return all(form.requires_case() for form in self.forms)
 
     def get_details(self):
         return (
@@ -2124,6 +2185,9 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
             case_properties.update(self.case_updates().keys())
 
         return parent_types, case_properties
+
+    def is_registration_form(self, case_type=None):
+        return self.mode == 'create' and (not case_type or self.case_type == case_type)
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
