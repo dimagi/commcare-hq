@@ -535,6 +535,18 @@ class HQMediaMixin(Document):
                 'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
+            if module.case_list_form.form_id:
+                media.append(ApplicationMediaReference(
+                    module.case_list_form.media_audio,
+                    media_class=CommCareAudio,
+                    **media_kwargs)
+                )
+                media.append(ApplicationMediaReference(
+                    module.case_list_form.media_image,
+                    media_class=CommCareImage,
+                    **media_kwargs)
+                )
+
             for f_order, f in enumerate(module.get_forms()):
                 media_kwargs['form_name'] = f.name
                 media_kwargs['form_id'] = f.unique_id
@@ -624,7 +636,7 @@ class HQMediaMixin(Document):
         if map_changed:
             self.save()
 
-    def create_mapping(self, multimedia, form_path):
+    def create_mapping(self, multimedia, form_path, save=True):
         """
             This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
         """
@@ -635,12 +647,13 @@ class HQMediaMixin(Document):
         map_item.media_type = multimedia.doc_type
         self.multimedia_map[form_path] = map_item
 
-        try:
-            self.save()
-        except ResourceConflict:
-            # Attempt to fetch the document again.
-            updated_doc = self.get(self._id)
-            updated_doc.create_mapping(multimedia, form_path)
+        if save:
+            try:
+                self.save()
+            except ResourceConflict:
+                # Attempt to fetch the document again.
+                updated_doc = self.get(self._id)
+                updated_doc.create_mapping(multimedia, form_path)
 
     def get_media_objects(self):
         """
