@@ -11,7 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.app_manager.models import get_apps_in_domain
 from corehq import Session, ConfigurableReport
