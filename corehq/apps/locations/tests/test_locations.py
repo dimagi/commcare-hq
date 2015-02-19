@@ -6,6 +6,7 @@ from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 from couchdbkit import ResourceNotFound
 from corehq.apps.groups.models import Group
+from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.shortcuts import create_domain
 
@@ -350,6 +351,11 @@ class LocationGroupTest(LocationTestBase):
         group_obj = self.test_outlet.sql_location.case_sharing_group_object()
         with self.assertRaises(ResourceNotFound):
             Group.get(group_obj._id)
+
+    def test_cant_save_wont_save(self):
+        group_obj = self.test_outlet.sql_location.case_sharing_group_object()
+        with self.assertRaises(CantSaveException):
+            group_obj.save()
 
     def test_custom_data(self):
         # need to put the location data on the

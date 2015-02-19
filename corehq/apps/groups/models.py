@@ -7,6 +7,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.groups.exceptions import CantSaveException
 
 
 class Group(UndoableDocument):
@@ -237,6 +238,11 @@ class Group(UndoableDocument):
         return ("Group(domain={self.domain!r}, name={self.name!r}, "
                 + "case_sharing={self.case_sharing!r}, users={users!r})"
         ).format(self=self, users=self.get_users())
+
+
+class UnsavableGroup(Group):
+    def save(self, *args, **kwargs):
+        raise CantSaveException("Instances of UnsavableGroup cannot be saved")
 
 
 class DeleteGroupRecord(DeleteDocRecord):

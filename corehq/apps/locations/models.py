@@ -91,14 +91,14 @@ class SQLLocation(MPTTModel):
 
     def case_sharing_group_object(self, user_id=None):
         """
-        Returns a fake group object that SHOULD NOT be saved.
+        Returns a fake group object that cannot be saved.
 
         This is used for giving users access via case
         sharing groups, without having a real group
         for every location that we have to manage/hide.
         """
 
-        from corehq.apps.groups.models import Group
+        from corehq.apps.groups.models import UnsavableGroup
 
         def group_name():
             return '/'.join(
@@ -106,7 +106,7 @@ class SQLLocation(MPTTModel):
                 [self.name]
             )
 
-        g = Group()
+        g = UnsavableGroup()
         g.domain = self.domain
         g.name = group_name() + '-Cases'
         g.users = [user_id] if user_id else []
@@ -125,13 +125,13 @@ class SQLLocation(MPTTModel):
 
     def reporting_group_object(self, user_id=None):
         """
-        Returns a fake group object that SHOULD NOT be saved.
+        Returns a fake group object that cannot be saved.
 
         Similar to case_sharing_group_object method, but for
         reporting groups.
         """
 
-        from corehq.apps.groups.models import Group
+        from corehq.apps.groups.models import UnsavableGroup
 
         def group_name():
             return '/'.join(
@@ -139,7 +139,7 @@ class SQLLocation(MPTTModel):
                 [self.name]
             )
 
-        g = Group()
+        g = UnsavableGroup()
         g.domain = self.domain
         g.name = group_name()
         g.users = [user_id] if user_id else []
