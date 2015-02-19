@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from dimagi.utils.couch.database import iter_docs
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, CommCareUser
 
 
@@ -16,8 +17,22 @@ class Command(BaseCommand):
 
         to_save = []
 
+        domain_cache = {}
+
+        def _is_location_domain(domain):
+            if domain in domain_cache:
+                return domain_cache[domain]
+            else:
+                domain_obj = Domain.get_by_name(domain)
+                val = domain_obj.commtrack_enabled or domain_obj.locations_enabled
+                domain_cache[domain] = val
+                return val
+
         for user_doc in iter_docs(CommCareUser.get_db(), relevant_ids):
             if user_doc['doc_type'] == 'WebUser':
+                continue
+
+            if not _is_location_domain(user_doc['domain']):
                 continue
 
             user = CommCareUser.get(user_doc['_id'])
@@ -27,6 +42,7 @@ class Command(BaseCommand):
                 to_save.append(user_doc)
 
             if len(to_save) > 500:
+                self.stdout.write("Saving 500")
                 CouchUser.get_db().bulk_save(to_save)
                 to_save = []
 
