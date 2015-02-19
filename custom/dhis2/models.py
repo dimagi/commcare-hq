@@ -66,6 +66,16 @@ class Dhis2ApiQueryError(JsonApiError):
 
 
 class Dhis2ConfigurationError(Exception):
+    """
+    DHIS2 API Integration has not been configured correctly.
+    """
+    pass
+
+
+class Dhis2IntegrationError(Exception):
+    """
+    A failure has occurred in CommCareHQ related to but not caused by DHIS2.
+    """
     pass
 
 
@@ -322,6 +332,13 @@ class Dhis2Api(object):
             # Note: self.get_resource_id returns None if name not found
             self._tracked_entity_attributes[name] = self.get_resource_id('trackedEntityAttributes', name)
         return self._tracked_entity_attributes[name]
+
+    def get_te_inst(self, te_inst_id):
+        """
+        Return the tracked entity instance identified by the give ID
+        """
+        __, inst = self._request.get('trackedEntityInstances/' + te_inst_id)
+        return inst
 
     def gen_instances_with_unset(self, te_name, attr_name):
         """

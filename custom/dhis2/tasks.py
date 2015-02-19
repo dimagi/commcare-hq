@@ -35,6 +35,50 @@ from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Dhis2Settings, FixtureMa
 logger = logging.getLogger(__name__)
 
 
+def push_case(case, dhis2_api):
+    """
+    Create a DHIS2 tracked entity instance from the form's case and enroll in
+    the nutrition assessment programme.
+    """
+    if getattr(case, 'dhis_org_id', None):
+        ou_id = case.dhis_org_id  # App sets this case property from user custom data
+    else:
+        # This is an old case, or org unit is not set. Skip it
+        return
+
+    program_data = {dhis2_attr: case[cchq_attr]
+                    for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
+                    if getattr(case, cchq_attr, None)}
+    if (
+        'CHDR Number' in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.values() and  # May not be required in production
+        'CHDR Number' not in program_data
+    ):
+        # CHDR Number must have a unique value. If we don't have one, we have to fake it.
+        program_data['CHDR Number'] = case['child_id']
+
+    try:
+        # Search for CCHQ Case ID in case previous attempt to register failed.
+        instance = next(dhis2_api.gen_instances_with_equals(TRACKED_ENTITY, CCHQ_CASE_ID, case['_id']))
+        instance_id = instance['Instance']
+    except StopIteration:
+        # Create a DHIS2 tracked entity instance
+        instance = {CCHQ_CASE_ID: case['_id']}
+        instance.update(program_data)
+        instance_id = dhis2_api.add_te_inst(TRACKED_ENTITY, ou_id, instance)
+
+    # Enroll in Pediatric Nutrition Assessment
+    # TODO: Test without doing this
+    date_of_visit = case['date_of_visit'] if getattr(case, 'date_of_visit', None) else date.today()
+    response = dhis2_api.enroll_in(instance_id, 'Paediatric Nutrition Assessment', date_of_visit, program_data)
+    if response['status'] != 'SUCCESS':
+        logger.error('Failed to push CCHQ case "%s" to DHIS2 program "%s". DHIS2 API error: %s',
+                     case['_id'], 'Paediatric Nutrition Assessment', response)
+        return
+
+    # Set external_id in CCHQ to flag the case as pushed.
+    update_case_external_id(case, instance_id)
+
+
 def push_child_entities(settings, children):
     """
     Register child entities in DHIS2 and enroll them in the Pediatric
@@ -53,45 +97,8 @@ def push_child_entities(settings, children):
     dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                          settings.dhis2['top_org_unit_name'])
     # nutrition_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
-    nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
-    today = date.today()
     for child in children:
-        if getattr(child, 'dhis_org_id', None):
-            ou_id = child.dhis_org_id  # App sets this case property from user custom data
-        else:
-            # This is an old case, or org unit is not set. Skip it
-            continue
-        try:
-            # Search for CCHQ Case ID in case previous attempt to register failed.
-            dhis2_child = next(dhis2_api.gen_instances_with_equals(TRACKED_ENTITY, CCHQ_CASE_ID, child['_id']))
-            dhis2_child_id = dhis2_child['Instance']
-        except StopIteration:
-            # Register child entity in DHIS2, and set CCHQ Case ID.
-            dhis2_child = {
-                CCHQ_CASE_ID: child['_id'],
-            }
-            dhis2_child_id = dhis2_api.add_te_inst(TRACKED_ENTITY, ou_id, dhis2_child)
-
-        # Enroll in Pediatric Nutrition Assessment
-        date_of_visit = child['date_of_visit'] if getattr(child, 'date_of_visit', None) else today
-        program_data = {dhis2_attr: child[cchq_attr]
-                        for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
-                        if getattr(child, cchq_attr, None)}
-        if (
-            'CHDR Number' in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.values() and  # May not be required in production
-            'CHDR Number' not in program_data
-        ):
-            # CHDR Number must have a unique value. If we don't have one, we have to fake it.
-            program_data['CHDR Number'] = 'cchq-' + child['_id']
-        response = dhis2_api.enroll_in_id(dhis2_child_id, nutrition_id, date_of_visit, program_data)
-        if response['status'] != 'SUCCESS':
-            logger.error('Failed to push CCHQ case "%s" to DHIS2 program "%s". DHIS2 API error: %s',
-                         child['_id'], 'Paediatric Nutrition Assessment', response)
-            # Skip to the next case
-            continue
-
-        # Set external_id in CCHQ to flag the case as pushed.
-        update_case_external_id(child, dhis2_child_id)
+        push_case(child, dhis2_api)
 
 
 def pull_child_entities(settings, dhis2_children):
@@ -118,7 +125,7 @@ def pull_child_entities(settings, dhis2_children):
         # Add each child separately. Although this is slower, it avoids problems if a DHIS2 API call fails
         # ("Instance" is DHIS2's friendly name for "id")
         logger.info('DHIS2: Syncing DHIS2 child "%s"', dhis2_child['Instance'])
-        case = get_case_by_external_id(settings.domain, dhis2_child['Instance'])
+        case = get_case_by_identifier(settings.domain, dhis2_child['Instance'])  # Get case by external_id
         if case:
             case_id = case['case_id']
         else:
@@ -162,13 +169,6 @@ def get_user_by_org_unit(domain, org_unit_id, top_org_unit_name):
         return get_user_by_org_unit(domain, org_units[org_unit_id].parent_id, top_org_unit_name)
     # We don't know that org unit ID, or we're at the top for this project, or we're at the top of DHIS2
     return None
-
-
-def get_case_by_external_id(domain, external_id):
-    """
-    Filter cases by external_id
-    """
-    return get_case_by_identifier(domain, external_id)
 
 
 def create_case_from_dhis2(dhis2_child, domain, user):
@@ -237,27 +237,22 @@ def gen_children_only_ours(domain):
             yield CommCareCase.wrap(doc)
 
 
-# TODO: Use case forwarding, or form forwarding of registration forms
-@periodic_task(run_every=timedelta(minutes=5))  # Run every 5 minutes to match forwarded forms
-def sync_cases():
+@periodic_task(run_every=crontab(minute=2, hour=2))  # Run daily at 02h02
+def fetch_cases():
     """
     Create new child cases in CommCare for nutrition tracking, and associate
     CommCare child cases with DHIS2 child entities and enroll them in the
     Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
     """
     for settings in Dhis2Settings.all_enabled():
-        logger.info('DHIS2: Syncing cases for domain "%s" with "%s"',
-                    settings.domain, settings.dhis2['host'])
+        logger.info('DHIS2: Fetching cases for domain "%s" from "%s"', settings.domain, settings.dhis2['host'])
         children = get_children_only_theirs(settings)
         pull_child_entities(settings, children)
-
-        children = gen_children_only_ours(settings.domain)
-        push_child_entities(settings, children)
 
 
 # There is a large number of org units, but the lookup table is not deployed to handsets.
 @periodic_task(run_every=crontab(minute=3, hour=3))  # Run daily at 03h03
-def sync_org_units():
+def fetch_org_units():
     """
     Synchronize DHIS2 Organization Units with local data.
 
@@ -272,8 +267,7 @@ def sync_org_units():
 
     """
     for settings in Dhis2Settings.all_enabled():
-        logger.info('DHIS2: Syncing org units for domain "%s" with "%s"',
-                    settings.domain, settings.dhis2['host'])
+        logger.info('DHIS2: Fetching org units for domain "%s" with "%s"', settings.domain, settings.dhis2['host'])
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])
         Dhis2OrgUnit.objects = FixtureManager(Dhis2OrgUnit, settings.domain, ORG_UNIT_FIXTURES)

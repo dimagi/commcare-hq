@@ -11,7 +11,7 @@ from couchdbkit import ResourceNotFound
 from custom.dhis2.const import ORG_UNIT_FIXTURES
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, \
     FixtureManager
-from custom.dhis2.tasks import sync_cases, sync_org_units
+from custom.dhis2.tasks import fetch_cases, fetch_org_units
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from mock import patch, Mock
@@ -380,7 +380,7 @@ class TaskTest(SimpleTestCase):
         pass
 
     @skip('Fix mocks')
-    def test_sync_org_units_dict_comps(self):
+    def test_fetch_org_units_dict_comps(self):
         """
         sync_org_units should create dictionaries of CCHQ and DHIS2 org units
         """
@@ -391,14 +391,14 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [ou_dict])  # Generates org unit dicts
             objects_all_patch.side_effect = lambda: (o for o in [ou_obj])  # Generates org unit objects
 
-            sync_org_units()
+            fetch_org_units()
 
             gen_org_units_patch.assert_called()
             objects_all_patch.assert_called()
 
     # TODO: No point in running this test if Dhis2OrgUnit patch doesn't work -- nothing to assert
     @skip('Fix mocks')
-    def test_sync_org_units_adds(self):
+    def test_fetch_org_units_adds(self):
         """
         sync_org_units should add new org units
         """
@@ -410,13 +410,13 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [ou_dict])
             objects_all_patch.side_effect = lambda: (o for o in [])
 
-            sync_org_units()
+            fetch_org_units()
 
             org_unit_patch.__init__.assert_called_with(id='1', name='Sri Lanka')
             org_unit_patch.save.assert_called()
 
     @skip('Fix mocks')
-    def test_sync_org_units_deletes(self):
+    def test_fetch_org_units_deletes(self):
         """
         sync_org_units should delete old org units
         """
@@ -427,12 +427,12 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [])
             objects_all_patch.side_effect = lambda: (o for o in [ou_obj])
 
-            sync_org_units()
+            fetch_org_units()
 
             delete_mock.assert_called()
 
     @skip('Fix mocks')
-    def test_sync_cases(self):
+    def test_fetch_cases(self):
         with patch('custom.dhis2.tasks.get_children_only_theirs') as only_theirs_mock, \
                 patch('custom.dhis2.tasks.pull_child_entities') as pull_mock, \
                 patch('custom.dhis2.tasks.gen_children_only_ours') as only_ours_mock, \
@@ -442,7 +442,7 @@ class TaskTest(SimpleTestCase):
             only_theirs_mock.return_value = foo
             only_ours_mock.return_value = bar
 
-            sync_cases()
+            fetch_cases()
 
             only_theirs_mock.assert_called()
             pull_mock.assert_called_with(DOMAIN, foo)

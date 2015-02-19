@@ -21,9 +21,11 @@ from datetime import date
 import json
 from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
-from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings
+from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings, Dhis2IntegrationError
 from custom.dhis2.const import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
-    RISK_ASSESSMENT_PROGRAM_FIELDS
+    RISK_ASSESSMENT_PROGRAM_FIELDS, REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS, \
+    NUTRITION_ASSESSMENT_PROGRAM_FIELDS
+from custom.dhis2.tasks import push_case
 
 
 @RegisterGenerator(FormRepeater, 'dhis2_event_json', 'DHIS2 Event JSON')
@@ -40,40 +42,56 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
         if not Dhis2Settings.is_enabled_for_domain(form['domain']):
             return
 
-        from casexml.apps.case.models import CommCareCase  # avoid circular import
+        if form['xmlns'] not in (REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS):
+            # This is not a form we care about
+            return
+
+        from casexml.apps.case.models import CommCareCase
+
         settings = Dhis2Settings.for_domain(form['domain'])
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])
         cases = CommCareCase.get_by_xform_id(form.get_id)
         case = cases[0]
-        if not case.get('external_id'):
-            # This case has not yet been pushed to DHIS2.
-            # TODO: Try again later
-            return None
-        if form['xmlns'] == 'http://openrosa.org/formdesigner/b6a45e8c03a6167acefcdb225ee671cbeb332a40':
-            # This is a growth monitoring form. It needs to be converted into
-            # a paediatric nutrition assessment event.
+        event = None
+
+        if form['xmlns'] == REGISTER_CHILD_XMLNS:
+            # Create a DHIS2 tracked entity instance from the form's case and
+            # enroll in the nutrition assessment programme.
+            push_case(case, dhis2_api)
+            # We just need to enroll. No event to create
+
+        elif form['xmlns'] == GROWTH_MONITORING_XMLNS:
+            if not case.get('external_id'):
+                raise Dhis2IntegrationError('Register Child form must be processed before Growth Monitoring form')
+            # Update tracked entity instance
+            instance = dhis2_api.get_te_inst(case['external_id'])
+            instance.update({dhis2_attr: case[cchq_attr]
+                             for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()})
+            dhis2_api.update_te_inst(instance)
+            # Create a paediatric nutrition assessment event.
             nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
-            # TODO: Update the entity with program_data?
             event = dhis2_api.form_to_event(nutrition_id, form, NUTRITION_ASSESSMENT_EVENT_FIELDS,
                                             case['external_id'])
-            # If the form is not to be forwarded, the event will be None
-            return json.dumps(event, default=json_serializer) if event else None
 
-        elif form['xmlns'] == 'http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC':
-            # This is a risk assessment form. It needs to be converted into a
-            # risk assessment event.
-            risk_id = dhis2_api.get_program_id('Underlying Risk Assessment')
+        elif form['xmlns'] == RISK_ASSESSMENT_XMLNS:
+            # Create a risk assessment event.
+            if not case.get('external_id'):
+                raise Dhis2IntegrationError('Register Child form must be processed before Risk Assessment form')
+            # Update tracked entity instance
+            instance = dhis2_api.get_te_inst(case['external_id'])
+            instance.update({dhis2_attr: case[cchq_attr]
+                             for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()})
+            dhis2_api.update_te_inst(instance)
             # Check whether the case needs to be enrolled in the Risk Assessment Program
+            risk_id = dhis2_api.get_program_id('Underlying Risk Assessment')
             if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
+                # TODO: Test without doing this
                 today = date.today().strftime('%Y-%m-%d')
                 program_data = {dhis2_attr: case[cchq_attr]
                                 for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()}
                 dhis2_api.enroll_in_id(case['external_id'], risk_id, today, program_data)
-            # TODO: Update the entity with program_data?
             event = dhis2_api.form_to_event(risk_id, form, RISK_ASSESSMENT_EVENT_FIELDS, case['external_id'])
-            return json.dumps(event, default=json_serializer) if event else None
 
-        else:
-            # This is not a form we care about
-            return None
+        # If the form is not to be forwarded, the event will be None
+        return json.dumps(event, default=json_serializer) if event else None
