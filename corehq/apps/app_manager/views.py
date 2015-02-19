@@ -1417,7 +1417,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         'media_image': None, 'media_audio': None, 'has_schedule': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
-        "parent_module": None,
+        "parent_module": None, "root_module_id": None,
     }
 
     if attr not in attributes:
@@ -1487,6 +1487,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
+        if module["put_in_root"] is not True and should_edit("root_module_id"):
+            # validate the module_id and raise error if not found
+            module["root_module_id"] = req.POST.get("root_module_id")
 
     _handle_media_edits(req, module, should_edit, resp)
 
