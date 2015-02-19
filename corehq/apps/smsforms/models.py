@@ -1,6 +1,5 @@
 from copy import copy
 from datetime import datetime
-import logging
 from couchdbkit import MultipleResultsFound
 from couchdbkit.ext.django.schema import StringProperty, Document,\
     DateTimeProperty, BooleanProperty
@@ -9,6 +8,7 @@ from django.db.models import Q
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count
+from dimagi.utils.logging import notify_error
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -199,7 +199,7 @@ def get_session_by_session_id(id):
 
     couch_session = XFormsSession.by_session_id(id)
     if couch_session:
-        logging.error('session {} could not be found in sql.'.format(couch_session._id))
+        notify_error('session {} could not be found in sql.'.format(couch_session._id))
     return couch_session
 
 
@@ -250,7 +250,7 @@ def sync_couch_session_from_couch_session(sql_session):
         return
 
     if not sql_session.couch_id:
-        logging.error('Only existing sessions can be synced for now.')
+        notify_error('Only existing sessions can be synced for now. sql session id is {}'.format(sql_session.pk))
         return
 
     couch_doc = XFormsSession.get(sql_session.couch_id)
