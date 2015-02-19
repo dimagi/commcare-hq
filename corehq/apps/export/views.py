@@ -17,6 +17,7 @@ from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
 require_form_export_permission = require_permission(
@@ -73,6 +74,9 @@ class BaseExportView(BaseProjectDataView):
             self.commit(request)
         except Exception, e:
             if self.is_async:
+                # todo: this can probably be removed as soon as
+                # http://manage.dimagi.com/default.asp?157713 is resolved
+                notify_exception(request, 'problem saving an export! {}'.format(str(e)))
                 response = json_response({
                     'error': str(e) or type(e).__name__
                 })
