@@ -338,7 +338,13 @@ class Dhis2Api(object):
         Return the tracked entity instance identified by the give ID
         """
         __, inst = self._request.get('trackedEntityInstances/' + te_inst_id)
-        return inst
+        instance = {attr['displayName']: attr['value'] for attr in inst['attributes']}
+        instance.update({
+            'Instance': inst['trackedEntityInstance'],
+            'Tracked entity': inst['trackedEntity'],
+            'Org unit': inst['orgUnit'],
+        })
+        return instance
 
     def gen_instances_with_unset(self, te_name, attr_name):
         """
