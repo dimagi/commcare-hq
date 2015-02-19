@@ -234,7 +234,7 @@ def sync_sql_session_from_couch_session(couch_session):
     for attr in SESSION_PROPERTIES_TO_SYNC:
         setattr(sql_session, attr, data.get(attr, None))
 
-    # hack to avoid excess saves. see sync_couch_session_from_couch_session
+    # hack to avoid excess saves. see sync_couch_session_from_sql_session
     sql_session.do_not_sync = True
     sql_session.save()
     sql_session.do_not_sync = False
@@ -242,10 +242,10 @@ def sync_sql_session_from_couch_session(couch_session):
 
 @receiver(post_save, sender=SQLXFormsSession)
 def sync_signal_catcher(sender, instance, *args, **kwargs):
-    sync_couch_session_from_couch_session(instance)
+    sync_couch_session_from_sql_session(instance)
 
 
-def sync_couch_session_from_couch_session(sql_session):
+def sync_couch_session_from_sql_session(sql_session):
     if sql_session.do_not_sync:
         return
 
