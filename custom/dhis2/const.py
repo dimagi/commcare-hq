@@ -65,20 +65,20 @@ RISK_ASSESSMENT_EVENT_FIELDS = {
     # 'last_risk_assessment_date': 'Event Date',
 
     ('causes_for_poverty', 'low_income'):
-        '1.1 Low Income',
+        '1.1 Low income',
     ('causes_for_poverty', 'poor_financial_management'):
-        '1.2 Poor Financial Management',
+        '1.2 Poor financial management',
     ('causes_for_poverty', 'limited_opportunity'):
         '1.3 Limited Opportunity for income generation within agriculture settings',
     ('causes_for_poverty', 'constrains_in_obtaining_loan'):
-        '1.4 Any constraints in obtaining loan',
+        '1.4 Any constrains in obtaining loan',
     ('causes_for_poverty', 'fewer_opportunities_for_occupational_trainings'):
         '1.5 Fever opportunities for occupational trainings',
 
     ('causes_for_inadequate_child_care', 'parent_dont_have_time'):
         '2.1 Both parents are working and do not have time to spend with children',
     ('causes_for_inadequate_child_care', 'poor_eccd_knowledge_care_givers'):
-        '2.2 Poor Knowledge on ECCD among care givers',
+        '2.2 Poor knowledge on ECCD among care givers',
     ('causes_for_inadequate_child_care', 'poor_eccd_knowledge_serivice_providers'):
         '2.3 Poor knowledge on ECCD among service providers',
     ('causes_for_inadequate_child_care', 'unavailability_of_minimum_play_materials'):
@@ -87,15 +87,15 @@ RISK_ASSESSMENT_EVENT_FIELDS = {
         '2.5 Absent of age appropriate immunization',
 
     ('causes_poor_feeding_practices', 'inadequate_quantity_per_meals'):
-        '3.1 Inadequate frequency of feeding',
+        '3.1 Inadequate quantity per meals',
     ('causes_poor_feeding_practices', 'poor_quality_of_the_meals'):
-        '3.2 Poor quality of meals',
+        '3.2 Poor quality of the meals',
     ('causes_poor_feeding_practices', 'inadequate_frequency_of_feeding'):
         '3.3 Inadequate frequency of feeding',
     ('causes_poor_feeding_practices', 'poor_know_nut_food_resource_utilization'):
         '3.4 Poor knowledge on obtaining nutritious food within the available resources',
     ('causes_poor_feeding_practices', 'false_believes_and_myths'):
-        '3.5 False beliefs or myths',
+        '3.5 False beliefs and myths',
     ('causes_poor_feeding_practices', 'poor_knowledge_of_feeding_during_illness'):
         '3.6 Poor knowledge of feeding during illness',
     ('causes_poor_feeding_practices', 'poor_knowledge_and_attitudes_towards_nutrition'):
@@ -125,7 +125,7 @@ RISK_ASSESSMENT_EVENT_FIELDS = {
     ('causes_low_food_security', 'spending_higher_proportion_alcohol'):
         '5.8 Spending higher proportion of income o alcohol',
     ('causes_low_food_security', 'domestic_violence_alcohol_smoking'):
-        '5.9 Domestic violence/abuse due to alcohol & smoking',
+        '5.9 Domestic violence/abuse due to alcohol and smoking',
 
     ('causes_water_sanitation', 'unavailability_safe_water_supply'):
         '6.1 Unavailability of safe water supply',
@@ -137,5 +137,5 @@ RISK_ASSESSMENT_EVENT_FIELDS = {
     ('causes_nutrition_knowledge', 'poor_knowledge__appropriate_food_intake'):
         '7.2 Poor knowledge on using appropriate food for family members',
     ('causes_nutrition_knowledge', 'false_believes_myths_and_customs'):
-        '7.3 False beliefs, myths and customs',
+        '7.3 False believes, myths & customs',
 }
