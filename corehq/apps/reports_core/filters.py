@@ -197,7 +197,7 @@ class ChoiceListFilter(BaseFilter):
         self.choices = choices or []
 
     def value(self, **kwargs):
-        choice = kwargs[self.name]
+        choice = unicode(kwargs[self.name])
         return next(choice_obj for choice_obj in self.choices if choice_obj.value == choice)
 
     def default_value(self):
