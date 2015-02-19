@@ -79,6 +79,7 @@ from .exceptions import (
     XFormValidationError,
 )
 from corehq.apps.app_manager import id_strings
+from jsonpath_rw import jsonpath, parse
 
 WORKFLOW_DEFAULT = 'default'
 WORKFLOW_ROOT = 'root'
@@ -100,6 +101,33 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
 }
+
+
+def jsonpath_update(datum_context, value):
+    field = datum_context.path.fields[0]
+    parent = jsonpath.Parent().find(datum_context)[0]
+    parent.value[field] = value
+
+# store a list of references to form ID's so that
+# when an app is copied we can update the references
+# with the new values
+form_id_references = []
+
+
+def FormIdProperty(expression, **kwargs):
+    """
+    Create a StringProperty that references a form ID.
+    :param level:   From where is the form referenced? One of 'app', 'module', 'form'
+    :param path:    jsonpath to field that holds the form ID
+    """
+    path_expression = parse(expression)
+    assert isinstance(path_expression, jsonpath.Child), "only child path expressions are supported"
+    field = path_expression.right
+    assert len(field.fields) == 1, 'path expression can only reference a single field'
+
+    form_id_references.append(path_expression)
+    return StringProperty(**kwargs)
+
 
 def _rename_key(dct, old, new):
     if old in dct:
@@ -1370,7 +1398,7 @@ class DetailPair(DocumentSchema):
 
 
 class CaseListForm(NavMenuItemMediaMixin):
-    form_id = StringProperty()
+    form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
 
     def rename_lang(self, old_lang, new_lang):
@@ -3644,13 +3672,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             unique_id = form['unique_id']
             new_unique_id = FormBase.generate_id()
             form['unique_id'] = new_unique_id
-            if source['_attachments'].has_key("%s.xml" % unique_id):
+            if ("%s.xml" % unique_id) in source['_attachments']:
                 source['_attachments']["%s.xml" % new_unique_id] = source['_attachments'].pop("%s.xml" % unique_id)
+            return new_unique_id
 
         change_unique_id(source['user_registration'])
+        id_changes = {}
         for m, module in enumerate(source['modules']):
             for f, form in enumerate(module['forms']):
-                change_unique_id(source['modules'][m]['forms'][f])
+                old_id = form['unique_id']
+                new_id = change_unique_id(source['modules'][m]['forms'][f])
+                id_changes[old_id] = new_id
+
+        for reference_path in form_id_references:
+            for reference in reference_path.find(source):
+                if reference.value in id_changes:
+                    jsonpath_update(reference, id_changes[reference.value])
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
