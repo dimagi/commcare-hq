@@ -1,70 +1,21 @@
 {% load hq_shared_tags %}
-{% include 'hqmedia/partials/multimedia_js.html' %}
-<script type="text/javascript" src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-<script type="text/javascript">
-    {% with multimedia.upload_managers.icon as uploader %}
-    var iconUploader = new HQMediaFileUploadController (
-        '{{ uploader.slug }}',
-        '{{ uploader.media_type }}',
-        {
-            allowCloseDuringUpload: true,
-            fileFilters: {{ uploader.supported_files|JSON }},
-            uploadURL: '{{ uploader.destination }}',
-            processingURL: '{{ uploader.processing_url }}',
-            swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
-            isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
-            {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
-            {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}
-            {% if uploader.details_template %}detailsTemplate: '{% filter escapejs %}{% include uploader.details_template %}{% endfilter %}',{% endif %}
-            {% if uploader.errors_template %}errorsTemplate: '{% filter escapejs %}{% include uploader.errors_template %}{% endfilter %}',{% endif %}
-            {% if uploader.existing_file_template %}existingFileTemplate: '{% filter escapejs %}{% include uploader.existing_file_template %}{% endfilter %}',{% endif %}
-            uploadParams: {{ uploader.upload_params|JSON }},
-            sessionid: {{ request.COOKIES.sessionid|JSON }},
-            licensingParams: {{ uploader.licensing_params|JSON }}
-        });
-    iconUploader.init();
-    {% endwith %}
-
-    {% with multimedia.upload_managers.audio as uploader %}
-    var audioUploader = new HQMediaFileUploadController (
-        '{{ uploader.slug }}',
-        '{{ uploader.media_type }}',
-        {
-            allowCloseDuringUpload: true,
-            fileFilters: {{ uploader.supported_files|JSON }},
-            uploadURL: '{{ uploader.destination }}',
-            processingURL: '{{ uploader.processing_url }}',
-            swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
-            isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
-            {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
-            {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}
-            {% if uploader.details_template %}detailsTemplate: '{% filter escapejs %}{% include uploader.details_template %}{% endfilter %}',{% endif %}
-            {% if uploader.errors_template %}errorsTemplate: '{% filter escapejs %}{% include uploader.errors_template %}{% endfilter %}',{% endif %}
-            {% if uploader.existing_file_template %}existingFileTemplate: '{% filter escapejs %}{% include uploader.existing_file_template %}{% endfilter %}',{% endif %}
-            uploadParams: {{ uploader.upload_params|JSON }},
-            sessionid: {{ request.COOKIES.sessionid|JSON }},
-            licensingParams: {{ uploader.licensing_params|JSON }}
-        });
-    audioUploader.init();
-    {% endwith %}
-</script>
 <script>
     $(function () {
-        var $mediaImage = $('#media_image'),
-            $mediaAudio = $('#media_audio');
+        var $mediaImage = $('#{{ qualifier|default_if_none:"" }}media_image'),
+            $mediaAudio = $('#{{ qualifier|default_if_none:"" }}media_audio');
 
         var menuImage = new AppMenuMediaManager({
-            ref: {{ multimedia.menu_refs.image|JSON }},
+            ref: {{ item.menu_refs.image|JSON }},
             objectMap: {{ multimedia.object_map|JSON }},
             uploadController: iconUploader,
-            defaultPath: 'jr://file/commcare/image/' + '{{ multimedia.default_file_name }}' + '.png'
+            defaultPath: 'jr://file/commcare/image/' + '{{ item.default_file_name }}' + '.png'
         });
 
         var menuAudio = new AppMenuMediaManager({
-            ref: {{ multimedia.menu_refs.audio|JSON }},
+            ref: {{ item.menu_refs.audio|JSON }},
             objectMap: {{ multimedia.object_map|JSON }},
             uploadController: audioUploader,
-            defaultPath: 'jr://file/commcare/audio/' + '{{ multimedia.default_file_name }}' + '.mp3'
+            defaultPath: 'jr://file/commcare/audio/' + '{{ item.default_file_name }}' + '.mp3'
         });
 
         if ($mediaImage.length) {

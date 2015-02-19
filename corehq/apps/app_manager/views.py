@@ -998,11 +998,21 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if form_id:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
 
+        specific_media = {
+            'menu': {
+                'menu_refs': app.get_menu_media(
+                    module, module_id, form=form, form_index=form_id
+                ),
+                'default_file_name': default_file_name,
+            }
+        }
+        if module:
+            specific_media['case_list_form'] = {
+                'menu_refs': app.get_case_list_form_media(module, module_id),
+                'default_file_name': '{}_case_list_form'.format(default_file_name),
+            }
         context.update({
             'multimedia': {
-                'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id, as_json=True
-                ),
                 "references": app.get_references(),
                 "object_map": app.get_object_map(),
                 'upload_managers': {
@@ -1016,9 +1026,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                                 args=[app.domain, app.get_id])
                     ),
                 },
-                'default_file_name': default_file_name,
             }
         })
+        context['multimedia'].update(specific_media)
 
     error = req.GET.get('error', '')
 

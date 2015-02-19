@@ -29,9 +29,10 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "hqwebapp/ko/value-or-none-ui.html" %}
-    {% include "app_manager/partials/nav_menu_media_js.html" %}
+    {% include "app_manager/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% if case_list_form_options %}
-        {% include "app_manager/partials/nav_menu_media_js.old.html" with item=module.case_list_form qualifier='case_list_form_' image_default="jr://file/commcare/image/case_list_form.png" audio_default="jr://file/commcare/audio/case_list_form.mp3" %}
+        {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
     {% include 'hqwebapp/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
@@ -240,7 +241,7 @@
                         {% endif %}
                     </div>
                 </div>
-                {% include "app_manager/partials/nav_menu_media.html" %}
+                {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% endblock %}
             </fieldset>
         </form>
