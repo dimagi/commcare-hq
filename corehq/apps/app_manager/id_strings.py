@@ -173,7 +173,10 @@ def detail(module, detail_type):
 
 def menu(module):
     put_in_root = getattr(module, 'put_in_root', False)
-    return ROOT if put_in_root else u"m{module.id}".format(module=module)
+    if put_in_root:
+        return ROOT
+    else:
+        return u"m{id}".format(id=getattr(module, 'root_module_index', module.id))
 
 
 def form_command(form):
