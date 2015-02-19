@@ -57,7 +57,7 @@
                 url: '{% url "asha_af_report" domain %}',
                 data: {
                     date: selected_date,
-                    case_id: selected_asha_id
+                    doc_id: selected_asha_id
                 },
                 success: function(response) {
                     $('#af_checklist').empty();

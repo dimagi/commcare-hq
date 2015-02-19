@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django import forms
@@ -87,10 +88,10 @@ class CustomDataEditor(object):
         return dict(cleaned_data, **system_data)
 
     def init_form(self, post_dict=None):
-        fields = {
-            field.slug: _make_field(field)
-            for field in self.model.get_fields(required_only=self.required_only)
-        }
+        fields = OrderedDict()
+        for field in self.model.get_fields(required_only=self.required_only):
+            fields[field.slug] = _make_field(field)
+
         field_names = fields.keys()
 
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)

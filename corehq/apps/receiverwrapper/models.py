@@ -242,7 +242,7 @@ class Repeater(Document, UnicodeMixIn):
             if doc_type in repeater_types:
                 return repeater_types[doc_type].wrap(data)
             else:
-                raise ResourceNotFound('Unknown repeater type: %s', data)
+                raise ResourceNotFound('Unknown repeater type: %s' % data)
         else:
             return super(Repeater, cls).wrap(data)
 

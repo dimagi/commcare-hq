@@ -2,6 +2,7 @@ import re
 from custom.ewsghana.handlers.registration import RegistrationHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
 from custom.ewsghana.handlers.undo import UndoHandler
+from custom.ewsghana.handlers.alerts import AlertsHandler
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
@@ -40,6 +41,7 @@ def handle(verified_contact, text, msg=None):
         ('reg', 'register'): RegistrationHandler,
         ('yes', 'no', 'y', 'n'): RequisitionHandler,
         ('undo', 'replace', 'revoke'): UndoHandler,
+        ('soh'): AlertsHandler,
         ('not',): not_function(args[0]) if args else None
     }
 
@@ -57,4 +59,6 @@ def handle(verified_contact, text, msg=None):
             handler.handle()
         else:
             handler.help()
+    if keyword == 'soh':
+        return True
     return False

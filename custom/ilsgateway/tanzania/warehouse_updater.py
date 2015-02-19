@@ -31,10 +31,9 @@ DELIVERY_NOT_RESPONDING = 'delivery_not_responding'
 SOH_NOT_RESPONDING = 'soh_not_responding'
 
 
-def _is_valid_status(facility_id, date, status_type):
+def _is_valid_status(facility, date, status_type):
     if status_type not in NEEDED_STATUS_TYPES:
         return False
-    facility = Location.get(docid=facility_id)
     groups = HistoricalLocationGroup.objects.filter(
         date__month=date.month,
         date__year=date.year,
@@ -120,17 +119,15 @@ def average_lead_time(facility_id, window_date):
 
 
 def needed_status_types(org_summary):
-    return [status_type for status_type in NEEDED_STATUS_TYPES if _is_valid_status(org_summary.supply_point,
+    facility = Location.get(docid=org_summary.supply_point)
+    return [status_type for status_type in NEEDED_STATUS_TYPES if _is_valid_status(facility,
                                                                                    org_summary.date, status_type)]
 
 
 def not_responding_facility(org_summary):
-    assert Location.get(docid=org_summary.supply_point).location_type == "FACILITY"
-
     for status_type in needed_status_types(org_summary):
         group_summary, created = GroupSummary.objects.get_or_create(org_summary=org_summary,
-                                                           title=status_type)
-
+                                                                    title=status_type)
         group_summary.total = 1
         assert group_summary.responded in (0, 1)
         if group_summary.title == SupplyPointStatusTypes.SOH_FACILITY and not group_summary.responded:
@@ -337,12 +334,13 @@ def process_facility_warehouse_data(facility, start_date, end_date):
         alert.delete()
 
     supply_point_id = facility.linked_supply_point()._id
+    location_id = facility._id
     new_statuses = SupplyPointStatus.objects.filter(
         supply_point=facility._id,
         status_date__gte=start_date,
         status_date__lt=end_date
     ).order_by('status_date')
-    process_facility_statuses(facility, new_statuses)
+    process_facility_statuses(location_id, new_statuses)
 
     new_reports = StockReport.objects.filter(
         stocktransaction__case_id=supply_point_id,
@@ -350,14 +348,14 @@ def process_facility_warehouse_data(facility, start_date, end_date):
         date__lt=end_date,
         stocktransaction__type='stockonhand'
     ).order_by('date')
-    process_facility_product_reports(facility, new_reports)
+    process_facility_product_reports(location_id, new_reports)
 
     new_trans = StockTransaction.objects.filter(
         case_id=supply_point_id,
         report__date__gte=start_date,
         report__date__lt=end_date
     ).order_by('report__date')
-    process_facility_transactions(facility, new_trans)
+    process_facility_transactions(location_id, new_trans)
 
     # go through all the possible values in the date ranges
     # and make sure there are warehouse tables there
@@ -392,19 +390,18 @@ def process_facility_warehouse_data(facility, start_date, end_date):
         populate_facility_stockout_alerts(facility, window_date)
 
 
-def process_facility_statuses(facility, statuses, alerts=True):
+def process_facility_statuses(facility_id, statuses, alerts=True):
     """
     For a given facility and list of statuses, update the appropriate
     data warehouse tables. This should only be called on supply points
     that are facilities.
     """
-    assert facility.location_type == "FACILITY"
+    facility = Location.get(docid=facility_id)
     for status in statuses:
-        assert status.supply_point == facility._id
         warehouse_date = _get_window_date(status.status_type, status.status_date)
-        if _is_valid_status(facility._id, status.status_date, status.status_type):
+        if _is_valid_status(facility, status.status_date, status.status_type):
             org_summary = OrganizationSummary.objects.get_or_create(
-                supply_point=facility._id,
+                supply_point=facility_id,
                 date=warehouse_date
             )[0]
             group_summary = GroupSummary.objects.get_or_create(
@@ -434,16 +431,16 @@ def process_facility_statuses(facility, statuses, alerts=True):
                 if alerts:
                     if status.status_value == SupplyPointStatusValues.NOT_SUBMITTED \
                             and status.status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
-                        create_alert(facility._id, status.status_date, RR_NOT_SUBMITTED,
+                        create_alert(facility_id, status.status_date, RR_NOT_SUBMITTED,
                                      {'number': 1})
 
                     if status.status_value == SupplyPointStatusValues.NOT_RECEIVED \
                             and status.status_type == SupplyPointStatusTypes.DELIVERY_FACILITY:
-                        create_alert(facility._id, status.status_date, DELIVERY_NOT_RECEIVED,
+                        create_alert(facility_id, status.status_date, DELIVERY_NOT_RECEIVED,
                                      {'number': 1})
 
 
-def process_facility_product_reports(facility, reports):
+def process_facility_product_reports(facility_id, reports):
     """
     For a given facility and list of ProductReports, update the appropriate
     data warehouse tables. This should only be called on supply points
@@ -452,12 +449,10 @@ def process_facility_product_reports(facility, reports):
     stock on hand reports don't create valid status, but should be treated
     like valid submissions in most of the rest of the site.
     """
-    assert facility.location_type == "FACILITY"
     months_updated = {}
     for report in reports:
         stock_transactions = report.stocktransaction_set.filter(type='stockonhand')
         assert stock_transactions.count() > 0
-        assert stock_transactions[0].case_id == facility.linked_supply_point()._id
 
         warehouse_date = _get_window_date(SupplyPointStatusTypes.SOH_FACILITY, report.date)
 
@@ -466,7 +461,7 @@ def process_facility_product_reports(facility, reports):
             # product report for the entire month
             continue
 
-        org_summary = OrganizationSummary.objects.get_or_create(supply_point=facility._id, date=warehouse_date)[0]
+        org_summary = OrganizationSummary.objects.get_or_create(supply_point=facility_id, date=warehouse_date)[0]
 
         group_summary = GroupSummary.objects.get_or_create(org_summary=org_summary,
                                                            title=SupplyPointStatusTypes.SOH_FACILITY)[0]
@@ -480,21 +475,18 @@ def process_facility_product_reports(facility, reports):
         months_updated[warehouse_date] = None  # update the cache of stuff we've dealt with
 
 
-def process_facility_transactions(facility, transactions):
+def process_facility_transactions(facility_id, transactions):
     """
     For a given facility and list of transactions, update the appropriate
     data warehouse tables. This should only be called on supply points
     that are facilities.
 
     """
-    assert facility.location_type == "FACILITY"
-
     for trans in transactions:
-        assert trans.case_id == facility.linked_supply_point()._id
         date = trans.report.date
         product_data = ProductAvailabilityData.objects.get_or_create(
             product=trans.product_id,
-            supply_point=facility._id,
+            supply_point=facility_id,
             date=datetime(date.year, date.month, 1)
         )[0]
 
@@ -611,7 +603,8 @@ def update_historical_data(domain):
         except SupplyPointWarehouseRecord.DoesNotExist:
             # we didn't have a record so go through and historically update
             # anything we maybe haven't touched
-            for year, month in months_between(start_date, sp.linked_supply_point().opened_on):
+            opened_on = sp.linked_supply_point().opened_on
+            for year, month in months_between(start_date, opened_on):
                 window_date = datetime(year, month, 1)
                 for cls in [OrganizationSummary, ProductAvailabilityData, GroupSummary]:
                     _init_warehouse_model(cls, sp, window_date)

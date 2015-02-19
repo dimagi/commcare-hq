@@ -38,5 +38,5 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, DatespanMixin, Cust
 
     @property
     def rows(self):
-        return [[index + 1, '<text id=%s>%s</text>' % (v['case_id'], v['hv_asha_name']),
+        return [[index + 1, '<text id=%s>%s</text>' % (v['doc_id'], v['hv_asha_name']),
                  v['date']] for index, v in enumerate(self.model.data.values())]

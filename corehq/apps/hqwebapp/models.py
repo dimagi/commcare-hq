@@ -959,7 +959,7 @@ class MessagingTab(UITab):
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
             settings_pages.append(
                 {'title': ugettext_lazy("General Settings"),
-                 'url': reverse('sms_settings_new', args=[self.domain])},
+                 'url': reverse('sms_settings', args=[self.domain])},
             )
             settings_pages.append(
                 {'title': ugettext_lazy("Languages"),
