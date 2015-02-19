@@ -19,7 +19,10 @@ class ProfileTest(SimpleTestCase, TestFileMixin):
         )
 
     def _test_profile(self, app):
-        profile_xml = ET.fromstring(app.create_profile())
+        profile = app.create_profile()
+        assert isinstance(profile, bytes), type(profile)
+        assert u"TÉST ÁPP" in profile.decode('utf-8')
+        profile_xml = ET.fromstring(profile)
         types = {
             'features': self._test_feature,
             'properties': self._test_property,
