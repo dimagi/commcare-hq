@@ -328,6 +328,16 @@ class FormPreparationV2TestAdvanced(TestCase, TestFileMixin):
         )
         self.assertXmlEqual(xml, form.render_xform())
 
+    def test_case_list_form(self):
+        self.form.actions.open_cases.append(AdvancedOpenCaseAction(
+            case_type=self.module.case_type,
+            case_tag='open_1',
+            name_path="/data/question1"
+        ))
+        self.form.actions.open_cases[0].open_condition.type = 'always'
+        self.module.case_list_form.form_id = self.form.get_unique_id()
+        self.assertXmlEqual(self.get_xml('case_list_form'), self.form.render_xform())
+
 
 class SubcaseRepeatTestAdvanced(TestCase, TestFileMixin):
     file_path = ('data', 'form_preparation_v2_advanced')
