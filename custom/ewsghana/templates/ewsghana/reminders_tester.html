@@ -1,0 +1,18 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load hq_shared_tags %}
+
+{% block main_column %}
+        <h2>Reminders tester</h2>
+
+        <form method="POST" action="{% url 'reminders_tester' domain phone_number %}">
+            <div class="form-group" id="reminder_field">
+                <label for="reminder">Reminder</label>
+                <select id="reminder" name="reminder">
+                    {% for reminder in reminders %}
+                        <option value="{{ reminder }}">{{ reminder }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input id="submitButton" class="btn" type="submit" value="submit"/>
+        </form>
+{% endblock %}
