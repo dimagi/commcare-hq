@@ -265,8 +265,10 @@ class ProjectReportsTab(UITab):
         ])]
 
         user_reports = [(_("Create Reports"), [
-            {"title": _("(+) Create new report"),
-             "url": reverse("create_new_report_builder", args=[self.domain])}
+            {"title": _('Create new report'),
+             "url": reverse("create_new_report_builder", args=[self.domain]),
+             "icon": "icon-plus"
+            }
         ])] if toggle_enabled(self._request, 'USER_CONFIGURABLE_REPORTS') else []
         project_reports = ProjectReportDispatcher.navigation_sections(context)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
