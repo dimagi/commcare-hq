@@ -22,6 +22,6 @@ def parse_phone_number(number, region=None, failhard=True):
             return None
 
 
-def get_country_code(number, failhard=False):
+def get_country_code_and_national_number(number, failhard=False):
     parsed = parse_phone_number(number, failhard=failhard)
-    return parsed.country_code if parsed else None
+    return (parsed.country_code, parsed.national_number) if parsed else (None, None)
