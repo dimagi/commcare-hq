@@ -89,6 +89,41 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
+    def _make_group_object(self, user_id, case_sharing):
+        def group_name():
+            return '/'.join(
+                list(self.get_ancestors().values_list('name', flat=True)) +
+                [self.name]
+            )
+
+        from corehq.apps.groups.models import UnsavableGroup
+
+        g = UnsavableGroup()
+        g.domain = self.domain
+        g.users = [user_id] if user_id else []
+        g.last_modified = datetime.now()
+
+        if case_sharing:
+            g.name = group_name() + '-Cases'
+            g._id = LOCATION_SHARING_PREFIX + self.location_id
+            g.case_sharing = True
+            g.reporting = False
+        else:
+            # reporting groups
+            g.name = group_name()
+            g._id = LOCATION_REPORTING_PREFIX + self.location_id
+            g.case_sharing = False
+            g.reporting = True
+
+        g.metadata = {
+            'commcare_location_type': self.location_type,
+            'commcare_location_name': self.name,
+        }
+        for key, val in self.metadata.items():
+            g.metadata['commcare_location_' + key] = val
+
+        return g
+
     def case_sharing_group_object(self, user_id=None):
         """
         Returns a fake group object that cannot be saved.
@@ -98,30 +133,10 @@ class SQLLocation(MPTTModel):
         for every location that we have to manage/hide.
         """
 
-        from corehq.apps.groups.models import UnsavableGroup
-
-        def group_name():
-            return '/'.join(
-                list(self.get_ancestors().values_list('name', flat=True)) +
-                [self.name]
-            )
-
-        g = UnsavableGroup()
-        g.domain = self.domain
-        g.name = group_name() + '-Cases'
-        g.users = [user_id] if user_id else []
-        g.case_sharing = True
-        g.reporting = False
-        g.last_modified = datetime.now()
-        g._id = LOCATION_SHARING_PREFIX + self.location_id
-        g.metadata = {
-            'commcare_location_type': self.location_type,
-            'commcare_location_name': self.name,
-        }
-        for key, val in self.metadata.items():
-            g.metadata['commcare_location_' + key] = val
-
-        return g
+        return self._make_group_object(
+            user_id,
+            True,
+        )
 
     def reporting_group_object(self, user_id=None):
         """
@@ -131,31 +146,12 @@ class SQLLocation(MPTTModel):
         reporting groups.
         """
 
-        from corehq.apps.groups.models import UnsavableGroup
+        return self._make_group_object(
+            user_id,
+            False,
+        )
 
-        def group_name():
-            return '/'.join(
-                list(self.get_ancestors().values_list('name', flat=True)) +
-                [self.name]
-            )
-
-        g = UnsavableGroup()
-        g.domain = self.domain
-        g.name = group_name()
-        g.users = [user_id] if user_id else []
-        g.case_sharing = False
-        g.reporting = True
-        g.last_modified = datetime.now()
-        g._id = LOCATION_REPORTING_PREFIX + self.location_id
-        g.metadata = {
-            'commcare_location_type': self.location_type,
-            'commcare_location_name': self.name,
-        }
-        for key, val in self.metadata.items():
-            g.metadata['commcare_location_' + key] = val
-
-        return g
-
+    @memoized
     def couch_location(self):
         return Location.get(self.location_id)
 
