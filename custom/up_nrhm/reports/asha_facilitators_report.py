@@ -8,13 +8,8 @@ from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    fields = [DatespanFilter, DrillDownOptionFilter]
     name = "ASHA Facilitators Report"
     slug = "asha_facilitators_report"
-    show_all_rows = True
-    default_rows = 20
-    printable = True
-    report_template_path = "up_nrhm/asha_report.html"
     no_value = '--'
 
     @property

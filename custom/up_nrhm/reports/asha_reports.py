@@ -6,6 +6,7 @@ from custom.up_nrhm.filters import DrillDownOptionFilter, SampleFormatFilter, AS
 from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
+from custom.up_nrhm.reports.district_functionality_report import DistrictFunctionalityReport
 
 
 def total_rows(report):
@@ -45,7 +46,7 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport):
     def model(self):
         config = self.report_config
         if config.get('sf') == 'sf5':
-            return []
+            return DistrictFunctionalityReport(self.request, domain=self.domain)
         elif config.get('sf') == 'sf4':
             return BlockLevelAFReport(self.request, domain=self.domain)
         elif config.get('sf') == 'sf3':

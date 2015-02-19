@@ -1,22 +1,15 @@
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
-from custom.up_nrhm.filters import DrillDownOptionFilter, HierarchySqlData
+from custom.up_nrhm.filters import HierarchySqlData
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    fields = [DrillDownOptionFilter, MonthFilter, YearFilter]
     name = "Block Level-Month wise Report"
     slug = "block_level_month_wise"
-    show_all_rows = True
-    default_rows = 20
-    use_datatables = False
-    printable = True
-    no_value = '--'
 
     def get_afs_for_block(self):
         afs = []
@@ -40,7 +33,6 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
             'year': self.request.GET.get('year'),
             'month': self.request.GET.get('month'),
             'block': self.request.GET.get('hierarchy_block'),
-            'district': self.request.GET.get('hierarchy_district'),
         }
 
     @property
@@ -50,8 +42,8 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
     @property
     def rows(self):
         rows = [[column.header] for column in self.model.columns[2:]]
-        rows.append(["Total number of ASHAs who did not report/not known"])
-        last_row = ["Total ASHAs"]
+        rows.append(["<b>Total number of ASHAs who did not report/not known</b>"])
+        last_row = ["<b>Total Number of ASHAs under each Facilitator</b>"]
         sums = [0] * len(rows)
         total = 0
 

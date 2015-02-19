@@ -2,22 +2,15 @@ import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
-from custom.up_nrhm.filters import DrillDownOptionFilter
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    fields = [DrillDownOptionFilter, MonthFilter, YearFilter]
     name = "Block Level-Month wise Report"
     slug = "block_level_month_wise"
-    show_all_rows = True
-    default_rows = 20
-    use_datatables = False
-    printable = True
     no_value = '--'
 
     @property
@@ -83,5 +76,6 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
         reporting = [self.model.columns[1].get_raw_value(d) for d in data]
         not_reporting = [format_datatables_data(i - (j or 0), i - (j or 0)) for i, j in zip(total, reporting)]
 
-        rows.append(["Total number of ASHAs who did not report/not known"] + not_reporting + [avg(not_reporting)])
+        rows.append(["<b>Total number of ASHAs who did not report/not known</b>"] + not_reporting +
+                    [avg(not_reporting)])
         return rows, sum(total) / len(total)

@@ -184,7 +184,7 @@ class ASHAFacilitatorsData(SqlData):
                 FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Total number of ASHAs who are functional on at least 6/10 tasks",
+                "<b>Total number of ASHAs who are functional on at least 6/10 tasks</b>",
                 FunctionalityChecklistColumn(
                     whens={'hv_percent_functionality >= 60': 1},
                     alias='percent_functionality'),

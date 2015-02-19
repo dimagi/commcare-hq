@@ -111,8 +111,7 @@ class SampleFormatFilter(BaseSingleOptionFilter):
         return [
             ('sf3', 'Block Level-Month wise'),
             ('sf4', 'Block Level-AF wise'),
-            # TODO:
-            # ('sf5', 'District (Functionality of ASHAs)'),
+            ('sf5', 'District (Functionality of ASHAs)'),
         ]
 
 
