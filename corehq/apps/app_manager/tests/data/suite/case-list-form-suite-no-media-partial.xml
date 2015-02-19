@@ -1,0 +1,14 @@
+<partial>
+    <action>
+        <display>
+            <text><locale id="case_list_form.m0"/></text>
+        </display>
+        <stack>
+            <push>
+                <command value="'m1-f0'"/>
+                <datum id="case_id" value="uuid()"/>
+                <datum id="return_to" value="'m0'"/>
+            </push>
+        </stack>
+    </action>
+</partial>
