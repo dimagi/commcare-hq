@@ -31,12 +31,12 @@ class IndicatorSqlAdapter(object):
             table = self.get_table()
             for indicator_row in indicator_rows:
                 with self.engine.begin() as connection:
+                    # delete all existing rows for this doc to ensure we aren't left with stale data
+                    delete = table.delete(table.c.doc_id == doc['_id'])
+                    connection.execute(delete)
+                    all_values = {i.column.id: i.value for i in indicator_row}
+                    insert = table.insert().values(**all_values)
                     try:
-                        # delete all existing rows for this doc to ensure we aren't left with stale data
-                        delete = table.delete(table.c.doc_id == doc['_id'])
-                        connection.execute(delete)
-                        all_values = {i.column.id: i.value for i in indicator_row}
-                        insert = table.insert().values(**all_values)
                         connection.execute(insert)
                     except IntegrityError:
                         # Someone beat us to it. Concurrent inserts can happen
