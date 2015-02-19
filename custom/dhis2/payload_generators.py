@@ -27,7 +27,7 @@ from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
 from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings, Dhis2IntegrationError
 from custom.dhis2.const import NUTRITION_ASSESSMENT_EVENT_FIELDS, RISK_ASSESSMENT_EVENT_FIELDS, \
     RISK_ASSESSMENT_PROGRAM_FIELDS, REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS, \
-    NUTRITION_ASSESSMENT_PROGRAM_FIELDS
+    NUTRITION_ASSESSMENT_PROGRAM_FIELDS, CASE_TYPE
 from custom.dhis2.tasks import push_case
 
 
@@ -59,7 +59,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])
         cases = CommCareCase.get_by_xform_id(form.get_id)
-        case = cases[0]
+        case = next(c for c in cases.iterator() if c.type == CASE_TYPE)
         event = None
 
         if form['xmlns'] == REGISTER_CHILD_XMLNS:
