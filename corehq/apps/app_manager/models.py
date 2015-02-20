@@ -843,6 +843,41 @@ class IndexedFormBase(FormBase, IndexedSchema):
 
         return errors
 
+    def add_property_save(self, app_case_meta, case_type, name,
+                          questions, question_path, condition=None):
+        if question_path in questions:
+            app_case_meta.add_property_save(
+                case_type,
+                name,
+                self.unique_id,
+                questions[question_path],
+                condition
+            )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
+            )
+
+    def add_property_load(self, app_case_meta, case_type, name,
+                          questions, question_path):
+        if question_path in questions:
+            app_case_meta.add_property_load(
+                case_type,
+                name,
+                self.unique_id,
+                questions[question_path]
+            )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
+            )
+
 
 class JRResourceProperty(StringProperty):
 
@@ -1034,19 +1069,21 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 type_meta.add_closer(self.unique_id, action.condition)
             if type_ == 'update_case':
                 for name, question_path in FormAction.get_action_properties(action):
-                    app_case_meta.add_property_save(
+                    self.add_property_save(
+                        app_case_meta,
                         module_case_type,
                         name,
-                        self.unique_id,
-                        questions[question_path]
+                        questions,
+                        question_path
                     )
             if type_ == 'case_preload':
                 for name, question_path in FormAction.get_action_properties(action):
-                    app_case_meta.add_property_load(
+                    self.add_property_load(
+                        app_case_meta,
                         module_case_type,
                         name,
-                        self.unique_id,
-                        questions[question_path]
+                        questions,
+                        question_path
                     )
             if type_ == 'subcases':
                 for act in action:
@@ -1056,11 +1093,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         if act.close_condition.is_active():
                             sub_type_meta.add_closer(self.unique_id, act.close_condition)
                         for name, question_path in FormAction.get_action_properties(act):
-                            app_case_meta.add_property_save(
+                            self.add_property_save(
+                                app_case_meta,
                                 act.case_type,
                                 name,
-                                self.unique_id,
-                                questions[question_path]
+                                questions,
+                                question_path
                             )
 
 
@@ -1798,37 +1836,41 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
-                app_case_meta.add_property_save(
+                self.add_property_save(
+                    app_case_meta,
                     action.case_type,
                     name,
-                    self.unique_id,
-                    questions[question_path]
+                    questions,
+                    question_path
                 )
             for name, question_path in action.preload.items():
-                app_case_meta.add_property_load(
+                self.add_property_load(
+                    app_case_meta,
                     action.case_type,
                     name,
-                    self.unique_id,
-                    questions[question_path]
+                    questions,
+                    question_path
                 )
             if action.close_condition.is_active():
                 meta = app_case_meta.get_type(action.case_type)
                 meta.add_closer(self.unique_id, action.close_condition)
 
         for action in self.actions.open_cases:
-            app_case_meta.add_property_save(
+            self.add_property_save(
+                app_case_meta,
                 action.case_type,
                 'name',
-                self.unique_id,
-                questions.get(action.name_path),
+                questions,
+                action.name_path,
                 action.open_condition
             )
             for name, question_path in action.case_properties.items():
-                app_case_meta.add_property_save(
+                self.add_property_save(
+                    app_case_meta,
                     action.case_type,
                     name,
-                    self.unique_id,
-                    questions[question_path],
+                    questions,
+                    question_path,
                     action.open_condition
                 )
             meta = app_case_meta.get_type(action.case_type)
@@ -2087,18 +2129,20 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
         questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
         meta = app_case_meta.get_type(self.case_type)
         for name, question_path in self.case_updates().items():
-            app_case_meta.add_property_save(
+            self.add_property_save(
+                app_case_meta,
                 self.case_type,
                 name,
-                self.unique_id,
-                questions[question_path],
+                questions,
+                question_path
             )
         for name, question_path in self.case_preload.items():
-            app_case_meta.add_property_load(
+            self.add_property_load(
+                app_case_meta,
                 self.case_type,
                 name,
-                self.unique_id,
-                questions[question_path],
+                questions,
+                question_path
             )
         meta.add_opener(self.unique_id, FormActionCondition(
             type='always',
