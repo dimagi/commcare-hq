@@ -70,12 +70,14 @@ class LocationsListView(BaseLocationView):
     @property
     def page_context(self):
         selected_id = self.request.GET.get('selected')
+        has_location_types = len(self.domain_object.location_types) > 0
         return {
             'selected_id': selected_id,
             'locations': load_locs_json(
                 self.domain, selected_id, self.show_inactive
             ),
             'show_inactive': self.show_inactive,
+            'has_location_types': has_location_types
         }
 
 
@@ -109,6 +111,8 @@ class LocationSettingsView(BaseCommTrackManageView):
             'code': loctype.code,
             'allowed_parents': [p or None for p in loctype.allowed_parents],
             'administrative': loctype.administrative,
+            'shares_cases': loctype.shares_cases,
+            'view_descendants': loctype.view_descendants
         }
 
     def post(self, request, *args, **kwargs):
@@ -491,6 +495,9 @@ def location_export(request, domain):
 @domain_admin_required
 @require_POST
 def sync_facilities(request, domain):
+    # TODO this is believed to be obsolete and should
+    # likely be removed, just need to make sure it isn't
+    # magically used by ils/ews first..
     # create Facility Registry and Facility LocationTypes if they don't exist
     if not any(lt.name == 'Facility Registry'
                for lt in request.project.location_types):

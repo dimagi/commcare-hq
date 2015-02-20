@@ -18,9 +18,10 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload
 from lxml import etree
+from corehq.apps.locations.schema import LocationType
 
 TEST_DOMAIN = 'commtrack-test'
-TEST_LOCATION_TYPE = 'location'
+TEST_LOCATION_TYPE = 'outlet'
 TEST_USER = 'commtrack-user'
 TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
@@ -97,8 +98,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         if not SupplyPointCase.get_by_location(setup.loc):
             make_supply_point(domain, setup.loc)
 
-        user.add_location(setup.loc)
-        user.save()
+        user.set_location(setup.loc)
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return CommCareUser.wrap(user.to_json())
@@ -122,6 +122,33 @@ class CommTrackTest(TestCase):
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain()
+        self.domain.location_types = [
+            LocationType(
+                name='state',
+                allowed_parents=[''],
+                administrative=True
+            ),
+            LocationType(
+                name='district',
+                allowed_parents=['state'],
+                administrative=True
+            ),
+            LocationType(
+                name='block',
+                allowed_parents=['district'],
+                administrative=True
+            ),
+            LocationType(
+                name='village',
+                allowed_parents=['block'],
+                administrative=True
+            ),
+            LocationType(
+                name='outlet',
+                allowed_parents=['village']
+            ),
+        ]
+        self.domain.save()
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,

@@ -27,7 +27,7 @@ class Command(BaseCommand):
                 except ResourceNotFound:
                     # if there was bad data in there before, we can ignore it
                     continue
-                user.set_locations([original_location_object])
+                user.set_location(original_location_object)
 
                 del user_doc['commtrack_location']
 

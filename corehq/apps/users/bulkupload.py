@@ -17,6 +17,7 @@ from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_blo
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
 
 from .forms import CommCareAccountForm
 from .models import CommCareUser, CouchUser
@@ -31,7 +32,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id',
+    'uncategorized_data', 'user_id', 'location-sms-code',
 ]) | required_headers
 
 
@@ -119,22 +120,58 @@ def _fmt_phone(phone_number):
     return phone_number.lstrip("+")
 
 
-class LocationCache(object):
-    def __init__(self):
+class BulkCacheBase(object):
+    def __init__(self, domain):
+        self.domain = domain
         self.cache = {}
 
-    def get(self, site_code, domain):
-        if not site_code:
+    def get(self, key):
+        if not key:
             return None
-        if site_code in self.cache:
-            return self.cache[site_code]
-        else:
-            supply_point = get_supply_point(
-                domain,
-                site_code
-            )['case']
-            self.cache[site_code] = supply_point
-            return supply_point
+        if key not in self.cache:
+            self.cache[key] = self.lookup(key)
+        return self.cache[key]
+
+    def lookup(self, key):
+        # base classes must implement this themselves
+        raise NotImplementedError
+
+
+class SiteCodeToSupplyPointCache(BulkCacheBase):
+    """
+    Cache the lookup of a supply point object from
+    the site code used in upload.
+    """
+
+    def lookup(self, site_code):
+        supply_point = get_supply_point(
+            self.domain,
+            site_code
+        )['case']
+        return supply_point
+
+
+class SiteCodeToLocationCache(BulkCacheBase):
+    def __init__(self, domain):
+        self.non_admin_types = [
+            loc_type.name for loc_type in Domain.get_by_name(domain).location_types
+            if not loc_type.administrative
+        ]
+        return super(SiteCodeToLocationCache, self).__init__(domain)
+
+    def lookup(self, site_code):
+        return SQLLocation.objects.get(
+            domain=self.domain,
+            site_code=site_code
+        ).couch_location()
+
+
+class LocationIdToSiteCodeCache(BulkCacheBase):
+    def lookup(self, location_id):
+        return SQLLocation.objects.get(
+            domain=self.domain,  # this is only for safety
+            location_id=location_id
+        ).site_code
 
 
 class UserLocMapping(object):
@@ -146,7 +183,7 @@ class UserLocMapping(object):
         self.location_cache = location_cache
 
     def get_supply_point_from_location(self, sms_code):
-        return self.location_cache.get(sms_code, self.domain)
+        return self.location_cache.get(sms_code)
 
     def save(self):
         """
@@ -162,12 +199,14 @@ class UserLocMapping(object):
 
         commit_list = {}
         messages = []
+
         def _add_loc(loc, clear=False):
             sp = self.get_supply_point_from_location(loc)
             if sp is None:
-                messages.append(_("No supply point found for location '{}'. "
-                   "Make sure the location type is not set to administrative only "
-                   "and that the location has a valid sms code."
+                messages.append(_(
+                    "No supply point found for location '{}'. "
+                    "Make sure the location type is not set to administrative only "
+                    "and that the location has a valid sms code."
                 ).format(loc or ''))
             else:
                 commit_list.update(user.supply_point_index_mapping(sp, clear))
@@ -186,20 +225,30 @@ class UserLocMapping(object):
 
 
 def create_or_update_locations(domain, location_specs, log):
-    location_cache = LocationCache()
+    """
+    This method should only be used when uploading multiple
+    location per user situations. This is behind a feature
+    flag and is not for normal use.
+
+    It is special because it is creating delegate case
+    submissions to give this location access.
+    """
+    sp_cache = SiteCodeToSupplyPointCache(domain)
     users = {}
     for row in location_specs:
         username = row.get('username')
         try:
             username = normalize_username(username, domain)
         except ValidationError:
-            log['errors'].append(_("Username must be a valid email address: %s") % username)
+            log['errors'].append(
+                _("Username must be a valid email address: %s") % username
+            )
         else:
             location_code = unicode(row.get('location-sms-code'))
             if username in users:
                 user_mapping = users[username]
             else:
-                user_mapping = UserLocMapping(username, domain, location_cache)
+                user_mapping = UserLocMapping(username, domain, sp_cache)
                 users[username] = user_mapping
 
             if row.get('remove') == 'y':
@@ -212,9 +261,12 @@ def create_or_update_locations(domain, location_specs, log):
             messages = mapping.save()
             log['errors'].extend(messages)
         except UserUploadError as e:
-            log['errors'].append(_('Unable to update locations for {user} because {message}'.format(
-                user=username, message=e
-            )))
+            log['errors'].append(
+                _('Unable to update locations for {user} because {message}'.format(
+                    user=username,
+                    message=e
+                ))
+            )
 
 
 def create_or_update_groups(domain, group_specs, log):
@@ -275,6 +327,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
+    location_cache = SiteCodeToLocationCache(domain)
     try:
         for row in user_specs:
             _set_progress(current)
@@ -290,6 +343,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             uncategorized_data = row.get('uncategorized_data')
             user_id = row.get('user_id')
             username = row.get('username')
+            location_code = row.get('location-sms-code', '')
 
             if password:
                 password = unicode(password)
@@ -372,6 +426,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if email:
                         user.email = email
                     user.save()
+                    if location_code:
+                        loc = location_cache.get(location_code)
+                        if user.location_id != loc._id:
+                            # this triggers a second user save so
+                            # we want to avoid doing it if it isn't
+                            # needed
+                            user.set_location(loc)
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.
@@ -410,7 +471,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             ) % (_error_message, e.errors))
             ret['errors'].append(_error_message)
 
-    create_or_update_locations(domain, location_specs, log=ret)
+    if Domain.get_by_name(domain).supports_multiple_locations_per_user:
+        create_or_update_locations(domain, location_specs, log=ret)
     _set_progress(total)
     return ret
 
@@ -431,6 +493,11 @@ def get_location_rows(domain):
 
     mappings = []
     for user in users:
+        # this method is only called when exporting the
+        # locaiton tab (so on domains with multiple
+        # locations per user), so we are relying on
+        # user.locations being a thing that is real
+        # and working
         locations = user.locations
         for location in locations:
             mappings.append([
@@ -448,7 +515,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, users, user_data_model):
+def parse_users(group_memoizer, users, user_data_model, location_cache):
 
     def _get_group_names(user):
         return sorted(map(
@@ -456,7 +523,7 @@ def parse_users(group_memoizer, users, user_data_model):
             Group.by_user(user, wrap=False)
         ), key=alphanumeric_sort_key)
 
-    def _make_user_dict(user, group_names):
+    def _make_user_dict(user, group_names, location_cache):
         model_data, uncategorized_data = (
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
@@ -471,6 +538,7 @@ def parse_users(group_memoizer, users, user_data_model):
             'username': user.raw_username,
             'language': user.language,
             'user_id': user._id,
+            'location-sms-code': location_cache.get(user.location_id),
         }
 
     user_data_keys = set()
@@ -478,13 +546,13 @@ def parse_users(group_memoizer, users, user_data_model):
     user_dicts = []
     for user in users:
         group_names = _get_group_names(user)
-        user_dicts.append(_make_user_dict(user, group_names))
+        user_dicts.append(_make_user_dict(user, group_names, location_cache))
         user_data_keys.update(user.user_data.keys() if user.user_data else [])
         user_groups_length = max(user_groups_length, len(group_names))
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id'
+        'language', 'user_id', 'location-sms-code'
     ]
     user_data_fields = [f.slug for f in user_data_model.fields]
     user_headers.extend(build_data_headers(user_data_fields))
@@ -552,14 +620,19 @@ def dump_users_and_groups(response, domain):
     export_file = StringIO()
     writer = Excel2007ExportWriter()
     group_memoizer = _load_memoizer(domain)
+    location_cache = LocationIdToSiteCodeCache(domain)
+
     user_data_model = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
     )
 
-    user_headers, user_rows = parse_users(group_memoizer,
-                                          CommCareUser.by_domain(domain),
-                                          user_data_model)
+    user_headers, user_rows = parse_users(
+        group_memoizer,
+        CommCareUser.by_domain(domain),
+        user_data_model,
+        location_cache
+    )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
     headers = [
@@ -571,8 +644,8 @@ def dump_users_and_groups(response, domain):
         ('groups', group_rows),
     ]
 
-    commtrack_enabled = Domain.get_by_name(domain).commtrack_enabled
-    if commtrack_enabled:
+    domain_obj = Domain.get_by_name(domain)
+    if domain_obj.commtrack_enabled and domain_obj.supports_multiple_locations_per_user:
         headers.append(
             ('locations', [['username', 'location-sms-code', 'location name (optional)']])
         )
