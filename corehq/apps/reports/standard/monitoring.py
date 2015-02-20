@@ -471,7 +471,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         return sorted(users, key=lambda u: u['username_in_report'])
 
     def paginate_list(self, data_list):
-        if self.pagination:
+        if self.request_params.get('iDisplayLength'):
             start = self.pagination.start
             end = start + self.pagination.count
             return data_list[start:end]
