@@ -9,10 +9,22 @@ Project Space: {{ domain }}
 Software Plan: {{ plan_name }}
 Status: {{ payment_status }}
 Amount Due: {{ amount_due }}
+{% endblocktrans %}
 
-You can view the full statement under Subscription > Billing Statements
-in your Project Space Settings or by visiting this link: {{ statements_url }}.
+{% if can_view_statement %}
+{% blocktrans %}
+To view the full billing statement, log into your project space on
+CommCareHQ and navigate to Billing Statements at {{ statements_url }}
+{% endblocktrans %}
+{% else %}
+{% blocktrans %}
+Your project's administrator can view the full billing statement by
+logging into your project space on CommCareHQ and navigating to
+Billing Statements at {{ statements_url }}
+{% endblocktrans %}
+{% endif %}
 
+{% blocktrans %}
 Thank you for using {{ plan_name }}. If you have any questions, please don't
 hesitate to contact {{ invoicing_contact_email }}.
 
