@@ -637,13 +637,15 @@ class SoftwarePlanVersion(models.Model):
             'name': self.plan.name,
             'description': self.plan.description,
         }
-        if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-            or self.plan.visibility == SoftwarePlanVisibility.TRIAL
-        ):
-            try:
-                desc = DESC_BY_EDITION[self.plan.edition]
-            except KeyError:
-                pass
+        try:
+            if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+                or self.plan.visibility == SoftwarePlanVisibility.TRIAL):
+                desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
+            else:
+                for desc_key in desc:
+                    desc[desc_key] |= DESC_BY_EDITION[self.plan.edition][desc_key]
+        except KeyError:
+            pass
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],

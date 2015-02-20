@@ -58,10 +58,10 @@
                                     {% endblocktrans %}
                                 {% else %}{{ plan.description }}{% endif %}</p>
                         </div>
-                        {% if plan.is_dimagi_subscription %}
+                        {% if plan.do_not_invoice %}
                             <div class="alert alert-info">
                             {% blocktrans %}
-                                <strong>Note:</strong> This is a Dimagi-owned subscription.
+                                <strong>Note:</strong> This subscription will not be invoiced.
                             {% endblocktrans %}
                             </div>
                         {% endif %}
