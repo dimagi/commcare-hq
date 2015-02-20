@@ -471,7 +471,7 @@ class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
         label=_("Restrict Superuser Access"),
         required=False,
-        help_text=_("If access to a domain is restricted only users added " +
+        help_text=_("If access to a project space is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
     secure_submissions = BooleanField(
@@ -521,7 +521,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     self_started = ChoiceField(
         label=ugettext_noop("Self Started?"),
         choices=tf_choices('Yes', 'No'),
-        required=False)
+        required=False,
+        help_text=ugettext_noop(
+            "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
+        ))
     area = ChoiceField(
         label=ugettext_noop("Sector"),
         required=False,
@@ -530,7 +533,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label=ugettext_noop("Sub-Sector"),
         required=False,
         choices=tuple_of_copies(SUB_AREA_CHOICES))
-    using_adm = ChoiceField(label=ugettext_noop("Using ADM?"), choices=tf_choices('Yes', 'No'), required=False)
     organization_name = CharField(
         label=ugettext_noop("Organization Name"),
         required=False,
@@ -548,7 +550,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         choices=COUNTRIES,
     )
     commtrack_domain = ChoiceField(
-        label=ugettext_noop("Supply Chain Enabled"),
+        label=ugettext_noop("CommCare Supply Project"),
         choices=tf_choices('Yes', 'No'),
         required=False,
         help_text=_("This app aims to improve the supply of goods and materials")
@@ -578,7 +580,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'sf_contract_id',
                 'sf_account_id',
                 'services',
-                'using_adm',
             ),
             FormActions(
                 StrictButton(
@@ -621,7 +622,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             self_started=self.cleaned_data['self_started'] == 'true',
             area=self.cleaned_data['area'],
             sub_area=self.cleaned_data['sub_area'],
-            using_adm=self.cleaned_data['using_adm'] == 'true',
             organization_name=self.cleaned_data['organization_name'],
             notes=self.cleaned_data['notes'],
             phone_model=self.cleaned_data['phone_model'],

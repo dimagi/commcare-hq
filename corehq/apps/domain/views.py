@@ -1978,7 +1978,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'organization_name',
             'notes',
             'self_started',
-            'using_adm',
             'phone_model',
             'commtrack_domain',
         ]
