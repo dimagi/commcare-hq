@@ -1132,6 +1132,7 @@ class Subscription(models.Model):
             'subscription_url': absolute_reverse(
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
             'base_url': get_site_domain(),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
@@ -1503,6 +1504,7 @@ class BillingRecord(models.Model):
             'amount_due': fmt_dollar_amount(self.invoice.balance),
             'statements_url': absolute_reverse(
                 DomainBillingStatementsView.urlname, args=[domain]),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients
