@@ -546,7 +546,7 @@ class Dhis2Api(object):
                     })
         return data_values
 
-    def form_to_event(self, program_id, xform, data_element_names, te_inst_id=None):
+    def form_to_event(self, program_id, xform, data_element_names, program_stage_id=None, te_inst_id=None):
         """
         Builds a dict representing a DHIS2 event
 
@@ -554,6 +554,7 @@ class Dhis2Api(object):
         :param xform: An XFormInstance
         :param data_element_names: A dictionary mapping CCHQ form field names
                                    to DHIS2 tracked entity attribute names
+        :param program_stage_id: Program stage for programs with stages
         :param te_inst_id: Tracked entity instance ID, for creating an event
                            with registration
 
@@ -605,6 +606,8 @@ class Dhis2Api(object):
             'storedBy': self._username,
             'dataValues': self._get_event_data_values(xform, data_element_names)
         }
+        if program_stage_id:
+            event['programStage'] = program_stage_id
         if te_inst_id:
             event['trackedEntityInstance'] = te_inst_id
         if xform.metadata.location:

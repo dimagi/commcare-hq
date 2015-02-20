@@ -80,8 +80,9 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
                              if getattr(case, cchq_attr, None)})
             dhis2_api.update_te_inst(instance)
             # Create a paediatric nutrition assessment event.
-            nutrition_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
-            event = dhis2_api.form_to_event(nutrition_id, form, NUTRITION_ASSESSMENT_EVENT_FIELDS,
+            program_id = dhis2_api.get_program_id('Paediatric Nutrition Assessment')
+            program_stage_id = dhis2_api.get_program_stage_id('Nutrition Assessment')
+            event = dhis2_api.form_to_event(program_id, form, NUTRITION_ASSESSMENT_EVENT_FIELDS, program_stage_id,
                                             case['external_id'])
 
         elif form['xmlns'] == RISK_ASSESSMENT_XMLNS:
@@ -95,15 +96,17 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
                              if getattr(case, cchq_attr, None)})
             dhis2_api.update_te_inst(instance)
             # Check whether the case needs to be enrolled in the Risk Assessment Program
-            risk_id = dhis2_api.get_program_id('Underlying Risk Assessment')
+            program_id = dhis2_api.get_program_id('Underlying Risk Assessment')
             if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
                 # TODO: Test without doing this
                 today = date.today().strftime('%Y-%m-%d')
                 program_data = {dhis2_attr: case[cchq_attr]
                                 for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()}
-                dhis2_api.enroll_in_id(case['external_id'], risk_id, today, program_data)
+                dhis2_api.enroll_in_id(case['external_id'], program_id, today, program_data)
             # Create a risk assessment event.
-            event = dhis2_api.form_to_event(risk_id, form, RISK_ASSESSMENT_EVENT_FIELDS, case['external_id'])
+            program_stage_id = dhis2_api.get_program_stage_id('Underlying Risk Assessment')
+            event = dhis2_api.form_to_event(program_id, form, RISK_ASSESSMENT_EVENT_FIELDS, program_stage_id,
+                                            case['external_id'])
 
         # If the form is not to be forwarded, the event will be None
         return json.dumps(event, default=json_serializer) if event else None
