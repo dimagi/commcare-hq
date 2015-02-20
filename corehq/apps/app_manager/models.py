@@ -853,6 +853,13 @@ class IndexedFormBase(FormBase, IndexedSchema):
                 questions[question_path],
                 condition
             )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
+            )
 
     def add_property_load(self, app_case_meta, case_type, name,
                           questions, question_path):
@@ -862,6 +869,13 @@ class IndexedFormBase(FormBase, IndexedSchema):
                 name,
                 self.unique_id,
                 questions[question_path]
+            )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
             )
 
 
