@@ -1,18 +1,20 @@
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.smsforms.models import XFormsSession
+from django.db.models import Q
+from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_SMS
 from touchforms.formplayer.api import (
     get_raw_instance,
     InvalidSessionIdException,
 )
+
 
 class Command(BaseCommand):
     args = ""
     help = ""
     
     def handle(self, *args, **options):
-        sessions = XFormsSession.view(
-            "smsforms/open_sms_sessions_by_connection",
-            include_docs=True
+        sessions = SQLXFormsSession.objects.filter(
+            Q(session_type__isnull=True) | Q(session_type=XFORMS_SESSION_SMS),
+            end_time__isnull=True,
         ).all()
         for session in sessions:
             try:
@@ -24,4 +26,3 @@ class Command(BaseCommand):
             except Exception as e:
                 print "An unexpected error occurred when processing %s %s" % (session.domain, session._id)
                 print e
-

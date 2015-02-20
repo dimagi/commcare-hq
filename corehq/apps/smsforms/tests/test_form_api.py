@@ -4,7 +4,7 @@ import json
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.tests.util import MockContact, CONTACT_ID, q_and_a
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession
 from couchforms.models import XFormInstance
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.shortcuts import create_domain
@@ -49,7 +49,7 @@ class FormplayerApiTest(TestCase):
         q_and_a(self, "2", "thanks for submitting!", self.domain)
         
         # check the instance
-        session = XFormsSession.get(session.get_id)
+        session = SQLXFormsSession.objects.get(couch_id=session.get_id)
         self.assertTrue(session.submission_id)
         instance = XFormInstance.get(session.submission_id)
         self.assertEqual("sms contact", instance.xpath("form/name"))
@@ -73,7 +73,7 @@ class FormplayerApiTest(TestCase):
         q_and_a(self, "some case", "thanks, you're done!", self.domain)
         
         def _get_case(session):
-            session = XFormsSession.get(session.get_id)
+            session = SQLXFormsSession.objects.get(couch_id=session.get_id)
             self.assertTrue(session.submission_id)
             instance = XFormInstance.get(session.submission_id)
             case_id = instance.xpath("form/case/@case_id")

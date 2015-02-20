@@ -2,6 +2,7 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER
 from corehq.toggles import NAMESPACE_DOMAIN
+from django.db import models
 
 
 class EWSGhanaConfig(Document):
@@ -55,3 +56,10 @@ class EWSGhanaConfig(Document):
 
         if self.enabled:
             STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
+
+
+class AlertsSent(models.Model):
+    create_date = models.DateTimeField(editable=False)
+    alert_type = models.TextField()
+    alert_text = models.TextField()
+    supply_point_id = models.CharField(max_length=10)

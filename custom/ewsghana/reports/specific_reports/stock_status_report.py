@@ -334,11 +334,11 @@ class StockStatus(MultiReport):
 
         report_type = self.request.GET.get('report_type', None)
         if report_type == 'stockouts' or not report_type:
-            r = self.report_context['reports'][1]['report_table']
+            r = self.report_context['reports'][2]['report_table']
             return [self._export(r['title'], r['headers'], r['rows'])]
         else:
-            reports = [self.report_context['reports'][1]['report_table'],
-                       self.report_context['reports'][3]['report_table']]
+            reports = [self.report_context['reports'][2]['report_table'],
+                       self.report_context['reports'][4]['report_table']]
             return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
 
     def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):

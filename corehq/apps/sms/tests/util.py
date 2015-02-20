@@ -14,7 +14,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMSLog, CallLog
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
     RECIPIENT_SENDER, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS, METHOD_SMS)
@@ -283,7 +283,7 @@ class TouchformsTestCase(LiveServerTestCase):
         return call
 
     def get_open_session(self, contact):
-        return XFormsSession.get_open_sms_session(self.domain, contact._id)
+        return SQLXFormsSession.get_open_sms_session(self.domain, contact._id)
 
     def assertLastOutboundSMSEquals(self, contact, message):
         sms = self.get_last_outbound_sms(contact)

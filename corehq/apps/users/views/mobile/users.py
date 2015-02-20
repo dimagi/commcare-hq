@@ -623,7 +623,6 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return CustomDataEditor(
             field_view=UserFieldsView,
             domain=self.domain,
-            required_only=True,
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 

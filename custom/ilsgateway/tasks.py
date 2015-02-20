@@ -90,6 +90,8 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                     stock_state = StockState.objects.get(section_id='stock',
                                                          case_id=case._id,
                                                          product_id=product._id)
+                    stock_state.last_modified_date = product_stock.last_modified
+                    stock_state.stock_on_hand = product_stock.quantity or 0
                 except StockState.DoesNotExist:
                     stock_state = StockState(section_id='stock',
                                              case_id=case._id,
