@@ -598,7 +598,7 @@ class Dhis2Api(object):
         event = {
             'program': program_id,
             'orgUnit': org_unit,
-            'eventDate': xform.received_on,
+            'eventDate': xform.received_on.date(),
             'status': 'COMPLETED',
             'storedBy': self._username,
             'dataValues': self._get_event_data_values(xform, data_element_names)
