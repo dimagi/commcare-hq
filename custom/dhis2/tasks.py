@@ -67,7 +67,6 @@ def push_case(case, dhis2_api):
         instance_id = dhis2_api.add_te_inst(TRACKED_ENTITY, ou_id, instance)
 
     # Enroll in Pediatric Nutrition Assessment
-    # TODO: Test without doing this
     date_of_visit = case['date_of_visit'] if getattr(case, 'date_of_visit', None) else date.today()
     response = dhis2_api.enroll_in(instance_id, 'Paediatric Nutrition Assessment', date_of_visit, program_data)
     if response['status'] != 'SUCCESS':

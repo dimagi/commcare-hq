@@ -98,7 +98,6 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # Check whether the case needs to be enrolled in the Risk Assessment Program
             program_id = dhis2_api.get_program_id('Underlying Risk Assessment')
             if not dhis2_api.enrolled_in(case['external_id'], 'Underlying Risk Assessment'):
-                # TODO: Test without doing this
                 today = date.today().strftime('%Y-%m-%d')
                 program_data = {dhis2_attr: case[cchq_attr]
                                 for cchq_attr, dhis2_attr in RISK_ASSESSMENT_PROGRAM_FIELDS.iteritems()}

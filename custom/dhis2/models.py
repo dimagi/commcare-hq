@@ -458,7 +458,8 @@ class Dhis2Api(object):
         """
         Yields organisation units with parent IDs
         """
-        # I didn't find a way to do this with a single request. :-|
+        # TODO: Use a SQL query.
+        # cf. https://www.dhis2.org/doc/snapshot/en/user/html/ch25s21.html
         for ou in self.gen_org_units():
             ou['parent_id'] = self.get_org_unit_parent_id(ou['id'])
             yield ou
@@ -513,7 +514,8 @@ class Dhis2Api(object):
         :param program: The name of a program
         :return: boolean
         """
-        # TODO: Find a better DHIS2 API search instead of iterating instances
+        # TODO: Instead of iterating instances, maybe use a SQL query.
+        # cf. https://www.dhis2.org/doc/snapshot/en/user/html/ch25s21.html
         return any(inst['Instance'] == te_inst_id for inst in self.gen_instances_in_program(program))
 
     def _get_event_data_values(self, xform, data_element_names):
