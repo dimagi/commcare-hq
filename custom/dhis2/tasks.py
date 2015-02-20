@@ -148,11 +148,10 @@ def get_user_by_org_unit(domain, org_unit_id, top_org_unit_name):
               .domain(domain)
               .mobile_users()
               # .term('user_data.dhis_org_id', org_unit_id)
-              # .filter({'term': {'user_data.dhis_org_id.exact': org_unit_id}})
               .run())
-    # user_data is a dynamic mapping. Despite documentation ...
-    # http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-dynamic-mapping.html
-    # ... it seems not to be filtering on it. We have to do this ourselves.
+    # cf. http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-dynamic-mapping.html
+    # If/when we upgrade elasticsearch, we can filter on dynamic mappings and
+    # uncomment the ".term" line above. Until then, check it ourselves ...
     for doc in result.hits:
         if doc['user_data'].get('dhis_org_id') == org_unit_id:
             return CommCareUser.wrap(doc)
