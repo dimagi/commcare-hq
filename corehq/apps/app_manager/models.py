@@ -3258,7 +3258,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'uniqueid': self.copy_of or self.id,
             'name': self.name,
             'descriptor': u"Profile File"
-        }).decode('utf-8')
+        }).encode('utf-8')
 
     @property
     def custom_suite(self):

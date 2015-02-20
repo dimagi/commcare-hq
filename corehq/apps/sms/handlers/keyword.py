@@ -1,4 +1,3 @@
-import logging
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
@@ -9,7 +8,7 @@ from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import (
     SurveyKeyword,
     RECIPIENT_SENDER,
@@ -26,7 +25,7 @@ from corehq.apps.groups.models import Group
 from touchforms.formplayer.api import current_question
 from corehq.apps.app_manager.models import Form
 from casexml.apps.case.models import CommCareCase
-from couchdbkit.exceptions import MultipleResultsFound
+
 
 class StructuredSMSException(Exception):
     def __init__(self, *args, **kwargs):
@@ -85,7 +84,7 @@ def global_keyword_start(v, text, msg, text_words, open_sessions):
     return True
 
 def global_keyword_stop(v, text, msg, text_words, open_sessions):
-    XFormsSession.close_all_open_sms_sessions(v.domain, v.owner_id)
+    SQLXFormsSession.close_all_open_sms_sessions(v.domain, v.owner_id)
     return True
 
 def global_keyword_current(v, text, msg, text_words, open_sessions):
@@ -135,7 +134,7 @@ def sms_keyword_handler(v, text, msg):
     if text == "":
         return False
 
-    sessions = XFormsSession.get_all_open_sms_sessions(v.domain, v.owner_id)
+    sessions = SQLXFormsSession.get_all_open_sms_sessions(v.domain, v.owner_id)
     text_words = text.upper().split()
 
     if text.startswith("#"):
@@ -325,7 +324,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
 
     if session is not None:
-        session = XFormsSession.get(session._id)
+        session = SQLXFormsSession.objects.get(couch_id=session._id)
         if session.is_open:
             session.end(False)
             session.save()
@@ -427,7 +426,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
 
     # Close any open sessions even if it's just an sms that we're
     # responding with.
-    XFormsSession.close_all_open_sms_sessions(verified_number.domain,
+    SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain,
         verified_number.owner_id)
 
     if sender.doc_type == "CommCareCase":
