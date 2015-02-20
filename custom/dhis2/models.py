@@ -105,10 +105,7 @@ class JsonApiRequest(object):
         :raises JsonApiError: if HTTP status is not in the 200 (OK) range
         """
         if 200 <= response.status_code < 300:
-            return response.status_code, response.json()
-        elif response.status_code == 404:
-            raise JsonApiError('API request to %s failed with HTTP status %s' %
-                               (response.url, response.status_code))
+            return response.json()
         else:
             raise JsonApiError('API request to %s failed with HTTP status %s: %s' %
                                (response.url, response.status_code, response.text))
@@ -176,12 +173,12 @@ class Dhis2Api(object):
         self._data_elements = {}  # Like _tracked_entity_attributes, but for events data
 
     def _fetch_tracked_entity_attributes(self):
-        __, response = self._request.get('trackedEntityAttributes', params={'links': 'false', 'paging': 'false'})
+        response = self._request.get('trackedEntityAttributes', params={'links': 'false', 'paging': 'false'})
         for te in response['trackedEntityAttributes']:
             self._tracked_entity_attributes[te['name']] = te['id']
 
     def _fetch_data_elements(self):
-        __, response = self._request.get('dataElements', params={'links': 'false', 'paging': 'false'})
+        response = self._request.get('dataElements', params={'links': 'false', 'paging': 'false'})
         for de in response['dataElements']:
             self._data_elements[de['name']] = de['id']
 
@@ -247,7 +244,7 @@ class Dhis2Api(object):
             'orgUnit': ou_id,
             'attributes': self._data_to_attributes(instance_data)
         }
-        __, response = self._request.post('trackedEntityInstances', request_data)
+        response = self._request.post('trackedEntityInstances', request_data)
         return response['reference']
 
     def update_te_inst(self, instance_data):
@@ -267,8 +264,7 @@ class Dhis2Api(object):
             'orgUnit': ou_id,
             'attributes': self._data_to_attributes(instance_data)
         }
-        __, response = self._request.put('trackedEntityInstances/' + te_inst_id, request_data)
-        return response
+        return self._request.put('trackedEntityInstances/' + te_inst_id, request_data)
 
     def get_top_org_unit(self):
         """
@@ -277,21 +273,21 @@ class Dhis2Api(object):
         if self._top_org_unit is None:
             if self.top_org_unit_name:
                 # A top organisation unit has been specified in the settings. Use that
-                __, response = self._request.get('organisationUnits',
-                                                 params={'links': 'false',
-                                                         'query': self.top_org_unit_name})
+                response = self._request.get('organisationUnits',
+                                             params={'links': 'false',
+                                                     'query': self.top_org_unit_name})
                 self._top_org_unit = response['organisationUnits'][0]
             else:
                 # Traverse up the tree of organisation units
-                __, org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
+                org_units_json = self._request.get('organisationUnits', params={'links': 'false'})
                 org_unit = org_units_json['organisationUnits'][0]
                 # The List response doesn't include parent (even if you ask for it :-| ). Request org_unit details.
-                __, org_unit = self._request.get('organisationUnits/' + org_unit['id'])
+                org_unit = self._request.get('organisationUnits/' + org_unit['id'])
                 while True:
                     if not org_unit.get('parent'):
                         # The organisation unit with no parent is the top-most organisation unit
                         break
-                    __, org_unit = self._request.get('organisationUnits/' + org_unit['parent']['id'])
+                    org_unit = self._request.get('organisationUnits/' + org_unit['parent']['id'])
                 self._top_org_unit = org_unit
         return self._top_org_unit
 
@@ -299,7 +295,7 @@ class Dhis2Api(object):
         """
         Returns the ID of the given resource type with the given name
         """
-        __, response = self._request.get(resource, params={'links': 'false', 'query': name})
+        response = self._request.get(resource, params={'links': 'false', 'query': name})
         if not response[resource]:
             return None
         if len(response[resource]) > 1:
@@ -337,7 +333,7 @@ class Dhis2Api(object):
         """
         Return the tracked entity instance identified by the give ID
         """
-        __, inst = self._request.get('trackedEntityInstances/' + te_inst_id)
+        inst = self._request.get('trackedEntityInstances/' + te_inst_id)
         instance = {attr['displayName']: attr['value'] for attr in inst['attributes']}
         instance.update({
             'Instance': inst['trackedEntityInstance'],
@@ -356,7 +352,7 @@ class Dhis2Api(object):
         page = 1
         while True:
             # Because we don't have an "UNSET" filter, we need to fetch all and yield the unset ones
-            __, response = self._request.get(
+            response = self._request.get(
                 'trackedEntityInstances',
                 params={
                     'paging': 'true',
@@ -389,7 +385,7 @@ class Dhis2Api(object):
                 attr_name, self._request.baseurl)
         page = 1
         while True:
-            __, response = self._request.get(
+            response = self._request.get(
                 'trackedEntityInstances',
                 params={
                     'paging': 'true',
@@ -416,7 +412,7 @@ class Dhis2Api(object):
         program_id = self.get_program_id(program)
         page = 1
         while True:
-            __, response = self._request.get(
+            response = self._request.get(
                 'trackedEntityInstances',
                 params={
                     'paging': 'true',
@@ -440,7 +436,7 @@ class Dhis2Api(object):
         """
         page = 1
         while True:
-            __, response = self._request.get(
+            response = self._request.get(
                 'organisationUnits',
                 params={
                     'paging': 'true',
@@ -465,7 +461,7 @@ class Dhis2Api(object):
             yield ou
 
     def get_org_unit_parent_id(self, ou_id):
-        __, details = self._request.get('organisationUnits/' + ou_id)
+        details = self._request.get('organisationUnits/' + ou_id)
         return details['parent']['id'] if details.get('parent') else None
 
     def enroll_in(self, te_inst_id, program, when=None, data=None):
@@ -502,8 +498,7 @@ class Dhis2Api(object):
         }
         if data:
             request_data['attributes'] = self._data_to_attributes(data)
-        __, response = self._request.post('enrollments', request_data)
-        return response
+        return self._request.post('enrollments', request_data)
 
     def enrolled_in(self, te_inst_id, program):
         """
@@ -630,8 +625,7 @@ class Dhis2Api(object):
 
         .. _Events documentation: https://www.dhis2.org/doc/snapshot/en/user/html/ch28s09.html
         """
-        __, response = self._request.post('events', events)
-        return response
+        return self._request.post('events', events)
 
     @staticmethod
     def entities_to_dicts(response):
