@@ -1,4 +1,5 @@
 from datetime import datetime
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.receiverwrapper.models import RepeatRecord
 from corehq.apps.receiverwrapper.tasks import process_repeater_list
 from django.http import HttpResponse
@@ -17,6 +18,7 @@ PAGE = """
 """
 
 
+@domain_admin_required
 def check_repeaters(request, domain):
     if request.method == 'GET':
         return HttpResponse(PAGE % {'status': '', 'domain': domain})
