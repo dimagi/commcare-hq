@@ -1198,13 +1198,13 @@ class CaseReminderHandler(Document):
                     pass
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
-                    use_critical_section=True, print_stack_interval=60)
+                    use_critical_section=False, print_stack_interval=60)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
             process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=True,
+                max_threads=5, use_critical_section=False,
                 print_stack_interval=60)
 
     @classmethod
