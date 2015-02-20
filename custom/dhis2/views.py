@@ -1,7 +1,6 @@
 from datetime import datetime
 from corehq.apps.receiverwrapper.models import RepeatRecord
 from corehq.apps.receiverwrapper.tasks import process_repeater_list
-from custom.dhis2.models import Dhis2Settings
 from django.http import HttpResponse
 
 
