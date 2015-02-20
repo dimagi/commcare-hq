@@ -1482,9 +1482,10 @@ class BillingRecord(models.Model):
         }
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.subscription.subscriber.domain
-        title = "Your %(product)s Billing Statement for %(month)s" % {
+        title = "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
             'product': self.invoice.subscription.plan_version.core_product,
             'month': month_name,
+            'domain': self.invoice.subscription.subscriber.domain,
         }
         from corehq.apps.domain.views import (
             DomainBillingStatementsView, DefaultProjectSettingsView,
