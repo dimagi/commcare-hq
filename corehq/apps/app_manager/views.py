@@ -1862,7 +1862,7 @@ def edit_commcare_settings(request, domain, app_id):
 @require_can_edit_apps
 def edit_commcare_profile(request, domain, app_id):
     try:
-        settings = json.loads(request.raw_post_data)
+        settings = json.loads(request.body)
     except TypeError:
         return HttpResponseBadRequest(json.dumps({
             'reason': 'POST body must be of the form:'
@@ -1882,7 +1882,7 @@ def edit_commcare_profile(request, domain, app_id):
 
 
 def validate_langs(request, existing_langs, validate_build=True):
-    o = json.loads(request.raw_post_data)
+    o = json.loads(request.body)
     langs = o['langs']
     rename = o['rename']
     build = o['build']
@@ -1993,7 +1993,7 @@ def edit_app_attr(request, domain, app_id, attr):
     lang = request.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     try:
-        hq_settings = json.loads(request.raw_post_data)['hq']
+        hq_settings = json.loads(request.body)['hq']
     except ValueError:
         hq_settings = request.POST
 

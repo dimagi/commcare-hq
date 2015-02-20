@@ -16,7 +16,7 @@ def sms_in(request):
     Handles tropo messaging requests
     """
     if request.method == "POST":
-        data = json.loads(request.raw_post_data)
+        data = json.loads(request.body)
         session = data["session"]
         # Handle when Tropo posts to us to send an SMS
         if "parameters" in session:
@@ -51,7 +51,7 @@ def ivr_in(request):
     Handles tropo call requests
     """
     if request.method == "POST":
-        data = json.loads(request.raw_post_data)
+        data = json.loads(request.body)
         phone_number = data["session"]["from"]["id"]
         # TODO: Implement tropo as an ivr backend. In the meantime, just log the call.
 
