@@ -61,16 +61,13 @@ class FacilityReportData(EWSData):
     def get_prod_data(self):
         def get_months_until_stockout_icon(value):
             stock_levels = CommtrackConfig.for_domain(self.config['domain']).stock_levels_config
-            STOCKOUT = 0.0
-            LOW = stock_levels.understock_threshold
-            OVERSTOCK = stock_levels.overstock_threshold
-            if float(value) == STOCKOUT:
+            if float(value) == 0.0:
                 return '%s <span class="icon-remove" style="color:red"/>' % value
-            elif float(value) < LOW:
+            elif float(value) < stock_levels.understock_threshold:
                 return '%s <span class="icon-warning-sign" style="color:orange"/>' % value
-            elif LOW < float(value) < OVERSTOCK:
+            elif stock_levels.understock_threshold < float(value) < stock_levels.overstock_threshold:
                 return '%s <span class="icon-ok" style="color:green"/>' % value
-            elif float(value) >= OVERSTOCK:
+            elif float(value) >= stock_levels.overstock_threshold:
                 return '%s <span class="icon-arrow-up" style="color:purple"/>' % value
 
         state_grouping = {}
