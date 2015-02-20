@@ -22,6 +22,9 @@ class ReportXFormPillow(XFormPillow):
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
 
+    def get_unique_id(self):
+        return REPORT_XFORM_INDEX
+
     def change_transform(self, doc_dict):
         doc_ret = super(ReportXFormPillow, self).change_transform(doc_dict, include_props=False)
 
