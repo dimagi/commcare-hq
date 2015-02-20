@@ -203,9 +203,10 @@ $(function() {
     </script>
 {% else %}
   <div class="loc_child no_children alert alert-info">
+    {% url "location_settings" domain as location_settings_url%}
     {% blocktrans %}
     Please define the location types
-    <a href="{% url "location_settings" domain %}">here</a>
+    <a href="{{ location_settings_url }}">here</a>
     for your project before creating any locations.
     {% endblocktrans %}
   </div>

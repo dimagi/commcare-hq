@@ -1,4 +1,4 @@
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location, SQLLocation, LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
@@ -301,11 +301,11 @@ class LocationGroupTest(LocationTestBase):
     def test_id_assignment(self):
         # each should have the same id, but with a different prefix
         self.assertEqual(
-            'locationgroup-' + self.test_outlet._id,
+            LOCATION_SHARING_PREFIX + self.test_outlet._id,
             self.test_outlet.sql_location.case_sharing_group_object()._id
         )
         self.assertEqual(
-            'locationreportinggroup-' + self.test_outlet._id,
+            LOCATION_REPORTING_PREFIX + self.test_outlet._id,
             self.test_outlet.sql_location.reporting_group_object()._id
         )
 

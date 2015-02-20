@@ -186,14 +186,14 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         Include all users that are assigned to the selected
         locations or those locations descendants.
         """
-        from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
         from corehq.apps.users.models import CommCareUser
         results = []
         selected_location_group_ids = EMWF.selected_location_reporting_group_ids(self.request)
 
         for group_id in selected_location_group_ids:
             loc = SQLLocation.objects.get(
-                location_id=group_id.replace('locationreportinggroup-', '')
+                location_id=group_id.replace(LOCATION_REPORTING_PREFIX, '')
             )
 
             for l in [loc] + list(loc.get_descendants()):
