@@ -549,6 +549,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
             record.save()
             return record
 
+    def transfer_domain_membership(self, domain, to_user, create_record=False):
+        to_user.add_domain_membership(domain)
+        self.delete_domain_membership(domain, create_record=create_record)
+
     def is_domain_admin(self, domain=None):
         if not domain:
             # hack for template
@@ -657,6 +661,9 @@ class SingleMembershipMixin(_AuthorizableMixin):
         raise NotImplementedError
 
     def delete_domain_membership(self, domain, create_record=False):
+        raise NotImplementedError
+
+    def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
 class MultiMembershipMixin(_AuthorizableMixin):
