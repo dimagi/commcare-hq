@@ -3,7 +3,7 @@ from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (Application, AutoSelectCase,
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
-    Module, AdvancedModule)
+    Module, AdvancedModule, WORKFLOW_ROOT)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -241,13 +241,23 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
 
-    def test_form_workflow_root(self):
+    def test_form_workflow_module_in_root(self):
         # app = Application.wrap(self.get_json('suite-workflow-root'))
-        
+
         app = Application.wrap(self.get_json('suite-workflow'))
         for m in [1, 2]:
             module = app.get_module(m)
             module.put_in_root = True
+
+        self.assertXmlEqual(self.get_xml('suite-workflow-module-in-root'), app.create_suite())
+
+    def test_form_workflow_root(self):
+        # app = Application.wrap(self.get_json('suite-workflow-root'))
+
+        app = Application.wrap(self.get_json('suite-workflow'))
+        for module in app.get_modules():
+            for form in module.get_forms():
+                form.post_form_workflow = WORKFLOW_ROOT
 
         self.assertXmlEqual(self.get_xml('suite-workflow-root'), app.create_suite())
 

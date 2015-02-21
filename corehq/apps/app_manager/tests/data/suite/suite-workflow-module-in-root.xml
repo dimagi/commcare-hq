@@ -301,7 +301,9 @@
       </text>
     </command>
     <stack>
-      <create/>
+      <create>
+        <command value="'m0'"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -312,7 +314,9 @@
       </text>
     </command>
     <stack>
-      <create/>
+      <create>
+        <command value="'m0'"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -322,9 +326,6 @@
         <locale id="forms.m1f0"/>
       </text>
     </command>
-    <stack>
-      <create/>
-    </stack>
   </entry>
   <entry>
     <form>http://openrosa.org/formdesigner/A69E6A89-6683-4BAA-8B84-C729FB79F3D5</form>
@@ -338,7 +339,9 @@
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m1-f1'"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -353,7 +356,9 @@
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m2-f0'"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -368,7 +373,9 @@
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m2-f1'"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -385,7 +392,11 @@
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id" detail-select="m3_case_short" detail-confirm="m3_case_long"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m3'"/>
+        <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -402,7 +413,11 @@
       <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id" detail-select="m3_case_short" detail-confirm="m3_case_long"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m3'"/>
+        <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
+        <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -413,12 +428,17 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_a" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_b" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m4'"/>
+        <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_a"/>
+        <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_b"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -429,13 +449,19 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_a" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_b" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_c" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m4'"/>
+        <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_a"/>
+        <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_b"/>
+        <command value="'m4-f1'"/>
+      </create>
     </stack>
   </entry>
   <entry>
@@ -446,13 +472,18 @@
       </text>
     </command>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <datum id="case_id_a" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_b" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m4_case_short" detail-confirm="m4_case_long"/>
       <datum id="case_id_autoload_patient2" function="case_id"/>
     </session>
     <stack>
-      <create/>
+      <create>
+        <command value="'m4'"/>
+        <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_a"/>
+        <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_b"/>
+      </create>
     </stack>
   </entry>
   <menu id="m0">
@@ -462,14 +493,14 @@
     <command id="m0-f0"/>
     <command id="m0-f1"/>
   </menu>
-  <menu id="m1">
+  <menu id="root">
     <text>
       <locale id="modules.m1"/>
     </text>
     <command id="m1-f0"/>
     <command id="m1-f1"/>
   </menu>
-  <menu id="m2">
+  <menu id="root">
     <text>
       <locale id="modules.m2"/>
     </text>
