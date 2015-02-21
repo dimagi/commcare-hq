@@ -855,13 +855,13 @@ class CaseReminderHandler(Document):
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
-            try:
+            if hasattr(r, "get_verified_numbers"):
                 contact_verified_numbers = r.get_verified_numbers(False)
                 if len(contact_verified_numbers) > 0:
                     verified_number = sorted(contact_verified_numbers.iteritems())[0][1]
                 else:
                     verified_number = None
-            except Exception:
+            else:
                 verified_number = None
             verified_numbers[r.get_id] = verified_number
         
@@ -931,15 +931,12 @@ class CaseReminderHandler(Document):
         """
         now = now or self.get_now()
         reminder = self.get_reminder(case)
-        
-        try:
-            if (case.user_id == case._id) or (case.user_id is None):
-                user = None
-            else:
-                user = CommCareUser.get_by_user_id(case.user_id)
-        except Exception:
+
+        if case and case.user_id and (case.user_id != case._id):
+            user = CommCareUser.get_by_user_id(case.user_id)
+        else:
             user = None
-        
+
         if (case.closed or case.type != self.case_type or
             case.doc_type.endswith("-Deleted") or self.deleted() or
             (self.recipient == RECIPIENT_USER and not user)):
@@ -1341,11 +1338,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def user(self):
         if self.handler.recipient == RECIPIENT_USER:
-            try:
-                return CommCareUser.get_by_user_id(self.user_id)
-            except Exception:
-                self.retire()
-                return None
+            return CommCareUser.get_by_user_id(self.user_id)
         else:
             return None
 
