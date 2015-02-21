@@ -4,7 +4,13 @@
 {% load crispy_forms_tags %}
 
 {% block pagination_footer %}
-    <div class="row-fluid" style="margin-top: 10px;">
+    <div>
+        {% blocktrans %}
+            * Before using this gateway to send messages internationally, please test that it works for each network provider in your desired countries.
+            International text messages sent from this gateway may not be delivered in all countries.
+        {% endblocktrans %}
+    </div>
+    <div class="row-fluid" style="margin-top: 50px;">
         <div class="span12">
             <form class="form form-horizontal" method="post">
                 {% crispy initiate_new_form %}
@@ -20,6 +26,7 @@
             <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
         </td>
         <td class="span4" data-bind="text: description"></td>
+        <td class="span4" data-bind="text: supported_countries"></td>
         <td class="span2">
             <button type="button"
                     class="btn refresh-list-confirm"
@@ -56,6 +63,7 @@
     <script type="text/html" id="gateway-deleted-template">
         <td class="span4" data-bind="text: name"></td>
         <td class="span4" data-bind="text: description"></td>
+        <td class="span4" data-bind="text: supported_countries"></td>
         <td class="span4" colspan="2">
             {% trans 'DELETED' %}
         </td>
@@ -67,6 +75,7 @@
             <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
         </td>
         <td class="span4" data-bind="text: description"></td>
+        <td class="span4" data-bind="text: supported_countries"></td>
         <td class="span2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
         <td class="span2">
             <button type="button"
@@ -76,7 +85,7 @@
     </script>
 
     <script type="text/html" id="gateway-automatic-template">
-        <td class="span8" colspan="2"><em data-bind="text: name"></em></td>
+        <td class="span8" colspan="3"><em data-bind="text: name"></em></td>
         <td class="span4" colspan="2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
     </script>
 {% endblock %}

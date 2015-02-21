@@ -882,6 +882,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return [
             _("Connection"),
             _("Description"),
+            _("Supported Countries"),
             _("Status"),
             _("Actions"),
         ]
@@ -941,10 +942,19 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def _fmt_backend_data(self, backend):
         is_editable = not backend.is_global and backend.domain == self.domain
+        if len(backend.supported_countries) > 0:
+            if backend.supported_countries[0] == '*':
+                supported_countries = _('Multiple%s') % '*'
+            else:
+                supported_countries = ', '.join(
+                    [_(c) for c in backend.supported_countries])
+        else:
+            supported_countries = ''
         return {
             'id': backend._id,
             'name': backend.name,
             'description': backend.description,
+            'supported_countries': supported_countries,
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
