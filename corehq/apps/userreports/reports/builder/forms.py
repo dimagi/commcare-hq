@@ -303,7 +303,7 @@ class CreateNewReportForm(forms.Form):
 
 class ConfigureNewReportBase(forms.Form):
     report_name = forms.CharField()
-    filters = FilterField()
+    filters = FilterField(required=False)
     form_title = 'Configure Report'
     button_text = 'Save Report'
 
@@ -527,7 +527,7 @@ class ConfigureNewPieChartReport(ConfigureNewBarChartReport):
 
 class ConfigureNewTableReport(ConfigureNewReportBase):
     form_title = "Configure Table Report"
-    columns = JsonField(required=False)
+    columns = JsonField(required=True)
 
     @property
     def configuration_tables(self):
