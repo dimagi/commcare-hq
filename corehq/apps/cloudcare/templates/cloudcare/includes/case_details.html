@@ -9,13 +9,7 @@
                 <li>{% trans "Selected Case:" %}</li>
                     <% if (parentCase){ %>
                     <li <% if (childCase == null){ %> class="active" <% } %>>
-                        <% if (parentCase.href){ %>
-                        <a href="<%= parentCase.href %>">
                             <%= parentCase.text %>
-                        </a>
-                        <% } else { %>
-                            <%= parentCase.text %>
-                        <% } %>
                         <% if (parentCase && childCase) { %>
                         <span class="divider">/</span>
                         <% } %>
@@ -35,15 +29,20 @@
                 <tbody>
                     <% _.each(parentCase.properties,function(field){ %>
                         <tr>
-                            <th><%= field.key %></th>
+                            <th class="span5"><%= field.key %></th>
                             <td><%= field.value %></td>
                         </tr>
                     <% }); %>
                 </tbody>
             </table>
             <% if (parentCase && childCase) { %>
-                        <br class="divider"></br>
-                        <% } %>
+                <% if (parentCase.href){ %>
+                    <a target="_blank" href="<%= parentCase.href %>">
+                        {% trans "open case list in new window" %}
+                    </a>
+                <% } %>
+                    <br class="divider"></br>
+                    <% } %>
             <% } %>
             <% if (childCase) { %>
             <table class="table table-striped datatable">
@@ -53,7 +52,7 @@
                 <tbody>
                     <% _.each(childCase.properties,function(field){ %>
                         <tr>
-                            <th><%= field.key %></th>
+                            <th class="span5"><%= field.key %></th>
                             <td><%= field.value %></td>
                         </tr>
                     <% }); %>
