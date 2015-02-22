@@ -1,6 +1,6 @@
-import os
 import uuid
 from django import forms
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop as _
 
 from crispy_forms import layout as crispy
@@ -343,13 +343,7 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def column_config_template(self):
-        path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "..", "..", "templates", "userreports", "partials", "report_filter_configuration.html"
-        )
-        with open(path, "r") as f:
-            template = f.read()
-        return template
+        return render_to_string('userreports/partials/report_filter_configuration.html')
 
     # TODO: I don't love the name of this property...
     @property
