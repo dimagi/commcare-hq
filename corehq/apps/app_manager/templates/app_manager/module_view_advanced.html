@@ -15,7 +15,7 @@
         <div class="controls">
             {% if edit %}
                 <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
-				<option value="">{% trans "NA" %}</option>
+				<option value="">{% trans "No Parent" %}</option>
                 {% for module in app.modules %}
 					<option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
                 {% endfor %}

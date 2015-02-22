@@ -1900,7 +1900,7 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
-    root_module_id = StringProperty(default='')
+    root_module_id = StringProperty()
 
     @classmethod
     def new_module(cls, name, lang):
