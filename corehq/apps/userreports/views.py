@@ -285,6 +285,7 @@ def create_data_source_from_app(request, domain):
     else:
         form = ConfigurableDataSourceFromAppForm(domain)
     context = _shared_context(domain)
+    context['data_source_options_map'] = form.data_source_options_map
     context['form'] = form
     return render(request, 'userreports/data_source_from_app.html', context)
 
@@ -303,6 +304,7 @@ def create_form_data_source_from_app(request, domain):
         form = ConfigurableFormDataSourceFromAppForm(domain)
     context = _shared_context(domain)
     context['form'] = form
+    context['data_source_options_map'] = form.data_source_options_map
     return render(request, 'userreports/data_source_from_app.html', context)
 
 

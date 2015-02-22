@@ -1,6 +1,18 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% load crispy_forms_tags_b3 %}
+{% load hq_shared_tags %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            ko.applyBindings({
+                optionsMap: ko.observable({{ data_source_options_map|JSON }}),
+                appId: ko.observable()
+            }, $('#data-source-config').get(0));
+        });
+    </script>
+{% endblock %}
 {% block main_column %}
     {% crispy_b3 form %}
 {% endblock %}

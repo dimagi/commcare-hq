@@ -2,11 +2,13 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+from bootstrap3_crispy import layout as crispy
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
 from corehq.apps.app_manager.models import Application, get_apps_in_domain, Form
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
+from dimagi.utils.decorators.memoized import memoized
 
 
 class DocumentFormBase(forms.Form):
@@ -132,18 +134,34 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
     case_type = forms.ChoiceField()
 
     def __init__(self, domain, *args, **kwargs):
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', _('Save Changes')))
         super(ConfigurableDataSourceFromAppForm, self).__init__(*args, **kwargs)
-        apps = get_apps_in_domain(domain, full=True, include_remote=False)
+        self.apps = get_apps_in_domain(domain, full=True, include_remote=False)
         self.fields['app_id'] = forms.ChoiceField(
             label=_('Application'),
-            choices=[(app._id, app.name) for app in apps]
+            choices=[(app._id, app.name) for app in self.apps]
         )
         self.fields['case_type'] = forms.ChoiceField(
-            choices=[(ct, ct) for ct in set([c for app in apps for c in app.get_case_types() if c])]
+            choices=[(ct, ct) for ct in set([c for app in self.apps for c in app.get_case_types() if c])]
         )
+
+        self.helper = FormHelper()
+        self.helper.form_id = "data-source-config"
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('app_id', data_bind='value: appId'),
+                crispy.Field('case_type', data_bind='''
+                    options: optionsMap()[appId()]
+                '''),
+                Submit('submit', _('Save Changes')),
+            )
+        )
+
+    @property
+    @memoized
+    def data_source_options_map(self):
+        return {
+            app._id: [ct for ct in set(app.get_case_types())] for app in self.apps
+        }
 
     def clean(self):
         cleaned_data = super(ConfigurableDataSourceFromAppForm, self).clean()
@@ -165,20 +183,46 @@ class ConfigurableFormDataSourceFromAppForm(forms.Form):
     form_id = forms.ChoiceField()
 
     def __init__(self, domain, *args, **kwargs):
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', _('Save Changes')))
         super(ConfigurableFormDataSourceFromAppForm, self).__init__(*args, **kwargs)
-        apps = get_apps_in_domain(domain, full=True, include_remote=False)
+
+        self.apps = get_apps_in_domain(domain, full=True, include_remote=False)
         self.fields['app_id'] = forms.ChoiceField(
             label=_('Application'),
-            choices=[(app._id, app.name) for app in apps]
+            choices=[(app._id, app.name) for app in self.apps]
         )
         self.fields['form_id'] = forms.ChoiceField(
             label=_('Module - Form'),
             choices=[(form.get_unique_id(), form.get_module().default_name() + ' - ' + form.default_name())
-                     for form in set([form for app in apps for form in app.get_forms()])]
+                     for form in set([form for app in self.apps for form in app.get_forms()])]
         )
+
+        self.helper = FormHelper()
+        self.helper.form_id = "data-source-config"
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('app_id', data_bind='value: appId'),
+                crispy.Field('form_id', data_bind='''
+                    options: optionsMap()[appId()],
+                    optionsText: function(i){return i[1];},
+                    optionsValue: function(i){return i[0];}
+                '''),
+                Submit('submit', _('Save Changes')),
+            )
+        )
+
+    @property
+    @memoized
+    def data_source_options_map(self):
+        def option_label(form):
+            return form.get_module().default_name() + ' - ' + form.default_name()
+
+        return {
+            app._id: [
+                (form.get_unique_id(), option_label(form))
+                for form in app.get_forms()
+            ]
+            for app in self.apps
+        }
 
     def clean(self):
         cleaned_data = super(ConfigurableFormDataSourceFromAppForm, self).clean()
