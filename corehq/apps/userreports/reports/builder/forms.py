@@ -29,6 +29,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
+from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
@@ -165,16 +166,12 @@ class DataSourceBuilder(object):
         case properties and form metadata it is simply the name of the property.
         """
 
-        def escape_id(id):
-            # TODO: This is fairly naive escaping
-            return id.strip("/").replace("/", "__")
-
         if self.source_type == 'case':
             return {
                 cp: {
                     'type': 'case_property',
                     'id': cp,
-                    'column_id': escape_id(cp),
+                    'column_id': get_column_name(cp),
                     'text': cp,
                     'source': cp
                 } for cp in self.case_properties
@@ -187,7 +184,7 @@ class DataSourceBuilder(object):
                 q['value']: {
                     "type": "question",
                     "id": q['value'],
-                    "column_id": escape_id(q['value']),
+                    "column_id": get_column_name(q['value'].strip("/")),
                     'text': q['label'],
                     "source": q,
                 } for q in questions
@@ -196,7 +193,7 @@ class DataSourceBuilder(object):
                 p[0]: {
                     "type": "meta",
                     "id": p[0],
-                    "column_id": escape_id(p[0]),
+                    "column_id": get_column_name(p[0].strip("/")),
                     'text': p[0],
                     "source": p,
                 } for p in FORM_METADATA_PROPERTIES

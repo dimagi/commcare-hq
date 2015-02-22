@@ -10,6 +10,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_form_question_indicator,
 )
+from corehq.apps.userreports.sql import get_column_name
 import unidecode
 
 
@@ -63,7 +64,8 @@ def get_form_data_source(app, form):
         display_name=form_name,
         configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns),
         configured_indicators=[
-            make_form_question_indicator(q) for q in questions
+            make_form_question_indicator(q, column_id=get_column_name(q['value']))
+            for q in questions
         ] + [
             make_form_meta_block_indicator(field[0], field[1])
             for field in FORM_METADATA_PROPERTIES
