@@ -237,6 +237,8 @@ class CreateNewReportForm(forms.Form):
             ]
         ]
 
+        # NOTE: The corresponding knockout view model is defined in:
+        #       templates/userreports/create_new_report_builder.html
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.form_id = "report-builder-form"
@@ -321,6 +323,8 @@ class ConfigureNewReportBase(forms.Form):
         )
         self.data_source_properties = self.ds_builder.data_source_properties
 
+        # NOTE: The corresponding knockout view model is defined in:
+        #       templates/userreports/partials/report_builder_configure_report.html
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.attrs['data_bind'] = "submit: submitHandler"
