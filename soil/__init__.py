@@ -1,5 +1,6 @@
 import json
 import logging
+from django.db import IntegrityError
 from django.core import cache
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
@@ -141,6 +142,9 @@ class DownloadBase(object):
             if task:
                 task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
         except (TypeError, NotImplementedError):
+            pass
+        except IntegrityError:
+            # Not called in task context just pass
             pass
     
     @classmethod
