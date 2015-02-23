@@ -98,4 +98,5 @@ def locations_fix(domain):
 @task
 def add_products_to_loc(api):
     endpoint = api.endpoint
-    synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0)
+    synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0,
+                    filters={"is_active": True})
