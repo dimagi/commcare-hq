@@ -273,7 +273,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         return response
 
     def get_email_context(self):
-        context = super(InvoiceStripePaymentHandler, self).get_email_context()
+        context = super(CreditStripePaymentHandler, self).get_email_context()
         if self.product_type:
             credit_name = _("%s Software Plan" % self.product_type)
         else:
