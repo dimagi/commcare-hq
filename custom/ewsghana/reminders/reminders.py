@@ -167,7 +167,7 @@ def third_soh_process_users_and_facilities(users, facilities, test=False):
                                 'name': user.name,
                                 'facility': facility.name,
                                 'products': ", ".join([SQLProduct.objects.get(
-                                    product_id=product.product_id).name for product in missing_products])
+                                    product_id=product_id).name for product_id in missing_products])
                             }
                         )
                     else:
@@ -177,7 +177,7 @@ def third_soh_process_users_and_facilities(users, facilities, test=False):
                                 'name': user.name,
                                 'facility': facility.name,
                                 'products': ", ".join([SQLProduct.objects.get(
-                                    product_id=product.product_id).name for product in missing_products])
+                                    product_id=product_id).name for product_id in missing_products])
                             }
                         )
 
