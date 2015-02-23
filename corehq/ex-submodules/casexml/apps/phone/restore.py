@@ -108,6 +108,139 @@ class StringRestoreResponse(object):
         )
 
 
+def get_stock_payload(domain, stock_settings, case_state_list):
+    if domain and not domain.commtrack_enabled:
+        return
+
+    from lxml.builder import ElementMaker
+    E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
+
+    def entry_xml(id, quantity):
+        return E.entry(
+            id=id,
+            quantity=str(int(quantity)),
+        )
+
+    def transaction_to_xml(trans):
+        return entry_xml(trans.product_id, trans.stock_on_hand)
+
+    def consumption_entry(case_id, product_id, section_id):
+        consumption_value = compute_consumption_or_default(
+            case_id,
+            product_id,
+            datetime.utcnow(),
+            section_id,
+            stock_settings.consumption_config
+        )
+        if consumption_value is not None:
+            return entry_xml(product_id, consumption_value)
+
+    case_ids = [case.case_id for case in case_state_list]
+    all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
+    for commtrack_case in case_state_list:
+        case_id = commtrack_case.case_id
+        current_ledgers = all_current_ledgers[case_id]
+
+        section_product_map = defaultdict(lambda: [])
+        section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
+        for section_id in sorted(current_ledgers.keys()):
+            transactions_map = current_ledgers[section_id]
+            sorted_product_ids = sorted(transactions_map.keys())
+            transactions = [transactions_map[p] for p in sorted_product_ids]
+            as_of = json_format_datetime(max(txn.report.date for txn in transactions))
+            section_product_map[section_id] = sorted_product_ids
+            section_timestamp_map[section_id] = as_of
+            yield E.balance(*(transaction_to_xml(e) for e in transactions),
+                            **{'entity-id': case_id, 'date': as_of, 'section-id': section_id})
+
+        for section_id, consumption_section_id in stock_settings.section_to_consumption_types.items():
+
+            if (section_id in current_ledgers or
+                    stock_settings.force_consumption_case_filter(commtrack_case)):
+
+                consumption_product_ids = stock_settings.default_product_list \
+                    if stock_settings.default_product_list \
+                    else section_product_map[section_id]
+
+                consumption_entries = filter(lambda e: e is not None, [
+                    consumption_entry(case_id, p, section_id)
+                    for p in consumption_product_ids
+                ])
+
+                if consumption_entries:
+                    yield E.balance(
+                        *consumption_entries,
+                        **{
+                            'entity-id': case_id,
+                            'date': section_timestamp_map[section_id],
+                            'section-id': consumption_section_id,
+                        }
+                    )
+
+
+def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
+        response_elements = []
+        sync_operation = user.get_case_updates(last_sync)
+        synclog.cases_on_phone = [
+            CaseState.from_case(c) for c in sync_operation.actual_owned_cases
+        ]
+        synclog.dependent_cases_on_phone = [
+            CaseState.from_case(c) for c in sync_operation.actual_extended_cases
+        ]
+        synclog.save(**get_safe_write_kwargs())
+
+        # case blocks
+        case_xml_elements = (
+            xml.get_case_element(op.case, op.required_updates, version)
+            for op in sync_operation.actual_cases_to_sync
+        )
+        for case_elem in case_xml_elements:
+            response_elements.append(case_elem)
+
+        add_custom_parameter('restore_total_cases', len(sync_operation.all_potential_cases))
+        add_custom_parameter('restore_synced_cases', len(sync_operation.actual_cases_to_sync))
+
+        # commtrack balance sections
+        case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
+        commtrack_elements = get_stock_payload(domain, stock_settings, case_state_list)
+        response_elements.extend(commtrack_elements)
+
+        return response_elements, 1
+
+
+def get_case_payload_batched(domain, stock_settings, version, user, last_sync, synclog):
+        response_elements = []
+        synclog.save(**get_safe_write_kwargs())
+
+        num_batches = 0
+        sync_operation = BatchedCaseSyncOperation(user, last_sync)
+        for batch in sync_operation.batches():
+            num_batches += 1
+            logger.debug(batch)
+
+            # case blocks
+            case_xml_elements = (
+                xml.get_case_element(op.case, op.required_updates, version)
+                for op in batch.case_updates_to_sync()
+            )
+            for case_elem in case_xml_elements:
+                response_elements.append(case_elem)
+
+        sync_state = sync_operation.global_state
+        synclog.cases_on_phone = sync_state.actual_owned_cases
+        synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
+        synclog.save(**get_safe_write_kwargs())
+
+        add_custom_parameter('restore_total_cases', len(sync_state.actual_relevant_cases))
+        add_custom_parameter('restore_synced_cases', len(sync_state.all_synced_cases))
+
+        # commtrack balance sections
+        commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
+        response_elements.extend(commtrack_elements)
+
+        return response_elements, num_batches
+
+
 class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
@@ -178,75 +311,6 @@ class RestoreConfig(object):
                                         actual=parsed_hash,
                                         case_ids=self.sync_log.get_footprint_of_cases_on_phone())
 
-    def get_stock_payload(self, case_state_list):
-        if self.domain and not self.domain.commtrack_enabled:
-            return
-
-        from lxml.builder import ElementMaker
-        E = ElementMaker(namespace=COMMTRACK_REPORT_XMLNS)
-
-        def entry_xml(id, quantity):
-            return E.entry(
-                id=id,
-                quantity=str(int(quantity)),
-            )
-
-        def transaction_to_xml(trans):
-            return entry_xml(trans.product_id, trans.stock_on_hand)
-
-        def consumption_entry(case_id, product_id, section_id):
-            consumption_value = compute_consumption_or_default(
-                case_id,
-                product_id,
-                datetime.utcnow(),
-                section_id,
-                self.stock_settings.consumption_config
-            )
-            if consumption_value is not None:
-                return entry_xml(product_id, consumption_value)
-
-        case_ids = [case.case_id for case in case_state_list]
-        all_current_ledgers = get_current_ledger_transactions_multi(case_ids)
-        for commtrack_case in case_state_list:
-            case_id = commtrack_case.case_id
-            current_ledgers = all_current_ledgers[case_id]
-
-            section_product_map = defaultdict(lambda: [])
-            section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
-            for section_id in sorted(current_ledgers.keys()):
-                transactions_map = current_ledgers[section_id]
-                sorted_product_ids = sorted(transactions_map.keys())
-                transactions = [transactions_map[p] for p in sorted_product_ids]
-                as_of = json_format_datetime(max(txn.report.date for txn in transactions))
-                section_product_map[section_id] = sorted_product_ids
-                section_timestamp_map[section_id] = as_of
-                yield E.balance(*(transaction_to_xml(e) for e in transactions),
-                                **{'entity-id': case_id, 'date': as_of, 'section-id': section_id})
-
-            for section_id, consumption_section_id in self.stock_settings.section_to_consumption_types.items():
-
-                if (section_id in current_ledgers or
-                        self.stock_settings.force_consumption_case_filter(commtrack_case)):
-
-                    consumption_product_ids = self.stock_settings.default_product_list \
-                        if self.stock_settings.default_product_list \
-                        else section_product_map[section_id]
-
-                    consumption_entries = filter(lambda e: e is not None, [
-                        consumption_entry(case_id, p, section_id)
-                        for p in consumption_product_ids
-                    ])
-
-                    if consumption_entries:
-                        yield E.balance(
-                            *consumption_entries,
-                            **{
-                                'entity-id': case_id,
-                                'date': section_timestamp_map[section_id],
-                                'section-id': consumption_section_id,
-                            }
-                        )
-
     def get_payload(self):
         user = self.user
         last_sync = self.sync_log
@@ -288,8 +352,12 @@ class RestoreConfig(object):
         for fixture in generator.get_fixtures(user, self.version, last_sync):
             response.append(fixture)
 
-        payload_fn = self._get_case_payload_batched if batch_enabled else self._get_case_payload
-        response = payload_fn(response, user, last_sync, synclog)
+        payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
+        response_elements, self.num_batches = payload_fn(
+            self.domain, self.stock_settings, self.version, user, last_sync, synclog
+        )
+        for element in response_elements:
+            response.append(element)
 
         resp = str(response)
         duration = datetime.utcnow() - start_time
@@ -298,67 +366,6 @@ class RestoreConfig(object):
         add_custom_parameter('restore_response_size', response.num_items)
         self.set_cached_payload_if_necessary(resp, duration)
         return resp
-
-    def _get_case_payload(self, response, user, last_sync, synclog):
-        sync_operation = user.get_case_updates(last_sync)
-        synclog.cases_on_phone = [
-            CaseState.from_case(c) for c in sync_operation.actual_owned_cases
-        ]
-        synclog.dependent_cases_on_phone = [
-            CaseState.from_case(c) for c in sync_operation.actual_extended_cases
-        ]
-        synclog.save(**get_safe_write_kwargs())
-
-        # case blocks
-        case_xml_elements = (
-            xml.get_case_element(op.case, op.required_updates, self.version)
-            for op in sync_operation.actual_cases_to_sync
-        )
-        for case_elem in case_xml_elements:
-            response.append(case_elem)
-
-        add_custom_parameter('restore_total_cases', len(sync_operation.all_potential_cases))
-        add_custom_parameter('restore_synced_cases', len(sync_operation.actual_cases_to_sync))
-
-        # commtrack balance sections
-        case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
-        commtrack_elements = self.get_stock_payload(case_state_list)
-        for ct_elem in commtrack_elements:
-            response.append(ct_elem)
-
-        return response
-
-    def _get_case_payload_batched(self, response, user, last_sync, synclog):
-        synclog.save(**get_safe_write_kwargs())
-
-        self.num_batches = 0
-        sync_operation = BatchedCaseSyncOperation(user, last_sync)
-        for batch in sync_operation.batches():
-            self.num_batches += 1
-            logger.debug(batch)
-
-            # case blocks
-            case_xml_elements = (
-                xml.get_case_element(op.case, op.required_updates, self.version)
-                for op in batch.case_updates_to_sync()
-            )
-            for case_elem in case_xml_elements:
-                response.append(case_elem)
-
-        sync_state = sync_operation.global_state
-        synclog.cases_on_phone = sync_state.actual_owned_cases
-        synclog.dependent_cases_on_phone = sync_state.actual_extended_cases
-        synclog.save(**get_safe_write_kwargs())
-
-        add_custom_parameter('restore_total_cases', len(sync_state.actual_relevant_cases))
-        add_custom_parameter('restore_synced_cases', len(sync_state.all_synced_cases))
-
-        # commtrack balance sections
-        commtrack_elements = self.get_stock_payload(sync_state.all_synced_cases)
-        for ct_elem in commtrack_elements:
-            response.append(ct_elem)
-
-        return response
 
     def get_response(self):
         try:
