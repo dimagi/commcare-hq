@@ -1,8 +1,11 @@
 from datetime import datetime
+from functools import partial
 import itertools
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation, Location
+from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway import TEST
+from custom.ilsgateway.models import ILSGatewayConfig
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
@@ -75,7 +78,9 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
 @task
 def sms_users_fix(api):
     endpoint = api.endpoint
-    synchronization(None, endpoint.get_smsusers, api.add_language_to_user, None, None, 100, 0)
+    enabled_domains = ILSGatewayConfig.get_all_enabled_domains() + EWSGhanaConfig.get_all_enabled_domains()
+    synchronization(None, endpoint.get_smsusers, partial(api.add_language_to_user, domains=enabled_domains),
+                    None, None, 100, 0)
 
 
 @task

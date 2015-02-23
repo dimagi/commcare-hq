@@ -3,8 +3,6 @@ from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 
 from corehq.apps.products.models import Product
-from custom.ewsghana.models import EWSGhanaConfig
-from custom.ilsgateway.models import ILSGatewayConfig
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -242,7 +240,9 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def add_language_to_user(self, logistics_sms_user):
+    def add_language_to_user(self, logistics_sms_user, domains=None):
+        if not domains:
+            domains = []
         domain_part = "%s.commcarehq.org" % self.domain
         username_part = "%s%d" % (logistics_sms_user.name.strip().replace(' ', '.').lower(),
                                   logistics_sms_user.id)
@@ -262,7 +262,7 @@ class APISynchronization(object):
                                               logistics_sms_user.backend)
                 except PhoneNumberInUseException:
                     v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-                    if ILSGatewayConfig.for_domain(v.domain) or EWSGhanaConfig.for_domain(v.domain):
+                    if v.domain in domains:
                         v.delete()
                         user.save_verified_number(self.domain, phone_number, True,
                                                   logistics_sms_user.backend)
