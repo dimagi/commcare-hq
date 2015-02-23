@@ -255,5 +255,11 @@ class APISynchronization(object):
                 v = VerifiedNumber.by_phone(phone_number, include_pending=True)
                 if v:
                     v.delete()
-                user.save_verified_number(self.domain, phone_number, True,
-                                          logistics_sms_user.backend)
+                try:
+                    user.save_verified_number(self.domain, phone_number, True,
+                                              logistics_sms_user.backend)
+                except PhoneNumberInUseException:
+                    v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+                    v.delete()
+                    user.save_verified_number(self.domain, phone_number, True,
+                                              logistics_sms_user.backend)
