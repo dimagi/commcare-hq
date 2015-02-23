@@ -1,11 +1,15 @@
 from corehq import Domain
+from corehq.apps.accounting import generator
+from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.locations.models import SQLLocation
 from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
+from corehq.apps.locations.schema import LocationType
 from corehq.apps.sms.api import add_msg_tags
 from corehq.apps.sms.models import SMSLog, OUTGOING
+from custom.ewsghana.models import EWSGhanaConfig
 
 
 def get_supply_points(location_id, domain):
@@ -91,3 +95,59 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
         return products
     else:
         return filter_relevant(SQLLocation.objects.filter(domain=domain))
+
+
+def prepare_domain(domain_name):
+    from corehq.apps.commtrack.tests import bootstrap_domain
+    domain = bootstrap_domain(domain_name)
+    domain.location_types = [
+        LocationType(name="country", allowed_parents=[""],
+                     administrative=True),
+        LocationType(name="Central Medical Store", allowed_parents=["country"],
+                     administrative=False),
+        LocationType(name="Teaching Hospital", allowed_parents=["country"],
+                     administrative=False),
+        LocationType(name="region", allowed_parents=["country"],
+                     administrative=True),
+        LocationType(name="Regional Medical Store", allowed_parents=["region"],
+                     administrative=False),
+        LocationType(name="Regional Hospital", allowed_parents=["region"],
+                     administrative=False),
+        LocationType(name="district", allowed_parents=["region"],
+                     administrative=True),
+        LocationType(name="Clinic", allowed_parents=["district"],
+                     administrative=False),
+        LocationType(name="District Hospital", allowed_parents=["district"],
+                     administrative=False),
+        LocationType(name="Health Centre", allowed_parents=["district"],
+                     administrative=False),
+        LocationType(name="CHPS Facility", allowed_parents=["district"],
+                     administrative=False),
+        LocationType(name="Hospital", allowed_parents=["district"],
+                     administrative=False),
+        LocationType(name="Psychiatric Hospital", allowed_parents=["district"],
+                     administrative=False),
+        LocationType(name="Polyclinic", allowed_parents=["district"],
+                     administrative=False),
+        LocationType(name="facility", allowed_parents=["district"],
+                     administrative=False)
+    ]
+    domain.save()
+    generator.instantiate_accounting_for_tests()
+    account = BillingAccount.get_or_create_account_by_domain(
+        domain.name,
+        created_by="automated-test",
+    )[0]
+    plan = DefaultProductPlan.get_default_plan_by_domain(
+        domain, edition=SoftwarePlanEdition.ADVANCED
+    )
+    subscription = Subscription.new_domain_subscription(
+        account,
+        domain.name,
+        plan
+    )
+    subscription.is_active = True
+    subscription.save()
+    ews_config = EWSGhanaConfig(enabled=True, domain=domain.name)
+    ews_config.save()
+    return domain

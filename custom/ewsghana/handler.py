@@ -41,7 +41,7 @@ def handle(verified_contact, text, msg=None):
         ('reg', 'register'): RegistrationHandler,
         ('yes', 'no', 'y', 'n'): RequisitionHandler,
         ('undo', 'replace', 'revoke'): UndoHandler,
-        ('soh'): AlertsHandler,
+        ('soh',): AlertsHandler,
         ('not',): not_function(args[0]) if args else None
     }
 
