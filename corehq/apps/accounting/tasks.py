@@ -343,7 +343,7 @@ def weekly_digest():
     from_email = "Dimagi Accounting <%s>" % settings.DEFAULT_FROM_EMAIL
     send_HTML_email(
         "Subscriptions ending in 40 Days from %s" % today.isoformat(),
-        settings.INVOICING_CONTACT_EMAIL,
+        settings.ACCOUNTS_EMAIL,
         email_content,
         email_from=from_email,
         text_content=email_content_plaintext,

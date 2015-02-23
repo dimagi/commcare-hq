@@ -1139,7 +1139,7 @@ class Subscription(models.Model):
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
-        bcc = [settings.INVOICING_CONTACT_EMAIL] if not self.is_trial else []
+        bcc = [settings.ACCOUNTS_EMAIL] if not self.is_trial else []
         if self.account.dimagi_contact is not None:
             bcc.append(self.account.dimagi_contact)
         for email in emails:
