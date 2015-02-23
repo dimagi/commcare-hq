@@ -308,8 +308,8 @@
                                         transform: column.transform() || null, // it doesn't save '' well
                                         is_sensitive: Boolean(is_sensitive)
                                 };
-                                if (column.doc_type === 'SplitColumn'){
-                                    col.doc_type = column.doc_type;
+                                if (column.doc_type() === 'SplitColumn'){
+                                    col.doc_type = column.doc_type();
                                     col.options = column.options();
                                 }
                                 return col;
