@@ -240,7 +240,9 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def add_language_to_user(self, logistics_sms_user):
+    def add_language_to_user(self, logistics_sms_user, domains=None):
+        if not domains:
+            domains = []
         domain_part = "%s.commcarehq.org" % self.domain
         username_part = "%s%d" % (logistics_sms_user.name.strip().replace(' ', '.').lower(),
                                   logistics_sms_user.id)
@@ -255,5 +257,12 @@ class APISynchronization(object):
                 v = VerifiedNumber.by_phone(phone_number, include_pending=True)
                 if v:
                     v.delete()
-                user.save_verified_number(self.domain, phone_number, True,
-                                          logistics_sms_user.backend)
+                try:
+                    user.save_verified_number(self.domain, phone_number, True,
+                                              logistics_sms_user.backend)
+                except PhoneNumberInUseException:
+                    v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+                    if v.domain in domains:
+                        v.delete()
+                        user.save_verified_number(self.domain, phone_number, True,
+                                                  logistics_sms_user.backend)
