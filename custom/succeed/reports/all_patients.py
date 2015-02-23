@@ -19,10 +19,9 @@ import dateutil
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, EMPTY_FIELD, CM7, PM3,\
     CM_APP_CM_MODULE, OUTPUT_DATE_FORMAT, INPUT_DATE_FORMAT
-from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build
+from custom.succeed.utils import is_succeed_admin, SUCCEED_CM_APPNAME, has_any_role, get_app_build, SUCCEED_DOMAIN
 import logging
 import simplejson
-
 
 class PatientListReportDisplay(CaseDisplay):
     def __init__(self, report, case_dict):
@@ -45,8 +44,9 @@ class PatientListReportDisplay(CaseDisplay):
         self.next_visit = next_visit
         if last_inter:
             self.last_interaction = last_inter['date']
-        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
-        self.latest_build = get_app_build(self.app_dict)
+        self.app_dict = None
+        # get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
+        # self.latest_build = get_app_build(self.app_dict)
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
     def get_property(self, key):
@@ -69,14 +69,15 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def edit_link(self):
-        module = self.app_dict['modules'][CM_APP_CM_MODULE]
-        form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
-        return html.mark_safe("<a target='_blank' class='ajax_dialog' href='%s'>Edit</a>") \
-            % html.escape(get_cloudcare_form_url(domain=self.app_dict['domain'],
-                                                 app_build_id=self.latest_build,
-                                                 module_id=CM_APP_CM_MODULE,
-                                                 form_id=form_idx,
-                                                 case_id=self.case_id) + '/enter/')
+        # module = self.app_dict['modules'][CM_APP_CM_MODULE]
+        # form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
+        return "Edit"
+            # html.mark_safe("<a target='_blank' class='ajax_dialog' href='%s'>Edit</a>") \
+            # % html.escape(get_cloudcare_form_url(domain=self.app_dict['domain'],
+            #                                      app_build_id=self.latest_build,
+            #                                      module_id=CM_APP_CM_MODULE,
+            #                                      form_id=form_idx,
+            #                                      case_id=self.case_id) + '/enter/')
 
     @property
     def case_detail_url(self):
@@ -352,6 +353,45 @@ class PatientListReport(CustomProjectReport, CaseListReport):
                     "type": "string",
                     "params": {
                         "visits_list": VISIT_SCHEDULE
+                    },
+                    "order": order
+                }
+            }
+            q['sort'] = sort
+        elif sorting_block == 'care_team':
+            ids_and_names = {}
+            user_ids = {}
+
+            # print len(Group.by_domain(SUCCEED_DOMAIN))
+            users = []
+            for g in Group.by_domain(SUCCEED_DOMAIN):
+                ids_and_names.update({g.get_id: g.name})
+                for user in g.users:
+                    # print type(user)
+                    # print user
+                    users.append(user)
+                    if user not in user_ids:
+                        user_ids.update({user:g.name})
+            # print Group.by_domain(SUCCEED_DOMAIN)
+            # print users
+            # print len(user_ids.keys())
+            # print len(users)
+            # print len(set(users))
+            sort = {
+                "_script": {
+                    "script":
+                        """
+                            owner=_source.owner_id;
+                            grp_name=user_ids.get(owner);
+                            if (grp_name==null) {
+                               grp_name=ids_and_names.get(owner);
+                            }
+                            return grp_name;
+                        """,
+                    "type": "string",
+                    "params": {
+                        "user_ids": user_ids,
+                        "ids_and_names": ids_and_names
                     },
                     "order": order
                 }

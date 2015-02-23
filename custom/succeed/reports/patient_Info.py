@@ -100,7 +100,7 @@ class PatientInfoDisplay(object):
                                                          getattr(self.case, 'PCP_telephone', EMPTY_FIELD),
                                                      ]}
 
-        general_info['key_notes'] = {'label': _('Key Notes'),'value': getattr(self.case, 'key_notes', EMPTY_FIELD)}
+        general_info['key_notes'] = {'label': _('Key Notes'), 'value': getattr(self.case, 'notes', EMPTY_FIELD)}
 
         return general_info
 
