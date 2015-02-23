@@ -295,7 +295,7 @@ class RestoreConfig(object):
             except ResourceNotFound:
                 # if we are in loose mode, return an HTTP 412 so that the phone will
                 # just force a fresh sync
-                if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
+                if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain.name):
                     raise HttpException(412)
                 else:
                     raise
