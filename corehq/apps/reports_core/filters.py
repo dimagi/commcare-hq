@@ -198,6 +198,11 @@ class ChoiceListFilter(BaseFilter):
 
     def value(self, **kwargs):
         choice = unicode(kwargs[self.name])
+        choice_values = map(lambda c: c.value, self.choices)
+        if choice not in choice_values:
+            raise FilterValueException(u'Choice "{choice}" not found in choices: {choices}'
+                                       .format(choice=choice,
+                                               choices=choice_values))
         return next(choice_obj for choice_obj in self.choices if choice_obj.value == choice)
 
     def default_value(self):
