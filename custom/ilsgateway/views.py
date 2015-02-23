@@ -151,6 +151,7 @@ class BaseConfigView(BaseCommTrackManageView):
         config.url = payload['source_config'].get('url', None)
         config.username = payload['source_config'].get('username', None)
         config.password = payload['source_config'].get('password', None)
+        config.steady_sync = payload['source_config'].get('steady_sync')
         config.save()
         return self.get(request, *args, **kwargs)
 

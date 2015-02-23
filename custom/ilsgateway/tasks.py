@@ -1,8 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
 import logging
+from celery.schedules import crontab
 
-from celery.task import task
+from celery.task import task, periodic_task
 from couchdbkit.exceptions import ResourceNotFound
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
@@ -17,14 +18,24 @@ from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain,
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
 from dimagi.utils.dates import force_to_datetime
+import settings
+from custom.logistics.tasks import stock_data_task
 
 
-# @periodic_task(run_every=timedelta(days=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def migration_task():
-    configs = ILSGatewayConfig.get_all_configs()
-    for config in configs:
+    for config in ILSGatewayConfig.get_all_steady_sync_configs():
         if config.enabled:
-            ils_bootstrap_domain(ILSGatewayAPI(config.domain, ILSGatewayEndpoint.from_config(config)))
+            endpoint = ILSGatewayEndpoint.from_config(config)
+            ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
+            apis = (
+                ('product_stock', get_product_stock),
+                ('stock_transaction', get_stock_transaction),
+                ('supply_point_status', get_supply_point_statuses),
+                ('delivery_group', get_delivery_group_reports)
+            )
+            stock_data_task.delay(config.domain, endpoint, apis, ILS_FACILITIES)
 
 
 @task
