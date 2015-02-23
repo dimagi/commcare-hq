@@ -1,5 +1,4 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
-
 REPORT_XFORM_INDEX = "report_xforms_e26fad18b95711e4a7bc3c970e7be43b"
 
 CASE_MAPPING_FRAGMENT = {
