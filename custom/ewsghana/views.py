@@ -76,7 +76,8 @@ class RemindersTester(BaseDomainView):
                     date = now - datetime.timedelta(days=5)
                     second_soh_process_user(user, date, test=True)
                 elif reminder == 'third_soh':
-                    third_soh_process_users_and_facilities([user], [user.location.sql_location], test=True)
+                    if user.location:
+                        third_soh_process_users_and_facilities([user], [user.location.sql_location], test=True)
                 elif reminder == 'stockout':
                     stockout_process_user(user, test=True)
                 elif reminder == 'rrirv':
