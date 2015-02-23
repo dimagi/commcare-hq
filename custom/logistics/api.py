@@ -3,6 +3,9 @@ from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 
 from corehq.apps.products.models import Product
+from custom.ewsghana.models import EWSGhanaConfig
+from custom.ilsgateway.api import ILSGatewayAPI
+from custom.ilsgateway.models import ILSGatewayConfig
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -260,6 +263,7 @@ class APISynchronization(object):
                                               logistics_sms_user.backend)
                 except PhoneNumberInUseException:
                     v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-                    v.delete()
-                    user.save_verified_number(self.domain, phone_number, True,
-                                              logistics_sms_user.backend)
+                    if ILSGatewayConfig.for_domain(v.domain) or EWSGhanaConfig.for_domain(v.domain):
+                        v.delete()
+                        user.save_verified_number(self.domain, phone_number, True,
+                                                  logistics_sms_user.backend)
