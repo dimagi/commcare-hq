@@ -637,13 +637,15 @@ class SoftwarePlanVersion(models.Model):
             'name': self.plan.name,
             'description': self.plan.description,
         }
-        if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-            or self.plan.visibility == SoftwarePlanVisibility.TRIAL
-        ):
-            try:
-                desc = DESC_BY_EDITION[self.plan.edition]
-            except KeyError:
-                pass
+        try:
+            if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+                or self.plan.visibility == SoftwarePlanVisibility.TRIAL):
+                desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
+            else:
+                for desc_key in desc:
+                    desc[desc_key] |= DESC_BY_EDITION[self.plan.edition][desc_key]
+        except KeyError:
+            pass
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
@@ -1132,6 +1134,7 @@ class Subscription(models.Model):
             'subscription_url': absolute_reverse(
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
             'base_url': get_site_domain(),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
         email_html = render_to_string(template, context)
         email_plaintext = render_to_string(template_plaintext, context)
@@ -1481,9 +1484,10 @@ class BillingRecord(models.Model):
         }
         month_name = self.invoice.date_start.strftime("%B")
         domain = self.invoice.subscription.subscriber.domain
-        title = "Your %(product)s Billing Statement for %(month)s" % {
+        title = "Your %(month)s %(product)s Billing Statement for Project Space %(domain)s" % {
             'product': self.invoice.subscription.plan_version.core_product,
             'month': month_name,
+            'domain': self.invoice.subscription.subscriber.domain,
         }
         from corehq.apps.domain.views import (
             DomainBillingStatementsView, DefaultProjectSettingsView,
@@ -1503,6 +1507,7 @@ class BillingRecord(models.Model):
             'amount_due': fmt_dollar_amount(self.invoice.balance),
             'statements_url': absolute_reverse(
                 DomainBillingStatementsView.urlname, args=[domain]),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
         contact_emails = contact_emails or self.invoice.email_recipients

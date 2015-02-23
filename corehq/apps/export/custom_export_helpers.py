@@ -111,7 +111,7 @@ class CustomExportHelper(object):
     @property
     @memoized
     def post_data(self):
-        return json.loads(self.request.raw_post_data)
+        return json.loads(self.request.body)
 
     def update_custom_export(self):
         """

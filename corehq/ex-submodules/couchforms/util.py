@@ -499,6 +499,7 @@ class SubmissionPost(object):
                         try:
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
+                            logging.exception('BulkSaveError saving forms', extra={'errors': e.errors})
                             raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()

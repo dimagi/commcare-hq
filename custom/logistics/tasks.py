@@ -73,7 +73,7 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
 
 
 @task
-def language_fix(api):
+def sms_users_fix(api):
     endpoint = api.endpoint
     synchronization(None, endpoint.get_smsusers, api.add_language_to_user, None, None, 100, 0)
 

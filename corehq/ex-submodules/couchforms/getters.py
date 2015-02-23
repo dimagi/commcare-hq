@@ -43,7 +43,7 @@ def get_instance_and_attachment(request):
     else:
         # j2me and touchforms; of the form
         # $ curl --data '@form.xml' $URL
-        instance = request.raw_post_data
+        instance = request.body
         if not instance:
             instance = EMPTY_PAYLOAD_ERROR
     request._instance_and_attachment = (instance, attachments)

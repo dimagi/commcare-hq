@@ -257,6 +257,12 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
+    'multiple_locations',
+    "Enable multiple locations per user on domain.",
+    [NAMESPACE_DOMAIN]
+)
+
 PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "

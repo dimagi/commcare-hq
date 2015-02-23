@@ -21,7 +21,7 @@ from custom.ilsgateway.forms import SupervisionDocumentForm
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
     get_delivery_group_reports, ILS_FACILITIES
 from casexml.apps.stock.models import StockTransaction
-from custom.logistics.tasks import language_fix
+from custom.logistics.tasks import sms_users_fix
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
@@ -228,10 +228,10 @@ def end_report_run(request, domain):
 
 @domain_admin_required
 @require_POST
-def ils_fix_languages(request, domain):
+def ils_sms_users_fix(request, domain):
     config = ILSGatewayConfig.for_domain(domain)
     endpoint = ILSGatewayEndpoint.from_config(config)
-    language_fix.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
+    sms_users_fix.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 
