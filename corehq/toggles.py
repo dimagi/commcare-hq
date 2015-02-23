@@ -219,7 +219,7 @@ BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.1
+    0.25
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
