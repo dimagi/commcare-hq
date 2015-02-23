@@ -109,13 +109,15 @@ def second_soh_process_user(user, date, test=False):
                     send_sms_to_verified_number(
                         user.get_verified_number(),
                         SECOND_INCOMPLETE_SOH_REMINDER %
-                        {'name': user.name, 'products': ", ".join(missing_products)}
+                        {'name': user.name, 'products': ", ".join([SQLProduct.objects.get(
+                            product_id=product_id).name for product_id in missing_products])}
                     )
                 else:
                     send_test_message(
                         user.get_verified_number(),
                         SECOND_INCOMPLETE_SOH_REMINDER %
-                        {'name': user.name, 'products': ", ".join(missing_products)}
+                        {'name': user.name, 'products': ", ".join([SQLProduct.objects.get(
+                            product_id=product_id).name for product_id in missing_products])}
                     )
 
 
