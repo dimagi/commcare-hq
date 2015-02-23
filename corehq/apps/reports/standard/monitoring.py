@@ -404,6 +404,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     emailable = True
     is_cacheable = False
     ajax_pagination = True
+    exportable_all = True
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
