@@ -99,9 +99,8 @@ class JsonApiRequestTest(SimpleTestCase):
         JsonApiRequest.json_or_error should return a status code and JSON on success
         """
         with response_context() as response_mock:
-            status_code, data = JsonApiRequest.json_or_error(response_mock)
+            data = JsonApiRequest.json_or_error(response_mock)
 
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_json_or_error_raises_404(self):
@@ -111,10 +110,11 @@ class JsonApiRequestTest(SimpleTestCase):
         response_mock = Mock()
         response_mock.url = 'http://nowhere.example.com'
         response_mock.status_code = 404
+        response_mock.text = 'Where?'
 
         with self.assertRaisesMessage(
                 JsonApiError,
-                'API request to http://nowhere.example.com failed with HTTP status 404'):
+                'API request to http://nowhere.example.com failed with HTTP status 404: Where?'):
             JsonApiRequest.json_or_error(response_mock)
 
     def test_json_or_error_raises_500(self):
@@ -140,13 +140,12 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.get('ham/eggs')
+            data = request.get('ham/eggs')
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 headers={'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_post_calls_requests(self):
@@ -158,14 +157,13 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.post('ham/eggs', {'ham': True})
+            data = request.post('ham/eggs', {'ham': True})
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 '{"ham": true}',
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_put_calls_requests(self):
@@ -177,14 +175,13 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.put('ham/eggs', {'ham': True})
+            data = request.put('ham/eggs', {'ham': True})
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 '{"ham": true}',
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
 
@@ -199,7 +196,7 @@ class Dhis2ApiTest(SimpleTestCase):
             {'name': 'spam', 'id': 'c0ffee'},
         ]}
         dhis2_api = Dhis2Api('http://example.com/dhis', 'user', 'p4ssw0rd')
-        dhis2_api._request.get = Mock(return_value=('foo', te_attrs))
+        dhis2_api._request.get = Mock(return_value=te_attrs)
         keys_before = set(dhis2_api._tracked_entity_attributes.keys())
         dhis2_api._fetch_tracked_entity_attributes()
         keys_after = set(dhis2_api._tracked_entity_attributes.keys())
