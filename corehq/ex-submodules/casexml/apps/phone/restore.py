@@ -268,7 +268,14 @@ class RestoreConfig(object):
         self.version = version
         self.state_hash = state_hash
         self.items = items
-        self.stock_settings = stock_settings or StockSettings()
+
+        if stock_settings:
+            self.stock_settings = stock_settings
+        elif domain and domain.commtrack_settings:
+            self.stock_settings = domain.commtrack_settings.get_ota_restore_settings()
+        else:
+            self.stock_settings = StockSettings()
+
         self.domain = domain
         self.force_cache = force_cache
         self.cache_timeout = cache_timeout or INITIAL_SYNC_CACHE_TIMEOUT

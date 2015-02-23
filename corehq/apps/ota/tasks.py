@@ -37,12 +37,9 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None
 
         try:
             project = couch_user.project
-            commtrack_settings = project.commtrack_settings
-            stock_settings = commtrack_settings.get_ota_restore_settings() if commtrack_settings else None
             restore_config = RestoreConfig(
                 couch_user.to_casexml_user(), None, version, None,
                 items=True,
-                stock_settings=stock_settings,
                 domain=project,
                 force_cache=True,
                 cache_timeout=cache_timeout_hours * 60 * 60,
