@@ -17,9 +17,10 @@ from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     EWS_FACILITIES
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction
-from custom.ilsgateway.views import GlobalStats, BaseConfigView
+from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import language_fix, add_products_to_loc, locations_fix
 from custom.logistics.tasks import stock_data_task
+from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
 
 
