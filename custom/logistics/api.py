@@ -4,7 +4,6 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 
 from corehq.apps.products.models import Product
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ilsgateway.api import ILSGatewayAPI
 from custom.ilsgateway.models import ILSGatewayConfig
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
