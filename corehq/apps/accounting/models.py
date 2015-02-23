@@ -643,7 +643,8 @@ class SoftwarePlanVersion(models.Model):
                 desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
             else:
                 for desc_key in desc:
-                    desc[desc_key] |= DESC_BY_EDITION[self.plan.edition][desc_key]
+                    if not desc[desc_key]:
+                        desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
         except KeyError:
             pass
         desc.update({
