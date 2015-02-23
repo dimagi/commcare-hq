@@ -427,7 +427,7 @@ class SubmissionPost(object):
                 instance = xforms[0]
                 if instance.doc_type == "XFormInstance":
                     domain = get_and_check_xform_domain(instance)
-                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
+                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xform=instance) as case_db:
                         try:
                             process_cases_with_casedb(instance, case_db)
                             process_stock(instance, case_db)
