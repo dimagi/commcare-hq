@@ -1,8 +1,13 @@
 from copy import copy
 import json
-from couchdbkit import ResourceNotFound
-from couchdbkit.ext.django.schema import Document, StringListProperty, BooleanProperty
-from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty
+from couchdbkit import ResourceNotFound, SchemaProperty
+from couchdbkit.ext.django.schema import (
+    BooleanProperty,
+    Document,
+    DocumentSchema,
+    StringListProperty,
+)
+from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty, IntegerProperty
 from jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -33,6 +38,25 @@ DELETED_DOC_TYPES = {
 }
 
 
+class DataSourceBuildInformation(DocumentSchema):
+    """
+    A class to encapsulate meta information about the process through which
+    its DataSourceConfiguration was configured and built.
+    """
+    # Either the case type or the form xmlns that this data source is based on.
+    source_id = StringProperty()
+    # The app that the form belongs to, or the app that was used to infer the case properties
+    app_id = StringProperty()
+    # The version of the app at the time of the data source's configuration,
+    app_version = IntegerProperty()
+    # True if the data source has been built, that is, if the corresponding SQL table has been populated.
+    built = BooleanProperty(default=False)
+
+
+class DataSourceMeta(DocumentSchema):
+    build = SchemaProperty(DataSourceBuildInformation)
+
+
 class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -46,7 +70,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
     named_filters = DictProperty()
-    built = BooleanProperty(default=False)
+    meta = SchemaProperty(DataSourceMeta)
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.display_name)

@@ -402,7 +402,7 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    return json_response({'isBuilt': config.built})
+    return json_response({'isBuilt': config.meta.build.built})
 
 
 @login_and_domain_required

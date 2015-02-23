@@ -17,7 +17,9 @@ from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
+    DataSourceBuildInformation,
     DataSourceConfiguration,
+    DataSourceMeta,
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.builder import (
@@ -46,7 +48,6 @@ class FilterField(JsonField):
                 raise forms.ValidationError("Invalid filter format!")
 
 
-# NOTE: Should I break this into two classes, one for forms and one for cases?
 class DataSourceBuilder(object):
     """
     When configuring a report, one can use DataSourceBuilder to determine some
@@ -200,6 +201,14 @@ class DataSourceBuilder(object):
             })
             return ret
 
+    @property
+    @memoized
+    def data_source_name(self):
+        if self.source_type == 'form':
+            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
+        if self.source_type == 'case':
+            return "{} (v{})".format(self.source_id, self.app.version)
+
 
 class CreateNewReportForm(forms.Form):
     """
@@ -275,29 +284,33 @@ class CreateNewReportForm(forms.Form):
         app_id = cleaned_data.get('application')
 
         if report_source and source_type and app_id:
+
             app = Application.get(app_id)
             ds_builder = DataSourceBuilder(self.domain, app, source_type, report_source)
 
             existing_sources = DataSourceConfiguration.by_domain(self.domain)
             if len(existing_sources) >= 5:
-                suitable_source_exists = False
-                for s in existing_sources:
-                    if (
-                        s.referenced_doc_type == ds_builder.source_doc_type and
-                        s.configured_filter == ds_builder.filter and
-                        s.configured_indicators == ds_builder.indicators
-                    ):
-                        suitable_source_exists = True
-                        break
-                if not suitable_source_exists:
+
+                suitable_source = DataSourceConfiguration.view(
+                    'userreports/data_sources_by_build_info',
+                    key=[
+                        self.domain,
+                        ds_builder.source_doc_type,
+                        report_source,
+                        app._id,
+                        app.version
+                    ],
+                    reduce=False
+                ).one()
+
+                if not suitable_source:
                     raise forms.ValidationError(_(
                         "Too many data sources!\n"
                         "Creating this report would cause you to go over the maximum "
                         "number of data sources allowed in this domain. The current "
-                        "limit is 5. Each case type and form that you have a user "
-                        "configurable report for count towards your limit. To continue, "
-                        "delete all the reports using a particular data source (or "
-                        "the data source itself) and try again."
+                        "limit is 5."
+                        "To continue, delete all of the reports using a particular "
+                        "data source (or the data source itself) and try again. "
                     ))
 
         return cleaned_data
@@ -376,39 +389,44 @@ class ConfigureNewReportBase(forms.Form):
         """
         Creates data source and report config.
         """
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            display_name="{} source".format(self.cleaned_data['report_name']),
-            referenced_doc_type=self.ds_builder.source_doc_type,
-            # The uuid gets truncated, so it's not really universally unique.
-            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
-            configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators
-        )
-        data_source_config.validate()
 
-        # Check if a suitable data source already exists.
-        # This checking is pretty naive. Do something better.
-        # Also inefficient. Consider writing a new couch view.
-        sources = DataSourceConfiguration.by_domain(self.domain)
-        match = None
-        for s in sources:
-            if (
-                s.referenced_doc_type == data_source_config.referenced_doc_type and
-                s.configured_filter == data_source_config.configured_filter and
-                s.configured_indicators == data_source_config.configured_indicators
-            ):
-                match = s
-                break
-        if not match:
+        matching_data_source = DataSourceConfiguration.view(
+            'userreports/data_sources_by_build_info',
+            key=[
+                self.domain,
+                self.ds_builder.source_doc_type,
+                self.report_source_id,
+                self.app._id,
+                self.app.version
+            ],
+            reduce=False
+        ).one()
+
+        if matching_data_source:
+            data_source_config_id = matching_data_source['id']
+        else:
+            data_source_config = DataSourceConfiguration(
+                domain=self.domain,
+                display_name=self.ds_builder.data_source_name,
+                referenced_doc_type=self.ds_builder.source_doc_type,
+                # The uuid gets truncated, so it's not really universally unique.
+                table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
+                configured_filter=self.ds_builder.filter,
+                configured_indicators=self.ds_builder.indicators,
+                meta=DataSourceMeta(build=DataSourceBuildInformation(
+                    source_id=self.report_source_id,
+                    app_id=self.app._id,
+                    app_version=self.app.version,
+                ))
+            )
+            data_source_config.validate()
             data_source_config.save()
             tasks.rebuild_indicators.delay(data_source_config._id)
-        else:
-            data_source_config = match
+            data_source_config_id = data_source_config._id
 
         report = ReportConfiguration(
             domain=self.domain,
-            config_id=data_source_config._id,
+            config_id=data_source_config_id,
             title=self.cleaned_data['report_name'],
             aggregation_columns=self._report_aggregation_cols,
             columns=self._report_columns,
