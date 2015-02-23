@@ -12,6 +12,8 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import process_cases
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SyncLog
+import couchforms
 from couchforms.models import XFormInstance, XFormDeprecated
 from couchforms.tests.testutils import post_xform_to_couch
 
@@ -75,19 +77,24 @@ class BaseCaseMultimediaTest(TestCase):
         with open(MEDIA_FILES[key], 'rb') as attach:
             return hashlib.md5(attach.read()).hexdigest()
 
-    def _do_submit(self, xml_data, dict_attachments):
+    def _do_submit(self, xml_data, dict_attachments, sync_token=None):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        form = post_xform_to_couch(xml_data, dict_attachments)
-        form.domain = TEST_DOMAIN
+        sp = couchforms.SubmissionPost(
+            instance=xml_data,
+            domain=TEST_DOMAIN,
+            attachments=dict_attachments,
+            last_sync_token=sync_token,
+        )
+        response, xform, cases = sp.run()
         self.assertEqual(set(dict_attachments.keys()),
-                         set(form.attachments.keys()))
-        case, = process_cases(form)
+                         set(xform.attachments.keys()))
+        [case] = cases
         self.assertEqual(case.case_id, TEST_CASE_ID)
 
-    def _submit_and_verify(self, doc_id, xml_data, dict_attachments):
-        self._do_submit(xml_data, dict_attachments)
+    def _submit_and_verify(self, doc_id, xml_data, dict_attachments, sync_token=None):
+        self._do_submit(xml_data, dict_attachments, sync_token)
 
         time.sleep(2)
         form = XFormInstance.get(doc_id)
@@ -107,14 +114,15 @@ class BaseCaseMultimediaTest(TestCase):
         final_xml = self._formatXForm(CREATE_XFORM_ID, xml_data, attachment_block)
         self._submit_and_verify(CREATE_XFORM_ID, final_xml, dict_attachments)
 
-    def _doSubmitUpdateWithMultimedia(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file'],
-                                      removes=['fruity_file']):
+    def _doSubmitUpdateWithMultimedia(self, new_attachments=None, removes=None, sync_token=None):
+        new_attachments = new_attachments if new_attachments is not None \
+            else ['commcare_logo_file', 'dimagi_logo_file']
+        removes = removes if removes is not None else ['fruity_file']
         attachment_block, dict_attachments = self._prepAttachments(new_attachments, removes=removes)
-
         raw_xform = self._getXFormString('multimedia_update.xml')
         doc_id = uuid.uuid4().hex
         final_xform = self._formatXForm(doc_id, raw_xform, attachment_block)
-        self._submit_and_verify(doc_id, final_xform, dict_attachments)
+        self._submit_and_verify(doc_id, final_xform, dict_attachments, sync_token)
 
 
 class CaseMultimediaTest(BaseCaseMultimediaTest):
@@ -221,8 +229,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
     def testAttachInUpdate(self, new_attachments=['commcare_logo_file', 'dimagi_logo_file']):
         self.testAttachInCreate()
-        removes = []
-        self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
+        self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=[])
 
         case = CommCareCase.get(TEST_CASE_ID)
         #1 plus the 2 we had
@@ -235,3 +242,11 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         for attach_name in new_attachments:
             self.assertTrue(attach_name in case.case_attachments)
             self.assertEqual(self._calc_file_hash(attach_name), hashlib.md5(case.get_attachment(attach_name)).hexdigest())
+
+    def test_sync_log_invalidation_bug(self):
+        sync_log = SyncLog(user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5')
+        sync_log.save()
+        self.testAttachInCreate()
+        # this used to fail before we fixed http://manage.dimagi.com/default.asp?158373
+        self._doSubmitUpdateWithMultimedia(new_attachments=['commcare_logo_file'], removes=[],
+                                           sync_token=sync_log._id)
