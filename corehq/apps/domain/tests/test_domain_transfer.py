@@ -105,3 +105,45 @@ class TestTransferDomainModel(BaseDomainTest):
                          "Should send an email to both requester and requestee")
 
 
+class TestTransferDomainIntegration(BaseDomainTest):
+
+    def setUp(self):
+        super(TestTransferDomainIntegration, self).setUp()
+
+        self.client.login(username=self.username, password=self.password)
+
+    def test_basic_workflow(self):
+        """
+        This should execute a basic transferring of domains. user will transfer a
+        domain to muggle. user should be able to see status of transferred domain
+        and muggle will accept transfer request.
+        """
+
+        # Get the transfer request page
+        resp = self.client.get(reverse(TransferDomainView.urlname, args=[self.domain.name]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(type(resp.context['form']), TransferDomainForm, 
+                         "Should get TransferRequestForm")
+
+        form = resp.context['form']
+        form.data['domain'] = self.domain.name
+        form.data['to_username'] = self.muggle.username
+
+        # Post the form data
+        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]), form.data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 2,
+                         "Should send an email to both requester and requestee")
+
+        transfer = TransferDomainRequest.objects.get(to_username=self.muggle.username,
+                                                     from_username=self.user.username,
+                                                     domain=self.domain.name)
+        self.assertIsNotNone(transfer)
+        self.assertTrue(transfer.active)
+
+        # Activate the transfer
+        resp = self.client.get(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.redirect_chain[-1][0],
+                         "http://testserver{url}".format(
+                         url=reverse(NewUserDashboardView.urlname, args=[self.domain.name])))

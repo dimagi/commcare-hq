@@ -68,9 +68,9 @@ from corehq.apps.domain.forms import (
     DomainGlobalSettingsForm, DomainMetadataForm, SnapshotSettingsForm,
     SnapshotApplicationForm, DomainDeploymentForm, DomainInternalForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
-    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm,
+    ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm
 )
-from corehq.apps.domain.models import Domain, LICENSES
+from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.orgs.models import Organization, OrgRequest, Team
@@ -2286,6 +2286,76 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
         return {
             'flags': self.enabled_flags(),
         }
+
+
+class TransferDomainView(BaseAdminProjectSettingsView):
+    urlname = 'transfer_domain_view'
+    page_title = ugettext_noop("Transfer Domain")
+    template_name = 'domain/admin/transfer_domain.html'
+
+    @property
+    @memoized
+    def active_transfer(self):
+        return TransferDomainRequest.get_active_transfer(self.domain,
+                                                         self.request.user.username)
+
+    def get(self, request, *args, **kwargs):
+
+        if self.active_transfer:
+            self.template_name = 'domain/admin/transfer_domain_pending.html'
+
+            if request.GET.get('resend', None):
+                self.active_transfer.send_transfer_request()
+                messages.info(request, _("Resent transfer request for project '{domain}'")
+                                         .format(domain=self.domain))
+
+
+        return super(TransferDomainView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = TransferDomainForm(self.domain, self.request.user.username, request.POST)
+        if form.is_valid():
+            # Initiate domain transfer
+            transfer = form.save()
+            transfer.send_transfer_request()
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'transfer': self.active_transfer.as_dict(),
+            'form': TransferDomainForm(self.domain, self.request.user.username)
+        }
+
+class ActivateTransferDomainView(View):
+
+    def get(self, request, guid, *args, **kwargs):
+
+        transfer = TransferDomainRequest.get_by_guid(guid)
+
+        if not transfer or not transfer.active:
+            return HttpResponseRedirect('/')
+
+        transfer.transfer_domain()
+        messages.success(request, _("Successfully transferred ownership of project '{domain}'")
+                                    .format(domain=transfer.domain))
+
+        return HttpResponseRedirect(reverse('dashboard_default', args=[transfer.domain]))
+
+
+class DeactivateTransferDomainView(View):
+
+    def get(self, request, guid, *args, **kwargs):
+
+        transfer = TransferDomainRequest.get_by_guid(guid)
+
+        if not transfer:
+            return HttpResponseRedirect('')
+
+        transfer.active = False
+        transfer.save()
+        return HttpResponseRedirect('')
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

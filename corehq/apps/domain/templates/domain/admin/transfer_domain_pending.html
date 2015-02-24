@@ -1,0 +1,20 @@
+{% extends "settings/base_template.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+
+{% block main_column %}
+    <h4>
+        You have a pending transfer with {{ transfer.to_username }}
+    </h4>
+    <a href="{% url 'transfer_domain_view' domain %}?resend=true" class="btn btn-primary">
+        Resend Transfer Request
+    </a>
+    <a href="{{ transfer.deactivate_url }}" class="btn btn-danger">
+        Cancel Transfer
+    </a>
+{% endblock %}
+
+

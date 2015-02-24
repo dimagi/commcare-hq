@@ -1,0 +1,19 @@
+{% extends "settings/base_template.html" %}
+{% load hqstyle_tags %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+
+{% block main_column %}
+    <div class="well">
+        <p class="lead">
+            {% blocktrans %}
+                Use this form to transfer domains between users.
+            {% endblocktrans %}
+        </p>
+    </div>
+    <hr />
+    {% crispy form %}
+{% endblock %}
+
