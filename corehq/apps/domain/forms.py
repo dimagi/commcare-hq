@@ -39,7 +39,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase, get_apps_in_domain
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, Domain)
+    AREA_CHOICES, SUB_AREA_CHOICES, Domain, TransferDomainRequest)
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -274,6 +274,55 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         return app_ids
 
 ########################################################################################################
+
+class TransferDomainFormErrors(object):
+    USER_DNE = 'The user being transferred to does not exist'
+    DOMAIN_MISMATCH = 'Mismatch in domains when confirming'
+
+class TransferDomainForm(forms.ModelForm):
+
+    class Meta:
+        model = TransferDomainRequest
+        fields = ['domain', 'to_username']
+
+    def __init__(self, domain, from_username, *args, **kwargs):
+        super(TransferDomainForm, self).__init__(*args, **kwargs)
+        self.current_domain = domain
+        self.from_username = from_username
+        self.helper = FormHelper()
+        self.helper.layout = crispy.Layout(
+            'domain',
+            'to_username',
+            StrictButton(
+                _("Transfer Domain"),
+                type="submit",
+                css_class='btn-danger',
+            )
+        )
+
+    def save(self, commit=True):
+        instance = super(TransferDomainForm, self).save(commit=False)
+        instance.from_username = self.from_username
+        if commit:
+            instance.save()
+        return instance
+
+    def clean_domain(self):
+        domain = self.cleaned_data['domain']
+
+        if domain != self.current_domain:
+            raise forms.ValidationError(TransferDomainFormErrors.DOMAIN_MISMATCH)
+
+        return domain
+
+    def clean_to_username(self):
+        username = self.cleaned_data['to_username']
+
+        if not WebUser.get_by_username(username):
+            raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
+
+        return username
+
 
 class SubAreaMixin():
     def clean_sub_area(self):

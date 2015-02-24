@@ -33,6 +33,37 @@ class BaseDomainTest(TestCase):
         self.user.delete()
         self.domain.delete()
         self.muggle.delete()
+
+class TestTransferDomainForm(BaseDomainTest):
+
+    def test_valid_data(self):
+        data = {
+            'to_username': self.mugglename,
+            'domain': self.domain.name,
+        }
+
+        form = TransferDomainForm(self.domain.name, self.user.username, data)
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+        transfer = form.save()
+        self.assertEqual(transfer.to_username, self.mugglename)
+        self.assertEqual(transfer.domain, self.domain.name)
+        self.assertEqual(transfer.from_username, self.username)
+
+    def test_invalid_user_data(self):
+        data = {
+            'to_username': 'non-existant',
+            'domain': 'mismatch',
+        }
+
+        form = TransferDomainForm(self.domain.name, self.user.username, data)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors, {
+            'to_username': [TransferDomainFormErrors.USER_DNE],
+            'domain': [TransferDomainFormErrors.DOMAIN_MISMATCH],
+        })
+
 class TestTransferDomainModel(BaseDomainTest):
 
     def setUp(self):
