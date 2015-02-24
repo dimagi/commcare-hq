@@ -18,6 +18,7 @@ Server layout:
         (i.e. ~/www/staging/logs and ~/www/production/logs).
 """
 import datetime
+import json
 import os
 import posixpath
 import sys
@@ -145,7 +146,7 @@ def format_env(current_env):
 
     for prop in important_props:
         ret[prop] = current_env.get(prop, '')
-    return '::'.join(['%s=%s' % (k, v) for k, v in ret.items()])
+    return json.dumps(ret)
 
 
 @task
@@ -1070,7 +1071,7 @@ def _rebuild_supervisor_conf_file(conf_command, filename):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             '%(conf_command)s --traceback --conf_file "%(filename)s" '
-            '--conf_destination "%(destination)s" --params "%(params)s"'
+            '--conf_destination "%(destination)s" --params \'%(params)s\''
         ) % {
 
             'conf_command': conf_command,
