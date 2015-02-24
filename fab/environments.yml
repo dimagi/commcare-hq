@@ -1,0 +1,78 @@
+# Base env containing default values which get
+# overridden or added to in each of the specific envs below.
+---
+base:
+  sudo_user: cchq
+  django_bind: 0.0.0.0
+  django_port: 9010
+  flower_port: 5555
+  should_migrate: False
+  home: "/home/cchq"
+  project: commcare-hq
+  code_repo: 'git://github.com/dimagi/commcare-hq.git'
+
+  # celery queues all disabled by default
+  sms_queue_enabled: False
+  pillow_retry_queue_enabled: False
+  celery_periodic_enabled: False
+  reminder_queue_enabled: False
+  reminder_rule_queue_enabled: False
+  reminder_case_update_queue_enabled: False
+
+  # list of servers where the NewRelic app agent should be running
+  new_relic_enabled: []
+
+development: {}
+
+india:
+  environment: india
+  should_migrate: True
+
+  sms_queue_enabled: True
+  pillow_retry_queue_enabled: True
+  celery_periodic_enabled: True
+  reminder_queue_enabled: True
+  reminder_rule_queue_enabled: True
+  reminder_case_update_queue_enabled: True
+
+preview:
+  environment: preview
+  code_branch: master
+  flower_port: 5556
+  django_port: 7999
+
+production:
+  environment: production
+  should_migrate: True
+
+  sms_queue_enabled: True
+  pillow_retry_queue_enabled: True
+  celery_periodic_enabled: True
+  reminder_queue_enabled: True
+  reminder_rule_queue_enabled: True
+  reminder_case_update_queue_enabled: True
+
+  new_relic_enabled:
+    - hqdjango3.internal.commcarehq.org
+
+staging:
+  environment: staging
+  should_migrate: True
+
+  pillow_retry_queue_enabled: True
+
+  new_relic_enabled:
+    - hqdjango0-staging.internal.commcarehq.org
+    - hqdjango1-staging.internal.commcarehq.org
+    - hqdb0-staging.internal.commcarehq.org
+
+zambia:
+  environment: production
+  should_migrate: True
+
+  sms_queue_enabled: True
+  pillow_retry_queue_enabled: True
+  celery_periodic_enabled: True
+  reminder_queue_enabled: True
+  reminder_rule_queue_enabled: True
+  reminder_case_update_queue_enabled: True
