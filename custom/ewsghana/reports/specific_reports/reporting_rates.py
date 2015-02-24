@@ -56,11 +56,11 @@ class ReportingRates(EWSData):
             non_reported_percent = float(data['non_reported']) * 100 / (data['total'] or 1)
             chart_data = [
                 dict(value=reported_percent,
-                     label=_('Reported'),
+                     label=_('Reporting'),
                      description=_("%.2f%% (%d) Reported (last 7 days)" % (reported_percent, data['total'])),
                      color='green'),
                 dict(value=non_reported_percent,
-                     label=_('Non-Reported'),
+                     label=_('Non-Reporting'),
                      description=_("%.2f%% (%d) Non-Reported (last 7 days)" %
                                    (non_reported_percent, data['total'])),
                      color='red'),
@@ -111,12 +111,12 @@ class ReportingDetails(EWSData):
             incomplete_percent = float(data['incomplete']) * 100 / (data['total'] or 1)
             chart_data = [
                 dict(value=complete_percent,
-                     label=_('Completed'),
+                     label=_('Complete'),
                      description=_("%.2f%% (%d) Complete Reports in last 7 days" %
                                    (complete_percent, data['total'])),
                      color='green'),
                 dict(value=incomplete_percent,
-                     label=_('Incompleted'),
+                     label=_('Incomplete'),
                      description=_("%.2f%% (%d) Incomplete Reports in last 7 days" %
                                    (incomplete_percent, data['total'])),
                      color='purple'),
@@ -235,7 +235,7 @@ class NonReporting(EWSData):
 
                 st = StockTransaction.objects.filter(case_id=loc.supply_point_id).order_by('-report__date')
                 if st:
-                    date = st[0].report.date
+                    date = st[0].report.date.strftime("%m-%d-%Y")
                 else:
                     date = _('---')
                 rows.append([link_format(loc.name, url), date])
@@ -276,7 +276,7 @@ class InCompleteReports(EWSData):
                 st_count = st.distinct('product_id').count()
                 if len(loc.products) != st_count:
                     if st:
-                        date = st[0].report.date
+                        date = st[0].report.date.strftime("%m-%d-%Y")
                     else:
                         date = '---'
 
