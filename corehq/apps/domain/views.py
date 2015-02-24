@@ -782,7 +782,11 @@ class DomainSubscriptionView(DomainAccountingSettings):
             feature_info = {
                 'name': get_feature_name(feature_rate.feature.feature_type, self.product),
                 'usage': usage,
-                'remaining': feature_rate.monthly_limit - usage,
+                'remaining': (
+                    feature_rate.monthly_limit - usage
+                    if feature_rate.monthly_limit != -1
+                    else _('Unlimited')
+                ),
                 'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
             }
