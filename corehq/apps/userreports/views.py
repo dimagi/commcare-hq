@@ -180,8 +180,6 @@ class ConfigurePieChartReportBuilderView(ConfigureBarChartReportBuilderView):
 
 
 class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
-    # Temporarily building this view off of ConfigureBarChartReportBuilderView.
-    # We'll probably want to inherit from a common ancestor in the end?
     configure_report_form_class = ConfigureNewTableReport
     report_title = _("Create New Report > Configure Table Report")
 
@@ -311,6 +309,7 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, request.POST)
         if form.is_valid():
+
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
     else:
@@ -402,7 +401,7 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    return json_response({'isBuilt': config.meta.build.built})
+    return json_response({'isBuilt': config.meta.build.finished})
 
 
 @login_and_domain_required

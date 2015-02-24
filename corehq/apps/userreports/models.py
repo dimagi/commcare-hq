@@ -6,6 +6,7 @@ from couchdbkit.ext.django.schema import (
     Document,
     DocumentSchema,
     StringListProperty,
+    DateTimeProperty
 )
 from couchdbkit.ext.django.schema import StringProperty, DictProperty, ListProperty, IntegerProperty
 from jsonobject import JsonObject
@@ -45,12 +46,14 @@ class DataSourceBuildInformation(DocumentSchema):
     """
     # Either the case type or the form xmlns that this data source is based on.
     source_id = StringProperty()
-    # The app that the form belongs to, or the app that was used to infer the case properties
+    # The app that the form belongs to, or the app that was used to infer the case properties.
     app_id = StringProperty()
-    # The version of the app at the time of the data source's configuration,
+    # The version of the app at the time of the data source's configuration.
     app_version = IntegerProperty()
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
-    built = BooleanProperty(default=False)
+    finished = BooleanProperty(default=False)
+    # Start time of the most recent build SQL table celery task.
+    initiated = DateTimeProperty()
 
 
 class DataSourceMeta(DocumentSchema):

@@ -127,6 +127,11 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             raise ValidationError(_(u'Problem with data source spec: {}').format(e))
         return cleaned_data
 
+    def save(self, commit=False):
+        self.instance.meta.build.finished = False
+        self.instance.meta.build.initiated = None
+        super(ConfigurableDataSourceEditForm, self).save(commit)
+
 
 class ConfigurableDataSourceFromAppForm(forms.Form):
 
