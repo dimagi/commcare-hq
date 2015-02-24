@@ -866,7 +866,6 @@ class Subscription(models.Model):
         today = datetime.date.today()
         if self.date_end is not None and today > self.date_end:
             raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
-        self.subscriber.apply_upgrades_and_downgrades(web_user=web_user)
 
         self.date_end = today
         if self.date_start > today:
@@ -874,6 +873,11 @@ class Subscription(models.Model):
 
         self.is_active = False
         self.save()
+
+        self.subscriber.apply_upgrades_and_downgrades(
+            web_user=web_user,
+            old_subscription=self,
+        )
 
         # transfer existing credit lines to the account
         self.transfer_credits()
@@ -938,10 +942,6 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         adjustment_reason, downgrades, upgrades = get_change_status(self.plan_version, new_plan_version)
-        self.subscriber.apply_upgrades_and_downgrades(
-            downgraded_privileges=downgrades, upgraded_privileges=upgrades,
-            new_plan_version=new_plan_version, web_user=web_user,
-        )
 
         today = datetime.date.today()
         new_start_date = today if self.date_start < today else self.date_start
@@ -971,6 +971,15 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
+        self.subscriber.apply_upgrades_and_downgrades(
+            downgraded_privileges=downgrades,
+            upgraded_privileges=upgrades,
+            new_plan_version=new_plan_version,
+            web_user=web_user,
+            old_subscription=self,
+            new_subscription=new_subscription,
+        )
+
         # transfer existing credit lines to the new subscription
         self.transfer_credits(new_subscription)
 
@@ -990,15 +999,18 @@ class Subscription(models.Model):
         created in between).
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        self.subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=self.plan_version, web_user=web_user,
-        )
         self.date_end = date_end
         self.is_active = True
         for allowed_attr in self.allowed_attr_changes:
             if allowed_attr in kwargs.keys():
                 setattr(self, allowed_attr, kwargs[allowed_attr])
         self.save()
+        self.subscriber.apply_upgrades_and_downgrades(
+            new_plan_version=self.plan_version,
+            web_user=web_user,
+            old_subscription=self,
+            new_subscription=self,
+        )
         SubscriptionAdjustment.record_adjustment(
             self, reason=SubscriptionAdjustmentReason.REACTIVATE,
             method=adjustment_method, note=note, web_user=web_user,
@@ -1288,7 +1300,9 @@ class Subscription(models.Model):
             **kwargs
         )
         subscriber.apply_upgrades_and_downgrades(
-            new_plan_version=plan_version, web_user=web_user,
+            new_plan_version=plan_version,
+            web_user=web_user,
+            new_subscription=subscription,
         )
         SubscriptionAdjustment.record_adjustment(
             subscription, method=adjustment_method, note=note,
