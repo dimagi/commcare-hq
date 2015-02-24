@@ -21,6 +21,27 @@ base:
 
   # list of servers where the NewRelic app agent should be running
   new_relic_enabled: []
+  
+  # parameters for configuring the celery worker processes
+  celery_params:
+    main:
+      concurrency: 1
+    doc_deletion_queue:
+      concurrency: 1
+    periodic:
+      concurrency: 1
+    pillow_retry_queue:
+      concurrency: 1
+    reminder_case_update_queue:
+      concurrency: 1
+    reminder_queue:
+      concurrency: 1
+    reminder_rule_queue:
+      concurrency: 1
+    saved_exports_queue:
+      concurrency: 1
+    sms_queue:
+      concurrency: 1
 
 development: {}
 
@@ -34,6 +55,26 @@ india:
   reminder_queue_enabled: True
   reminder_rule_queue_enabled: True
   reminder_case_update_queue_enabled: True
+
+  celery_params:
+    main:
+      concurrency: 8
+    doc_deletion_queue:
+      concurrency: 2
+    periodic:
+      concurrency: 4
+    pillow_retry_queue:
+      concurrency: 1
+    reminder_case_update_queue:
+      concurrency: 4
+    reminder_queue:
+      concurrency: 8
+    reminder_rule_queue:
+      concurrency: 4
+    saved_exports_queue:
+      concurrency: 3
+    sms_queue:
+      concurrency: 8
 
 preview:
   environment: preview
@@ -55,6 +96,26 @@ production:
   new_relic_enabled:
     - hqdjango3.internal.commcarehq.org
 
+  celery_params:
+    main:
+      concurrency: 8
+    doc_deletion_queue:
+      concurrency: 2
+    periodic:
+      concurrency: 4
+    pillow_retry_queue:
+      concurrency: 1
+    reminder_case_update_queue:
+      concurrency: 4
+    reminder_queue:
+      concurrency: 8
+    reminder_rule_queue:
+      concurrency: 4
+    saved_exports_queue:
+      concurrency: 3
+    sms_queue:
+      concurrency: 8
+
 staging:
   environment: staging
   should_migrate: True
@@ -66,6 +127,22 @@ staging:
     - hqdjango1-staging.internal.commcarehq.org
     - hqdb0-staging.internal.commcarehq.org
 
+  celery_params:
+    main:
+      concurrency: 4
+    doc_deletion_queue:
+      concurrency: 2
+    pillow_retry_queue:
+      concurrency: 1
+    reminder_case_update_queue:
+      concurrency: 1
+    reminder_queue:
+      concurrency: 1
+    reminder_rule_queue:
+      concurrency: 1
+    saved_exports_queue:
+      concurrency: 3
+
 zambia:
   environment: production
   should_migrate: True
@@ -76,3 +153,23 @@ zambia:
   reminder_queue_enabled: True
   reminder_rule_queue_enabled: True
   reminder_case_update_queue_enabled: True
+
+  celery_params:
+    main:
+      concurrency: 4
+    doc_deletion_queue:
+      concurrency: 2
+    periodic:
+      concurrency: 4
+    pillow_retry_queue:
+      concurrency: 1
+    reminder_case_update_queue:
+      concurrency: 4
+    reminder_queue:
+      concurrency: 4
+    reminder_rule_queue:
+      concurrency: 4
+    saved_exports_queue:
+      concurrency: 3
+    sms_queue:
+      concurrency: 4

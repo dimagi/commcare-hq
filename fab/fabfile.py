@@ -120,6 +120,7 @@ def format_env(current_env):
         'django_port',
         'django_bind',
         'flower_port',
+        'celery_params',
     ]
 
     host = current_env.get('host_string')
