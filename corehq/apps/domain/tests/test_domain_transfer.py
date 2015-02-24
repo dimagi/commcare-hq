@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 
-from corehq.apps.dashboard.views import NewUserDashboardView
+from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.domain.forms import TransferDomainForm, TransferDomainFormErrors
@@ -141,9 +141,49 @@ class TestTransferDomainIntegration(BaseDomainTest):
         self.assertIsNotNone(transfer)
         self.assertTrue(transfer.active)
 
-        # Activate the transfer
+        # Land on the activate transfer page
         resp = self.client.get(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.redirect_chain[-1][0],
-                         "http://testserver{url}".format(
-                         url=reverse(NewUserDashboardView.urlname, args=[self.domain.name])))
+        self.assertIsNotNone(resp.context['transfer'])
+
+        # Finally accept the transfer
+        mail.outbox = [] # Clear outbox
+        resp = self.client.post(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
+        self.assertEqual(len(mail.outbox), 1, "Send an email to Dimagi to confirm")
+
+        # Reload from DB
+        user = WebUser.get_by_username(self.user.username)
+        muggle = WebUser.get_by_username(self.muggle.username)
+        self.assertFalse(user.is_member_of(self.domain.name))
+        self.assertTrue(muggle.is_member_of(self.domain.name))
+        self.assertTrue(muggle.get_domain_membership(self.domain.name).is_admin)
+
+    def test_transfer_cancel_workflow(self):
+        """
+        This should execute a transferring of domains, but have the user cancel the request
+        before the other user accepts that request
+        """
+
+        data = {
+            'domain': self.domain.name,
+            'to_username': self.muggle.username,
+        }
+
+        # Post the transfer data
+        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]), data)
+        self.assertEqual(resp.status_code, 200)
+
+        # Ensure transfer is active
+        transfer = TransferDomainRequest.get_active_transfer(self.domain.name, self.user.username)
+        self.assertIsNotNone(transfer)
+
+        # Deactivate transfer request before to_user accepts the transfer
+        resp = self.client.post(reverse('deactivate_transfer_domain', args=[transfer.transfer_guid]))
+
+        # Ensure transfer is now deactivated
+        updated_transfer = TransferDomainRequest.get_active_transfer(self.domain.name, self.user.username)
+        self.assertIsNone(updated_transfer)
+
+        # Attempt to activate transfer
+        resp = self.client.post(reverse('activate_transfer_domain', args=[transfer.transfer_guid]))
+        self.assertEqual(resp.status_code, 404)

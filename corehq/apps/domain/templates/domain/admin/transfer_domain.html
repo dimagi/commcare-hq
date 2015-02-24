@@ -6,14 +6,13 @@
 
 
 {% block main_column %}
-    <div class="well">
-        <p class="lead">
-            {% blocktrans %}
-                Use this form to transfer domains between users.
-            {% endblocktrans %}
-        </p>
+    <div class="page-header">
+        <h3>
+        {% blocktrans %}
+            Use this to transfer your project to another user.
+        {% endblocktrans %}
+        </h3>
     </div>
-    <hr />
     {% crispy form %}
 {% endblock %}
 

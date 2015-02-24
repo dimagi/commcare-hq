@@ -1085,6 +1085,8 @@ class TransferDomainRequest(models.Model):
 
     TRANSFER_TO_EMAIL = 'domain/email/domain_transfer_to_request'
     TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_to_request'
+    DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
+    DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
     @property
     @memoized
@@ -1100,14 +1102,28 @@ class TransferDomainRequest(models.Model):
 
     @classmethod
     def get_by_guid(cls, guid):
-        return cls.objects.get(transfer_guid=guid)
-
-    @classmethod
-    def get_active_transfer(cls, domain, username):
         try:
-            return cls.objects.get(domain=domain, from_username=username, active=True)
+            return cls.objects.get(transfer_guid=guid, active=True)
         except TransferDomainRequest.DoesNotExist:
             return None
+
+    @classmethod
+    def get_active_transfer(cls, domain, from_username):
+        try:
+            return cls.objects.get(domain=domain, from_username=from_username, active=True)
+        except TransferDomainRequest.DoesNotExist:
+            return None
+        except TransferDomainRequest.MultipleObjectsReturned:
+            # Deactivate all active transfer except for most recent
+            latest = cls.objects \
+                        .filter(domain=domain, from_username=from_username, active=True) \
+                        .latest('request_time')
+            cls.objects \
+                .filter(domain=domain, from_username=from_username) \
+                .exclude(pk=latest.pk) \
+                .update(active=False)
+
+            return latest
 
     def requires_active_transfer(fn):
         def decorate(self, *args, **kwargs):
@@ -1165,9 +1181,19 @@ class TransferDomainRequest(models.Model):
         if 'ip' in kwargs:
             self.confirm_ip = kwargs['ip']
 
-        self.from_user.transfer_domain_membership(self.domain, self.to_user)
+        self.from_user.transfer_domain_membership(self.domain, self.to_user, is_admin=True)
+        self.from_user.save()
+        self.to_user.save()
         self.active = False
         self.save()
+
+        html_content = render_to_string(
+            "{template}.html".format(template=self.DIMAGI_CONFIRM_EMAIL),
+            self.as_dict())
+
+        send_HTML_email(_('There has been a transfer of ownership of {domain}').format(domain=self.domain),
+                        self.DIMAGI_CONFIRM_ADDRESS,
+                        html_content)
 
     def as_dict(self):
         return {
@@ -1177,7 +1203,7 @@ class TransferDomainRequest(models.Model):
             'guid': self.transfer_guid,
             'request_time': self.request_time,
             'deactivate_url': self.deactivate_url(),
-            'activate_url': self.deactivate_url(),
+            'activate_url': self.activate_url(),
         }
 
 

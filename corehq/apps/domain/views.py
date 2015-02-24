@@ -2323,21 +2323,42 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        return {
-            'transfer': self.active_transfer.as_dict(),
-            'form': TransferDomainForm(self.domain, self.request.user.username)
-        }
+        if self.active_transfer:
+            return { 'transfer': self.active_transfer.as_dict() }
+        else:
+            return { 'form': TransferDomainForm(self.domain, self.request.user.username) }
 
-class ActivateTransferDomainView(View):
+class ActivateTransferDomainView(BasePageView):
+    urlname = 'activate_transfer_domain'
+    page_title = 'Activate Domain Transfer'
+    template_name = 'domain/activate_transfer_domain.html'
+
+    @property
+    def page_context(self):
+        transfer = TransferDomainRequest.get_by_guid(self.guid)
+        if transfer:
+            return { 'transfer': transfer.as_dict() }
+        else:
+            return {}
+
+    @property
+    def page_url(self):
+        return self.request.get_full_path()
 
     def get(self, request, guid, *args, **kwargs):
+        self.guid = guid
+
+        return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
+
+    def post(self, request, guid, *args, **kwargs):
+        self.guid = guid
 
         transfer = TransferDomainRequest.get_by_guid(guid)
 
         if not transfer or not transfer.active:
-            return HttpResponseRedirect('/')
+            raise Http404()
 
-        transfer.transfer_domain()
+        transfer.transfer_domain(ip=get_ip(request))
         messages.success(request, _("Successfully transferred ownership of project '{domain}'")
                                     .format(domain=transfer.domain))
 
@@ -2346,16 +2367,16 @@ class ActivateTransferDomainView(View):
 
 class DeactivateTransferDomainView(View):
 
-    def get(self, request, guid, *args, **kwargs):
+    def post(self, request, guid, *args, **kwargs):
 
         transfer = TransferDomainRequest.get_by_guid(guid)
 
         if not transfer:
-            return HttpResponseRedirect('')
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         transfer.active = False
         transfer.save()
-        return HttpResponseRedirect('')
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

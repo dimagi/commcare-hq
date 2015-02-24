@@ -1,0 +1,28 @@
+{% extends 'style/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block content %}
+<div class="container" id="hq-content">
+  <div class="row">
+    <div class="page-header">
+        <h1>{% trans "Transfer project ownership" %}</h1>
+    </div>
+    <div class="col-md-8 col-xs-12">
+      {% if transfer %}
+        <p class="lead">
+          By clicking "accept" below You acknowledge that You accept full ownership of this project space
+          ("{{ transfer.domain }}").  You agree to be bound by the terms of Dimagi's <a href="https://www.commcarehq.org/eula/">End User License Agreement</a>.  By accepting this agreement, your are acknowledging you have permission and authority to accept Dimagi's End User License Agreement.
+        </p>
+        <form action="{{ transfer.activate_url }}" method="POST">{% csrf_token %}
+          <input type="submit" value="Accept" class="btn btn-primary"/>
+        </form>
+      {% else %}
+        <p class="lead">
+          Sorry this transfer request has expired.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock content %}

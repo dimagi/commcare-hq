@@ -549,8 +549,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
             record.save()
             return record
 
-    def transfer_domain_membership(self, domain, to_user, create_record=False):
-        to_user.add_domain_membership(domain)
+    def transfer_domain_membership(self, domain, to_user, create_record=False, is_admin=True):
+        to_user.add_domain_membership(domain, is_admin=is_admin)
         self.delete_domain_membership(domain, create_record=create_record)
 
     def is_domain_admin(self, domain=None):

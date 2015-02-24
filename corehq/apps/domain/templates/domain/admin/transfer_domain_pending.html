@@ -6,15 +6,25 @@
 
 
 {% block main_column %}
-    <h4>
-        You have a pending transfer with {{ transfer.to_username }}
-    </h4>
-    <a href="{% url 'transfer_domain_view' domain %}?resend=true" class="btn btn-primary">
-        Resend Transfer Request
-    </a>
-    <a href="{{ transfer.deactivate_url }}" class="btn btn-danger">
-        Cancel Transfer
-    </a>
+    <div class="row-fluid">
+        <div class="span12">
+            <h4>
+                You have a pending transfer with {{ transfer.to_username }}
+            </h4>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span2">
+            <a href="{% url 'transfer_domain_view' domain %}?resend=true" class="btn btn-primary">
+                Resend Transfer Request
+            </a>
+        </div>
+        <div class="span2">
+            <form action="{{ transfer.deactivate_url }}" method="POST">
+                <input class="btn btn-danger" type="submit" value="Cancel Transfer" />
+            </form>
+        </div>
+    </div>
 {% endblock %}
 
 
