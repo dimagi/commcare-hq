@@ -723,7 +723,10 @@ class Subscriber(models.Model):
     def apply_upgrades_and_downgrades(self, downgraded_privileges=None,
                                       upgraded_privileges=None,
                                       new_plan_version=None,
-                                      verbose=False, web_user=None):
+                                      verbose=False,
+                                      web_user=None,
+                                      old_subscription=None,
+                                      new_subscription=None):
 
         if self.organization is not None:
             raise SubscriptionChangeError("Only domain upgrades and downgrades are possible.")
@@ -751,6 +754,24 @@ class Subscriber(models.Model):
             )
             if not upgrade_handler.get_response():
                 raise SubscriptionChangeError("The upgrade was not successful.")
+
+        if (
+            not (old_subscription and old_subscription.is_trial)
+            or not (new_subscription and new_subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY)
+        ):
+            email_context = {
+                'domain': self.domain,
+                'old_plan': old_subscription.plan_version if old_subscription else None,
+                'new_plan': new_subscription.plan_version if new_subscription else None,
+                'old_subscription_start_date': old_subscription.date_start if old_subscription else None,
+                'new_subscription_end_date': new_subscription.date_end if new_subscription else None,
+            }
+            send_HTML_email(
+                "Subscription Change Alert: %(domain)s from %(old_plan)s to %(new_plan)s" % email_context,
+                settings.SUBSCRIPTION_CHANGE_EMAIL,
+                render_to_string('accounting/subscription_change_email.html', email_context),
+                text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
+            )
 
 
 class Subscription(models.Model):

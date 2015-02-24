@@ -458,6 +458,7 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
+SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
