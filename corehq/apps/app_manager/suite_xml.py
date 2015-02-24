@@ -1099,7 +1099,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         with open(os.path.join(
                 os.path.dirname(__file__), "case_tile_templates", "tdh.txt"
         )) as f:
-            return unicode(f.read())
+            return f.read().decode('utf-8')
 
     def get_filter_xpath(self, module, delegation=False):
         filter = module.case_details.short.filter
