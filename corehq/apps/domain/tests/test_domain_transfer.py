@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+from datetime import datetime
 
 from django.core import mail
 from django.core.urlresolvers import reverse
@@ -103,6 +104,21 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertIsNotNone(self.transfer.transfer_guid)
         self.assertEqual(len(mail.outbox), 2,
                          "Should send an email to both requester and requestee")
+
+    def test_get_active_transfer(self):
+        res = TransferDomainRequest.get_active_transfer(self.domain, self.user.username)
+        self.assertIsNotNone(res)
+
+        newer = TransferDomainRequest(
+            to_username=self.mugglename,
+            from_username=self.username,
+            request_time=datetime.now(),
+            domain=self.domain.name)
+        newer.save()
+
+        res = TransferDomainRequest.get_active_transfer(self.domain, self.user.username)
+        self.assertEqual(res.pk, newer.pk)
+        self.assertFalse(TransferDomainRequest.objects.get(pk=self.transfer.pk).active)
 
 
 class TestTransferDomainIntegration(BaseDomainTest):

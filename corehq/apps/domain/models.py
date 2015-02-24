@@ -1116,7 +1116,7 @@ class TransferDomainRequest(models.Model):
         except TransferDomainRequest.MultipleObjectsReturned:
             # Deactivate all active transfer except for most recent
             latest = cls.objects \
-                        .filter(domain=domain, from_username=from_username, active=True) \
+                        .filter(domain=domain, from_username=from_username, active=True, request_time__isnull=False) \
                         .latest('request_time')
             cls.objects \
                 .filter(domain=domain, from_username=from_username) \
