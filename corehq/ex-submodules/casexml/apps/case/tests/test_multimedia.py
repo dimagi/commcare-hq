@@ -250,3 +250,4 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         # this used to fail before we fixed http://manage.dimagi.com/default.asp?158373
         self._doSubmitUpdateWithMultimedia(new_attachments=['commcare_logo_file'], removes=[],
                                            sync_token=sync_log._id)
+        sync_log.delete()
