@@ -1727,7 +1727,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id
-                application.name = request.POST["%s-name" % original_id]
+                name_field = "%s-name" % original_id
+                if name_field not in request.POST:
+                    continue
+
+                application.name = request.POST[name_field]
                 application.description = request.POST["%s-description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id]
                 try:
