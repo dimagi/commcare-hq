@@ -755,9 +755,16 @@ class Subscriber(models.Model):
             if not upgrade_handler.get_response():
                 raise SubscriptionChangeError("The upgrade was not successful.")
 
-        if (
-            not (old_subscription and old_subscription.is_trial)
-            or not (new_subscription and new_subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY)
+        if not (
+            (
+                new_subscription
+                and new_subscription.is_trial
+            )
+            or (
+                old_subscription
+                and old_subscription.is_trial
+                and not new_subscription
+            )
         ):
             email_context = {
                 'domain': self.domain,
