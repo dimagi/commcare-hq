@@ -58,6 +58,7 @@ branches:
   - project-settings-update # sravan 1/30
   - report-builder # Noah 2/16
   - split-uat # SK 2/23
+  - subscription-change-email # Nick P 2/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
