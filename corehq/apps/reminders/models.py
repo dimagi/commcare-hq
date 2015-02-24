@@ -6,7 +6,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
@@ -618,7 +618,7 @@ class CaseReminderHandler(Document):
         """
         if recipient is None:
             if self.recipient == RECIPIENT_USER:
-                recipient = CommCareUser.get_by_user_id(case.user_id)
+                recipient = CouchUser.get_by_user_id(case.user_id)
             elif self.recipient == RECIPIENT_CASE:
                 recipient = CommConnectCase.get(case._id)
             elif self.recipient == RECIPIENT_PARENT_CASE:
@@ -933,7 +933,7 @@ class CaseReminderHandler(Document):
         reminder = self.get_reminder(case)
 
         if case and case.user_id and (case.user_id != case._id):
-            user = CommCareUser.get_by_user_id(case.user_id)
+            user = CouchUser.get_by_user_id(case.user_id)
         else:
             user = None
 
@@ -1014,7 +1014,7 @@ class CaseReminderHandler(Document):
         elif self.recipient == RECIPIENT_USER_GROUP:
             recipient = Group.get(self.user_group_id)
         elif self.recipient == RECIPIENT_USER:
-            recipient = CommCareUser.get(self.user_id)
+            recipient = CouchUser.get_by_user_id(self.user_id)
         elif self.recipient == RECIPIENT_CASE:
             recipient = CommCareCase.get(self.case_id)
         else:
@@ -1301,7 +1301,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     last_modified = DateTimeProperty()
     case_id = StringProperty()                      # Reference to the CommCareCase
     handler_id = StringProperty()                   # Reference to the CaseReminderHandler
-    user_id = StringProperty()                      # Reference to the CommCareUser who will receive the SMS messages
+    user_id = StringProperty()                      # Reference to the CouchUser who will receive the SMS messages
     method = StringProperty(choices=METHOD_CHOICES) # See CaseReminderHandler.method
     next_fire = DateTimeProperty()                  # The date and time that the next message should go out
     last_fired = DateTimeProperty()                 # The date and time that the last message went out
@@ -1338,7 +1338,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def user(self):
         if self.handler.recipient == RECIPIENT_USER:
-            return CommCareUser.get_by_user_id(self.user_id)
+            return CouchUser.get_by_user_id(self.user_id)
         else:
             return None
 
