@@ -323,3 +323,10 @@ VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     "Adds transaction-related question types in the form builder",
     [NAMESPACE_DOMAIN]
 )
+
+VELLUM_ITEMSETS = StaticToggle(
+    'itemsets',
+    "Adds dynamic (itemset) select and multi-select question types to the "
+    "form builder",
+    [NAMESPACE_DOMAIN]
+)

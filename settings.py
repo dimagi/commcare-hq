@@ -28,10 +28,6 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
-# enables all plugins, including ones that haven't been released on production
-# yet
-VELLUM_PRERELEASE = False
-
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
