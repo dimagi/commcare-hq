@@ -933,7 +933,10 @@ class CaseReminderHandler(Document):
         reminder = self.get_reminder(case)
 
         if case and case.user_id and (case.user_id != case._id):
-            user = CouchUser.get_by_user_id(case.user_id)
+            try:
+                user = CouchUser.get_by_user_id(case.user_id)
+            except KeyError:
+                user = None
         else:
             user = None
 
