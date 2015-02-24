@@ -7,11 +7,11 @@ class Command(SupervisorConfCommand):
     help = "Make pillowtop supervisord conf - multiple configs per the PILLOWTOPS setting"
     args = ""
 
-    def render_configuration_file(self, conf_template_string):
+    def render_configuration_file(self, conf_template_string, params):
         """
         Hacky override to make pillowtop config. Multiple configs within the conf file
         """
-        environment = self.params['environment']
+        environment = params['environment']
 
         configs = []
         all_pillows = get_pillows_for_env(environment, settings.PILLOWTOPS)
@@ -21,7 +21,7 @@ class Command(SupervisorConfCommand):
                 'pillow_name': pillow_name,
                 'pillow_option': ' --pillow-name %s' % pillow_name
             }
-            pillow_params.update(self.params)
-            pillow_rendering = conf_template_string % pillow_params
+            pillow_params.update(params)
+            pillow_rendering = super(Command, self).render_configuration_file(conf_template_string, pillow_params)
             configs.append(pillow_rendering)
         return '\n\n'.join(configs)
