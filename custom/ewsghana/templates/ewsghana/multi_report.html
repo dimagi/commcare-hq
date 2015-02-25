@@ -3,12 +3,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
-{% endblock %}
-
 {% block reportcontent %}
 {% block pretable %}
     {% if not report.needs_filters %}
@@ -47,6 +41,15 @@
 
         .row {
             float: left;
+            width: 100%;
+        }
+
+        #report_table_product_selection_pane tr {
+            width: 20%;
+            display: inline-block;
+        }
+
+        #report_table_product_selection_pane tr:last-child {
             width: 100%;
         }
     </style>
@@ -99,39 +102,58 @@
             {% endwith %}
         {% endfor %}
     {% endfor %}
+
     <script>
-        $inventory_filter = $('#inventory_filter');
-        $inventory_filter.createDefaultDateRangePicker();
-        $('#inventory_filter_btn').on('click', function(e) {
-            e.preventDefault();
-            $('.hq-loading').fadeIn();
-
-            $(this).prop('disabled', true);
-            var dates = $($inventory_filter).val().split($inventory_filter.getDateRangeSeparator());
-            $.ajax({
-                type: 'GET',
-                datatype: 'json',
-                url: '{% url 'inventory_managment' domain %}',
-                data: {
-                    startdate: dates[0],
-                    enddate: dates[1],
-                    location_id: '{{ location_id }}'
-                },
-                success: function(response) {
-                    $(chart_id + ' svg').empty();
-
-                    d3.select(chart_id + ' svg')
-                            .datum(response)
-                            .transition().duration(500).call(chart);
-                    addCheckboxes();
-                    $('#inventory_filter_btn').removeAttr('disabled');
-                    $('.hq-loading').fadeOut();
-                },
-                error: function() {
-                }
-            });
-
+        function updateExportButton() {
+            var button = $("#export-report-excel");
+            if ({{ split|yesno:"true,false" }}) {
+                button.text("Export Chart to Excel");
+                button.css('display', 'inline-block');
+            } else if ({{ exportable|yesno:"true,false" }}){
+                button.text("Export to Excel");
+                button.css('display', 'inline-block');
+            } else {
+                button.css('display', 'None');
+            }
+        }
+        $("#apply-filters").on('click', function(){
+            updateExportButton();
         });
+        updateExportButton()
     </script>
 
+    <script>
+        $('#selection_pane_apply').on('click', function(e) {
+            e.preventDefault();
+            var productCodes = [];
+            $("#report_table_product_selection_pane input:not(:checked)").each(function() {
+                productCodes.push($(this).attr('value'));
+            });
+            var idsToHide = [];
+            $(".dataTables_scrollHead thead th").each(function(id){
+                if (jQuery.inArray($(this).text().trim(), productCodes) !== -1) {
+                    $(this).css('display', 'none');
+                    idsToHide.push(id);
+                } else {
+                    $(this).css('display', 'table-cell');
+                }
+            });
+            $(".dataTables_scrollBody th").each(function(id) {
+                if (jQuery.inArray(id, idsToHide) !== -1) {
+                    $(this).css('display', 'none');
+                } else {
+                    $(this).css('display', 'table-cell');
+                }
+            });
+            $(".dataTables_scrollBody tr").each(function() {
+                $(this).children().each(function(id) {
+                    if (jQuery.inArray(id, idsToHide) !== -1) {
+                        $(this).css('display', 'none');
+                    } else {
+                        $(this).css('display', 'table-cell');
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}

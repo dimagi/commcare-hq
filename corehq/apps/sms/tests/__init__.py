@@ -8,6 +8,7 @@ from couchdbkit.ext.django.schema import *
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 #from .inbound_handlers import *
+from .opt_tests import *
 
 class BackendInvocationDoc(Document):
     pass

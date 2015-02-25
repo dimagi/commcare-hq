@@ -4,9 +4,12 @@ from decimal import Decimal
 import logging
 import uuid
 from couchdbkit import ResourceNotFound
+from custom.dhis2.forms import Dhis2SettingsForm
+from custom.dhis2.models import Dhis2Settings
 import dateutil
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.forms.forms import get_declared_fields
 from django.views.generic import View
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
@@ -47,6 +50,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType, BillingAccountAdmin,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod,
+    EntryPoint,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import get_feature_name, PricingTable, DESC_BY_EDITION
@@ -481,6 +485,35 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+class EditDhis2SettingsView(BaseProjectSettingsView):
+    template_name = 'domain/admin/dhis2_settings.html'
+    urlname = 'dhis2_settings'
+    page_title = ugettext_noop("DHIS2 API settings")
+
+    @property
+    @memoized
+    def dhis2_settings_form(self):
+        settings_ = Dhis2Settings.for_domain(self.domain_object.name)
+        initial = settings_.dhis2 if settings_ else {'enabled': False}
+        if self.request.method == 'POST':
+            return Dhis2SettingsForm(self.request.POST, initial=initial)
+        return Dhis2SettingsForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {
+            'dhis2_settings_form': self.dhis2_settings_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.dhis2_settings_form.is_valid():
+            if self.dhis2_settings_form.save(self.domain_object):
+                messages.success(request, _('DHIS2 API settings successfully updated'))
+            else:
+                messages.error(request, _('There seems to have been an error. Please try again.'))
+        return self.get(request, *args, **kwargs)
+
+
 @require_POST
 @require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
@@ -642,6 +675,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
         next_subscription = {
             'exists': False,
             'can_renew': False,
+            'name': None,
+            'price': None,
         }
         cards = None
         general_credits = None
@@ -652,10 +687,27 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
             if subscription.date_end is not None:
                 if subscription.is_renewed:
+
+                    next_products = self.get_product_summary(subscription.next_subscription.plan_version,
+                                                             self.account,
+                                                             subscription)
+
+                    if len(next_products) > 1:
+                        accounting_logger.error(
+                            "[BILLING] "
+                            "There seem to be multiple ACTIVE NEXT subscriptions for the "
+                            "subscriber %s. Odd, right? The latest one by "
+                            "date_created was used, but consider this an issue."
+                            % self.account
+                        )
+
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime("%d %B %Y"),
+                        'name': subscription.next_subscription.plan_version.plan.name,
+                        'price': next_products[0]['monthly_fee'],
                     })
+
                 else:
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
@@ -675,7 +727,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'features': self.get_feature_summary(plan_version, self.account, subscription),
             'general_credit': general_credits,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
-            'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
+            'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
             'date_start': (subscription.date_start.strftime("%d %B %Y")
                            if subscription is not None else None),
@@ -730,7 +782,11 @@ class DomainSubscriptionView(DomainAccountingSettings):
             feature_info = {
                 'name': get_feature_name(feature_rate.feature.feature_type, self.product),
                 'usage': usage,
-                'remaining': feature_rate.monthly_limit - usage,
+                'remaining': (
+                    feature_rate.monthly_limit - usage
+                    if feature_rate.monthly_limit != -1
+                    else _('Unlimited')
+                ),
                 'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
             }
@@ -1015,8 +1071,10 @@ class CreditsStripePaymentView(BaseStripePaymentView):
     @memoized
     def account(self):
         return BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.user.username,
+            self.domain,
+            created_by=self.request.user.username,
             account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )[0]
 
     def get_payment_handler(self):
@@ -1289,7 +1347,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         if self.current_subscription:
             return self.current_subscription.account
         account, self.is_new = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.request.couch_user.username, account_type=BillingAccountType.USER_CREATED,
+            self.domain,
+            created_by=self.request.couch_user.username,
+            account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )
         return account
 
@@ -1686,7 +1747,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id
-                application.name = request.POST["%s-name" % original_id]
+                name_field = "%s-name" % original_id
+                if name_field not in request.POST:
+                    continue
+
+                application.name = request.POST[name_field]
                 application.description = request.POST["%s-description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id]
                 try:
@@ -1853,6 +1918,9 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
+            use_basic_auth=self.add_repeater_form.cleaned_data['use_basic_auth'],
+            username=self.add_repeater_form.cleaned_data['username'],
+            password=self.add_repeater_form.cleaned_data['password'],
             format=self.add_repeater_form.cleaned_data['format']
         )
         return repeater
@@ -1877,6 +1945,7 @@ class AddFormRepeaterView(AddRepeaterView):
     def make_repeater(self):
         repeater = super(AddFormRepeaterView, self).make_repeater()
         repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
+        repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 
 

@@ -24,7 +24,7 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None
 
     ret = {'messages': []}
     for i, username_or_id in enumerate(usernames_or_ids):
-        couch_user = get_user(username_or_id)
+        couch_user = get_user(username_or_id, domain)
         if not couch_user:
             ret['messages'].append('WARNING: User not found: {}'.format(username_or_id))
             continue
@@ -37,12 +37,9 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None
 
         try:
             project = couch_user.project
-            commtrack_settings = project.commtrack_settings
-            stock_settings = commtrack_settings.get_ota_restore_settings() if commtrack_settings else None
             restore_config = RestoreConfig(
                 couch_user.to_casexml_user(), None, version, None,
                 items=True,
-                stock_settings=stock_settings,
                 domain=project,
                 force_cache=True,
                 cache_timeout=cache_timeout_hours * 60 * 60,
@@ -86,13 +83,20 @@ def _get_cached_payload(restore_config):
     return payload
 
 
-def get_user(username_or_id):
-    try:
-        couch_user = CommCareUser.get(username_or_id)
-    except ResourceNotFound:
+def get_user(username_or_id, domain):
+    if '@' in username_or_id:
+        return get_user_from_username(username_or_id)
+    else:
         try:
-            couch_user = CommCareUser.get_by_username(username_or_id)
+            couch_user = CommCareUser.get(username_or_id)
+            return couch_user
         except ResourceNotFound:
-            return None
+            username_or_id = '{}@{}.commcarehq.org'.format(username_or_id, domain)
+            return get_user_from_username(username_or_id)
 
-    return couch_user
+
+def get_user_from_username(username):
+    try:
+        return CommCareUser.get_by_username(username)
+    except ResourceNotFound:
+        return None

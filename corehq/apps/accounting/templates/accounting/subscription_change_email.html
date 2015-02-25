@@ -1,0 +1,16 @@
+<p>
+    Dear Accounting Team,
+</p>
+
+<p>
+    The project space <strong>{{ domain }}</strong> has changed its subscription from {{ old_plan }} to {{ new_plan }}, with {% if new_subscription_end_date %}an end date of {{ new_subscription_end_date }}{% else %} no end date{% endif %}.
+</p>
+
+<p>
+    Previously, they had been on {{ old_plan }} since {{ old_subscription_start_date }}.
+</p>
+
+<p>
+    Cheers,<br />
+    --The CommCareHQ Team
+</p>

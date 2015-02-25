@@ -7,7 +7,7 @@ from celery.task import periodic_task
 from corehq.apps.reports.scheduled import get_scheduled_reports
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
-from couchexport.groupexports import export_for_group
+from couchexport.groupexports import export_for_group, rebuild_export
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
@@ -131,7 +131,14 @@ def saved_exports():
 
 @task(queue='saved_exports_queue')
 def export_for_group_async(group_config, output_dir):
-    export_for_group(group_config, output_dir)
+    # exclude exports not accessed within the last 7 days
+    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    export_for_group(group_config, output_dir, last_access_cutoff=last_access_cutoff)
+
+
+@task(queue='saved_exports_queue')
+def rebuild_export_async(config, schema, output_dir):
+    rebuild_export(config, schema, output_dir)
 
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))

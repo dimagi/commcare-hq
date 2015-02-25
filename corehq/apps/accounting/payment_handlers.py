@@ -156,7 +156,9 @@ class BaseStripePaymentHandler(object):
         }
 
     def get_email_context(self):
-        return {}
+        return {
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+        }
 
     def send_email(self, payment_record):
         additional_context = self.get_email_context()
@@ -210,12 +212,14 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         self.invoice.save()
 
     def get_email_context(self):
-        return {
+        context = super(InvoiceStripePaymentHandler, self).get_email_context()
+        context.update({
             'balance': fmt_dollar_amount(self.invoice.balance),
             'is_paid': self.invoice.date_paid is not None,
             'date_due': self.invoice.date_due.strftime("%d %B %Y"),
             'invoice_num': self.invoice.invoice_number,
-        }
+        })
+        return context
 
 
 class CreditStripePaymentHandler(BaseStripePaymentHandler):
@@ -269,11 +273,13 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         return response
 
     def get_email_context(self):
+        context = super(CreditStripePaymentHandler, self).get_email_context()
         if self.product_type:
             credit_name = _("%s Software Plan" % self.product_type)
         else:
             credit_name = get_feature_name(self.feature_type, self.core_product)
-        return {
+        context.update({
             'credit_name': credit_name,
-        }
+        })
+        return context
 

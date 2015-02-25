@@ -1,4 +1,11 @@
-<profile version="{{ app.version }}" update="{{ profile_url }}" requiredMajor="{{ app.build_spec.major_release }}" requiredMinor="{{ app.build_spec.minor_release.1 }}" descriptor="{{ descriptor }}">
+<?xml version='1.0' encoding='UTF-8'?>
+<profile version="{{ app.version }}"
+         update="{{ profile_url }}"
+         requiredMajor="{{ app.build_spec.major_release }}"
+         requiredMinor="{{ app.build_spec.minor_release.1 }}"
+         uniqueid="{{ uniqueid }}"
+         name="{{ name }}"
+         descriptor="{{ descriptor }}">
     <property key="BackupMode" value="file_mode"/>
     <property key="backup-url" value="file:///E:/CommCare.Backup"/>
     <property key="restore-url" value="file:///E:/CommCare.Backup"/>

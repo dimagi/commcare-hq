@@ -197,7 +197,12 @@ class ChoiceListFilter(BaseFilter):
         self.choices = choices or []
 
     def value(self, **kwargs):
-        choice = kwargs[self.name]
+        choice = unicode(kwargs[self.name])
+        choice_values = map(lambda c: c.value, self.choices)
+        if choice not in choice_values:
+            raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
+                                       .format(choice=choice,
+                                               choices=choice_values))
         return next(choice_obj for choice_obj in self.choices if choice_obj.value == choice)
 
     def default_value(self):
@@ -213,7 +218,7 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, required, label, show_all, url_generator, css_id=None):
+    def __init__(self, name, field, required, label, show_all, url_generator, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -222,6 +227,7 @@ class DynamicChoiceListFilter(BaseFilter):
             FilterParam(name, True),
         ]
         super(DynamicChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        self.field = field
         self.label = label
         self.show_all = show_all
         self.css_id = css_id or self.name

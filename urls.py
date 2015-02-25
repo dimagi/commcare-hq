@@ -3,7 +3,6 @@ from django.conf.urls import patterns, url, include
 from django.views.generic import TemplateView, RedirectView
 from corehq.apps.domain.utils import legacy_domain_re
 
-# Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 from corehq.apps.domain.views import ProBonoStaticView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
@@ -58,6 +57,7 @@ domain_specific = patterns('',
     (r'^fri/', include('custom.fri.urls')),
     (r'^ilsgateway/', include('custom.ilsgateway.urls')),
     (r'^ewsghana/', include('custom.ewsghana.urls')),
+    (r'^up_nrhm/', include('custom.up_nrhm.urls')),
     (r'^', include('custom.m4change.urls')),
     (r'^', include('custom.uth.urls')),
     (r'^dashboard/', include('corehq.apps.dashboard.urls')),

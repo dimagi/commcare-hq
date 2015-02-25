@@ -157,17 +157,55 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                                                 .fields([])
         sharing_group_ids = share_group_q.run().doc_ids
 
-        owner_ids = list(set().union(special_user_ids,
-                                selected_user_ids,
-                                selected_sharing_group_ids,
-                                selected_reporting_group_users,
-                                sharing_group_ids))
+        owner_ids = list(set().union(
+            special_user_ids,
+            selected_user_ids,
+            selected_sharing_group_ids,
+            selected_reporting_group_users,
+            sharing_group_ids
+        ))
         if HQUserType.COMMTRACK in user_types:
             owner_ids.append("commtrack-system")
         if HQUserType.DEMO_USER in user_types:
             owner_ids.append("demo_user_group_id")
+
+        owner_ids += self.location_sharing_owner_ids()
+        owner_ids += self.location_reporting_owner_ids()
         return owner_ids
 
+    def location_sharing_owner_ids(self):
+        """
+        For now (and hopefully for always) the only owner
+        id that is important for case sharing group selection
+        is that actual group id.
+        """
+        return EMWF.selected_location_sharing_group_ids(self.request)
+
+    def location_reporting_owner_ids(self):
+        """
+        Include all users that are assigned to the selected
+        locations or those locations descendants.
+        """
+        from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
+        from corehq.apps.users.models import CommCareUser
+        results = []
+        selected_location_group_ids = EMWF.selected_location_reporting_group_ids(self.request)
+
+        for group_id in selected_location_group_ids:
+            loc = SQLLocation.objects.get(
+                location_id=group_id.replace(LOCATION_REPORTING_PREFIX, '')
+            )
+
+            for l in [loc] + list(loc.get_descendants()):
+                users = CommCareUser.get_db().view(
+                    'locations/users_by_location_id',
+                    startkey=[l.location_id],
+                    endkey=[l.location_id, {}],
+                    include_docs=True
+                ).all()
+                results += [u['id'] for u in users]
+
+        return results
 
     def get_case(self, row):
         if '_source' in row:

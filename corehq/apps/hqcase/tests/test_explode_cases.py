@@ -1,10 +1,18 @@
 import datetime
+import uuid
 from couchdbkit import ResourceNotFound
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
+from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.xml import V2
 from corehq.apps.app_manager.tests import TestFileMixin
-from corehq.apps.hqcase.utils import make_creating_casexml
+from corehq.apps.hqcase.tasks import explode_cases
+from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks, \
+    get_case_ids_in_domain, get_cases_in_domain
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.domain.models import Domain
 
 
 TESTS = (
@@ -94,3 +102,74 @@ class ExplodeCasesTest(SimpleTestCase, TestFileMixin):
                     {key: value.read() for key, value in attachments.items()},
                     {value: open(value).read() for key, value in files.items()}
                 )
+
+
+class ExplodeCasesDbTest(TestCase):
+
+    def setUp(self):
+        delete_all_cases()
+        self.domain = Domain(name='foo')
+        self.domain.save()
+        self.user = CommCareUser.create(self.domain.name, 'somebody', 'password')
+        self.user_id = self.user._id
+
+    def tearDown(self):
+        self.user.delete()
+        self.domain.delete()
+
+    def test_simple(self):
+        caseblock = CaseBlock(
+            create=True,
+            case_id=uuid.uuid4().hex,
+            user_id=self.user_id,
+            owner_id=self.user_id,
+            case_type='exploder-type',
+            version=V2
+        ).as_string()
+        submit_case_blocks([caseblock], self.domain.name)
+        self.assertEqual(1, len(get_case_ids_in_domain(self.domain.name)))
+        explode_cases(self.user_id, self.domain.name, 10)
+        cases_back = list(get_cases_in_domain(self.domain.name))
+        self.assertEqual(10, len(cases_back))
+        for case in cases_back:
+            self.assertEqual(self.user_id, case.owner_id)
+
+    def test_parent_child(self):
+        parent_id = uuid.uuid4().hex
+        parent_type = 'exploder-parent-type'
+        parent_block = CaseBlock(
+            create=True,
+            case_id=parent_id,
+            user_id=self.user_id,
+            owner_id=self.user_id,
+            case_type=parent_type,
+            version=V2
+        ).as_string()
+
+        child_id = uuid.uuid4().hex
+        child_block = CaseBlock(
+            create=True,
+            case_id=child_id,
+            user_id=self.user_id,
+            owner_id=self.user_id,
+            case_type='exploder-child-type',
+            index={'parent': (parent_type, parent_id)},
+            version=V2
+        ).as_string()
+
+        submit_case_blocks([parent_block, child_block], self.domain.name)
+        self.assertEqual(2, len(get_case_ids_in_domain(self.domain.name)))
+
+        explode_cases(self.user_id, self.domain.name, 5)
+        cases_back = list(get_cases_in_domain(self.domain.name))
+        self.assertEqual(10, len(cases_back))
+        parent_cases = {p._id: p for p in filter(lambda case: case.type == parent_type, cases_back)}
+        self.assertEqual(5, len(parent_cases))
+        child_cases = filter(lambda case: case.type == 'exploder-child-type', cases_back)
+        self.assertEqual(5, len(child_cases))
+        child_indices = [child.indices[0].referenced_id for child in child_cases]
+        # make sure they're different
+        self.assertEqual(len(child_cases), len(set(child_indices)))
+        for child in child_cases:
+            self.assertEqual(1, len(child.indices))
+            self.assertTrue(child.indices[0].referenced_id in parent_cases)

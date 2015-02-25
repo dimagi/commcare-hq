@@ -406,30 +406,47 @@ def update_case_list_translations(sheet, rows, app):
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
     module = app.get_module(module_index)
 
-    # It is easier to process the translations if mapping rows are nested under
-    # their respective DetailColumns
+    # It is easier to process the translations if mapping and graph config
+    # rows are nested under their respective DetailColumns.
+
     condensed_rows = []
-    i = 0
-    while i < len(rows):
-        if rows[i]['case_property'].endswith(" (ID Mapping Text)"):
-            # Cut off the id mapping text
-            rows[i]['case_property'] = rows[i]['case_property'].split(" ")[0]
-            # Construct a list of mapping rows
-            mappings = []
-            j = 1
-            while (i + j < len(rows) and
-                    rows[i + j]['case_property'].endswith(" (ID Mapping Value)")):
-                # Cut off the id mapping value part
-                rows[i + j]['case_property'] = \
-                    rows[i + j]['case_property'].split(" ")[0]
-                mappings.append(rows[i + j])
-                j += 1
-            rows[i]['mappings'] = mappings
-            condensed_rows.append(rows[i])
-            i += j
+    index_of_last_enum_in_condensed = -1
+    index_of_last_graph_in_condensed = -1
+    for i, row in enumerate(rows):
+        # If it's an enum case property, set index_of_last_enum_in_condensed
+        if row['case_property'].endswith(" (ID Mapping Text)"):
+            row['id'] = row['case_property'].split(" ")[0]
+            condensed_rows.append(row)
+            index_of_last_enum_in_condensed = len(condensed_rows) - 1
+
+        # If it's an enum value, add it to it's parent enum property
+        elif row['case_property'].endswith(" (ID Mapping Value)"):
+            row['id'] = row['case_property'].split(" ")[0]
+            parent = condensed_rows[index_of_last_enum_in_condensed]
+            parent['mappings'] = parent.get('mappings', []) + [row]
+
+        # If it's a graph case property, set index_of_last_graph_in_condensed
+        elif row['case_property'].endswith(" (graph)"):
+            row['id'] = row['case_property'].split(" ")[0]
+            condensed_rows.append(row)
+            index_of_last_graph_in_condensed = len(condensed_rows) - 1
+
+        # If it's a graph configuration item, add it to its parent
+        elif row['case_property'].endswith(" (graph config)"):
+            row['id'] = row['case_property'].split(" ")[0]
+            parent = condensed_rows[index_of_last_graph_in_condensed]
+            parent['configs'] = parent.get('configs', []) + [row]
+
+        # If it's a graph annotation, add it to its parent
+        elif row['case_property'].startswith("graph annotation "):
+            row['id'] = int(row['case_property'].split(" ")[-1])
+            parent = condensed_rows[index_of_last_graph_in_condensed]
+            parent['annotations'] = parent.get('annotations', []) + [row]
+
+        # It's a normal case property
         else:
-            condensed_rows.append(rows[i])
-            i += 1
+            row['id'] = row['case_property']
+            condensed_rows.append(row)
 
     list_rows = [
         row for row in condensed_rows if row['list_or_detail'] == 'list'
@@ -467,7 +484,7 @@ def update_case_list_translations(sheet, rows, app):
 
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.
-        if row.get('case_property', None) != detail.field:
+        if row.get('id', None) != detail.field:
             msgs.append((
                 messages.error,
                 'A row in sheet {sheet} has an unexpected value of "{field}" '
@@ -480,34 +497,43 @@ def update_case_list_translations(sheet, rows, app):
             ))
             continue
 
-        # The logic for updating a mapping and updating a MappingItem and a
-        # DetailColumn is almost the same. So, we smush the two together.
-        for index, translation_row in enumerate([row] + row.get("mappings", [])):
-            ok_to_delete_translations = has_at_least_one_translation(
-                translation_row, 'default', app.langs)
+        def _update_translation(row, language_dict, require_translation=True):
+            ok_to_delete_translations = (
+                not require_translation or has_at_least_one_translation(
+                    row, 'default', app.langs
+                ))
             if ok_to_delete_translations:
                 for lang in app.langs:
-                    translation = translation_row['default_%s' % lang]
-                    if index == 0:
-                        # For DetailColumns
-                        language_dict = detail.header
-                    else:
-                        # For MappingItems
-                        language_dict = detail['enum'][index - 1].value
-
+                    translation = row['default_%s' % lang]
                     if translation:
                         language_dict[lang] = translation
                     else:
-                        if lang in language_dict:
-                            del language_dict[lang]
+                        language_dict.pop(lang, None)
             else:
                 msgs.append((
                     messages.error,
                     "You must provide at least one translation" +
-                    " of the case property '%s'" %
-                    translation_row['case_property'] + " (ID Mapping Value)"
-                    if index != 0 else ""
+                    " of the case property '%s'" % row['case_property']
                 ))
+
+        # Update the translations for the row and all its child rows
+        _update_translation(row, detail.header)
+        for i, enum_value_row in enumerate(row.get('mappings', [])):
+            _update_translation(enum_value_row, detail['enum'][i].value)
+        for i, graph_annotation_row in enumerate(row.get('annotations', [])):
+            _update_translation(
+                graph_annotation_row,
+                detail['graph_configuration']['annotations'][i].display_text,
+                False
+            )
+        for graph_config_row in row.get('configs', []):
+            config_key = graph_config_row['id']
+            _update_translation(
+                graph_config_row,
+                detail['graph_configuration']['locale_specific_config'][config_key],
+                False
+            )
+
     return msgs
 
 

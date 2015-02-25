@@ -41,10 +41,11 @@ class GenericEnqueuingOperation(BaseCommand):
         client = self.get_redis_client()
         utcnow = datetime.utcnow()
         entries = self.get_items_to_be_processed(utcnow)
-        for entry in entries:
-            item_id = entry["id"]
-            process_datetime_str = entry["key"]
-            self.enqueue(item_id, process_datetime_str, redis_client=client)
+        if entries:
+            for entry in entries:
+                item_id = entry["id"]
+                process_datetime_str = entry["key"]
+                self.enqueue(item_id, process_datetime_str, redis_client=client)
 
     def enqueue(self, item_id, process_datetime_str, redis_client=None):
         client = redis_client or self.get_redis_client()

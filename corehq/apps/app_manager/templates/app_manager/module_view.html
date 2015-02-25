@@ -20,6 +20,7 @@
     window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
     window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
     window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
+    window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
     </script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}

@@ -1,15 +1,18 @@
 import json
 import xlrd
+from collections import defaultdict
+from datetime import date
+from django.utils.translation import ugettext as _
 from couchdbkit import NoResultFound
 from dimagi.utils.couch.database import get_db
-from corehq.apps.importer.const import LookupErrors
-from datetime import date
+from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
 from xlrd import xldate_as_tuple
 from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX
 
 
 def get_case_properties(domain, case_type=None):
@@ -204,6 +207,62 @@ class InvalidDateException(Exception):
     pass
 
 
+class ImportErrorDetail(object):
+
+    def __init__(self, *args, **kwargs):
+        self.errors = defaultdict(dict)
+        self.ERROR_MSG = {
+            ImportErrors.InvalidOwnerId: _(
+                "Owner ID was used in the mapping but there were errors "
+                "when uploading because of these values. Make sure "
+                "the values in this column are ID's for users or "
+                "case sharing groups."
+            ),
+
+            ImportErrors.InvalidOwnerName: _(
+                "Owner name was used in the mapping but there were errors "
+                "when uploading because of these values."
+            ),
+
+            ImportErrors.InvalidDate: _(
+                "Date fields were specified that caused an error during"
+                "conversion. This is likely caused by a value from "
+                "excel having the wrong type or not being formatted "
+                "properly."
+            ),
+
+            ImportErrors.BlankExternalId: _(
+                "Blank external ids were found in these rows causing as "
+                "error when importing cases."
+            ),
+
+            ImportErrors.CaseGeneration: _(
+                "These rows failed to generate cases for unknown reasons"
+            ),
+
+            ImportErrors.InvalidParentId: _(
+                "An invalid or unknown parent case was specified for the "
+                "uploaded case."
+            )
+        }
+
+    def add(self, error, row_number):
+        self.errors[error]['error'] = _(error)
+
+        try:
+            self.errors[error]['description'] = self.ERROR_MSG[error]
+        except KeyError:
+            self.errors[error]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
+
+        if 'rows' not in self.errors[error]:
+            self.errors[error]['rows'] = []
+
+        self.errors[error]['rows'].append(row_number)
+
+    def as_dict(self):
+        return dict(self.errors)
+
+
 def parse_excel_date(date_val, datemode):
     """ Convert field value from excel to a date value """
     if date_val:
@@ -346,15 +405,40 @@ def get_spreadsheet(download_ref, column_headers=True):
         return None
     return ExcelFile(download_ref.get_filename(), column_headers)
 
+
+def is_location_group(owner_id, domain):
+    """
+    Return yes if the specified owner_id is one of the
+    faked location groups.
+    """
+    if not owner_id.startswith(LOCATION_SHARING_PREFIX):
+        return False
+
+    results = SQLLocation.objects.filter(
+        domain=domain,
+        location_id=owner_id.replace(LOCATION_SHARING_PREFIX, '')
+    )
+    return results.exists()
+
+
 def is_user_or_case_sharing_group(owner):
     return not isinstance(owner, Group) or owner.case_sharing
+
 
 def is_valid_id(uploaded_id, domain, cache):
     if uploaded_id in cache:
         return cache[uploaded_id]
 
     owner = get_wrapped_owner(uploaded_id)
-    return owner and is_user_or_case_sharing_group(owner) and owner.is_member_of(domain)
+    return (
+        (
+            owner and
+            is_user_or_case_sharing_group(owner) and
+            owner.is_member_of(domain)
+        ) or
+        is_location_group(uploaded_id, domain)
+    )
+
 
 def get_id_from_name(uploaded_name, domain, cache):
     '''

@@ -15,7 +15,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
-from corehq import IS_DEVELOPER, Domain
+from corehq import toggles, Domain
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
 from custom.ilsgateway.forms import SupervisionDocumentForm
@@ -24,13 +24,14 @@ from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, ge
     get_delivery_group_reports, ILS_FACILITIES
 from custom.logistics.models import StockDataCheckpoint
 from casexml.apps.stock.models import StockTransaction
+from custom.logistics.tasks import sms_users_fix
+from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.models import MigrationCheckpoint
-from custom.logistics.tasks import resync_webusers_passwords_task
 
 
 class GlobalStats(BaseDomainView):
@@ -126,7 +127,7 @@ class BaseConfigView(BaseCommTrackManageView):
             'sync_url': self.sync_urlname,
             'sync_stock_url': self.sync_stock_url,
             'clear_stock_url': self.clear_stock_url,
-            'is_developer': IS_DEVELOPER.enabled(self.request.couch_user.username),
+            'is_developer': toggles.IS_DEVELOPER.enabled(self.request.couch_user.username),
             'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
         }
 
@@ -290,10 +291,10 @@ def end_report_run(request, domain):
 
 @domain_admin_required
 @require_POST
-def ils_resync_passwords(request, domain):
+def ils_sms_users_fix(request, domain):
     config = ILSGatewayConfig.for_domain(domain)
     endpoint = ILSGatewayEndpoint.from_config(config)
-    resync_webusers_passwords_task.delay(config, endpoint)
+    sms_users_fix.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 

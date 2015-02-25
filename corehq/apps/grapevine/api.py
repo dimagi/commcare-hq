@@ -37,6 +37,14 @@ class GrapevineBackend(SMSBackend):
     authentication_code = StringProperty()
 
     @classmethod
+    def get_opt_in_keywords(cls):
+        return ["START"]
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        return ["STOP", "END", "CANCEL", "UNSUBSCRIBE", "QUIT"]
+
+    @classmethod
     def get_api_id(cls):
         return "GVI"
 

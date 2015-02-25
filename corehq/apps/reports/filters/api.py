@@ -76,22 +76,29 @@ class EmwfOptionsView(LoginAndDomainMixin, EmwfMixin, JSONResponseMixin, View):
             groups = report_groups + share_groups
         else:
             groups = report_groups
+
         users, _ = self.user_es_call(size=0, return_count=True)
         self.group_start = len(self.user_types)
-        self.user_start = self.group_start + groups
+        self.location_start = self.group_start + groups
+        self.user_start = self.location_start + len(list(self.get_location_groups()))
         self.total_results = self.user_start + users
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
         limit = int(self.request.GET.get('page_limit', 10))
-        start = limit*(page-1)
+        start = limit * (page - 1)
         stop = start + limit
 
         options = self.user_types[start:stop]
 
         g_start = max(0, start - self.group_start)
-        g_size = limit - len(options) if start < self.user_start else 0
+        g_size = limit - len(options) if start < self.location_start else 0
         options += self.get_groups(g_start, g_size) if g_size else []
+
+        l_start = max(0, start - self.location_start)
+        l_size = limit - len(options) if start < self.user_start else 0
+        location_groups = list(self.get_location_groups())[l_start:l_size]
+        options += location_groups
 
         u_start = max(0, start - self.user_start)
         u_size = limit - len(options)

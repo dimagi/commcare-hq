@@ -1,9 +1,10 @@
-from mvp.reports import mvis, chw
+from mvp.reports import mvis, chw, va
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
         mvis.HealthCoordinatorReport,
-        chw.CHWManagerReport
+        chw.CHWManagerReport,
+        va.VerbalAutopsyReport,
     )),
 )
 

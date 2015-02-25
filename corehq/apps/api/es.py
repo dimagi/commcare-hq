@@ -195,7 +195,7 @@ class ESView(View):
         More powerful ES querying using POST params.
         """
         try:
-            raw_post = request.raw_post_data
+            raw_post = request.body
             raw_query = simplejson.loads(raw_post)
         except Exception, ex:
             content_response = dict(message="Error parsing query request", exception=ex.message)

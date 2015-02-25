@@ -1,5 +1,4 @@
 from django.conf.urls import *
-from corehq.apps.hqadmin.views import PrimeRestoreCache
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import FlagBrokenBuilds
 
@@ -15,6 +14,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^users/$', 'active_users', name="active_users"),
     url(r'^commcare_version/$', 'commcare_version_report', name='commcare_version_report'),
     url(r'^message_logs/$', 'message_log_report', name='message_log_report'),
+    url(r'^contact_email/$', 'contact_email', name="contact_email"),
     url(r'^mass_email/$', 'mass_email', name="mass_email"),
     url(r'^noneulized_users/$', 'noneulized_users', name="noneulized_users"),
     url(r'^commcare_settings/$', 'all_commcare_settings', name="all_commcare_settings"),
@@ -28,7 +28,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^reset_pillow_checkpoint/$', 'reset_pillow_checkpoint', name="reset_pillow_checkpoint"),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
-    url(r'^prime_restore/$', PrimeRestoreCache.as_view(), name="prime_restore_cache"),
     (r'^api/', include(admin_api_urlpatterns)),
 
     AdminReportDispatcher.url_pattern(),

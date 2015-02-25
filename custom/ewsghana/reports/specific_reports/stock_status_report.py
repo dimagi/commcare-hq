@@ -1,19 +1,19 @@
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.products.models import SQLProduct
+from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.graph_models import MultiBarChart, Axis, LineChart
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter
 from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
-    FacilityInChargeUsers, FacilityUsers, FacilitySMSUsers, StockLevelsLegend, FacilityReportData
-from custom.ewsghana.reports import MultiReport, EWSData
+    FacilityInChargeUsers, FacilityUsers, FacilitySMSUsers, StockLevelsLegend, FacilityReportData, InputStock
+from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
-from custom.ewsghana.utils import get_supply_points, get_products, make_url, get_second_week
+from custom.ewsghana.utils import get_supply_points, make_url, get_second_week
 
 
 def link_format(text, url):
@@ -32,13 +32,11 @@ class ProductAvailabilityData(EWSData):
 
     @property
     def rows(self):
-        products = get_products(self.config['program'],
-                                self.config['products'],
-                                self.config['domain']).order_by('code')
         rows = []
         if self.config['location_id']:
-            for p in products:
-                supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
+            locations = get_supply_points(self.config['location_id'], self.config['domain'])
+            for p in self.unique_products(locations):
+                supply_points = locations.values_list('supply_point_id', flat=True)
                 if supply_points:
                     stocks = StockState.objects.filter(sql_product=p, case_id__in=supply_points)
                     total = supply_points.count()
@@ -73,21 +71,26 @@ class ProductAvailabilityData(EWSData):
             def convert_product_data_to_stack_chart(rows, chart_config):
                 ret_data = []
                 for k in ['Stocked out', 'Not Stocked out', 'No Stock Data']:
+
+                    def calculate_percent(x, y):
+                        return float(x) / float((y or 1))
+
                     datalist = []
                     for row in rows:
+                        total = row['total']
                         if k == 'No Stock Data':
-                            datalist.append([row['product_code'], row['without_data']])
+                            datalist.append([row['product_code'], calculate_percent(row['without_data'], total)])
                         elif k == 'Stocked out':
-                            datalist.append([row['product_code'], row['without_stock']])
+                            datalist.append([row['product_code'], calculate_percent(row['without_stock'], total)])
                         elif k == 'Not Stocked out':
-                            datalist.append([row['product_code'], row['with_stock']])
+                            datalist.append([row['product_code'], calculate_percent(row['with_stock'], total)])
                     ret_data.append({'color': chart_config['label_color'][k], 'label': k, 'data': datalist})
                 return ret_data
-
-            chart = MultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
+            chart = EWSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis('', '.2%'))
             chart.rotateLabels = -45
             chart.marginBottom = 120
             chart.stacked = False
+            chart.forceY = [0, 1]
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
                     {'x': r[0], 'y': r[1]}
@@ -106,22 +109,9 @@ class MonthOfStockProduct(EWSData):
     use_datatables = True
 
     @property
-    def headers(self):
-        headers = DataTablesHeader(*[DataTablesColumn('Location')])
-
-        for product in get_products(self.config['program'],
-                                    self.config['products'],
-                                    self.config['domain']).order_by('code'):
-            headers.add_column(DataTablesColumn(product.code))
-
-        return headers
-
-    @property
-    def rows(self):
-        products = get_products(self.config['program'],
-                                self.config['products'],
-                                self.config['domain']).order_by('code')
-        rows = []
+    @memoized
+    def get_supply_points(self):
+        supply_points = []
         if self.config['location_id']:
             location = SQLLocation.objects.get(
                 domain=self.config['domain'],
@@ -136,8 +126,22 @@ class MonthOfStockProduct(EWSData):
                 supply_points = SQLLocation.objects.filter(
                     parent__location_id=self.config['location_id']
                 ).order_by('name').exclude(supply_point_id__isnull=True)
+        return supply_points
 
-            for sp in supply_points:
+    @property
+    def headers(self):
+        headers = DataTablesHeader(*[DataTablesColumn('Location')])
+
+        for product in self.unique_products(self.get_supply_points):
+            headers.add_column(DataTablesColumn(product.code))
+
+        return headers
+
+    @property
+    def rows(self):
+        rows = []
+        if self.config['location_id']:
+            for sp in self.get_supply_points:
                 location_types = [loc_type.name for loc_type in filter(
                     lambda loc_type: not loc_type.administrative,
                     Domain.get_by_name(self.config['domain']).location_types
@@ -156,7 +160,7 @@ class MonthOfStockProduct(EWSData):
                     '&filter_by_product='.join(self.config['products'])))
 
                 row = [link_format(sp.name, url)]
-                for p in products:
+                for p in self.unique_products(self.get_supply_points):
                     stock = StockState.objects.filter(sql_product=p, case_id=sp.supply_point_id)\
                         .order_by('-last_modified_date')
 
@@ -165,9 +169,9 @@ class MonthOfStockProduct(EWSData):
                         if monthly:
                             row.append(int(stock[0].stock_on_hand / monthly))
                         else:
-                            row.append('-')
+                            row.append(0)
                     else:
-                        row.append(0)
+                        row.append('-')
                 rows.append(row)
         return rows
 
@@ -190,21 +194,18 @@ class StockoutsProduct(EWSData):
         rows = {}
         if self.config['location_id']:
             supply_points = get_supply_points(self.config['location_id'], self.config['domain'])
-            products = get_products(self.config['program'],
-                                    self.config['products'],
-                                    self.config['domain']).order_by('code')
-
+            products = self.unique_products(supply_points)
             for product in products:
                 rows[product.code] = []
 
             for d in get_second_week(self.config['startdate'], self.config['enddate']):
                 for product in products:
-                    st = StockTransaction.objects.filter(case_id__in=supply_points,
-                                                         sql_product=product,
-                                                         report__date__range=[d['start_date'],
-                                                                              d['end_date']],
-                                                         type='stockonhand',
-                                                         stock_on_hand=0).count()
+                    st = StockTransaction.objects.filter(
+                        case_id__in=supply_points.values_list('supply_point_id', flat=True),
+                        sql_product=product,
+                        report__date__range=[d['start_date'], d['end_date']],
+                        type='stockonhand',
+                        stock_on_hand=0).count()
 
                     rows[product.code].append({'x': d['start_date'], 'y': st})
         return rows
@@ -213,8 +214,8 @@ class StockoutsProduct(EWSData):
     def charts(self):
         rows = self.rows
         if self.show_chart:
-            chart = LineChart("Stockout by Product", x_axis=Axis(self.chart_x_label, dateFormat='%b %Y'),
-                              y_axis=Axis(self.chart_y_label, 'd'))
+            chart = EWSLineChart("Stockout by Product", x_axis=Axis(self.chart_x_label, dateFormat='%b %Y'),
+                                 y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
@@ -254,12 +255,11 @@ class StockoutTable(EWSData):
                 supply_points = SQLLocation.objects.filter(
                     parent__location_id=self.config['location_id']
                 ).order_by('name').exclude(supply_point_id__isnull=True)
-            products = SQLProduct.objects.filter(is_archived=False, domain=self.config['domain'])
 
             for supply_point in supply_points:
-                stockout = StockState.objects.filter(sql_product__in=products,
+                stockout = StockState.objects.filter(sql_product__in=supply_point.products,
                                                      case_id=supply_point.supply_point_id,
-                                                     stock_on_hand=0).values_list(*['sql_product__name'],
+                                                     stock_on_hand=0).values_list('sql_product__name',
                                                                                   flat=True)
                 if stockout:
                     rows.append([supply_point.name, ', '.join(stockout)])
@@ -273,6 +273,7 @@ class StockStatus(MultiReport):
     fields = [AsyncLocationFilter, ProductByProgramFilter, DatespanFilter, ViewReportFilter]
     split = False
     exportable = True
+    is_exportable = True
 
     @property
     def report_config(self):
@@ -289,13 +290,58 @@ class StockStatus(MultiReport):
         )
 
     @property
-    def export_table(self):
-        if not self.is_reporting_type():
-            return super(StockStatus, self).export_table
-        r = self.report_context['reports'][0]['report_table']
-        return [self._export_table(r['title'], r['headers'], r['rows'])]
+    def data_providers(self):
+        config = self.report_config
+        report_type = self.request.GET.get('report_type', None)
 
-    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        if self.is_reporting_type():
+            self.split = True
+            return [
+                FacilityReportData(config),
+                StockLevelsLegend(config),
+                InputStock(config),
+                FacilitySMSUsers(config),
+                FacilityUsers(config),
+                FacilityInChargeUsers(config),
+                InventoryManagementData(config)
+            ]
+        self.split = False
+        if report_type == 'stockouts':
+            return [
+                ProductSelectionPane(config=config),
+                StockoutsProduct(config=config),
+                StockoutTable(config=config)
+            ]
+        elif report_type == 'asi':
+            return [
+                ProductSelectionPane(config=config),
+                ProductAvailabilityData(config=config),
+                MonthOfStockProduct(config=config),
+                StockoutsProduct(config=config),
+                StockoutTable(config=config)
+            ]
+        else:
+            return [
+                ProductSelectionPane(config=config),
+                ProductAvailabilityData(config=config),
+                MonthOfStockProduct(config=config)
+            ]
+
+    @property
+    def export_table(self):
+        if self.is_reporting_type():
+            return super(StockStatus, self).export_table
+
+        report_type = self.request.GET.get('report_type', None)
+        if report_type == 'stockouts' or not report_type:
+            r = self.report_context['reports'][2]['report_table']
+            return [self._export(r['title'], r['headers'], r['rows'])]
+        else:
+            reports = [self.report_context['reports'][2]['report_table'],
+                       self.report_context['reports'][4]['report_table']]
+            return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
+
+    def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
         def _unformat_row(row):
             return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
 
@@ -313,38 +359,3 @@ class StockStatus(MultiReport):
             table.append(_unformat_row(total_row))
 
         return [export_sheet_name, table]
-
-    @property
-    def data_providers(self):
-        config = self.report_config
-        report_type = self.request.GET.get('report_type', None)
-
-        if self.is_reporting_type():
-            self.split = True
-            return [
-                FacilityReportData(config),
-                StockLevelsLegend(config),
-                FacilitySMSUsers(config),
-                FacilityUsers(config),
-                FacilityInChargeUsers(config),
-                InventoryManagementData(config)
-            ]
-        self.split = False
-        if report_type == 'stockouts':
-            return [
-                StockoutsProduct(config=config),
-                StockoutTable(config=config)
-            ]
-        elif report_type == 'asi':
-            return [
-                ProductAvailabilityData(config=config),
-                MonthOfStockProduct(config=config),
-                StockoutsProduct(config=config),
-                StockoutTable(config=config)
-            ]
-        else:
-            return [
-                ProductAvailabilityData(config=config),
-                MonthOfStockProduct(config=config)
-            ]
-

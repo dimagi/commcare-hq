@@ -49,6 +49,7 @@ class AccountingInterface(AddItemInterface):
               'corehq.apps.accounting.interface.AccountTypeFilter',
               'corehq.apps.accounting.interface.ActiveStatusFilter',
               'corehq.apps.accounting.interface.DimagiContactFilter',
+              'corehq.apps.accounting.interface.EntryPointFilter',
               ]
     hide_filters = False
 
@@ -69,6 +70,7 @@ class AccountingInterface(AddItemInterface):
             DataTablesColumn("Account Type"),
             DataTablesColumn("Active Status"),
             DataTablesColumn("Dimagi Contact"),
+            DataTablesColumn("Entry Point"),
         )
 
     @property
@@ -106,6 +108,11 @@ class AccountingInterface(AddItemInterface):
             filters.update(
                 dimagi_contact=dimagi_contact,
             )
+        entry_point = EntryPointFilter.get_value(self.request, self.domain)
+        if entry_point is not None:
+            filters.update(
+                entry_point=entry_point,
+            )
 
         for account in BillingAccount.objects.filter(**filters):
             rows.append([
@@ -115,6 +122,7 @@ class AccountingInterface(AddItemInterface):
                 account.account_type,
                 "Active" if account.is_active else "Inactive",
                 account.dimagi_contact,
+                account.entry_point,
             ])
         return rows
 
@@ -151,6 +159,8 @@ class SubscriptionInterface(AddItemInterface):
         'corehq.apps.accounting.interface.DoNotInvoiceFilter',
         'corehq.apps.accounting.interface.CreatedSubAdjMethodFilter',
         'corehq.apps.accounting.interface.TrialStatusFilter',
+        'corehq.apps.accounting.interface.SubscriptionTypeFilter',
+        'corehq.apps.accounting.interface.ProBonoStatusFilter',
     ]
     hide_filters = False
 
@@ -174,6 +184,8 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("End Date"),
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
+            DataTablesColumn("Type"),
+            DataTablesColumn("Pro-Bono"),
         )
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
@@ -236,6 +248,18 @@ class SubscriptionInterface(AddItemInterface):
             is_trial = trial_status_filter == TrialStatusFilter.TRIAL
             filters.update(is_trial=is_trial)
 
+        service_type = SubscriptionTypeFilter.get_value(self.request, self.domain)
+        if service_type is not None:
+            filters.update(
+                service_type=service_type,
+            )
+
+        pro_bono_status = ProBonoStatusFilter.get_value(self.request, self.domain)
+        if pro_bono_status is not None:
+            filters.update(
+                pro_bono_status=pro_bono_status,
+            )
+
         for subscription in Subscription.objects.filter(**filters):
             try:
                 created_by_adj = SubscriptionAdjustment.objects.filter(
@@ -261,6 +285,8 @@ class SubscriptionInterface(AddItemInterface):
                 subscription.date_end,
                 subscription.do_not_invoice,
                 created_by,
+                subscription.service_type,
+                subscription.pro_bono_status,
             ]
             if not self.is_rendered_as_email:
                 columns.append(mark_safe('<a href="./%d" class="btn">Edit</a>' % subscription.id))
@@ -644,6 +670,8 @@ class InvoiceInterface(GenericTabularReport):
             filters.update(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
+
+        filters.update(is_hidden_to_ops=False)
 
         return filters
 

@@ -27,7 +27,15 @@ from django.utils.encoding import smart_str
 from django.contrib.auth.forms import PasswordResetForm
 from django.utils.safestring import mark_safe
 from django_countries.countries import COUNTRIES
-from corehq.apps.accounting.models import BillingContactInfo, BillingAccountAdmin, SubscriptionAdjustmentMethod, Subscription, SoftwarePlanEdition
+from corehq.apps.accounting.models import (
+    BillingAccountAdmin,
+    BillingContactInfo,
+    ProBonoStatus,
+    SoftwarePlanEdition,
+    Subscription,
+    SubscriptionAdjustmentMethod,
+    SubscriptionType,
+)
 from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase, get_apps_in_domain
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
@@ -911,7 +919,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                                                                   web_user=self.creating_user)
                 else:
                     subscription = self.current_subscription.change_plan(
-                        self.plan_version, web_user=self.creating_user, adjustment_method=SubscriptionAdjustmentMethod.USER
+                        self.plan_version,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.SELF_SERVICE,
+                        pro_bono_status=ProBonoStatus.NO,
                     )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
@@ -1008,6 +1020,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
             self.current_subscription.renew_subscription(
                 web_user=self.creating_user,
                 adjustment_method=SubscriptionAdjustmentMethod.USER,
+                service_type=SubscriptionType.SELF_SERVICE,
+                pro_bono_status=ProBonoStatus.NO,
             )
         except SubscriptionRenewalError as e:
             logger.error("[BILLING] Subscription for %(domain)s failed to "

@@ -194,7 +194,7 @@ def app_list(domain, *args):
     return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
 
 def uses_reminders(domain, *args):
-    handlers = CaseReminderHandler.get_handlers(domain=domain).all()
+    handlers = CaseReminderHandler.get_handlers(domain)
     return len(handlers) > 0
 
 def not_implemented(domain, *args):

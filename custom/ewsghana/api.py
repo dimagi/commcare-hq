@@ -1,5 +1,6 @@
 import logging
 from django.core.validators import validate_email
+from corehq.apps.products.models import SQLProduct
 from custom.logistics.commtrack import add_location
 from dimagi.utils.dates import force_to_datetime
 from corehq import Domain
@@ -34,6 +35,7 @@ class SupplyPoint(JsonObject):
     supplied_by = IntegerProperty()
     type = StringProperty()
     location_id = IntegerProperty()
+    products = ListProperty()
 
 
 class SMSUser(JsonObject):
@@ -47,6 +49,7 @@ class SMSUser(JsonObject):
     backend = StringProperty()
     family_name = StringProperty()
     to = StringProperty()
+    language = StringProperty()
 
 
 class EWSUser(JsonObject):
@@ -117,7 +120,7 @@ class GhanaEndpoint(LogisticsEndpoint):
 
 class EWSApi(APISynchronization):
     LOCATION_CUSTOM_FIELDS = ['created_at', 'supervised_by']
-    SMS_USER_CUSTOM_FIELDS = ['to']
+    SMS_USER_CUSTOM_FIELDS = ['to', 'backend', 'role']
     PRODUCT_CUSTOM_FIELDS = []
 
     def _create_location_type_if_not_exists(self, supply_point, location):
@@ -144,6 +147,9 @@ class EWSApi(APISynchronization):
             if supply_point.supervised_by:
                 new_location.metadata['supervised_by'] = supply_point.supervised_by
             new_location.save()
+            sql_loc = new_location.sql_location
+            sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
+            sql_loc.save()
             return new_location
 
     def _create_supply_point_from_location(self, supply_point, location):
@@ -151,6 +157,9 @@ class EWSApi(APISynchronization):
             if supply_point.supervised_by:
                 location.metadata['supervised_by'] = supply_point.supervised_by
                 location.save()
+                sql_loc = location.sql_location
+                sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
+                sql_loc.save()
             SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
                                                           name=supply_point.name,
                                                           external_id=str(supply_point.id),
@@ -191,7 +200,8 @@ class EWSApi(APISynchronization):
                          administrative=False)
         ]
         domain.save()
-        role = UserRole(domain=self.domain, permissions=Permissions(), name='Facility manager')
+        role = UserRole(domain=self.domain, permissions=Permissions(view_reports=True,
+                                                                    edit_data=True), name='Facility manager')
         role.save()
 
     def product_sync(self, ews_product):
@@ -224,6 +234,10 @@ class EWSApi(APISynchronization):
                 )
                 SupplyPointCase.get_or_create_by_location(fake_location)
                 created_location.save()
+            fake_location = Loc(_id=location._id,
+                                name=location.name,
+                                domain=self.domain)
+            SupplyPointCase.get_or_create_by_location(fake_location)
         elif ews_location.supply_points:
             supply_point = ews_location.supply_points[0]
             location.location_type = supply_point.type
@@ -272,6 +286,18 @@ class EWSApi(APISynchronization):
 
             if apply_updates(location, location_dict):
                 location.save()
+            for loc in ews_location.supply_points:
+                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                          key=[self.domain, str(loc.id)],
+                                          reduce=False,
+                                          include_docs=True,
+                                          limit=1).first()
+                if sp:
+                    sqlloc = sp.location.sql_location
+                    sqlloc.stocks_all_products = False
+                    if not sqlloc.products:
+                        sqlloc.products = SQLProduct.objects.filter(domain=self.domain, code__in=loc.products)
+                        sqlloc.save()
         return location
 
     def convert_web_user_to_sms_user(self, ews_webuser):

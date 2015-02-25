@@ -58,10 +58,10 @@
                                     {% endblocktrans %}
                                 {% else %}{{ plan.description }}{% endif %}</p>
                         </div>
-                        {% if plan.is_dimagi_subscription %}
+                        {% if plan.do_not_invoice %}
                             <div class="alert alert-info">
                             {% blocktrans %}
-                                <strong>Note:</strong> This is a Dimagi-owned subscription.
+                                <strong>Note:</strong> This subscription will not be invoiced.
                             {% endblocktrans %}
                             </div>
                         {% endif %}
@@ -103,21 +103,9 @@
                             </div>
                         </div>
                     {% endif %}
-                    {% if plan.next_subscription.exists %}
+                    <div data-bind="foreach: products">
                         <div class="control-group">
-                            <label class="control-label">
-                                {% trans "Next Subscription Begins" %}
-                            </label>
-                            <div class="controls">
-                                <p class="control-group-text">
-                                    {{ plan.next_subscription.date_start }}
-                                </p>
-                            </div>
-                        </div>
-                    {% endif %}
-                     <div data-bind="foreach: products">
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'Price' %}</label>
+                            <label class="control-label">{% trans 'Current Price' %}</label>
                             <div class="controls">
                                 <p class="control-group-text"
                                    data-bind="text: monthlyFee"></p>
@@ -159,6 +147,38 @@
                                         or the features below. It's likely that someone from Dimagi added these
                                         credits for you.
                                     {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if plan.next_subscription.exists %}
+                        <div class="control-group">
+                            <label class="control-label">
+                                {% trans "Next Subscription Begins" %}
+                            </label>
+                            <div class="controls">
+                                <p class="control-group-text">
+                                    {{ plan.next_subscription.date_start }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">
+                                {% trans "Next Subscription Plan" %}
+                            </label>
+                            <div class="controls">
+                                <p class="control-group-text">
+                                    {{ plan.next_subscription.name }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">
+                                {% trans "Next Subscription Price" %}
+                            </label>
+                            <div class="controls">
+                                <p class="control-group-text">
+                                    {{ plan.next_subscription.price }}
                                 </p>
                             </div>
                         </div>

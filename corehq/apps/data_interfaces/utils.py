@@ -1,7 +1,9 @@
+from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from django.utils.translation import ugettext as _
+from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import iter_docs
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):
@@ -32,5 +34,42 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
 
     if response['success']:
         case_group.save()
+
+    return response
+
+
+def archive_forms(domain, user, uploaded_data):
+    response = {
+        'errors': [],
+        'success': [],
+    }
+
+    form_ids = [row.get('form_id') for row in uploaded_data]
+    missing_forms = set(form_ids)
+
+    for xform_doc in iter_docs(XFormInstance.get_db(), form_ids):
+        xform = XFormInstance.wrap(xform_doc)
+        missing_forms.discard(xform['_id'])
+
+        if xform['domain'] != domain:
+            response['errors'].append(_(u"XFORM {form_id} does not belong to domain {domain}").format(
+                form_id=xform['_id'], domain=xform['domain']))
+            continue
+
+        xform_string = _(u"XFORM {form_id} for domain {domain} by user '{username}'").format(
+            form_id=xform['_id'],
+            domain=xform['domain'],
+            username=user.username)
+
+        try:
+            xform.archive(user=user.username)
+            response['success'].append(_(u"Successfully archived {form}").format(form=xform_string))
+        except Exception as e:
+            response['errors'].append(_(u"Could not archive {form}: {error}").format(
+                form=xform_string, error=e))
+
+    for missing_form_id in missing_forms:
+        response['errors'].append(
+            _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
 
     return response

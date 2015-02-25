@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import (
     Subscription, BillingAccount, SubscriptionAdjustment,
     SubscriptionAdjustmentMethod, BillingRecord,
     BillingContactInfo, SoftwarePlanEdition, CreditLine,
+    EntryPoint,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -97,8 +98,11 @@ class DomainInvoiceFactory(object):
             return
         do_not_invoice = any([s.do_not_invoice for s in subscriptions])
         account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name, created_by=self.__class__.__name__,
-            created_by_invoicing=True)[0]
+            self.domain.name,
+            created_by=self.__class__.__name__,
+            created_by_invoicing=True,
+            entry_point=EntryPoint.SELF_STARTED,
+        )[0]
         if account.date_confirmed_extra_charges is None:
             logger.info(
                 "Did not generate invoice because date_confirmed_extra_charges "

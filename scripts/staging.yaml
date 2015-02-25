@@ -45,25 +45,28 @@ name: autostaging
 branches:
   - subscription-no-contact-info # bb 8/4
   # - lwyszomi:b3-mobile-layout
+  - lwyszomi:ils_staging
+  - lwyszomi:ews_staging
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
   - quickview # Simon 11/25
-#  - master+double-management # Nick P 12/31
-#  - double-management # SK 12/1
-  - vellum-model-iteration # daniel 1/22
+  - doubleman-clean # SK 18/2
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
-  - project-settings-update # sravan 1/30
-  - tdh-tiles # Noah 2/1
-  - lwyszomi:ilsgateway-supervision-upload
-  - lwyszomi:ews_report_chart_checkboxes
-  - graph-bulk-translations # Noah 2/5
-  - dhis2 # Norman 2/6
-  - daily-form-stats-export-all # Nick P 2/6
   - static-updates # Biyeun 2/9
+  - dhis2 # Norman 2/6
+  - project-settings-update # sravan 1/30
+  - report-builder # Noah 2/16
+  - subscription-change-email # Nick P 2/24
 submodules:
-  submodules/dimagi-utils-src:
+  submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-    - master
+    - mobile-libs-219
+    
+  submodules/formtranslate-src:
+    # let's leave this here even when empty
+    # just so we always get latest master
+    branches:
+    - form-translate-219
