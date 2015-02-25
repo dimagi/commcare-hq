@@ -1,4 +1,5 @@
-from corehq.apps.locations.models import Location, LocationType, SQLLocation, LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
+from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
+    LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.commtrack.util import bootstrap_location_types

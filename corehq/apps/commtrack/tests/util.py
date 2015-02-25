@@ -6,11 +6,11 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import Location
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.util import get_default_requisition_config, \
-        bootstrap_location_types
+    bootstrap_location_types
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.backend import test

@@ -11,7 +11,7 @@ from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
-from corehq.apps.domain.models import Domain
+
 
 LOCATION_SHARING_PREFIX = 'locationgroup-'
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
@@ -39,7 +39,7 @@ class LocationTypeManager(models.Manager):
                 lt_heirarchy = heirarchy
             else:
                 lt_heirarchy = insert_loc_type(loc_type.parent_type)
-            if not loc_type.id in lt_heirarchy:
+            if loc_type.id not in lt_heirarchy:
                 lt_heirarchy[loc_type.id] = (loc_type, {})
             return lt_heirarchy[loc_type.id][1]
 

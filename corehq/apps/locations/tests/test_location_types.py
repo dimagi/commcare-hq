@@ -6,6 +6,7 @@ from corehq.apps.locations.models import LocationType
 class TestLocationTypes(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
+
         def make_loc_type(name, parent_type=None):
             return LocationType.objects.create(
                 domain=self.domain.name,
