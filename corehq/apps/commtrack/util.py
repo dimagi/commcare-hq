@@ -87,6 +87,27 @@ def get_or_create_default_program(domain):
         )
 
 
+def bootstrap_location_types(domain):
+    previous = None
+    for name, administrative in [
+        ('state', True),
+        ('district', True),
+        ('block', True),
+        ('village', True),
+        ('outlet', False),
+    ]:
+        location_type, _ = LocationType.objects.get_or_create(
+            domain=domain,
+            name=name,
+            defaults={
+                'parent_type': previous,
+                'administrative': administrative,
+            },
+        )
+        previous = location_type
+
+
+
 def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
     """
     Create a new CommtrackConfig object for a domain
@@ -148,23 +169,7 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
     make_product(domain.name, 'Sample Product 2', 'pq', program.get_id)
     make_product(domain.name, 'Sample Product 3', 'pr', program.get_id)
 
-    previous = None
-    for name, administrative in [
-        ('state', True),
-        ('district', True),
-        ('block', True),
-        ('village', True),
-        ('outlet', False),
-    ]:
-        location_type, _ = LocationType.objects.get_or_create(
-            domain=domain.name,
-            name=name,
-            defaults={
-                'parent_type': previous,
-                'administrative': administrative,
-            },
-        )
-        previous = location_type
+    bootstrap_location_types(domain.name)
 
     # Enable feature flags if necessary - this is required by exchange
     # and should have no effect on changing the project settings directly

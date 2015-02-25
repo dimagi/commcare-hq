@@ -179,7 +179,7 @@ class SQLLocation(MPTTModel):
             g.reporting = True
 
         g.metadata = {
-            'commcare_location_type': self.location_type,
+            'commcare_location_type': self.location_type.name,
             'commcare_location_name': self.name,
         }
         for key, val in self.metadata.items():

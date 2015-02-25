@@ -6,10 +6,11 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.util import get_default_requisition_config
+from corehq.apps.commtrack.util import get_default_requisition_config, \
+        bootstrap_location_types
 from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.backend import test
@@ -19,7 +20,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from casexml.apps.phone.restore import generate_restore_payload
 from lxml import etree
-from corehq.apps.locations.schema import LocationType
+
 
 TEST_DOMAIN = 'commtrack-test'
 TEST_LOCATION_TYPE = 'outlet'
@@ -125,33 +126,7 @@ class CommTrackTest(TestCase):
 
         self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
         self.domain = bootstrap_domain()
-        self.domain.location_types = [
-            LocationType(
-                name='state',
-                allowed_parents=[''],
-                administrative=True
-            ),
-            LocationType(
-                name='district',
-                allowed_parents=['state'],
-                administrative=True
-            ),
-            LocationType(
-                name='block',
-                allowed_parents=['district'],
-                administrative=True
-            ),
-            LocationType(
-                name='village',
-                allowed_parents=['block'],
-                administrative=True
-            ),
-            LocationType(
-                name='outlet',
-                allowed_parents=['village']
-            ),
-        ]
-        self.domain.save()
+        bootstrap_location_types(self.domain.name)
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
