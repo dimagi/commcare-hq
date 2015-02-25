@@ -32,7 +32,7 @@ def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
     return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
 
-# District Moshi-Rural
+# Region KILIMANJARO
 ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
                   652, 765, 1010, 657, 1173, 1037, 965, 749, 1171, 980,
                   1180, 1033, 975, 1056, 970, 742, 985, 2194, 935, 1128,
@@ -53,7 +53,7 @@ ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
                   1114, 932, 984, 656, 653, 946, 1058, 931, 770, 1108, 909, 1118, 1062, 745, 1065,
                   955, 1052, 753, 944, 1061, 1069, 1104, 996, 4860, 950, 993, 1064, 1175, 1059, 1050,
                   968, 928, 989, 967, 966, 750, 981, 1055, 766, 1123, 1039, 1103, 655, 1125, 774, 991,
-                  1117, 920, 769, 1005, 1009, 925, 1115, 907]
+                  1117, 920, 769, 1005, 1009, 925, 1115, 907, 4996]
 
 
 def get_locations(api_object, facilities):
