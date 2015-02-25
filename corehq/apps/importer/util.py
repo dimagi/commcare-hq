@@ -2,7 +2,7 @@ import json
 import xlrd
 from collections import defaultdict
 from datetime import date
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 from dimagi.utils.couch.database import get_db
 from corehq.apps.importer.const import LookupErrors, ImportErrors
@@ -209,42 +209,31 @@ class InvalidDateException(Exception):
 
 class ImportErrorDetail(object):
 
+    ERROR_MSG = {
+        ImportErrors.InvalidOwnerId: _("Owner ID was used in the mapping but there were errors "
+                                       "when uploading because of these values. Make sure "
+                                       "the values in this column are ID's for users or "
+                                       "case sharing groups."),
+
+        ImportErrors.InvalidOwnerName: _("Owner name was used in the mapping but there were errors "
+                                         "when uploading because of these values."),
+
+        ImportErrors.InvalidDate: _("Date fields were specified that caused an error during"
+                                    "conversion. This is likely caused by a value from "
+                                    "excel having the wrong type or not being formatted "
+                                    "properly."),
+
+        ImportErrors.BlankExternalId: _("Blank external ids were found in these rows causing as "
+                                        "error when importing cases."),
+
+        ImportErrors.CaseGeneration: _("These rows failed to generate cases for unknown reasons"),
+
+        ImportErrors.InvalidParentId: _("An invalid or unknown parent case was specified for the "
+                                        "uploaded case.")
+    }
+
     def __init__(self, *args, **kwargs):
         self.errors = defaultdict(dict)
-        self.ERROR_MSG = {
-            ImportErrors.InvalidOwnerId: _(
-                "Owner ID was used in the mapping but there were errors "
-                "when uploading because of these values. Make sure "
-                "the values in this column are ID's for users or "
-                "case sharing groups."
-            ),
-
-            ImportErrors.InvalidOwnerName: _(
-                "Owner name was used in the mapping but there were errors "
-                "when uploading because of these values."
-            ),
-
-            ImportErrors.InvalidDate: _(
-                "Date fields were specified that caused an error during"
-                "conversion. This is likely caused by a value from "
-                "excel having the wrong type or not being formatted "
-                "properly."
-            ),
-
-            ImportErrors.BlankExternalId: _(
-                "Blank external ids were found in these rows causing as "
-                "error when importing cases."
-            ),
-
-            ImportErrors.CaseGeneration: _(
-                "These rows failed to generate cases for unknown reasons"
-            ),
-
-            ImportErrors.InvalidParentId: _(
-                "An invalid or unknown parent case was specified for the "
-                "uploaded case."
-            )
-        }
 
     def add(self, error, row_number):
         self.errors[error]['error'] = _(error)
