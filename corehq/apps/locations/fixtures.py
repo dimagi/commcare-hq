@@ -12,14 +12,14 @@ class LocationSet(object):
 
     def __init__(self, locations=None):
         self.by_id = {}
-        self.by_parent = defaultdict(lambda: [])
+        self.by_parent = defaultdict(lambda: set())
         if locations is not None:
             for loc in locations:
                 self.add_location(loc)
 
     def add_location(self, location):
         self.by_id[location._id] = location
-        self.by_parent[location.parent_id].append(location)
+        self.by_parent[location.parent_id].add(location)
 
     def __contains__(self, item):
         return item in self.by_id
