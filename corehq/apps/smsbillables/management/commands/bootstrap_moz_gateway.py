@@ -72,68 +72,67 @@ def bootstrap_moz_gateway(orm):
     backend_id = '7ddf3301c093b793c6020ebf755adb6f'
     try:
         backend = HttpBackend.get(backend_id)
-    except ResourceNotFound:
-        # for non-production environments
-        backend = HttpBackend()
-        backend._id = backend_id
-        backend.save()
-    SmsGatewayFee.create_new(
-        backend.get_api_id(),
-        OUTGOING,
-        Decimal('0.3627'),
-        backend_instance=backend._id,
-        country_code='258',
-        prefix='82',
-        currency=mzn,
-        fee_class=sms_gateway_fee_class,
-        criteria_class=sms_gateway_fee_criteria_class,
-    )
-    SmsGatewayFee.create_new(
-        backend.get_api_id(),
-        OUTGOING,
-        Decimal('0.3627'),
-        backend_instance=backend._id,
-        country_code='258',
-        prefix='83',
-        currency=mzn,
-        fee_class=sms_gateway_fee_class,
-        criteria_class=sms_gateway_fee_criteria_class,
-    )
-    SmsGatewayFee.create_new(
-        backend.get_api_id(),
-        OUTGOING,
-        Decimal('0.3627'),
-        backend_instance=backend._id,
-        country_code='258',
-        prefix='84',
-        currency=mzn,
-        fee_class=sms_gateway_fee_class,
-        criteria_class=sms_gateway_fee_criteria_class,
-    )
-    SmsGatewayFee.create_new(
-        backend.get_api_id(),
-        OUTGOING,
-        Decimal('1.1232'),
-        backend_instance=backend._id,
-        country_code='258',
-        prefix='86',
-        currency=mzn,
-        fee_class=sms_gateway_fee_class,
-        criteria_class=sms_gateway_fee_criteria_class,
-    )
-    SmsGatewayFee.create_new(
-        backend.get_api_id(),
-        OUTGOING,
-        Decimal('1.1232'),
-        backend_instance=backend._id,
-        country_code='258',
-        prefix='87',
-        currency=mzn,
-        fee_class=sms_gateway_fee_class,
-        criteria_class=sms_gateway_fee_criteria_class,
-    )
 
-    logger.info("Updated Moz gateway fees.")
+        SmsGatewayFee.create_new(
+            backend.get_api_id(),
+            OUTGOING,
+            Decimal('0.3627'),
+            backend_instance=backend._id,
+            country_code='258',
+            prefix='82',
+            currency=mzn,
+            fee_class=sms_gateway_fee_class,
+            criteria_class=sms_gateway_fee_criteria_class,
+        )
+        SmsGatewayFee.create_new(
+            backend.get_api_id(),
+            OUTGOING,
+            Decimal('0.3627'),
+            backend_instance=backend._id,
+            country_code='258',
+            prefix='83',
+            currency=mzn,
+            fee_class=sms_gateway_fee_class,
+            criteria_class=sms_gateway_fee_criteria_class,
+        )
+        SmsGatewayFee.create_new(
+            backend.get_api_id(),
+            OUTGOING,
+            Decimal('0.3627'),
+            backend_instance=backend._id,
+            country_code='258',
+            prefix='84',
+            currency=mzn,
+            fee_class=sms_gateway_fee_class,
+            criteria_class=sms_gateway_fee_criteria_class,
+        )
+        SmsGatewayFee.create_new(
+            backend.get_api_id(),
+            OUTGOING,
+            Decimal('1.1232'),
+            backend_instance=backend._id,
+            country_code='258',
+            prefix='86',
+            currency=mzn,
+            fee_class=sms_gateway_fee_class,
+            criteria_class=sms_gateway_fee_criteria_class,
+        )
+        SmsGatewayFee.create_new(
+            backend.get_api_id(),
+            OUTGOING,
+            Decimal('1.1232'),
+            backend_instance=backend._id,
+            country_code='258',
+            prefix='87',
+            currency=mzn,
+            fee_class=sms_gateway_fee_class,
+            criteria_class=sms_gateway_fee_criteria_class,
+        )
+
+        logger.info("Updated Moz gateway fees.")
+    except ResourceNotFound:
+        logger.error("[SMS-BILLING] Could not find HttpBackend %s - did not create outgoing Moz gateway fees."
+                     " Please look into if this is on production, otherwise ignore." % backend_id)
 
 
 class Command(LabelCommand):
