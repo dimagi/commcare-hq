@@ -300,10 +300,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
                     product['count'] += 1
 
+                    location_type = state.sql_location.location_type
                     product['category'] = stock_category(
                         product['current_stock'],
                         _convert_to_daily(product['consumption']),
-                        Domain.get_by_name(self.domain)
+                        location_type.understock_threshold,
+                        location_type.overstock_threshold,
                     )
                     product['months_remaining'] = months_of_stock_remaining(
                         product['current_stock'],
@@ -322,11 +324,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'current_stock': format_decimal(state.stock_on_hand),
                         'count': 1,
                         'consumption': consumption,
-                        'category': stock_category(
-                            state.stock_on_hand,
-                            _convert_to_daily(consumption),
-                            Domain.get_by_name(self.domain)
-                        ),
+                        'category': state_stock_category(state),
                         'months_remaining': months_of_stock_remaining(
                             state.stock_on_hand,
                             _convert_to_daily(consumption)

@@ -9,7 +9,7 @@ def months_of_stock_remaining(stock, daily_consumption):
         return None
 
 
-def stock_category(stock, daily_consumption, domain):
+def stock_category(stock, daily_consumption, understock, overstock):
     if stock is None:
         return 'nodata'
     elif stock == 0:
@@ -20,25 +20,23 @@ def stock_category(stock, daily_consumption, domain):
         return 'overstock'
 
     months_left = months_of_stock_remaining(stock, daily_consumption)
-
-    # This will need access to the product, not just the stock level
-    stock_levels = domain.commtrack_settings.stock_levels_config
-
     if months_left is None:
         return 'nodata'
-    elif months_left < stock_levels.understock_threshold:
+    elif months_left < understock_threshold:
         return 'understock'
-    elif months_left > stock_levels.overstock_threshold:
+    elif months_left > overstock_threshold:
         return 'overstock'
     else:
         return 'adequate'
 
 
 def state_stock_category(state):
+    location_type = state.sql_location.location_type
     return stock_category(
         state.stock_on_hand,
         state.get_daily_consumption(),
-        state.get_domain()
+        location_type.understock_threshold,
+        location_type.overstock_threshold,
     )
 
 
