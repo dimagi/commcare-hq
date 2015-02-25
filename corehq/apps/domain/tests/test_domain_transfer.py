@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 
+from corehq import toggles
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain, TransferDomainRequest
@@ -19,6 +20,7 @@ class BaseDomainTest(TestCase):
 
         self.domain = Domain(name="fandago", is_active=True)
         self.domain.save()
+        toggles.TRANSFER_DOMAIN.set("domain:{domain}".format(domain=self.domain.name), True)
 
         self.username = 'bananafana'
         self.password = '*******'

@@ -1211,10 +1211,11 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
             })
 
-            administration.append({
-                'title': _(TransferDomainView.page_title),
-                'url': reverse(TransferDomainView.urlname, args=[self.domain])
-            })
+            if toggles.TRANSFER_DOMAIN.enabled(self.domain):
+                administration.append({
+                    'title': _(TransferDomainView.page_title),
+                    'url': reverse(TransferDomainView.urlname, args=[self.domain])
+                })
             items.append((_('Project Administration'), administration))
 
         from corehq.apps.users.models import WebUser

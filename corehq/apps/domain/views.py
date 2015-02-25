@@ -32,7 +32,7 @@ from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRat
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import DomainInvitation
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.conf import settings
@@ -2329,8 +2329,10 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(TransferDomainView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if not TRANSFER_DOMAIN.enabled(request.domain):
+            raise Http404()
+        return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
 
 
 class ActivateTransferDomainView(BasePageView):
