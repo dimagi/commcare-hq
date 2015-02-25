@@ -32,7 +32,7 @@ class SmsGatewayFeeCriteria(models.Model):
 
     @classmethod
     def get_most_specific(cls, backend_api_id, direction,
-                          backend_instance=None, country_code=None, national_number=None):
+                          backend_instance=None, country_code=None, national_number=""):
         """
         Gets the most specific criteria available based on (and in order of preference for optional):
         - backend_api_id
@@ -44,10 +44,6 @@ class SmsGatewayFeeCriteria(models.Model):
 
         if all_possible_criteria.count() == 0:
             return None
-
-        national_number = str(national_number) if national_number is not None else ""
-        if national_number:
-            national_number = '0' * (10 - len(national_number)) + national_number
 
         def get_criteria_with_longest_matching_prefix(criteria_list):
             if len(set(criteria.prefix for criteria in criteria_list)) != len(criteria_list):
