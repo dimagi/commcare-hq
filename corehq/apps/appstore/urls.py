@@ -21,7 +21,8 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^(?P<domain>[\w\.-]+)/copy/$', 'copy_snapshot', name='domain_copy_snapshot'),
     url(r'^(?P<domain>[\w\.-]+)/importapp/$', 'import_app', name='import_app_from_snapshot'),
     url(r'^(?P<domain>[\w\.-]+)/image/$', 'project_image', name='appstore_project_image'),
-    url(r'^(?P<domain>[\w\.-]+)/documentation_file/$', 'project_documentation_file', name='appstore_project_documentation_file'),
+    url(r'^(?P<domain>[\w\.-]+)/documentation_file/$', 'project_documentation_file',
+        name='appstore_project_documentation_file'),
     url(r'^(?P<domain>[\w\.-]+)/multimedia/$', 'media_files', name='media_files'),
 )
 

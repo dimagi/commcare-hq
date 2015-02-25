@@ -1746,7 +1746,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 if documentation_file:
                     new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
                 elif request.POST.get('old_documentation_file', False):
-                    new_domain.put_attachment(content=old.fetch_attachment(old.documentation_file_path), name=new_domain.documentation_file_path)
+                    new_domain.put_attachment(content=old.fetch_attachment(old.documentation_file_path),
+                                              name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id

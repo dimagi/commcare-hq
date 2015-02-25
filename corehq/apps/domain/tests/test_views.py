@@ -25,8 +25,8 @@ class TestDomainViews(TestCase):
         self.user.eula.signed = True
         self.user.save()
 
-        self.app = Application.new_app(domain="fandago", 
-                                       name="cheeto", 
+        self.app = Application.new_app(domain="fandago",
+                                       name="cheeto",
                                        application_version=APP_V1)
         self.app.save()
 
@@ -84,7 +84,6 @@ class TestDomainViews(TestCase):
 
         self.assertEqual(published.title, data['title'])
         self.assertEqual(published.documentation_file_path, filename)
-
 
         # Should keep documentation file when old_documentation_file is specified
         del data['documentation_file']
