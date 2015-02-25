@@ -120,7 +120,8 @@ class LocationSettingsView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
 
-        def mk_loctype(name, code, allowed_parents, administrative):
+        def mk_loctype(name, code, allowed_parents, administrative,
+                       shares_cases, view_descendants):
             parents = allowed_parents
             if len(parents) > 1:
                 messages.warning(request, _("Location types cannot have "
@@ -150,6 +151,8 @@ class LocationSettingsView(BaseCommTrackManageView):
             location_type.code = code
             location_type.administrative = administrative
             location_type.parent_type = parent
+            location_type.shares_cases = shares_cases
+            location_type.view_descendants = view_descendants
             location_type.save()
 
         for loc_type in payload['loc_types']:

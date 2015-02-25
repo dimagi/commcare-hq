@@ -68,6 +68,8 @@ class LocationType(models.Model):
     code = models.SlugField(db_index=False)
     parent_type = models.ForeignKey('self', null=True)
     administrative = models.BooleanField(default=False)
+    shares_cases = models.BooleanField(default=False)
+    view_descendants = models.BooleanField(default=False)
 
     objects = LocationTypeManager()
 
