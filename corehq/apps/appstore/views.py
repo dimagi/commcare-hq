@@ -287,6 +287,15 @@ def project_image(request, domain):
         raise Http404()
 
 
+def project_documentation_file(request, domain):
+    project = Domain.get(domain)
+    if project.documentation_file_path:
+        documentation_file = project.fetch_attachment(project.documentation_file_path)
+        return HttpResponse(documentation_file, content_type=project.documentation_file_type)
+    else:
+        raise Http404()
+
+
 @login_required
 def deployment_info(request, domain, template="appstore/deployment_info.html"):
     dom = Domain.get_by_name(domain)

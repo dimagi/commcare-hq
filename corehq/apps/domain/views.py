@@ -40,7 +40,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 
-from corehq import privileges, feature_previews
+from corehq import privileges, feature_previews, toggles
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 
@@ -1618,7 +1618,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     @memoized
     def snapshot_settings_form(self):
         if self.request.method == 'POST':
-            form = SnapshotSettingsForm(self.request.POST, self.request.FILES, domain=self.domain_object)
+            # User arg can be removed when toggle in __init__ is gone
+            form = SnapshotSettingsForm(self.request.POST, self.request.FILES,
+                                        domain=self.domain_object,
+                                        user=self.request.user)
             return form
 
         proj = self.published_snapshot if self.published_snapshot else self.domain_object
@@ -1635,7 +1638,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
         for attr in init_attribs:
             initial[attr] = getattr(proj, attr)
 
-        return SnapshotSettingsForm(initial=initial, domain=self.domain_object)
+        # User arg can be removed when toggle in __init__ is gone
+        return SnapshotSettingsForm(initial=initial, domain=self.domain_object, user=self.request.user)
 
     @property
     @memoized
@@ -1713,20 +1717,14 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 new_domain.image_type = old.image_type
             new_domain.save()
 
-            if publish_on_submit:
-                _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
-            else:
-                new_domain.published = False
-                new_domain.save()
-
-            if toggles.DOCUMENTATION_FILE.enabled(request.domain):
-                doc_file = self.snapshot_settings.cleaned_data['doc_file']
-                if doc_file:
-                    new_domain.doc_file_path = doc_file.name
-                    new_domain.doc_file_type = doc_file.content_type
-                elif request.POST.get('old_doc_file', False):
-                    new_domain.doc_file_path = old.doc_file_path
-                    new_domain.doc_file_type = old.doc_file_type
+            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+                documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
+                if documentation_file:
+                    new_domain.documentation_file_path = documentation_file.name
+                    new_domain.documentation_file_type = documentation_file.content_type
+                elif request.POST.get('old_documentation_file', False):
+                    new_domain.documentation_file_path = old.documentation_file_path
+                    new_domain.documentation_file_type = old.documentation_file_type
                 new_domain.save()
 
             if publish_on_submit:
@@ -1734,7 +1732,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             else:
                 new_domain.published = False
                 new_domain.save()
-
 
             if image:
                 im = Image.open(image)
@@ -1744,6 +1741,12 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 new_domain.put_attachment(content=out.getvalue(), name=image.name)
             elif request.POST.get('old_image', False):
                 new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
+
+            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+                if documentation_file:
+                    new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
+                elif request.POST.get('old_documentation_file', False):
+                    new_domain.put_attachment(content=old.fetch_attachment(old.documentation_file_path), name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id

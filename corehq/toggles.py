@@ -271,9 +271,8 @@ PRODUCTS_PER_LOCATION = StaticToggle(
 )
 
 DOCUMENTATION_FILE = StaticToggle(
-    'doc_file',
-    "Allows users to optionally add a supporting file to explain applications",
-    [NAMESPACE_DOMAIN]
+    'documentation_file',
+    "Allows users to optionally add a supporting documentation file to explain exchange applications",
 )
 
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
