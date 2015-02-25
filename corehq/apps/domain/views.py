@@ -2298,6 +2298,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     def active_transfer(self):
         return TransferDomainRequest.get_active_transfer(self.domain,
                                                          self.request.user.username)
+
     @property
     @memoized
     def transfer_domain_form(self):
