@@ -68,3 +68,10 @@ class CommCareFeatureSupportMixin(object):
         version 2.16 or higher
         """
         return self._require_minimum_version('2.16')
+
+    @property
+    def enable_post_form_workflow(self):
+        """
+        Post form workflow is supported by apps version 2.9 or higher
+        """
+        return self._require_minimum_version('2.9')

@@ -302,7 +302,7 @@
     </command>
     <stack>
       <create>
-        <command>m0</command>
+        <command value="'m0'"/>
       </create>
     </stack>
   </entry>
@@ -315,7 +315,7 @@
     </command>
     <stack>
       <create>
-        <command>m0</command>
+        <command value="'m0'"/>
       </create>
     </stack>
   </entry>
@@ -340,7 +340,7 @@
     </session>
     <stack>
       <create>
-        <command>m1-f1</command>
+        <command value="'m1-f1'"/>
       </create>
     </stack>
   </entry>
@@ -357,7 +357,7 @@
     </session>
     <stack>
       <create>
-        <command>m2-f0</command>
+        <command value="'m2-f0'"/>
       </create>
     </stack>
   </entry>
@@ -374,7 +374,7 @@
     </session>
     <stack>
       <create>
-        <command>m2-f1</command>
+        <command value="'m2-f1'"/>
       </create>
     </stack>
   </entry>
@@ -393,7 +393,7 @@
     </session>
     <stack>
       <create>
-        <command>m3</command>
+        <command value="'m3'"/>
         <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
@@ -414,7 +414,7 @@
     </session>
     <stack>
       <create>
-        <command>m3</command>
+        <command value="'m3'"/>
         <datum id="parent_id" value="instance('commcaresession')/session/data/parent_id"/>
         <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
       </create>
@@ -435,7 +435,7 @@
     </session>
     <stack>
       <create>
-        <command>m4</command>
+        <command value="'m4'"/>
         <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_a"/>
         <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_b"/>
       </create>
@@ -457,10 +457,10 @@
     </session>
     <stack>
       <create>
-        <command>m4</command>
+        <command value="'m4'"/>
         <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_a"/>
         <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_b"/>
-        <command>m4-f1</command>
+        <command value="'m4-f1'"/>
       </create>
     </stack>
   </entry>
@@ -480,7 +480,7 @@
     </session>
     <stack>
       <create>
-        <command>m4</command>
+        <command value="'m4'"/>
         <datum id="case_id_a" value="instance('commcaresession')/session/data/case_id_a"/>
         <datum id="case_id_b" value="instance('commcaresession')/session/data/case_id_b"/>
       </create>

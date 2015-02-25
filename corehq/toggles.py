@@ -94,7 +94,7 @@ def all_toggles():
 
 def toggles_dict(username=None, domain=None):
     """
-    Loads all toggles into a dictonary for use in JS
+    Loads all toggles into a dictionary for use in JS
     """
     return {t.slug: True for t in all_toggles() if (t.enabled(username) or
                                                     t.enabled(domain))}
@@ -129,6 +129,12 @@ BOOTSTRAP3_PREVIEW = StaticToggle(
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
+)
+
+CASE_LIST_TILE = StaticToggle(
+    'case_list_tile',
+    'Allow configuration of case list tiles',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 DETAIL_LIST_TABS = StaticToggle(
@@ -213,7 +219,7 @@ BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.1
+    0.25
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -251,6 +257,12 @@ LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
+    'multiple_locations',
+    "Enable multiple locations per user on domain.",
+    [NAMESPACE_DOMAIN]
+)
+
 PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
@@ -280,4 +292,36 @@ APP_SUMMARY = StaticToggle(
     'app_summary',
     'Form and Case summary of an application',
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+BULK_ARCHIVE_FORMS = StaticToggle(
+    'bulk_archive_forms',
+    'Bulk archive forms with excel',
+)
+
+DHIS2_DOMAIN = StaticToggle(
+    'dhis2_domain',
+    'Enable DHIS2 integration for this domain',
+    [NAMESPACE_DOMAIN]
+)
+
+PRIME_RESTORE = StaticToggle(
+    'prime_restore',
+    'Prime restore cache',
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+# not referenced in code directly but passed through to vellum
+# see toggles_dict
+VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
+    'transaction_question_types',
+    "Adds transaction-related question types in the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_ITEMSETS = StaticToggle(
+    'itemsets',
+    "Adds dynamic (itemset) select and multi-select question types to the "
+    "form builder",
+    [NAMESPACE_DOMAIN]
 )

@@ -427,7 +427,7 @@ class SubmissionPost(object):
                 instance = xforms[0]
                 if instance.doc_type == "XFormInstance":
                     domain = get_and_check_xform_domain(instance)
-                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
+                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xform=instance) as case_db:
                         try:
                             process_cases_with_casedb(instance, case_db)
                             process_stock(instance, case_db)
@@ -497,8 +497,18 @@ class SubmissionPost(object):
                                     )
                                 )
                         try:
+                            # todo: remove this when http://manage.dimagi.com/default.asp?158371 is sorted out
+                            if domain == 'itech-etc3-test':
+                                logging.warning(
+                                    'ITECH DEBUG: forms are: {}, cases are: {}'.format(
+                                        ', '.join([f._id for f in xforms]),
+                                        ', '.join([c._id for c in cases])
+                                    )
+                                )
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
+                            logging.error('BulkSaveError saving forms',
+                                          extra={'exc_info': 1, 'errors': e.errors})
                             raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()

@@ -38,6 +38,9 @@ def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
 
 def get_pillow_actions_for_env(env_name, base_path=None):
     pillow_actions = []
+    # fixme - this needs to be reverted back to production once all pillows are caught up
+    if env_name == 'production':
+        env_name = 'production_tmp'
     for name in ['default', env_name]:
         pillow_action = get_single_pillow_action(name, base_path)
         if pillow_action:

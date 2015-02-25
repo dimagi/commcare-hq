@@ -44,11 +44,12 @@ class XFormPillow(HQPillow):
     es_index = XFORM_INDEX
     include_docs = False
 
-    #for simplicity, the handlers are managed on the domain level
+    # for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
-
-    #type level mapping
     default_mapping = XFORM_MAPPING
+
+    def get_unique_id(self):
+        return XFORM_INDEX
 
     def change_transform(self, doc_dict, include_props=True):
         if self.get_domain(doc_dict) is None:

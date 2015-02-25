@@ -1,5 +1,6 @@
 from decimal import Decimal
 import uuid
+import logging
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.ext.django.schema import *
@@ -503,20 +504,41 @@ class StockTransaction(object):
                     yield _txn(action=const.StockActions.RECEIPTS, case_id=dst,
                                section_id=section_id, quantity=quantity)
 
+        def _quantity_or_none(value, config, section_id):
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                logging.error((
+                    "Non-numeric quantity submitted on domain %s for "
+                    "a %s ledger" % (config.domain, section_id)
+                ))
+                return None
+
         section_id = action_node.attrib.get('section-id', None)
         grouped_entries = section_id is not None
         if grouped_entries:
-            quantity = float(product_node.attrib.get('quantity'))
-            for txn in _yield_txns(section_id, quantity):
-                yield txn
-
+            quantity = _quantity_or_none(
+                product_node.attrib.get('quantity'),
+                config,
+                section_id
+            )
+            # make sure quantity is not an empty, unset node value
+            if quantity is not None:
+                for txn in _yield_txns(section_id, quantity):
+                    yield txn
         else:
             values = [child for child in product_node]
             for value in values:
                 section_id = value.attrib.get('section-id')
-                quantity = float(value.attrib.get('quantity'))
-                for txn in _yield_txns(section_id, quantity):
-                    yield txn
+                quantity = _quantity_or_none(
+                    value.attrib.get('quantity'),
+                    config,
+                    section_id
+                )
+                # make sure quantity is not an empty, unset node value
+                if quantity is not None:
+                    for txn in _yield_txns(section_id, quantity):
+                        yield txn
 
     def to_xml(self, E=None, **kwargs):
         if not E:
@@ -594,11 +616,11 @@ class SupplyPointCase(CommCareCase):
         return cls.get(caseblock._id)
 
     @classmethod
-    def create_from_location(cls, domain, location, owner_id=None):
+    def create_from_location(cls, domain, location):
         # a supply point is currently just a case with a special type
         id = uuid.uuid4().hex
         user_id = const.get_commtrack_user_id(domain)
-        owner_id = owner_id or user_id
+        owner_id = location.group_id
         kwargs = {'external_id': location.external_id} if location.external_id else {}
         caseblock = CaseBlock(
             case_id=id,

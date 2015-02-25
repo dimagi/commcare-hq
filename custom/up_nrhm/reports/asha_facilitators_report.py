@@ -1,37 +1,16 @@
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.filters import DrillDownOptionFilter
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 
 
 class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
-    fields = [DatespanFilter, DrillDownOptionFilter]
     name = "ASHA Facilitators Report"
     slug = "asha_facilitators_report"
-    show_all_rows = True
-    default_rows = 20
-    use_datatables = False
-    printable = True
-    base_template = "up_nrhm/asha_report.html"
-
-    LEFT_COLUMN_NAMES = [
-        "Newborn visits within first day of birth in case of home deliveries",
-        "Set of home visits for newborn care as specified in the HBNC guidelines "
-        "(six visits in case of Institutional delivery and seven in case of a home delivery)",
-        "Attending VHNDs/Promoting immunization",
-        "Supporting institutional delivery",
-        "Management of childhood illness - especially diarrhea and pneumonia",
-        "Household visits with nutrition counseling",
-        "Fever cases seen/malaria slides made in malaria endemic area",
-        "Acting as DOTS provider",
-        "Holding or attending village/VHSNC meeting",
-        "Successful referral of the IUD, "
-        "Female sterilization or male sterilization cases and/or providing OCPs/Condoms",
-        "Total number of ASHAs who are functional on at least 6/10 tasks"
-    ]
+    no_value = '--'
 
     @property
     def report_config(self):
@@ -39,11 +18,7 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
             'domain': self.domain,
             'startdate': self.datespan.startdate,
             'enddate': self.datespan.enddate,
-            'startdate_str': str(self.datespan.startdate),
-            'enddate_str': str(self.datespan.enddate),
             'af': self.request.GET.get('hierarchy_af'),
-            'count_one': 1,
-            'sixty_percents': 60,
         }
 
     @property
@@ -52,28 +27,28 @@ class ASHAFacilitatorsReport(GenericTabularReport, DatespanMixin, CustomProjectR
 
     @property
     def headers(self):
-        return DataTablesHeader()
+        return DataTablesHeader(
+            DataTablesColumn('', sortable=False),
+            DataTablesColumn('Total no. of ASHAs functional', sortable=False),
+            DataTablesColumn('Total no. of ASHAs who did not report/not known', sortable=False),
+            DataTablesColumn('Remarks', sortable=False),
+        )
 
     @property
     def rows(self):
-        no_value = dict(sort_key=0L, html=0L)
-        model = self.model
-        formatter = DataFormatter(TableDataFormat(model.columns, no_value=no_value))
-        rows = list(formatter.format(model.data, keys=model.keys, group_by=model.group_by))
-        if not rows:
-            return []
+        def format_val(val):
+            return self.no_value if val is None else val
 
-        assert len(rows) == 1
-        row = [row.get('sort_key') or 0L for row in rows[0]]
-        all_ashas = row[0]
-        all_ashas_with_checklist = row[1]
-        headers = [
-            ['Total number of ASHAs under the Facilitator', '', all_ashas, ''],
-            ['Total number of ASHAs for whom the functionality checklist was filled',
-             '', all_ashas_with_checklist, ''],
-            ["", "Total no. of ASHAs functional", "Total no. of ASHAs who did not report/not known", "Rmarks"]
-        ]
-        return headers + [
-            [self.LEFT_COLUMN_NAMES[idx], element, all_ashas - all_ashas_with_checklist, '']
-            for idx, element in enumerate(row[2:])
-        ]
+        model = self.model
+        model_data = model.data
+
+        total = model.columns[0].get_raw_value(model_data)
+        reporting = model.columns[1].get_raw_value(model_data)
+
+        not_reporting = total - (reporting or 0)
+        return ([[
+            column.header,
+            format_val(column.get_value(model_data)),
+            format_datatables_data(not_reporting, not_reporting),
+            ''
+        ] for column in model.columns[2:]], format_val(total), format_val(reporting))

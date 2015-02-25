@@ -1,0 +1,160 @@
+{% extends "reports/async/default.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'mvp/ko/mvp.async_indicators.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            window.queue = $.jqmq({
+                delay: -1,
+                batch: 1,
+                callback: function( item ) {
+                    item.loading_text("Loading...");
+                    item.is_loading(true);
+                    $.ajax({
+                        url: item.load_url+window.location.search.replace( "?", "&" ),
+                        dataType: 'json',
+                        success: item.load_success,
+                        error: item.load_error
+                    });
+                },
+                complete: function(){
+                    // done
+                }
+            });
+
+            $('#mvp_mvis_indicators').asyncIndicators({
+                categories: {{ report|JSON }}
+            });
+
+            var recalc_thead_width = function () {
+                var th_width = $('.mvp-table tbody td').width();
+                var category_title = $('.mvp-table tbody th.category_title').width();
+                var indicator_width = $('.mvp-table tbody th.indicator-def').width();
+                $('.mvp-table thead th, .mvp-table tbody td').width(th_width);
+                $('.mvp-table thead th.category_title, .mvp-table tbody th.category_title').width(category_title);
+                $('.mvp-table thead th.indicator-def, .mvp-table tbody th.indicator-def').width(indicator_width);
+            };
+            recalc_thead_width();
+
+            var getTopOffset = function () {
+                return $('#toggle-report-filters').offset().top + (($('.hq-subsection-navbar')) ? 36 : 10);
+            };
+
+            var findOffset = function () {
+                var self = this;
+                self.top = getTopOffset;
+                self.bottom = function () {
+                    return null;
+                };
+            };
+
+            $('#mvp-table-head').affix({
+                offset: new findOffset()
+            });
+
+            $(window).on('scroll.affix.data-api', function () {
+                $('.mvp-table thead.affix').css('margin-top', "-" + getTopOffset() + "px");
+            });
+
+            $(window).resize(function () {
+                recalc_thead_width();
+            });
+        });
+    </script>
+    <script type="text/html" id="numerator_denominator_template">
+        <td data-bind="text: val.text"></td>
+    </script>
+{% endblock %}
+
+{% block reportcontent %}
+    <table id="mvp_mvis_indicators" class="table table-bordered table-striped datatable mvp-table">
+        <thead id="mvp-table-head" data-spy="affix" data-offset-top="197">
+            <tr>
+                <th class="category_title">&nbsp;</th>
+                <th class="indicator-def">&nbsp;</th>
+                {% for month in months %}
+                <th{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ month }}</th>
+                {% endfor %}
+                <th class="summary">Average</th>
+                <th class="summary">Median</th>
+                <th class="summary">Std. Dev.</th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: categories">
+        <!-- ko foreach: indicators -->
+            <tr>
+                <!-- ko if: $parent.show_category_title($index) -->
+                <th class="category_title"
+                    style="width: 43px;"
+                    data-bind="attr: {rowspan: $parent.rowspan}">
+                    <div data-bind="text: $parent.category_title"></div>
+                </th>
+                <!-- /ko -->
+                <th class="indicator-def"
+                    data-bind="text: title, attr: {rowspan: rowspan}"></th>
+
+                <!-- ko if: show_only_numerators -->
+                    <!-- ko if: is_loaded -->
+                        <!-- ko foreach: numerators -->
+                        <td data-bind="text: $data.text, attr: {class: $data.css}"></td>
+                        <!-- /ko -->
+                    <!-- /ko -->
+                    <!-- ko if: show_loading -->
+                    <td data-bind="attr: {colspan: num_columns}" class="loading">
+                        <img src="{% static 'hqstyle/img/loading.gif' %}" alt="loading"
+                                data-bind="visible: is_loading"/>
+                        <span data-bind="text: default_loading_text"></span>
+                    </td>
+                    <!-- /ko -->
+                <!-- /ko -->
+
+                <!-- ko foreach: percentages -->
+                    <td data-bind="text: $data.text"></td>
+                <!-- /ko -->
+
+            </tr>
+            <!-- ko if: !show_only_numerators -->
+                <!-- ko if: is_loaded -->
+                <tr>
+                    <!-- ko foreach: numerators -->
+                    <td data-bind="text: $data.text, attr: {class: $data.css}"></td>
+                    <!-- /ko -->
+                </tr>
+                <tr>
+                    <!-- ko foreach: denominators -->
+                    <td data-bind="text: $data.text, attr: {class: $data.css}"></td>
+                    <!-- /ko -->
+                </tr>
+                <!-- /ko -->
+                <!-- ko if: show_loading -->
+                <tr>
+                    <td data-bind="attr: {colspan: num_columns}" class="loading">
+                        <img src="{% static 'hqstyle/img/loading.gif' %}" alt="loading"
+                             data-bind="visible: is_loading"/>
+                        <span data-bind="text: num_loading_text"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td data-bind="attr: {colspan: num_columns}" class="loading">
+                        <img src="{% static 'hqstyle/img/loading.gif' %}" alt="loading"
+                             data-bind="visible: is_loading"/>
+                        <span data-bind="text: denom_loading_text"></span>
+                    </td>
+                </tr>
+                <!-- /ko -->
+            <!-- /ko -->
+            <tr>
+                <td colspan="17"></td>
+            </tr>
+            <!-- /ko -->
+        </tbody>
+    </table>
+
+{% endblock %}

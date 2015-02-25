@@ -2,13 +2,13 @@ import HTMLParser
 import json
 import logging
 import socket
-import time
 from datetime import timedelta, datetime, date
-from copy import deepcopy
 from collections import defaultdict
 from StringIO import StringIO
 import dateutil
+from django.core.mail import send_mail
 from django.utils.datastructures import SortedDict
+from django.views.decorators.csrf import csrf_exempt
 
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
@@ -19,8 +19,6 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
-from django.template.defaultfilters import yesno
-from django.utils import html
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
@@ -32,19 +30,14 @@ from django.http import (
     Http404,
 )
 from restkit import Resource
+from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from couchdbkit import ResourceNotFound
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.ota.tasks import prime_restore
-from couchexport.export import export_raw, export_from_tables
-from couchexport.shortcuts import export_response
-from couchexport.models import Format
+from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance
-from phonelog.utils import device_users_by_xform
-from phonelog.models import DeviceReportEntry
-from phonelog.reports import TAGS
 from pillowtop import get_all_pillows_json, get_pillow_by_name
 
 from corehq.apps.app_manager.models import ApplicationBase
@@ -54,7 +47,7 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm, PrimeRestoreCacheForm
+from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -74,24 +67,20 @@ from corehq.apps.hqadmin.reporting.reports import (
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
+from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.sofabed.models import FormData
+from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import json_format_datetime, string_to_datetime
+from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response, get_url_base
-from dimagi.utils.excel import WorkbookJSONReader
-from dimagi.utils.decorators.view import get_file
 from dimagi.utils.django.email import send_HTML_email
 
 from .multimech import GlobalConfig
-from soil import DownloadBase
 
 
 @require_superuser
@@ -216,6 +205,21 @@ def message_log_report(request):
     return render(request, "hqadmin/message_log_report.html", context)
 
 
+@require_POST
+@csrf_exempt
+def contact_email(request):
+    from_email = request.POST['email']
+    description = request.POST['description']
+    message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
+    send_mail(description[:60], message, from_email, [settings.CONTACT_EMAIL])
+    response = HttpResponse('success')
+    response["Access-Control-Allow-Origin"] = "http://www.commcarehq.org"
+    response["Access-Control-Allow-Methods"] = "POST"
+    response["Access-Control-Max-Age"] = "1000"
+    response["Access-Control-Allow-Headers"] = "*"
+    return response
+
+
 @require_superuser
 def mass_email(request):
     if not request.couch_user.is_staff:
@@ -304,7 +308,11 @@ def system_ajax(request):
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     db = XFormInstance.get_db()
     if type == "_active_tasks":
-        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        try:
+            tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        except Unauthorized:
+            return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+
         if not is_bigcouch():
             return json_response(tasks)
         else:
@@ -348,8 +356,7 @@ def system_ajax(request):
                 t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
                 all_tasks = json.loads(t)
             except Exception, ex:
-                all_tasks = {}
-                logging.error("Error with getting from celery_flower: %s" % ex)
+                return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
@@ -390,25 +397,31 @@ def system_info(request):
 @cache_page(60 * 5)
 @require_superuser_or_developer
 def db_comparisons(request):
+
+    def _simple_view_couch_query(db, view_name):
+        return db.view(view_name, reduce=True).one()['value']
+
+    def _count_real_forms():
+        all_forms = _simple_view_couch_query(XFormInstance.get_db(), 'couchforms/by_xmlns')
+        device_logs = XFormInstance.get_db().view('couchforms/by_xmlns', key=DEVICE_LOG_XMLNS).one()['value']
+        return all_forms - device_logs
+
     comparison_config = [
         {
             'description': 'Users (base_doc is "CouchUser")',
-            'couch_db': CommCareUser.get_db(),
-            'view_name': 'users/by_username',
+            'couch_docs': _simple_view_couch_query(CommCareUser.get_db(), 'users/by_username'),
             'es_query': UserES().remove_default_filter('active').size(0),
             'sql_rows': User.objects.count(),
         },
         {
             'description': 'Domains (doc_type is "Domain")',
-            'couch_db': Domain.get_db(),
-            'view_name': 'domain/by_status',
+            'couch_docs': _simple_view_couch_query(Domain.get_db(), 'domain/by_status'),
             'es_query': DomainES().size(0),
             'sql_rows': None,
         },
         {
             'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_db': XFormInstance.get_db(),
-            'view_name': 'couchforms/by_xmlns',
+            'couch_docs': _count_real_forms(),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
@@ -416,10 +429,9 @@ def db_comparisons(request):
         },
         {
             'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_db': CommCareCase.get_db(),
-            'view_name': 'case/by_owner',
+            'couch_docs': _simple_view_couch_query(CommCareCase.get_db(), 'case/by_owner'),
             'es_query': CaseES().size(0),
-            'sql_rows': None,
+            'sql_rows': CaseData.objects.count(),
         }
     ]
 
@@ -427,10 +439,7 @@ def db_comparisons(request):
     for comp in comparison_config:
         comparisons.append({
             'description': comp['description'],
-            'couch_docs': comp['couch_db'].view(
-                    comp['view_name'],
-                    reduce=True,
-                ).one()['value'],
+            'couch_docs': comp['couch_docs'],
             'es_docs': comp['es_query'].run().total,
             'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
         })
@@ -783,32 +792,3 @@ def callcenter_test(request):
         "doc_id": doc_id
     }
     return render(request, "hqadmin/callcenter_test.html", context)
-
-
-class PrimeRestoreCache(FormView):
-    template_name = "hqadmin/prime_restore_cache.html"
-    form_class = PrimeRestoreCacheForm
-
-    @method_decorator(require_superuser)
-    def dispatch(self, *args, **kwargs):
-        return super(PrimeRestoreCache, self).dispatch(*args, **kwargs)
-
-    def form_valid(self, form):
-        domain = form.cleaned_data['domain']
-        if form.cleaned_data['all_users']:
-            user_ids = CommCareUser.ids_by_domain(domain)
-        else:
-            user_ids = form.user_ids
-
-        download = DownloadBase()
-        res = prime_restore.delay(
-            domain,
-            user_ids,
-            version=form.cleaned_data['version'],
-            cache_timeout_hours=form.cleaned_data['cache_timeout'],
-            overwrite_cache=form.cleaned_data['overwrite_cache'],
-            check_cache_only=form.cleaned_data['check_cache_only']
-        )
-        download.set_task(res)
-
-        return redirect('hq_soil_download', domain, download.download_id)

@@ -24,6 +24,7 @@ from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
+from corehq import toggles
 
 
 lang_lookup = defaultdict(str)
@@ -58,13 +59,13 @@ class DomainMigrations(DocumentSchema):
             domain.save()
 
 LICENSES = {
-    'cc': 'Creative Commons Attribution',
-    'cc-sa': 'Creative Commons Attribution, Share Alike',
-    'cc-nd': 'Creative Commons Attribution, No Derivatives',
-    'cc-nc': 'Creative Commons Attribution, Non-Commercial',
-    'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike',
-    'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives',
-    }
+    'cc': 'Creative Commons Attribution (CC BY)',
+    'cc-sa': 'Creative Commons Attribution, Share Alike (CC BY-SA)',
+    'cc-nd': 'Creative Commons Attribution, No Derivatives (CC BY-ND)',
+    'cc-nc': 'Creative Commons Attribution, Non-Commercial (CC BY-NC)',
+    'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike (CC BY-NC-SA)',
+    'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives (CC BY-NC-ND)'
+}
 
 LICENSE_LINKS = {
     'cc': 'http://creativecommons.org/licenses/by/4.0',
@@ -1027,6 +1028,17 @@ class Domain(Document, SnapshotMixin):
     def location_types(self):
         from corehq.apps.locations.models import LocationType
         return LocationType.objects.filter(domain=self.name).all()
+
+    @property
+    def supports_multiple_locations_per_user(self):
+        """
+        This method is a wrapper around the toggle that
+        enables multiple location functionality. Callers of this
+        method should know that this is special functionality
+        left around for special applications, and not a feature
+        flag that should be set normally.
+        """
+        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
 
 
 class DomainCounter(Document):

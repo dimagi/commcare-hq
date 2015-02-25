@@ -49,6 +49,7 @@ class SMSUser(JsonObject):
     phone_numbers = ListProperty()
     backend = StringProperty()
     date_updated = StringProperty()
+    language = StringProperty()
 
 
 class Location(JsonObject):

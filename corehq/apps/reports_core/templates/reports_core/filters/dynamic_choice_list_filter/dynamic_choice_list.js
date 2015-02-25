@@ -2,6 +2,9 @@
 var filter_id = "#{{ filter.css_id }}-input";
 $(filter_id).select2({
     minimumInputLength: 1,
+    allowClear: true,
+    // allowClear only respected if there is a non empty placeholder
+    placeholder: " ",
     ajax: {
         url: "{% ajax_filter_url domain report filter %}",
         dataType: 'json',

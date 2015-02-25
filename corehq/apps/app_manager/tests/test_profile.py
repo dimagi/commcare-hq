@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import SETTINGS_LOOKUP, SETTINGS
 from corehq.apps.app_manager.models import Application
@@ -13,10 +14,15 @@ class ProfileTest(SimpleTestCase, TestFileMixin):
     def setUp(self):
         self.app = Application(build_spec=BuildSpec(
             version='2.7.0'
-        ))
+            ),
+            name=u"TÉST ÁPP"
+        )
 
     def _test_profile(self, app):
-        profile_xml = ET.fromstring(app.create_profile())
+        profile = app.create_profile()
+        assert isinstance(profile, bytes), type(profile)
+        assert u"TÉST ÁPP" in profile.decode('utf-8')
+        profile_xml = ET.fromstring(profile)
         types = {
             'features': self._test_feature,
             'properties': self._test_property,

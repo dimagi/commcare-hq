@@ -2,16 +2,16 @@ from collections import defaultdict
 from datetime import datetime, date
 from unittest import TestCase
 
-from jsonobject import (JsonObject, DictProperty, DateTimeProperty,
+from jsonobject import (JsonObject, DateTimeProperty,
     StringProperty, IntegerProperty, BooleanProperty)
 
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
-from ..reports import SharedDataProvider
 from dimagi.utils.dates import DateSpan, add_months
 
 from ..beneficiary import OPMCaseRow
-from ..reports import CaseReportMixin
+from .. import constants
+from ..reports import CaseReportMixin, SharedDataProvider
 
 
 class AggressiveDefaultDict(defaultdict):
@@ -35,7 +35,12 @@ class MockDataProvider(SharedDataProvider):
         super(MockDataProvider, self).__init__()
 
         if explicit_map is not None:
-            self.service_map = explicit_map
+            # convert map to a defaultdict
+            results = defaultdict(lambda: defaultdict(lambda: set()))
+            for owner, availability in explicit_map.items():
+                for prop, dates in availability.items():
+                    results[owner][prop].update(dates)
+            self.service_map = results
 
         else:
             get_default_set = lambda: {default_date} if default_date is not None else set()
@@ -136,3 +141,45 @@ class MockDataTest(OPMCaseReportTestBase):
             edd=date(2014, 11, 10),
         )
         row = MockCaseRow(case, report)
+
+
+def make_case_row(form_props=None, vhnd_props=None):
+    """
+    Accepts lists of properties available in form and at the vhnd
+    and returns a corresponding case row
+    """
+    report_year = 2014
+    report_month = 6
+    date_in_month = datetime(2014, 6, 10)
+    child_age = 6
+    owner_id = 'mock_owner_id'
+
+    forms = [XFormInstance(
+        form={'child_1': {prop: '1' for prop in form_props or []}},
+        received_on=date_in_month,
+        xmlns=constants.CFU1_XMLNS,
+    )]
+
+    dod_year, dod_month = add_months(report_year, report_month, -child_age)
+    case = OPMCase(
+        forms=forms or [],
+        dod=date(dod_year, dod_month, 10),
+        owner_id=owner_id,
+    )
+
+    data_provider = MockDataProvider(explicit_map={
+        owner_id: {
+            prop: {date_in_month.date()}
+            for prop in vhnd_props or []
+        }
+    })
+
+    report = Report(
+        month=report_month,
+        year=report_year,
+        block='Atri',
+    )
+
+    row = MockCaseRow(case, report, data_provider=data_provider)
+    assert row.child_age == child_age
+    return row

@@ -43,9 +43,10 @@ def synchronization(name, get_objects_function, sync_function, checkpoint, date,
 
     while has_next:
         meta, objects = get_objects_function(next_url_params=next_url, limit=limit, offset=offset, **kwargs)
-        save_checkpoint(checkpoint, name,
-                        meta.get('limit') or limit, meta.get('offset') or offset,
-                        date)
+        if checkpoint:
+            save_checkpoint(checkpoint, name,
+                            meta.get('limit') or limit, meta.get('offset') or offset,
+                            date)
         for obj in objects:
             sync_function(obj)
         has_next, next_url = get_next_meta_url(has_next, meta, next_url)
@@ -89,30 +90,6 @@ def check_hashes(webuser, django_user, password):
     else:
         logging.warning("Logistics: Hashes are not matching for user: %s" % webuser.username)
         return False
-
-
-def resync_password(config, user):
-    email = user.email
-    password = user.password
-    webuser = WebUser.get_by_username(email.lower())
-    if not webuser:
-        return
-
-    django_user = webuser.get_django_user()
-    domains = webuser.get_domains()
-    if not domains:
-        return None
-
-    # Make sure that user is migrated and didn't exist before migration
-    if all([config.for_domain(domain) is not None for domain in domains]):
-        if force_to_datetime(user.date_joined).replace(microsecond=0) != webuser.date_joined:
-            return None
-        if not check_hashes(webuser, django_user, password):
-            logging.info("Logistics: resyncing password...")
-            webuser.password = password
-            django_user.password = password
-            webuser.save()
-            django_user.save()
 
 
 def bootstrap_domain(api_object, **kwargs):

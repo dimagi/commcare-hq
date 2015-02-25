@@ -1150,8 +1150,10 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None,
                             unique_form_id=form.unique_id)
 
     vellum_plugins = ["modeliteration"]
-    if settings.VELLUM_PRERELEASE:
+    if toggles.VELLUM_ITEMSETS.enabled(domain):
         vellum_plugins.append("itemset")
+    if toggles.VELLUM_TRANSACTION_QUESTION_TYPES.enabled(domain):
+        vellum_plugins.append("commtrack")
 
     vellum_features = toggles.toggles_dict(username=req.user.username,
                                            domain=domain)
@@ -1509,6 +1511,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     custom_xml = params.get('custom_xml', None)
     parent_select = params.get('parent_select', None)
     sort_elements = params.get('sort_elements', None)
+    use_case_tiles = params.get('useCaseTiles', None)
+    persist_tile_on_forms = params.get("persistTileOnForms", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1527,16 +1531,19 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
 
     if short is not None:
         detail.short.columns = map(DetailColumn.wrap, short)
+        if use_case_tiles is not None:
+            detail.short.use_case_tiles = use_case_tiles
+        if persist_tile_on_forms is not None:
+            detail.short.persist_tile_on_forms = persist_tile_on_forms
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
-    if tabs is not None and long is not None:
-        # Tabs only apply to the case detail page
-        detail.long.tabs = map(DetailTab.wrap, tabs)
+        if tabs is not None:
+            detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
-    if custom_xml != None:
+    if custom_xml is not None:
         detail.short.custom_xml = custom_xml
     if sort_elements is not None:
         detail.short.sort_elements = []
@@ -1855,7 +1862,7 @@ def edit_commcare_settings(request, domain, app_id):
 @require_can_edit_apps
 def edit_commcare_profile(request, domain, app_id):
     try:
-        settings = json.loads(request.raw_post_data)
+        settings = json.loads(request.body)
     except TypeError:
         return HttpResponseBadRequest(json.dumps({
             'reason': 'POST body must be of the form:'
@@ -1875,7 +1882,7 @@ def edit_commcare_profile(request, domain, app_id):
 
 
 def validate_langs(request, existing_langs, validate_build=True):
-    o = json.loads(request.raw_post_data)
+    o = json.loads(request.body)
     langs = o['langs']
     rename = o['rename']
     build = o['build']
@@ -1986,7 +1993,7 @@ def edit_app_attr(request, domain, app_id, attr):
     lang = request.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     try:
-        hq_settings = json.loads(request.raw_post_data)['hq']
+        hq_settings = json.loads(request.body)['hq']
     except ValueError:
         hq_settings = request.POST
 
@@ -2903,6 +2910,8 @@ def download_bulk_app_translations(request, domain, app_id):
                 field_name = detail.field
                 if detail.format == "enum":
                     field_name += " (ID Mapping Text)"
+                elif detail.format == "graph":
+                    field_name += " (graph)"
 
                 # Add a row for this case detail
                 rows[module_string].append(
@@ -2919,6 +2928,26 @@ def download_bulk_app_translations(request, domain, app_id):
                                 list_or_detail
                             ) + tuple(
                                 mapping.value.get(lang, "")
+                                for lang in app.langs
+                            )
+                        )
+
+                # Add rows for graph configuration
+                if detail.format == "graph":
+                    for key, val in detail.graph_configuration.locale_specific_config.iteritems():
+                        rows[module_string].append(
+                            (
+                                key + " (graph config)",
+                                list_or_detail
+                            ) + tuple(val.get(lang, "") for lang in app.langs)
+                        )
+                    for i, annotation in enumerate(detail.graph_configuration.annotations):
+                        rows[module_string].append(
+                            (
+                                "graph annotation {}".format(i + 1),
+                                list_or_detail
+                            ) + tuple(
+                                annotation.display_text.get(lang, "")
                                 for lang in app.langs
                             )
                         )

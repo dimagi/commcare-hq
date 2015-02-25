@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from django.http import QueryDict
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_exception
@@ -21,6 +22,9 @@ register = template.Library()
 
 @register.filter
 def JSON(obj):
+    # json.dumps does not properly convert QueryDict array parameter to json
+    if isinstance(obj, QueryDict):
+        obj = dict(obj)
     return mark_safe(json.dumps(obj, default=json_handler))
 
 

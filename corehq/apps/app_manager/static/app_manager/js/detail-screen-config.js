@@ -284,13 +284,14 @@ var DetailScreenConfig = (function () {
             this.original.filter_xpath = this.original.filter_xpath || "";
             this.original.calc_xpath = this.original.calc_xpath || ".";
             this.original.graph_configuration = this.original.graph_configuration || {};
+            this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
 
             // Tab attributes
             this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
             this.isTab = this.original.isTab;
 
-            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
-                           ? COMMCAREHQ.icons.PAPERCLIP : null);
+            this.case_tile_field = ko.observable(this.original.case_tile_field);
+
 
             this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 
@@ -300,6 +301,9 @@ var DetailScreenConfig = (function () {
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
+
+            var icon = (CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
+               ? COMMCAREHQ.icons.PAPERCLIP : null);
             this.field = uiElement.input().val(this.original.field).setIcon(icon);
 
             // Make it possible to observe changes to this.field
@@ -414,6 +418,7 @@ var DetailScreenConfig = (function () {
             for (i = 0; i < elements.length; i += 1) {
                 this[elements[i]].on('change', fireChange);
             }
+            this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
             this.format.on('change', function () {
@@ -489,6 +494,7 @@ var DetailScreenConfig = (function () {
                 column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
                 column.calc_xpath = this.calc_xpath_extra.val();
+                column.case_tile_field = this.case_tile_field();
                 if (this.isTab) {
                     // Note: starting_index is added by Screen.serialize
                     return {
@@ -554,6 +560,8 @@ var DetailScreenConfig = (function () {
             this.containsFilterConfiguration = options.containsFilterConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
+            this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+            this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
             this.allowsEmptyColumns = options.allowsEmptyColumns;
 
             this.fireChange = function() {
@@ -624,6 +632,12 @@ var DetailScreenConfig = (function () {
             });
             this.on('change', function () {
                 this.saveButton.fire('change');
+            });
+            this.useCaseTiles.subscribe(function(){
+                that.saveButton.fire('change');
+            });
+            this.persistTileOnForms.subscribe(function(){
+                that.saveButton.fire('change');
             });
             ko.computed(function () {
                 that.columns();
@@ -706,6 +720,9 @@ var DetailScreenConfig = (function () {
                     _.filter(columns, function(c){return c.isTab;}),
                     function(c){return c.serialize();}
                 ));
+
+                data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
+                data.persistTileOnForms = this.persistTileOnForms();
 
                 if (this.containsParentConfiguration) {
                     var parentSelect;

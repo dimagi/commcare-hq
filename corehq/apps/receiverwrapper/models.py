@@ -1,3 +1,4 @@
+import base64
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import logging
@@ -175,6 +176,10 @@ class Repeater(Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
+    use_basic_auth = BooleanProperty(default=False)
+    username = StringProperty()
+    password = StringProperty()
+
     def format_or_default_format(self):
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
@@ -237,7 +242,7 @@ class Repeater(Document, UnicodeMixIn):
             if doc_type in repeater_types:
                 return repeater_types[doc_type].wrap(data)
             else:
-                raise ResourceNotFound('Unknown repeater type: %s', data)
+                raise ResourceNotFound('Unknown repeater type: %s' % data)
         else:
             return super(Repeater, cls).wrap(data)
 
@@ -254,7 +259,14 @@ class Repeater(Document, UnicodeMixIn):
 
     def get_headers(self, repeat_record):
         # to be overridden
-        return {}
+        generator = self.get_payload_generator(self.format_or_default_format())
+        headers = generator.get_headers(repeat_record, self.payload_doc(repeat_record))
+        if self.use_basic_auth:
+            user_pass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
+            headers.update({'Authorization': 'Basic ' + user_pass})
+
+        return headers
+
 
 @register_repeater_type
 class FormRepeater(Repeater):
@@ -264,6 +276,7 @@ class FormRepeater(Repeater):
     """
 
     exclude_device_reports = BooleanProperty(default=False)
+    include_app_id_param = BooleanProperty(default=True)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -271,17 +284,22 @@ class FormRepeater(Repeater):
 
     def get_url(self, repeat_record):
         url = super(FormRepeater, self).get_url(repeat_record)
-        # adapted from http://stackoverflow.com/a/2506477/10840
-        url_parts = list(urlparse.urlparse(url))
-        query = urlparse.parse_qsl(url_parts[4])
-        query.append(("app_id", self.payload_doc(repeat_record).app_id))
-        url_parts[4] = urllib.urlencode(query)
-        return urlparse.urlunparse(url_parts)
+        if not self.include_app_id_param:
+            return url
+        else:
+            # adapted from http://stackoverflow.com/a/2506477/10840
+            url_parts = list(urlparse.urlparse(url))
+            query = urlparse.parse_qsl(url_parts[4])
+            query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            url_parts[4] = urllib.urlencode(query)
+            return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
-        return {
+        headers = super(FormRepeater, self).get_headers(repeat_record)
+        headers.update({
             "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
-        }
+        })
+        return headers
 
     def __unicode__(self):
         return "forwarding forms to: %s" % self.url
@@ -301,9 +319,11 @@ class CaseRepeater(Repeater):
         return CommCareCase.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
-        return {
+        headers = super(CaseRepeater, self).get_headers(repeat_record)
+        headers.update({
             "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
-        }
+        })
+        return headers
 
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
@@ -323,9 +343,11 @@ class ShortFormRepeater(Repeater):
         return XFormInstance.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
-        return {
+        headers = super(ShortFormRepeater, self).get_headers(repeat_record)
+        headers.update({
             "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
-        }
+        })
+        return headers
 
     def __unicode__(self):
         return "forwarding short form to: %s" % self.url

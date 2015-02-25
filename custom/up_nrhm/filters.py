@@ -1,36 +1,20 @@
 from django.utils.translation import ugettext_noop
+from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 
 
 class HierarchySqlData(SqlData):
-    table_name = "fluff_UpNRHMLocationHierarchyFluff"
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], 'location_hierarchy')
 
     @property
     def filters(self):
         return []
-
-    @property
-    def group_by(self):
-        return ['block', 'district', 'username', 'user_id']
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('block', SimpleColumn('block')),
-            DatabaseColumn('district', SimpleColumn('district')),
-            DatabaseColumn('username', SimpleColumn('username')),
-            DatabaseColumn('user_id', SimpleColumn('user_id'))
-        ]
-
-
-class NewHierarchySqlData(HierarchySqlData):
-    @property
-    def table_name(self):
-        return get_table_name(self.config['domain'], 'location_hierarchy')
 
     @property
     def group_by(self):
@@ -88,21 +72,18 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
     @memoized
     def drilldown_map(self):
         def make_drilldown(hierarchy):
-            return [{
+            hierarchy = [{
                 "val": current[0] if isinstance(current, tuple) else current,
                 "text": current[1] if isinstance(current, tuple) else current,
                 "next": make_drilldown(next_level) if next_level else []
             } for current, next_level in hierarchy.items()]
+
+            return sorted(hierarchy, key=lambda r: r['text'])
+
         return make_drilldown(self.get_hierarchy())
 
     @property
-    def use_new_ds(self):
-        return self.request.GET.get('ucr')
-
-    @property
     def data_source(self):
-        if self.use_new_ds:
-            return NewHierarchySqlData
         return HierarchySqlData
 
     def get_hierarchy(self):
@@ -110,14 +91,29 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
         for location in self.data_source(config={'domain': self.domain}).get_data():
             district = location['district']
             block = location['block']
-            if self.use_new_ds:
-                user = (u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip()
-            else:
-                user = location['username']
-            user_id = location['doc_id' if self.use_new_ds else 'user_id']
+            user = (u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip()
+            user_id = location['doc_id']
             if not (district and block and user):
                 continue
             hierarchy[district] = hierarchy.get(district, {})
             hierarchy[district][block] = hierarchy[district].get(block, {})
             hierarchy[district][block][(user_id, user)] = None
         return hierarchy
+
+
+class SampleFormatFilter(BaseSingleOptionFilter):
+    slug = 'sf'
+    label = 'Report type'
+    default_text = "ASHA Facilitators"
+
+    @property
+    def options(self):
+        return [
+            ('sf3', 'Block Level-Month wise'),
+            ('sf4', 'Block Level-AF wise'),
+            ('sf5', 'District (Functionality of ASHAs)'),
+        ]
+
+
+class ASHAMonthFilter(MonthFilter):
+    label = "Last month of the quarter"

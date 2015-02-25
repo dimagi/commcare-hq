@@ -4,6 +4,8 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -12,7 +14,7 @@ from django.utils.decorators import method_decorator
 from openpyxl.shared.exc import InvalidFileException
 from casexml.apps.case.models import CommCareCaseGroup
 from corehq import CaseReassignmentInterface
-from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group
+from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_archive_forms
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm)
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -153,6 +155,85 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'itemData': item_data,
             'template': 'deleted-group-template',
         }
+
+
+class ArchiveFormView(DataInterfaceSection):
+    template_name = 'data_interfaces/interfaces/import_forms.html'
+    urlname = 'archive_forms'
+    page_title = ugettext_noop("Bulk Archive Forms")
+
+    ONE_MB = 1000000
+    MAX_SIZE = 3 * ONE_MB
+
+    @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
+    def dispatch(self, request, *args, **kwargs):
+        if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
+            raise Http404()
+        return super(ArchiveFormView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def page_context(self):
+        context = {}
+        context.update({
+            'bulk_upload': {
+                "download_url": static(
+                    'data_interfaces/files/forms_bulk_example.xlsx'),
+                "adjective": _("example"),
+                "verb": _("archive"),
+                "plural_noun": _("forms"),
+            },
+        })
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+    @property
+    @memoized
+    def uploaded_file(self):
+        try:
+            bulk_file = self.request.FILES['bulk_upload_file']
+            if bulk_file.size > self.MAX_SIZE:
+                raise BulkUploadCasesException(_(u"File size too large. "
+                                                 "Please upload file less than"
+                                                 " {size} Megabytes").format(size=self.MAX_SIZE / self.ONE_MB))
+
+        except KeyError:
+            raise BulkUploadCasesException(_("No files uploaded"))
+        try:
+            return WorkbookJSONReader(bulk_file)
+        except InvalidFileException:
+            try:
+                csv.DictReader(io.StringIO(bulk_file.read().decode('utf-8'),
+                                           newline=None))
+                raise BulkUploadCasesException(_("CommCare HQ does not support that file type."
+                                                 "Please convert to Excel 2007 or higher (.xlsx) "
+                                                 "and try again."))
+            except UnicodeDecodeError:
+                raise BulkUploadCasesException(_("Unrecognized format"))
+        except JSONReaderError as e:
+            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % e.message)
+
+    def process(self):
+        try:
+            bulk_archive_forms.delay(
+                self.domain,
+                self.request.user,
+                list(self.uploaded_file.get_worksheet())
+            )
+            messages.success(self.request, _("We received your file and are processing it. "
+                                             "You will receive an email when it has finished."))
+        except BulkUploadCasesException as e:
+            messages.error(self.request, e.message)
+        return None
+
+    def post(self, request, *args, **kwargs):
+        self.process()
+        return HttpResponseRedirect(self.page_url)
 
 
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):

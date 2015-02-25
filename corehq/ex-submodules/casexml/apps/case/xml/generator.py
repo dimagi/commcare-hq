@@ -1,4 +1,4 @@
-from casexml.apps.case.xml import V1, V2, check_version, V2_NAMESPACE
+from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
 from dimagi.utils.parsing import json_format_datetime
@@ -210,5 +210,6 @@ def get_generator(version, case):
 
 GENERATOR_MAP = {
     V1: V1CaseXMLGenerator,
-    V2: V2CaseXMLGenerator
+    V2: V2CaseXMLGenerator,
+    V3: V2CaseXMLGenerator
 }

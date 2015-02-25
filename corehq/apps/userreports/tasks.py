@@ -3,7 +3,7 @@ from celery.task import task
 from sqlalchemy.exc import DataError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.utils import get_doc_ids
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_engine
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -11,7 +11,12 @@ from dimagi.utils.couch.database import iter_docs
 
 @task
 def rebuild_indicators(indicator_config_id):
-    config = DataSourceConfiguration.get(indicator_config_id)
+    is_static = indicator_config_id.startswith(CustomDataSourceConfiguration._datasource_id_prefix)
+    if is_static:
+        config = CustomDataSourceConfiguration.by_id(indicator_config_id)
+    else:
+        config = DataSourceConfiguration.get(indicator_config_id)
+
     adapter = IndicatorSqlAdapter(get_engine(), config)
     adapter.rebuild_table()
 

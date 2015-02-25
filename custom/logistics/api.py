@@ -195,6 +195,8 @@ class APISynchronization(object):
         if not last_name:
             last_name = splitted_value[1][:30] if len(splitted_value) > 1 else ''
 
+        language = ilsgateway_smsuser.language
+
         user_dict = {
             'first_name': first_name,
             'last_name': last_name,
@@ -218,6 +220,7 @@ class APISynchronization(object):
                                            password_hashed=bool(password))
                 user.first_name = first_name
                 user.last_name = last_name
+                user.language = language
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
                 if "phone_numbers" in user_dict:
@@ -236,3 +239,31 @@ class APISynchronization(object):
             if apply_updates(user, user_dict):
                 user.save()
         return user
+
+    def add_language_to_user(self, logistics_sms_user, domains=None):
+        if not domains:
+            domains = []
+        domain_part = "%s.commcarehq.org" % self.domain
+        username_part = "%s%d" % (logistics_sms_user.name.strip().replace(' ', '.').lower(),
+                                  logistics_sms_user.id)
+        username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
+        user = CouchUser.get_by_username(username)
+        if user and user.language != logistics_sms_user.language:
+            user.language = logistics_sms_user.language
+            user.save()
+
+        for phone_number in user.phone_numbers:
+            user.delete_phone_number(phone_number)
+
+        if logistics_sms_user.phone_numbers:
+            phone_number = logistics_sms_user.phone_numbers[0]
+            user.set_default_phone_number(phone_number)
+            try:
+                user.save_verified_number(self.domain, phone_number, True,
+                                          logistics_sms_user.backend)
+            except PhoneNumberInUseException:
+                v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+                if v.domain in domains:
+                    v.delete()
+                    user.save_verified_number(self.domain, phone_number, True,
+                                              logistics_sms_user.backend)

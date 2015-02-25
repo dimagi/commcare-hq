@@ -6,7 +6,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase, CommCareCaseGroup
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
@@ -22,7 +22,7 @@ from dimagi.utils.multithreading import process_fast
 from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
-
+from dimagi.utils.couch.database import iter_docs
 
 class IllegalModelStateException(Exception):
     pass
@@ -281,6 +281,7 @@ class CaseReminderEvent(DocumentSchema):
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
 
+
 def run_rule(case_id, handler, schedule_changed, prev_definition):
     case = CommCareCase.get(case_id)
     try:
@@ -292,17 +293,16 @@ def run_rule(case_id, handler, schedule_changed, prev_definition):
         handler.case_changed(case, schedule_changed=schedule_changed,
             prev_definition=prev_definition)
     try:
-        # It shouldn't be necessary to lock this out, but a deadlock can
-        # happen in rare cases without it
-        with CriticalSection(["reminder-rule-processing-%s" % handler._id], timeout=15):
-            client = get_redis_client()
-            client.incr("reminder-rule-processing-current-%s" % handler._id)
+        client = get_redis_client()
+        client.incr("reminder-rule-processing-current-%s" % handler._id)
     except:
         pass
+
 
 def retire_reminder(reminder_id):
     r = CaseReminder.get(reminder_id)
     r.retire()
+
 
 def get_case_ids(domain):
     """
@@ -322,6 +322,7 @@ def get_case_ids(domain):
         except Exception:
             if i == (max_tries - 1):
                 raise
+
 
 class CaseReminderHandler(Document):
     """
@@ -617,7 +618,7 @@ class CaseReminderHandler(Document):
         """
         if recipient is None:
             if self.recipient == RECIPIENT_USER:
-                recipient = CommCareUser.get_by_user_id(case.user_id)
+                recipient = CouchUser.get_by_user_id(case.user_id)
             elif self.recipient == RECIPIENT_CASE:
                 recipient = CommConnectCase.get(case._id)
             elif self.recipient == RECIPIENT_PARENT_CASE:
@@ -854,13 +855,13 @@ class CaseReminderHandler(Document):
         # Retrieve the corresponding verified number entries for all individual recipients
         verified_numbers = {}
         for r in recipients:
-            try:
+            if hasattr(r, "get_verified_numbers"):
                 contact_verified_numbers = r.get_verified_numbers(False)
                 if len(contact_verified_numbers) > 0:
                     verified_number = sorted(contact_verified_numbers.iteritems())[0][1]
                 else:
                     verified_number = None
-            except Exception:
+            else:
                 verified_number = None
             verified_numbers[r.get_id] = verified_number
         
@@ -930,15 +931,15 @@ class CaseReminderHandler(Document):
         """
         now = now or self.get_now()
         reminder = self.get_reminder(case)
-        
-        try:
-            if (case.user_id == case._id) or (case.user_id is None):
+
+        if case and case.user_id and (case.user_id != case._id):
+            try:
+                user = CouchUser.get_by_user_id(case.user_id)
+            except KeyError:
                 user = None
-            else:
-                user = CommCareUser.get_by_user_id(case.user_id)
-        except Exception:
+        else:
             user = None
-        
+
         if (case.closed or case.type != self.case_type or
             case.doc_type.endswith("-Deleted") or self.deleted() or
             (self.recipient == RECIPIENT_USER and not user)):
@@ -1016,7 +1017,7 @@ class CaseReminderHandler(Document):
         elif self.recipient == RECIPIENT_USER_GROUP:
             recipient = Group.get(self.user_group_id)
         elif self.recipient == RECIPIENT_USER:
-            recipient = CommCareUser.get(self.user_id)
+            recipient = CouchUser.get_by_user_id(self.user_id)
         elif self.recipient == RECIPIENT_CASE:
             recipient = CommCareCase.get(self.case_id)
         else:
@@ -1194,33 +1195,51 @@ class CaseReminderHandler(Document):
                     pass
                 process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
                     args=(self, schedule_changed, prev_definition),
-                    use_critical_section=True, print_stack_interval=60)
+                    use_critical_section=False, print_stack_interval=60)
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
             process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=True,
+                max_threads=5, use_critical_section=False,
                 print_stack_interval=60)
 
     @classmethod
-    def get_handlers(cls, domain, case_type=None, ids_only=False):
-        key = [domain]
-        if case_type:
-            key.append(case_type)
-        result = cls.view('reminders/handlers_by_domain_case_type',
-            startkey=key,
-            endkey=key + [{}],
-            include_docs=(not ids_only),
+    def get_handlers(cls, domain, reminder_type_filter=None):
+        ids = cls.get_handler_ids(domain,
+            reminder_type_filter=reminder_type_filter)
+        return cls.get_handlers_from_ids(ids)
+
+    @classmethod
+    def get_handlers_from_ids(cls, ids):
+        return [
+            CaseReminderHandler.wrap(doc)
+            for doc in iter_docs(cls.get_db(), ids)
+        ]
+
+    @classmethod
+    def get_handler_ids(cls, domain, reminder_type_filter=None):
+        result = cls.view('reminders/handlers_by_reminder_type',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=False,
+            reduce=False,
         )
-        if ids_only:
-            return [row["id"] for row in result]
-        else:
-            return result
+
+        def filter_fcn(reminder_type):
+            if reminder_type_filter is None:
+                return True
+            else:
+                return ((reminder_type or REMINDER_TYPE_DEFAULT) ==
+                    reminder_type_filter)
+        return [
+            row['id'] for row in result
+            if filter_fcn(row['key'][1])
+        ]
 
     @classmethod
     def get_referenced_forms(cls, domain):
-        handlers = cls.get_handlers(domain=domain).all()
+        handlers = cls.get_handlers(domain)
         referenced_forms = [e.form_unique_id for events in [h.events for h in handlers] for e in events]
         return filter(None, referenced_forms)
 
@@ -1285,7 +1304,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     last_modified = DateTimeProperty()
     case_id = StringProperty()                      # Reference to the CommCareCase
     handler_id = StringProperty()                   # Reference to the CaseReminderHandler
-    user_id = StringProperty()                      # Reference to the CommCareUser who will receive the SMS messages
+    user_id = StringProperty()                      # Reference to the CouchUser who will receive the SMS messages
     method = StringProperty(choices=METHOD_CHOICES) # See CaseReminderHandler.method
     next_fire = DateTimeProperty()                  # The date and time that the next message should go out
     last_fired = DateTimeProperty()                 # The date and time that the last message went out
@@ -1322,11 +1341,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def user(self):
         if self.handler.recipient == RECIPIENT_USER:
-            try:
-                return CommCareUser.get_by_user_id(self.user_id)
-            except Exception:
-                self.retire()
-                return None
+            return CouchUser.get_by_user_id(self.user_id)
         else:
             return None
 

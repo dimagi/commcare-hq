@@ -21,6 +21,7 @@ from corehq.apps.smsbillables.filters import (
 )
 from corehq.apps.smsbillables.models import (
     SmsBillable,
+    SmsGatewayFee,
     SmsGatewayFeeCriteria,
 )
 
@@ -33,6 +34,7 @@ class SMSBillablesInterface(GenericTabularReport):
     description = "List of all SMS Billables"
     slug = "sms_billables"
     ajax_pagination = True
+    exportable = True
     fields = [
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -150,6 +152,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
     name = "SMS Gateway Fee Criteria"
     description = "List of all SMS Gateway Fee Criteria"
     slug = "sms_gateway_fee_criteria"
+    exportable = True
     fields = [
         'corehq.apps.smsbillables.interface.GatewayTypeFilter',
         'corehq.apps.smsbillables.interface.SpecificGateway',
@@ -164,21 +167,27 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Specific Gateway"),
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
+            DataTablesColumn("Fee (Amount, Currency)")
         )
 
     @property
     def rows(self):
-        return [
-            [
+        rows = []
+        for criteria in self.sms_gateway_fee_criteria:
+            gateway_fee = SmsGatewayFee.get_by_criteria_obj(criteria)
+            rows.append([
                 criteria.backend_api_id,
                 (criteria.backend_instance
                  if criteria.backend_instance is not None else "Any"),
                 criteria.direction,
                 (criteria.country_code
                  if criteria.country_code is not None else "Any"),
-            ]
-            for criteria in self.sms_gateway_fee_criteria
-        ]
+                "%(amount)s %(currency)s" % {
+                    'amount': str(gateway_fee.amount),
+                    'currency': gateway_fee.currency.code,
+                },
+            ])
+        return rows
 
     @property
     def sms_gateway_fee_criteria(self):

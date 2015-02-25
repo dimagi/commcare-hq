@@ -1,13 +1,14 @@
 from datetime import datetime
+from functools import partial
 import itertools
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
+from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway import TEST
-from custom.logistics.commtrack import save_stock_data_checkpoint
+from custom.ilsgateway.models import ILSGatewayConfig
+from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
-import logging
-from custom.logistics.commtrack import resync_password
 
 
 @task
@@ -75,11 +76,32 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
 
 
 @task
-def resync_webusers_passwords_task(config, endpoint):
-    logging.info("Logistics: Webusers passwords resyncing started")
-    _, webusers = endpoint.get_webusers(limit=2000)
+def sms_users_fix(api):
+    endpoint = api.endpoint
+    enabled_domains = ILSGatewayConfig.get_all_enabled_domains() + EWSGhanaConfig.get_all_enabled_domains()
+    synchronization(None, endpoint.get_smsusers, partial(api.add_language_to_user, domains=enabled_domains),
+                    None, None, 100, 0)
 
-    for webuser in webusers:
-        resync_password(config, webuser)
 
-    logging.info("Logistics: Webusers passwords resyncing finished")
+@task
+def locations_fix(domain):
+    locations = SQLLocation.objects.filter(domain=domain, location_type__in=['country', 'region', 'district'])
+    for loc in locations:
+        sp = Location.get(loc.location_id).linked_supply_point()
+        if sp:
+            sp.external_id = None
+            sp.save()
+        else:
+            fake_location = Location(
+                _id=loc.location_id,
+                name=loc.name,
+                domain=domain
+            )
+            SupplyPointCase.get_or_create_by_location(fake_location)
+
+
+@task
+def add_products_to_loc(api):
+    endpoint = api.endpoint
+    synchronization(None, endpoint.get_locations, api.location_sync, None, None, 100, 0,
+                    filters={"is_active": True})

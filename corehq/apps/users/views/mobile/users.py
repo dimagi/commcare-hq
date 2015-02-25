@@ -22,7 +22,12 @@ from django.contrib import messages
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, require_billing_admin
-from corehq.apps.accounting.models import BillingAccount, BillingAccountType, BillingAccountAdmin
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    BillingAccountAdmin,
+    BillingAccountType,
+    EntryPoint,
+)
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.util import (
@@ -135,7 +140,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
-        return CommtrackUserForm(domain=self.domain, initial={'supply_point': initial_id})
+        return CommtrackUserForm(domain=self.domain, initial={'location': initial_id})
 
     @property
     def page_context(self):
@@ -458,7 +463,10 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
     @memoized
     def account(self):
         account = BillingAccount.get_or_create_account_by_domain(
-            self.domain, created_by=self.couch_user.username, account_type=BillingAccountType.USER_CREATED,
+            self.domain,
+            created_by=self.couch_user.username,
+            account_type=BillingAccountType.USER_CREATED,
+            entry_point=EntryPoint.SELF_STARTED,
         )[0]
         return account
 
@@ -615,7 +623,6 @@ class CreateCommCareUserView(BaseManageCommCareUserView):
         return CustomDataEditor(
             field_view=UserFieldsView,
             domain=self.domain,
-            required_only=True,
             post_dict=self.request.POST if self.request.method == "POST" else None,
         )
 

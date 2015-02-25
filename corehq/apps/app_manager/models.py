@@ -843,6 +843,41 @@ class IndexedFormBase(FormBase, IndexedSchema):
 
         return errors
 
+    def add_property_save(self, app_case_meta, case_type, name,
+                          questions, question_path, condition=None):
+        if question_path in questions:
+            app_case_meta.add_property_save(
+                case_type,
+                name,
+                self.unique_id,
+                questions[question_path],
+                condition
+            )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
+            )
+
+    def add_property_load(self, app_case_meta, case_type, name,
+                          questions, question_path):
+        if question_path in questions:
+            app_case_meta.add_property_load(
+                case_type,
+                name,
+                self.unique_id,
+                questions[question_path]
+            )
+        else:
+            app_case_meta.add_property_error(
+                case_type,
+                name,
+                self.unique_id,
+                "%s is not a valid question" % question_path
+            )
+
 
 class JRResourceProperty(StringProperty):
 
@@ -1034,19 +1069,21 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 type_meta.add_closer(self.unique_id, action.condition)
             if type_ == 'update_case':
                 for name, question_path in FormAction.get_action_properties(action):
-                    app_case_meta.add_property_save(
+                    self.add_property_save(
+                        app_case_meta,
                         module_case_type,
                         name,
-                        self.unique_id,
-                        questions[question_path]
+                        questions,
+                        question_path
                     )
             if type_ == 'case_preload':
                 for name, question_path in FormAction.get_action_properties(action):
-                    app_case_meta.add_property_load(
+                    self.add_property_load(
+                        app_case_meta,
                         module_case_type,
                         name,
-                        self.unique_id,
-                        questions[question_path]
+                        questions,
+                        question_path
                     )
             if type_ == 'subcases':
                 for act in action:
@@ -1056,11 +1093,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         if act.close_condition.is_active():
                             sub_type_meta.add_closer(self.unique_id, act.close_condition)
                         for name, question_path in FormAction.get_action_properties(act):
-                            app_case_meta.add_property_save(
+                            self.add_property_save(
+                                app_case_meta,
                                 act.case_type,
                                 name,
-                                self.unique_id,
-                                questions[question_path]
+                                questions,
+                                question_path
                             )
 
 
@@ -1139,6 +1177,7 @@ class DetailColumn(IndexedSchema):
 
     enum = SchemaListProperty(MappingItem)
     graph_configuration = SchemaProperty(GraphConfiguration)
+    case_tile_field = StringProperty()
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
@@ -1235,6 +1274,8 @@ class Detail(IndexedSchema):
     sort_elements = SchemaListProperty(SortElement)
     filter = StringProperty()
     custom_xml = StringProperty()
+    use_case_tiles = BooleanProperty()
+    persist_tile_on_forms = BooleanProperty()
 
     def get_tab_spans(self):
         '''
@@ -1505,7 +1546,7 @@ class Module(ModuleBase):
         else:
             raise IncompatibleFormTypeException()
 
-        if index:
+        if index is not None:
             self.forms.insert(index, new_form)
         else:
             self.forms.append(new_form)
@@ -1563,6 +1604,22 @@ class Module(ModuleBase):
                 'type': 'no parent select id',
                 'module': self.get_module_info()
             })
+        for detail in [self.case_details.short, self.case_details.long]:
+            if detail.use_case_tiles:
+                if not detail.display == "short":
+                    errors.append({
+                        'type': "invalid tile configuration",
+                        'module': self.get_module_info(),
+                        'reason': _('Case tiles may only be used for the case list (not the case details).')
+                    })
+                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                    if field not in col_by_tile_field:
+                        errors.append({
+                            'type': "invalid tile configuration",
+                            'module': self.get_module_info(),
+                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                        })
         return errors
 
     def export_json(self, dump_json=True, keep_unique_id=False):
@@ -1779,37 +1836,41 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
-                app_case_meta.add_property_save(
+                self.add_property_save(
+                    app_case_meta,
                     action.case_type,
                     name,
-                    self.unique_id,
-                    questions[question_path]
+                    questions,
+                    question_path
                 )
             for name, question_path in action.preload.items():
-                app_case_meta.add_property_load(
+                self.add_property_load(
+                    app_case_meta,
                     action.case_type,
                     name,
-                    self.unique_id,
-                    questions[question_path]
+                    questions,
+                    question_path
                 )
             if action.close_condition.is_active():
                 meta = app_case_meta.get_type(action.case_type)
                 meta.add_closer(self.unique_id, action.close_condition)
 
         for action in self.actions.open_cases:
-            app_case_meta.add_property_save(
+            self.add_property_save(
+                app_case_meta,
                 action.case_type,
                 'name',
-                self.unique_id,
-                questions.get(action.name_path),
+                questions,
+                action.name_path,
                 action.open_condition
             )
             for name, question_path in action.case_properties.items():
-                app_case_meta.add_property_save(
+                self.add_property_save(
+                    app_case_meta,
                     action.case_type,
                     name,
-                    self.unique_id,
-                    questions[question_path],
+                    questions,
+                    question_path,
                     action.open_condition
                 )
             meta = app_case_meta.get_type(action.case_type)
@@ -1868,6 +1929,9 @@ class AdvancedModule(ModuleBase):
         form = AdvancedForm(
             name={lang if lang else "en": name if name else _("Untitled Form")},
         )
+        if self.has_schedule:
+            form.schedule = FormSchedule()
+
         self.forms.append(form)
         form = self.get_form(-1)
         form.source = attachment
@@ -2065,18 +2129,20 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
         questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
         meta = app_case_meta.get_type(self.case_type)
         for name, question_path in self.case_updates().items():
-            app_case_meta.add_property_save(
+            self.add_property_save(
+                app_case_meta,
                 self.case_type,
                 name,
-                self.unique_id,
-                questions[question_path],
+                questions,
+                question_path
             )
         for name, question_path in self.case_preload.items():
-            app_case_meta.add_property_load(
+            self.add_property_load(
+                app_case_meta,
                 self.case_type,
                 name,
-                self.unique_id,
-                questions[question_path],
+                questions,
+                question_path
             )
         meta.add_opener(self.unique_id, FormActionCondition(
             type='always',
@@ -3236,8 +3302,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
+            'uniqueid': self.copy_of or self.id,
+            'name': self.name,
             'descriptor': u"Profile File"
-        }).decode('utf-8')
+        }).encode('utf-8')
 
     @property
     def custom_suite(self):

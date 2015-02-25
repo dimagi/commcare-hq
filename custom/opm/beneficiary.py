@@ -440,6 +440,22 @@ class OPMCaseRow(object):
             return True
 
     @property
+    def child_with_diarhea_received_ors(self):
+        for form in self.filtered_forms(CHILDREN_FORMS):
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
+            if form.xpath(xpath) and form.xpath(xpath) == '1':
+                return True
+        return False
+
+    @property
+    def child_has_diarhea(self):
+        for form in self.filtered_forms(CHILDREN_FORMS):
+            xpath = self.child_xpath('form/child_{num}/child{num}_suffer_diarrhea')
+            if form.xpath(xpath) == '1':
+                return True
+        return False
+
+    @property
     def child_weighed_once(self):
         if self.child_age == 3:
             # This doesn't depend on a VHND - it should happen at the hospital

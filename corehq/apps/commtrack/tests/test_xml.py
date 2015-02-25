@@ -322,6 +322,24 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, final, 0)
 
+    def test_blank_quantities(self):
+        # submitting a bunch of blank data shouldn't submit transactions
+        # so lets submit some initial data and make sure we don't modify it
+        # or have new transactions
+        initial = float(100)
+        initial_amounts = [(p._id, initial) for p in self.products]
+        self.submit_xml_form(balance_submission(initial_amounts))
+
+        trans_count = StockTransaction.objects.all().count()
+
+        initial_amounts = [(p._id, '') for p in self.products]
+        self.submit_xml_form(balance_submission(initial_amounts))
+
+        self.assertEqual(trans_count, StockTransaction.objects.all().count())
+        for product in self.products:
+            self.check_product_stock(self.sp, product._id, 100, 0)
+
+
 
 class BugSubmissionsTest(CommTrackSubmissionTest):
     def test_device_report_submissions_ignored(self):

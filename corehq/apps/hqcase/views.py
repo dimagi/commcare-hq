@@ -9,11 +9,13 @@ from corehq.apps.users.models import CommCareUser
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.users.util import user_id_to_username
+from corehq.apps.hqcase.tasks import explode_case_task
+from soil import DownloadBase
 
 @login_and_domain_required
 def open_cases_json(request, domain):
@@ -58,18 +60,11 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
         except ValueError:
             messages.error(request, 'factor must be an int; was: %s' % factor)
         else:
-            keys = [[domain, owner_id, False] for owner_id in user.get_owner_ids()]
-            for case in CommCareCase.view('hqcase/by_owner',
-                keys=keys,
-                include_docs=True,
-                reduce=False
-            ):
-                for i in range(factor - 1):
-                    new_case_id = uuid.uuid4().hex
-                    case_block, attachments = make_creating_casexml(case, new_case_id)
-                    submit_case_blocks(case_block, domain, attachments=attachments)
+            download = DownloadBase()
+            res = explode_case_task.delay(user_id, domain, factor)
+            download.set_task(res)
 
-            messages.success(request, "All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
+            return redirect('hq_soil_download', domain, download.download_id)
 
     return render(request, template, {
         'domain': domain,

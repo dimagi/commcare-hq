@@ -1,12 +1,25 @@
-from corehq.apps.domain.decorators import login_or_digest_ex
+from django.core.urlresolvers import reverse
+from django.shortcuts import redirect
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_noop
+from casexml.apps.case.xml import V2
+from corehq import toggles
+from corehq.apps.domain.decorators import login_or_digest_ex, domain_admin_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CouchUser
+from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
+from corehq.apps.hqwebapp.models import ProjectSettingsTab
+from corehq.apps.ota.forms import PrimeRestoreCacheForm
+from corehq.apps.ota.tasks import prime_restore
+from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.util.view_utils import json_error
 from couchforms.models import XFormInstance
+from dimagi.utils.decorators.memoized import memoized
 from django_digest.decorators import *
 from casexml.apps.phone.restore import RestoreConfig
 from django.http import HttpResponse
 from lxml import etree
+from soil import DownloadBase
 
 
 @json_error
@@ -46,12 +59,9 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
                             status=401)
 
     project = Domain.get_by_name(domain)
-    commtrack_settings = project.commtrack_settings
-    stock_settings = commtrack_settings.get_ota_restore_settings() if commtrack_settings else None
     restore_config = RestoreConfig(
         couch_user.to_casexml_user(), since, version, state,
         items=items,
-        stock_settings=stock_settings,
         domain=project,
         force_cache=force_cache,
         cache_timeout=cache_timeout,
@@ -94,3 +104,81 @@ def historical_forms(request, domain):
 
     # to make this not stream, just call list on data()
     return HttpResponse(data(), content_type='application/xml')
+
+
+class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
+    page_title = ugettext_noop("Prime Restore Cache")
+    section_name = ugettext_noop("Project Settings")
+    urlname = 'prime_restore_cache'
+    template_name = "ota/prime_restore_cache.html"
+
+    @method_decorator(domain_admin_required)
+    @toggles.PRIME_RESTORE.required_decorator()
+    def dispatch(self, *args, **kwargs):
+        return super(PrimeRestoreCacheView, self).dispatch(*args, **kwargs)
+
+    @property
+    def main_context(self):
+        main_context = super(PrimeRestoreCacheView, self).main_context
+        main_context.update({
+            'domain': self.domain,
+        })
+        main_context.update({
+            'active_tab': ProjectSettingsTab(
+                self.request,
+                self.urlname,
+                domain=self.domain,
+                couch_user=self.request.couch_user,
+                project=self.request.project
+            ),
+            'is_project_settings': True,
+        })
+        return main_context
+
+    @property
+    @memoized
+    def page_url(self):
+        if self.urlname:
+            return reverse(self.urlname, args=[self.domain])
+
+    @property
+    @memoized
+    def section_url(self):
+        return reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return PrimeRestoreCacheForm(self.request.POST)
+        return PrimeRestoreCacheForm()
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            return self.form_valid()
+        return self.get(request, *args, **kwargs)
+
+    def form_valid(self):
+        if self.form.cleaned_data['all_users']:
+            user_ids = CommCareUser.ids_by_domain(self.domain)
+        else:
+            user_ids = self.form.user_ids
+
+        download = DownloadBase()
+        res = prime_restore.delay(
+            self.domain,
+            user_ids,
+            version=V2,
+            cache_timeout_hours=24,
+            overwrite_cache=self.form.cleaned_data['overwrite_cache'],
+            check_cache_only=self.form.cleaned_data['check_cache_only']
+        )
+        download.set_task(res)
+
+        return redirect('hq_soil_download', self.domain, download.download_id)

@@ -1,25 +1,34 @@
 from collections import namedtuple, defaultdict
 from functools import total_ordering
+import os
 from os.path import commonprefix
 import re
-from corehq.apps.app_manager import id_strings
 import urllib
-from django.core.urlresolvers import reverse
-from lxml import etree
+
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, load_xmlobject_from_string
+from lxml import etree
+from xml.sax.saxutils import escape
+
+from django.core.urlresolvers import reverse
+
+from .exceptions import (
+    MediaResourceError,
+    ParentModuleReferenceError,
+    SuiteError,
+    SuiteValidationError,
+)
+from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
-from corehq.apps.app_manager.xpath import ProductInstanceXpath
-from corehq.apps.hqmedia.models import HQMediaMapItem
-from .exceptions import MediaResourceError, ParentModuleReferenceError, SuiteValidationError
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
+from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath
+from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
-from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath
 
 FIELD_TYPE_ATTACHMENT = 'attachment'
 FIELD_TYPE_INDICATOR = 'indicator'
@@ -226,13 +235,14 @@ class Instance(IdNode, OrderedXmlObject):
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
-    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm')
+    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm', 'detail_persistent')
 
     nodeset = XPathField('@nodeset')
     value = StringField('@value')
     function = XPathField('@function')
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
+    detail_persistent = StringField('@detail-persistent')
 
 
 class StackDatum(IdNode):
@@ -259,7 +269,7 @@ class CreatePushBase(IdNode, BaseFrame):
 
     def add_command(self, command):
         node = etree.SubElement(self.node, 'command')
-        node.text = command
+        node.attrib['value'] = command
 
     def add_datum(self, datum):
         self.node.append(datum.node)
@@ -703,8 +713,7 @@ class SuiteGenerator(SuiteGeneratorBase):
     )
 
     def post_process(self, suite):
-        if self.app.build_version >= "2.10":
-            # Isn't there a better way to version-limit a feature
+        if self.app.enable_post_form_workflow:
             self.add_form_workflow(suite)
 
         details_by_id = self.get_detail_mapping()
@@ -739,7 +748,7 @@ class SuiteGenerator(SuiteGeneratorBase):
 
             for child in frame_children:
                 if isinstance(child, basestring):
-                    frame.add_command(child)
+                    frame.add_command(XPath.string(child))
                 else:
                     frame.add_datum(StackDatum(id=child.id, value=session_var(child.id)))
             return frame
@@ -920,8 +929,16 @@ class SuiteGenerator(SuiteGeneratorBase):
 
                         if detail_column_infos:
                             if detail.custom_xml:
-                                d = load_xmlobject_from_string(detail.custom_xml, xmlclass=Detail)
+                                d = load_xmlobject_from_string(
+                                    detail.custom_xml,
+                                    xmlclass=Detail
+                                )
                                 r.append(d)
+
+                            elif detail.use_case_tiles:
+                                r.append(self.build_case_tile_detail(
+                                    module, detail, detail_type
+                                ))
                             else:
                                 d = self.build_detail(
                                     module,
@@ -1019,6 +1036,70 @@ class SuiteGenerator(SuiteGeneratorBase):
                 name='is_late',
                 function='next_due < today()'
             )
+
+    def build_case_tile_detail(self, module, detail, detail_type):
+        """
+        Return a Detail node from an apps.app_manager.models.Detail that is
+        configured to use case tiles.
+
+        This method does so by injecting the appropriate strings into a template
+        string.
+        """
+        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
+
+        template_args = {
+            "detail_id": self.id_strings.detail(module, detail_type),
+            "title_text_id": self.id_strings.detail_title_locale(
+                module, detail_type
+            )
+        }
+        # Get field/case property mappings
+
+        cols_by_tile = {col.case_tile_field: col for col in detail.columns}
+        for template_field in ["header", "top_left", "sex", "bottom_left", "date"]:
+            column = cols_by_tile.get(template_field, None)
+            if column is None:
+                raise SuiteError(
+                    'No column was mapped to the "{}" case tile field'.format(
+                        template_field
+                    )
+                )
+            template_args[template_field] = {
+                "prop_name": get_column_xpath_generator(
+                    self.app, module, detail, column
+                ).xpath,
+                "locale_id": self.id_strings.detail_column_header_locale(
+                    module, detail_type, column,
+                ),
+                # Just using default language for now
+                # The right thing to do would be to reference the app_strings.txt I think
+                "prefix": escape(
+                    column.header.get(self.app.default_language, "")
+                )
+            }
+            if column.format == "enum":
+                template_args[template_field]["enum_keys"] = {}
+                for mapping in column.enum:
+                    key = mapping.key
+                    template_args[template_field]["enum_keys"][key] = \
+                        self.id_strings.detail_column_enum_variable(
+                            module, detail_type, column, key
+                        )
+        # Populate the template
+        detail_as_string = self._case_tile_template_string.format(**template_args)
+        return load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+
+    @property
+    @memoized
+    def _case_tile_template_string(self):
+        """
+        Return a string suitable for building a case tile detail node
+        through `String.format`.
+        """
+        with open(os.path.join(
+                os.path.dirname(__file__), "case_tile_templates", "tdh.txt"
+        )) as f:
+            return f.read().decode('utf-8')
 
     def get_filter_xpath(self, module, delegation=False):
         filter = module.case_details.short.filter
@@ -1272,6 +1353,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                 parent_filter = ''
             else:
                 parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
+
+            detail_persistent = None
+            for detail_type, detail, enabled in module.get_details():
+                if detail.persist_tile_on_forms and detail.use_case_tiles and enabled:
+                    detail_persistent = self.id_strings.detail(module, detail_type)
+                    break
+
             e.datums.append(SessionDatum(
                 id=datum_ids[i],
                 nodeset=(self.get_nodeset_xpath(module.case_type, module, use_filter)
@@ -1281,7 +1369,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                 detail_confirm=(
                     self.get_detail_id_safe(module, 'case_long')
                     if i == 0 else None
-                )
+                ),
+                detail_persistent=detail_persistent
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
@@ -1451,19 +1540,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if not module.display_separately:
                     open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
                     frame.if_clause = '{count} = 1'.format(count=open_goal.count())
-                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
                 else:
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
             elif form.case_type == CAREPLAN_TASK:
                 if not module.display_separately:
-                    frame.add_command(self.id_strings.menu(parent_module))
+                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
                     if form.mode == 'update':
                         count = CaseTypeXpath(CAREPLAN_TASK).case().select(
@@ -1471,9 +1560,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                         ).select('@status', 'open').count()
                         frame.if_clause = '{count} >= 1'.format(count=count)
 
-                        frame.add_command(self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update')))
+                        frame.add_command(XPath.string(
+                            self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
+                        ))
                 else:
-                    frame.add_command(self.id_strings.menu(module))
+                    frame.add_command(XPath.string(self.id_strings.menu(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
                 if form.mode == 'create':

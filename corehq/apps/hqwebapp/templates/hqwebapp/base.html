@@ -1,10 +1,11 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
         <title>{% block title %}{% endblock %} - {{ SITE_NAME }}</title>
         <meta name="application-name" content="{{ SITE_NAME }}">
-        <meta http-equiv="content-language" content="en">
+        <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
         <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
         <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
 
@@ -141,6 +142,15 @@
                     </div>
                     {% if request.user.is_authenticated %}
                     <div class="btn-toolbar pull-right">
+                        <a id="uvSubmitIdea" 
+                            data-user-email="{{ user.email }}"
+                            data-user-name="{{ user.name }}"
+                            data-domain="{{ domain }}"
+                            data-uv-locale="{{ LANGUAGE_CODE }}"
+                            class="btn btn-footer-highlight">
+                            <i class="icon-lightbulb"></i> 
+                            {% trans 'Submit an Idea' %}
+                        </a>
                         <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
                         <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
                         <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'Mailing List' %}</a>
@@ -381,6 +391,7 @@
         <script src="{% static 'hqwebapp/js/lib/jquery.timeago.js' %}"></script>
 
         <script src="{% static 'hqwebapp/js/lib/keymaster.min.js' %}"></script>
+        <script src="{% new_static 'style/js/uv.widget.js' %}"></script>
         <script>
             var KEY = key.noConflict();  // Make global key function capital to adhere to globals convention
                                          // and to avoid conflicts in other places where "key" is used as variable name

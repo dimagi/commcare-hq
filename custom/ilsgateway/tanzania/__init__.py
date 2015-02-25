@@ -207,10 +207,13 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
 
     @property
     def export_table(self):
+        default_value = [['Sheet1', [[]]]]
         self.export_format_override = self.request.GET.get('format', Format.XLS)
         reports = [r['report_table'] for r in self.report_context['reports']]
-        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row'])
-                for r in reports if r['headers']]
+
+        export = [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row'])
+                  for r in reports if r['headers']]
+        return export if export else default_value
 
     def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
         def _unformat_row(row):

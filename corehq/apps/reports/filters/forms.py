@@ -31,7 +31,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     label = ugettext_noop("Filter Forms")
     css_class = "span5"
     drilldown_empty_text = ugettext_noop("You don't have any applications set up, so there are no forms "
-                                            "to choose from. Please create an application!")
+                                         "to choose from. Please create an application!")
     template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     app_slug = 'app_id'

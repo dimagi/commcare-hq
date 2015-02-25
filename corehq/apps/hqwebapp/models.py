@@ -19,8 +19,7 @@ from corehq.apps.hqadmin.reports import (
     CommTrackProjectSpacesReport,
 )
 from corehq.apps.hqwebapp.utils import (
-    format_second_level_context,
-    format_submenu_context,
+    dropdown_dict,
     sidebar_to_dropdown
 )
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
@@ -40,7 +39,6 @@ from corehq.apps.adm.dispatcher import (ADMAdminInterfaceDispatcher,
                                         ADMSectionDispatcher)
 from corehq.apps.announcements.dispatcher import (
     HQAnnouncementAdminInterfaceDispatcher)
-from corehq.toggles import IS_DEVELOPER
 
 
 class GaTracker(namedtuple('GaTracking', 'category action label')):
@@ -352,15 +350,27 @@ class ReportsTab(UITab):
 
     @property
     def dropdown_items(self):
-        saved_report_header = format_submenu_context(_('My Saved Reports'),
-                                                     is_header=True)
-        saved_report_list = [
-            format_submenu_context(config.name, url=config.url)
-            for config in ReportConfig.by_domain_and_owner(self.domain,
-                                                           self.couch_user._id)
+        saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
+        saved_reports_list = list(ReportConfig.by_domain_and_owner(
+                                  self.domain,
+                                  self.couch_user._id))
+
+        MAX_DISPLAYABLE_SAVED_REPORTS = 5
+        first_five_items = [
+            dropdown_dict(saved_report.name, url=saved_report.url)
+            for counter, saved_report in enumerate(saved_reports_list)
+            if counter < MAX_DISPLAYABLE_SAVED_REPORTS
         ]
-        if saved_report_list:
-            saved_reports_dropdown = ([saved_report_header] + saved_report_list)
+        rest_as_second_level_items = [
+            dropdown_dict("More Saved Reports", "#", second_level_dropdowns=[
+                dropdown_dict(saved_report.name, url=saved_report.url)
+                for counter, saved_report in enumerate(saved_reports_list)
+                if counter >= MAX_DISPLAYABLE_SAVED_REPORTS
+            ])
+        ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
+
+        if first_five_items:
+            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
         else:
             saved_reports_dropdown = []
 
@@ -420,7 +430,7 @@ class SetupTab(UITab):
             )]
 
         return [
-            format_submenu_context(
+            dropdown_dict(
                 item[0],
                 url=reverse(item[1].urlname, args=[self.domain])
             ) for item in dropdown_items
@@ -606,7 +616,7 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
 
             from corehq.apps.data_interfaces.views \
-                import CaseGroupListView, CaseGroupCaseManagementView
+                import CaseGroupListView, CaseGroupCaseManagementView, ArchiveFormView
             edit_section[0][1].append({
                 'title': CaseGroupListView.page_title,
                 'url': reverse(CaseGroupListView.urlname, args=[self.domain]),
@@ -618,6 +628,11 @@ class ProjectDataTab(UITab):
                 ]
             })
 
+            if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
+                edit_section[0][1].append({
+                    'title': ArchiveFormView.page_title,
+                    'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
+                })
             items.extend(edit_section)
 
         return items
@@ -653,7 +668,7 @@ class ApplicationsTab(UITab):
         if not apps:
             return submenu_context
 
-        submenu_context.append(format_submenu_context(_('My Applications'),
+        submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
         for app in apps:
             app_info = app['value']
@@ -666,31 +681,31 @@ class ApplicationsTab(UITab):
                     else reverse('release_manager', args=[self.domain, app_id])
                 app_title = self.make_app_title(app_name, app_doc_type)
 
-                submenu_context.append(format_submenu_context(
+                submenu_context.append(dropdown_dict(
                     app_title,
                     url=url,
                     data_id=app_id,
                 ))
 
         if self.couch_user.can_edit_apps():
-            submenu_context.append(format_submenu_context(None, is_divider=True))
+            submenu_context.append(dropdown_dict(None, is_divider=True))
             newapp_options = [
-                format_submenu_context(
+                dropdown_dict(
                     None,
                     html=self._new_app_link(_('Blank Application'))
                 ),
-                format_submenu_context(
+                dropdown_dict(
                     None,
                     html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
                                             is_remote=True)),
             ]
-            newapp_options.append(format_submenu_context(
+            newapp_options.append(dropdown_dict(
                 _('Visit CommCare Exchange to copy existing app...'),
                 url=reverse('appstore')))
-            submenu_context.append(format_second_level_context(
+            submenu_context.append(dropdown_dict(
                 _('New Application...'),
                 '#',
-                newapp_options
+                second_level_dropdowns=newapp_options
             ))
         return submenu_context
 
@@ -944,7 +959,7 @@ class MessagingTab(UITab):
         if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
             settings_pages.append(
                 {'title': ugettext_lazy("General Settings"),
-                 'url': reverse('sms_settings_new', args=[self.domain])},
+                 'url': reverse('sms_settings', args=[self.domain])},
             )
             settings_pages.append(
                 {'title': ugettext_lazy("Languages"),
@@ -1134,6 +1149,13 @@ class ProjectSettingsTab(UITab):
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
+        if toggles.DHIS2_DOMAIN.enabled(self.domain):
+            from corehq.apps.domain.views import EditDhis2SettingsView
+            project_info.append({
+                'title': _(EditDhis2SettingsView.page_title),
+                'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
+            })
+
         can_view_orgs = (user_is_admin
                          and self.project and self.project.organization
                          and has_privilege(self._request, privileges.CROSS_PROJECT_REPORTS))
@@ -1233,6 +1255,17 @@ class ProjectSettingsTab(UITab):
                     )
                 items.append((_('Subscription'), subscription))
 
+        if any(toggles.PRIME_RESTORE.enabled(item) for item in [self.couch_user.username, self.domain]):
+            from corehq.apps.ota.views import PrimeRestoreCacheView
+            project_tools = [
+                {
+                    'title': _(PrimeRestoreCacheView.page_title),
+                    'url': reverse(PrimeRestoreCacheView.urlname,
+                                   args=[self.domain])
+                },
+            ]
+            items.append((_('Project Tools'), project_tools))
+
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import EditInternalDomainInfoView, \
                 EditInternalCalculationsView
@@ -1297,7 +1330,7 @@ class AdminReportsTab(UITab):
         # todo: convert these to dispatcher-style like other reports
         if (self.couch_user and
                 (not self.couch_user.is_superuser and
-                 IS_DEVELOPER.enabled(self.couch_user.username))):
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
             return [
                 (_('Administrative Reports'), [
                     {'title': _('System Info'),
@@ -1350,7 +1383,7 @@ class AdminReportsTab(UITab):
     def is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
-                 IS_DEVELOPER.enabled(self.couch_user.username)))
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
 
 
 class GlobalADMConfigTab(UITab):
@@ -1468,44 +1501,40 @@ class AdminTab(UITab):
     @property
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
-                and (IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [format_submenu_context(_("System Info"),
+                and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+            return [dropdown_dict(_("System Info"),
                     url=reverse("system_info"))]
 
         submenu_context = [
-            format_submenu_context(_("Reports"), is_header=True),
-            format_submenu_context(_("Admin Reports"),
-                                   url=reverse("default_admin_report")),
-            format_submenu_context(_("System Info"),
-                                   url=reverse("system_info")),
-            format_submenu_context(_("Management"), is_header=True),
-            format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
-                                   url=reverse("default_adm_admin_interface")),
-            format_submenu_context(mark_for_escaping(_("Commands")),
-                                   url=reverse("management_commands")),
-            # format_submenu_context(mark_for_escaping("HQ Announcements"),
+            dropdown_dict(_("Reports"), is_header=True),
+            dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
+            dropdown_dict(_("System Info"), url=reverse("system_info")),
+            dropdown_dict(_("Management"), is_header=True),
+            dropdown_dict(mark_for_escaping(_("ADM Reports & Columns")),
+                          url=reverse("default_adm_admin_interface")),
+            dropdown_dict(mark_for_escaping(_("Commands")),
+                          url=reverse("management_commands")),
+            # dropdown_dict(mark_for_escaping("HQ Announcements"),
             #                      url=reverse("default_announcement_admin")),
         ]
         try:
             if AccountingTab(self._request, self._current_url_name).is_viewable:
                 submenu_context.append(
-                    format_submenu_context(AccountingTab.title,
-                                           url=reverse('accounting_default'))
+                    dropdown_dict(AccountingTab.title, url=reverse('accounting_default'))
                 )
         except Exception:
             pass
         try:
-            submenu_context.append(format_submenu_context(
+            submenu_context.append(dropdown_dict(
                 mark_for_escaping(_("Old SMS Billing")),
                 url=reverse("billing_default")))
         except Exception:
             pass
         submenu_context.extend([
-            format_submenu_context(_("SMS Connectivity & Billing"),
-                                   url=reverse("default_sms_admin_interface")),
-            format_submenu_context(_("Feature Flags"), url=reverse("toggle_list")),
-            format_submenu_context(None, is_divider=True),
-            format_submenu_context(_("Django Admin"), url="/admin")
+            dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
+            dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            dropdown_dict(None, is_divider=True),
+            dropdown_dict(_("Django Admin"), url="/admin")
         ])
         return submenu_context
 
@@ -1513,7 +1542,7 @@ class AdminTab(UITab):
     def is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
-                 IS_DEVELOPER.enabled(self.couch_user.username)))
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
 
 
 class ExchangeTab(UITab):
@@ -1525,9 +1554,8 @@ class ExchangeTab(UITab):
         submenu_context = None
         if self.domain and self.couch_user.is_domain_admin(self.domain):
             submenu_context = [
-                format_submenu_context(_("CommCare Exchange"),
-                                       url=reverse("appstore")),
-                format_submenu_context(
+                dropdown_dict(_("CommCare Exchange"), url=reverse("appstore")),
+                dropdown_dict(
                     _("Publish this project"),
                     url=reverse("domain_snapshot_settings",
                                 args=[self.domain]))
@@ -1556,16 +1584,16 @@ class OrgReportTab(OrgTab):
     @property
     def dropdown_items(self):
         return [
-            format_submenu_context(
+            dropdown_dict(
                 _("Projects Table"),
                 url=reverse("orgs_report", args=(self.org.name,))),
-            format_submenu_context(
+            dropdown_dict(
                 _("Form Data"),
                 url=reverse("orgs_stats", args=(self.org.name, "forms"))),
-            format_submenu_context(
+            dropdown_dict(
                 _("Case Data"),
                 url=reverse("orgs_stats", args=(self.org.name, "cases"))),
-            format_submenu_context(
+            dropdown_dict(
                 _("User Data"),
                 url=reverse("orgs_stats", args=(self.org.name, "users"))),
         ]
@@ -1578,13 +1606,13 @@ class OrgSettingsTab(OrgTab):
     @property
     def dropdown_items(self):
         return [
-            format_submenu_context(
+            dropdown_dict(
                 _("Projects"),
                 url=reverse("orgs_landing", args=(self.org.name,))),
-            format_submenu_context(
+            dropdown_dict(
                 _("Teams"),
                 url=reverse("orgs_teams", args=(self.org.name,))),
-            format_submenu_context(
+            dropdown_dict(
                 _("Members"),
                 url=reverse("orgs_stats", args=(self.org.name,))),
         ]
