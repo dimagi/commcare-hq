@@ -22,11 +22,14 @@ def parse_phone_number(number, region=None, failhard=True):
             return None
 
 
+def strip_plus(number):
+    return number[1:] if number.startswith('+') else number
+
+
 def get_country_code_and_national_number(number, failhard=False):
     parsed = parse_phone_number(number, failhard=failhard)
     if parsed:
         country_code = parsed.country_code
-        before_national_number = "+%d" % parsed.country_code
-        national_number = number[len(before_national_number):]
+        national_number = strip_plus(number)[len(str(country_code)):]
         return country_code, national_number
     return None, None
