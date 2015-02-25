@@ -85,20 +85,20 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                                    date, facility, True)
         for product_stock in product_stocks:
             if case:
-                product = Product.get_by_code(domain, product_stock.product)
+                product = SQLProduct.objects.get(domain=domain, code=product_stock.product)
                 try:
                     stock_state = StockState.objects.get(section_id='stock',
                                                          case_id=case._id,
-                                                         product_id=product._id)
+                                                         product_id=product.product_id)
                     stock_state.last_modified_date = product_stock.last_modified
                     stock_state.stock_on_hand = product_stock.quantity or 0
                 except StockState.DoesNotExist:
                     stock_state = StockState(section_id='stock',
                                              case_id=case._id,
-                                             product_id=product._id,
+                                             product_id=product.product_id,
                                              stock_on_hand=product_stock.quantity or 0,
                                              last_modified_date=product_stock.last_modified,
-                                             sql_product=SQLProduct.objects.get(product_id=product._id))
+                                             sql_product=product)
 
                 if product_stock.auto_monthly_consumption:
                     stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
@@ -140,7 +140,6 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
         with transaction.commit_on_success():
             for stocktransaction in stocktransactions:
                 if case:
-                    product = Product.get_by_code(domain, stocktransaction.product)
                     report = StockReport(
                         form_id=xform._id,
                         date=force_to_datetime(stocktransaction.date),
@@ -149,13 +148,13 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                     )
                     report.save()
                     try:
-                        sql_product = SQLProduct.objects.get(product_id=product._id)
+                        sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
                     except SQLProduct.DoesNotExist:
                         continue
 
                     transactions_to_add.append(StockTransaction(
                         case_id=case._id,
-                        product_id=product._id,
+                        product_id=sql_product.product_id,
                         sql_product=sql_product,
                         section_id='stock',
                         type='stockonhand',
