@@ -84,13 +84,15 @@ class LocationType(models.Model):
     objects = LocationTypeManager()
 
     def populate_stock_levels(self):
+        from corehq.apps.commtrack.models import CommtrackConfig
+        ct_config = CommtrackConfig.for_domain(self.domain)
         if (
-            (not Domain.get_by_name(self.domain).commtrack_enabled)
+            (ct_config is None)
+            or (not Domain.get_by_name(self.domain).commtrack_enabled)
             or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
         ):
             return
-        from corehq.apps.commtrack.models import CommtrackConfig
-        config = CommtrackConfig.for_domain(self.domain).stock_levels_config
+        config = ct_config.stock_levels_config
         self.emergency_level = config.emergency_level
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
