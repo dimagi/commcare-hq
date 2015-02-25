@@ -2329,7 +2329,6 @@ class TransferDomainView(BaseAdminProjectSettingsView):
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
-
     @property
     def page_context(self):
         if self.active_transfer:
