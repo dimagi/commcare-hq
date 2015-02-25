@@ -276,8 +276,9 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
 ########################################################################################################
 
 class TransferDomainFormErrors(object):
-    USER_DNE = 'The user being transferred to does not exist'
-    DOMAIN_MISMATCH = 'Mismatch in domains when confirming'
+    USER_DNE = _(u'The user being transferred to does not exist')
+    DOMAIN_MISMATCH = _(u'Mismatch in domains when confirming')
+
 
 class TransferDomainForm(forms.ModelForm):
 
@@ -285,16 +286,21 @@ class TransferDomainForm(forms.ModelForm):
         model = TransferDomainRequest
         fields = ['domain', 'to_username']
 
+
     def __init__(self, domain, from_username, *args, **kwargs):
         super(TransferDomainForm, self).__init__(*args, **kwargs)
         self.current_domain = domain
         self.from_username = from_username
+
+        self.fields['domain'].label = _(u'Type the name of the project to confirm')
+        self.fields['to_username'].label = _(u'New owner\'s CommCare username')
+
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             'domain',
             'to_username',
             StrictButton(
-                _("Transfer Domain"),
+                _("Transfer Project"),
                 type="submit",
                 css_class='btn-danger',
             )

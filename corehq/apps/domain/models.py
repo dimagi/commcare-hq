@@ -1116,8 +1116,8 @@ class TransferDomainRequest(models.Model):
         except TransferDomainRequest.MultipleObjectsReturned:
             # Deactivate all active transfer except for most recent
             latest = cls.objects \
-                        .filter(domain=domain, from_username=from_username, active=True, request_time__isnull=False) \
-                        .latest('request_time')
+                .filter(domain=domain, from_username=from_username, active=True, request_time__isnull=False) \
+                .latest('request_time')
             cls.objects \
                 .filter(domain=domain, from_username=from_username) \
                 .exclude(pk=latest.pk) \
@@ -1128,7 +1128,7 @@ class TransferDomainRequest(models.Model):
     def requires_active_transfer(fn):
         def decorate(self, *args, **kwargs):
             if not self.active:
-                raise InactiveTransferDomainException("Transfer domain request is no longer active")
+                raise InactiveTransferDomainException(_("Transfer domain request is no longer active"))
             return fn(self, *args, **kwargs)
         return decorate
 
@@ -1142,13 +1142,13 @@ class TransferDomainRequest(models.Model):
         self.email_from_request()
 
     def activate_url(self):
-        return "{url_base}/domain/transfer/{guid}/activate".format(
+        return u"{url_base}/domain/transfer/{guid}/activate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
 
     def deactivate_url(self):
-        return "{url_base}/domain/transfer/{guid}/deactivate".format(
+        return u"{url_base}/domain/transfer/{guid}/deactivate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
@@ -1160,7 +1160,7 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
         send_HTML_email(
-            _('Transfer of ownership for CommCare project space.'),
+            _(u'Transfer of ownership for CommCare project space.'),
             self.to_user.email,
             html_content,
             text_content=text_content)
@@ -1172,7 +1172,7 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
         send_HTML_email(
-            _('Transfer of ownership for CommCare project space.'),
+            _(u'Transfer of ownership for CommCare project space.'),
             self.from_user.email,
             html_content,
             text_content=text_content)
@@ -1194,7 +1194,7 @@ class TransferDomainRequest(models.Model):
             "{template}.html".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
 
-        send_HTML_email(_('There has been a transfer of ownership of {domain}').format(domain=self.domain),
+        send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
                         self.DIMAGI_CONFIRM_ADDRESS,
                         html_content)
 

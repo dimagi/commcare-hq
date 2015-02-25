@@ -9,19 +9,23 @@
     <div class="row-fluid">
         <div class="span12">
             <h4>
-                You have a pending transfer with {{ transfer.to_username }}
+                {% blocktrans with username=transfer.to_username %}
+                You have a pending transfer with {{ username }}
+                {% endblocktrans %}
             </h4>
         </div>
     </div>
     <div class="row-fluid">
         <div class="span2">
             <a href="{% url 'transfer_domain_view' domain %}?resend=true" class="btn btn-primary">
+                {% blocktrans %}
                 Resend Transfer Request
+                {% endblocktrans %}
             </a>
         </div>
         <div class="span2">
             <form action="{{ transfer.deactivate_url }}" method="POST">
-                <input class="btn btn-danger" type="submit" value="Cancel Transfer" />
+                <input class="btn btn-danger" type="submit" value="{% trans "Cancel Transfer" %}" />
             </form>
         </div>
     </div>

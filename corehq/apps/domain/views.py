@@ -2290,7 +2290,7 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
 
 class TransferDomainView(BaseAdminProjectSettingsView):
     urlname = 'transfer_domain_view'
-    page_title = ugettext_noop("Transfer Domain")
+    page_title = ugettext_noop("Transfer Project")
     template_name = 'domain/admin/transfer_domain.html'
 
     @property
@@ -2306,7 +2306,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 
             if request.GET.get('resend', None):
                 self.active_transfer.send_transfer_request()
-                messages.info(request, _("Resent transfer request for project '{domain}'")
+                messages.info(request, _(u"Resent transfer request for project '{domain}'")
                                          .format(domain=self.domain))
 
         return super(TransferDomainView, self).get(request, *args, **kwargs)
@@ -2318,7 +2318,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             transfer = form.save()
             transfer.send_transfer_request()
 
-        return self.get(request, *args, **kwargs)
+        return HttpResponseRedirect(self.page_url)
 
     @property
     def page_context(self):
@@ -2341,10 +2341,14 @@ class ActivateTransferDomainView(BasePageView):
     template_name = 'domain/activate_transfer_domain.html'
 
     @property
+    @memoized
+    def active_transfer(self):
+        return TransferDomainRequest.get_by_guid(self.guid)
+
+    @property
     def page_context(self):
-        transfer = TransferDomainRequest.get_by_guid(self.guid)
-        if transfer:
-            return { 'transfer': transfer.as_dict() }
+        if self.active_transfer:
+            return { 'transfer': self.active_transfer.as_dict() }
         else:
             return {}
 
@@ -2355,24 +2359,27 @@ class ActivateTransferDomainView(BasePageView):
     def get(self, request, guid, *args, **kwargs):
         self.guid = guid
 
+        if (self.active_transfer and
+                self.active_transfer.to_username != request.user.username and
+                not request.user.is_superuser):
+            return HttpResponseRedirect(reverse("no_permissions"))
+
         return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
 
     def post(self, request, guid, *args, **kwargs):
         self.guid = guid
 
-        transfer = TransferDomainRequest.get_by_guid(guid)
-
-        if not transfer or not transfer.active:
+        if not self.active_transfer:
             raise Http404()
 
-        if transfer.to_username != request.user.username and not request.user.is_superuser:
+        if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        transfer.transfer_domain(ip=get_ip(request))
-        messages.success(request, _("Successfully transferred ownership of project '{domain}'")
-                                    .format(domain=transfer.domain))
+        self.active_transfer.transfer_domain(ip=get_ip(request))
+        messages.success(request, _(u"Successfully transferred ownership of project '{domain}'")
+                                    .format(domain=self.active_transfer.domain))
 
-        return HttpResponseRedirect(reverse('dashboard_default', args=[transfer.domain]))
+        return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -2395,7 +2402,16 @@ class DeactivateTransferDomainView(View):
 
         transfer.active = False
         transfer.save()
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        referer = request.META.get('HTTP_REFERER', '/')
+
+        # Do not want to send them back to the activate page
+        if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
+            messages.info(request, _(u"Declined ownership of project '{domain}'")
+                                   .format(domain=transfer.domain))
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(referer)
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):

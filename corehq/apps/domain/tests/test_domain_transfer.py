@@ -14,6 +14,7 @@ from corehq.apps.domain.forms import TransferDomainForm, TransferDomainFormError
 from corehq.apps.domain.views import TransferDomainView
 from corehq.apps.domain.exceptions import InactiveTransferDomainException
 
+
 class BaseDomainTest(TestCase):
     def setUp(self):
         self.client = Client()
@@ -36,6 +37,7 @@ class BaseDomainTest(TestCase):
         self.user.delete()
         self.domain.delete()
         self.muggle.delete()
+
 
 class TestTransferDomainForm(BaseDomainTest):
 
@@ -66,6 +68,7 @@ class TestTransferDomainForm(BaseDomainTest):
             'to_username': [TransferDomainFormErrors.USER_DNE],
             'domain': [TransferDomainFormErrors.DOMAIN_MISMATCH],
         })
+
 
 class TestTransferDomainModel(BaseDomainTest):
 
@@ -122,6 +125,7 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertEqual(res.pk, newer.pk)
         self.assertFalse(TransferDomainRequest.objects.get(pk=self.transfer.pk).active)
 
+
 class TestTransferDomainViews(BaseDomainTest):
     def setUp(self):
         super(TestTransferDomainViews, self).setUp()
@@ -138,7 +142,6 @@ class TestTransferDomainViews(BaseDomainTest):
         super(TestTransferDomainViews, self).tearDown()
         self.transfer.delete()
         self.rando.delete()
-
 
     def test_permissions_for_activation(self):
         # No one logged in
@@ -222,7 +225,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
         form.data['to_username'] = self.muggle.username
 
         # Post the form data
-        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]), form.data)
+        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]), form.data, follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 2,
                          "Should send an email to both requester and requestee")
@@ -231,6 +234,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
                                                      from_username=self.user.username,
                                                      domain=self.domain.name)
         self.assertIsNotNone(transfer)
+        self.assertIsNone(transfer.confirm_time)
         self.assertTrue(transfer.active)
 
         # Land on the activate transfer page
@@ -247,9 +251,13 @@ class TestTransferDomainIntegration(BaseDomainTest):
         # Reload from DB
         user = WebUser.get_by_username(self.user.username)
         muggle = WebUser.get_by_username(self.muggle.username)
+        transfer = TransferDomainRequest.objects.get(to_username=self.muggle.username,
+                                                     from_username=self.user.username,
+                                                     domain=self.domain.name)
         self.assertFalse(user.is_member_of(self.domain.name))
         self.assertTrue(muggle.is_member_of(self.domain.name))
         self.assertTrue(muggle.get_domain_membership(self.domain.name).is_admin)
+        self.assertIsNotNone(transfer.confirm_time)
 
     def test_transfer_cancel_workflow(self):
         """
@@ -263,7 +271,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
         }
 
         # Post the transfer data
-        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]), data)
+        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]), data, follow=True)
         self.assertEqual(resp.status_code, 200)
 
         # Ensure transfer is active
