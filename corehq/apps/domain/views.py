@@ -2309,7 +2309,6 @@ class TransferDomainView(BaseAdminProjectSettingsView):
                 messages.info(request, _("Resent transfer request for project '{domain}'")
                                          .format(domain=self.domain))
 
-
         return super(TransferDomainView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -2327,6 +2326,12 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return { 'transfer': self.active_transfer.as_dict() }
         else:
             return { 'form': TransferDomainForm(self.domain, self.request.user.username) }
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(TransferDomainView, self).dispatch(*args, **kwargs)
+
 
 class ActivateTransferDomainView(BasePageView):
     urlname = 'activate_transfer_domain'
@@ -2358,11 +2363,18 @@ class ActivateTransferDomainView(BasePageView):
         if not transfer or not transfer.active:
             raise Http404()
 
+        if transfer.to_username != request.user.username and not request.user.is_superuser:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
         transfer.transfer_domain(ip=get_ip(request))
         messages.success(request, _("Successfully transferred ownership of project '{domain}'")
                                     .format(domain=transfer.domain))
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[transfer.domain]))
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ActivateTransferDomainView, self).dispatch(*args, **kwargs)
 
 
 class DeactivateTransferDomainView(View):
@@ -2374,9 +2386,18 @@ class DeactivateTransferDomainView(View):
         if not transfer:
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
+        if (transfer.to_username != request.user.username and
+                transfer.from_username != request.user.username and
+                not request.user.is_superuser):
+            return HttpResponseRedirect(reverse("no_permissions"))
+
         transfer.active = False
         transfer.save()
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
 
 
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):

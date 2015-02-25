@@ -120,6 +120,80 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertEqual(res.pk, newer.pk)
         self.assertFalse(TransferDomainRequest.objects.get(pk=self.transfer.pk).active)
 
+class TestTransferDomainViews(BaseDomainTest):
+    def setUp(self):
+        super(TestTransferDomainViews, self).setUp()
+        self.transfer = TransferDomainRequest(
+            to_username=self.mugglename,
+            from_username=self.username,
+            domain=self.domain.name)
+        self.transfer.save()
+        self.transfer.send_transfer_request()
+
+        self.rando = WebUser.create(self.domain.name, 'rando', self.password)
+
+    def tearDown(self):
+        super(TestTransferDomainViews, self).tearDown()
+        self.transfer.delete()
+        self.rando.delete()
+
+
+    def test_permissions_for_activation(self):
+        # No one logged in
+        resp = self.client.post(reverse('activate_transfer_domain',
+                                        args=[self.transfer.transfer_guid]), follow=True)
+        self.assertEqual(resp.template_name, 'login_and_password/login.html',
+                         'Should redirect to login page')
+
+        # Initiator logged in
+        self.client.login(username=self.username, password=self.password)
+        resp = self.client.post(reverse('activate_transfer_domain',
+                                        args=[self.transfer.transfer_guid]), follow=True)
+        self.assertEqual(resp.status_code, 403)
+
+        # Accepter logged in
+        self.client.login(username=self.mugglename, password=self.password)
+        resp = self.client.post(reverse('activate_transfer_domain',
+                                        args=[self.transfer.transfer_guid]), follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_permissions_for_deactivation(self):
+        # No one logged in
+        resp = self.client.post(reverse('deactivate_transfer_domain',
+                                        args=[self.transfer.transfer_guid]), follow=True)
+        self.assertEqual(resp.template_name, 'login_and_password/login.html',
+                         'Should redirect to login page')
+
+        # Random user who belongs to the domain
+        self.client.login(username=self.rando.username, password=self.password)
+        resp = self.client.post(reverse('deactivate_transfer_domain',
+                                        args=[self.transfer.transfer_guid]), follow=True)
+        self.assertEqual(resp.status_code, 403)
+
+        # Accepter logged in
+        self.client.login(username=self.mugglename, password=self.password)
+        resp = self.client.post(reverse('deactivate_transfer_domain',
+                                        args=[self.transfer.transfer_guid]), follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_permissions_for_transfer_domain_view(self):
+        # No one logged in
+        resp = self.client.get(reverse('transfer_domain_view',
+                                        args=[self.domain.name]), follow=True)
+        self.assertEqual(resp.status_code, 404)
+
+        # Random user who belongs to the domain but not an admin
+        self.client.login(username=self.rando.username, password=self.password)
+        resp = self.client.get(reverse('transfer_domain_view',
+                                        args=[self.domain.name]))
+        self.assertEqual(resp.status_code, 302, 'Should redirect to dashboard')
+
+        # Domain admin logged in
+        self.client.login(username=self.user.username, password=self.password)
+        resp = self.client.get(reverse('transfer_domain_view',
+                                        args=[self.domain.name]))
+        self.assertEqual(resp.status_code, 200)
+
 
 class TestTransferDomainIntegration(BaseDomainTest):
 
@@ -158,6 +232,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
         self.assertTrue(transfer.active)
 
         # Land on the activate transfer page
+        self.client.login(username=self.muggle.username, password=self.password)
         resp = self.client.get(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertIsNotNone(resp.context['transfer'])
@@ -201,5 +276,6 @@ class TestTransferDomainIntegration(BaseDomainTest):
         self.assertIsNone(updated_transfer)
 
         # Attempt to activate transfer
+        self.client.login(username=self.muggle.username, password=self.password)
         resp = self.client.post(reverse('activate_transfer_domain', args=[transfer.transfer_guid]))
         self.assertEqual(resp.status_code, 404)
