@@ -440,6 +440,7 @@ class Dhis2Api(object):
                 'organisationUnits',
                 params={
                     'paging': 'true',
+                    'pageSize': 500,
                     'page': page,
                     'links': 'false'
                 })
