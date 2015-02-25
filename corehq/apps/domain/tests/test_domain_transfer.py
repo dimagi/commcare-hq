@@ -7,7 +7,6 @@ from django.test import TestCase
 from django.test.client import Client
 
 from corehq import toggles
-from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.domain.forms import TransferDomainForm, TransferDomainFormErrors
@@ -184,19 +183,19 @@ class TestTransferDomainViews(BaseDomainTest):
     def test_permissions_for_transfer_domain_view(self):
         # No one logged in
         resp = self.client.get(reverse('transfer_domain_view',
-                                        args=[self.domain.name]), follow=True)
+                                       args=[self.domain.name]), follow=True)
         self.assertEqual(resp.status_code, 404)
 
         # Random user who belongs to the domain but not an admin
         self.client.login(username=self.rando.username, password=self.password)
         resp = self.client.get(reverse('transfer_domain_view',
-                                        args=[self.domain.name]))
+                                       args=[self.domain.name]))
         self.assertEqual(resp.status_code, 302, 'Should redirect to dashboard')
 
         # Domain admin logged in
         self.client.login(username=self.user.username, password=self.password)
         resp = self.client.get(reverse('transfer_domain_view',
-                                        args=[self.domain.name]))
+                                       args=[self.domain.name]))
         self.assertEqual(resp.status_code, 200)
 
 
@@ -217,7 +216,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
         # Get the transfer request page
         resp = self.client.get(reverse(TransferDomainView.urlname, args=[self.domain.name]))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(type(resp.context['form']), TransferDomainForm, 
+        self.assertEqual(type(resp.context['form']), TransferDomainForm,
                          "Should get TransferRequestForm")
 
         form = resp.context['form']
@@ -225,7 +224,8 @@ class TestTransferDomainIntegration(BaseDomainTest):
         form.data['to_username'] = self.muggle.username
 
         # Post the form data
-        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]), form.data, follow=True)
+        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]),
+                                form.data, follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 2,
                          "Should send an email to both requester and requestee")
@@ -244,7 +244,7 @@ class TestTransferDomainIntegration(BaseDomainTest):
         self.assertIsNotNone(resp.context['transfer'])
 
         # Finally accept the transfer
-        mail.outbox = [] # Clear outbox
+        mail.outbox = []  # Clear outbox
         resp = self.client.post(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
         self.assertEqual(len(mail.outbox), 1, "Send an email to Dimagi to confirm")
 

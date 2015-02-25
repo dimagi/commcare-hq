@@ -33,7 +33,6 @@ from corehq.apps.locations.schema import LocationType
 
 from .exceptions import InactiveTransferDomainException
 
-
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA

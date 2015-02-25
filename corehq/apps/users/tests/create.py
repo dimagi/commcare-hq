@@ -110,7 +110,6 @@ class CreateTestCase(TestCase):
         self.assertEquals(ccuser.get_domain_membership(domain).domain, domain)
 
         webuser.add_domain_membership(domain)
-        dm = webuser.get_domain_membership(domain)
         webuser.transfer_domain_membership(domain, webuser2)
 
         self.assertEquals(webuser.is_member_of(domain), False)

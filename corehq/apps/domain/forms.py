@@ -275,6 +275,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
 
 ########################################################################################################
 
+
 class TransferDomainFormErrors(object):
     USER_DNE = _(u'The user being transferred to does not exist')
     DOMAIN_MISMATCH = _(u'Mismatch in domains when confirming')
@@ -285,7 +286,6 @@ class TransferDomainForm(forms.ModelForm):
     class Meta:
         model = TransferDomainRequest
         fields = ['domain', 'to_username']
-
 
     def __init__(self, domain, from_username, *args, **kwargs):
         super(TransferDomainForm, self).__init__(*args, **kwargs)

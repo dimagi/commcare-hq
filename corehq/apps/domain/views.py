@@ -2306,8 +2306,8 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 
             if request.GET.get('resend', None):
                 self.active_transfer.send_transfer_request()
-                messages.info(request, _(u"Resent transfer request for project '{domain}'")
-                                         .format(domain=self.domain))
+                messages.info(request,
+                              _(u"Resent transfer request for project '{domain}'").format(domain=self.domain))
 
         return super(TransferDomainView, self).get(request, *args, **kwargs)
 
@@ -2323,9 +2323,9 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         if self.active_transfer:
-            return { 'transfer': self.active_transfer.as_dict() }
+            return {'transfer': self.active_transfer.as_dict()}
         else:
-            return { 'form': TransferDomainForm(self.domain, self.request.user.username) }
+            return {'form': TransferDomainForm(self.domain, self.request.user.username)}
 
     @method_decorator(domain_admin_required)
     @method_decorator(login_required)
@@ -2348,7 +2348,7 @@ class ActivateTransferDomainView(BasePageView):
     @property
     def page_context(self):
         if self.active_transfer:
-            return { 'transfer': self.active_transfer.as_dict() }
+            return {'transfer': self.active_transfer.as_dict()}
         else:
             return {}
 
@@ -2377,7 +2377,7 @@ class ActivateTransferDomainView(BasePageView):
 
         self.active_transfer.transfer_domain(ip=get_ip(request))
         messages.success(request, _(u"Successfully transferred ownership of project '{domain}'")
-                                    .format(domain=self.active_transfer.domain))
+                         .format(domain=self.active_transfer.domain))
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
 
@@ -2407,8 +2407,8 @@ class DeactivateTransferDomainView(View):
 
         # Do not want to send them back to the activate page
         if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
-            messages.info(request, _(u"Declined ownership of project '{domain}'")
-                                   .format(domain=transfer.domain))
+            messages.info(request,
+                          _(u"Declined ownership of project '{domain}'").format(domain=transfer.domain))
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(referer)
