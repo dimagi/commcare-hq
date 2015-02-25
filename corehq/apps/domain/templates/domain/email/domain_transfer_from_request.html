@@ -1,8 +1,20 @@
-<p>Hi {{ from_username }},</p>
-<p>You have invited {{ to_username }} to own the {{ domain }} project space at CommCareHQ.</p>
-<p>If you think this was a mistake, click <a href="{{ url }}">this link</a> and contact [[email]] as soon as
-possible. If you are unable to click the link, copy and paste the following url into your browser. {{url}}</p>
-<p>Thanks for using our site!</p>
+{% load i18n %}
+
+<p>
+    {% blocktrans %}
+    Hello,
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    A transfer of project space has been initiated by {{ from_username }} to {{ to_username }}.  If you believe this is an error, please contact Dimagi immediately at support@dimagi.com and click  <a href="{{ deactivate_url }}">this link</a> to deactivate the transfer: {{ deactivate_url }}
+    {% endblocktrans %}
+</p>
+
+<p>
+    {% blocktrans %}
+    Thanks for using our site!
+    {% endblocktrans %}
+</p>
 <p>-The CommCareHQ team</p>
-
-

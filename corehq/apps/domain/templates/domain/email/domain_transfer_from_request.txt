@@ -1,0 +1,15 @@
+{% load i18n %}
+
+{% blocktrans %}
+Hello,
+{% endblocktrans %}
+
+{% blocktrans %}
+A transfer of project space has been initiated by {{ from_username }} to {{ to_username }}.  If you believe this is an error, please contact Dimagi immediately at support@dimagi.com and click  this link to deactivate the transfer: {{ deactivate_url }}
+{% endblocktrans %}
+
+{% blocktrans %}
+Thanks for using our site!
+{% endblocktrans %}
+-The CommCareHQ team
+

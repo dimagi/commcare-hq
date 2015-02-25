@@ -1084,7 +1084,7 @@ class TransferDomainRequest(models.Model):
     to_username = models.CharField(max_length=80)
 
     TRANSFER_TO_EMAIL = 'domain/email/domain_transfer_to_request'
-    TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_to_request'
+    TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_from_request'
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
     DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
@@ -1155,24 +1155,27 @@ class TransferDomainRequest(models.Model):
 
     def email_to_request(self):
         context = self.as_dict()
-        context.update({ 'url': self.deactivate_url() })
 
-        html_content = render_to_string(
-            "{template}.html".format(template=self.TRANSFER_TO_EMAIL),
-            context)
-        #text_content = render_to_string("{template}.html".format(template=TRANSFER_TO_EMAIL))
-        send_HTML_email(_('CommcareHQ Domain transfer request'), self.to_user.email, html_content)
+        html_content = render_to_string("{template}.html".format(template=self.TRANSFER_TO_EMAIL), context)
+        text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
+
+        send_HTML_email(
+            _('Transfer of ownership for CommCare project space.'),
+            self.to_user.email,
+            html_content,
+            text_content=text_content)
 
     def email_from_request(self):
         context = self.as_dict()
-        context.update({ 'url': self.activate_url() })
 
-        html_content = render_to_string(
-            "{template}.html".format(template=self.TRANSFER_FROM_EMAIL),
-            context)
-        #text_content = render_to_string('domain/domain_transfer_from_request.txt')
+        html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
+        text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
-        send_HTML_email(_('CommcareHQ Domain transfer request'), self.from_user.email, html_content)
+        send_HTML_email(
+            _('Transfer of ownership for CommCare project space.'),
+            self.from_user.email,
+            html_content,
+            text_content=text_content)
 
     @requires_active_transfer
     def transfer_domain(self, *args, **kwargs):
