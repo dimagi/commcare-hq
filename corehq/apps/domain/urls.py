@@ -67,9 +67,9 @@ urlpatterns =\
         url(r'^domain/select/$', 'select', name='domain_select'),
         url(r'^domain/autocomplete/(?P<field>\w+)/$', 'autocomplete_fields', name='domain_autocomplete_fields'),
         url(r'^domain/incomplete_email/$', 'incomplete_email'),
-        url(r'^domain/transfer/(?P<guid>\w+)/activate$', 
+        url(r'^domain/transfer/(?P<guid>\w+)/activate$',
             ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
-        url(r'^domain/transfer/(?P<guid>\w+)/deactivate$', 
+        url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
             DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
     ) +\
     patterns('django.contrib.auth.views',
