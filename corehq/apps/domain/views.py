@@ -2298,6 +2298,12 @@ class TransferDomainView(BaseAdminProjectSettingsView):
     def active_transfer(self):
         return TransferDomainRequest.get_active_transfer(self.domain,
                                                          self.request.user.username)
+    @property
+    @memoized
+    def transfer_domain_form(self):
+        return TransferDomainForm(self.domain,
+                                  self.request.user.username,
+                                  self.request.POST or None)
 
     def get(self, request, *args, **kwargs):
 
@@ -2312,20 +2318,23 @@ class TransferDomainView(BaseAdminProjectSettingsView):
         return super(TransferDomainView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        form = TransferDomainForm(self.domain, self.request.user.username, request.POST)
+        form = self.transfer_domain_form
         if form.is_valid():
             # Initiate domain transfer
             transfer = form.save()
             transfer.send_transfer_request()
+            return HttpResponseRedirect(self.page_url)
 
-        return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
 
     @property
     def page_context(self):
         if self.active_transfer:
             return {'transfer': self.active_transfer.as_dict()}
         else:
-            return {'form': TransferDomainForm(self.domain, self.request.user.username)}
+            return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
     @method_decorator(login_required)
