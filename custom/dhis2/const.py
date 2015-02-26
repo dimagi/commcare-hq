@@ -59,7 +59,7 @@ RISK_ASSESSMENT_EVENT_FIELDS = {
     # DHIS2 Event: Underlying Risk
     # CCHQ form XMLNS: http://openrosa.org/formdesigner/39F09AD4-B770-491E-9255-C97B34BDD7FC Assessment
 
-    # 'last_risk_assessment_date': 'Event Date',
+    # 'last_risk_assessment_date': 'Event Date',  # "Event Date" is not a DHIS2 data element
 
     ('causes_for_poverty', 'low_income'):
         '1.1 Low income',

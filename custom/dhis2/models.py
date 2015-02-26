@@ -532,9 +532,10 @@ class Dhis2Api(object):
         data_values = []
         for field, element_name in data_element_names.iteritems():
             if isinstance(field, tuple):
-                # field is (field_name, field_value) of a dropdown
+                # field is (field_name, field_value) where field_value is one of many checkboxes
                 field_name, field_value = field
-                if xform.form.get(field_name) == field_value:
+                # e.g. xform.form['multi-select_field'] == 'checkbox_one checkbox_two checkbox_five'
+                if field_value in xform.form.get(field_name, '').split():
                     data_values.append({
                         'dataElement': self._data_elements[element_name],
                         'value': True
