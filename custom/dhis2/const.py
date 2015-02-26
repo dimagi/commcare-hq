@@ -17,17 +17,14 @@ NUTRITION_ASSESSMENT_PROGRAM_FIELDS = {
     # c.f. http://dhis1.internal.commcarehq.org:8080/dhis/api/programs/HiHLy0f1C1q.json
     #      programTrackedEntityAttributes
 
-    # NOTE: CHDR Number must be unique. "Optional" but defaults to null and
-    #       null is not unique ... so ... not optional then.
     'chdr_number': 'CHDR Number',
-
     'child_first_name': 'First Name',
+    'child_gender': 'Gender',
     'child_hh_name': 'Last Name',
-    # 'dob': 'Date of Birth',
-    # 'child_gender': 'Gender',
+    'dob': 'Date of Birth',
     'mother_first_name': 'Name of the Mother/Guardian',
-    # 'mother_phone_number': 'Mobile Number of the Mother',
-    # 'street_name': 'Address',
+    'mother_phone_number': 'Mobile Number of the Mother',
+    'street_name': 'Address',
 }
 
 NUTRITION_ASSESSMENT_EVENT_FIELDS = {

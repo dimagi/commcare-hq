@@ -15,7 +15,7 @@ is done using FormRepeater payload generators. See payload_generators.py for
 details.
 
 """
-from datetime import date, timedelta
+from datetime import date
 import logging
 import uuid
 from xml.etree import ElementTree
@@ -55,6 +55,12 @@ def push_case(case, dhis2_api):
     ):
         # CHDR Number must have a unique value. If we don't have one, we have to fake it.
         program_data['CHDR Number'] = case['child_id']
+    if 'Gender' in program_data:
+        # Gender is an optionSet. Options are "Male", "Female" and "Undefined"
+        # cf. http://dhis1.internal.commcarehq.org:8080/dhis/api/optionSets/wG0c8ReYyNz.json
+        program_data['Gender'] = program_data['Gender'].capitalize()  # "male" -> "Male"
+    else:
+        program_data['Gender'] = 'Undefined'
 
     try:
         # Search for CCHQ Case ID in case previous attempt to register failed.
