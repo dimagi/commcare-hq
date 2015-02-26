@@ -57,7 +57,15 @@
         event: {
             mediaUploadComplete: uploadComplete
         }
-    "><i class="icon icon-cloud-upload"></i> {% trans "Add Logo" %}</a>
+    ">
+        <i class="icon icon-cloud-upload"></i>
+        <span data-bind="visible: url">
+            {% trans "Replace Logo" %}
+        </span>
+        <span data-bind="visible: !url">
+            {% trans "Add Logo" %}
+        </span>
+    </a>
 </script>
 
 {% include 'hqmedia/partials/multimedia_js.html' %}
