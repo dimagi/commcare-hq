@@ -28,7 +28,7 @@ from corehq.apps.es import CaseES, UserES
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
 from custom.dhis2.const import CCHQ_CASE_ID, NUTRITION_ASSESSMENT_PROGRAM_FIELDS, ORG_UNIT_FIXTURES, CASE_TYPE, \
-    TRACKED_ENTITY
+    TRACKED_ENTITY, CASE_NAME
 from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Dhis2Settings, FixtureManager
 
 
@@ -49,12 +49,6 @@ def push_case(case, dhis2_api):
     program_data = {dhis2_attr: case[cchq_attr]
                     for cchq_attr, dhis2_attr in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.iteritems()
                     if getattr(case, cchq_attr, None)}
-    if (
-        'CHDR Number' in NUTRITION_ASSESSMENT_PROGRAM_FIELDS.values() and  # May not be required in production
-        'CHDR Number' not in program_data
-    ):
-        # CHDR Number must have a unique value. If we don't have one, we have to fake it.
-        program_data['CHDR Number'] = case['child_id']
     if 'Gender' in program_data:
         # Gender is an optionSet. Options are "Male", "Female" and "Undefined"
         # cf. http://dhis1.internal.commcarehq.org:8080/dhis/api/optionSets/wG0c8ReYyNz.json
@@ -193,6 +187,7 @@ def create_case_from_dhis2(dhis2_child, domain, user):
         user_id=user.userID,
         version=V2,
         case_type=CASE_TYPE,
+        case_name=update[CASE_NAME] if CASE_NAME else '',
         external_id=dhis2_child['Instance'],
         update=update
     )
