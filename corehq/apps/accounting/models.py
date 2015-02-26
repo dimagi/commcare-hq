@@ -766,8 +766,13 @@ class Subscriber(models.Model):
                 and not new_subscription
             )
         ):
+            from corehq.apps.domain.views import DefaultProjectSettingsView
             email_context = {
                 'domain': self.domain,
+                'domain_url': absolute_reverse(
+                    DefaultProjectSettingsView.urlname,
+                    args=[self.domain],
+                ),
                 'old_plan': old_subscription.plan_version if old_subscription else None,
                 'new_plan': new_subscription.plan_version if new_subscription else None,
                 'old_subscription_start_date': old_subscription.date_start if old_subscription else None,
