@@ -55,7 +55,6 @@ branches:
   - dhis2 # Norman 2/6
   - project-settings-update # sravan 1/30
   - report-builder # Noah 2/16
-  - subscription-change-domain # Nick P 2/26
   - check-loc-types  # Ethan 2/26
 submodules:
   submodules/touchforms-src:
