@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from sqlagg.filters import EQFilter
 from dimagi.utils.dates import DateSpan
 
 
@@ -74,7 +75,7 @@ class ChoiceListFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.show_all:
             return ''
-        return '{0} = :{0}'.format(self.filter.field)
+        return EQFilter(self.filter.field, self.filter.field)
 
     def to_sql_values(self):
         if self.show_all:
