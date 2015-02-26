@@ -4,5 +4,7 @@ The project space {{ domain }} has changed its subscription from {{ old_plan }} 
 
 Previously, they had been on {{ old_plan }} since {{ old_subscription_start_date }}.
 
+You can view the project space here: {{ domain_url }}
+
 Cheers,
 --The CommCareHQ Team

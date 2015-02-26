@@ -3,11 +3,15 @@
 </p>
 
 <p>
-    The project space <strong>{{ domain }}</strong> has changed its subscription from {{ old_plan }} to {{ new_plan }}, with {% if new_subscription_end_date %}an end date of {{ new_subscription_end_date }}{% else %} no end date{% endif %}.
+    The project space <a href="{{ domain_url }}">{{ domain }}</a> has changed its subscription from {{ old_plan }} to {{ new_plan }}, with {% if new_subscription_end_date %}an end date of {{ new_subscription_end_date }}{% else %} no end date{% endif %}.
 </p>
 
 <p>
     Previously, they had been on {{ old_plan }} since {{ old_subscription_start_date }}.
+</p>
+
+<p>
+    You can view the project space here: {{ domain_url }}
 </p>
 
 <p>
