@@ -1,4 +1,3 @@
-import logging
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.reminders.models import (CaseReminderHandler,
@@ -7,6 +6,9 @@ from corehq.apps.reminders.tasks import case_changed
 from dimagi.utils.logging import notify_exception
 
 def case_changed_receiver(sender, case, **kwargs):
+    """
+    Fires reminders associated with the case, if any exist.
+    """
     try:
         handler_ids = CaseReminderHandler.get_handler_ids(case.domain,
             reminder_type_filter=REMINDER_TYPE_DEFAULT)
