@@ -57,7 +57,6 @@ branches:
   - dhis2 # Norman 2/6
   - project-settings-update # sravan 1/30
   - report-builder # Noah 2/16
-  - subscription-change-email # Nick P 2/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
