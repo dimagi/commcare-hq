@@ -39,10 +39,10 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
-    <a data-bind="visible: url, attr: {href: url}" target="_blank">
+    <a data-bind="visible: url(), attr: {href: url()}" target="_blank">
         <img data-bind="
             attr: {
-                src: thumb_url
+                src: thumb_url()
             }
         "/>
     </a>
@@ -59,12 +59,19 @@
         }
     ">
         <i class="icon icon-cloud-upload"></i>
-        <span data-bind="visible: url">
+        <span data-bind="visible: url()">
             {% trans "Replace Logo" %}
         </span>
-        <span data-bind="visible: !url">
+        <span data-bind="visible: !url()">
             {% trans "Add Logo" %}
         </span>
+    </a>
+    <a class="btn btn-danger"
+       data-bind="
+           visible: url(),
+           click: removeLogo
+    ">
+        <i class="icon icon-remove"></i>
     </a>
 </script>
 

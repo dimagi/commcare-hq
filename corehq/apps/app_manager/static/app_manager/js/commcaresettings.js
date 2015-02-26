@@ -394,6 +394,9 @@ CommcareSettings.widgets.image_uploader = function (self) {
     self.triggerUpload = function() {
         triggerUploadForLogo(self.slug);
     };
+    self.removeLogo = function() {
+        removeLogo(self.slug);
+    };
 };
 
 $(function () {
