@@ -1,10 +1,8 @@
 from corehq.apps.commtrack.tests.util import bootstrap_user, make_loc, TEST_BACKEND
 from corehq.apps.products.models import Product
 from corehq.apps.sms.backend import test
-from corehq.apps.users.models import CommCareUser
-from custom.ewsghana.models import EWSGhanaConfig
-from custom.ewsghana.tests.test_script import TestScript
 from custom.ewsghana.utils import prepare_domain
+from custom.logistics.test.test_script import TestScript
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
 
