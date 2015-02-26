@@ -71,8 +71,8 @@
   value_names: ["Alphanumeric", "Numeric"]
   default: "n"
 
-- name: "Home Screen Logo"
-  description: "Upload a file to serve as a home screen logo on Android phones"
+- name: "CommCare Home Screen Logo"
+  description: "Upload a file to serve as a CommCare home screen logo on Android phones"
   id: "logo_android_home"
   widget: "image_uploader"
   toggle: "COMMCARE_LOGO_UPLOADER"
