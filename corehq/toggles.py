@@ -219,7 +219,7 @@ BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.1
+    0.25
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -254,6 +254,12 @@ PAGINATE_WEB_USERS = StaticToggle(
 LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
     'loose_sync_token_validation',
     "Don't fail hard on missing or deleted sync tokens.",
+    [NAMESPACE_DOMAIN]
+)
+
+MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
+    'multiple_locations',
+    "Enable multiple locations per user on domain.",
     [NAMESPACE_DOMAIN]
 )
 
@@ -307,13 +313,15 @@ PRIME_RESTORE = StaticToggle(
 
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
-VELLUM_HELP_TEXT = StaticToggle(
-    'add_help_text',
-    "Adds a help text in the form builder"
-)
-
 VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     'transaction_question_types',
     "Adds transaction-related question types in the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_ITEMSETS = StaticToggle(
+    'itemsets',
+    "Adds dynamic (itemset) select and multi-select question types to the "
+    "form builder",
     [NAMESPACE_DOMAIN]
 )

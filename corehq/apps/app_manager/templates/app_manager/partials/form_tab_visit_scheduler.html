@@ -2,6 +2,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="visit-scheduler">
+    {% if form.source %}
     <form class="form-horizontal">
         <div data-bind="saveButton: saveButton, visible: $root.edit"></div>
         <!--ko with: formSchedule -->
@@ -92,4 +93,9 @@
         </fieldset>
         <!--/ko-->
     </form>
+    {% else %}
+        <p class="alert alert-warning">
+            {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
+        </p>
+    {% endif %}
 </div>

@@ -726,7 +726,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'features': self.get_feature_summary(plan_version, self.account, subscription),
             'general_credit': general_credits,
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
-            'is_dimagi_subscription': subscription.do_not_invoice if subscription is not None else False,
+            'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
             'date_start': (subscription.date_start.strftime("%d %B %Y")
                            if subscription is not None else None),
@@ -781,7 +781,11 @@ class DomainSubscriptionView(DomainAccountingSettings):
             feature_info = {
                 'name': get_feature_name(feature_rate.feature.feature_type, self.product),
                 'usage': usage,
-                'remaining': feature_rate.monthly_limit - usage,
+                'remaining': (
+                    feature_rate.monthly_limit - usage
+                    if feature_rate.monthly_limit != -1
+                    else _('Unlimited')
+                ),
                 'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
             }
@@ -1726,7 +1730,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             for application in new_domain.full_applications():
                 original_id = application.copied_from._id
-                application.name = request.POST["%s-name" % original_id]
+                name_field = "%s-name" % original_id
+                if name_field not in request.POST:
+                    continue
+
+                application.name = request.POST[name_field]
                 application.description = request.POST["%s-description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id]
                 try:

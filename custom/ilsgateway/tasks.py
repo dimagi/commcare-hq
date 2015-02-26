@@ -32,7 +32,7 @@ def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
     return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
 
-# District Moshi-Rural
+# Region KILIMANJARO
 ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
                   652, 765, 1010, 657, 1173, 1037, 965, 749, 1171, 980,
                   1180, 1033, 975, 1056, 970, 742, 985, 2194, 935, 1128,
@@ -53,7 +53,7 @@ ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
                   1114, 932, 984, 656, 653, 946, 1058, 931, 770, 1108, 909, 1118, 1062, 745, 1065,
                   955, 1052, 753, 944, 1061, 1069, 1104, 996, 4860, 950, 993, 1064, 1175, 1059, 1050,
                   968, 928, 989, 967, 966, 750, 981, 1055, 766, 1123, 1039, 1103, 655, 1125, 774, 991,
-                  1117, 920, 769, 1005, 1009, 925, 1115, 907]
+                  1117, 920, 769, 1005, 1009, 925, 1115, 907, 4996]
 
 
 def get_locations(api_object, facilities):
@@ -85,20 +85,20 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                                    date, facility, True)
         for product_stock in product_stocks:
             if case:
-                product = Product.get_by_code(domain, product_stock.product)
+                product = SQLProduct.objects.get(domain=domain, code=product_stock.product)
                 try:
                     stock_state = StockState.objects.get(section_id='stock',
                                                          case_id=case._id,
-                                                         product_id=product._id)
+                                                         product_id=product.product_id)
                     stock_state.last_modified_date = product_stock.last_modified
                     stock_state.stock_on_hand = product_stock.quantity or 0
                 except StockState.DoesNotExist:
                     stock_state = StockState(section_id='stock',
                                              case_id=case._id,
-                                             product_id=product._id,
+                                             product_id=product.product_id,
                                              stock_on_hand=product_stock.quantity or 0,
                                              last_modified_date=product_stock.last_modified,
-                                             sql_product=SQLProduct.objects.get(product_id=product._id))
+                                             sql_product=product)
 
                 if product_stock.auto_monthly_consumption:
                     stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
@@ -140,7 +140,6 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
         with transaction.commit_on_success():
             for stocktransaction in stocktransactions:
                 if case:
-                    product = Product.get_by_code(domain, stocktransaction.product)
                     report = StockReport(
                         form_id=xform._id,
                         date=force_to_datetime(stocktransaction.date),
@@ -149,13 +148,13 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                     )
                     report.save()
                     try:
-                        sql_product = SQLProduct.objects.get(product_id=product._id)
+                        sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
                     except SQLProduct.DoesNotExist:
                         continue
 
                     transactions_to_add.append(StockTransaction(
                         case_id=case._id,
-                        product_id=product._id,
+                        product_id=sql_product.product_id,
                         sql_product=sql_product,
                         section_id='stock',
                         type='stockonhand',

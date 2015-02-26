@@ -186,6 +186,11 @@ class MobileBackend(Document):
     authorized_domains = ListProperty(StringProperty)  # A list of additional domains that are allowed to use this backend
     is_global = BooleanProperty(default=True)  # If True, this backend can be used for any domain
     description = StringProperty()          # (optional) A description of this backend
+    # A list of countries that this backend supports.
+    # This information is displayed in the gateway list UI.
+    # If this this backend represents an international gateway,
+    # set this to: ['*']
+    supported_countries = ListProperty(StringProperty)
     # TODO: Once the ivr backends get refactored, can remove these two properties:
     outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method

@@ -24,6 +24,7 @@ from langcodes import langs as all_langs
 from collections import defaultdict
 from django.utils.importlib import import_module
 from corehq.apps.locations.schema import LocationType
+from corehq import toggles
 
 
 lang_lookup = defaultdict(str)
@@ -1023,6 +1024,18 @@ class Domain(Document, SnapshotMixin):
     @property
     def name_of_publisher(self):
         return self.published_by.human_friendly_name if self.published_by else ""
+
+    @property
+    def supports_multiple_locations_per_user(self):
+        """
+        This method is a wrapper around the toggle that
+        enables multiple location functionality. Callers of this
+        method should know that this is special functionality
+        left around for special applications, and not a feature
+        flag that should be set normally.
+        """
+        return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self)
+
 
 class DomainCounter(Document):
     domain = StringProperty()

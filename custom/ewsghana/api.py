@@ -200,7 +200,8 @@ class EWSApi(APISynchronization):
                          administrative=False)
         ]
         domain.save()
-        role = UserRole(domain=self.domain, permissions=Permissions(), name='Facility manager')
+        role = UserRole(domain=self.domain, permissions=Permissions(view_reports=True,
+                                                                    edit_data=True), name='Facility manager')
         role.save()
 
     def product_sync(self, ews_product):

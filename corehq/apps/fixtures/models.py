@@ -8,6 +8,7 @@ from couchdbkit.ext.django.schema import Document, DocumentSchema, DictProperty,
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.locations.models import SQLLocation, LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
 
 
 class FixtureTypeField(DocumentSchema):
@@ -290,14 +291,40 @@ class FixtureDataItem(Document):
 
     def get_groups(self, wrap=True):
         group_ids = set(
-            self.get_db().view('fixtures/ownership',
+            FixtureOwnership.get_db().view(
+                'fixtures/ownership',
                 key=[self.domain, 'group by data_item', self.get_id],
                 reduce=False,
                 wrapper=lambda r: r['value']
             )
         )
+
         if wrap:
-            return set(Group.view('_all_docs', keys=list(group_ids), include_docs=True))
+            # if any fixtures are referencing location group IDs,
+            # make sure that those get wrapped properly as group-looking
+            # things
+            location_group_ids = set([
+                gid for gid in group_ids
+                if gid.startswith(LOCATION_SHARING_PREFIX) or gid.startswith(LOCATION_REPORTING_PREFIX)
+            ])
+            groups = []
+            for group_id in location_group_ids:
+                loc = SQLLocation.objects.get(
+                    location_id=group_id[group_id.index('-') + 1:]
+                )
+                if group_id.startswith(LOCATION_SHARING_PREFIX):
+                    groups.append(loc.case_sharing_group_object())
+                elif group_id.startswith(LOCATION_REPORTING_PREFIX):
+                    groups.append(loc.reporting_group_object())
+
+            return set(
+                list(Group.view(
+                    '_all_docs',
+                    keys=list(group_ids.difference(location_group_ids)),
+                    include_docs=True
+                )) +
+                groups
+            )
         else:
             return group_ids
 

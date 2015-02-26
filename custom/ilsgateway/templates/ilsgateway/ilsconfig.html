@@ -147,8 +147,8 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="fix_languages">
-                        {% trans "Fix languages" %}
+                    <button class="btn" id="ils_sms_users_fix">
+                        {% trans "Fix sms users" %}
                     </button>
                 </div>
             </div>
@@ -205,8 +205,8 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#fix_languages").click(function() {
-            var url = '{% url 'ils_fix_languages' domain %}';
+        $("#ils_sms_users_fix").click(function() {
+            var url = '{% url 'ils_sms_users_fix' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

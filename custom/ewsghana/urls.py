@@ -9,7 +9,7 @@ urlpatterns = patterns('custom.ewsghana.views',
 
     url(r'^ews_sync_stock_data/$', 'ews_sync_stock_data', name='ews_sync_stock_data'),
     url(r'^ews_clear_stock_data/$', 'ews_clear_stock_data', name='ews_clear_stock_data'),
-    url(r'^ews_fix_languages/$', 'ews_fix_languages', name='ews_fix_languages'),
+    url(r'^ews_fix_languages/$', 'ews_fix_sms_users', name='ews_fix_sms_users'),
     url(r'^inventory_managment/$', 'inventory_management', name='inventory_managment'),
     url(r'^reminder_test/(?P<phone_number>\d+)/$', RemindersTester.as_view(), name='reminders_tester'),
     url(r'^ews_fix_locations/$', 'ews_fix_locations', name='ews_fix_locations'),

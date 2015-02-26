@@ -1,4 +1,5 @@
 import traceback
+from celery.utils.mail import ErrorMail
 from django.core import mail
 from django.utils.log import AdminEmailHandler
 from django.views.debug import get_exception_reporter_filter, ExceptionReporter
@@ -58,3 +59,15 @@ class HqAdminEmailHandler(AdminEmailHandler):
         if details:
             formatted = '\n'.join('{item[0]}: {item[1]}'.format(item=item) for item in details.items())
             return 'Details:\n{}'.format(formatted)
+
+
+class SensitiveErrorMail(ErrorMail):
+    """
+    Extends Celery's ErrorMail class to prevents task args and kwargs from being printed in error emails.
+    """
+    replacement = '(excluded due to sensitive nature)'
+
+    def format_body(self, context):
+        context['args'] = self.replacement
+        context['kwargs'] = self.replacement
+        return self.body.strip() % context

@@ -1,4 +1,3 @@
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.models import Location, SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.xml import V2
@@ -8,6 +7,7 @@ from mock import patch
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 
 
 class LocationsTest(CommTrackTest):
@@ -16,6 +16,94 @@ class LocationsTest(CommTrackTest):
     def setUp(self):
         super(LocationsTest, self).setUp()
         self.user = self.users[0]
+
+    def test_sync(self):
+        test_state = make_loc(
+            'teststate',
+            type='state',
+            parent=self.user.location
+        )
+        test_village = make_loc(
+            'testvillage',
+            type='village',
+            parent=test_state
+        )
+
+        try:
+            sql_village = SQLLocation.objects.get(
+                name='testvillage',
+                domain=self.domain.name,
+            )
+
+            self.assertEqual(sql_village.name, test_village.name)
+            self.assertEqual(sql_village.domain, test_village.domain)
+        except SQLLocation.DoesNotExist:
+            self.fail("Synced SQL object does not exist")
+
+    def test_archive(self):
+        test_state = make_loc(
+            'teststate',
+            type='state',
+            parent=self.user.location
+        )
+        test_state.save()
+
+        original_count = len(list(Location.by_domain(self.domain.name)))
+
+        loc = self.user.location
+        loc.archive()
+
+        # it should also archive children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count - 2
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            0
+        )
+
+        loc.unarchive()
+
+        # and unarchive children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            1
+        )
+
+    def test_archive_flips_sp_cases(self):
+        loc = make_loc('someloc')
+        sp = make_supply_point(self.domain.name, loc)
+
+        self.assertFalse(sp.closed)
+        loc.archive()
+        sp = SupplyPointCase.get(sp._id)
+        self.assertTrue(sp.closed)
+
+        loc.unarchive()
+        sp = SupplyPointCase.get(sp._id)
+        self.assertFalse(sp.closed)
+
+
+class MultiLocationsTest(CommTrackTest):
+    """
+    LEGACY TESTS FOR MULTI LOCATION FUNCTIONALITY
+
+    These tests cover special functionality, generic location
+    test additions should not be added to this class.
+    """
+    user_definitions = [FIXED_USER]
+
+    def setUp(self):
+        super(MultiLocationsTest, self).setUp()
+        self.user = self.users[0]
+        MULTIPLE_LOCATIONS_PER_USER.set(self.user.domain, True, NAMESPACE_DOMAIN)
+        # add the users location for delgate access as well
+        self.user.add_location(self.user.location)
 
     def check_supply_point(self, user, sp, should_have=True):
         caseblock = CaseBlock(
@@ -32,7 +120,7 @@ class LocationsTest(CommTrackTest):
             version=V2
         )
 
-    def test_location_assignment(self):
+    def test_default_location_settings(self):
         user = self.user
 
         self.assertEqual(len(user.locations), 1)
@@ -92,7 +180,7 @@ class LocationsTest(CommTrackTest):
         loc2 = make_loc('thirdloc')
         sp2 = make_supply_point(self.domain.name, loc2)
 
-        user.set_locations([loc1, loc2])
+        user.create_location_delegates([loc1, loc2])
 
         # should only have the two new cases
         self.assertEqual(len(user.locations), 2)
@@ -112,7 +200,7 @@ class LocationsTest(CommTrackTest):
         make_supply_point(self.domain.name, loc1)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
-            user.set_locations([loc1])
+            user.create_location_delegates([loc1])
             self.assertEqual(submit_blocks.call_count, 1)
 
     def test_setting_existing_list_does_not_submit(self):
@@ -130,76 +218,5 @@ class LocationsTest(CommTrackTest):
         user.add_location(loc2)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
-            user.set_locations([loc1, loc2])
+            user.create_location_delegates([loc1, loc2])
             self.assertEqual(submit_blocks.call_count, 0)
-
-    def test_sync(self):
-        test_state = make_loc(
-            'teststate',
-            type='state',
-            parent=self.user.locations[0]
-        )
-        test_village = make_loc(
-            'testvillage',
-            type='village',
-            parent=test_state
-        )
-
-        try:
-            sql_village = SQLLocation.objects.get(
-                name='testvillage',
-                domain=self.domain.name,
-            )
-
-            self.assertEqual(sql_village.name, test_village.name)
-            self.assertEqual(sql_village.domain, test_village.domain)
-        except SQLLocation.DoesNotExist:
-            self.fail("Synced SQL object does not exist")
-
-    def test_archive(self):
-        test_state = make_loc(
-            'teststate',
-            type='state',
-            parent=self.user.locations[0]
-        )
-        test_state.save()
-
-        original_count = len(list(Location.by_domain(self.domain.name)))
-
-        loc = self.user.locations[0]
-        loc.archive()
-
-        # it should also archive children
-        self.assertEqual(
-            len(list(Location.by_domain(self.domain.name))),
-            original_count - 2
-        )
-        self.assertEqual(
-            len(Location.root_locations(self.domain.name)),
-            0
-        )
-
-        loc.unarchive()
-
-        # and unarchive children
-        self.assertEqual(
-            len(list(Location.by_domain(self.domain.name))),
-            original_count
-        )
-        self.assertEqual(
-            len(Location.root_locations(self.domain.name)),
-            1
-        )
-
-    def test_archive_flips_sp_cases(self):
-        loc = make_loc('someloc')
-        sp = make_supply_point(self.domain.name, loc)
-
-        self.assertFalse(sp.closed)
-        loc.archive()
-        sp = SupplyPointCase.get(sp._id)
-        self.assertTrue(sp.closed)
-
-        loc.unarchive()
-        sp = SupplyPointCase.get(sp._id)
-        self.assertFalse(sp.closed)

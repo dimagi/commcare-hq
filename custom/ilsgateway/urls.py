@@ -14,7 +14,7 @@ urlpatterns = patterns('custom.ilsgateway.views',
 
     url(r'^run_reports/$', 'run_warehouse_runner', name='run_reports'),
     url(r'^end_report_run/$', 'end_report_run', name='end_report_run'),
-    url(r'^ils_fix_languages/$', 'ils_fix_languages', name='ils_fix_languages'),
+    url(r'^ils_sms_users_fix/$', 'ils_sms_users_fix', name='ils_sms_users_fix'),
     url(r'^delete_runs/$', 'delete_reports_runs', name='delete_runs'),
     url(r'^supervision/$', SupervisionDocumentListView.as_view(), name=SupervisionDocumentListView.urlname),
     url(r'^delete_supervision_document/(?P<document_id>\d+)/$', SupervisionDocumentDeleteView.as_view(),

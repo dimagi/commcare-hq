@@ -655,11 +655,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                                                               create_action)
         self.actions.append(create_action)
     
-    def update_from_case_update(self, case_update, xformdoc):
+    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+        other_forms = other_forms or {}
         if case_update.has_referrals():
             return self._legacy_update_from_case_update(case_update, xformdoc)
         else:
-            return self._new_update_from_case_update(case_update, xformdoc)
+            return self._new_update_from_case_update(case_update, xformdoc, other_forms)
 
     def _legacy_update_from_case_update(self, case_update, xformdoc):
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
@@ -740,7 +741,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if case_update.user_id:     self.user_id = case_update.user_id
         if case_update.version:     self.version = case_update.version
 
-    def _new_update_from_case_update(self, case_update, xformdoc):
+    def _new_update_from_case_update(self, case_update, xformdoc, other_forms):
         assert not case_update.has_referrals()
 
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
@@ -756,7 +757,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 )
                 self.actions.append(case_action)
 
-        self.rebuild(strict=False, xforms={xformdoc._id: xformdoc})
+        local_forms = {xformdoc._id: xformdoc}
+        local_forms.update(other_forms)
+        self.rebuild(strict=False, xforms=local_forms)
 
         # override any explicit properties from the update
         if self.modified_on is None or mod_date > self.modified_on:

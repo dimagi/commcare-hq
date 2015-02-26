@@ -18,7 +18,7 @@ from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_dat
     EWS_FACILITIES
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction
 from custom.ilsgateway.views import GlobalStats, BaseConfigView
-from custom.logistics.tasks import language_fix, add_products_to_loc, locations_fix
+from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix
 from custom.logistics.tasks import stock_data_task
 from dimagi.utils.dates import force_to_datetime
 
@@ -76,7 +76,8 @@ class RemindersTester(BaseDomainView):
                     date = now - datetime.timedelta(days=5)
                     second_soh_process_user(user, date, test=True)
                 elif reminder == 'third_soh':
-                    third_soh_process_users_and_facilities([user], [user.location.sql_location], test=True)
+                    if user.location:
+                        third_soh_process_users_and_facilities([user], [user.location.sql_location], test=True)
                 elif reminder == 'stockout':
                     stockout_process_user(user, test=True)
                 elif reminder == 'rrirv':
@@ -117,10 +118,10 @@ def ews_clear_stock_data(request, domain):
 
 @domain_admin_required
 @require_POST
-def ews_fix_languages(request, domain):
+def ews_fix_sms_users(request, domain):
     config = EWSGhanaConfig.for_domain(domain)
     endpoint = GhanaEndpoint.from_config(config)
-    language_fix.delay(EWSApi(domain=domain, endpoint=endpoint))
+    sms_users_fix.delay(EWSApi(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 
