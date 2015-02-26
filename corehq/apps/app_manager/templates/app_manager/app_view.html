@@ -89,6 +89,12 @@
             image_refs[slug].upload_controller = HQMediaUploaders[slug];
             image_refs[slug].setObjReference(media_info[slug]);
         }
+        function urlFromLogo(slug) {
+            return image_refs[slug].url();
+        }
+        function thumbUrlFromLogo(slug) {
+            return image_refs[slug].thumb_url();
+        }
         function triggerUploadForLogo(slug) {
             if(image_refs[slug]) {
                 image_refs[slug].triggerUpload();

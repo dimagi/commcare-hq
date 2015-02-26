@@ -39,6 +39,13 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
+    <a data-bind="visible: url, attr: {href: url}" target="_blank">
+        <img data-bind="
+            attr: {
+                src: thumb_url
+            }
+        "/>
+    </a>
     <a data-toggle="modal"
        class="btn btn-primary"
        data-bind="
