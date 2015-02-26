@@ -53,17 +53,30 @@ class Command(BaseCommand):
                     step(parent)
             step(loc_type)
 
-    def check_loc_type(self, loc, loc_type_codes):
-        if loc.location_type not in loc_type_codes:
-            self.stdout.write(
-                u"  Location {} has a nonexistant type of {}\n"
-                .format(loc.location_id, loc.location_type)
-            )
+    def check_loc_types(self, domain, loc_types):
+        loc_type_codes = {loc_type.code for loc_type in loc_types}
+        # Some domains have names and not codes. Fall back to that.
+        loc_type_codes.update({loc_type.name for loc_type in loc_types})
+        loc_types = (SQLLocation.objects
+                     .filter(domain=domain)
+                     .values_list('location_type', flat=True)
+                     .order_by('location_type')
+                     .distinct('location_type'))
+
+        for loc_type in loc_types:
+            if loc_type not in loc_type_codes:
+                count = (SQLLocation.objects
+                         .filter(domain=domain, location_type=loc_type)
+                         .count())
+                self.stdout.write(
+                    u"  loc_type {} does not exist ({} instances)\n"
+                    .format(loc_type, count)
+                )
 
     def handle(self, *args, **options):
         for domain_obj in Domain.get_all():
             loc_types = domain_obj.location_types
-            locs = SQLLocation.objects.filter(domain=domain_obj.name).all()
+            locs = SQLLocation.objects.filter(domain=domain_obj.name).exists()
             if not loc_types and not locs:
                 continue
             self.stdout.write(u"[{}] - {}\n".format(domain_obj.name,
@@ -71,8 +84,4 @@ class Command(BaseCommand):
             self.check_for_duplicate_codes(loc_types)
             self.check_single_parentage(loc_types)
             self.check_parentage(loc_types)
-            loc_type_codes = {loc_type.code for loc_type in loc_types}
-            # Some domains have names and not codes. Fall back to that.
-            loc_type_codes.update({loc_type.name for loc_type in loc_types})
-            for loc in locs:
-                self.check_loc_type(loc, loc_type_codes)
+            self.check_loc_types(domain_obj.name, loc_types)
