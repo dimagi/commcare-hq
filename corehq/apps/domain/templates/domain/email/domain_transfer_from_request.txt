@@ -5,7 +5,7 @@ Hello,
 {% endblocktrans %}
 
 {% blocktrans %}
-A transfer of project space has been initiated by {{ from_username }} to {{ to_username }}.  If you believe this is an error, please contact Dimagi immediately at support@dimagi.com and click  this link to deactivate the transfer: {{ deactivate_url }}
+A transfer of project space has been initiated by {{ from_username }} to {{ to_username }}.  If you believe this is an error, please contact Dimagi immediately at support@dimagi.com and follow this link to deactivate the transfer: {{ settings_url }}
 {% endblocktrans %}
 
 {% blocktrans %}

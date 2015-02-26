@@ -14,6 +14,7 @@ from couchdbkit.ext.django.schema import (
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.cache import cache
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
@@ -1166,6 +1167,9 @@ class TransferDomainRequest(models.Model):
 
     def email_from_request(self):
         context = self.as_dict()
+        context['settings_url'] = u"{url_base}{path}".format(
+            url_base=get_url_base(),
+            path=reverse('transfer_domain_view', args=[self.domain]))
 
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
