@@ -62,10 +62,8 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-    - mobile-libs-219
     
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-    - form-translate-219
