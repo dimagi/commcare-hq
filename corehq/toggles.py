@@ -304,6 +304,12 @@ BULK_ARCHIVE_FORMS = StaticToggle(
     'Bulk archive forms with excel',
 )
 
+TRANSFER_DOMAIN = StaticToggle(
+    'transfer_domain',
+    'Transfer domains to different users',
+    [NAMESPACE_DOMAIN]
+)
+
 DHIS2_DOMAIN = StaticToggle(
     'dhis2_domain',
     'Enable DHIS2 integration for this domain',
