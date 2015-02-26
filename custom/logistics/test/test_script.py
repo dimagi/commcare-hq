@@ -3,6 +3,7 @@ from django.test.testcases import TestCase
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.util import strip_plus
 
 
 class TestScript(TestCase):
@@ -44,7 +45,9 @@ class TestScript(TestCase):
                 v = VerifiedNumber.by_phone(phone_number)
                 incoming(phone_number, command['text'], v.backend_id, domain_scope=v.domain)
             else:
-                self.get_last_outbound_sms(v.owner_doc_type, v.owner_id)
+                msg = self.get_last_outbound_sms(v.owner_doc_type, v.owner_id)
+                self.assertEqual(msg.text, command['text'])
+                self.assertEqual(strip_plus(msg.phone_number), strip_plus(phone_number))
 
 
 class TestParser(TestScript):
