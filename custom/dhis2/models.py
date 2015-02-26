@@ -245,6 +245,9 @@ class Dhis2Api(object):
             'attributes': self._data_to_attributes(instance_data)
         }
         response = self._request.post('trackedEntityInstances', request_data)
+        if response['status'] != 'SUCCESS':
+            raise Dhis2ApiQueryError('Failed to create instance of tracked entity "%s". DHIS2 API error: %s' %
+                                     (te_name, response))
         return response['reference']
 
     def update_te_inst(self, instance_data):
