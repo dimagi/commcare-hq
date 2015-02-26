@@ -61,7 +61,25 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("something dynamic", case.dynamic)
         self.assertEqual(2, len(case.actions))
         self.assertEqual("bar-user-id", case.actions[1].user_id)
-    
+
+    def testParseNoop(self):
+        self.testParseCreate()
+
+        file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_noop.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+
+        form = post_xform_to_couch(xml_data)
+        process_cases(form)
+        case = CommCareCase.get("foo-case-id")
+        self.assertFalse(case.closed)
+        self.assertEqual("bar-user-id", case.user_id)
+        self.assertEqual(datetime(2011, 12, 7, 13, 44, 50), case.modified_on)
+        self.assertEqual(2, len(case.actions))
+        self.assertEqual("bar-user-id", case.actions[1].user_id)
+
+        self.assertEqual(2, len(case.xform_ids))
+
     def testParseClose(self):
         self.testParseCreate()
         
