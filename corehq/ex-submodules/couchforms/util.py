@@ -474,14 +474,6 @@ class SubmissionPost(object):
                                     )
                                 )
                         try:
-                            # todo: remove this when http://manage.dimagi.com/default.asp?158371 is sorted out
-                            if domain == 'itech-etc3-test':
-                                logging.warning(
-                                    'ITECH DEBUG: forms are: {}, cases are: {}'.format(
-                                        ', '.join([f._id for f in xforms]),
-                                        ', '.join([c._id for c in cases])
-                                    )
-                                )
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
                             logging.error('BulkSaveError saving forms', exc_info=1,
