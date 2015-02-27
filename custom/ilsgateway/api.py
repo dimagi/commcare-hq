@@ -209,6 +209,7 @@ class ILSGatewayAPI(APISynchronization):
 
         if not location:
             if ilsgateway_location.parent_id:
+                # todo: this lookup is likely a source of slowness
                 loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',
                                                   key=[self.domain, str(ilsgateway_location.parent_id)],
                                                   reduce=False,
@@ -232,8 +233,11 @@ class ILSGatewayAPI(APISynchronization):
                 location.longitude = float(ilsgateway_location.longitude)
             location.location_type = ilsgateway_location.type
             location.site_code = ilsgateway_location.code
+            # todo: unicode?
             location.external_id = str(ilsgateway_location.id)
             location.save()
+
+            # todo: shouldn't this only be creating supply points for objects just at the facility level?
             if not SupplyPointCase.get_by_location(location):
                 SupplyPointCase.create_from_location(self.domain, location)
         else:
@@ -255,6 +259,7 @@ class ILSGatewayAPI(APISynchronization):
                     case.update_from_location(location)
                 else:
                     SupplyPointCase.create_from_location(self.domain, location)
+
         if ilsgateway_location.historical_groups:
             historical_groups = ilsgateway_location.historical_groups
         else:
@@ -262,6 +267,8 @@ class ILSGatewayAPI(APISynchronization):
             historical_groups = {}
             while counter != 5:
                 try:
+                    # todo: we may be able to avoid this call by passing the groups in as part of the original
+                    # location dict
                     location_object = self.endpoint.get_location(
                         ilsgateway_location.id,
                         params=dict(with_historical_groups=1)
