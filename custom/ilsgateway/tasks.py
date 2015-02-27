@@ -79,16 +79,14 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
     """
     has_next = True
     next_url = ""
-    while has_next:
-        supply_point = facility
-        # todo: I'm pretty sure this can move outside the while statement
-        # should be the same for as long as the facility doesn't change
-        case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                    key=[domain, str(supply_point)],
-                                    reduce=False,
-                                    include_docs=True,
-                                    limit=1).first()
-        if case:
+    supply_point = facility
+    case = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                key=[domain, str(supply_point)],
+                                reduce=False,
+                                include_docs=True,
+                                limit=1).first()
+    if case:
+        while has_next:
             meta, product_stocks = endpoint.get_productstocks(
                 next_url_params=next_url,
                 limit=limit,
