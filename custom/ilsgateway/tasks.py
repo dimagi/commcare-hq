@@ -183,7 +183,7 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
 def get_product_stock(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     for facility in facilities:
         sync_product_stock(domain, endpoint, facility, checkpoint, date, limit, offset)
-        offset = 0
+        offset = 0  # reset offset for each facility, is only set in the context of a checkpoint resume
 
 
 def get_stock_transaction(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
@@ -195,7 +195,7 @@ def get_stock_transaction(domain, endpoint, facilities, checkpoint, date, limit=
         xform.save()
     for facility in facilities:
         sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, date, limit, offset)
-        offset = 0
+        offset = 0 # reset offset for each facility, is only set in the context of a checkpoint resume
 
 
 def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
