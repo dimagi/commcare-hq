@@ -13,7 +13,7 @@ import hashlib
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
@@ -458,6 +458,13 @@ class RepeatRecord(Document, LockableMixIn):
             ))
             self.doc_type = self.doc_type + '-Failed'
             self.save()
+        except IgnoreDocument:
+            # this repeater is pointing at a document with no payload
+            logging.info('Repeater {} in domain {} references a document with no payload'.format(
+                self._id, self.domain,
+            ))
+            # Mark it succeeded so that we don't try again
+            self.update_success()
         else:
             post_fn = post_fn or simple_post_with_cached_timeout
             headers = self.repeater.get_headers(self)
