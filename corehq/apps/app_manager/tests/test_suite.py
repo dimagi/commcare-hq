@@ -242,8 +242,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('suite-workflow-module'), app.create_suite())
 
     def test_form_workflow_module_in_root(self):
-        # app = Application.wrap(self.get_json('suite-workflow-root'))
-
         app = Application.wrap(self.get_json('suite-workflow'))
         for m in [1, 2]:
             module = app.get_module(m)
@@ -252,8 +250,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self.assertXmlEqual(self.get_xml('suite-workflow-module-in-root'), app.create_suite())
 
     def test_form_workflow_root(self):
-        # app = Application.wrap(self.get_json('suite-workflow-root'))
-
         app = Application.wrap(self.get_json('suite-workflow'))
         for module in app.get_modules():
             for form in module.get_forms():
