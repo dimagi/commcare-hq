@@ -84,6 +84,7 @@ WORKFLOW_DEFAULT = 'default'
 WORKFLOW_ROOT = 'root'
 WORKFLOW_MODULE = 'module'
 WORKFLOW_PREVIOUS = 'previous_screen'
+WORKFLOW_FORM = 'form'
 
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'
@@ -521,6 +522,15 @@ class ScheduleVisit(DocumentSchema):
     late_window = IntegerProperty()
 
 
+class FormLink(DocumentSchema):
+    """
+    xpath:      xpath condition that must be true in order to open next form
+    form_id:    id of next form to open
+    """
+    xpath = StringProperty()
+    form_id = StringProperty()
+
+
 class FormSchedule(DocumentSchema):
     """
     anchor:                     Case property containing a date after which this schedule becomes active
@@ -561,6 +571,7 @@ class FormBase(DocumentSchema):
     )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
+    form_links = SchemaListProperty(FormLink)
 
     @classmethod
     def wrap(cls, data):
