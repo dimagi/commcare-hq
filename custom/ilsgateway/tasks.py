@@ -136,32 +136,35 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
 
 def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                            date, limit=100, offset=0):
+    """
+    Syncs stock data from StockTransaction objects in ILSGateway to StockTransaction objects in HQ
+    """
     has_next = True
     next_url = ""
-    while has_next:
-        supply_point = facility
-        case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                    key=[domain, str(supply_point)],
-                                    reduce=False,
-                                    include_docs=True,
-                                    limit=1).first()
-        if not case:
-            break
-        meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
-                                                                 limit=limit,
-                                                                 offset=offset,
-                                                                 filters=(dict(supply_point=supply_point,
-                                                                               date__gte=date,
-                                                                               order_by='date')))
-        save_stock_data_checkpoint(checkpoint,
-                                   'stock_transaction',
-                                   meta.get('limit') or limit,
-                                   meta.get('offset') or offset,
-                                   date, facility, True)
-        transactions_to_add = []
-        with transaction.commit_on_success():
-            for stocktransaction in stocktransactions:
-                if case:
+    supply_point = facility
+    case = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                key=[domain, str(supply_point)],
+                                reduce=False,
+                                include_docs=True,
+                                limit=1).first()
+    if case:
+        while has_next:
+            meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
+                                                                     limit=limit,
+                                                                     offset=offset,
+                                                                     filters=(dict(supply_point=supply_point,
+                                                                                   date__gte=date,
+                                                                                   order_by='date')))
+
+            # todo: kkrampa, shouldn't we wait to save the checkpoint until after we've processed all the data?
+            save_stock_data_checkpoint(checkpoint,
+                                       'stock_transaction',
+                                       meta.get('limit') or limit,
+                                       meta.get('offset') or offset,
+                                       date, facility, True)
+            transactions_to_add = []
+            with transaction.commit_on_success():
+                for stocktransaction in stocktransactions:
                     report = StockReport(
                         form_id=xform._id,
                         date=force_to_datetime(stocktransaction.date),
@@ -172,6 +175,7 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                     try:
                         sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
                     except SQLProduct.DoesNotExist:
+                        # todo: kkrampa what's the deal with this logic? this should never be true
                         continue
 
                     transactions_to_add.append(StockTransaction(
@@ -183,12 +187,13 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                         stock_on_hand=Decimal(stocktransaction.ending_balance),
                         report=report
                     ))
-        # Doesn't send signal
-        StockTransaction.objects.bulk_create(transactions_to_add)
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1]
+
+            # Doesn't send signal
+            StockTransaction.objects.bulk_create(transactions_to_add)
+            if not meta.get('next', False):
+                has_next = False
+            else:
+                next_url = meta['next'].split('?')[1]
 
 
 def get_product_stock(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
