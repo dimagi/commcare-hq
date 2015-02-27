@@ -74,10 +74,15 @@ def get_locations(api_object, facilities):
 
 
 def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
+    """
+    Syncs ProductStock objects in ILSGateway to StockState objects in CommTrack
+    """
     has_next = True
     next_url = ""
     while has_next:
         supply_point = facility
+        # todo: I'm pretty sure this can move outside the while statement
+        # should be the same for as long as the facility doesn't change
         case = SupplyPointCase.view('hqcase/by_domain_external_id',
                                     key=[domain, str(supply_point)],
                                     reduce=False,
@@ -89,6 +94,8 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
             offset=offset,
             filters=dict(supply_point=supply_point, last_modified__gte=date)
         )
+        # todo: shouldn't we wait to save the checkpoint until after we've processed all the data?
+        # otherwise seems like we would miss things
         save_stock_data_checkpoint(checkpoint,
                                    'product_stock',
                                    meta.get('limit') or limit,
@@ -96,6 +103,12 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                                    date, facility, True)
         for product_stock in product_stocks:
             if case:
+                # this logic updates the StockState object based on data from the current ProductStock
+                # todo: It seems a little bit odd/wrong that we would have this in the migration code at all
+                # Shouldn't we be able to rely on the stock transaction logic loading the right data
+                # into the StockState?
+
+                # todo: should figure out a way to cache this lookup, will hit every at least once per location
                 product = SQLProduct.objects.get(domain=domain, code=product_stock.product)
                 try:
                     stock_state = StockState.objects.get(section_id='stock',
@@ -195,7 +208,7 @@ def get_stock_transaction(domain, endpoint, facilities, checkpoint, date, limit=
         xform.save()
     for facility in facilities:
         sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, date, limit, offset)
-        offset = 0 # reset offset for each facility, is only set in the context of a checkpoint resume
+        offset = 0  # reset offset for each facility, is only set in the context of a checkpoint resume
 
 
 def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
