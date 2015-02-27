@@ -88,21 +88,21 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                                     reduce=False,
                                     include_docs=True,
                                     limit=1).first()
-        meta, product_stocks = endpoint.get_productstocks(
-            next_url_params=next_url,
-            limit=limit,
-            offset=offset,
-            filters=dict(supply_point=supply_point, last_modified__gte=date)
-        )
-        # todo: shouldn't we wait to save the checkpoint until after we've processed all the data?
-        # otherwise seems like we would miss things
-        save_stock_data_checkpoint(checkpoint,
-                                   'product_stock',
-                                   meta.get('limit') or limit,
-                                   meta.get('offset') or offset,
-                                   date, facility, True)
-        for product_stock in product_stocks:
-            if case:
+        if case:
+            meta, product_stocks = endpoint.get_productstocks(
+                next_url_params=next_url,
+                limit=limit,
+                offset=offset,
+                filters=dict(supply_point=supply_point, last_modified__gte=date)
+            )
+            # todo: shouldn't we wait to save the checkpoint until after we've processed all the data?
+            # otherwise seems like we would miss things
+            save_stock_data_checkpoint(checkpoint,
+                                       'product_stock',
+                                       meta.get('limit') or limit,
+                                       meta.get('offset') or offset,
+                                       date, facility, True)
+            for product_stock in product_stocks:
                 # this logic updates the StockState object based on data from the current ProductStock
                 # todo: It seems a little bit odd/wrong that we would have this in the migration code at all
                 # Shouldn't we be able to rely on the stock transaction logic loading the right data
@@ -130,10 +130,10 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                     stock_state.daily_consumption = None
                 stock_state.save()
 
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1]
+            if not meta.get('next', False):
+                has_next = False
+            else:
+                next_url = meta['next'].split('?')[1]
 
 
 def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
