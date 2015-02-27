@@ -52,8 +52,8 @@ class NumericFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return ""
-        ret = BasicFilter(self.filter.field, 'operand')
-        ret.operator = self.value['operator']
+        ret = BasicFilter(self.filter.field, 'operand',
+                          operator=self.value['operator'])
         return ret
 
     def to_sql_values(self):
