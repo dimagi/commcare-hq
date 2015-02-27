@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from corehq import Session
 from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
@@ -24,6 +24,8 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
     ConfigurableFormDataSourceFromAppForm)
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -220,7 +222,8 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
-@login_and_domain_required
+@login_or_basic
+@require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
     format = request.GET.get('format', Format.UNZIPPED_CSV)
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
