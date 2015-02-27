@@ -22,7 +22,6 @@ Set up form forwarding as follows:
 from datetime import date
 import json
 import logging
-from corehq.apps.receiverwrapper.exceptions import IgnoreDocument
 from corehq.apps.receiverwrapper.models import RegisterGenerator, FormRepeater
 from corehq.apps.receiverwrapper.repeater_generators import BasePayloadGenerator
 from custom.dhis2.models import Dhis2Api, json_serializer, Dhis2Settings, Dhis2IntegrationError
@@ -48,11 +47,11 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, form):
         logger.debug('DHIS2: Form domain "%s" XMLNS "%s"', form['domain'], form['xmlns'])
         if not Dhis2Settings.is_enabled_for_domain(form['domain']):
-            raise IgnoreDocument("DHIS2 integration not enabled for form's domain")
+            return
 
         if form['xmlns'] not in (REGISTER_CHILD_XMLNS, GROWTH_MONITORING_XMLNS, RISK_ASSESSMENT_XMLNS):
             # This is not a form we care about
-            raise IgnoreDocument("DHIS2 integration not applicable to form")
+            return
 
         from casexml.apps.case.models import CommCareCase
 
@@ -69,7 +68,6 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             logger.debug('DHIS2: Processing Register Child form')
             push_case(case, dhis2_api)
             # We just need to enroll. No event to create
-            raise IgnoreDocument("Registration complete. Form not applicable for DHIS2 Event.")
 
         elif form['xmlns'] == GROWTH_MONITORING_XMLNS:
             logger.debug('DHIS2: Processing Growth Monitoring form')
