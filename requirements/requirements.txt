@@ -57,7 +57,7 @@ markdown==2.2.1
 django-markup-deprecated
 amqp==1.0.13
 amqplib==1.0.2
-sqlagg==0.2.2
+sqlagg==0.2.3
 django-redis==3.3
 redis==2.8.0
 unittest2
