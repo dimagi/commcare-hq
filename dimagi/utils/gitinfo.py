@@ -30,17 +30,23 @@ def sub_git_cmd(git_dir, args):
     elif os.path.isfile(os.path.join(git_dir, '.git')):
         #it's a submodule, dereference the actual git info
         git_dir_to_use = os.path.join(git_dir, '.git')
-
-    p = Popen(
-        [
-            'git',
-            '--git-dir',
-            git_dir_to_use,
-        ] + args,
-        stdout=PIPE, stderr=PIPE
-    )
     # else:
     #     raise Exception("Error, the .git location for %s doesn't exists" % git_dir)
+
+    try:
+        p = Popen(
+            [
+                'git',
+                '--git-dir',
+                git_dir_to_use,
+            ] + args,
+            stdout=PIPE, stderr=PIPE
+        )
+    except OSError, e:
+        if e.errno == 2:
+            e.strerror += ": git"
+        raise(e)
+
     return p
 
 
