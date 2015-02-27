@@ -93,7 +93,7 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                 offset=offset,
                 filters=dict(supply_point=supply_point, last_modified__gte=date)
             )
-            # todo: shouldn't we wait to save the checkpoint until after we've processed all the data?
+            # todo: kkrampa shouldn't we wait to save the checkpoint until after we've processed all the data?
             # otherwise seems like we would miss things
             save_stock_data_checkpoint(checkpoint,
                                        'product_stock',
@@ -203,7 +203,7 @@ def get_product_stock(domain, endpoint, facilities, checkpoint, date, limit=100,
 
 
 def get_stock_transaction(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
-    # Faking xform
+    # todo: should figure out whether there's a better thing to be doing than faking this global form
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
     except ResourceNotFound:
@@ -227,6 +227,7 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
             filters=dict(supply_point=facility, status_date__gte=date),
             facility=facility
         )
+        # todo: kkrampa, shouldn't we wait to save the checkpoint until after we've processed all the data?
         save_stock_data_checkpoint(checkpoint,
                                    'supply_point_status',
                                    meta.get('limit') or limit,
@@ -258,6 +259,8 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
                                                                          filters=dict(supply_point=facility,
                                                                                       report_date__gte=date),
                                                                          facility=facility)
+
+        # todo: kkrampa, shouldn't we wait to save the checkpoint until after we've processed all the data?
         save_stock_data_checkpoint(checkpoint,
                                    'delivery_group',
                                    meta.get('limit') or limit,
