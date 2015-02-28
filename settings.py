@@ -57,6 +57,7 @@ LANGUAGES = (
     ('fr', 'French'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
+    ('sw', 'Swahili'),
 )
 
 SITE_ID = 1
