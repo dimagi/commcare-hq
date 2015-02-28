@@ -126,6 +126,7 @@ ko.bindingHandlers.langcode = {
                 b.valueUpdate = [b.valueUpdate];
             }
             b.valueUpdate.push('autocompletechange');
+            b.valueUpdate.push('autocompleteclose');
             return b;
         });
         $('input', element).addClass('short code').langcodes();
