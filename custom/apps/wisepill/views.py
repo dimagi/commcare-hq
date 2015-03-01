@@ -1,3 +1,4 @@
+import csv
 from datetime import datetime
 from django.http import HttpResponse, HttpResponseBadRequest
 from custom.apps.wisepill.models import WisePillDeviceEvent
@@ -5,6 +6,9 @@ from corehq.apps.sms.handlers.keyword import handle_structured_sms
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.reminders.models import SurveyKeyword, METHOD_STRUCTURED_SMS
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_WISEPILL
+from corehq.apps.domain.decorators import require_superuser
+from dimagi.utils.couch.database import iter_docs
+
 
 @require_api_user_permission(PERMISSION_POST_WISEPILL)
 def device_data(request):
@@ -54,3 +58,33 @@ def device_data(request):
     
     return HttpResponse("")
 
+
+@require_superuser
+def export_events(request):
+    """
+    Nothing fancy, just a simple csv dump of all the WisePill event
+    data stored for debugging. This can't really be a domain-specific
+    report because we may not be able to tie an event to a domain if
+    the device was not configured properly in CommCareHQ.
+    """
+    attrs = [
+        '_id',
+        'domain',
+        'data',
+        'received_on',
+        'case_id',
+        'processed',
+        'serial_number',
+        'timestamp',
+    ]
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="device_events.csv"'
+    writer = csv.writer(response)
+    writer.writerow(attrs)
+
+    ids = WisePillDeviceEvent.get_all_ids()
+    for doc in iter_docs(WisePillDeviceEvent.get_db(), ids):
+        event = WisePillDeviceEvent.wrap(doc)
+        writer.writerow([getattr(event, attr) for attr in attrs])
+
+    return response
