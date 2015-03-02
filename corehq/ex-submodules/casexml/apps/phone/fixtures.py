@@ -26,25 +26,31 @@ class FixtureGenerator(object):
     """
 
     def __init__(self):
-        self._generator_funcs = []
+        self._generator_funcs = {}
         if hasattr(settings, "FIXTURE_GENERATORS"):
-            for func_path in settings.FIXTURE_GENERATORS:
-                func = to_function(func_path)
-                if func:
-                    self._generator_funcs.append(func)
+            for group, func_paths in settings.FIXTURE_GENERATORS.items():
+                self._generator_funcs[group] = filter(None, [
+                    to_function(func_path) for func_path in func_paths
+                ])
 
-    def get_fixtures(self, user, version, last_sync=None):
+    def get_fixtures(self, user, version, last_sync=None, group=None):
         """
         Gets all fixtures associated with an OTA restore operation
         """
-        if version == V1: 
+        if version == V1:
             return []  # V1 phones will never use or want fixtures
 
+        funcs = []
         if getattr(user, "_hq_user", False):
             user = user._hq_user
         if isinstance(user, CommCareUser):
-            return itertools.chain(*[func(user, version, last_sync)
-                                     for func in self._generator_funcs])
+            if group:
+                funcs = self._generator_funcs.get(group, [])
+            else:
+                funcs = itertools.chain(*self._generator_funcs.values())
+
+        return itertools.chain(*[func(user, version, last_sync)
+                                 for func in funcs])
 
 
 generator = FixtureGenerator()
