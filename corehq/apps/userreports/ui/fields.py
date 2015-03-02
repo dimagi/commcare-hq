@@ -24,7 +24,6 @@ class JsonField(forms.CharField):
         self.expected_type = expected_type
         super(JsonField, self).__init__(*args, **kwargs)
 
-    # Is this doing anything?
     def prepare_value(self, value):
         if isinstance(value, basestring):
             try:
