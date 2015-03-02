@@ -174,9 +174,18 @@ def detail(module, detail_type):
 def menu_id(module):
     put_in_root = getattr(module, 'put_in_root', False)
     if put_in_root:
+        # handle circular calls, if bad module workflow setup
+        return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
+    else:
+        return u"m{module.id}".format(module=module)
+
+
+def menu_root(module):
+    put_in_root = getattr(module, 'put_in_root', False)
+    if put_in_root:
         return ROOT
     else:
-        return u"m{id}".format(id=getattr(module, 'root_module_index', module.id))
+        return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
 
 
 def form_command(form):

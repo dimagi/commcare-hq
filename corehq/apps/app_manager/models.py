@@ -2038,6 +2038,12 @@ class AdvancedModule(ModuleBase):
         self.case_list.rename_lang(old_lang, new_lang)
 
     @property
+    def root_module(self):
+        if self.root_module_id:
+            return self._parent.get_module_by_unique_id(self.root_module_id)
+            # handle errors if root module is deleted
+
+    @property
     def root_module_index(self):
         if self.root_module_id:
             root_module = self._parent.get_module_by_unique_id(self.root_module_id)
