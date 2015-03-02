@@ -3020,6 +3020,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.build_comment = comment
         copy.comment_from = user_id
+        if user_id:
+            user = CouchUser.get(user_id)
+            if not user.has_built_app:
+                user.has_built_app = True
+                user.save()
         copy.is_released = False
 
         return copy

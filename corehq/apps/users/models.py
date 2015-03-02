@@ -789,6 +789,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     keyboard_shortcuts = SchemaProperty(KeyboardShortcutsConfig)
     user_data = DictProperty()
     location_id = StringProperty()
+    has_built_app = BooleanProperty(default=False)
 
     _user = None
     _user_checked = False
