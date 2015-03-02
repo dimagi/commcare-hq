@@ -401,6 +401,21 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
         return ['video']
 
 
+class RemoveLogoView(BaseMultimediaView):
+    name = "hqmedia_remove_logo"
+
+    @property
+    def logo_slug(self):
+        if self.request.method == 'POST':
+            return self.request.POST.get('logo_slug')
+        return None
+
+    def post(self, *args, **kwargs):
+        if self.logo_slug in self.app.logo_refs:
+            del self.app.logo_refs[self.logo_slug]
+            self.app.save()
+        return HttpResponse()
+
 class CheckOnProcessingFile(BaseMultimediaView):
     name = "hqmedia_check_processing"
 
