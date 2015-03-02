@@ -4,6 +4,23 @@ from django.dispatch import receiver
 from casexml.apps.stock import const
 from decimal import Decimal
 from corehq.apps.products.models import SQLProduct
+from south.modelsinspector import add_introspection_rules
+
+
+class TruncatingCharField(models.CharField):
+    """
+    http://stackoverflow.com/a/3460942
+    """
+    def get_prep_value(self, value):
+        value = super(TruncatingCharField, self).get_prep_value(value)
+        if value:
+            return value[:self.max_length]
+        return value
+
+
+# http://south.aeracode.org/wiki/MyFieldsDontWork
+path = TruncatingCharField.__module__ + '.' + TruncatingCharField.__name__
+add_introspection_rules([], ["^{}".format(path.replace('.', '\.'))])
 
 
 class StockReport(models.Model):
@@ -36,7 +53,7 @@ class StockTransaction(models.Model):
     # currently supported/expected: 'stockonhand', 'receipts', 'consumption'
     type = models.CharField(max_length=20)
     # e.g. 'loss', 'transfer', 'inferred'
-    subtype = models.CharField(max_length=20, null=True, blank=True)
+    subtype = TruncatingCharField(max_length=20, null=True, blank=True)
 
     # often one of these two will be derived based on the other one
     quantity = models.DecimalField(null=True, max_digits=20, decimal_places=5)
