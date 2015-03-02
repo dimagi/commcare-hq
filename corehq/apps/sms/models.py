@@ -389,8 +389,13 @@ class MessageLogOld(models.Model):
             return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number
 
+
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
+
     def case_changed(self):
+        """
+        Syncs verified numbers with this case.
+        """
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
         contact_backend_id = self.get_case_property("contact_backend_id")
@@ -400,7 +405,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
             self.doc_type.endswith(DELETED_SUFFIX)):
             try:
                 self.delete_verified_number()
-            except:
+            except Exception:
                 logging.exception("Could not delete verified number for owner %s" % self._id)
         elif contact_phone_number_is_verified:
             try:
@@ -410,12 +415,9 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
                     self.delete_verified_number()
                 except:
                     logging.exception("Could not delete verified number for owner %s" % self._id)
-            except:
+            except Exception:
                 logging.exception("Could not save verified number for owner %s" % self._id)
-        else:
-            #TODO: Start phone verification workflow
-            pass
-    
+
     def get_time_zone(self):
         return self.get_case_property("time_zone")
 
@@ -438,6 +440,9 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
 
 
 def case_changed_receiver(sender, case, **kwargs):
+    # the primary purpose of this function is to add/remove verified
+    # phone numbers from the case. if the case doesn't have any verified
+    # numbers associated with it this is basically a no-op
     contact = CommConnectCase.wrap_as_commconnect_case(case)
     contact.case_changed()
 

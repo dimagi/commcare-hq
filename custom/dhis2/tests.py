@@ -11,7 +11,7 @@ from couchdbkit import ResourceNotFound
 from custom.dhis2.const import ORG_UNIT_FIXTURES
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, \
     FixtureManager
-from custom.dhis2.tasks import sync_cases, sync_org_units
+from custom.dhis2.tasks import fetch_cases, fetch_org_units
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from mock import patch, Mock
@@ -99,9 +99,8 @@ class JsonApiRequestTest(SimpleTestCase):
         JsonApiRequest.json_or_error should return a status code and JSON on success
         """
         with response_context() as response_mock:
-            status_code, data = JsonApiRequest.json_or_error(response_mock)
+            data = JsonApiRequest.json_or_error(response_mock)
 
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_json_or_error_raises_404(self):
@@ -111,10 +110,11 @@ class JsonApiRequestTest(SimpleTestCase):
         response_mock = Mock()
         response_mock.url = 'http://nowhere.example.com'
         response_mock.status_code = 404
+        response_mock.text = 'Where?'
 
         with self.assertRaisesMessage(
                 JsonApiError,
-                'API request to http://nowhere.example.com failed with HTTP status 404'):
+                'API request to http://nowhere.example.com failed with HTTP status 404: Where?'):
             JsonApiRequest.json_or_error(response_mock)
 
     def test_json_or_error_raises_500(self):
@@ -140,13 +140,12 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.get('ham/eggs')
+            data = request.get('ham/eggs')
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 headers={'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_post_calls_requests(self):
@@ -158,14 +157,13 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.post('ham/eggs', {'ham': True})
+            data = request.post('ham/eggs', {'ham': True})
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 '{"ham": true}',
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
     def test_put_calls_requests(self):
@@ -177,14 +175,13 @@ class JsonApiRequestTest(SimpleTestCase):
             requests_mock.return_value = response_mock
 
             request = JsonApiRequest('http://www.example.com', 'admin', 's3cr3t')
-            status_code, data = request.put('ham/eggs', {'ham': True})
+            data = request.put('ham/eggs', {'ham': True})
 
             requests_mock.assert_called_with(
                 'http://www.example.com/api/ham/eggs',
                 '{"ham": true}',
                 headers={'Content-type': 'application/json', 'Accept': 'application/json'},
                 auth=('admin', 's3cr3t'))
-            self.assertEqual(status_code, 200)
             self.assertEqual(data, {'spam': True})
 
 
@@ -199,7 +196,7 @@ class Dhis2ApiTest(SimpleTestCase):
             {'name': 'spam', 'id': 'c0ffee'},
         ]}
         dhis2_api = Dhis2Api('http://example.com/dhis', 'user', 'p4ssw0rd')
-        dhis2_api._request.get = Mock(return_value=('foo', te_attrs))
+        dhis2_api._request.get = Mock(return_value=te_attrs)
         keys_before = set(dhis2_api._tracked_entity_attributes.keys())
         dhis2_api._fetch_tracked_entity_attributes()
         keys_after = set(dhis2_api._tracked_entity_attributes.keys())
@@ -380,7 +377,7 @@ class TaskTest(SimpleTestCase):
         pass
 
     @skip('Fix mocks')
-    def test_sync_org_units_dict_comps(self):
+    def test_fetch_org_units_dict_comps(self):
         """
         sync_org_units should create dictionaries of CCHQ and DHIS2 org units
         """
@@ -391,14 +388,14 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [ou_dict])  # Generates org unit dicts
             objects_all_patch.side_effect = lambda: (o for o in [ou_obj])  # Generates org unit objects
 
-            sync_org_units()
+            fetch_org_units()
 
             gen_org_units_patch.assert_called()
             objects_all_patch.assert_called()
 
     # TODO: No point in running this test if Dhis2OrgUnit patch doesn't work -- nothing to assert
     @skip('Fix mocks')
-    def test_sync_org_units_adds(self):
+    def test_fetch_org_units_adds(self):
         """
         sync_org_units should add new org units
         """
@@ -410,13 +407,13 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [ou_dict])
             objects_all_patch.side_effect = lambda: (o for o in [])
 
-            sync_org_units()
+            fetch_org_units()
 
             org_unit_patch.__init__.assert_called_with(id='1', name='Sri Lanka')
             org_unit_patch.save.assert_called()
 
     @skip('Fix mocks')
-    def test_sync_org_units_deletes(self):
+    def test_fetch_org_units_deletes(self):
         """
         sync_org_units should delete old org units
         """
@@ -427,12 +424,12 @@ class TaskTest(SimpleTestCase):
             gen_org_units_patch.side_effect = lambda: (d for d in [])
             objects_all_patch.side_effect = lambda: (o for o in [ou_obj])
 
-            sync_org_units()
+            fetch_org_units()
 
             delete_mock.assert_called()
 
     @skip('Fix mocks')
-    def test_sync_cases(self):
+    def test_fetch_cases(self):
         with patch('custom.dhis2.tasks.get_children_only_theirs') as only_theirs_mock, \
                 patch('custom.dhis2.tasks.pull_child_entities') as pull_mock, \
                 patch('custom.dhis2.tasks.gen_children_only_ours') as only_ours_mock, \
@@ -442,7 +439,7 @@ class TaskTest(SimpleTestCase):
             only_theirs_mock.return_value = foo
             only_ours_mock.return_value = bar
 
-            sync_cases()
+            fetch_cases()
 
             only_theirs_mock.assert_called()
             pull_mock.assert_called_with(DOMAIN, foo)

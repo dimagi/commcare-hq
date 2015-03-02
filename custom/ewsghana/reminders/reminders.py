@@ -87,10 +87,10 @@ def second_soh_process_user(user, date, test=False):
         case_id=supply_point._id,
         last_modified_date__gte=date
     )
-
-    location_products = [product.product_id for product in user.location.sql_location.products]
-    reported_products = [stock_state.product_id for stock_state in stock_states]
-    missing_products = set(location_products) - set(reported_products)
+    products = user.location.sql_location.products
+    location_products_ids = [product.product_id for product in products]
+    reported_products_ids = [stock_state.product_id for stock_state in stock_states]
+    missing_products_ids = set(location_products_ids) - set(reported_products_ids)
     if user_has_reporting_location(user) and user_has_role(user, IN_CHARGE_ROLE):
         if user.get_verified_number():
             if not stock_states:
@@ -104,18 +104,23 @@ def second_soh_process_user(user, date, test=False):
                         user.get_verified_number(),
                         SECOND_STOCK_ON_HAND_REMINDER % {'name': user.name}
                     )
-            elif missing_products:
+            elif missing_products_ids:
+                products_names = [
+                    product.name
+                    for product in products
+                    if product.product_id in missing_products_ids
+                ]
                 if not test:
                     send_sms_to_verified_number(
                         user.get_verified_number(),
                         SECOND_INCOMPLETE_SOH_REMINDER %
-                        {'name': user.name, 'products': ", ".join(missing_products)}
+                        {'name': user.name, 'products': ", ".join(products_names)}
                     )
                 else:
                     send_test_message(
                         user.get_verified_number(),
                         SECOND_INCOMPLETE_SOH_REMINDER %
-                        {'name': user.name, 'products': ", ".join(missing_products)}
+                        {'name': user.name, 'products': ", ".join(products_names)}
                     )
 
 
@@ -167,7 +172,7 @@ def third_soh_process_users_and_facilities(users, facilities, test=False):
                                 'name': user.name,
                                 'facility': facility.name,
                                 'products': ", ".join([SQLProduct.objects.get(
-                                    product_id=product.product_id).name for product in missing_products])
+                                    product_id=product_id).name for product_id in missing_products])
                             }
                         )
                     else:
@@ -177,7 +182,7 @@ def third_soh_process_users_and_facilities(users, facilities, test=False):
                                 'name': user.name,
                                 'facility': facility.name,
                                 'products': ", ".join([SQLProduct.objects.get(
-                                    product_id=product.product_id).name for product in missing_products])
+                                    product_id=product_id).name for product_id in missing_products])
                             }
                         )
 

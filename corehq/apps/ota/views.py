@@ -59,12 +59,9 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
                             status=401)
 
     project = Domain.get_by_name(domain)
-    commtrack_settings = project.commtrack_settings
-    stock_settings = commtrack_settings.get_ota_restore_settings() if commtrack_settings else None
     restore_config = RestoreConfig(
         couch_user.to_casexml_user(), since, version, state,
         items=items,
-        stock_settings=stock_settings,
         domain=project,
         force_cache=force_cache,
         cache_timeout=cache_timeout,

@@ -1,0 +1,55 @@
+from django.test import TestCase
+import os
+from django.test.utils import override_settings
+from casexml.apps.case.xml import V3
+from couchforms.tests.testutils import post_xform_to_couch
+from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
+from casexml.apps.case import process_cases
+from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user
+
+
+@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+class OtaV3RestoreTest(TestCase):
+    """Tests OTA Restore v3"""
+
+    def setUp(self):
+        delete_all_cases()
+        delete_all_sync_logs()
+
+    def testUserRestoreWithCase(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        process_cases(form)
+
+        expected_case_block = """
+        <case case_id="asdf" date_modified="2010-06-29T13:42:50Z" user_id="foo"
+            xmlns="http://commcarehq.org/case/transaction/v2">
+            <create>
+                <case_type>test_case_type</case_type>
+                <case_name>test case name</case_name>
+                <owner_id>foo</owner_id>
+            </create>
+            <update>
+                <external_id>someexternal</external_id>
+            </update>
+        </case>"""
+
+        restore_payload = generate_restore_payload(
+            user=dummy_user(),
+            items=True,
+            version=V3
+        )
+        sync_log_id = SyncLog.view(
+            "phone/sync_logs_by_user",
+            include_docs=True,
+            reduce=False,
+        ).one().get_id
+        check_xml_line_by_line(
+            self,
+            dummy_restore_xml(sync_log_id, expected_case_block, items=4),
+            restore_payload
+        )

@@ -735,10 +735,12 @@ class SuiteGenerator(SuiteGeneratorBase):
           * Remove any autoselect items from the end of the stack frame.
           * Finally remove the last item from the stack frame.
         """
-        from corehq.apps.app_manager.models import WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE
+        from corehq.apps.app_manager.models import (
+            WORKFLOW_DEFAULT, WORKFLOW_PREVIOUS, WORKFLOW_MODULE, WORKFLOW_ROOT
+        )
 
-        def create_workflow_stack(suite, form_command, module_command, frame_children):
-            if not frame_children:
+        def create_workflow_stack(suite, form_command, module_command, frame_children, allow_empty_stack=False):
+            if not frame_children and not allow_empty_stack:
                 return
 
             entry = self.get_form_entry(suite, form_command)
@@ -764,6 +766,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     module_command = self.id_strings.menu(module)
 
                     frame_children = [module_command] if module_command != self.id_strings.ROOT else []
+                    if form.post_form_workflow == WORKFLOW_ROOT:
+                        create_workflow_stack(suite, form_command, module_command, [], True)
                     if form.post_form_workflow == WORKFLOW_MODULE:
                         create_workflow_stack(suite, form_command, module_command, frame_children)
                     elif form.post_form_workflow == WORKFLOW_PREVIOUS:
@@ -1099,7 +1103,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         with open(os.path.join(
                 os.path.dirname(__file__), "case_tile_templates", "tdh.txt"
         )) as f:
-            return f.read()
+            return f.read().decode('utf-8')
 
     def get_filter_xpath(self, module, delegation=False):
         filter = module.case_details.short.filter

@@ -13,7 +13,6 @@ from corehq.elastic import stream_es_query, ES_URLS
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from dimagi.utils.timezones import utils as tz_utils
 import pytz
-from corehq.apps.reports.tasks import export_all_rows_task
 from custom.bihar.utils import get_all_owner_ids_from_group
 
 
@@ -107,14 +106,6 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
         query = self.build_query(case_type=self.case_type, afilter=self.case_filter,
                                  status=self.case_status)
         return query
-
-    @property
-    @request_cache("export")
-    def export_response(self):
-        self.request.datespan = None
-        export_all_rows_task.delay(self.__class__, self.__getstate__())
-
-        return HttpResponse()
 
     @property
     def rows(self):

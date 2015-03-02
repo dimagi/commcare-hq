@@ -1,6 +1,7 @@
 import logging
 try:
     from .test_ota_restore import *
+    from .test_ota_restore_v3 import *
     from .test_state_hash import *
     from .test_sync_logs import *
     from .test_sync_mode import *
