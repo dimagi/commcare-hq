@@ -186,7 +186,7 @@ class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
 
 def _edit_report_shared(request, domain, config):
     if request.method == 'POST':
-        form = ConfigurableReportEditForm(domain, config, request.POST)
+        form = ConfigurableReportEditForm(domain, config, data=request.POST)
         if form.is_valid():
             form.save(commit=True)
             messages.success(request, _(u'Report "{}" saved!').format(config.title))
@@ -307,13 +307,13 @@ def create_form_data_source_from_app(request, domain):
 
 def _edit_data_source_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
-        form = ConfigurableDataSourceEditForm(domain, config, request.POST)
+        form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
 
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
     else:
-        form = ConfigurableDataSourceEditForm(domain, config, read_only=read_only)
+        form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)
     context.update({
         'form': form,

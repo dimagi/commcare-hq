@@ -54,8 +54,8 @@ class ConfigurableReportEditForm(DocumentFormBase):
     columns = JsonField(expected_type=list)
     configured_charts = JsonField(expected_type=list)
 
-    def __init__(self, domain, instance=None, *args, **kwargs):
-        super(ConfigurableReportEditForm, self).__init__(instance, *args, **kwargs)
+    def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
+        super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
         self.fields['config_id'] = ReportDataSourceField(domain=domain)
 
     def clean_visible(self):
