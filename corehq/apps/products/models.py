@@ -296,6 +296,9 @@ class SQLProduct(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    def __unicode__(self):
+        return u"{} ({})".format(self.name, self.domain)
+
     def __repr__(self):
         return "<SQLProduct(domain=%s, name=%s)>" % (
             self.domain,
