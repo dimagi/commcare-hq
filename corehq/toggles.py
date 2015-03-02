@@ -322,6 +322,11 @@ PRIME_RESTORE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+FORM_LINK_WORKFLOW = StaticToggle(
+    'form_link_workflow',
+    'Form linking workflow available on forms',
+)
+
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(

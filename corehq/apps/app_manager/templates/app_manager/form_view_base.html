@@ -188,15 +188,21 @@
                     labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
                     labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
                     labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
-                    labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
 
                     var options = {
                         locale: '{{ LANGUAGE_CODE }}',
                         labels: labels,
                         workflow: '{{ form.post_form_workflow }}',
-                        forms: {{ linkable_forms|JSON}},
-                        formLinks: {{ form.form_links|JSON }}
-                    }
+                    };
+                {% endif %}
+
+                {% if allow_form_workflow and request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+                    labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
+                    options.forms = {{ linkable_forms|JSON}}
+                    options.formLinks = {{ form.form_links|JSON }}
+                {% endif %}
+
+                {% if allow_form_workflow %}
                     ko.applyBindings(new FormWorkflow(options), $('#form-workflow').get(0))
                 {% endif %}
 

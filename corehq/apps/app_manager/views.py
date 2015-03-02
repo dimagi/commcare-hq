@@ -959,11 +959,16 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     if form:
         template, form_context = get_form_view_context_and_template(req, form, context['langs'], is_user_registration)
-        modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
         context.update({
             'case_properties': get_all_case_properties(app),
-            'linkable_forms': sum([list(m.get_forms()) for m in modules], [])
         })
+
+        if toggles.FORM_LINK_WORKFLOW.enabled(req.user.username):
+            modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
+            context.update({
+                'linkable_forms': sum([list(m.get_forms()) for m in modules], [])
+            })
+
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
@@ -1718,7 +1723,9 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.auto_gps_capture = req.POST['auto_gps_capture'] == 'true'
     if should_edit('no_vellum'):
         form.no_vellum = req.POST['no_vellum'] == 'true'
-    if should_edit("form_links_xpath_expressions") and should_edit("form_links_form_ids"):
+    if (should_edit("form_links_xpath_expressions") and
+            should_edit("form_links_form_ids") and
+            toggles.FORM_LINK_WORKFLOW.enabled(req.user.username)):
         form_links = zip(
             req.POST.getlist('form_links_xpath_expressions'),
             req.POST.getlist('form_links_form_ids')
