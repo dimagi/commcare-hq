@@ -1281,7 +1281,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(_(
+            raise NewSubscriptionError(unicode(_(
                 "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
                 "subscription %(start)s - %(end)s." % {
@@ -1289,7 +1289,7 @@ class Subscription(models.Model):
                     'start': date_start,
                     'end': date_end
                 }
-            ))
+            )))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start
