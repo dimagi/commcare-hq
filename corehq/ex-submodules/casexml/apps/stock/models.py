@@ -1,3 +1,4 @@
+import re
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -20,7 +21,7 @@ class TruncatingCharField(models.CharField):
 
 # http://south.aeracode.org/wiki/MyFieldsDontWork
 path = TruncatingCharField.__module__ + '.' + TruncatingCharField.__name__
-add_introspection_rules([], ["^{}".format(path.replace('.', '\.'))])
+add_introspection_rules([], ["^{}".format(re.escape(path))])
 
 
 class StockReport(models.Model):
