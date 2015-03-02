@@ -1,12 +1,13 @@
 from django.test import TestCase
 import os
+from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
 from couchforms.tests.testutils import post_xform_to_couch
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
 from casexml.apps.case import process_cases
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.restore import generate_restore_payload, StringRestoreResponse
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user
 
 
@@ -53,3 +54,48 @@ class OtaV3RestoreTest(TestCase):
             dummy_restore_xml(sync_log_id, expected_case_block, items=4),
             restore_payload
         )
+
+
+class TestRestoreResponse(SimpleTestCase):
+    def _expected(self, username, body, items=None):
+        items_text = ' items="{}"'.format(items) if items is not None else ''
+        return (
+            '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
+            '<message nature="ota_restore_success">Successfully restored account {username}!</message>'
+            '{body}'
+            '</OpenRosaResponse>'
+        ).format(
+            username=username,
+            body=body,
+            items=items_text
+        )
+
+    def test_no_items(self):
+        user = 'user1'
+        body = '<elem>data0</elem>'
+        expected = self._expected(user, body, items=None)
+        response = StringRestoreResponse(user, False)
+        response.append(body)
+        self.assertEqual(expected, str(response), '')
+
+    def test_items(self):
+        user = 'user1'
+        body = '<elem>data0</elem>'
+        expected = self._expected(user, body, items=2)
+        response = StringRestoreResponse(user, True)
+        response.append(body)
+        self.assertEqual(expected, str(response), '')
+
+    def test_add(self):
+        user = 'user1'
+        body1 = '<elem>data0</elem>'
+        body2 = '<elem>data1</elem>'
+        expected = self._expected(user, body1 + body2, items=3)
+        response1 = StringRestoreResponse(user, True)
+        response1.append(body1)
+
+        response2 = StringRestoreResponse(user, True)
+        response2.append(body2)
+
+        added = response1 + response2
+        self.assertEqual(expected, str(added))
