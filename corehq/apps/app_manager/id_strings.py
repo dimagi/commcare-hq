@@ -171,7 +171,7 @@ def detail(module, detail_type):
     return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
-def menu(module):
+def menu_id(module):
     put_in_root = getattr(module, 'put_in_root', False)
     if put_in_root:
         return ROOT
