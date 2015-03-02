@@ -73,6 +73,15 @@ class StringRestoreResponse(object):
         self.num_items = 0
         self.response_body = StringIO()
 
+    def close(self):
+        self.response_body.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     def append(self, xml_element):
         self.num_items += 1
         if isinstance(xml_element, basestring):
@@ -343,24 +352,26 @@ class RestoreConfig(object):
         # start with standard response
         batch_enabled = BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username)
         logger.debug('Batch restore enabled: %s', batch_enabled)
-        response = StringRestoreResponse(user.username, items=self.items)
+        with StringRestoreResponse(user.username, items=self.items) as response:
+            # add sync token info
+            response.append(xml.get_sync_element(synclog.get_id))
+            # registration block
+            response.append(xml.get_registration_element(user))
 
-        # add sync token info
-        response.append(xml.get_sync_element(synclog.get_id))
-        # registration block
-        response.append(xml.get_registration_element(user))
+            # fixture block
+            for fixture in generator.get_fixtures(user, self.version, last_sync):
+                response.append(fixture)
 
-        # fixture block
-        for fixture in generator.get_fixtures(user, self.version, last_sync):
-            response.append(fixture)
+            payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
+            case_response, self.num_batches = payload_fn(
+                self.domain, self.stock_settings, self.version, user, last_sync, synclog
+            )
+            combined_response = response + case_response
+            case_response.close()
 
-        payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
-        case_response, self.num_batches = payload_fn(
-            self.domain, self.stock_settings, self.version, user, last_sync, synclog
-        )
+            resp = str(combined_response)
+            combined_response.close()
 
-        response += case_response
-        resp = str(response)
         duration = datetime.utcnow() - start_time
         synclog.duration = duration.seconds
         synclog.save()
