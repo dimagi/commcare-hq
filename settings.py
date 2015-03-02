@@ -478,10 +478,6 @@ OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
 FIXTURE_GENERATORS = [
-    "corehq.apps.fixtures.fixturegenerators.hq_fixtures",
-]
-
-HQ_FIXTURE_GENERATORS = [
     # core
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",

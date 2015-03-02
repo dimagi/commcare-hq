@@ -1,5 +1,6 @@
 from casexml.apps.case.xml import V1
 from django.conf import settings
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.modules import to_function
 import itertools
 
@@ -38,8 +39,12 @@ class FixtureGenerator(object):
         """
         if version == V1: 
             return []  # V1 phones will never use or want fixtures
-        return itertools.chain(*[func(user, version, last_sync)
-                                 for func in self._generator_funcs])
+
+        if getattr(user, "_hq_user", False):
+            user = user._hq_user
+        if isinstance(user, CommCareUser):
+            return itertools.chain(*[func(user, version, last_sync)
+                                     for func in self._generator_funcs])
 
 
 generator = FixtureGenerator()
