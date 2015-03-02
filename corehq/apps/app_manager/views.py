@@ -1730,7 +1730,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
             req.POST.getlist('form_links_xpath_expressions'),
             req.POST.getlist('form_links_form_ids')
         )
-        form.form_links = [FormLink({ 'xpath': link[0], 'form_id': link[1] }) for link in form_links]
+        form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
 
     _handle_media_edits(req, form, should_edit, resp)
 

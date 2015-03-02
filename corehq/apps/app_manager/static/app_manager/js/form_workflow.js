@@ -1,5 +1,7 @@
-'use strict';
+/* global ko, _, $ */
+
 var FormWorkflow = function(options) {
+    'use strict';
     var self = this;
 
     // Human readable labels for the workflow types
@@ -16,12 +18,12 @@ var FormWorkflow = function(options) {
     /* Form linking */
     self.showFormLinkUI = ko.observable(self.workflow() === FormWorkflow.Values.FORM);
     self.forms = _.map(options.forms, function(f) {
-        return new FormWorkflow.Form(f, { locale: self.locale })
+        return new FormWorkflow.Form(f, { locale: self.locale });
     });
     self.formLinks = ko.observableArray(_.map(options.formLinks, function(link) {
         return new FormWorkflow.FormLink(link.xpath, link.form_id, { forms: self.forms });
     }));
-}
+};
 
 FormWorkflow.Values = {
     DEFAULT: 'default',
@@ -33,7 +35,7 @@ FormWorkflow.Values = {
 
 FormWorkflow.Errors = {
     FORM_NOTFOUND: 'This form either no longer exists or has a different case type',
-}
+};
 
 
 FormWorkflow.prototype.workflowDisplay = function() {
@@ -56,7 +58,7 @@ FormWorkflow.prototype.onWorkflowChange = function(workflow, event) {
 };
 
 FormWorkflow.prototype.onAddFormLink = function(workflow, event) {
-    this.formLinks.push(new FormWorkflow.FormLink())
+    this.formLinks.push(new FormWorkflow.FormLink());
 };
 
 FormWorkflow.prototype.onDestroyFormLink = function(formLink, event) {
@@ -71,15 +73,17 @@ FormWorkflow.prototype.displayUnknownForm = function(formLink) {
         return "Unknown form";
     }
     return;
-}
+};
 
 FormWorkflow.Form = function(form, options) {
+    'use strict';
     this.name = window.localize(form.name, options.locale);
     this.uniqueId = form.unique_id;
     this.locale = options.locale;
 };
 
 FormWorkflow.FormLink = function(xpath, formId, options) {
+    'use strict';
     var self = this;
     self.xpath = ko.observable(xpath);
     self.formId = ko.observable(formId);
