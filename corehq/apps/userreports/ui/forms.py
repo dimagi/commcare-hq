@@ -130,7 +130,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     def save(self, commit=False):
         self.instance.meta.build.finished = False
         self.instance.meta.build.initiated = None
-        super(ConfigurableDataSourceEditForm, self).save(commit)
+        return super(ConfigurableDataSourceEditForm, self).save(commit)
 
 
 class ConfigurableDataSourceFromAppForm(forms.Form):
