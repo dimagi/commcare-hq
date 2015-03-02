@@ -50,6 +50,9 @@ class UserPillow(AliasedElasticPillow):
         return self.calc_mapping_hash({"es_meta": self.es_meta,
                                        "mapping": self.default_mapping})
 
+    def get_unique_id(self):
+        return USER_INDEX
+
     def get_mapping_from_type(self, doc_dict):
         """
         Define mapping uniquely to the user_type document.

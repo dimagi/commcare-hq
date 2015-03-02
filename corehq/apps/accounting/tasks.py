@@ -48,6 +48,7 @@ def activate_subscriptions(based_on_date=None):
             _, _, upgraded_privs = get_change_status(None, subscription.plan_version)
             subscription.subscriber.apply_upgrades_and_downgrades(
                 upgraded_privileges=upgraded_privs,
+                new_subscription=subscription,
             )
 
 
@@ -60,16 +61,19 @@ def deactivate_subscriptions(based_on_date=None):
     for subscription in ending_subscriptions:
         subscription.is_active = False
         subscription.save()
-        if subscription.next_subscription and subscription.next_subscription.date_start == ending_date:
-            new_plan_version = subscription.next_subscription.plan_version
-            subscription.next_subscription.is_active = True
-            subscription.next_subscription.save()
+        next_subscription = subscription.next_subscription
+        if next_subscription and next_subscription.date_start == ending_date:
+            new_plan_version = next_subscription.plan_version
+            next_subscription.is_active = True
+            next_subscription.save()
         else:
             new_plan_version = None
         _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
         subscription.subscriber.apply_upgrades_and_downgrades(
             downgraded_privileges=downgraded_privs,
             upgraded_privileges=upgraded_privs,
+            old_subscription=subscription,
+            new_subscription=next_subscription,
         )
 
 

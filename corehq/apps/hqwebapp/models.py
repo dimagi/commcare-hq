@@ -1119,7 +1119,9 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import FeatureFlagsView, FeaturePreviewsView
+        from corehq.apps.domain.views import (FeatureFlagsView,
+                                              FeaturePreviewsView,
+                                              TransferDomainView)
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
@@ -1208,6 +1210,12 @@ class ProjectSettingsTab(UITab):
                 'title': _(FeaturePreviewsView.page_title),
                 'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
             })
+
+            if toggles.TRANSFER_DOMAIN.enabled(self.domain):
+                administration.append({
+                    'title': _(TransferDomainView.page_title),
+                    'url': reverse(TransferDomainView.urlname, args=[self.domain])
+                })
             items.append((_('Project Administration'), administration))
 
         from corehq.apps.users.models import WebUser

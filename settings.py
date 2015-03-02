@@ -28,10 +28,6 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
-# enables all plugins, including ones that haven't been released on production
-# yet
-VELLUM_PRERELEASE = False
-
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -61,6 +57,7 @@ LANGUAGES = (
     ('fr', 'French'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
+    ('sw', 'Swahili'),
 )
 
 SITE_ID = 1
@@ -462,6 +459,7 @@ DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
+SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'

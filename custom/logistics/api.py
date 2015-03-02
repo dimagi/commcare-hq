@@ -251,18 +251,19 @@ class APISynchronization(object):
         if user and user.language != logistics_sms_user.language:
             user.language = logistics_sms_user.language
             user.save()
-            if user.phone_numbers:
-                phone_number = user.phone_numbers[0]
-                user.set_default_phone_number(phone_number)
+
+        for phone_number in user.phone_numbers:
+            user.delete_phone_number(phone_number)
+
+        if logistics_sms_user.phone_numbers:
+            phone_number = logistics_sms_user.phone_numbers[0]
+            user.set_default_phone_number(phone_number)
+            try:
+                user.save_verified_number(self.domain, phone_number, True,
+                                          logistics_sms_user.backend)
+            except PhoneNumberInUseException:
                 v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-                if v:
+                if v.domain in domains:
                     v.delete()
-                try:
                     user.save_verified_number(self.domain, phone_number, True,
                                               logistics_sms_user.backend)
-                except PhoneNumberInUseException:
-                    v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-                    if v.domain in domains:
-                        v.delete()
-                        user.save_verified_number(self.domain, phone_number, True,
-                                                  logistics_sms_user.backend)

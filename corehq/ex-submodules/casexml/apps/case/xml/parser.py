@@ -102,7 +102,15 @@ class CaseActionBase(object):
                    const.CASE_TAG_OWNER_ID: "owner_id",
                    const.CASE_TAG_DATE_OPENED: "opened_on"}
         return cls._from_block_and_mapping(block, mapping)
-        
+
+class CaseNoopAction(CaseActionBase):
+    """
+    Form completed against case without updating any properties (empty case block)
+    """
+    action_type_slug = const.CASE_ACTION_UPDATE
+
+    def get_known_properties(self):
+        return {}
 
 class CaseCreateAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_CREATE
@@ -247,6 +255,9 @@ class CaseUpdate(object):
         if self.has_attachments():
             self.actions.append(ATTACHMENT_ACTION_FUNCTION_MAP[self.version](self.attachment_block))
 
+        if not self.actions:
+            self.actions.append(NOOP_ACTION_FUNCTION_MAP[self.version](self.raw_block))
+
     
     def creates_case(self):
         # creates have to have actual data in them so this is fine
@@ -343,6 +354,11 @@ class CaseUpdate(object):
 VERSION_FUNCTION_MAP = {
     V1: CaseUpdate.from_v1,
     V2: CaseUpdate.from_v2
+}
+
+NOOP_ACTION_FUNCTION_MAP = {
+    V1: CaseNoopAction.from_v1,
+    V2: CaseNoopAction.from_v2
 }
 
 CREATE_ACTION_FUNCTION_MAP = {

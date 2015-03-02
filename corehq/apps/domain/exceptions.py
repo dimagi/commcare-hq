@@ -1,0 +1,2 @@
+class InactiveTransferDomainException(Exception):
+    pass
