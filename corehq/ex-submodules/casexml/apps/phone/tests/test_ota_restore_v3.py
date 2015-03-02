@@ -76,7 +76,7 @@ class TestRestoreResponse(SimpleTestCase):
         expected = self._expected(user, body, items=None)
         with StringRestoreResponse(user, False) as response:
             response.append(body)
-            self.assertEqual(expected, str(response), '')
+            self.assertEqual(expected, str(response))
 
     def test_items(self):
         user = 'user1'
@@ -84,7 +84,7 @@ class TestRestoreResponse(SimpleTestCase):
         expected = self._expected(user, body, items=2)
         response = StringRestoreResponse(user, True)
         response.append(body)
-        self.assertEqual(expected, str(response), '')
+        self.assertEqual(expected, str(response))
 
     def test_add(self):
         user = 'user1'
