@@ -160,12 +160,11 @@ class TableCardDataGroupsFormatter(DataFormatter):
             range_groups[2].append(0)
             range_groups[3].append(0)
 
-        min_length = min([len(group) for group in rows_dict])
-
         for key, row in rows_dict.items():
-             for idx, practice in enumerate(row, 1):
-                if idx <= min_length:
-                    range_groups[self.group_level(practice)][idx] += 1
+            for idx, practice in enumerate(row, 1):
+                group = self.group_level(practice)
+                if idx < len(range_groups[group]):
+                    range_groups[group][idx] += 1
         all_rows = len(rows_dict)
 
         for group in range_groups:
