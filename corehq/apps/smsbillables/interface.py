@@ -35,6 +35,7 @@ class SMSBillablesInterface(GenericTabularReport):
     slug = "sms_billables"
     ajax_pagination = True
     exportable = True
+    exportable_all = True
     fields = [
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -153,6 +154,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
     description = "List of all SMS Gateway Fee Criteria"
     slug = "sms_gateway_fee_criteria"
     exportable = True
+    exportable_all = True
     fields = [
         'corehq.apps.smsbillables.interface.GatewayTypeFilter',
         'corehq.apps.smsbillables.interface.SpecificGateway',
