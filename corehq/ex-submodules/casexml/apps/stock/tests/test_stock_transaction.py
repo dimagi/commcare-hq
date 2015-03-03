@@ -7,7 +7,7 @@ from casexml.apps.stock.tests.mock_consumption import ago
 from casexml.apps.stock import const
 from corehq.apps.products.models import SQLProduct
 
-SUB_TYPE_MAX_LEN = 20
+SUB_TYPE_MAX_LEN = 40
 
 
 class StockTransactionTests(TestCase):
