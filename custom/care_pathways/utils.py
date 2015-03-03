@@ -147,29 +147,22 @@ class TableCardDataGroupsFormatter(DataFormatter):
             ['C'],
             ['D'],
         ]
-        rows_dict = dict()
-        for key, row in data.items():
-            formatted_row = self._format.format_row(row)
-            if not rows_dict.has_key(formatted_row[0]):
-                rows_dict[formatted_row[0]] = []
-            rows_dict[formatted_row[0]].append(formatted_row[1])
 
-        for i in xrange(0, len(rows_dict[rows_dict.keys()[0]])):
+        for i in xrange(0, len(data[0]) - 2):
             range_groups[0].append(0)
             range_groups[1].append(0)
             range_groups[2].append(0)
             range_groups[3].append(0)
 
-        for key, row in rows_dict.items():
-            for idx, practice in enumerate(row, 1):
+        for row in data:
+            for idx, practice in enumerate(row[2:], 1):
                 group = self.group_level(practice)
-                if idx < len(range_groups[group]):
+                if idx < len(row) - 1:
                     range_groups[group][idx] += 1
-        all_rows = len(rows_dict)
 
         for group in range_groups:
             for idx, row in enumerate(group[1:], 1):
-                percent = 100 * float(group[idx]) / float(all_rows)
+                percent = 100 * float(group[idx]) / float(len(data))
                 group[idx] = "%.2f%%" % percent
         return range_groups
 
