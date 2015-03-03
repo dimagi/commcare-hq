@@ -496,6 +496,9 @@ class XForm(WrappedNode):
             self.namespaces.update(x="{%s}" % xmlns)
         self.has_casedb = False
 
+    def __str__(self):
+        return ET.tostring(self.xml) if self.xml is not None else ''
+
     def validate(self, version='1.0'):
         validate_xform(ET.tostring(self.xml) if self.xml is not None else '',
                        version=version)
