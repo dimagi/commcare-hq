@@ -1,5 +1,6 @@
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest
 
+
 class ReceiptsTest(EWSScriptTest):
 
     def test_receipts(self):

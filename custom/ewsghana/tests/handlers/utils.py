@@ -1,7 +1,6 @@
 import datetime
 from couchdbkit.exceptions import ResourceNotFound
 from couchforms.models import XFormInstance
-from decimal import Decimal
 from corehq import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState

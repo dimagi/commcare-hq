@@ -20,7 +20,7 @@ class UndoHandler(KeywordHandler):
             stock_transaction.quantity = st.quantity
             stock_transaction.save()
             st.delete()
-            
+
         self.respond(
             "Success. Your previous report has been removed. It was: %(report)s",
             report=sp)

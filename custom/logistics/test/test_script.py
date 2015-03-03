@@ -73,4 +73,3 @@ class TestParser(TestScript):
             'direction': '>',
             'text': 'test3'
         })
-

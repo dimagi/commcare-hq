@@ -1,8 +1,6 @@
 import re
 from custom.ewsghana.handlers.receipts import ReceiptsHandler
-from custom.ewsghana.handlers.registration import RegistrationHandler
 from custom.ewsghana.handlers.requisition import RequisitionHandler
-from custom.ewsghana.handlers.undo import UndoHandler
 from custom.ewsghana.handlers.alerts import AlertsHandler
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler

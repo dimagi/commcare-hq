@@ -23,4 +23,5 @@ STOCKOUTS_MESSAGE = _('these items are stocked out: %(products)s.')
 REORDER_MESSAGE = _('Please order %s.')
 LOW_SUPPLY_MESSAGE = _('these items need to be reordered: %(low_supply)s.')
 OVERSTOCKED_MESSAGE = _('these items are overstocked: %(overstocked)s. The district admin has been informed.')
-RECEIPT_MESSAGE = _('Dear %(username)s, thank you for reporting the commodities you have. You received %(received)s.')
+RECEIPT_MESSAGE = _('Dear %(username)s, thank you for reporting the commodities you have. '
+                    'You received %(received)s.')

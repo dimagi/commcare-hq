@@ -9,7 +9,7 @@ from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS,\
     REPORT_REMINDER, WEB_REMINDER, URGENT_NON_REPORTING, URGENT_STOCKOUT, COMPLETE_REPORT, INCOMPLETE_REPORT, \
-    STOCKOUTS_MESSAGE, REORDER_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
+    STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
 from django.core.mail import send_mail
 from custom.ewsghana.utils import ProductsReportHelper
 import settings
@@ -313,11 +313,10 @@ def send_message_to_admins(user, message):
         include_docs=True
     ).all()
     in_charge_users = [
-        user
-        for user in users
-        if user.get_verified_number() and user.user_data.get('role') == "In Charge"
+        u
+        for u in users
+        if u.get_verified_number() and u.user_data.get('role') == "In Charge"
     ]
     for in_charge_user in in_charge_users:
         send_sms_to_verified_number(in_charge_user.get_verified_number(),
                                     message % (in_charge_user.username, in_charge_user.location.name))
-

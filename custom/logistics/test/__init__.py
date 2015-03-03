@@ -1,1 +1,1 @@
-from .test_script import TestParser
+from .test_script import *
