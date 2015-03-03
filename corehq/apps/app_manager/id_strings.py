@@ -182,10 +182,10 @@ def menu_id(module):
 
 def menu_root(module):
     put_in_root = getattr(module, 'put_in_root', False)
-    if put_in_root:
-        return ROOT
+    if not put_in_root and getattr(module, 'root_module', False):
+        return menu_id(module.root_module)
     else:
-        return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
+        return None
 
 
 def form_command(form):

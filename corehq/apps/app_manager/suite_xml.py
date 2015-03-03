@@ -1614,13 +1614,16 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ])
                 menus.append(update_menu)
             else:
-                menu = Menu(
-                    id=self.id_strings.menu_id(module),
-                    root=self.id_strings.menu_root(module),
-                    locale_id=self.id_strings.module_locale(module),
-                    media_image=module.media_image,
-                    media_audio=module.media_audio,
-                )
+                menu_kwargs = {
+                    'id': self.id_strings.menu_id(module),
+                    'root': self.id_strings.menu_root(module),
+                    'locale_id': self.id_strings.module_locale(module),
+                    'media_image': module.media_image,
+                    'media_audio': module.media_audio,
+                }
+                if self.id_strings.menu_root(module):
+                    menu_kwargs['root'] = self.id_strings.menu_root(module)
+                menu = Menu(**menu_kwargs)
 
                 def get_commands():
                     for form in module.get_forms():
