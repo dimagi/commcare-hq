@@ -12,6 +12,12 @@
     </resource>
 </xform>
 <xform>
+    <resource id="register_case_form" version="1">
+      <location authority="local">./modules-1/forms-0.xml</location>
+      <location authority="remote">./modules-1/forms-0.xml</location>
+    </resource>
+</xform>
+<xform>
     <resource descriptor="User Registration Form" id="b8a611e9ddbaba25131574b235d66eeb02ba3f41" version="1">
         <location authority="local">./user_registration.xml</location>
         <location authority="remote">./user_registration.xml</location>
@@ -170,6 +176,19 @@
             </text>
         </template>
     </field>
+    <action>
+        <display>
+            <text><locale id="case_list_form.m0"/></text>
+            <media image="jr://file/commcare/image/new_case.png" audio="jr://file/commcare/audio/new_case.mp3"/>
+        </display>
+        <stack>
+            <push>
+                <command value="'m1-f0'"/>
+                <datum id="case_id" value="uuid()"/>
+                <datum id="return_to" value="'m0'"/>
+            </push>
+        </stack>
+    </action>
 </detail>
 <detail id="m0_case_long">
     <title>
@@ -281,6 +300,44 @@
         </template>
     </field>
 </detail>
+<detail id="m1_case_short">
+    <title>
+      <text>
+        <locale id="m1.case_short.title"/>
+      </text>
+    </title>
+    <field sort="default">
+      <header>
+        <text>
+          <locale id="m1.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_case_long">
+    <title>
+      <text>
+        <locale id="m1.case_long.title"/>
+      </text>
+    </title>
+    <field sort="default">
+      <header>
+        <text>
+          <locale id="m1.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+</detail>
 <entry>
     <form>http://openrosa.org/formdesigner/0260EE34-0345-490B-A1ED-B32361750D36</form>
     <command id="m0-f0">
@@ -302,11 +359,38 @@
         <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='suite_test'][@status='open'][(filter = 'danny')]" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
     </session>
 </entry>
+<entry>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <session>
+        <datum id="case_id" function="uuid()"/>
+    </session>
+    <stack>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) &gt; 0">
+            <command value="instance('commcaresession')/session/data/return_to"/>
+            <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+        </create>
+        <create if="count(instance('commcaresession')/session/data/return_to) = 1 and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+            <command value="instance('commcaresession')/session/data/return_to"/>
+        </create>
+    </stack>
+</entry>
 <menu id="m0">
     <text>
         <locale id="modules.m0"/>
     </text>
     <command id="m0-f0"/>
     <command id="m0-f1"/>
+</menu>
+<menu id="m1">
+    <text>
+      <locale id="modules.m1"/>
+    </text>
+    <command id="m1-f0"/>
 </menu>
 </suite>

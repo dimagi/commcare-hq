@@ -41,9 +41,10 @@ def html_trans(name, langs=["default"]):
 def html_name(name):
     return mark_safe(name or EMPTY_LABEL)
 
-@register.filter
-def input_trans(name, langs=["default"]):
-    template='<input type="text" name="name" value="%(value)s" placeholder="%(placeholder)s" />'
+
+@register.simple_tag
+def input_trans(name, langs=["default"], input_name='name'):
+    template = '<input type="text" name="{}" value="%(value)s" placeholder="%(placeholder)s" />'.format(input_name)
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
@@ -54,7 +55,8 @@ def input_trans(name, langs=["default"]):
     default = "Untitled"
     if 'en' in name:
         default = name['en']
-    return template % {"value": "", "placeholder": default }
+    return mark_safe(template % {"value": "", "placeholder": default})
+
 
 @register.filter
 def clean_trans(name, langs=["default"]):
