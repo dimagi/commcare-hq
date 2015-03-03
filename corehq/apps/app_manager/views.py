@@ -2894,7 +2894,7 @@ def download_bulk_app_translations(request, domain, app_id):
             ("Module", module_string) +
             tuple(module.name.get(lang, "") for lang in app.langs) +
             tuple(module.case_label.get(lang, "") for lang in app.langs) +
-            (module.media_audio, module.media_image, module.unique_id)
+            (module.media_image, module.media_audio, module.unique_id)
         )
         rows["Modules_and_forms"].append(row_data)
 
@@ -2962,7 +2962,7 @@ def download_bulk_app_translations(request, domain, app_id):
                 ("Form", form_string) +
                 tuple(form.name.get(lang, "") for lang in app.langs) +
                 tuple("" for lang in app.langs) +
-                (form.media_audio, form.media_image, form.unique_id)
+                (form.media_image, form.media_audio, form.unique_id)
             )
 
             # Add form to the first street
