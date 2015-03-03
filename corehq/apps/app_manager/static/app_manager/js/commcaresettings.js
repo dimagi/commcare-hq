@@ -382,6 +382,9 @@ CommcareSettings.widgets.image_uploader = function (self) {
     self.slug = "hq_" + self.id;
     self.href = "#" + self.slug;
     self.path = getPathFromSlug(self.slug);
+    self.url = urlFromLogo(self.slug);
+    self.thumb_url = thumbUrlFromLogo(self.slug);
+
     self.is_uploader = function(slug) {
         return slug == self.slug;
     };
@@ -390,6 +393,9 @@ CommcareSettings.widgets.image_uploader = function (self) {
     };
     self.triggerUpload = function() {
         triggerUploadForLogo(self.slug);
+    };
+    self.removeLogo = function() {
+        removeLogo(self.slug);
     };
 };
 

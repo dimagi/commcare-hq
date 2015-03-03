@@ -89,6 +89,12 @@
             image_refs[slug].upload_controller = HQMediaUploaders[slug];
             image_refs[slug].setObjReference(media_info[slug]);
         }
+        function urlFromLogo(slug) {
+            return image_refs[slug].url;
+        }
+        function thumbUrlFromLogo(slug) {
+            return image_refs[slug].thumb_url;
+        }
         function triggerUploadForLogo(slug) {
             if(image_refs[slug]) {
                 image_refs[slug].triggerUpload();
@@ -101,6 +107,19 @@
         }
         function getPathFromSlug(slug) {
             return image_refs[slug].path;
+        }
+        function removeLogo(slug) {
+            $.post(
+                '{% url "hqmedia_remove_logo" domain app.id %}',
+                {
+                    logo_slug: slug
+                },
+                function(data, status) {
+                    if(status == 'success'){
+                        image_refs[slug].url("");
+                    }
+                }
+            );
         }
     </script>
     <script>

@@ -228,13 +228,14 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
 class ProductSelectionPane(EWSData):
     slug = 'product_selection_pane'
     show_table = True
-    title = 'Product Selection Pane'
+    title = 'Select Products'
 
     @property
     def rows(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations)
-        result = [['<input value=\"{0}\" type=\"checkbox\">{1} ({0})</input>'.format(p.code, p.name)]
+        result = [['<input value=\"{0}\" type=\"checkbox\" checked=\"checked\">{1} ({0})</input>'.format(p.code,
+                                                                                                         p.name)]
                   for p in products]
         result.append(['<button id=\"selection_pane_apply\" class=\"filters btn\">Apply</button>'])
         return result
