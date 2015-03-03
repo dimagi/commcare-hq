@@ -14,8 +14,7 @@
                 <div class="control-group">
                     <select name="post_form_workflow" data-bind="
                         optstr: workflowOptions(),
-                        value: workflow,
-                        event: { change: onWorkflowChange }
+                        value: workflow
                         "></select>
                 </div>
 
@@ -34,9 +33,7 @@
                         ">
                     </div>
                     <button class="btn btn-primary" data-bind="
-                        event: {
-                            click: onAddFormLink
-                        }
+                        click: onAddFormLink
                         ">
                         {% trans "Add link" %}
                     </button>
@@ -68,7 +65,7 @@
                 value: formLink.formId
                 "></select>
             <button class="btn btn-danger" data-bind="
-                event: { click: $parent.onDestroyFormLink.bind($parent) }
+                click: $parent.onDestroyFormLink.bind($parent)
                 ">
                 <i class="icon-trash"></i>
             </button>
@@ -76,17 +73,12 @@
                 visible: formLink.errors().length
                 ">
                 <ul data-bind="
-                    template: {
-                        name: 'form-link-error-template',
                         foreach: formLink.errors(),
-                        as: 'error'
-                    }
-                "></ul>
+                ">
+                    <li data-bind="text: $data"></li>
+                </ul>
             </div>
 
         </div>
-    </script>
-    <script type="text/html" id="form-link-error-template">
-        <li data-bind="text: error"></li>
     </script>
 {% endif %}
