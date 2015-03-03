@@ -22,3 +22,4 @@ class NotDeliveredHandler(KeywordHandler):
                                          status_type=status_type,
                                          status_value=SupplyPointStatusValues.NOT_RECEIVED,
                                          status_date=datetime.utcnow())
+        return True

@@ -19,3 +19,4 @@ class LanguageHandler(KeywordHandler):
                 self.respond(LANGUAGE_CONFIRM, language=name)
                 return
         self.respond(LANGUAGE_UNKNOWN, language=language)
+        return True

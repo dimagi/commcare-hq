@@ -16,3 +16,4 @@ class NotSubmittedHandler(KeywordHandler):
                                          status_type=SupplyPointStatusTypes.R_AND_R_FACILITY,
                                          status_value=SupplyPointStatusValues.NOT_SUBMITTED,
                                          status_date=datetime.utcnow())
+        return True

@@ -9,8 +9,6 @@ from corehq.apps.sms.util import strip_plus
 class TestScript(TestCase):
 
     def get_last_outbound_sms(self, doc_type, contact_id):
-        # Not clear why this should be necessary, but without it the latest
-        # sms may not be returned
         sms = SMSLog.view("sms/by_recipient",
                           startkey=[doc_type, contact_id, "SMSLog", "O", {}],
                           endkey=[doc_type, contact_id, "SMSLog", "O"],
@@ -41,8 +39,8 @@ class TestScript(TestCase):
         commands = self.parse_script(script)
         for command in commands:
             phone_number = command['phone_number']
+            v = VerifiedNumber.by_phone(phone_number)
             if command['direction'] == '>':
-                v = VerifiedNumber.by_phone(phone_number)
                 incoming(phone_number, command['text'], v.backend_id, domain_scope=v.domain)
             else:
                 msg = self.get_last_outbound_sms(v.owner_doc_type, v.owner_id)
