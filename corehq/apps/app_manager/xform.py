@@ -385,6 +385,10 @@ class CaseBlock(object):
         for key, value in updates.items():
             if key == 'name':
                 key = 'case_name'
+            elif key.startswith('user:'):
+                # Skip usercase keys. They are handled by the usercase block.
+                # cf. _get_usercase_updates()
+                continue
             if self.is_attachment(value):
                 attachments[key] = value
             else:

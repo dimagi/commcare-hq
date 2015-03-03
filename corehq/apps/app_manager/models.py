@@ -3054,7 +3054,7 @@ def validate_lang(lang):
 
 def validate_property(property):
     # this regex is also copied in propertyList.ejs
-    if not re.match(r'^[a-zA-Z][\w_-]*(/[a-zA-Z][\w_-]*)*$', property):
+    if not re.match(r'^[a-zA-Z][\w_-]*([/:][a-zA-Z][\w_-]*)*$', property):
         raise ValueError("Invalid Property")
 
 
