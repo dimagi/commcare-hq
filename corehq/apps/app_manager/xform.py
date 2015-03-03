@@ -475,6 +475,13 @@ def validate_xform(source, version='1.0'):
         )
 
 
+def _get_usercase_updates(update):
+    """
+    Return usercase updates from update
+    """
+    return {k[5:]: update[k] for k in update.keys() if k.startswith('user:')}
+
+
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -904,10 +911,12 @@ class XForm(WrappedNode):
             self.add_case_and_meta_1(form)
         else:
             self.create_casexml_2(form)
+            self.add_usercase(form)
             self.add_meta_2(form)
 
     def add_case_and_meta_advanced(self, form):
         self.create_casexml_2_advanced(form)
+        self.add_usercase(form)
         self.add_meta_2(form)
 
     def already_has_meta(self):
@@ -918,6 +927,22 @@ class XForm(WrappedNode):
                 meta_blocks.add(meta)
 
         return meta_blocks
+
+    def add_usercase(self, form):
+        actions = form.active_actions()
+        if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
+            updates = _get_usercase_updates(actions['update_case'].update)
+            if not updates:
+                # There are no usercase updates. Don't bother adding the usercase block
+                return
+
+            usercase_block = _make_elem('{x}usercase')
+            case_block = CaseBlock(self, 'usercase/')
+            # self.add_case_updates(case_block, updates)
+            # We only have one case, so we can use case_block.add_update_block instead of self.add_case_updates
+            case_block.add_update_block(updates)
+            usercase_block.append(case_block.elem)
+            self.data_node.append(usercase_block)
 
     def add_meta_2(self, form):
         case_parent = self.data_node
