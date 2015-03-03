@@ -15,7 +15,7 @@
         isEmailable: {{ report.is_emailable|JSON }},
         emailDefaultSubject: {{ report.title|JSON }},
         emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
-        emailErrorMessage: "{% trans 'An error occurred emailing you report. Please try again.' %}",
+        emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
 
         {% if request.datespan %}
             datespan: {
