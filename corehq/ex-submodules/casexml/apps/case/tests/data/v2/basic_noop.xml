@@ -1,0 +1,7 @@
+<?xml version='1.0' ?>
+<form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms"
+	xmlns="http://openrosa.org/case/test/create">
+	<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="foo-case-id"
+		user_id="bar-user-id" date_modified="2011-12-07T13:44:50">
+	</case>
+</form>

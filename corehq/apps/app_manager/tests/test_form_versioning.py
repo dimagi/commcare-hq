@@ -1,4 +1,4 @@
-from django.test.testcases import TestCase
+from django.test.testcases import TestCase, SimpleTestCase
 from corehq.apps.app_manager import suite_xml
 from corehq.apps.app_manager.models import Application, Module, Form, import_app
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
@@ -111,3 +111,22 @@ class FormVersioningTest(TestCase):
             etree.fromstring(build.fetch_attachment('files/suite.xml').encode('utf-8'))
         )
         return [r.version for r in suite.xform_resources]
+
+
+class FormIdTest(SimpleTestCase):
+
+    def test_update_form_references(self):
+        app = Application.new_app('domain', 'Foo', '2.0')
+        app.modules.append(Module(forms=[Form()]))
+        app.modules.append(Module(forms=[Form()]))
+        app.build_spec = BuildSpec.from_string('2.7.0/latest')
+        app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
+        app.get_module(1).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
+
+        original_form_id = app.get_module(1).get_form(0).unique_id
+        app.get_module(0).case_list_form.form_id = original_form_id
+
+        copy = Application.from_source(app.export_json(dump_json=False), 'domain')
+        new_form_id = copy.get_module(1).get_form(0).unique_id
+        self.assertNotEqual(original_form_id, new_form_id)
+        self.assertEqual(new_form_id, copy.get_module(0).case_list_form.form_id)

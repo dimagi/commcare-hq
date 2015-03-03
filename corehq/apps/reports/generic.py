@@ -1,15 +1,17 @@
 from StringIO import StringIO
 import datetime
 import re
+import pytz
+import json
+
 from celery.utils.log import get_task_logger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
-import json
 from django.template.loader import render_to_string
 from django.shortcuts import render
 
-import pytz
+from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -609,9 +611,13 @@ class GenericReportView(CacheableRequestMixIn):
         Intention: Not to be overridden in general.
         Returns the tabular export of the data, if available.
         """
-        temp = StringIO()
-        export_from_tables(self.export_table, temp, self.export_format)
-        return export_response(temp, self.export_format, self.export_name)
+        if self.exportable_all:
+            export_all_rows_task.delay(self.__class__, self.__getstate__())
+            return HttpResponse()
+        else:
+            temp = StringIO()
+            export_from_tables(self.export_table, temp, self.export_format)
+            return export_response(temp, self.export_format, self.export_name)
 
     @property
     @request_cache("raw")

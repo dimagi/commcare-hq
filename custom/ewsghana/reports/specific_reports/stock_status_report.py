@@ -1,6 +1,7 @@
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
@@ -347,6 +348,8 @@ class StockStatus(MultiReport):
 
         table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
+        for row in rows:
+            row[0] = GenericTabularReport._strip_tags(row[0])
         replace = ''
 
         for k, v in enumerate(table[0]):

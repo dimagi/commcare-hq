@@ -1,5 +1,6 @@
 from django.test import TestCase
 from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
@@ -117,6 +118,8 @@ class CommTrackTest(TestCase):
         # might as well clean house before doing anything
         delete_all_xforms()
         delete_all_cases()
+        delete_all_sync_logs()
+
         StockReport.objects.all().delete()
         StockTransaction.objects.all().delete()
 

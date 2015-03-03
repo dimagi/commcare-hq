@@ -6,17 +6,6 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.modules import to_function
 
 
-def hq_fixtures(user, version, last_sync=None):
-    if hasattr(user, "_hq_user") and user._hq_user is not None:
-        user = user._hq_user
-    if isinstance(user, CommCareUser):
-        for func_path in settings.HQ_FIXTURE_GENERATORS:
-            func = to_function(func_path)
-            if func:
-                for fixture in func(user, version, last_sync):
-                    yield fixture
-
-
 def item_lists(user, version, last_sync=None):
     assert isinstance(user, CommCareUser)
 

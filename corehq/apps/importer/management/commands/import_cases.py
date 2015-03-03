@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from django.core.management import BaseCommand, CommandError
+from dimagi.utils.web import json_handler
 from corehq.apps.importer.tasks import do_import
 from corehq.apps.importer.util import ImporterConfig, ExcelFile
 from corehq.apps.users.models import WebUser
@@ -29,5 +30,6 @@ class Command(BaseCommand):
 
         config.couch_user_id = user._id
         spreadsheet = ExcelFile(export_file, True)
-        print json.dumps(do_import(spreadsheet, config, domain))
+        print json.dumps(do_import(spreadsheet, config, domain),
+                         default=json_handler)
         print 'finished in %s seconds' % (datetime.now() - start).seconds

@@ -13,7 +13,6 @@ from corehq.apps.reminders.views import (
 )
 
 urlpatterns = patterns('corehq.apps.reminders.views',
-    url(r'^all/$', 'list_reminders', name='list_reminders'),
     url(r'^list/$', RemindersListView.as_view(), name=RemindersListView.urlname),
     url(r'^delete/(?P<handler_id>[\w-]+)/$', 'delete_reminder', name='delete_reminder'),
     url(r'^scheduled/', 'scheduled_reminders', name='scheduled_reminders'),

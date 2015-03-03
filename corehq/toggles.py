@@ -215,11 +215,17 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DOUBLE_MANAGEMENT = StaticToggle(
+    'double_management',
+    'Case list actions a.k.a. double management',
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
+)
+
 BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    0.1
+    0.25
 )
 
 SPLIT_MULTISELECT_EXPORT = StaticToggle(
@@ -270,6 +276,11 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+DOCUMENTATION_FILE = StaticToggle(
+    'documentation_file',
+    "Allows users to optionally add a supporting documentation file to explain exchange applications",
+)
+
 ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     'allow_case_attachments_view',
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
@@ -299,6 +310,12 @@ BULK_ARCHIVE_FORMS = StaticToggle(
     'Bulk archive forms with excel',
 )
 
+TRANSFER_DOMAIN = StaticToggle(
+    'transfer_domain',
+    'Transfer domains to different users',
+    [NAMESPACE_DOMAIN]
+)
+
 DHIS2_DOMAIN = StaticToggle(
     'dhis2_domain',
     'Enable DHIS2 integration for this domain',
@@ -313,13 +330,15 @@ PRIME_RESTORE = StaticToggle(
 
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
-VELLUM_HELP_TEXT = StaticToggle(
-    'add_help_text',
-    "Adds a help text in the form builder"
-)
-
 VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
     'transaction_question_types',
     "Adds transaction-related question types in the form builder",
+    [NAMESPACE_DOMAIN]
+)
+
+VELLUM_ITEMSETS = StaticToggle(
+    'itemsets',
+    "Adds dynamic (itemset) select and multi-select question types to the "
+    "form builder",
     [NAMESPACE_DOMAIN]
 )

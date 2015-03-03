@@ -2,6 +2,7 @@ import copy
 from urllib import unquote
 import rawes
 from django.conf import settings
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
@@ -52,6 +53,7 @@ ES_URLS = {
     "groups": GROUP_INDEX + '/group/_search',
     "sms": SMS_INDEX + '/sms/_search',
     "report_cases": REPORT_CASE_INDEX + '/report_case/_search',
+    "report_xforms": REPORT_XFORM_INDEX + '/report_xform/_search',
 }
 
 ADD_TO_ES_FILTER = {
