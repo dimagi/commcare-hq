@@ -37,7 +37,7 @@
 
 <script type="text/html" id="case-config:case-properties:question">
     <input class="input-large" type="hidden" data-bind="
-        questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats()),
+        questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
         optionsCaption: ' ',
         edit: $root.edit"
