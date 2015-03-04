@@ -56,6 +56,7 @@ branches:
   - project-settings-update # sravan 1/30
   - report-builder # Noah 2/16
   - upgrade-celery # SK 2/27
+  - balance-icon # Daniel 3/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
