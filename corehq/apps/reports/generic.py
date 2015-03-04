@@ -88,7 +88,7 @@ class GenericReportView(CacheableRequestMixIn):
     printable = False
 
     exportable = False
-    exportable_all = False
+    exportable_all = False  # also requires overriding self.get_all_rows
     mobile_enabled = False
     export_format_override = None
     icon = None
