@@ -122,9 +122,22 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 }
             }
         }, self.named_filter_objects)
+        case_id_indicator = IndicatorFactory.from_spec({
+            "column_id": "case_id",
+            "type": "raw",
+            "display_name": "case id",
+            "datatype": "string",
+            "property_path": [
+                "form",
+                "case",
+                "@case_id",
+            ],
+            "is_nullable": True,
+            "is_primary_key": False,
+        }, self.named_filter_objects)
         return CompoundIndicator(
             self.display_name,
-            [doc_id_indicator] + [
+            [doc_id_indicator] + ([case_id_indicator] if self.referenced_doc_type == "XFormInstance" else []) + [
                 IndicatorFactory.from_spec(indicator, self.named_filter_objects)
                 for indicator in self.configured_indicators
             ]

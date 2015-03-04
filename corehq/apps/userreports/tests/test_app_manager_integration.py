@@ -77,3 +77,19 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
         data_source = data_sources['http://openrosa.org/formdesigner/AF6F83BA-09A9-4773-9177-AB51EA6CF802']
         for indicator in data_source.configured_indicators:
             self.assertIsNotNone(indicator)
+
+        expected_columns = [
+            "doc_id",
+            "case_id",
+            "name",
+            "category_bug",
+            "category_feature",
+            "category_support",
+            "category_schedule",
+            "priority",
+            "starred",
+            "estimate",
+            "date_question",
+        ]
+        for col in data_source.get_columns():
+            self.assertIn(col.id, expected_columns)
