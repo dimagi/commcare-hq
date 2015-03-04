@@ -335,6 +335,12 @@ class ModuleAsChildTest(SuiteTest):
         self.module_1.root_module_id = self.module_0.unique_id
         XML = """
         <partial>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+          </menu>
           <menu root="m0" id="m1">
             <text>
               <locale id="modules.m1"/>
@@ -343,7 +349,7 @@ class ModuleAsChildTest(SuiteTest):
           </menu>
         </partial>
         """
-        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[2]")
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
     def test_advanced_module_after_test2(self):
         # make module_1 as submenu to module_0
@@ -352,7 +358,13 @@ class ModuleAsChildTest(SuiteTest):
 
         XML = """
         <partial>
-          <menu id="root">
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+          </menu>
+          <menu id="m0">
             <text>
               <locale id="modules.m1"/>
             </text>
@@ -360,7 +372,7 @@ class ModuleAsChildTest(SuiteTest):
           </menu>
         </partial>
         """
-        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[2]")
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
     def test_advanced_deleted_parent(self):
         self.module_1.root_module_id = self.module_0.unique_id
