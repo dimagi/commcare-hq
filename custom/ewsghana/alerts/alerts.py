@@ -7,13 +7,14 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
-from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS,\
+from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS, \
     REPORT_REMINDER, WEB_REMINDER, URGENT_NON_REPORTING, URGENT_STOCKOUT, COMPLETE_REPORT, INCOMPLETE_REPORT, \
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
 from django.core.mail import send_mail
 from custom.ewsghana.utils import ProductsReportHelper
 import settings
 from custom.ewsghana.models import EWSGhanaConfig
+from django.utils.translation import ugettext as _
 
 
 def send_alert(transactions, sp, user, message):
@@ -250,7 +251,6 @@ def stock_alerts(transactions, user):
     products_below = report_helper.low_supply()
     stockouts = report_helper.stockouts()
     overstocked = report_helper.overstocked()
-    # amount_to_reorder = report_helper.reorders()
     receipts = report_helper.receipts()
     message = ""
     super_message = ""
@@ -259,31 +259,20 @@ def stock_alerts(transactions, user):
         products_codes_str = ' '.join([stockout.sql_product.code for stockout in stockouts])
         products_names_str = ' '.join([stockout.sql_product.name for stockout in stockouts])
         message += " " + STOCKOUTS_MESSAGE % {'products': products_codes_str}
-        super_message = "stockouts %s; " % products_names_str
+        super_message = _("stockouts %s; ") % products_names_str
 
     if products_below:
         products_codes_str = ' '.join([product.sql_product.code for product in products_below])
         products_names_str = ' '.join([product.sql_product.name for product in products_below])
         message += " " + LOW_SUPPLY_MESSAGE % {'low_supply': products_codes_str}
-        super_message += "below reorder level %s; " % products_names_str
-
-    # if (stockouts or products_below) and amount_to_reorder:
-    #     reorder_str = ', '.join(
-    #         [
-    #             ('%s %s' % (product_code, amount))
-    #             for product_code, amount in amount_to_reorder
-    #             if amount
-    #         ]
-    #     )
-    #     if reorder_str:
-    #         message += " " + REORDER_MESSAGE % reorder_str
+        super_message += _("below reorder level %s; ") % products_names_str
 
     if overstocked:
         if not message:
             products_codes_str = ' '.join([overstock.sql_product.code for overstock in overstocked])
             message += " " + OVERSTOCKED_MESSAGE % {'username': user.username, 'overstocked': products_codes_str}
         products_names_str = ' '.join([overstock.sql_product.name for overstock in overstocked])
-        super_message += "overstocked %s; " % products_names_str
+        super_message += _("overstocked %s; ") % products_names_str
 
     if not message:
         if not receipts:
@@ -297,10 +286,11 @@ def stock_alerts(transactions, user):
             )
             message = RECEIPT_MESSAGE % {'username': user.username, 'received': products_str}
     else:
-        message = ('Dear %s,' % user.username) + message
+        message = (_('Dear %s,') % user.username) + message
 
     if super_message:
-        super_message = 'Dear %s, %s is experiencing the following problems: ' + super_message.strip().strip(';')
+        stripped_message = super_message.strip().strip(';')
+        super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
         send_message_to_admins(user, super_message)
     send_sms_to_verified_number(user.get_verified_number(), message)
 
