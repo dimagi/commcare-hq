@@ -1487,9 +1487,15 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
-        if not module.put_in_root and should_edit("root_module_id"):
-            # validate the module_id and raise error if not found
-            module["root_module_id"] = req.POST.get("root_module_id")
+        if should_edit("root_module_id"):
+            if not req.POST.get("root_module_id"):
+                module["root_module_id"] = None
+            else:
+                try:
+                    app.get_module(module_id)
+                    module["root_module_id"] = req.POST.get("root_module_id")
+                except ModuleNotFoundException:
+                    messages.error(_("Unknown Module"))
 
     _handle_media_edits(req, module, should_edit, resp)
 
