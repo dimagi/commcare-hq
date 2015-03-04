@@ -3728,8 +3728,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             module_errors.append({'type': 'root cycle'})
 
         module_ids = set([m.unique_id for m in self.get_modules()])
-        root_ids = set([_root_module_fn(m) for m in self.get_modules()])
-        if root_ids.issubset(module_ids):
+        root_ids = set([_root_module_fn(m) for m in self.get_modules() if _root_module_fn(m) is not None])
+        if not root_ids.issubset(module_ids):
             module_errors.append({'type': 'unknown root'})
         return module_errors
 
