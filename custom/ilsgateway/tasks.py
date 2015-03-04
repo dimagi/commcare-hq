@@ -93,8 +93,7 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                 offset=offset,
                 filters=dict(supply_point=supply_point, last_modified__gte=date)
             )
-            # todo: kkrampa shouldn't we wait to save the checkpoint until after we've processed all the data?
-            # otherwise seems like we would miss things
+            # set the checkpoint right before the data we are about to process
             save_stock_data_checkpoint(checkpoint,
                                        'product_stock',
                                        meta.get('limit') or limit,
@@ -156,7 +155,7 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                                                                                    date__gte=date,
                                                                                    order_by='date')))
 
-            # todo: kkrampa, shouldn't we wait to save the checkpoint until after we've processed all the data?
+            # set the checkpoint right before the data we are about to process
             save_stock_data_checkpoint(checkpoint,
                                        'stock_transaction',
                                        meta.get('limit') or limit,
@@ -227,7 +226,7 @@ def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit
             filters=dict(supply_point=facility, status_date__gte=date),
             facility=facility
         )
-        # todo: kkrampa, shouldn't we wait to save the checkpoint until after we've processed all the data?
+        # set the checkpoint right before the data we are about to process
         save_stock_data_checkpoint(checkpoint,
                                    'supply_point_status',
                                    meta.get('limit') or limit,
@@ -260,7 +259,7 @@ def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, lim
                                                                                       report_date__gte=date),
                                                                          facility=facility)
 
-        # todo: kkrampa, shouldn't we wait to save the checkpoint until after we've processed all the data?
+        # set the checkpoint right before the data we are about to process
         save_stock_data_checkpoint(checkpoint,
                                    'delivery_group',
                                    meta.get('limit') or limit,

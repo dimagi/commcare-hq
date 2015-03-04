@@ -238,6 +238,11 @@ class ILSGatewayAPI(APISynchronization):
             location.save()
 
             # todo: shouldn't this only be creating supply points for objects just at the facility level?
+            # explanation: There are some sms users in ILS that are assigned to non-facility locations.
+            # In HQ when we assign location to user supply point is automatically created.
+            # That's reason why I'm creating supply point for all locations. Not sure how it should be solved.
+            # note: I think we can now assign users to locations without making a supply point so am
+            # hoping this can get changed.
             if not SupplyPointCase.get_by_location(location):
                 SupplyPointCase.create_from_location(self.domain, location)
         else:
@@ -268,7 +273,7 @@ class ILSGatewayAPI(APISynchronization):
             while counter != 5:
                 try:
                     # todo: we may be able to avoid this call by passing the groups in as part of the original
-                    # location dict
+                    # location dict, though that may introduce slowness/timeouts
                     location_object = self.endpoint.get_location(
                         ilsgateway_location.id,
                         params=dict(with_historical_groups=1)

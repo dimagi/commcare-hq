@@ -70,7 +70,7 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
         )
         limit = 100
         offset = 0
-        # todo: kkrampa why is this here?
+        # todo: see if we can avoid modifying the list of facilities in place
         if idx == 0:
             facilities = facilities_copy
     save_stock_data_checkpoint(checkpoint, 'product_stock', 100, 0, start_date, None, False)
