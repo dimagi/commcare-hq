@@ -342,3 +342,10 @@ VELLUM_ITEMSETS = StaticToggle(
     "form builder",
     [NAMESPACE_DOMAIN]
 )
+
+CACHE_AND_INDEX = StaticToggle(
+    'cache_and_index',
+    'Enable the "Cache and Index" format option when choosing sort properties '
+    'in the app builder',
+    [NAMESPACE_DOMAIN],
+)

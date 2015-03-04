@@ -624,8 +624,8 @@ def get_detail_column_infos(detail, include_sort):
         sort_elements = get_default_sort_elements(detail)
 
     # order is 1-indexed
-    sort_elements = dict((s.field, (s, i + 1))
-                         for i, s in enumerate(sort_elements))
+    sort_elements = {s.field: (s, i + 1)
+                     for i, s in enumerate(sort_elements)}
     columns = []
     for column in detail.get_columns():
         sort_element, order = sort_elements.pop(column.field, (None, None))

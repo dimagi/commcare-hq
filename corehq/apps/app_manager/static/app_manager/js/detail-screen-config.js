@@ -110,7 +110,8 @@ var SortRow = function(params){
 
     self.ascendText = ko.computed(function () {
         var type = self.type();
-        if (type === 'plain') {
+        // This is here for the CACHE_AND_INDEX feature
+        if (type === 'plain' || type === 'index') {
             return 'Increasing (a, b, c)';
         } else if (type === 'date') {
             return 'Increasing (May 1st, May 2nd)';
@@ -123,7 +124,7 @@ var SortRow = function(params){
 
     self.descendText = ko.computed(function () {
         var type = self.type();
-        if (type === 'plain') {
+        if (type === 'plain' || type === 'index') {
             return 'Decreasing (c, b, a)';
         } else if (type === 'date') {
             return 'Decreasing (May 2nd, May 1st)'
