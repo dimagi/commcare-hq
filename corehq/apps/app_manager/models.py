@@ -3678,14 +3678,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
-        if self._has_parent_child_selection_cycle({m.unique_id:m for m in self.get_modules()}):
+        modules_dict = {m.unique_id: m for m in self.get_modules()}
+
+        def _parent_select_fn(module):
+            if hasattr(module, 'parent_select') and module.parent_select.active:
+                return module.parent_select.module_id
+
+        if self._has_parent_child_selection_cycle(modules_dict, _parent_select_fn):
             errors.append({'type': 'parent cycle'})
+
+        errors.extend(self._child_module_errors(modules_dict))
 
         if not errors:
             errors = super(Application, self).validate_app()
         return errors
 
-    def _has_parent_child_selection_cycle(self, modules):
+    def _has_parent_child_selection_cycle(self, modules, parent_id_fn):
         """
         :param modules: A mapping of module unique_ids to Module objects
         :return: True if there is a cycle in the parent-child selection graph
@@ -3699,10 +3707,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     return False
                 return True
             visited.add(m.id)
-            if hasattr(m, 'parent_select') and m.parent_select.active:
-                parent = modules.get(m.parent_select.module_id, None)
-                if parent != None and cycle_helper(parent):
-                    return True
+            parent = modules.get(parent_id_fn(m), None)
+            if parent is not None and cycle_helper(parent):
+                return True
             completed.add(m.id)
             return False
         for module in modules.values():
@@ -3710,6 +3717,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 return True
         return False
 
+    def _child_module_errors(self, modules_dict):
+        module_errors = []
+
+        def _root_module_fn(module):
+            if hasattr(module, 'root_module_id'):
+                return module.root_module_id
+
+        if self._has_parent_child_selection_cycle(modules_dict, _root_module_fn):
+            module_errors.append({'type': 'root cycle'})
+
+        module_ids = set([m.unique_id for m in self.get_modules()])
+        root_ids = set([_root_module_fn(m) for m in self.get_modules()])
+        if root_ids.issubset(module_ids):
+            module_errors.append({'type': 'unknown root'})
+        return module_errors
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
