@@ -317,6 +317,67 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
 
+class ModuleAsChildTest(SuiteTest):
+
+    def __init__(self, args, **kwargs):
+        self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        self.module_0 = self.app.add_module(AdvancedModule.new_module('parent', None))
+        self.module_0.unique_id = 'm1'
+        self.module_1 = self.app.add_module(AdvancedModule.new_module("Untitled Module", None))
+        self.module_1.unique_id = 'm2'
+
+        for m_id in range(2):
+            self.app.new_form(m_id, "Form", None)
+        super(ModuleAsChildTest, self).__init__(args, **kwargs)
+
+    def test_advanced_module_after_test1(self):
+        # make module_1 as submenu to module_0
+        self.module_1.root_module_id = self.module_0.unique_id
+        XML = """
+        <partial>
+          <menu root="m0" id="m1">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[2]")
+
+    def test_advanced_module_after_test2(self):
+        # make module_1 as submenu to module_0
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_1.put_in_root = True
+
+        XML = """
+        <partial>
+          <menu id="root">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu[2]")
+
+    def test_advanced_deleted_parent(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        # delete parent module
+        self.app.delete_module('m0')
+        # assert that create_suite raises a validation exception
+
+    def test_advanced_circular_relation(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.root_module_id = self.module_1.unique_id
+        # detect circular reference and raise validation exception
+
+    def test_advance_case_dependence(self):
+        # test correct, incorrect case-management dependencies
+        self.module_1.root_module_id = self.module_0.unique_id
+
+
 class RegexTest(SimpleTestCase):
 
     def testRegex(self):
