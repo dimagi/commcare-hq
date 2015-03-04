@@ -25,5 +25,5 @@ class ILSArrivedTest(ILSTestScript):
         msg = """
            5551234 > arrived loc1
            5551234 < {0}
-        """.format(ARRIVED_KNOWN % {'facility': self.loc.name})
+        """.format(ARRIVED_KNOWN % {'facility': self.loc1.name})
         self.run_script(msg)

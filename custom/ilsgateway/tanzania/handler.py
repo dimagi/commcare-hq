@@ -71,7 +71,6 @@ def handle(verified_contact, text, msg=None):
 
     if handler:
         if args:
-            handler.handle()
+            return handler.handle()
         else:
-            handler.help()
-    return False
+            return handler.help()

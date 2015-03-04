@@ -5,16 +5,17 @@ from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
     DeliveryGroupReport
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
-from custom.ilsgateway.tanzania.reminders import SUBMITTED_NOTIFICATION_MSD
+from custom.ilsgateway.tanzania.reminders import SUBMITTED_NOTIFICATION_MSD, SUBMITTED_CONFIRM, \
+    SUBMITTED_REMINDER_DISTRICT
 
 
 class RandrHandler(KeywordHandler):
 
     def handle(self):
-        self._handle()
+        return self._handle()
 
     def help(self):
-        self._handle(help=True)
+        return self._handle(help=True)
 
     def _send_submission_alert_to_msd(self, params):
         users = filter(lambda u: u.user_data.get('role', None) == 'MSD', CommCareUser.by_domain(self.domain))
@@ -27,9 +28,12 @@ class RandrHandler(KeywordHandler):
         status_type = None
         if location['location'].location_type == 'FACILITY':
             status_type = SupplyPointStatusTypes.R_AND_R_FACILITY
+            self.respond(SUBMITTED_CONFIRM % {"sp_name":location['location'].name,
+                                              "contact_name":self.user.name})
         elif location['location'].location_type == 'DISTRICT':
             if help:
                 quantities = [0, 0, 0]
+                self.respond(SUBMITTED_REMINDER_DISTRICT)
             else:
                 quantities = [self.args[1], self.args[3], self.args[5]]
                 DeliveryGroupReport.objects.create(
@@ -47,6 +51,9 @@ class RandrHandler(KeywordHandler):
                     quantity=quantities[2],
                     message=self.msg._id,
                     delivery_group="C")
+                self.respond(SUBMITTED_CONFIRM % {"sp_name": location['case'].name,
+                                                  "contact_name": self.user.first_name + " " + self.user.last_name
+                })
             status_type = SupplyPointStatusTypes.R_AND_R_DISTRICT
             params = {
                 'district_name': location['case'].name,
@@ -59,3 +66,5 @@ class RandrHandler(KeywordHandler):
                                          status_type=status_type,
                                          status_value=SupplyPointStatusValues.SUBMITTED,
                                          status_date=datetime.utcnow())
+        return True
+

@@ -46,6 +46,7 @@ class TestScript(TestCase):
                 msg = self.get_last_outbound_sms(v.owner_doc_type, v.owner_id)
                 self.assertEqual(msg.text, command['text'])
                 self.assertEqual(strip_plus(msg.phone_number), strip_plus(phone_number))
+                msg.delete()
 
 
 class TestParser(TestScript):

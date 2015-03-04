@@ -21,9 +21,13 @@ SOH_HELP_MESSAGE = _("To report stock on hand, send SOH [space] [product code] [
 SOH_THANK_YOU = _("Thank you for reporting your stock on hand this month")
 
 SUPERVISION_HELP = _("Supervision reminders will come monthly, and you can respond 'supervision yes' if you have received supervision or 'supervision no' if you have not")
+SUPERVISION_CONFIRM_NO = 'You have reported that you have not yet received supervision this month.'
+SUPERVISION_CONFIRM_YES = 'Thank you for reporting that you have received supervision this month.'
 SUPERVISION_REMINDER = _("Have you received supervision this month? Please reply 'supervision yes' or 'supervision no'")
 SUBMITTED_REMINDER_FACILITY = _("Have you sent in your R&R form yet for this quarter? Please reply \"submitted\" or \"not submitted\"")
 SUBMITTED_REMINDER_DISTRICT= _("How many R&R forms have you submitted to MSD? Reply with 'submitted A <number of R&Rs submitted for group A> B <number of R&Rs submitted for group B>'")
+
+NOT_DELIVERED_CONFIRM = "You have reported that you haven't yet received your delivery."
 
 DELIVERY_CONFIRM_DISTRICT = _("Thank you %(contact_name)s for reporting your delivery for %(facility_name)s")
 DELIVERY_PARTIAL_CONFIRM = _("To record a delivery, respond with \"delivered product amount product amount...\"")
@@ -31,7 +35,10 @@ DELIVERY_REMINDER_FACILITY = _("Did you receive your delivery yet? Please reply 
 DELIVERY_REMINDER_DISTRICT = _("Did you receive your delivery yet? Please reply 'delivered' or 'not delivered'")
 DELIVERY_LATE_DISTRICT = _("Facility deliveries for group %(group_name)s (out of %(group_total)d): %(not_responded_count)d haven't responded and %(not_received_count)d have reported not receiving. See ilsgateway.com")
 
+NOT_SUBMITTED_CONFIRM = "You have reported that you haven't yet sent in your R&R."
+
 SUBMITTED_NOTIFICATION_MSD = _("%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for Group A, %(group_b)s for Group B, %(group_c)s for Group C")
+SUBMITTED_CONFIRM = "Thank you %(contact_name)s for submitting your R and R form for %(sp_name)s"
 DELIVERY_CONFIRM_CHILDREN = _("District %(district_name)s has reported that they sent their R&R forms to MSD")
 
 ARRIVED_HELP = _("To report an arrival, please send 'arrived <MSD code>'.")
