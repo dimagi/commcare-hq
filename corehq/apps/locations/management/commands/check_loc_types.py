@@ -26,7 +26,7 @@ def _forms_by_domain(domain):
     return res[0].get('value', 0) if res else 0
 
 
-def _locs_by_domain(domain):
+def locs_by_domain(domain):
     res = Location.view(
         'locations/by_name',
         startkey=[domain],
@@ -151,7 +151,7 @@ class Command(BaseCommand):
                 domain_info.num_stock_states = _stock_states_by_domain(domain_obj.name)
                 domain_info.is_test = domain_obj.is_test == u'true'
                 domain_info.num_forms = _forms_by_domain(domain_obj.name)
-                domain_info.num_locations = _locs_by_domain(domain_obj.name)
+                domain_info.num_locations = locs_by_domain(domain_obj.name)
                 domains.append(domain_info)
 
         self._write_to_csv(headers, domains)
