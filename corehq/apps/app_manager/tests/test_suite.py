@@ -317,7 +317,8 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
 
-class ModuleAsChildTest(SuiteTest):
+class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
+    "TODO - Add Case-dependency tests"
 
     def __init__(self, args, **kwargs):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
@@ -330,7 +331,7 @@ class ModuleAsChildTest(SuiteTest):
             self.app.new_form(m_id, "Form", None)
         super(ModuleAsChildTest, self).__init__(args, **kwargs)
 
-    def test_advanced_module_after_test1(self):
+    def test_basic_workflow(self):
         # make module_1 as submenu to module_0
         self.module_1.root_module_id = self.module_0.unique_id
         XML = """
@@ -351,7 +352,7 @@ class ModuleAsChildTest(SuiteTest):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
-    def test_advanced_module_after_test2(self):
+    def test_workflow_with_put_in_root(self):
         # make module_1 as submenu to module_0
         self.module_1.root_module_id = self.module_0.unique_id
         self.module_1.put_in_root = True
@@ -374,20 +375,23 @@ class ModuleAsChildTest(SuiteTest):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
-    def test_advanced_deleted_parent(self):
-        self.module_1.root_module_id = self.module_0.unique_id
-        # delete parent module
-        self.app.delete_module('m0')
-        # assert that create_suite raises a validation exception
+    def test_deleted_parent(self):
+        self.module_1.root_module_id = "unknownmodule"
 
-    def test_advanced_circular_relation(self):
+        cycle_error = {
+            'type': 'unknown root',
+        }
+        errors = self.app.validate_app()
+        self.assertIn(cycle_error, errors)
+
+    def test_circular_relation(self):
         self.module_1.root_module_id = self.module_0.unique_id
         self.module_0.root_module_id = self.module_1.unique_id
-        # detect circular reference and raise validation exception
-
-    def test_advance_case_dependence(self):
-        # test correct, incorrect case-management dependencies
-        self.module_1.root_module_id = self.module_0.unique_id
+        cycle_error = {
+            'type': 'root cycle',
+        }
+        errors = self.app.validate_app()
+        self.assertIn(cycle_error, errors)
 
 
 class RegexTest(SimpleTestCase):
