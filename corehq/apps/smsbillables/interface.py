@@ -87,7 +87,13 @@ class SMSBillablesInterface(GenericTabularReport):
                     'name': DomainFilter.slug,
                     'value': DomainFilter.get_value(self.request, self.domain)
                 },
-        ]
+            ]
+
+    @property
+    def get_all_rows(self):
+        query = self.sms_billables
+        query = query.order_by(self.sort_field)
+        return self._format_billables(query)
 
     @property
     def total_records(self):
@@ -100,6 +106,10 @@ class SMSBillablesInterface(GenericTabularReport):
         query = query.order_by(self.sort_field)
 
         sms_billables = query[self.pagination.start:(self.pagination.start + self.pagination.count)]
+        return self._format_billables(sms_billables)
+
+
+    def _format_billables(self, sms_billables):
         return [
             [
                 sms_billable.date_sent,
