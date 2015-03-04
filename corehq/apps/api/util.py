@@ -12,8 +12,11 @@ def get_object_or_not_exist(cls, doc_id, domain, additional_doc_types=None):
     doc_type = getattr(cls, '_doc_type', cls.__name__)
     additional_doc_types.append(doc_type)
     try:
-        doc = cls.get(doc_id)
-        if doc and doc.domain == domain and doc.doc_type in additional_doc_types:
+        doc_json = cls.get_db().get(doc_id)
+        if doc_json['doc_type'] not in additional_doc_types:
+            raise ResourceNotFound
+        doc = cls.wrap(doc_json)
+        if doc and doc.domain == domain:
             return doc
     except ResourceNotFound:
         pass # covered by the below
