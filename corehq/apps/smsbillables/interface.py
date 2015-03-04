@@ -87,7 +87,7 @@ class SMSBillablesInterface(GenericTabularReport):
                     'name': DomainFilter.slug,
                     'value': DomainFilter.get_value(self.request, self.domain)
                 },
-            ]
+        ]
 
     @property
     def get_all_rows(self):
@@ -107,7 +107,6 @@ class SMSBillablesInterface(GenericTabularReport):
 
         sms_billables = query[self.pagination.start:(self.pagination.start + self.pagination.count)]
         return self._format_billables(sms_billables)
-
 
     def _format_billables(self, sms_billables):
         return [

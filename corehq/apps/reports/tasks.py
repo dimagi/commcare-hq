@@ -229,8 +229,13 @@ def _send_email(user, report, hash_id):
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
 
-    send_HTML_email(_(title) % report.name, user.get_email(), _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
-                    email_from=settings.DEFAULT_FROM_EMAIL)
+    send_HTML_email(
+        _(title) % report.name,
+        user.get_email(),
+        _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
+        email_from=settings.DEFAULT_FROM_EMAIL
+    )
+
 
 def _store_excel_in_redis(file):
     hash_id = uuid.uuid4().hex
