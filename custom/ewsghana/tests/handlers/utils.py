@@ -103,6 +103,5 @@ class EWSScriptTest(TestScript):
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
         Location.by_site_code(TEST_DOMAIN, 'garms').delete()
-        SQLLocation.objects.all().delete()
         generator.delete_all_subscriptions()
         Domain.get_by_name(TEST_DOMAIN).delete()
