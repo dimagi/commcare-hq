@@ -173,6 +173,10 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
         )
 
     @property
+    def get_all_rows(self):
+        return self.rows
+
+    @property
     def rows(self):
         rows = []
         for criteria in self.sms_gateway_fee_criteria:
