@@ -4,10 +4,10 @@ from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_KNOWN, AR
 
 
 class ArrivedHandler(KeywordHandler):
-    
+
     def help(self):
         return self.handle()
-    
+
     def handle(self):
         if not self.args:
             self.respond(ARRIVED_HELP)

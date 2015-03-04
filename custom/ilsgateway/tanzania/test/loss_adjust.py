@@ -4,10 +4,10 @@ from custom.ilsgateway.tanzania.test.utils import ILSTestScript
 
 
 class ILSLossesAdjustmentsTest(ILSTestScript):
-        
+
     def setUp(self):
         super(ILSLossesAdjustmentsTest, self).setUp()
-        
+
     def test_losses_adjustments(self):
 
         script = """

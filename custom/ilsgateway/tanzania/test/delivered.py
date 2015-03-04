@@ -10,7 +10,7 @@ class ILSDeliveredTest(ILSTestScript):
     def setUp(self):
         super(ILSDeliveredTest, self).setUp()
 
-    def testDeliveryFacilityReceivedNoQuantitiesReported(self):
+    def test_delivery_facility_received_no_quantities_reported(self):
 
         script = """
             5551234 > delivered
@@ -25,7 +25,7 @@ class ILSDeliveredTest(ILSTestScript):
         self.assertEqual(SupplyPointStatusValues.RECEIVED, sps.status_value)
         self.assertEqual(SupplyPointStatusTypes.DELIVERY_FACILITY, sps.status_type)
 
-    def testDeliveryFacilityReceivedQuantitiesReported(self):
+    def test_delivery_facility_received_quantities_reported(self):
 
         script = """
             5551234 > delivered jd 400 mc 569
@@ -37,7 +37,7 @@ class ILSDeliveredTest(ILSTestScript):
             self.assertEqual(self.loc1.linked_supply_point().get_id, ps.case_id)
             self.assertTrue(0 != ps.stock_on_hand)
 
-    def testDeliveryFacilityNotReceived(self):
+    def test_delivery_facility_not_received(self):
 
         script = """
             5551234 > sijapokea
@@ -47,12 +47,12 @@ class ILSDeliveredTest(ILSTestScript):
 
         sp = self.loc1.linked_supply_point()
         sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
-                                         status_type="del_fac").order_by("-status_date")[0]
+                                               status_type="del_fac").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.NOT_RECEIVED, sps.status_value)
         self.assertEqual(SupplyPointStatusTypes.DELIVERY_FACILITY, sps.status_type)
 
-    def testDeliveryDistrictReceived(self):
+    def test_delivery_district_received(self):
 
         script = """
           555 > nimepokea
@@ -68,12 +68,12 @@ class ILSDeliveredTest(ILSTestScript):
 
         sp = self.dis.linked_supply_point()
         sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
-                                         status_type="del_dist").order_by("-status_date")[0]
+                                               status_type="del_dist").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.RECEIVED, sps.status_value)
         self.assertEqual(SupplyPointStatusTypes.DELIVERY_DISTRICT, sps.status_type)
 
-    def testDeliveryDistrictNotReceived(self):
+    def test_delivery_district_not_received(self):
 
         script = """
           555 > sijapokea
@@ -83,8 +83,7 @@ class ILSDeliveredTest(ILSTestScript):
 
         sp = self.dis.linked_supply_point()
         sps = SupplyPointStatus.objects.filter(supply_point=sp.get_id,
-                                         status_type="del_dist").order_by("-status_date")[0]
+                                               status_type="del_dist").order_by("-status_date")[0]
 
         self.assertEqual(SupplyPointStatusValues.NOT_RECEIVED, sps.status_value)
         self.assertEqual(SupplyPointStatusTypes.DELIVERY_DISTRICT, sps.status_type)
-

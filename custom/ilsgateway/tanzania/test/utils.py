@@ -103,10 +103,9 @@ def prepare_domain(domain_name):
         domain, edition=SoftwarePlanEdition.ADVANCED
     )
     commtrack = domain.commtrack_settings
-    commtrack.actions.append(CommtrackActionConfig(
-            action='receipts',
-            keyword='delivered',
-            caption='Delivered')
+    commtrack.actions.append(CommtrackActionConfig(action='receipts',
+                                                   keyword='delivered',
+                                                   caption='Delivered')
     )
     commtrack.save()
     subscription = Subscription.new_domain_subscription(

@@ -14,7 +14,8 @@ class DeliveredHandler(KeywordHandler):
         users = filter(lambda u: u.location_id in locs, CommCareUser.by_domain(self.domain))
         for user in users:
             if user.get_verified_number():
-                send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN % {"district_name": sp_name})
+                send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN %
+                                            {"district_name": sp_name})
 
     def handle(self):
         location = get_location(self.domain, self.user, None)

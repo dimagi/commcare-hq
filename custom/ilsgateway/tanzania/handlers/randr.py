@@ -28,8 +28,8 @@ class RandrHandler(KeywordHandler):
         status_type = None
         if location['location'].location_type == 'FACILITY':
             status_type = SupplyPointStatusTypes.R_AND_R_FACILITY
-            self.respond(SUBMITTED_CONFIRM % {"sp_name":location['location'].name,
-                                              "contact_name":self.user.name})
+            self.respond(SUBMITTED_CONFIRM % {"sp_name": location['location'].name,
+                                              "contact_name": self.user.name})
         elif location['location'].location_type == 'DISTRICT':
             if help:
                 quantities = [0, 0, 0]
@@ -51,9 +51,10 @@ class RandrHandler(KeywordHandler):
                     quantity=quantities[2],
                     message=self.msg._id,
                     delivery_group="C")
-                self.respond(SUBMITTED_CONFIRM % {"sp_name": location['case'].name,
-                                                  "contact_name": self.user.first_name + " " + self.user.last_name
-                })
+                self.respond(SUBMITTED_CONFIRM % {
+                    "sp_name": location['case'].name,
+                    "contact_name": self.user.first_name + " " + self.user.last_name}
+                )
             status_type = SupplyPointStatusTypes.R_AND_R_DISTRICT
             params = {
                 'district_name': location['case'].name,
@@ -67,4 +68,3 @@ class RandrHandler(KeywordHandler):
                                          status_value=SupplyPointStatusValues.SUBMITTED,
                                          status_date=datetime.utcnow())
         return True
-

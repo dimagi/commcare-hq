@@ -3,7 +3,7 @@ from custom.ilsgateway.tanzania.test.utils import ILSTestScript
 
 
 class TestYes(ILSTestScript):
-    
+
     def test_yes(self):
         script = """
           5551234 > ndio

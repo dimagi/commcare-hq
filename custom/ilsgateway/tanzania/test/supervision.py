@@ -3,7 +3,7 @@ from custom.ilsgateway.tanzania.test.utils import ILSTestScript
 
 
 class TestSupervision(ILSTestScript):
-    
+
     def test_supervision_yes(self):
 
         script = """

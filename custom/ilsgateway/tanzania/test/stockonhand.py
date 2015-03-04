@@ -4,10 +4,10 @@ from django.utils.translation import ugettext as _
 
 
 class ILSSoHTest(ILSTestScript):
-        
+
     def setUp(self):
         super(ILSSoHTest, self).setUp()
-        
+
     def test_losses_adjustments(self):
 
         script = """
