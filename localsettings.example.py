@@ -156,22 +156,6 @@ MAPS_LAYERS = {
     },
 }
 
-####### Django Extensions #######
-# These things will be imported when you run ./manage.py shell_plus
-SHELL_PLUS_POST_IMPORTS = (
-    # Models
-    ('corehq.apps.domain.models', 'Domain'),
-    ('corehq.apps.groups.models', 'Group'),
-    ('corehq.apps.locations', 'Location'),
-    ('corehq.apps.users.models', ('CommCareUser', 'CommCareCase')),
-    ('couchforms.models', 'XFormInstance'),
-
-    # Data querying utils
-    ('dimagi.utils.couch.database', 'get_db'),
-    ('corehq.apps.sofabed.models', ('FormData', 'CaseData')),
-    ('corehq.apps.es', '*'),
-)
-
 FORMTRANSLATE_TIMEOUT = 5
 LOCAL_APPS = (
 #    'django_coverage', # Adds `python manage.py test_coverage` (settings below)
