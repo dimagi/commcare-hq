@@ -56,6 +56,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite('sort-only-value', 'sort-only-value')
         self._test_app_strings('sort-only-value')
 
+    def test_sort_cache_suite(self):
+        self._test_generic_suite('sort-cache', 'sort-cache')
+
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
 
