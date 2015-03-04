@@ -3468,11 +3468,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'value': 'sync',
             }
 
-        for logo_name in self.logo_refs:
-            if logo_name in ANDROID_LOGO_PROPERTY_MAPPING:
-                app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
-                    'value': self.logo_refs[logo_name]['path'],
-                }
+        if domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
+            for logo_name in self.logo_refs:
+                if logo_name in ANDROID_LOGO_PROPERTY_MAPPING:
+                    app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
+                        'value': self.logo_refs[logo_name]['path'],
+                    }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')

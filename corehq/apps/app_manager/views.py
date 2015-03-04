@@ -537,6 +537,9 @@ def get_app_view_context(request, app):
             toggle_name = setting.get('toggle')
             if toggle_name and not toggle_enabled(request, toggle_name):
                 continue
+            privilege_name = setting.get('privilege')
+            if privilege_name and not has_privilege(request, privilege_name):
+                continue
             new_settings.append(setting)
         section['settings'] = new_settings
 
@@ -1042,7 +1045,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
 
-    if app and app.doc_type == 'Application':
+    if app and app.doc_type == 'Application' and has_privilege(req, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
