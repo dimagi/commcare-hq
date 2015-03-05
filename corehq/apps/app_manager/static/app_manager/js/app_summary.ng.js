@@ -147,6 +147,7 @@
         $scope.showConditions = true;
         $scope.showCalculations = true;
         $scope.showLabels = true;
+        $scope.appLangs = summaryConfig.appLangs;
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch = caseType ? {'name': caseType} : null;
