@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import (
     Application, AutoSelectCase,
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
-    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction)
+    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -57,7 +57,20 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_app_strings('sort-only-value')
 
     def test_sort_cache_suite(self):
-        self._test_generic_suite('sort-cache', 'sort-cache')
+        app = Application.wrap(self.get_json('suite-advanced'))
+        detail = app.modules[0].case_details.short
+        detail.sort_elements.append(
+            SortElement(
+                field=detail.columns[0].field,
+                type='index',
+                direction='descending',
+            )
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('sort-cache'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']"
+        )
 
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
