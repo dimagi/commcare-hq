@@ -3684,7 +3684,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if hasattr(module, 'parent_select') and module.parent_select.active:
                 return module.parent_select.module_id
 
-        if self._has_parent_child_selection_cycle(modules_dict, _parent_select_fn):
+        if self._has_dependency_cycle(modules_dict, _parent_select_fn):
             errors.append({'type': 'parent cycle'})
 
         errors.extend(self._child_module_errors(modules_dict))
@@ -3693,10 +3693,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors = super(Application, self).validate_app()
         return errors
 
-    def _has_parent_child_selection_cycle(self, modules, parent_id_fn):
+    def _has_dependency_cycle(self, modules, neighbour_id_fn):
         """
+        Detect dependency cycles given modules and the neighbour_id_fn
+
         :param modules: A mapping of module unique_ids to Module objects
-        :return: True if there is a cycle in the parent-child selection graph
+        :neighbour_id_fn: function to get the neibour module unique_id
+        :return: True if there is a cycle in the module relationship graph
         """
         visited = set()
         completed = set()
@@ -3707,7 +3710,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     return False
                 return True
             visited.add(m.id)
-            parent = modules.get(parent_id_fn(m), None)
+            parent = modules.get(neighbour_id_fn(m), None)
             if parent is not None and cycle_helper(parent):
                 return True
             completed.add(m.id)
@@ -3724,7 +3727,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if hasattr(module, 'root_module_id'):
                 return module.root_module_id
 
-        if self._has_parent_child_selection_cycle(modules_dict, _root_module_fn):
+        if self._has_dependency_cycle(modules_dict, _root_module_fn):
             module_errors.append({'type': 'root cycle'})
 
         module_ids = set([m.unique_id for m in self.get_modules()])
