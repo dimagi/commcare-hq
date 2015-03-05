@@ -1,13 +1,20 @@
 function (doc) {
     if(doc.doc_type === "DataSourceConfiguration") {
-        // TODO: Do I need to check for existence of these properties?
-        // TODO: Can I get rid of data sources by domain and just use this view?
+        // TODO: Can I get rid of the data_sources_by_domain view and just use this?
+        var source_id = null;
+        var app_id = null;
+        var app_version = null;
+        if (doc.meta && doc.meta.build){
+            source_id = doc.meta.build.source_id;
+            app_id = doc.meta.build.app_id;
+            app_version = doc.meta.build.app_version;
+        }
         emit([
             doc.domain,
             doc.referenced_doc_type,
-            doc.meta.build.source_id,
-            doc.meta.build.app_id,
-            doc.meta.build.app_version
+            source_id,
+            app_id,
+            app_version
         ], null);
     }
 }
