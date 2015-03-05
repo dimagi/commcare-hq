@@ -711,15 +711,28 @@ class XForm(WrappedNode):
 
         return text
 
-    def get_label_text(self, prompt, langs, form=None):
+    def get_label_translations(self, prompt, langs):
         if prompt.tag_name == 'repeat':
-            return self.get_label_text(prompt.find('..'), langs, form)
+            return self.get_label_translations(prompt.find('..'), langs)
+        label_node = prompt.find('{f}label')
+        translations = {}
+        if label_node.exists() and 'ref' in label_node.attrib:
+            for lang in langs:
+                label = self.localize(label_node.attrib['ref'], lang)
+                if label:
+                    translations[lang] = label
+
+        return translations
+
+    def get_label_text(self, prompt, langs):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_text(prompt.find('..'), langs)
         label_node = prompt.find('{f}label')
         label = ""
         if label_node.exists():
             if 'ref' in label_node.attrib:
                 for lang in langs + [None]:
-                    label = self.localize(label_node.attrib['ref'], lang, form)
+                    label = self.localize(label_node.attrib['ref'], lang)
                     if label is not None:
                         break
             elif label_node.text:
@@ -780,6 +793,7 @@ class XForm(WrappedNode):
 
             question = {
                 "label": self.get_label_text(node, langs),
+                "translations": self.get_label_translations(node, langs),
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,
@@ -797,6 +811,7 @@ class XForm(WrappedNode):
                         raise XFormException("<item> (%r) has no <value>" % translation)
                     options.append({
                         'label': translation,
+                        'translations': self.get_label_translations(item, langs),
                         'value': value
                     })
                 question['options'] = options
@@ -815,6 +830,7 @@ class XForm(WrappedNode):
                     matching_repeat_context = None
                 questions.append({
                     "label": path,
+                    "translations": {},
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
