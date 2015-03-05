@@ -205,13 +205,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @classmethod
     def by_domain(cls, domain):
         return sorted(
-            cls.view('userreports/data_sources_by_domain', key=domain, reduce=False, include_docs=True),
+            cls.view('userreports/data_sources_by_build_info', start_key=[domain], reduce=False, include_docs=True),
             key=lambda config: config.display_name
         )
 
     @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_domain',
+        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
                                                       reduce=False, include_docs=False)]
         for result in iter_docs(cls.get_db(), ids):
             yield cls.wrap(result)

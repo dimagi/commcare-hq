@@ -1,6 +1,5 @@
 function (doc) {
     if(doc.doc_type === "DataSourceConfiguration") {
-        // TODO: Can I get rid of the data_sources_by_domain view and just use this?
         var source_id = null;
         var app_id = null;
         var app_version = null;
