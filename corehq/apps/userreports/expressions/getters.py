@@ -108,6 +108,8 @@ def transform_from_datatype(datatype):
     identity = lambda x: x
     return {
         'date': transform_date,
+        'datetime': transform_datetime,
+        'decimal': transform_decimal,
         'integer': transform_int,
         'string': unicode,
     }.get(datatype) or identity
