@@ -351,7 +351,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             for attr in [
                 'project_type',
                 'customer_type',
-                'commconnect_enabled',
                 'survey_management_enabled',
                 'sms_case_registration_enabled',
                 'sms_case_registration_type',
