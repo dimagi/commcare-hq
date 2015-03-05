@@ -390,6 +390,10 @@ class LocationGroupTest(LocationTestBase):
         )
 
     def test_location_fixture_generator(self):
+        """
+        This tests the location XML fixture generator. It specifically ensures that no duplicate XML
+        nodes are generated when all locations have a parent and multiple locations are enabled.
+        """
         self.domain.commtrack_enabled = True
         self.domain.save()
         self.loc.delete()
@@ -423,5 +427,5 @@ class LocationGroupTest(LocationTestBase):
         self.user.add_location(loc4)
         self.user.save()
         fixture = location_fixture_generator(self.user, '2.0')
+        self.assertEquals(len(fixture[0].findall('.//state')), 1)
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
-        pass
