@@ -104,6 +104,3 @@ def _transform_from_datatype(datatype):
         'decimal': transform_decimal,
         'integer': transform_int,
     }.get(datatype)
-
-
-
