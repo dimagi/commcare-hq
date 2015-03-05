@@ -41,17 +41,19 @@ class Command(BaseCommand):
             print "Domain '{}' not found".format(domain)
             return
 
-        total = locs_by_domain(domain)
-        msg = ("{} has {} locations, do you REALLY want to delete them?\n(y/n)"
-               .format(domain, total))
+        couch_total = locs_by_domain(domain)
+        sql_total = SQLLocation.objects.filter(domain=domain).count()
+        msg = ("{} has {} Locations and {} SQLLocations, do you REALLY want "
+               "to delete them?\n(y/n)"
+               .format(domain, couch_total, sql_total))
         if raw_input(msg) != 'y':
             return
 
         print "Fine, your funeral"
-
+        print '"Deleting" couch locs'
         self.bulk_delete_locs(
             Location.by_domain(domain, include_docs=False),
-            total,
+            couch_total,
         )
 
         print "Archiving SQLLocations"
