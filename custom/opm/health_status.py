@@ -130,7 +130,7 @@ class AWCHealthStatus(object):
          _("New mothers who attended a VHND this month or were exempt.  "
            "Beneficiaries are exempt during the 1st month after childbirth, "
            "and when there is no VHND"),
-         'mothers'),
+         'children'),
         ('beneficiary_vhnd',
          _("Beneficiary VHND Attendance"),
          _("Total beneficiaries who attended a VHND this month or were exempt.  "
