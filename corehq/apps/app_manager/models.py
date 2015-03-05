@@ -1143,6 +1143,13 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         for type_, action in self.active_actions().items():
             if type_ == 'open_case':
                 type_meta.add_opener(self.unique_id, action.condition)
+                self.add_property_save(
+                    app_case_meta,
+                    module_case_type,
+                    'name',
+                    questions,
+                    action.name_path
+                )
             if type_ == 'close_case':
                 type_meta.add_closer(self.unique_id, action.condition)
             if type_ == 'update_case':
