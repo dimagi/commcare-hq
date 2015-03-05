@@ -15,20 +15,28 @@ class TestFileMixin(object):
 
     @property
     def base(self):
-        return os.path.join(self.root, *self.file_path)
+        return self.get_base()
 
-    def get_path(self, name, ext):
-        return os.path.join(self.base, '%s.%s' % (name, ext))
+    @classmethod
+    def get_base(cls):
+        return os.path.join(cls.root, *cls.file_path)
 
-    def get_file(self, name, ext):
-        with open(self.get_path(name, ext)) as f:
+    @classmethod
+    def get_path(cls, name, ext):
+        return os.path.join(cls.get_base(), '%s.%s' % (name, ext))
+
+    @classmethod
+    def get_file(cls, name, ext):
+        with open(cls.get_path(name, ext)) as f:
             return f.read()
 
-    def get_json(self, name):
-        return json.loads(self.get_file(name, 'json'))
+    @classmethod
+    def get_json(cls, name):
+        return json.loads(cls.get_file(name, 'json'))
 
-    def get_xml(self, name):
-        return self.get_file(name, 'xml')
+    @classmethod
+    def get_xml(cls, name):
+        return cls.get_file(name, 'xml')
 
     def assertXmlPartialEqual(self, expected, actual, xpath):
         """

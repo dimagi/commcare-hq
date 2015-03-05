@@ -1,10 +1,13 @@
 import codecs
+from collections import OrderedDict
 
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.translations import \
-    process_bulk_app_translation_upload
+    process_bulk_app_translation_upload, expected_bulk_app_sheet_rows, \
+    expected_bulk_app_sheet_headers
+from dimagi.utils.excel import WorkbookJSONReader
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
@@ -104,7 +107,6 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.fail(e)
 
 
-
 class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
     """
     Test the bulk app translation upload when the itext reference in a question
@@ -127,3 +129,31 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBase):
         self.do_upload("modifications")
         form = self.app.get_module(0).get_form(0)
         self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
+
+
+class BulkAppTranslationDownloadTest(SimpleTestCase, TestFileMixin):
+
+    file_path = ('data', 'bulk_app_translation', 'download')
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.app = Application.wrap(cls.get_json("app"))
+        wb_reader = WorkbookJSONReader(cls.get_path('bulk_app_translations', 'xlsx'))
+        cls.expected_workbook = [{'name': ws.title, 'rows': list(ws)}
+                                 for ws in wb_reader.worksheets]
+
+    def test_download(self):
+        actual_headers = expected_bulk_app_sheet_headers(self.app)
+        actual_rows = expected_bulk_app_sheet_rows(self.app)
+
+        actual_workbook = [
+            {'name': title,
+             'rows': [dict(zip(headers, row)) for row in actual_rows[title]]}
+            for title, headers in actual_headers
+        ]
+
+        for actual_sheet, expected_sheet in zip(actual_workbook,
+                                                self.expected_workbook):
+            self.assertEqual(actual_sheet, expected_sheet)
+        self.assertEqual(actual_workbook, self.expected_workbook)

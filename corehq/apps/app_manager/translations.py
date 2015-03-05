@@ -148,6 +148,29 @@ def process_bulk_app_translation_upload(app, f):
     return msgs
 
 
+def make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
+                               media_image, media_audio, unique_id):
+    """
+    assemble the various pieces of data that make up a row in the
+    "Modules_and_forms" sheet into a single row (a flat tuple).
+
+    This function is meant as the single point of truth for the
+    column ordering of Modules_and_forms
+
+    """
+    assert row_type is not None
+    assert sheet_name is not None
+    assert isinstance(languages, list)
+    assert isinstance(case_labels, list)
+    assert isinstance(media_image, (type(None), basestring))
+    assert isinstance(media_audio, (type(None), basestring))
+    assert isinstance(unique_id, basestring)
+
+    return [item if item is not None else ""
+            for item in ([row_type, sheet_name] + languages + case_labels
+                         + [media_image, media_audio, unique_id])]
+
+
 def expected_bulk_app_sheet_headers(app):
     '''
     Returns lists representing the expected structure of bulk app translation
@@ -170,12 +193,18 @@ def expected_bulk_app_sheet_headers(app):
     headers = []
 
     # Add headers for the first sheet
-    headers.append(
-        ["Modules_and_forms",
-            ['Type', 'sheet_name'] + languages_list +
-            ['label_for_cases_%s' % l for l in app.langs] +
-            ['icon_filepath', 'audio_filepath', 'unique_id']]
-    )
+    headers.append([
+        "Modules_and_forms",
+        make_modules_and_forms_row(
+            row_type='Type',
+            sheet_name='sheet_name',
+            languages=languages_list,
+            case_labels=['label_for_cases_%s' % l for l in app.langs],
+            media_image='icon_filepath',
+            media_audio='audio_filepath',
+            unique_id='unique_id',
+        )
+    ])
 
     for mod_index, module in enumerate(app.get_modules()):
 
@@ -193,13 +222,6 @@ def expected_bulk_app_sheet_headers(app):
 
 
 def expected_bulk_app_sheet_rows(app):
-    def cleaned_row(row):
-        '''
-        :param row: A tuple representing a row in the spreadsheet
-        Returns a cleaned version of row with all instances of None
-        changed to ""
-        '''
-        return tuple(item if item is not None else "" for item in row)
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = {"Modules_and_forms": []}
@@ -210,11 +232,14 @@ def expected_bulk_app_sheet_rows(app):
         module_string = "module" + str(mod_index + 1)
 
         # Add module to the first sheet
-        row_data = cleaned_row(
-            ("Module", module_string) +
-            tuple(module.name.get(lang, "") for lang in app.langs) +
-            tuple(module.case_label.get(lang, "") for lang in app.langs) +
-            (module.media_image, module.media_audio, module.unique_id)
+        row_data = make_modules_and_forms_row(
+            row_type="Module",
+            sheet_name=module_string,
+            languages=[module.name.get(lang) for lang in app.langs],
+            case_labels=[module.case_label.get(lang) for lang in app.langs],
+            media_image=module.media_image,
+            media_audio=module.media_audio,
+            unique_id=module.unique_id,
         )
         rows["Modules_and_forms"].append(row_data)
 
@@ -278,11 +303,15 @@ def expected_bulk_app_sheet_rows(app):
 
             # Add row for this form to the first sheet
             # This next line is same logic as above :(
-            first_sheet_row = cleaned_row(
-                ("Form", form_string) +
-                tuple(form.name.get(lang, "") for lang in app.langs) +
-                tuple("" for lang in app.langs) +
-                (form.media_image, form.media_audio, form.unique_id)
+            first_sheet_row = make_modules_and_forms_row(
+                row_type="Form",
+                sheet_name=form_string,
+                languages=[form.name.get(lang) for lang in app.langs],
+                # leave all
+                case_labels=[None] * len(app.langs),
+                media_image=form.media_image,
+                media_audio=form.media_audio,
+                unique_id=form.unique_id
             )
 
             # Add form to the first street
