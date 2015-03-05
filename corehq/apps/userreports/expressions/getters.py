@@ -77,8 +77,6 @@ def transform_date(item):
 
 
 def transform_datetime(item):
-    # Following the example of transform_date here, but it seems like this
-    # should do some transforming?
     return item or None
 
 
@@ -91,7 +89,6 @@ def transform_int(item):
 
 def transform_decimal(item):
     try:
-        # Set precision?
         return Decimal(item)
     except (ValueError, TypeError):
         return None

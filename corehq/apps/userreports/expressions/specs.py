@@ -16,13 +16,9 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
 
 
-# Should PropertyName and PropertyPath cast automagically based on the question type?
-
-
 class ConstantGetterSpec(JsonObject):
     type = TypeProperty('constant')
     constant = DefaultProperty(required=True)
-    # Would datatype here be useful? (maybe for dates)
 
     def __call__(self, item, context=None):
         return self.constant

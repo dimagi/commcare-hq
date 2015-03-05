@@ -29,7 +29,6 @@ class ConstantExpressionTest(SimpleTestCase):
 class PropertyExpressionTest(SimpleTestCase):
 
     def test_datatype(self):
-        # TODO: Test other data types too.
         for expected, datatype, original in [
             (5, "integer", "5"),
             (None, "integer", "5.3"),
