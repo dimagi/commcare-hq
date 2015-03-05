@@ -25,6 +25,8 @@ MSG_MULTIPLE_CASES_FOUND = "sms.caselookup.multiplecasesfound"
 MSG_FIELD_DESCRIPTOR = "sms.survey.fielddescriptor"
 MSG_OPTED_IN = "sms.opt.in"
 MSG_OPTED_OUT = "sms.opt.out"
+MSG_DUPLICATE_USERNAME = "sms.validation.duplicateusername"
+MSG_USERNAME_TOO_LONG = "sms.validation.usernametoolong"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
@@ -52,6 +54,8 @@ _MESSAGES = {
         " CommCareHQ. To opt-out, reply to this number with {0}"),
     MSG_OPTED_OUT: ugettext_noop("You have opted-out from receiving"
         " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
+    MSG_DUPLICATE_USERNAME: ugettext_noop("CommCare user {0} already exists"),
+    MSG_USERNAME_TOO_LONG: ugettext_noop("Username {0} is too long.  Must be under {1} characters."),
 }
 
 def get_message(msg_id, verified_number=None, context=None):

@@ -25,6 +25,7 @@
         ga('set', 'dimension2', '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}');
         ga('set', 'dimension3', '{% if request.couch_user.is_commcare_user %}yes{% else %}no{% endif %}');
         ga('set', 'dimension4', '{% if domain %}{{ domain|escapejs }}{% else %}none{% endif %}');
+        ga('set', 'dimension5', '{% if request.couch_user.has_built_app %}yes{% else %}no{% endif %}')
         ga('send', 'pageview');
 
         function gaTrackLink($link_or_selector, eventCategory, eventAction, eventLabel, eventValue) {

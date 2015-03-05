@@ -537,6 +537,9 @@ def get_app_view_context(request, app):
             toggle_name = setting.get('toggle')
             if toggle_name and not toggle_enabled(request, toggle_name):
                 continue
+            privilege_name = setting.get('privilege')
+            if privilege_name and not has_privilege(request, privilege_name):
+                continue
             new_settings.append(setting)
         section['settings'] = new_settings
 
@@ -806,6 +809,22 @@ def get_module_view_context_and_template(app, module):
             'is_parent': mod.unique_id in parent_module_ids,
         } for mod in app.modules if mod.case_type != case_type and mod.unique_id != module.unique_id]
 
+    def case_list_form_options(case_type):
+        options = OrderedDict()
+        forms = [
+            form
+            for mod in app.get_modules() if module.unique_id != mod.unique_id
+            for form in mod.get_forms() if form.is_registration_form(case_type)
+        ]
+        if forms or module.case_list_form.form_id:
+            options['disabled'] = _("Don't show")
+            options.update({f.unique_id: trans(f.name, app.langs) for f in forms})
+
+        if not options:
+            options['disabled'] = _("No suitable forms available")
+
+        return options
+
     ensure_unique_ids()
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
@@ -868,6 +887,8 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view_advanced.html", {
             'fixtures': fixtures,
             'details': get_details(),
+            'case_list_form_options': case_list_form_options(case_type),
+            'case_list_form_allowed': module.all_forms_require_a_case
         }
     else:
         case_type = module.case_type
@@ -888,6 +909,8 @@ def get_module_view_context_and_template(app, module):
                     'child_case_types': child_case_types,
                 },
             ],
+            'case_list_form_options': case_list_form_options(case_type),
+            'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active
         }
 
 
@@ -978,11 +1001,21 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if form_id:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
 
+        specific_media = {
+            'menu': {
+                'menu_refs': app.get_menu_media(
+                    module, module_id, form=form, form_index=form_id
+                ),
+                'default_file_name': default_file_name,
+            }
+        }
+        if module:
+            specific_media['case_list_form'] = {
+                'menu_refs': app.get_case_list_form_media(module, module_id),
+                'default_file_name': '{}_case_list_form'.format(default_file_name),
+            }
         context.update({
             'multimedia': {
-                'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id, as_json=True
-                ),
                 "references": app.get_references(),
                 "object_map": app.get_object_map(),
                 'upload_managers': {
@@ -996,9 +1029,9 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                                 args=[app.domain, app.get_id])
                     ),
                 },
-                'default_file_name': default_file_name,
             }
         })
+        context['multimedia'].update(specific_media)
 
     error = req.GET.get('error', '')
 
@@ -1012,7 +1045,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
 
-    if app and app.doc_type == 'Application':
+    if app and app.doc_type == 'Application' and has_privilege(req, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
@@ -1417,7 +1450,12 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         'media_image': None, 'media_audio': None, 'has_schedule': None,
         "case_list": ('case_list-show', 'case_list-label'),
         "task_list": ('task_list-show', 'task_list-label'),
-        "parent_module": None, "root_module_id": None,
+        "case_list_form_id": None,
+        "case_list_form_label": None,
+        "case_list_form_media_image": None,
+        "case_list_form_media_audio": None,
+        "parent_module": None,
+        "root_module_id": None,
     }
 
     if attr not in attributes:
@@ -1438,7 +1476,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
-    resp = {'update': {}}
+    resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = req.POST.get("case_type", None)
         if is_valid_case_type(case_type):
@@ -1470,6 +1508,26 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+
+    if should_edit('case_list_form_id'):
+        module.case_list_form.form_id = req.POST.get('case_list_form_id')
+    if should_edit('case_list_form_label'):
+        module.case_list_form.label[lang] = req.POST.get('case_list_form_label')
+    if should_edit('case_list_form_media_image'):
+        val = _process_media_attribute(
+            'case_list_form_media_image',
+            resp,
+            req.POST.get('case_list_form_media_image')
+        )
+        module.case_list_form.media_image = val
+    if should_edit('case_list_form_media_audio'):
+        val = _process_media_attribute(
+            'case_list_form_media_audio',
+            resp,
+            req.POST.get('case_list_form_media_audio')
+        )
+        module.case_list_form.media_audio = val
+
     for attribute in ("name", "case_label", "referral_label"):
         if should_edit(attribute):
             name = req.POST.get(attribute, None)
@@ -1592,27 +1650,32 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     return HttpResponse(response_html)
 
 
+def _process_media_attribute(attribute, resp, val):
+    if val:
+        if val.startswith('jr://'):
+            pass
+        elif val.startswith('/file/'):
+            val = 'jr:/' + val
+        elif val.startswith('file/'):
+            val = 'jr://' + val
+        elif val.startswith('/'):
+            val = 'jr://file' + val
+        else:
+            val = 'jr://file/' + val
+        resp['corrections'][attribute] = val
+    else:
+        val = None
+    return val
+
+
 def _handle_media_edits(request, item, should_edit, resp):
-    if not resp.has_key('corrections'):
+    if 'corrections' not in resp:
         resp['corrections'] = {}
     for attribute in ('media_image', 'media_audio'):
         if should_edit(attribute):
-            val = request.POST.get(attribute)
-            if val:
-                if val.startswith('jr://'):
-                    pass
-                elif val.startswith('/file/'):
-                    val = 'jr:/' + val
-                elif val.startswith('file/'):
-                    val = 'jr://' + val
-                elif val.startswith('/'):
-                    val = 'jr://file' + val
-                else:
-                    val = 'jr://file/' + val
-                resp['corrections'][attribute] = val
-            else:
-                val = None
+            val = _process_media_attribute(attribute, resp, request.POST.get(attribute))
             setattr(item, attribute, val)
+
 
 @no_conflict_require_POST
 @login_or_digest
@@ -2903,7 +2966,7 @@ def download_bulk_app_translations(request, domain, app_id):
             ("Module", module_string) +
             tuple(module.name.get(lang, "") for lang in app.langs) +
             tuple(module.case_label.get(lang, "") for lang in app.langs) +
-            (module.media_audio, module.media_image, module.unique_id)
+            (module.media_image, module.media_audio, module.unique_id)
         )
         rows["Modules_and_forms"].append(row_data)
 
@@ -2971,7 +3034,7 @@ def download_bulk_app_translations(request, domain, app_id):
                 ("Form", form_string) +
                 tuple(form.name.get(lang, "") for lang in app.langs) +
                 tuple("" for lang in app.langs) +
-                (form.media_audio, form.media_image, form.unique_id)
+                (form.media_image, form.media_audio, form.unique_id)
             )
 
             # Add form to the first street

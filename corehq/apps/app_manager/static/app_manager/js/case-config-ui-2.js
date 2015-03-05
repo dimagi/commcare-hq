@@ -91,8 +91,8 @@ var CaseConfig = (function () {
             });
         };
 
-        self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+        self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
+            return CC_UTILS.getQuestions(self.questions, filter, excludeHidden, includeRepeat, excludeTrigger);
         };
         self.getAnswers = function (condition) {
             return CC_UTILS.getAnswers(self.questions, condition);

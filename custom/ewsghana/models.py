@@ -11,6 +11,7 @@ class EWSGhanaConfig(Document):
     url = StringProperty(default="http://ewsghana.com/api/v0_1")
     username = StringProperty()
     password = StringProperty()
+    steady_sync = BooleanProperty(default=False)
 
     @classmethod
     def for_domain(cls, name):
@@ -25,6 +26,13 @@ class EWSGhanaConfig(Document):
         mappings = DocDomainMapping.objects.filter(doc_type='EWSGhanaConfig')
         configs = [cls.get(docid=mapping.doc_id) for mapping in mappings]
         return configs
+
+    @classmethod
+    def get_all_steady_sync_configs(cls):
+        return [
+            config for config in cls.get_all_configs()
+            if config.steady_sync
+        ]
 
     @classmethod
     def get_all_enabled_domains(cls):

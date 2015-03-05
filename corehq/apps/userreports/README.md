@@ -544,7 +544,7 @@ Here's an example report column that shows the owner name from an associated `ow
 
 ### Transforms
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are only two supported transform types. These are shown below:
+Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:
 
 #### Displaying username instead of user ID
 
@@ -555,12 +555,30 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
+#### Displaying username minus @domain.commcarehq.org instead of user ID
+
+```
+{
+    "type": "custom",
+    "custom_type": "user_without_domain_display"
+}
+```
+
 #### Displaying owner name instead of owner ID
 
 ```
 {
     "type": "custom",
     "custom_type": "owner_display"
+}
+```
+
+#### Displaying month name instead of month index
+
+```
+{
+    "type": "custom",
+    "custom_type": "month_display"
 }
 ```
 

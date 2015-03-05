@@ -270,6 +270,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
             kwargs['modified_on__gte'] = modified_after
         if modified_before:
             kwargs['modified_on__lt'] = modified_before
+        if self.case_type:
+            kwargs['type'] = self.case_type
 
         qs = CaseData.objects.filter(
             domain=self.domain,

@@ -26,6 +26,7 @@ class DocumentTransform():
                 self._attachments = _attachments
                 self.attachments = dict((k, self.database.fetch_attachment(doc["_id"], k)) for k in self._attachments)
         self.doc = doc
+        del self.doc['_rev']
 
 class TargetSyncConfig():
     

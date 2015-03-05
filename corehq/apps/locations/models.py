@@ -65,6 +65,9 @@ class SQLLocation(MPTTModel):
     class Meta:
         unique_together = ('domain', 'site_code',)
 
+    def __unicode__(self):
+        return u"{} ({})".format(self.name, self.domain)
+
     def __repr__(self):
         return "<SQLLocation(domain=%s, name=%s)>" % (
             self.domain,

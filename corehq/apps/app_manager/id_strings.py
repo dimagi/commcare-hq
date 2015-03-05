@@ -140,6 +140,11 @@ def case_list_locale(module):
     return u"case_lists.m{module.id}".format(module=module)
 
 
+@pattern('case_list_form.m%d')
+def case_list_form_locale(module):
+    return u"case_list_form.m{module.id}".format(module=module)
+
+
 @pattern('referral_lists.m%d')
 def referral_list_locale(module):
     """1.0 holdover"""

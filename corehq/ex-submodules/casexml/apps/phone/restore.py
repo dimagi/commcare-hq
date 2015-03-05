@@ -59,53 +59,62 @@ class StockSettings(object):
         self.force_consumption_case_filter = force_consumption_case_filter or (lambda case: False)
 
 
-class EtreeRestoreResponse(object):
-    def __init__(self, username, items=False):
-        self.items = items
-        self.num_items = 0
-        self.response = get_response_element(
-            "Successfully restored account %s!" % username,
-            ResponseNature.OTA_RESTORE_SUCCESS)
-
-    def append(self, xml):
-        self.response.append(xml)
-
-    def __str__(self):
-        if self.items:
-            self.num_items = len(self.response.getchildren())
-            self.response.attrib['items'] = '%d' % self.num_items
-        return xml.tostring(self.response)
-
-
 class StringRestoreResponse(object):
-    start_tag_template = '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
+    start_tag_template = (
+        '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
+        '<message nature="{nature}">Successfully restored account {username}!</message>'
+    )
     items_template = ' items="{}"'
-    message_template = '<message nature="{nature}">{message}</message>'
     closing_tag = '</OpenRosaResponse>'
 
-    def __init__(self, username, items=False):
+    def __init__(self, username=None, items=False):
+        self.username = username
         self.items = items
         self.num_items = 0
-        self.response = StringIO()
-        self.append(self.message_template.format(
-            message="Successfully restored account %s!" % username,
-            nature=ResponseNature.OTA_RESTORE_SUCCESS
-        ))
+        self.response_body = StringIO()
+
+    def close(self):
+        self.response_body.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def append(self, xml_element):
         self.num_items += 1
         if isinstance(xml_element, basestring):
-            self.response.write(xml_element)
+            self.response_body.write(xml_element)
         else:
-            self.response.write(xml.tostring(xml_element))
+            self.response_body.write(xml.tostring(xml_element))
+
+    def extend(self, iterable):
+        for element in iterable:
+            self.append(element)
 
     def __str__(self):
-        items = self.items_template.format(self.num_items) if self.items else ''
+        # Add 1 to num_items to account for message element
+        items = self.items_template.format(self.num_items + 1) if self.items else ''
         return '{start}{body}{end}'.format(
-            start=self.start_tag_template.format(items=items),
-            body=self.response.getvalue(),
+            start=self.start_tag_template.format(
+                items=items,
+                username=self.username,
+                nature=ResponseNature.OTA_RESTORE_SUCCESS),
+            body=self.response_body.getvalue(),
             end=self.closing_tag
         )
+
+    def __add__(self, other):
+        if not isinstance(other, StringRestoreResponse):
+            raise NotImplemented()
+
+        response = StringRestoreResponse(self.username, self.items)
+        response.num_items = self.num_items + other.num_items
+        response.response_body.write(self.response_body.getvalue())
+        response.response_body.write(other.response_body.getvalue())
+
+        return response
 
 
 def get_stock_payload(domain, stock_settings, case_state_list):
@@ -179,7 +188,7 @@ def get_stock_payload(domain, stock_settings, case_state_list):
 
 
 def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
-        response_elements = []
+        response = StringRestoreResponse()
         sync_operation = user.get_case_updates(last_sync)
         synclog.cases_on_phone = [
             CaseState.from_case(c) for c in sync_operation.actual_owned_cases
@@ -194,8 +203,7 @@ def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
             xml.get_case_element(op.case, op.required_updates, version)
             for op in sync_operation.actual_cases_to_sync
         )
-        for case_elem in case_xml_elements:
-            response_elements.append(case_elem)
+        response.extend(case_xml_elements)
 
         add_custom_parameter('restore_total_cases', len(sync_operation.all_potential_cases))
         add_custom_parameter('restore_synced_cases', len(sync_operation.actual_cases_to_sync))
@@ -203,19 +211,19 @@ def get_case_payload(domain, stock_settings, version, user, last_sync, synclog):
         # commtrack balance sections
         case_state_list = [CaseState.from_case(op.case) for op in sync_operation.actual_cases_to_sync]
         commtrack_elements = get_stock_payload(domain, stock_settings, case_state_list)
-        response_elements.extend(commtrack_elements)
+        response.extend(commtrack_elements)
 
-        return response_elements, 1
+        batch_count = 1
+        return response, batch_count
 
 
 def get_case_payload_batched(domain, stock_settings, version, user, last_sync, synclog):
-        response_elements = []
-        synclog.save(**get_safe_write_kwargs())
+        response = StringRestoreResponse()
 
-        num_batches = 0
+        batch_count = 0
         sync_operation = BatchedCaseSyncOperation(user, last_sync)
         for batch in sync_operation.batches():
-            num_batches += 1
+            batch_count += 1
             logger.debug(batch)
 
             # case blocks
@@ -223,8 +231,7 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_sync, s
                 xml.get_case_element(op.case, op.required_updates, version)
                 for op in batch.case_updates_to_sync()
             )
-            for case_elem in case_xml_elements:
-                response_elements.append(case_elem)
+            response.extend(case_xml_elements)
 
         sync_state = sync_operation.global_state
         synclog.cases_on_phone = sync_state.actual_owned_cases
@@ -236,9 +243,9 @@ def get_case_payload_batched(domain, stock_settings, version, user, last_sync, s
 
         # commtrack balance sections
         commtrack_elements = get_stock_payload(domain, stock_settings, sync_state.all_synced_cases)
-        response_elements.extend(commtrack_elements)
+        response.extend(commtrack_elements)
 
-        return response_elements, num_batches
+        return response, batch_count
 
 
 class RestoreConfig(object):
@@ -345,28 +352,26 @@ class RestoreConfig(object):
         # start with standard response
         batch_enabled = BATCHED_RESTORE.enabled(self.user.domain) or BATCHED_RESTORE.enabled(self.user.username)
         logger.debug('Batch restore enabled: %s', batch_enabled)
-        if batch_enabled:
-            response = StringRestoreResponse(user.username, items=self.items)
-        else:
-            response = EtreeRestoreResponse(user.username, items=self.items)
+        with StringRestoreResponse(user.username, items=self.items) as response:
+            # add sync token info
+            response.append(xml.get_sync_element(synclog.get_id))
+            # registration block
+            response.append(xml.get_registration_element(user))
 
-        # add sync token info
-        response.append(xml.get_sync_element(synclog.get_id))
-        # registration block
-        response.append(xml.get_registration_element(user))
+            # fixture block
+            for fixture in generator.get_fixtures(user, self.version, last_sync):
+                response.append(fixture)
 
-        # fixture block
-        for fixture in generator.get_fixtures(user, self.version, last_sync):
-            response.append(fixture)
+            payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
+            case_response, self.num_batches = payload_fn(
+                self.domain, self.stock_settings, self.version, user, last_sync, synclog
+            )
+            combined_response = response + case_response
+            case_response.close()
 
-        payload_fn = get_case_payload_batched if batch_enabled else get_case_payload
-        response_elements, self.num_batches = payload_fn(
-            self.domain, self.stock_settings, self.version, user, last_sync, synclog
-        )
-        for element in response_elements:
-            response.append(element)
+            resp = str(combined_response)
+            combined_response.close()
 
-        resp = str(response)
         duration = datetime.utcnow() - start_time
         synclog.duration = duration.seconds
         synclog.save()

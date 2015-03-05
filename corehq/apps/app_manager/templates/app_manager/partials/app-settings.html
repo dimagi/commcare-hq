@@ -39,8 +39,15 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
+    <a data-bind="visible: url(), attr: {href: url()}" target="_blank">
+        <img data-bind="
+            attr: {
+                src: thumb_url()
+            }
+        "/>
+    </a>
     <a data-toggle="modal"
-       class="btn btn-default"
+       class="btn btn-primary"
        data-bind="
         attr: {
             'data-hqmediapath': path,
@@ -50,7 +57,22 @@
         event: {
             mediaUploadComplete: uploadComplete
         }
-    "><i class="icon-plus"></i> {% trans "Add Logo" %}</a>
+    ">
+        <i class="icon icon-cloud-upload"></i>
+        <span data-bind="visible: url()">
+            {% trans "Replace Logo" %}
+        </span>
+        <span data-bind="visible: !url()">
+            {% trans "Upload Logo" %}
+        </span>
+    </a>
+    <a class="btn btn-danger"
+       data-bind="
+           visible: url(),
+           click: removeLogo
+    ">
+        <i class="icon icon-remove"></i>
+    </a>
 </script>
 
 {% include 'hqmedia/partials/multimedia_js.html' %}

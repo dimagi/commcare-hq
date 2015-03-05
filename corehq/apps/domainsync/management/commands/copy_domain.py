@@ -1,6 +1,7 @@
 from multiprocessing import Process, Queue
 import sys
 import os
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.stock.models import StockTransaction, StockReport, DocDomainMapping
@@ -101,8 +102,11 @@ class Command(BaseCommand):
 
         self.targetdb = get_db()
 
+        try:
+            domain_doc = Domain.get_by_name(domain)
+        except ResourceNotFound:
+            domain_doc = None
 
-        domain_doc = Domain.get_by_name(domain)
         if domain_doc is None:
             self.copy_domain(sourcedb, domain)
 
