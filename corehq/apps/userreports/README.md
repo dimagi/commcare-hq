@@ -141,7 +141,7 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
 
-Note also that it's important to make sure that you comparing values of the same type. The expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results! 
+Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results! 
 
 #### Related document expressions
 
