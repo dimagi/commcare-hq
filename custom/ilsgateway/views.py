@@ -1,12 +1,11 @@
 import base64
-import json
 import StringIO
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http.response import HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
-from corehq.apps.commtrack.models import CommtrackConfig, StockState
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
@@ -15,23 +14,21 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
-from corehq import toggles, Domain
-from corehq.apps.commtrack.views import BaseCommTrackManageView
-from corehq.apps.domain.decorators import domain_admin_required, cls_require_superuser_or_developer
+from corehq import Domain
+from corehq.apps.domain.decorators import domain_admin_required
 from custom.ilsgateway.forms import SupervisionDocumentForm
 
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
     get_delivery_group_reports, ILS_FACILITIES
-from custom.logistics.models import StockDataCheckpoint
 from casexml.apps.stock.models import StockTransaction
-from custom.logistics.tasks import language_fix
+from custom.logistics.tasks import sms_users_fix
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
-from custom.logistics.models import MigrationCheckpoint
+from custom.logistics.views import BaseConfigView
 
 
 class GlobalStats(BaseDomainView):
@@ -79,7 +76,7 @@ class GlobalStats(BaseDomainView):
             'web_users': len(web_users),
             'web_users_admins': web_users_admins,
             'web_users_read_only': web_users_read_only,
-            'products': SQLProduct.objects.filter(domain=self.domain).count(),
+            'products': SQLProduct.objects.filter(domain=self.domain, is_archived=False).count(),
             'product_stocks': StockState.objects.filter(sql_product__domain=self.domain).count(),
             'stock_transactions': StockTransaction.objects.filter(report__domain=self.domain).count(),
             'inbound_messages': SMSLog.count_incoming_by_domain(self.domain),
@@ -93,66 +90,6 @@ class GlobalStats(BaseDomainView):
             context['location_types'] = counts
         main_context.update(context)
         return main_context
-
-
-class BaseConfigView(BaseCommTrackManageView):
-
-    @cls_require_superuser_or_developer
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        try:
-            checkpoint = MigrationCheckpoint.objects.get(domain=self.domain)
-        except MigrationCheckpoint.DoesNotExist:
-            checkpoint = None
-
-        try:
-            runner = ReportRun.objects.get(domain=self.domain, complete=False)
-        except ReportRun.DoesNotExist:
-            runner = None
-
-        try:
-            stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=self.domain)
-        except StockDataCheckpoint.DoesNotExist, StockDataCheckpoint.MultipleObjectsReturned:
-            stock_data_checkpoint = None
-
-        return {
-            'stock_data_checkpoint': stock_data_checkpoint,
-            'runner': runner,
-            'checkpoint': checkpoint,
-            'settings': self.settings_context,
-            'source': self.source,
-            'sync_url': self.sync_urlname,
-            'sync_stock_url': self.sync_stock_url,
-            'clear_stock_url': self.clear_stock_url,
-            'is_developer': toggles.IS_DEVELOPER.enabled(self.request.couch_user.username),
-            'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
-        }
-
-    @property
-    def settings_context(self):
-        config = self.config.for_domain(self.domain_object.name)
-        if config:
-            return {
-                "source_config": config._doc,
-            }
-        else:
-            return {
-                "source_config": self.config()._doc
-            }
-
-    def post(self, request, *args, **kwargs):
-        payload = json.loads(request.POST.get('json'))
-        config = self.config.wrap(self.settings_context['source_config'])
-        config.enabled = payload['source_config'].get('enabled', None)
-        config.domain = self.domain_object.name
-        config.url = payload['source_config'].get('url', None)
-        config.username = payload['source_config'].get('username', None)
-        config.password = payload['source_config'].get('password', None)
-        config.save()
-        return self.get(request, *args, **kwargs)
 
 
 class ILSConfigView(BaseConfigView):
@@ -291,10 +228,10 @@ def end_report_run(request, domain):
 
 @domain_admin_required
 @require_POST
-def ils_fix_languages(request, domain):
+def ils_sms_users_fix(request, domain):
     config = ILSGatewayConfig.for_domain(domain)
     endpoint = ILSGatewayEndpoint.from_config(config)
-    language_fix.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
+    sms_users_fix.delay(ILSGatewayAPI(domain=domain, endpoint=endpoint))
     return HttpResponse('OK')
 
 

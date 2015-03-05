@@ -7,7 +7,7 @@ from corehq.apps.styleguide.examples.controls_demo.views import (
     DefaultControlsDemoFormsView,
     SelectControlDemoView,
 )
-from corehq.apps.hqwebapp.models import UITab, format_submenu_context
+from corehq.apps.hqwebapp.models import UITab, dropdown_dict
 from corehq.apps.styleguide.examples.simple_crispy_form.views import (
     DefaultSimpleCrispyFormSectionView,
     SimpleCrispyFormView,
@@ -111,17 +111,17 @@ class SGExampleTab(BaseSGTab):
     @property
     def dropdown_items(self):
         submenu_context = [
-            format_submenu_context(_("Examples"), is_header=True),
-            format_submenu_context(
+            dropdown_dict(_("Examples"), is_header=True),
+            dropdown_dict(
                 _("Simple Crispy Form"),
                 url=reverse(DefaultSimpleCrispyFormSectionView.urlname)
             ),
-            format_submenu_context(
+            dropdown_dict(
                 _("Form Controls"),
                 url=reverse(DefaultControlsDemoFormsView.urlname)
             ),
-            format_submenu_context(None, is_divider=True),
-            format_submenu_context(
+            dropdown_dict(None, is_divider=True),
+            dropdown_dict(
                 _("Style Guide"),
                 url=reverse(MainStyleGuideView.urlname)
             ),

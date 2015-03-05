@@ -126,6 +126,7 @@ ko.bindingHandlers.langcode = {
                 b.valueUpdate = [b.valueUpdate];
             }
             b.valueUpdate.push('autocompletechange');
+            b.valueUpdate.push('autocompleteclose');
             return b;
         });
         $('input', element).addClass('short code').langcodes();
@@ -516,11 +517,13 @@ ko.bindingHandlers.makeHqHelp = {
         var opts = valueAccessor(),
             name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
             description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
+            placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
             format = ko.utils.unwrapObservable(opts.format);
         COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
-            html: format === 'html'
+            html: format === 'html',
+            placement: placement || 'right'
         }).appendTo(element);
     }
 };

@@ -1,4 +1,3 @@
-from django.utils import translation
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege

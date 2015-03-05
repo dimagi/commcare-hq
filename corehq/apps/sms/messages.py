@@ -23,6 +23,10 @@ MSG_MISSING_EXTERNAL_ID = "sms.caselookup.missingexternalid"
 MSG_CASE_NOT_FOUND = "sms.caselookup.casenotfound"
 MSG_MULTIPLE_CASES_FOUND = "sms.caselookup.multiplecasesfound"
 MSG_FIELD_DESCRIPTOR = "sms.survey.fielddescriptor"
+MSG_OPTED_IN = "sms.opt.in"
+MSG_OPTED_OUT = "sms.opt.out"
+MSG_DUPLICATE_USERNAME = "sms.validation.duplicateusername"
+MSG_USERNAME_TOO_LONG = "sms.validation.usernametoolong"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
@@ -46,6 +50,12 @@ _MESSAGES = {
     MSG_CASE_NOT_FOUND: ugettext_noop("Case with the given external id was not found."),
     MSG_MULTIPLE_CASES_FOUND: ugettext_noop("More than one case was found with the given external id."),
     MSG_FIELD_DESCRIPTOR: ugettext_noop("Field '{0}': "),
+    MSG_OPTED_IN: ugettext_noop("You have opted-in to receive messages from"
+        " CommCareHQ. To opt-out, reply to this number with {0}"),
+    MSG_OPTED_OUT: ugettext_noop("You have opted-out from receiving"
+        " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
+    MSG_DUPLICATE_USERNAME: ugettext_noop("CommCare user {0} already exists"),
+    MSG_USERNAME_TOO_LONG: ugettext_noop("Username {0} is too long.  Must be under {1} characters."),
 }
 
 def get_message(msg_id, verified_number=None, context=None):

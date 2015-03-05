@@ -242,7 +242,7 @@ class Repeater(Document, UnicodeMixIn):
             if doc_type in repeater_types:
                 return repeater_types[doc_type].wrap(data)
             else:
-                raise ResourceNotFound('Unknown repeater type: %s', data)
+                raise ResourceNotFound('Unknown repeater type: %s' % data)
         else:
             return super(Repeater, cls).wrap(data)
 
@@ -343,7 +343,7 @@ class ShortFormRepeater(Repeater):
         return XFormInstance.get(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
-        headers = super(CaseRepeater, self).get_headers(repeat_record)
+        headers = super(ShortFormRepeater, self).get_headers(repeat_record)
         headers.update({
             "received-on": self.payload_doc(repeat_record).received_on.isoformat()+"Z"
         })

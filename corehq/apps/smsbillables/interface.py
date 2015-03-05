@@ -90,6 +90,12 @@ class SMSBillablesInterface(GenericTabularReport):
         ]
 
     @property
+    def get_all_rows(self):
+        query = self.sms_billables
+        query = query.order_by(self.sort_field)
+        return self._format_billables(query)
+
+    @property
     def total_records(self):
         query = self.sms_billables
         return query.aggregate(Count('id'))['id__count']
@@ -100,6 +106,9 @@ class SMSBillablesInterface(GenericTabularReport):
         query = query.order_by(self.sort_field)
 
         sms_billables = query[self.pagination.start:(self.pagination.start + self.pagination.count)]
+        return self._format_billables(sms_billables)
+
+    def _format_billables(self, sms_billables):
         return [
             [
                 sms_billable.date_sent,
@@ -171,6 +180,10 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Country Code"),
             DataTablesColumn("Fee (Amount, Currency)")
         )
+
+    @property
+    def get_all_rows(self):
+        return self.rows
 
     @property
     def rows(self):

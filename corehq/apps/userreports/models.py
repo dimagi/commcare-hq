@@ -305,6 +305,10 @@ class CustomDataSourceConfiguration(JsonObject):
     config = DictProperty()
 
     @classmethod
+    def get_doc_id(cls, table_id):
+        return '{}{}'.format(cls._datasource_id_prefix, table_id)
+
+    @classmethod
     def all(cls):
         for path in settings.CUSTOM_DATA_SOURCES:
             with open(path) as f:
@@ -312,7 +316,7 @@ class CustomDataSourceConfiguration(JsonObject):
                 for domain in wrapped.domains:
                     doc = copy(wrapped.config)
                     doc['domain'] = domain
-                    doc['_id'] = '{}{}'.format(cls._datasource_id_prefix, doc['table_id'])
+                    doc['_id'] = cls.get_doc_id(doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
 
     @classmethod

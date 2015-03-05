@@ -1,14 +1,18 @@
 # encoding: utf-8
-import datetime
 from django.conf import settings
 from django.core.management import call_command
-from south.db import db
+import corehq.apps.sms.models as sms_models
 from south.v2 import DataMigration
-from django.db import models
+from dimagi.utils.couch import sync_docs
+
 
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        # hack: manually force sync SMS design docs before
+        # we try to load from them. the bootstrap commands are dependent on these.
+        sync_docs.sync(sms_models, verbosity=2)
+
         # ensure default currency
         orm['accounting.Currency'].objects.get_or_create(code=settings.DEFAULT_CURRENCY)
         orm['accounting.Currency'].objects.get_or_create(code='EUR')

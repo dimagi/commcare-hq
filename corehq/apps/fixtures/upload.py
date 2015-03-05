@@ -11,6 +11,7 @@ from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from soil import DownloadBase
+from corehq.apps.locations.models import SQLLocation
 
 
 DELETE_HEADER = "Delete(Y/N)"
@@ -208,9 +209,22 @@ def get_workbook(file_or_filename):
     return FixtureWorkbook(file_or_filename)
 
 
+def pre_populate_location_groups(group_memoizer, domain):
+    """
+    We have to pre load the memoizer with
+    fake location groups so that it doesn't
+    try to look them up for us later.
+    """
+    for loc in SQLLocation.objects.filter(domain=domain):
+        group_memoizer.add_group(loc.case_sharing_group_object())
+        group_memoizer.add_group(loc.reporting_group_object())
+
+
 def run_upload(domain, workbook, replace=False, task=None):
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
+
+    pre_populate_location_groups(group_memoizer, domain)
 
     def diff_lists(list_a, list_b):
         set_a = set(list_a)

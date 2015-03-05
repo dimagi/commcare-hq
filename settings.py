@@ -28,10 +28,6 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
-# enables all plugins, including ones that haven't been released on production
-# yet
-VELLUM_PRERELEASE = False
-
 try:
     UNIT_TESTING = 'test' == sys.argv[1]
 except IndexError:
@@ -61,6 +57,7 @@ LANGUAGES = (
     ('fr', 'French'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
+    ('sw', 'Swahili'),
 )
 
 SITE_ID = 1
@@ -461,8 +458,10 @@ SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
+ACCOUNTS_EMAIL = 'accounts@dimagi.com'
+SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
-INVOICING_CONTACT_EMAIL = 'accounts@dimagi.com'
+INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
@@ -478,23 +477,25 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = [
-    "corehq.apps.fixtures.fixturegenerators.hq_fixtures",
-]
-
-HQ_FIXTURE_GENERATORS = [
-    # core
-    "corehq.apps.users.fixturegenerators.user_groups",
-    "corehq.apps.fixtures.fixturegenerators.item_lists",
-    "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
-    "corehq.apps.products.fixtures.product_fixture_generator",
-    "corehq.apps.programs.fixtures.program_fixture_generator",
-    "corehq.apps.locations.fixtures.location_fixture_generator",
-    # custom
-    "custom.bihar.reports.indicators.fixtures.generator",
-    "custom.m4change.fixtures.report_fixtures.generator",
-    "custom.m4change.fixtures.location_fixtures.generator",
-]
+FIXTURE_GENERATORS = {
+    # fixtures that may be sent to the phone independent of cases
+    'standalone': [
+        # core
+        "corehq.apps.users.fixturegenerators.user_groups",
+        "corehq.apps.fixtures.fixturegenerators.item_lists",
+        "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
+        "corehq.apps.products.fixtures.product_fixture_generator",
+        "corehq.apps.programs.fixtures.program_fixture_generator",
+        # custom
+        "custom.bihar.reports.indicators.fixtures.generator",
+        "custom.m4change.fixtures.report_fixtures.generator",
+        "custom.m4change.fixtures.location_fixtures.generator",
+    ],
+    # fixtures that must be sent along with the phones cases
+    'case': [
+        "corehq.apps.locations.fixtures.location_fixture_generator",
+    ]
+}
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
@@ -885,6 +886,9 @@ MAILCHIMP_MASS_EMAIL_ID = ''
 
 SQL_REPORTING_DATABASE_URL = None
 
+# number of days since last access after which a saved export is considered unused
+SAVED_EXPORT_ACCESS_CUTOFF = 35
+
 # override for production
 DEFAULT_PROTOCOL = 'http'
 
@@ -1216,8 +1220,6 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
-        'custom.up_nrhm.models.UpNRHMLocationHierarchyFluffPillow',
-        'custom.up_nrhm.models.ASHAFacilitatorsFluffPillow'
     ],
     'mvp': [
         'corehq.apps.indicators.pillows.FormIndicatorPillow',
@@ -1231,7 +1233,8 @@ PILLOWTOPS = {
 
 
 CUSTOM_DATA_SOURCES = [
-    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json')
+    os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
+    os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
 ]
 
 

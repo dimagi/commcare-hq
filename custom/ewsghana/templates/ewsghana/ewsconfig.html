@@ -1,4 +1,4 @@
-{% extends 'locations/facility_sync.html' %}
+{% extends 'logistics/config.html' %}
 {% load i18n %}
 {% block main_column %}
     {% if is_commtrack_enabled %}
@@ -86,8 +86,34 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="fix_languages">
-                        {% trans "Fix languages" %}
+                    <button class="btn" id="fix_sms_users">
+                        {% trans "Fix sms users" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="fix_locations">
+                        {% trans "Fix locations" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="ews_add_products_to_locs">
+                        {% trans "Add Products to Locations" %}
+                    </button>
+                </div>
+            </div>
+        </div><div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="clear_products">
+                        {% trans "Clear Products from Locations" %}
                     </button>
                 </div>
             </div>
@@ -129,8 +155,25 @@
             _post(this, url, {success: successMessage});
         });
 
-        $("#fix_languages").click(function() {
-            var url = '{% url 'ews_fix_languages' domain %}';
+        $("#fix_sms_users").click(function() {
+            var url = '{% url 'ews_fix_sms_users' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#fix_locations").click(function() {
+            var url = '{% url 'ews_fix_locations' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#ews_add_products_to_locs").click(function() {
+            var url = '{% url 'ews_add_products_to_locs' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+        $("#clear_products").click(function() {
+            var url = '{% url 'clear_products' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

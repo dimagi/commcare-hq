@@ -1,4 +1,5 @@
 import json
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import ensure_request_has_privilege
 from corehq import privileges
@@ -111,7 +112,7 @@ class CustomExportHelper(object):
     @property
     @memoized
     def post_data(self):
-        return json.loads(self.request.raw_post_data)
+        return json.loads(self.request.body)
 
     def update_custom_export(self):
         """
@@ -286,7 +287,8 @@ class FormCustomExportHelper(CustomExportHelper):
             if self.creating_new_export and (question in self.default_questions or question in current_questions):
                 col["selected"] = True
 
-            update_multi_select_column(question, col)
+            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
+                update_multi_select_column(question, col)
 
         requires_case = self.custom_export.uses_cases()
 
@@ -312,7 +314,9 @@ class FormCustomExportHelper(CustomExportHelper):
 
         # This adds [info] location.#text to the standard list of columns to export, even if no forms have been
         # submitted with location data yet.
-        if self.custom_export.app and self.custom_export.app.auto_gps_capture:
+        if (self.custom_export.app
+                and not self.custom_export.app.is_remote_app()
+                and self.custom_export.app.auto_gps_capture):
             loc_present = False
             for col in column_conf:
                 if col['index'] == 'form.meta.location.#text':
@@ -340,7 +344,8 @@ class FormCustomExportHelper(CustomExportHelper):
                 show=True,
             ).to_config_format(selected=self.creating_new_export)
 
-            update_multi_select_column(question, col)
+            if toggle_enabled(self.request, 'SPLIT_MULTISELECT_EXPORT'):
+                update_multi_select_column(question, col)
 
             return col
 

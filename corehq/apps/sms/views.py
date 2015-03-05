@@ -39,7 +39,7 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
-    InitiateAddSMSBackendForm, SMSSettingsForm, SubscribeSMSForm,
+    InitiateAddSMSBackendForm, SubscribeSMSForm,
     SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
     DEFAULT, CUSTOM)
 from corehq.apps.sms.util import get_available_backends, get_contact
@@ -525,14 +525,12 @@ def _add_backend(request, backend_class_name, is_global, domain=None, backend_id
     }
     return render(request, backend_class.get_template(), context)
 
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def add_domain_backend(request, domain, backend_class_name, backend_id=None):
-    return _add_backend(request, backend_class_name, False, domain, backend_id)
 
 @require_superuser
 def add_backend(request, backend_class_name, backend_id=None):
+    # We need to keep this until we move over the admin sms gateway UIs
     return _add_backend(request, backend_class_name, True, backend_id=backend_id)
+
 
 def _list_backends(request, show_global=False, domain=None):
     backend_classes = get_available_backends()
@@ -585,58 +583,27 @@ def _list_backends(request, show_global=False, domain=None):
     }
     return render(request, "sms/list_backends.html", context)
 
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def list_domain_backends(request, domain):
-    return _list_backends(request, False, domain)
 
 @require_superuser
 def list_backends(request):
+    # We need to keep this until we move over the admin sms gateway UIs
     return _list_backends(request, True)
+
 
 @require_superuser
 def default_sms_admin_interface(request):
     return HttpResponseRedirect(reverse("list_backends"))
 
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def delete_domain_backend(request, domain, backend_id):
-    backend = SMSBackend.get(backend_id)
-    if backend.domain != domain or backend.base_doc != "MobileBackend":
-        raise Http404
-    domain_obj = Domain.get_by_name(domain, strict=True)
-    if domain_obj.default_sms_backend_id == backend._id:
-        domain_obj.default_sms_backend_id = None
-        domain_obj.save()
-    backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
-    return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
 
 @require_superuser
 def delete_backend(request, backend_id):
+    # We need to keep this until we move over the admin sms gateway UIs
     backend = SMSBackend.get(backend_id)
     if not backend.is_global or backend.base_doc != "MobileBackend":
         raise Http404
     backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
     return HttpResponseRedirect(reverse("list_backends"))
 
-def _set_default_domain_backend(request, domain, backend_id, unset=False):
-    backend = SMSBackend.get(backend_id)
-    if not backend.domain_is_authorized(domain):
-        raise Http404
-    domain_obj = Domain.get_by_name(domain, strict=True)
-    domain_obj.default_sms_backend_id = None if unset else backend._id
-    domain_obj.save()
-    return HttpResponseRedirect(reverse("list_domain_backends", args=[domain]))
-
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def set_default_domain_backend(request, domain, backend_id):
-    return _set_default_domain_backend(request, domain, backend_id)
-
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def unset_default_domain_backend(request, domain, backend_id):
-    return _set_default_domain_backend(request, domain, backend_id, True)
 
 @require_superuser
 def global_backend_map(request):
@@ -883,7 +850,7 @@ def api_last_read_message(request, domain):
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
-    urlname = 'list_domain_backends_new'
+    urlname = 'list_domain_backends'
     page_title = ugettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
@@ -915,6 +882,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return [
             _("Connection"),
             _("Description"),
+            _("Supported Countries"),
             _("Status"),
             _("Actions"),
         ]
@@ -974,10 +942,19 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def _fmt_backend_data(self, backend):
         is_editable = not backend.is_global and backend.domain == self.domain
+        if len(backend.supported_countries) > 0:
+            if backend.supported_countries[0] == '*':
+                supported_countries = _('Multiple%s') % '*'
+            else:
+                supported_countries = ', '.join(
+                    [_(c) for c in backend.supported_countries])
+        else:
+            supported_countries = ''
         return {
             'id': backend._id,
             'name': backend.name,
             'description': backend.description,
+            'supported_countries': supported_countries,
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
                 args=[self.domain, backend.__class__.__name__, backend._id]
@@ -1352,8 +1329,8 @@ def upload_sms_translations(request, domain):
 
 
 class SMSSettingsView(BaseMessagingSectionView):
-    urlname = "sms_settings_new"
-    template_name = "sms/settings_new.html"
+    urlname = "sms_settings"
+    template_name = "sms/settings.html"
     page_title = ugettext_noop("SMS Settings")
 
     @property
@@ -1425,6 +1402,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     domain_obj.sms_case_registration_owner_id,
                 "sms_case_registration_user_id":
                     domain_obj.sms_case_registration_user_id,
+                "sms_mobile_worker_registration_enabled":
+                    enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
@@ -1459,6 +1438,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "restricted_sms_times_json"),
                 ("sms_conversation_times",
                  "sms_conversation_times_json"),
+                ("sms_mobile_worker_registration_enabled",
+                 "sms_mobile_worker_registration_enabled"),
             ]
             if self.previewer:
                 field_map.append(
@@ -1499,58 +1480,3 @@ class SMSSettingsView(BaseMessagingSectionView):
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
-
-
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def sms_settings(request, domain):
-    domain_obj = Domain.get_by_name(domain, strict=True)
-    is_previewer = request.couch_user.is_previewer()
-    if request.method == "POST":
-        form = SMSSettingsForm(request.POST, _cchq_is_previewer=is_previewer)
-        if form.is_valid():
-            domain_obj.use_default_sms_response = form.cleaned_data["use_default_sms_response"]
-            domain_obj.default_sms_response = form.cleaned_data["default_sms_response"]
-            if settings.SMS_QUEUE_ENABLED:
-                domain_obj.restricted_sms_times = form.cleaned_data["restricted_sms_times_json"]
-            if is_previewer:
-                domain_obj.custom_case_username = form.cleaned_data["custom_case_username"]
-                domain_obj.chat_message_count_threshold = form.cleaned_data["custom_message_count_threshold"]
-                domain_obj.custom_chat_template = form.cleaned_data["custom_chat_template"]
-                domain_obj.filter_surveys_from_chat = form.cleaned_data["filter_surveys_from_chat"]
-                domain_obj.show_invalid_survey_responses_in_chat = form.cleaned_data["show_invalid_survey_responses_in_chat"]
-                domain_obj.count_messages_as_read_by_anyone = form.cleaned_data["count_messages_as_read_by_anyone"]
-                domain_obj.send_to_duplicated_case_numbers = form.cleaned_data["send_to_duplicated_case_numbers"]
-                if settings.SMS_QUEUE_ENABLED:
-                    domain_obj.sms_conversation_times = form.cleaned_data["sms_conversation_times_json"]
-                    domain_obj.sms_conversation_length = int(form.cleaned_data["sms_conversation_length"])
-            domain_obj.save()
-            messages.success(request, _("Changes Saved."))
-    else:
-        initial = {
-            "use_default_sms_response" : domain_obj.use_default_sms_response,
-            "default_sms_response" : domain_obj.default_sms_response,
-            "use_custom_case_username" : domain_obj.custom_case_username is not None,
-            "custom_case_username" : domain_obj.custom_case_username,
-            "use_custom_message_count_threshold" : domain_obj.chat_message_count_threshold is not None,
-            "custom_message_count_threshold" : domain_obj.chat_message_count_threshold,
-            "use_custom_chat_template" : domain_obj.custom_chat_template is not None,
-            "custom_chat_template" : domain_obj.custom_chat_template,
-            "restricted_sms_times" : domain_obj.restricted_sms_times,
-            "sms_conversation_times" : domain_obj.sms_conversation_times,
-            "sms_conversation_length" : domain_obj.sms_conversation_length,
-            "filter_surveys_from_chat" : domain_obj.filter_surveys_from_chat,
-            "show_invalid_survey_responses_in_chat" : domain_obj.show_invalid_survey_responses_in_chat,
-            "count_messages_as_read_by_anyone" : domain_obj.count_messages_as_read_by_anyone,
-            "send_to_duplicated_case_numbers": domain_obj.send_to_duplicated_case_numbers,
-        }
-        form = SMSSettingsForm(initial=initial)
-
-    context = {
-        "domain" : domain,
-        "form" : form,
-        "is_previewer" : is_previewer,
-        "sms_queue_enabled" : settings.SMS_QUEUE_ENABLED,
-        'can_use_survey': can_use_survey_reminders(request),
-    }
-    return render(request, "sms/settings.html", context)

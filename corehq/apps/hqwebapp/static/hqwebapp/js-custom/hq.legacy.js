@@ -16,7 +16,7 @@ var COMMCAREHQ = (function () {
                 '<a href="#" class="hq-help no-click">' +
                     '<i class="icon-question-sign" data-trigger="hover"></i></a>'
             );
-            for (var attr in {'content': 0, 'title': 0}) {
+            for (var attr in {'content': 0, 'title': 0, 'placement': 0}) {
                 $('i', el).data(attr, opts[attr]);
             }
             if (wrap) {

@@ -1,23 +1,32 @@
-#fieldset_year, #fieldset_gender, #fieldset_group_leadership, #fieldset_cbt_name {
+#fieldset_gender, #fieldset_group_leadership, #fieldset_cbt_name {
     float: left;
-    width: 30%;
+    width: 190px;
+    margin-left: 10px;
 }
 
-#fieldset_cbt_name, #fieldset_farmer_social_category {
+#fieldset_year {
     float: left;
-    width: 45%;
+    width: 190px;
+    margin-left: 205px;
 }
 
-#fieldset_gender label, #fieldset_group_leadership label,  #fieldset_farmer_social_category label {
-    width: 45%;
+#fieldset_farmer_social_category {
+    clear: left;
+    margin-left: 180px;
+}
+
+#fieldset_year label, #fieldset_gender label, #fieldset_group_leadership label, #fieldset_cbt_name label {
+    width: 100%;
+    height: 25px;
     text-align: left;
+}
+
+#fieldset_year .controls, #fieldset_gender .controls, #fieldset_group_leadership .controls, #fieldset_cbt_name .controls, #fieldset_farmer_social_category .controls {
+    width: 100%;
+    margin-left: 0;
 }
 
 #fieldset_year .select2-container, #fieldset_gender .select2-container, #fieldset_group_leadership .select2-container,
 #fieldset_cbt_name .select2-container, #fieldset_farmer_social_category .select2-container {
-    width: 60%;
-}
-
-#fieldset_gender .controls, #fieldset_group_leadership .controls {
-    margin-left: 50px;
+    width: 100%;
 }

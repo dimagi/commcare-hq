@@ -2,6 +2,7 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER
 from corehq.toggles import NAMESPACE_DOMAIN
+from django.db import models
 
 
 class EWSGhanaConfig(Document):
@@ -10,6 +11,7 @@ class EWSGhanaConfig(Document):
     url = StringProperty(default="http://ewsghana.com/api/v0_1")
     username = StringProperty()
     password = StringProperty()
+    steady_sync = BooleanProperty(default=False)
 
     @classmethod
     def for_domain(cls, name):
@@ -24,6 +26,13 @@ class EWSGhanaConfig(Document):
         mappings = DocDomainMapping.objects.filter(doc_type='EWSGhanaConfig')
         configs = [cls.get(docid=mapping.doc_id) for mapping in mappings]
         return configs
+
+    @classmethod
+    def get_all_steady_sync_configs(cls):
+        return [
+            config for config in cls.get_all_configs()
+            if config.steady_sync
+        ]
 
     @classmethod
     def get_all_enabled_domains(cls):
@@ -55,3 +64,10 @@ class EWSGhanaConfig(Document):
 
         if self.enabled:
             STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
+
+
+class AlertsSent(models.Model):
+    create_date = models.DateTimeField(editable=False)
+    alert_type = models.TextField()
+    alert_text = models.TextField()
+    supply_point_id = models.CharField(max_length=10)

@@ -1,33 +1,65 @@
-{% extends "reports/base_template.html" %}
+{% extends "reports/async/tabular.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block reports-css %}
+{% block pretable %}
     {{ block.super }}
-    <style>
-        .datatable tbody tr:nth-child(3) td:nth-child(odd), .table-hq tbody tr:nth-child(3) td:nth-child(odd) {
-            background-color: #39506a;
-            background-image: -moz-linear-gradient(top, #4c5b6b, #1c4068);
-            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#4c5b6b), to(#1c4068));
-            background-image: -webkit-linear-gradient(top, #4c5b6b, #1c4068);
-            background-image: -o-linear-gradient(top, #4c5b6b, #1c4068);
-            background-image: linear-gradient(to bottom, #4c5b6b, #1c4068);
-            background-repeat: repeat-x;
-            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff4c5b6b', endColorstr='#ff1c4068', GradientType=0);
-        }
+    {% if sf == "" %}
+    <div class="row hq-flush-content">
+        <div class="span6">
+            <table class="table table-striped">
+                <tr>
+                    <td><strong>Total number of ASHAs under the Facilitator</strong></td>
+                    <td>{{ total_under_facilitator }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total number of ASHAs for whom the functionality checklist was filled</strong></td>
+                    <td>{{ total_with_checklist }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+{% endblock pretable %}
 
-        .datatable tbody tr:nth-child(3) td, .hq-generic-report .table tbody tr:nth-child(3) td, .table-hq tbody tr:nth-child(3) td{
-            color: #ffffff;
-            background-color: #587392;
-            background-image: -moz-linear-gradient(top, #7b8da2, #224c7c);
-            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#7b8da2), to(#224c7c));
-            background-image: -webkit-linear-gradient(top, #7b8da2, #224c7c);
-            background-image: -o-linear-gradient(top, #7b8da2, #224c7c);
-            background-image: linear-gradient(to bottom, #7b8da2, #224c7c);
-            background-repeat: repeat-x;
-            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff7b8da2', endColorstr='#ff224c7c', GradientType=0);
-            font-weight: normal;
-            position: relative;
+{% block js-inline %}
+    <script>
+        function hideFilters(sf) {
+            if (sf === "") {
+                $('#fieldset_datespan').css('display', 'block');
+                $('#fieldset_year').css('display', 'none');
+                $('#fieldset_month').css('display', 'none');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'block');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'block');
+            } else if (sf === "sf3") {
+                $('#fieldset_datespan').css('display', 'none');
+                $('#fieldset_year').css('display', 'block');
+                $('#fieldset_month').css('display', 'block');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'block');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'block');
+            } else if (sf === "sf4") {
+                $('#fieldset_datespan').css('display', 'none');
+                $('#fieldset_year').css('display', 'block');
+                $('#fieldset_month').css('display', 'block');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'none');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'block');
+
+            } else if (sf === "sf5") {
+                $('#fieldset_datespan').css('display', 'none');
+                $('#fieldset_year').css('display', 'block');
+                $('#fieldset_month').css('display', 'block');
+                $('#report_filter_hierarchy_af').parent().parent().css('display', 'none');
+                $('#report_filter_hierarchy_block').parent().parent().css('display', 'none');
+            }
         }
-    </style>
+        $('#report_filter_sf').on('change', function() {
+            sf = $(this).select2('data').id;
+            hideFilters(sf);
+        });
+        $('#hq-report-filters').on('change', function() {
+            hideFilters(sf);
+        });
+        sf = $('#report_filter_sf').select2('data').id;
+        hideFilters(sf);
+    </script>
 {% endblock %}

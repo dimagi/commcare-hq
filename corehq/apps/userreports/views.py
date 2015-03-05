@@ -16,7 +16,7 @@ from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.app_manager.models import get_apps_in_domain
 from corehq import Session, ConfigurableReport
 from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.builder.forms import (
@@ -37,6 +37,8 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
     ConfigurableFormDataSourceFromAppForm)
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
@@ -312,6 +314,7 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
 
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
+
     else:
         form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)
@@ -371,7 +374,8 @@ def preview_data_source(request, domain, config_id):
     return render(request, "userreports/preview_data.html", context)
 
 
-@login_and_domain_required
+@login_or_basic
+@require_permission(Permissions.view_reports)
 def export_data_source(request, domain, config_id):
     format = request.GET.get('format', Format.UNZIPPED_CSV)
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)

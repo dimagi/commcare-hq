@@ -427,49 +427,21 @@ class SubmissionPost(object):
                 instance = xforms[0]
                 if instance.doc_type == "XFormInstance":
                     domain = get_and_check_xform_domain(instance)
-                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
+                    with CaseDbCache(domain=domain, lock=True, deleted_ok=True, xform=instance) as case_db:
                         try:
                             process_cases_with_casedb(instance, case_db)
                             process_stock(instance, case_db)
                         except IllegalCaseId as e:
-                            error_message = '{}: {}'.format(
-                                type(e).__name__, unicode(e))
-                            logging.exception((
-                                u"Warning in case or stock processing "
-                                u"for form {}: {}."
-                            ).format(instance._id, error_message))
-                            instance.__class__ = XFormError
-                            instance.problem = error_message
-                            instance.save()
+                            # errors we know about related to the content of the form
+                            # log the error and respond with a success code so that the phone doesn't
+                            # keep trying to send the form
+                            instance = _handle_known_error(e, instance)
                             response = self._get_open_rosa_response(instance,
                                                                     None, None)
                             return response, instance, cases
                         except Exception as e:
-                            # Some things to consider here
-                            # The following code saves the xform instance
-                            # as an XFormError, with a different ID.
-                            # That's because if you save with the original ID
-                            # and then resubmit, the new submission never has a
-                            # chance to get reprocessed; it'll just get saved as
-                            # a duplicate.
-                            error_message = '{}: {}'.format(
-                                type(e).__name__, unicode(e))
-                            new_id = XFormError.get_db().server.next_uuid()
-                            logging.exception((
-                                u"Error in case or stock processing "
-                                u"for form {}: {}.\n"
-                                u"Error saved as {}"
-                            ).format(instance._id, error_message, new_id))
-                            instance.__class__ = XFormError
-                            instance.orig_id = instance._id
-                            instance._id = new_id
-                            instance.problem = error_message
-                            instance.save()
-                            if instance.orig_id == "8410bd60-2269-4c5d-b262-5cf828cfddee":
-                                response = self._get_open_rosa_response(
-                                    instance, None, None)
-                                return response, instance, cases
-
+                            # handle / log the error and reraise so the phone knows to resubmit
+                            _handle_unexpected_error(e, instance)
                             raise
                         now = datetime.datetime.utcnow()
                         unfinished_submission_stub = UnfinishedSubmissionStub(
@@ -504,6 +476,8 @@ class SubmissionPost(object):
                         try:
                             XFormInstance.get_db().bulk_save(docs)
                         except BulkSaveError as e:
+                            logging.error('BulkSaveError saving forms', exc_info=1,
+                                          extra={'errors': e.errors})
                             raise
                         unfinished_submission_stub.saved = True
                         unfinished_submission_stub.save()
@@ -600,6 +574,42 @@ class SubmissionPost(object):
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
         ).response()
+
+
+def _handle_known_error(e, instance):
+    error_message = '{}: {}'.format(
+        type(e).__name__, unicode(e))
+    logging.exception((
+        u"Warning in case or stock processing "
+        u"for form {}: {}."
+    ).format(instance._id, error_message))
+    instance.__class__ = XFormError
+    instance.problem = error_message
+    instance.save()
+    return instance
+
+
+def _handle_unexpected_error(e, instance):
+    # Some things to consider here
+    # The following code saves the xform instance
+    # as an XFormError, with a different ID.
+    # That's because if you save with the original ID
+    # and then resubmit, the new submission never has a
+    # chance to get reprocessed; it'll just get saved as
+    # a duplicate.
+    error_message = '{}: {}'.format(
+        type(e).__name__, unicode(e))
+    new_id = XFormError.get_db().server.next_uuid()
+    logging.exception((
+        u"Error in case or stock processing "
+        u"for form {}: {}.\n"
+        u"Error saved as {}"
+    ).format(instance._id, error_message, new_id))
+    instance.__class__ = XFormError
+    instance.orig_id = instance._id
+    instance._id = new_id
+    instance.problem = error_message
+    instance.save()
 
 
 def fetch_and_wrap_form(doc_id):

@@ -14,7 +14,7 @@ from django.template import Context
 from django_countries.countries import COUNTRIES
 from corehq.apps.domain.forms import EditBillingAccountInfoForm
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, LOCATION_SHARING_PREFIX
 from corehq.apps.registration.utils import handle_changed_mailchimp_email
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -35,6 +35,7 @@ import settings
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
 mark_safe_lazy = lazy(mark_safe, six.text_type)
+
 
 def wrapped_language_validation(value):
     try:
@@ -391,8 +392,9 @@ class SupplyPointSelectWidget(forms.Widget):
                     'query_url': reverse('corehq.apps.commtrack.views.api_query_supply_point', args=[self.domain]),
                 }))
 
+
 class CommtrackUserForm(forms.Form):
-    supply_point = forms.CharField(label='Location:', required=False)
+    location = forms.CharField(label='Location:', required=False)
     program_id = forms.ChoiceField(label="Program", choices=(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -406,7 +408,7 @@ class CommtrackUserForm(forms.Form):
         else:
             attrs = {'is_admin': False}
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['supply_point'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
+        self.fields['location'].widget = SupplyPointSelectWidget(domain=domain, attrs=attrs)
         if Domain.get_by_name(domain).commtrack_enabled:
             programs = Program.by_domain(domain, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
@@ -416,17 +418,25 @@ class CommtrackUserForm(forms.Form):
             self.fields['program_id'].widget = forms.HiddenInput()
 
     def save(self, user):
-        location_id = self.cleaned_data['supply_point']
+        location_id = self.cleaned_data['location']
         if location_id:
             loc = Location.get(location_id)
 
-            user.clear_locations()
-            user.add_location(loc, create_sp_if_missing=True)
+            # This means it will clear the location associations
+            # set in a domain with multiple locations configured.
+            # It is acceptable for now because multi location
+            # config is a not really supported special flag for
+            # IPM.
+            user.set_location(loc)
 
             # add the supply point case id to user data fields
             # so that the phone can auto select
             supply_point = SupplyPointCase.get_by_location(loc)
-            user.user_data['commtrack-supply-point'] = supply_point._id
+            if supply_point:
+                user.user_data['commtrack-supply-point'] = supply_point._id
+
+            user.user_data['commcare_primary_case_sharing_id'] = \
+                LOCATION_SHARING_PREFIX + location_id
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):

@@ -72,7 +72,7 @@
                         <td>{{ info.next_fire }}</td>
                         <td>
                             {% if info.handler_type == 'DEFAULT' %}
-                                <a href="{% url "edit_complex" domain info.handler_id %}">{{ info.handler_name }}</a>
+                                <a href="{% url "edit_reminder_schedule" domain info.handler_id %}">{{ info.handler_name }}</a>
                             {% else %}
                                 {% if info.handler_type == 'KEYWORD_INITIATED' %}
                                     {% trans 'Keyword Response' %}

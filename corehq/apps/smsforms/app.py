@@ -1,4 +1,4 @@
-from .models import XFormsSession, XFORMS_SESSION_SMS
+from .models import XFormsSession, XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
 from touchforms.formplayer.api import (
@@ -96,10 +96,10 @@ def _get_responses(domain, recipient, text, yield_responses=False, session_id=No
     if session_id is not None:
         if update_timestamp:
             # The IVR workflow passes the session id
-            session = XFormsSession.by_session_id(session_id)
+            session = SQLXFormsSession.by_session_id(session_id)
     else:
         # The SMS workflow grabs the open sms session
-        session = XFormsSession.get_open_sms_session(domain, recipient)
+        session = SQLXFormsSession.get_open_sms_session(domain, recipient)
         if session is not None:
             session_id = session.session_id
 
@@ -130,7 +130,7 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
 
     The form is only submitted if the smsforms session has not yet completed.
     """
-    session = XFormsSession.by_session_id(session_id)
+    session = SQLXFormsSession.by_session_id(session_id)
     if session is not None and session.end_time is None:
         # Get and clean the raw xml
         try:

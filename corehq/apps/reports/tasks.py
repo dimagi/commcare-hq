@@ -7,7 +7,7 @@ from celery.task import periodic_task
 from corehq.apps.reports.scheduled import get_scheduled_reports
 from corehq.util.view_utils import absolute_reverse
 from couchexport.files import Temp
-from couchexport.groupexports import export_for_group
+from couchexport.groupexports import export_for_group, rebuild_export
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.logging import notify_exception
 from couchexport.tasks import cache_file_to_be_served
@@ -131,7 +131,14 @@ def saved_exports():
 
 @task(queue='saved_exports_queue')
 def export_for_group_async(group_config, output_dir):
-    export_for_group(group_config, output_dir)
+    # exclude exports not accessed within the last 7 days
+    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
+    export_for_group(group_config, output_dir, last_access_cutoff=last_access_cutoff)
+
+
+@task(queue='saved_exports_queue')
+def rebuild_export_async(config, schema, output_dir):
+    rebuild_export(config, schema, output_dir)
 
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
@@ -209,11 +216,12 @@ def export_all_rows_task(ReportClass, report_state):
     file = report.excel_response
     hash_id = _store_excel_in_redis(file)
     user = WebUser.get(report_state["request"]["couch_user"])
-    _send_email(user.get_email(), report, hash_id)
+    _send_email(user, report, hash_id)
 
 
-def _send_email(to, report, hash_id):
-    link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
+def _send_email(user, report, hash_id):
+    domain = report.domain or user.get_domains()[0]
+    link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
     title = "%s: Requested export excel data"
@@ -221,8 +229,13 @@ def _send_email(to, report, hash_id):
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
 
-    send_HTML_email(_(title) % report.name, to, _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
-                    email_from=settings.DEFAULT_FROM_EMAIL)
+    send_HTML_email(
+        _(title) % report.name,
+        user.get_email(),
+        _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
+        email_from=settings.DEFAULT_FROM_EMAIL
+    )
+
 
 def _store_excel_in_redis(file):
     hash_id = uuid.uuid4().hex

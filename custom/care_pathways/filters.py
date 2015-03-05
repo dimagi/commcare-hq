@@ -99,6 +99,11 @@ class GenderFilter(BaseSingleOptionFilter):
     def options(self):
         return [('2', 'All Women'), ('1', 'Some Women'), ('0', 'No Women')]
 
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
+
 
 class GroupLeadershipFilter(BaseSingleOptionFilter):
     slug = "group_leadership"
@@ -110,6 +115,11 @@ class GroupLeadershipFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('2', 'All Women'), ('1', 'Some Women'), ('0', 'No Women')]
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
 
 
 class CBTNameFilter(BaseSingleOptionFilter):
@@ -182,12 +192,6 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
             'slug': slug,
             'value': val,
         }
-
-
-class TypeFilterWithoutPractices(TypeFilter):
-    @classmethod
-    def get_labels(cls):
-        return [('Value Chain', 'Any', 'value_chain'), ('Domain', '', 'domain')]
 
 
 class GroupByFilter(BaseSingleOptionFilter):

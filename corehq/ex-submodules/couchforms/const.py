@@ -33,3 +33,5 @@ MULTIPART_EMPTY_PAYLOAD_ERROR = BadRequest((
     'must not have an empty payload\n'
 ) % MAGIC_PROPERTY)
 EMPTY_PAYLOAD_ERROR = BadRequest('Post may not have an empty body\n')
+
+DEVICE_LOG_XMLNS = 'http://code.javarosa.org/devicereport'

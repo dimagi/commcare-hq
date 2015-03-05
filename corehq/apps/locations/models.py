@@ -12,6 +12,10 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from mptt.models import MPTTModel, TreeForeignKey
+from corehq.apps.domain.models import Domain
+
+LOCATION_SHARING_PREFIX = 'locationgroup-'
+LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
 class SQLLocation(MPTTModel):
@@ -61,6 +65,9 @@ class SQLLocation(MPTTModel):
     class Meta:
         unique_together = ('domain', 'site_code',)
 
+    def __unicode__(self):
+        return u"{} ({})".format(self.name, self.domain)
+
     def __repr__(self):
         return "<SQLLocation(domain=%s, name=%s)>" % (
             self.domain,
@@ -84,6 +91,80 @@ class SQLLocation(MPTTModel):
     def root_locations(cls, domain, include_archive_ancestors=False):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
+
+    def _make_group_object(self, user_id, case_sharing):
+        def group_name():
+            return '/'.join(
+                list(self.get_ancestors().values_list('name', flat=True)) +
+                [self.name]
+            )
+
+        from corehq.apps.groups.models import UnsavableGroup
+
+        g = UnsavableGroup()
+        g.domain = self.domain
+        g.users = [user_id] if user_id else []
+        g.last_modified = datetime.now()
+
+        if case_sharing:
+            g.name = group_name() + '-Cases'
+            g._id = LOCATION_SHARING_PREFIX + self.location_id
+            g.case_sharing = True
+            g.reporting = False
+        else:
+            # reporting groups
+            g.name = group_name()
+            g._id = LOCATION_REPORTING_PREFIX + self.location_id
+            g.case_sharing = False
+            g.reporting = True
+
+        g.metadata = {
+            'commcare_location_type': self.location_type,
+            'commcare_location_name': self.name,
+        }
+        for key, val in self.metadata.items():
+            g.metadata['commcare_location_' + key] = val
+
+        return g
+
+    def case_sharing_group_object(self, user_id=None):
+        """
+        Returns a fake group object that cannot be saved.
+
+        This is used for giving users access via case
+        sharing groups, without having a real group
+        for every location that we have to manage/hide.
+        """
+
+        return self._make_group_object(
+            user_id,
+            True,
+        )
+
+    def reporting_group_object(self, user_id=None):
+        """
+        Returns a fake group object that cannot be saved.
+
+        Similar to case_sharing_group_object method, but for
+        reporting groups.
+        """
+
+        return self._make_group_object(
+            user_id,
+            False,
+        )
+
+    @memoized
+    def couch_location(self):
+        return Location.get(self.location_id)
+
+    @memoized
+    def get_products(self):
+        """
+        If there are no products specified for this location, assume all
+        products for the domain are relevant.
+        """
+        return self.products.all() or SQLProduct.by_domain(self.domain)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -408,10 +489,22 @@ class Location(CachedCouchDocumentMixin, Document):
         return SupplyPointCase.get_by_location(self)
 
     @property
+    def group_id(self):
+        """
+        Returns the id with a prefix because this is
+        the magic id we are force setting the locations
+        case sharing group to be.
+
+        This is also the id that owns supply point cases.
+        """
+        return LOCATION_SHARING_PREFIX + self._id
+
+    @property
     def location_type_object(self):
         """
         Brute force lookup for the LocationType object
         that corresponds to this locations type.
+
         This could definitely use a more efficient way,
         but no domains at this point have a large list of
         types.

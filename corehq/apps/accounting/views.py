@@ -7,7 +7,12 @@ from django.contrib.auth.models import User
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.util import ErrorList
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    Http404,
+)
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
@@ -129,7 +134,10 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def account(self):
-        return BillingAccount.objects.get(id=self.args[0])
+        try:
+            return BillingAccount.objects.get(id=self.args[0])
+        except BillingAccount.DoesNotExist:
+            raise Http404()
 
     @property
     @memoized
@@ -286,7 +294,10 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def subscription(self):
-        return Subscription.objects.get(id=self.subscription_id)
+        try:
+            return Subscription.objects.get(id=self.subscription_id)
+        except Subscription.DoesNotExist:
+            raise Http404()
 
     @property
     @memoized
@@ -437,7 +448,10 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def plan(self):
-        return SoftwarePlan.objects.get(id=self.args[0])
+        try:
+            return SoftwarePlan.objects.get(id=self.args[0])
+        except SoftwarePlan.DoesNotExist:
+            raise Http404()
 
     @property
     @memoized
@@ -627,7 +641,10 @@ class InvoiceSummaryView(AccountingSectionView):
     @property
     @memoized
     def invoice(self):
-        return Invoice.objects.get(id=self.args[0])
+        try:
+            return Invoice.objects.get(id=self.args[0])
+        except Invoice.DoesNotExist:
+            raise Http404()
 
     @property
     def page_title(self):

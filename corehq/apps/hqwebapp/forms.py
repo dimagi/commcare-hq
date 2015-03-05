@@ -23,7 +23,7 @@ class EmailAuthenticationForm(AuthenticationForm):
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
-    username = forms.EmailField(label=_("Username"), max_length=75)
+    username = forms.CharField(label=_("Username"), max_length=75)
 
 
 class BulkUploadForm(forms.Form):

@@ -1,12 +1,14 @@
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests import delete_all_cases
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import get_case_ids_in_domain, get_cases_in_domain
 from corehq.apps.importer.tasks import do_import
 from corehq.apps.importer.util import ImporterConfig
 from corehq.apps.users.models import WebUser
 
+from .const import ImportErrors
 
 class MockExcelFile(object):
     """
@@ -99,7 +101,7 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
-        self.assertEqual(0, res['errors'])
+        self.assertFalse(res['errors'])
         self.assertEqual(1, res['num_chunks'])
         cases = list(get_cases_in_domain(self.domain))
         self.assertEqual(5, len(cases))
@@ -145,7 +147,7 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(0, res['created_count'])
         self.assertEqual(3, res['match_count'])
-        self.assertEqual(0, res['errors'])
+        self.assertFalse(res['errors'])
 
         # shouldn't create any more cases, just the one
         self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
@@ -198,7 +200,7 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(0, res['created_count'])
         self.assertEqual(3, res['match_count'])
-        self.assertEqual(0, res['errors'])
+        self.assertFalse(res['errors'])
 
         # shouldn't create any more cases, just the one
         self.assertEqual(1, len(get_case_ids_in_domain(self.domain)))
@@ -250,7 +252,7 @@ class ImporterTest(TestCase):
         res = do_import(file, config, self.domain)
         self.assertEqual(1, res['created_count'])
         self.assertEqual(2, res['match_count'])
-        self.assertEqual(0, res['errors'])
+        self.assertFalse(res['errors'])
         self.assertEqual(2, res['num_chunks']) # the lookup causes an extra chunk
 
         # should just create the one case
@@ -259,3 +261,26 @@ class ImporterTest(TestCase):
         self.assertEqual(external_id, case.external_id)
         for prop in self.default_headers[1:]:
             self.assertTrue(prop in case.get_case_property(prop))
+
+    def testParentCase(self):
+        headers = ['parent_id', 'name', 'case_id']
+        config = self._config(headers, create_new_cases=True, search_column='case_id')
+        rows = 3
+        parent_case = CommCareCase(domain=self.domain, type=self.default_case_type)
+        parent_case.save()
+
+        file = MockExcelFile(header_columns=headers,
+                             num_rows=rows,
+                             row_generator=id_match_generator(parent_case['_id']))
+        file_missing = MockExcelFile(header_columns=headers,
+                                     num_rows=rows)
+
+        # Should successfully match on `rows` cases
+        res = do_import(file, config, self.domain)
+        self.assertEqual(rows, res['created_count'])
+
+        # Should be unable to find parent case on `rows` cases
+        res = do_import(file_missing, config, self.domain)
+        self.assertEqual(rows,
+                         len(res['errors'][ImportErrors.InvalidParentId]['rows']),
+                         "All cases should have missing parent")

@@ -55,6 +55,7 @@ class Command(BaseCommand):
                 subscriber.apply_upgrades_and_downgrades(
                     new_plan_version=plan_version,
                     verbose=True,
+                    new_subscription=subscription,
                 )
             else:
                 print ("[DRY RUN] %s => %s" %

@@ -270,6 +270,8 @@ class CaseActivityReport(WorkerMonitoringReportTableBase):
             kwargs['modified_on__gte'] = modified_after
         if modified_before:
             kwargs['modified_on__lt'] = modified_before
+        if self.case_type:
+            kwargs['type'] = self.case_type
 
         qs = CaseData.objects.filter(
             domain=self.domain,
@@ -402,9 +404,9 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     fix_left_col = False
     emailable = True
-    exportable_all = True
     is_cacheable = False
     ajax_pagination = True
+    exportable_all = True
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
