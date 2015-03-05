@@ -36,13 +36,8 @@
                 </tbody>
             </table>
             <% if (parentCase && childCase) { %>
-                <% if (parentCase.href){ %>
-                    <a target="_blank" href="<%= parentCase.href %>">
-                        {% trans "open case list in new window" %}
-                    </a>
-                <% } %>
-                    <br class="divider"></br>
-                    <% } %>
+                <br class="divider"></br>
+            <% } %>
             <% } %>
             <% if (childCase) { %>
             <table class="table table-striped datatable">
