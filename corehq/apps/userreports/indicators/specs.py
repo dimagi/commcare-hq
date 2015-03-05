@@ -1,18 +1,14 @@
 from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.expressions.getters import (
-    getter_from_property_reference,
-    TransformedGetter,
-    transform_date,
-    transform_datetime,
-    transform_decimal,
-    transform_int,
-    transform_unicode,
-)
+from corehq.apps.userreports.expressions.getters import TransformedGetter, getter_from_property_reference, \
+    transform_from_datatype
 from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL
 from corehq.apps.userreports.specs import TypeProperty
 
+
 DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal']
+
+
 def DataTypeProperty(**kwargs):
     """
     Shortcut for valid data types.
@@ -68,7 +64,7 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
     @property
     def getter(self):
-        transform = _transform_from_datatype(self.datatype)
+        transform = transform_from_datatype(self.datatype)
         getter = getter_from_property_reference(self)
         return TransformedGetter(getter, transform)
 
@@ -82,7 +78,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
 
     def parsed_expression(self, context):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
-        transform = _transform_from_datatype(self.datatype)
+        transform = transform_from_datatype(self.datatype)
         expression = ExpressionFactory.from_spec(self.expression, context)
         return TransformedGetter(expression, transform)
 
@@ -94,13 +90,3 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
     def get_operator(self):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
-
-
-def _transform_from_datatype(datatype):
-    return {
-        'date': transform_date,
-        'datetime': transform_datetime,
-        'string': transform_unicode,
-        'decimal': transform_decimal,
-        'integer': transform_int,
-    }.get(datatype)

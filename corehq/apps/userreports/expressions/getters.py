@@ -101,6 +101,18 @@ def transform_unicode(item):
         return None
 
 
+def transform_from_datatype(datatype):
+    """
+    Given a datatype, return a transform for that type.
+    """
+    identity = lambda x: x
+    return {
+        'date': transform_date,
+        'integer': transform_int,
+        'string': unicode,
+    }.get(datatype) or identity
+
+
 def getter_from_property_reference(spec):
     if spec.property_name:
         assert not spec.property_path, \

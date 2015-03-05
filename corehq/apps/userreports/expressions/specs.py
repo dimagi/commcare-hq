@@ -6,11 +6,8 @@ from corehq.apps.userreports.expressions.getters import (
     DictGetter,
     NestedDictGetter,
     TransformedGetter,
-)
-from corehq.apps.userreports.indicators.specs import (
-    DataTypeProperty,
-    _transform_from_datatype,
-)
+    transform_from_datatype)
+from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
@@ -31,7 +28,7 @@ class PropertyNameGetterSpec(JsonObject):
 
     @property
     def expression(self):
-        transform = _transform_from_datatype(self.datatype)
+        transform = transform_from_datatype(self.datatype)
         getter = DictGetter(self.property_name)
         return TransformedGetter(getter, transform)
 
@@ -46,7 +43,7 @@ class PropertyPathGetterSpec(JsonObject):
 
     @property
     def expression(self):
-        transform = _transform_from_datatype(self.datatype)
+        transform = transform_from_datatype(self.datatype)
         getter = NestedDictGetter(self.property_path)
         return TransformedGetter(getter, transform)
 
