@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import Location, SQLLocation
 from .check_loc_types import locs_by_domain
 
 
@@ -16,6 +16,7 @@ class Command(BaseCommand):
         count = 0
         for loc in iter_docs(Location.get_db(), loc_ids):
             loc['doc_type'] = "{}{}".format(loc['doc_type'], DELETED_SUFFIX)
+            loc['is_archived'] = True
             locs_to_save.append(loc)
             count += 1
 
@@ -26,7 +27,6 @@ class Command(BaseCommand):
 
         if locs_to_save:
             Location.get_db().bulk_save(locs_to_save)
-        print "Finished"
 
     def handle(self, *args, **options):
         if not len(args) == 1:
@@ -51,3 +51,8 @@ class Command(BaseCommand):
             Location.by_domain(domain, include_docs=False),
             total,
         )
+
+        print "Archiving SQLLocations"
+        SQLLocation.objects.filter(domain=domain).update(is_archived=True)
+
+        print "Finished"
