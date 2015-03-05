@@ -161,14 +161,12 @@ class BillingAccountBasicForm(forms.Form):
         )
 
     def clean_name(self):
-        existing_names = set(account.name for account in BillingAccount.objects.all())
-        if self.account:
-            disallowed_names = existing_names - {self.account.name}
-        else:
-            disallowed_names = existing_names
-
         name = self.cleaned_data['name']
-        if name in disallowed_names:
+        conflicting_named_accounts = BillingAccount.objects.filter(name=name)
+        if self.account:
+            conflicting_named_accounts = conflicting_named_accounts.exclude(name=self.account.name)
+
+        if conflicting_named_accounts.exists():
             raise ValidationError("Name '%s' is already taken." % name)
         return name
 
