@@ -329,7 +329,7 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
 
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
-        super(ModuleAsChildTest, self).__init__(args, **kwargs)
+        super(AdvancedModuleAsChildTest, self).__init__(args, **kwargs)
 
     def test_basic_workflow(self):
         # make module_1 as submenu to module_0
