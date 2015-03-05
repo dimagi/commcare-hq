@@ -308,7 +308,7 @@ class CreateNewReportForm(forms.Form):
                         "Too many data sources!\n"
                         "Creating this report would cause you to go over the maximum "
                         "number of data sources allowed in this domain. The current "
-                        "limit is 5."
+                        "limit is 5. "
                         "To continue, delete all of the reports using a particular "
                         "data source (or the data source itself) and try again. "
                     ))
