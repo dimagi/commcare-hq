@@ -302,7 +302,6 @@ HQ_APPS = (
     'custom.apps.gsid',
     'hsph',
     'mvp',
-    'mvp_apps',
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',

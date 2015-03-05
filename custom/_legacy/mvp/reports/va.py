@@ -22,10 +22,6 @@ class VerbalAutopsyReport(MVPIndicatorReport):
     emailable = True
 
     @property
-    def use_new_db(self):
-        return True
-
-    @property
     def timezone(self):
         return pytz.utc
 
@@ -63,7 +59,6 @@ class VerbalAutopsyReport(MVPIndicatorReport):
                     indicator = DynamicIndicatorDefinition.get_current(
                         MVP.NAMESPACE, self.domain, slug,
                         wrap_correctly=True,
-                        use_new_db=self.use_new_db,
                     )
                     if self.is_rendered_as_email:
                         retrospective = indicator.get_monthly_retrospective(user_ids=self.user_ids)
