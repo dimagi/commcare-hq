@@ -247,7 +247,7 @@ def process_username(username, domain):
 
     max_len_username = 80
     if len(username) > max_len_username:
-        raise forms.ValidationError(get_message(msg_id=MSG_USERNAME_TOO_LONG, context=(username, max_len_username)))
+        raise forms.ValidationError(get_message(MSG_USERNAME_TOO_LONG, context=(username, max_len_username)))
     # Check if the username contains invalid characters w/ django checker
     validate_username('%s@commcarehq.org' % username)
     username = format_username(username, domain)
@@ -255,7 +255,7 @@ def process_username(username, domain):
                                          key=username,
                                          reduce=False))
     if num_couch_users > 0:
-        raise forms.ValidationError(get_message(msg_id=MSG_DUPLICATE_USERNAME, context=username))
+        raise forms.ValidationError(get_message(MSG_DUPLICATE_USERNAME, context=(username,)))
 
     return username
 
