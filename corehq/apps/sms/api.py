@@ -1,5 +1,11 @@
 import logging
+import random
+import string
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from corehq.apps.users.models import CommCareUser, CouchUser
+from django.forms import forms
+from corehq.apps.users.util import format_username
 
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
@@ -10,7 +16,7 @@ from corehq.apps.sms.util import (clean_phone_number, clean_text,
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
     PhoneNumber, ERROR_PHONE_NUMBER_OPTED_OUT)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
-    MSG_OPTED_OUT)
+    MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG)
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber, SMSBackend
 from corehq.apps.domain.models import Domain
 from datetime import datetime
@@ -90,10 +96,10 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
 def send_sms_to_verified_number(verified_number, text, metadata=None):
     """
     Sends an sms using the given verified phone number entry.
-    
+
     verified_number The VerifiedNumber entry to use when sending.
     text            The text of the message to send.
-    
+
     return  True on success, False on failure
     """
     backend = verified_number.backend
@@ -225,11 +231,40 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         return False
 
 
+def random_password():
+    """
+    This method creates a random password for an sms user registered via sms
+    """
+    chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
+    return ''.join(random.choice(chars) for x in range(15))
+
+
+def process_username(username, domain):
+    """
+    Loosely based on code from apps/users/forms.py:255
+    """
+    from corehq.apps.users.forms import validate_username
+
+    max_len_username = 80
+    if len(username) > max_len_username:
+        raise forms.ValidationError(get_message(msg_id=MSG_USERNAME_TOO_LONG, context=(username, max_len_username)))
+    # Check if the username contains invalid characters w/ django checker
+    validate_username('%s@commcarehq.org' % username)
+    username = format_username(username, domain)
+    num_couch_users = len(CouchUser.view("users/by_username",
+                                         key=username,
+                                         reduce=False))
+    if num_couch_users > 0:
+        raise forms.ValidationError(get_message(msg_id=MSG_DUPLICATE_USERNAME, context=username))
+
+    return username
+
+
 def process_sms_registration(msg):
     """
     This method handles registration via sms.
     Returns True if a contact was registered, False if not.
-    
+
     To have a case register itself, do the following:
 
         1) Select "Enable Case Registration Via SMS" in project settings, and fill in the
@@ -239,35 +274,46 @@ def process_sms_registration(msg):
         number does not exist in the system, a case will be registered tied to that number.
         The "join" keyword can be any keyword in REGISTRATION_KEYWORDS. This is meant to
         support multiple translations.
-    
-    To have a mobile worker register itself, do the following:
 
-        NOTE: This is not yet implemented and may change slightly.
+    To have a mobile worker register itself, do the following:
 
         1) Select "Enable Mobile Worker Registration via SMS" in project settings.
 
-        2) Text in "join <domain> worker", where <domain> is the domain to join. If the
-        sending number does not exist in the system, a PendingCommCareUser object will be
-        created, tied to that number.
-        The "join" and "worker" keywords can be any keyword in REGISTRATION_KEYWORDS and
-        REGISTRATION_MOBILE_WORKER_KEYWORDS, respectively. This is meant to support multiple 
-        translations.
+        2) Text in "join <domain> worker <username>", where <domain> is the domain to join and <username> is the
+        requested username.  If the username doesn't exist it will be created, otherwise the registration will error.
+        If the username argument is not specified, the username will be the mobile number
 
-        3) A domain admin will have to approve the addition of the mobile worker before
-        a CommCareUser can actually be created.
+        The "join" and "worker" keywords can be any keyword in REGISTRATION_KEYWORDS and
+        REGISTRATION_MOBILE_WORKER_KEYWORDS, respectively. This is meant to support multiple
+        translations.
     """
     registration_processed = False
     text_words = msg.text.upper().split()
     keyword1 = text_words[0] if len(text_words) > 0 else ""
     keyword2 = text_words[1].lower() if len(text_words) > 1 else ""
     keyword3 = text_words[2] if len(text_words) > 2 else ""
+    keyword4 = text_words[3] if len(text_words) > 3 else ""
+    cleaned_phone_number = strip_plus(msg.phone_number)
     if keyword1 in REGISTRATION_KEYWORDS and keyword2 != "":
         domain = Domain.get_by_name(keyword2, strict=True)
         if domain is not None:
             if domain_has_privilege(domain, privileges.INBOUND_SMS):
                 if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
-                    #TODO: Register a PendingMobileWorker object that must be approved by a domain admin
-                    pass
+                    if keyword4 != '':
+                        username = keyword4
+                    else:
+                        username = cleaned_phone_number
+                    try:
+                        username = process_username(username, domain)
+                        password = random_password()
+                        new_user = CommCareUser.create(domain.name, username, password)
+                        new_user.add_phone_number(cleaned_phone_number)
+                        new_user.save_verified_number(domain.name, cleaned_phone_number, True, None)
+                        new_user.save()
+                        registration_processed = True
+                    except ValidationError as e:
+                        send_sms(domain.name, None, cleaned_phone_number, str(e))
+
                 elif domain.sms_case_registration_enabled:
                     register_sms_contact(
                         domain=domain.name,

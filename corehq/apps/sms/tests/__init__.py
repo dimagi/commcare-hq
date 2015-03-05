@@ -1,7 +1,11 @@
 from django.test import TestCase
+from corehq.apps.accounting import generator
+from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
+from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.mixin import SMSBackend, BackendMapping, BadSMSConfigException
-from corehq.apps.sms.api import send_sms, send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name, BackendAuthorizationException
+from corehq.apps.sms.api import send_sms, send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name, \
+    incoming
 from corehq.apps.sms.models import CommConnectCase
 from django.conf import settings
 from couchdbkit.ext.django.schema import *
@@ -9,6 +13,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 #from .inbound_handlers import *
 from .opt_tests import *
+from corehq.apps.users.models import CommCareUser
+
 
 class BackendInvocationDoc(Document):
     pass
@@ -56,7 +62,24 @@ class BackendTestCase(TestCase):
 
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
+
+        generator.instantiate_accounting_for_tests()
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            self.domain_obj.name,
+            created_by="automated-test",
+        )[0]
+        plan = DefaultProductPlan.get_default_plan_by_domain(
+            self.domain_obj, edition=SoftwarePlanEdition.ADVANCED
+        )
+        self.subscription = Subscription.new_domain_subscription(
+            self.account,
+            self.domain_obj.name,
+            plan
+        )
+        self.subscription.is_active = True
+        self.subscription.save()
         self.domain_obj = Domain.get(self.domain_obj._id) # Prevent resource conflict
+
 
         self.backend1 = TestCaseBackend(name="BACKEND1",is_global=True)
         self.backend1.save()
@@ -393,4 +416,20 @@ class BackendTestCase(TestCase):
         self.backend3.delete_invoke_doc()
         self.assertFalse(self.backend3.invoke_doc_exists())
 
+    def test_sms_registration(self):
+        incoming("+9991234567", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
+        # Test without mobile worker registration enabled
+        self.assertIsNone(CommCareUser.get_by_username("tester@test-domain.commcarehq.org"))
 
+        # Enable mobile worker registration
+        setattr(self.domain_obj, "sms_mobile_worker_registration_enabled", True)
+        self.domain_obj.save()
+
+        incoming("+9991234567", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
+        self.assertIsNotNone(CommCareUser.get_by_username("tester@test-domain.commcarehq.org"))
+
+        # Test a duplicate registration
+        prev_num_users = num_mobile_users(self.domain)
+        incoming("+9991234568", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
+        current_num_users = num_mobile_users(self.domain)
+        self.assertTrue(prev_num_users == current_num_users)
