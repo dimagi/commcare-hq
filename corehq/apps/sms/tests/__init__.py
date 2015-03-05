@@ -15,6 +15,7 @@ from casexml.apps.case.models import CommCareCase
 from .opt_tests import *
 from corehq.apps.users.models import CommCareUser
 from django.contrib.sites.models import Site
+from corehq.apps.users.util import format_username
 
 
 class BackendInvocationDoc(Document):
@@ -431,16 +432,18 @@ class BackendTestCase(TestCase):
         self.assertFalse(self.backend3.invoke_doc_exists())
 
     def test_sms_registration(self):
+        formatted_username = format_username("tester", self.domain)
+
         incoming("+9991234567", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
         # Test without mobile worker registration enabled
-        self.assertIsNone(CommCareUser.get_by_username("tester@test-domain.%s" % self.site.domain))
+        self.assertIsNone(CommCareUser.get_by_username(formatted_username))
 
         # Enable mobile worker registration
         setattr(self.domain_obj, "sms_mobile_worker_registration_enabled", True)
         self.domain_obj.save()
 
         incoming("+9991234567", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
-        self.assertIsNotNone(CommCareUser.get_by_username("tester@test-domain.%s" % self.site.domain))
+        self.assertIsNotNone(CommCareUser.get_by_username(formatted_username))
 
         # Test a duplicate registration
         prev_num_users = num_mobile_users(self.domain)
