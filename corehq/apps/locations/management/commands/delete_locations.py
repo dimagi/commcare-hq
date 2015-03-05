@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from .check_loc_types import locs_by_domain
@@ -8,13 +9,13 @@ from .check_loc_types import locs_by_domain
 class Command(BaseCommand):
     args = "<domain>"
     help = ("Change the doc types of all locations in `domain` to "
-            "Location-DELETED.  Note that this only affects couch locations.")
+            "Location-Deleted.  Note that this only affects couch locations.")
 
     def bulk_delete_locs(self, loc_ids, total):
         locs_to_save = []
         count = 0
         for loc in iter_docs(Location.get_db(), loc_ids):
-            loc['doc_type'] = "{}-DELETED".format(loc['doc_type'])
+            loc['doc_type'] = "{}{}".format(loc['doc_type'], DELETED_SUFFIX)
             locs_to_save.append(loc)
             count += 1
 
@@ -32,20 +33,21 @@ class Command(BaseCommand):
             print "Format is ./manage.py delete_locations {}".format(self.args)
             return
 
-        domain = Domain.get_by_name(args[0])
-        if domain is None:
-            print "Domain '{}' not found".format(args[0])
+        domain = args[0]
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj is None:
+            print "Domain '{}' not found".format(domain)
             return
 
-        total = locs_by_domain(domain.name)
+        total = locs_by_domain(domain)
         msg = ("{} has {} locations, do you REALLY want to delete them?\n(y/n)"
-               .format(domain.name, total))
+               .format(domain, total))
         if raw_input(msg) != 'y':
             return
 
         print "Fine, your funeral"
 
         self.bulk_delete_locs(
-            Location.by_domain(domain.name, include_docs=False),
+            Location.by_domain(domain, include_docs=False),
             total,
         )
