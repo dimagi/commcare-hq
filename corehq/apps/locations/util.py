@@ -1,3 +1,4 @@
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
@@ -267,7 +268,11 @@ def purge_locations(domain):
     ).all()])
     iter_bulk_delete(Location.get_db(), location_ids)
 
-    SQLLocation.objects.filter(domain=domain).delete()
+    for loc in SQLLocation.objects.filter(domain=domain).iterator():
+        if loc.supply_point_id:
+            case = CommCareCase.get(loc.supply_point_id)
+            case.delete()
+        loc.delete()
 
     domain_obj = Domain.get_by_name(domain)
     domain_obj.location_types = []

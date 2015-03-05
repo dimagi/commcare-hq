@@ -26,3 +26,8 @@ SCHEDULE_LAST_VISIT = 'last_visit_number_{}'
 SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'
 
 ATTACHMENT_PREFIX = 'attachment:'
+
+CASE_ID = 'case_id'
+USERCASE_ID = 'usercase_id'
+
+RETURN_TO = 'return_to'

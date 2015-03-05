@@ -1,7 +1,8 @@
 from collections import defaultdict
 import logging
 from casexml.apps.case.xml import V2_NAMESPACE
-from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE
+from corehq.apps.app_manager.const import APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE, \
+    CASE_ID, USERCASE_ID
 from lxml import etree as ET
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
@@ -69,8 +70,8 @@ def relative_path(from_path, to_path):
             return '%s/%s' % ('/'.join(['..' for n in from_nodes]), '/'.join(to_nodes))
 
 
-SESSION_CASE_ID = CaseIDXPath(session_var('case_id'))
-SESSION_USERCASE_ID = CaseIDXPath(session_var('usercase_id'))
+SESSION_CASE_ID = CaseIDXPath(session_var(CASE_ID))
+SESSION_USERCASE_ID = CaseIDXPath(session_var(USERCASE_ID))
 
 
 class WrappedAttribs(object):
@@ -1201,7 +1202,7 @@ class XForm(WrappedNode):
         else:
             extra_updates = {}
             case_block = CaseBlock(self)
-
+            module = form.get_module()
             if form.requires != 'none':
                 def make_delegation_stub_case_block():
                     path = 'cc_delegation_stub/'
@@ -1226,17 +1227,23 @@ class XForm(WrappedNode):
                     outer_block.append(delegation_case_block.elem)
                     return outer_block
 
-                if form.get_module().task_list.show:
+                if module.task_list.show:
                     delegation_case_block = make_delegation_stub_case_block()
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
+                case_id = 'uuid()'
+                if not (hasattr(module, 'parent_select') and module.parent_select.active) and \
+                        form.is_case_list_form:
+                    case_id = session_var(CASE_ID)
+
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
                     case_type=form.get_case_type(),
                     autoset_owner_id=autoset_owner_id_for_open_case(actions),
                     has_case_sharing=form.get_app().case_sharing,
+                    case_id=case_id
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
@@ -1470,8 +1477,16 @@ class XForm(WrappedNode):
 
             return path, subcase_node
 
+        case_registration_action = None
+        if form.is_case_list_form:
+            case_registration_action = form.get_registration_actions()[0]
+
         for action in form.actions.open_cases:
             check_case_type(action)
+
+            case_id = 'uuid()'
+            if case_registration_action == action:
+                case_id = session_var(action.case_session_var)
 
             path, subcase_node = get_action_path(action)
 
@@ -1484,6 +1499,7 @@ class XForm(WrappedNode):
                 delay_case_id=bool(action.repeat_context),
                 autoset_owner_id=('owner_id' not in action.case_properties),
                 has_case_sharing=form.get_app().case_sharing,
+                case_id=case_id
             )
 
             if action.case_properties:

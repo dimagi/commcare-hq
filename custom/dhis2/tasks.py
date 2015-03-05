@@ -29,7 +29,8 @@ from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_identifier
 from corehq.apps.users.models import CommCareUser
 from custom.dhis2.const import CCHQ_CASE_ID, NUTRITION_ASSESSMENT_PROGRAM_FIELDS, ORG_UNIT_FIXTURES, CASE_TYPE, \
     TRACKED_ENTITY, CASE_NAME
-from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Dhis2Settings, FixtureManager
+from custom.dhis2.models import Dhis2Api, Dhis2OrgUnit, Dhis2Settings, FixtureManager, JsonApiError, \
+    Dhis2ApiQueryError
 
 
 logger = logging.getLogger(__name__)
@@ -64,11 +65,21 @@ def push_case(case, dhis2_api):
         # Create a DHIS2 tracked entity instance
         instance = {CCHQ_CASE_ID: case['_id']}
         instance.update(program_data)
-        instance_id = dhis2_api.add_te_inst(TRACKED_ENTITY, ou_id, instance)
+        try:
+            instance_id = dhis2_api.add_te_inst(TRACKED_ENTITY, ou_id, instance)
+        except (JsonApiError, Dhis2ApiQueryError) as err:
+            logger.error('Failed to create DHIS2 entity from CCHQ case "%s". DHIS2 server error: %s',
+                         case['_id'], err)
+            return
 
     # Enroll in Pediatric Nutrition Assessment
     date_of_visit = case['date_of_visit'] if getattr(case, 'date_of_visit', None) else date.today()
-    response = dhis2_api.enroll_in(instance_id, 'Paediatric Nutrition Assessment', date_of_visit, program_data)
+    try:
+        response = dhis2_api.enroll_in(instance_id, 'Paediatric Nutrition Assessment', date_of_visit, program_data)
+    except (JsonApiError, Dhis2ApiQueryError) as err:
+        logger.error('Failed to push CCHQ case "%s" to DHIS2 program "%s". DHIS2 server error: %s',
+                     case['_id'], 'Paediatric Nutrition Assessment', err)
+        return
     if response['status'] != 'SUCCESS':
         logger.error('Failed to push CCHQ case "%s" to DHIS2 program "%s". DHIS2 API error: %s',
                      case['_id'], 'Paediatric Nutrition Assessment', response)

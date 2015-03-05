@@ -48,7 +48,6 @@ branches:
   - lwyszomi:ews_staging
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
-  - doubleman-clean # SK 18/2
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
@@ -56,6 +55,7 @@ branches:
   - project-settings-update # sravan 1/30
   - report-builder # Noah 2/16
   - upgrade-celery # SK 2/27
+  - balance-icon # Daniel 3/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

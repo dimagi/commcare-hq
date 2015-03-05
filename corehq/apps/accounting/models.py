@@ -27,7 +27,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.accounting.exceptions import (
     CreditLineError, AccountingError, SubscriptionAdjustmentError,
     SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
-    SubscriptionReminderError, SubscriptionRenewalError,
+    SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.utils import (
@@ -1237,9 +1237,14 @@ class Subscription(models.Model):
         """
         domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
-            plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
-                                                          product_type=SoftwareProductType.COMMCARE).plan.get_version()
-            return plan_version, None
+            try:
+                plan_version = DefaultProductPlan.objects.get(
+                    edition=SoftwarePlanEdition.COMMUNITY,
+                    product_type=SoftwareProductType.COMMCARE,
+                ).plan.get_version()
+                return plan_version, None
+            except DefaultProductPlan.DoesNotExist:
+                raise ProductPlanNotFoundError
         domain = domain_obj
         subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
         plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
