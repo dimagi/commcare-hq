@@ -24,7 +24,7 @@ class ConstantGetterSpec(JsonObject):
 class PropertyNameGetterSpec(JsonObject):
     type = TypeProperty('property_name')
     property_name = StringProperty(required=True)
-    datatype = DataTypeProperty(required=False, default="string")
+    datatype = DataTypeProperty(required=False)
 
     @property
     def expression(self):
@@ -39,7 +39,7 @@ class PropertyNameGetterSpec(JsonObject):
 class PropertyPathGetterSpec(JsonObject):
     type = TypeProperty('property_path')
     property_path = ListProperty(unicode, required=True)
-    datatype = DataTypeProperty(required=False, default="string")
+    datatype = DataTypeProperty(required=False)
 
     @property
     def expression(self):
