@@ -45,10 +45,9 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     _class_path = "corehq.apps.indicators.models"
     _returns_multiple = False
 
-    def __init__(self, _d=None, use_new_db=False, **kwargs):
+    def __init__(self, _d=None, **kwargs):
         super(IndicatorDefinition, self).__init__(_d, **kwargs)
         self.class_path = self._class_path
-        self.use_new_db = use_new_db
 
     def __str__(self):
         return "\n\n%(class_name)s - Modified %(last_modified)s\n %(slug)s, domain: %(domain)s," \
@@ -172,10 +171,6 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     @classmethod
     @memoized
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
-        if 'use_new_db' in kwargs:
-            use_new_db = kwargs.pop('use_new_db', False)
-        else:
-            use_new_db = False
 
         couch_key = cls._generate_couch_key(
             namespace=namespace,
@@ -197,7 +192,6 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 doc_instance = doc_class.get(doc.get('id'))
-                doc_instance.use_new_db = use_new_db
                 return doc_instance
             except Exception as e:
                 logging.error("No matching documents found for indicator %s: %s" % (slug, e))
@@ -427,14 +421,12 @@ class CouchIndicatorDef(DynamicIndicatorDefinition):
                 reduce=reduce
             )
 
-        if self.use_new_db:
-            from mvp_docs.models import IndicatorXForm
-            db = IndicatorXForm.get_db()
-            section = self.couch_view.split('/')
-            couch_view = "%s_indicators/%s" % (section[0], section[1])
-        else:
-            db = XFormInstance.get_db()
-            couch_view = self.couch_view
+        # Pull Data from the MVP-only DB
+        from mvp_docs.models import IndicatorXForm
+        db = IndicatorXForm.get_db()
+        section = self.couch_view.split('/')
+        couch_view = "%s_indicators/%s" % (section[0], section[1])
+
         return cache_core.cached_view(db, couch_view, cache_expire=60*60*6, **view_kwargs)
 
     def get_raw_results(self, user_ids, datespan=False, date_group_level=False, reduce=False):
