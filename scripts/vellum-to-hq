@@ -12,6 +12,7 @@ This script assumes that the vellum-staging branch is in staging.yaml.
 """
 from __future__ import print_function
 import os
+import re
 import subprocess
 import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
@@ -94,9 +95,21 @@ def build_vellum(path, branch, test=True):
     return str(git("rev-parse", "HEAD"))
 
 
+def get_old_vellum_rev(git):
+    commit = str(git('log', '--oneline', '--grep', 'vellum', '-n', '1'))
+    return re.search('[0-9a-f]+ vellum:([0-9a-f]+)', commit).group(1)
+
+
+def print_vellum_changes(old_vellum_rev, path):
+    git = get_git(path)
+    print("Vellum Changes Since Last HQ Deploy")
+    print(git('log', '--oneline', '--grep', 'Merge', old_vellum_rev + "..HEAD"))
+
+
 def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
     git = get_git(path)
     require_clean_working_tree(git, path)
+    old_vellum_rev = get_old_vellum_rev(git)
 
     print("Checkout and fetch HQ {}".format(branch))
     git.checkout(branch)
@@ -127,6 +140,8 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push):
         print("Pushing HQ origin/{}".format(branch))
         opts = () if branch == "master" else ["-f"]
         git.push("origin", branch, *opts)
+
+    print_vellum_changes(old_vellum_rev, vellum_dir)
 
 
 def require_branch_up_to_date(git, branch, remote="origin", context="Your local", abort=sys.exit):
