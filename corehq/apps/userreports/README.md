@@ -102,6 +102,7 @@ This expression returns `doc["age"]`:
     "property_name": "age"
 }
 ```
+An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 ##### Property Path Expression
 
 This expression returns `doc["child"]["age"]`:
@@ -111,6 +112,7 @@ This expression returns `doc["child"]["age"]`:
     "property_path": ["child", "age"]
 }
 ```
+An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 ##### Conditional Expression
 
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
@@ -122,6 +124,7 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
         "expression": {
             "type": "property_name",
             "property_name": "age"
+            "datatype": "integer"
         },
         "type": "boolean_expression",
         "property_value": 21
@@ -137,6 +140,8 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 }
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
+
+Note also that it's important to make sure that you comparing values of the same type. The expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results! 
 
 #### Related document expressions
 
@@ -168,6 +173,7 @@ Here is a sample JSON format for simple `boolean_expression` filter:
     "expression": {
         "type": "property_name",
         "property_name": "age",
+        "datatype": "integer"
     },
     "operator": "gt",
     "property_value": 21
@@ -206,6 +212,7 @@ The following filter represents the statement: `doc["age"] < 21 and doc["nationa
             "expression": {
                 "type": "property_name",
                 "property_name": "age",
+                "datatype": "integer"
             },
             "operator": "lt",
             "property_value": 21
@@ -234,6 +241,7 @@ The following filter represents the statement: `doc["age"] > 21 or doc["national
             "expression": {
                 "type": "property_name",
                 "property_name": "age",
+                "datatype": "integer",
             },
             "operator": "gt",
             "property_value": 21
