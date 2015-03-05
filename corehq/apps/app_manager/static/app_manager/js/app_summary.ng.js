@@ -9,7 +9,8 @@
     summaryModule.constant('summaryConfig', {
         staticRoot: '/',
         vellumTypes: {},
-        formNameMap: {}
+        formNameMap: {},
+        appLangs: []
     });
 
     summaryModule.factory('utils', ['$location', 'summaryConfig', function ($location, config) {
@@ -24,10 +25,17 @@
                 }
                 return '';
             },
-            getFormName: function (formId, lang) {
-                var name = config.formNameMap[formId];
-                if (name) {
-                    return name.module_name[lang] + ' -> ' + name.form_name[lang];
+            getFormName: function (formId, target_lang) {
+                function translateName (name, langs) {
+                    var firstLang = _(langs).find(function (lang) {
+                        return name[lang];
+                    });
+                    return name[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
+                }
+                var names = config.formNameMap[formId],
+                    langs = [target_lang].concat(config.appLangs);
+                if (names) {
+                    return translateName(names.module_name, langs) + ' -> ' + translateName(names.form_name, langs);
                 }
                 return formId;
             },
