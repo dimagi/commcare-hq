@@ -1,3 +1,4 @@
+import time
 from django.core.management.base import BaseCommand
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -24,6 +25,7 @@ class Command(BaseCommand):
                 Location.get_db().bulk_save(locs_to_save)
                 locs_to_save = []
                 print "{} of {}".format(count, total)
+                time.sleep(5)
 
         if locs_to_save:
             Location.get_db().bulk_save(locs_to_save)
