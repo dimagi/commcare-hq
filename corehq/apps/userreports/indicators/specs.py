@@ -1,17 +1,23 @@
 from jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject.exceptions import BadValueError
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.expressions.getters import TransformedGetter, getter_from_property_reference, \
-    transform_date, transform_int
+from corehq.apps.userreports.expressions.getters import (
+    getter_from_property_reference,
+    TransformedGetter,
+    transform_date,
+    transform_datetime,
+    transform_decimal,
+    transform_int,
+    transform_unicode,
+)
 from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL
 from corehq.apps.userreports.specs import TypeProperty
 
-
-def DataTypeProperty():
+DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal']
+def DataTypeProperty(**kwargs):
     """
     Shortcut for valid data types.
     """
-    return StringProperty(required=True, choices=['date', 'datetime', 'string', 'integer', 'decimal'])
+    return StringProperty(choices=DATA_TYPE_CHOICES, **kwargs)
 
 
 class IndicatorSpecBase(JsonObject):
@@ -56,7 +62,7 @@ class BooleanIndicatorSpec(IndicatorSpecBase):
 
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('raw')
-    datatype = DataTypeProperty()
+    datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
 
@@ -69,12 +75,13 @@ class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
 class ExpressionIndicatorSpec(IndicatorSpecBase):
     type = TypeProperty('expression')
-    datatype = DataTypeProperty()
+    datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
     expression = DictProperty(required=True)
 
     def parsed_expression(self, context):
+        from corehq.apps.userreports.expressions.factory import ExpressionFactory
         transform = _transform_from_datatype(self.datatype)
         expression = ExpressionFactory.from_spec(self.expression, context)
         return TransformedGetter(expression, transform)
@@ -92,5 +99,11 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 def _transform_from_datatype(datatype):
     return {
         'date': transform_date,
+        'datetime': transform_datetime,
+        'string': transform_unicode,
+        'decimal': transform_decimal,
         'integer': transform_int,
     }.get(datatype)
+
+
+

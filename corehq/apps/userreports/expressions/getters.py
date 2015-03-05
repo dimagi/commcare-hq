@@ -1,3 +1,4 @@
+from decimal import Decimal
 
 
 class TransformedGetter(object):
@@ -75,9 +76,30 @@ def transform_date(item):
     return item or None
 
 
+def transform_datetime(item):
+    # Following the example of transform_date here, but it seems like this
+    # should do some transforming?
+    return item or None
+
+
 def transform_int(item):
     try:
         return int(item)
+    except (ValueError, TypeError):
+        return None
+
+
+def transform_decimal(item):
+    try:
+        # Set precision?
+        return Decimal(item)
+    except (ValueError, TypeError):
+        return None
+
+
+def transform_unicode(item):
+    try:
+        return unicode(item)
     except (ValueError, TypeError):
         return None
 

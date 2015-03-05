@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -23,6 +24,27 @@ class ConstantExpressionTest(SimpleTestCase):
             ExpressionFactory.from_spec({
                 'type': 'constant',
             })
+
+
+class PropertyExpressionTest(SimpleTestCase):
+
+    def test_datatype(self):
+        # TODO: Test other data types too.
+        for expected, datatype, original in [
+            (5, "integer", "5"),
+            (None, "integer", "5.3"),
+            (Decimal(5), "decimal", "5"),
+            (Decimal("5.3"), "decimal", "5.3"),
+            ("5", "string", "5"),
+            ("5", "string", 5),
+            (u"fo\u00E9", "string", u"fo\u00E9")
+        ]:
+            getter = ExpressionFactory.from_spec({
+                'type': 'property_name',
+                'property_name': 'foo',
+                'datatype': datatype
+            })
+            self.assertEqual(expected, getter({'foo': original}))
 
 
 class ExpressionFromSpecTest(SimpleTestCase):
