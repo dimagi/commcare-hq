@@ -209,6 +209,19 @@ class DataSourceBuilder(object):
         if self.source_type == 'case':
             return "{} (v{})".format(self.source_id, self.app.version)
 
+    def get_existing_match(self):
+        return DataSourceConfiguration.view(
+            'userreports/data_sources_by_build_info',
+            key=[
+                self.domain,
+                self.source_doc_type,
+                self.source_id,
+                self.app._id,
+                self.app.version
+            ],
+            reduce=False
+        ).one()
+
 
 class CreateNewReportForm(forms.Form):
     """
@@ -290,20 +303,7 @@ class CreateNewReportForm(forms.Form):
 
             existing_sources = DataSourceConfiguration.by_domain(self.domain)
             if len(existing_sources) >= 5:
-
-                suitable_source = DataSourceConfiguration.view(
-                    'userreports/data_sources_by_build_info',
-                    key=[
-                        self.domain,
-                        ds_builder.source_doc_type,
-                        report_source,
-                        app._id,
-                        app.version
-                    ],
-                    reduce=False
-                ).one()
-
-                if not suitable_source:
+                if not ds_builder.get_existing_match():
                     raise forms.ValidationError(_(
                         "Too many data sources!\n"
                         "Creating this report would cause you to go over the maximum "
@@ -389,19 +389,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         Creates data source and report config.
         """
-
-        matching_data_source = DataSourceConfiguration.view(
-            'userreports/data_sources_by_build_info',
-            key=[
-                self.domain,
-                self.ds_builder.source_doc_type,
-                self.report_source_id,
-                self.app._id,
-                self.app.version
-            ],
-            reduce=False
-        ).one()
-
+        matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
             data_source_config_id = matching_data_source['id']
         else:
