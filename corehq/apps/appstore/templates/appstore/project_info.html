@@ -51,7 +51,9 @@
             });
             $('#agree-button').click(function() {
                 $('#download-new-project').removeAttr('data-toggle');
+                $('#download-new-project').removeAttr('href');
                 $('#import-into-button').removeAttr('data-toggle');
+                $('#import-into-button').removeAttr('href');
                 var form = $("#" + $(this).attr('data-form'));
                 form.submit();
             });
