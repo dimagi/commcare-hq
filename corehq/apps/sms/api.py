@@ -312,7 +312,7 @@ def process_sms_registration(msg):
                         new_user.save()
                         registration_processed = True
                     except ValidationError as e:
-                        send_sms(domain.name, None, cleaned_phone_number, str(e))
+                        send_sms(domain.name, None, cleaned_phone_number, e.messages[0])
 
                 elif domain.sms_case_registration_enabled:
                     register_sms_contact(
