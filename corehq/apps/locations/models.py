@@ -381,17 +381,21 @@ class Location(CachedCouchDocumentMixin, Document):
         ).one()['value']
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, include_docs=True):
         relevant_ids = set([r['id'] for r in cls.get_db().view(
             'locations/by_type',
             reduce=False,
             startkey=[domain],
             endkey=[domain, {}],
         ).all()])
-        return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
-            if not l.get('is_archived', False)
-        )
+
+        if not include_docs:
+            return relevant_ids
+        else:
+            return (
+                cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+                if not l.get('is_archived', False)
+            )
 
     @classmethod
     def site_codes_for_domain(cls, domain):
