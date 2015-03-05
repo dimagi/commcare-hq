@@ -223,6 +223,15 @@ class Location(CachedCouchDocumentMixin, Document):
     def __repr__(self):
         return "%s (%s)" % (self.name, self.location_type)
 
+    def __eq__(self, other):
+        if isinstance(other, Location):
+            return self._id == other._id
+        else:
+            return False
+
+    def __hash__(self):
+        return hash(self._id)
+
     def _sync_location(self):
         properties_to_sync = [
             ('location_id', '_id'),
