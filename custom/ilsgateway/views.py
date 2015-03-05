@@ -76,7 +76,7 @@ class GlobalStats(BaseDomainView):
             'web_users': len(web_users),
             'web_users_admins': web_users_admins,
             'web_users_read_only': web_users_read_only,
-            'products': SQLProduct.objects.filter(domain=self.domain).count(),
+            'products': SQLProduct.objects.filter(domain=self.domain, is_archived=False).count(),
             'product_stocks': StockState.objects.filter(sql_product__domain=self.domain).count(),
             'stock_transactions': StockTransaction.objects.filter(report__domain=self.domain).count(),
             'inbound_messages': SMSLog.count_incoming_by_domain(self.domain),
