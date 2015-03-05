@@ -95,6 +95,8 @@ def transform_decimal(item):
 
 
 def transform_unicode(item):
+    if item is None:
+        return None
     try:
         return unicode(item)
     except (ValueError, TypeError):
@@ -111,7 +113,7 @@ def transform_from_datatype(datatype):
         'datetime': transform_datetime,
         'decimal': transform_decimal,
         'integer': transform_int,
-        'string': unicode,
+        'string': transform_unicode,
     }.get(datatype) or identity
 
 
