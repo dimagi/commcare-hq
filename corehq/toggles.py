@@ -247,11 +247,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-COMMCARE_LOGO_UPLOADER = StaticToggle(
-    'commcare_logo_uploader',
-    'CommCare logo uploader',
-)
-
 PAGINATE_WEB_USERS = StaticToggle(
     'paginate_web_users',
     'Paginate Web Users',

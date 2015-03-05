@@ -75,14 +75,12 @@
   description: "Upload a file to serve as a CommCare home screen logo on Android phones"
   id: "logo_android_home"
   widget: "image_uploader"
-  toggle: "COMMCARE_LOGO_UPLOADER"
   privilege: "commcare_logo_uploader"
 
 - name: "Login Logo"
   description: "Upload a file to serve as a login logo on Android phones"
   id: "logo_android_login"
   widget: "image_uploader"
-  toggle: "COMMCARE_LOGO_UPLOADER"
   privilege: "commcare_logo_uploader"
 
 - disabled: true
