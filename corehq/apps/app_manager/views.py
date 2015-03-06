@@ -83,8 +83,15 @@ from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
 )
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.app_manager.util import is_valid_case_type, get_all_case_properties, add_odk_profile_after_build, ParentCasePropertyBuilder, commtrack_ledger_sections
-from corehq.apps.app_manager.util import save_xform, get_settings_values
+from corehq.apps.app_manager.util import (
+    is_valid_case_type,
+    get_all_case_properties,
+    add_odk_profile_after_build,
+    ParentCasePropertyBuilder,
+    commtrack_ledger_sections,
+    save_xform,
+    get_settings_values
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.util.compression import decompress
@@ -825,6 +832,44 @@ def get_module_view_context_and_template(app, module):
 
         return options
 
+    def get_details():
+        item = {
+            'label': _('Case List'),
+            'detail_label': _('Case Detail'),
+            'type': 'case',
+            'model': 'case',
+            # TODO: Why properties, and not case_properties? Where in the JS is "properties" used?
+            # Will it be OK to merge usercase properties into this?
+            'properties': sorted(builder.get_properties(case_type)),
+            'sort_elements': module.case_details.short.sort_elements,
+            'short': module.case_details.short,
+            'long': module.case_details.long,
+            'child_case_types': child_case_types,
+        }
+        # call_center_config = Domain.get_by_name(app.domain).call_center_config
+        # if call_center_config.enabled:
+        #     usercase_type = call_center_config.case_type
+        #     item['usercase_properties'] = sorted(builder.get_properties(usercase_type))
+
+        if isinstance(module, AdvancedModule):
+            details = [item]
+            if app.commtrack_enabled:
+                details.append({
+                    'label': _('Product List'),
+                    'detail_label': _('Product Detail'),
+                    'type': 'product',
+                    'model': 'product',
+                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                    'sort_elements': module.product_details.short.sort_elements,
+                    'short': module.product_details.short,
+                    'child_case_types': child_case_types,
+                })
+        else:
+            item['parent_select'] = module.parent_select
+            details = [item]
+
+        return details
+
     ensure_unique_ids()
     if isinstance(module, CareplanModule):
         return "app_manager/module_view_careplan.html", {
@@ -857,33 +902,6 @@ def get_module_view_context_and_template(app, module):
         }
     elif isinstance(module, AdvancedModule):
         case_type = module.case_type
-        def get_details():
-            details = [{
-                'label': _('Case List'),
-                'detail_label': _('Case Detail'),
-                'type': 'case',
-                'model': 'case',
-                'properties': sorted(builder.get_properties(case_type)),
-                'sort_elements': module.case_details.short.sort_elements,
-                'short': module.case_details.short,
-                'long': module.case_details.long,
-                'child_case_types': child_case_types,
-            }]
-
-            if app.commtrack_enabled:
-                details.append({
-                    'label': _('Product List'),
-                    'detail_label': _('Product Detail'),
-                    'type': 'product',
-                    'model': 'product',
-                    'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
-                    'sort_elements': module.product_details.short.sort_elements,
-                    'short': module.product_details.short,
-                    'child_case_types': child_case_types,
-                })
-
-            return details
-
         return "app_manager/module_view_advanced.html", {
             'fixtures': fixtures,
             'details': get_details(),
@@ -895,20 +913,7 @@ def get_module_view_context_and_template(app, module):
         return "app_manager/module_view.html", {
             'parent_modules': get_parent_modules(case_type),
             'fixtures': fixtures,
-            'details': [
-                {
-                    'label': _('Case List'),
-                    'detail_label': _('Case Detail'),
-                    'type': 'case',
-                    'model': 'case',
-                    'properties': sorted(builder.get_properties(case_type)),
-                    'sort_elements': module.case_details.short.sort_elements,
-                    'short': module.case_details.short,
-                    'long': module.case_details.long,
-                    'parent_select': module.parent_select,
-                    'child_case_types': child_case_types,
-                },
-            ],
+            'details': get_details(),
             'case_list_form_options': case_list_form_options(case_type),
             'case_list_form_allowed': module.all_forms_require_a_case and not module.parent_select.active
         }
@@ -1044,6 +1049,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update({
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
     })
+
+    context['usercase_enabled'] = Domain.get_by_name(domain).call_center_config.enabled
 
     if app and app.doc_type == 'Application' and has_privilege(req, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
