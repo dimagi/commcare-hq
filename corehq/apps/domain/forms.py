@@ -482,10 +482,11 @@ class DomainGlobalSettingsForm(forms.Form):
                     if app.secure_submissions != secure_submissions:
                         app.secure_submissions = secure_submissions
                         apps_to_save.append(app)
-            domain.secure_submissions = secure_submissions
-            domain.save()
             if apps_to_save:
                 ApplicationBase.bulk_save(apps_to_save)
+
+            domain.secure_submissions = secure_submissions
+            domain.save()
             return True
         except Exception:
             return False
