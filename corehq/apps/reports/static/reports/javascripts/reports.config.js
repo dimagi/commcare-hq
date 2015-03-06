@@ -163,7 +163,7 @@ var HQReport = function (options) {
                     "&enddate="+self.datespan.enddate;
             }
         }
-        params += (additionalParams == undefined ? "" : "&" + additionalParams);
+        params += (additionalParams ? "&" + additionalParams : "");
         if (asObject) {
             // http://stackoverflow.com/a/8649003/835696
             return JSON.parse('{"' +
