@@ -126,9 +126,6 @@ class CallLogReport(BaseCommConnectLogReport):
             
             result.append(row)
 
-        # Look up the XFormsSession documents 500 at a time.
-        # Had to do this because looking up one document at a time slows things
-        # down a lot.
         all_session_ids = xforms_sessions.keys()
         session_submission_map = dict(
             SQLXFormsSession.objects.filter(session_id__in=all_session_ids).values_list(
