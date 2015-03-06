@@ -11,6 +11,7 @@ class SQLXFormsSessionAdmin(admin.ModelAdmin):
         'modified_time',
         'completed',
         'user_id',
+        'session_id',
         'submission_id',
         'connection_id',
     ]
