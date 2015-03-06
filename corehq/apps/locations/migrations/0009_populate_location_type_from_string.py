@@ -49,10 +49,13 @@ class Migration(DataMigration):
                 }
             )[0]
 
-        return {
-            lt.get('code', lt['name']): get_or_create(lt)
-            for lt in couch_loc_types
-        }
+        loc_types = {}
+        for lt in couch_loc_types:
+            loc_type = get_or_create(lt)
+            if 'code' in lt:
+                loc_types[lt['code']] = loc_type
+            loc_types[lt['name']] = loc_type
+        return loc_types
 
     def link_locs_to_types(self, loc_types, domain):
         for loc in (
