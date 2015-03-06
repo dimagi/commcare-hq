@@ -142,7 +142,7 @@ def sms_keyword_handler(v, text, msg):
     else:
         return handle_domain_keywords(v, text, msg, text_words, sessions)
 
-def _handle_structured_sms(domain, args, contact_id, session,
+def _handle_structured_sms(domain, args, contact_id, session_id,
     first_question, verified_number, xpath_answer=None):
 
     form_complete = False
@@ -182,7 +182,7 @@ def _handle_structured_sms(domain, args, contact_id, session,
                     xformsresponse=current_question)
 
         responses = _get_responses(domain, contact_id, answer, 
-            yield_responses=True, session_id=session.session_id,
+            yield_responses=True, session_id=session_id,
             update_timestamp=False)
         current_question = responses[-1]
 
@@ -297,12 +297,12 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
                 # Arguments in the sms are named
                 xpath_answer = parse_structured_sms_named_args(args,
                     survey_keyword_action, verified_number)
-                _handle_structured_sms(domain, args, contact_id, session,
+                _handle_structured_sms(domain, args, contact_id, session.session_id,
                     first_question, verified_number, xpath_answer)
             else:
                 # Arguments in the sms are not named; pass each argument to
                 # each question in order
-                _handle_structured_sms(domain, args, contact_id, session,
+                _handle_structured_sms(domain, args, contact_id, session.session_id,
                     first_question, verified_number)
 
     except StructuredSMSException as sse:
