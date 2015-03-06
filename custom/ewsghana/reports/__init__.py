@@ -96,35 +96,22 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
 
-        def _is_admin(user, domain):
-            return isinstance(user, WebUser) and user.get_domain_membership(domain).is_admin
-
-        def _is_read_only(user, domain):
-            user_role = user.get_role()
-            return isinstance(user, WebUser) and user_role == UserRole.get_read_only_role_by_domain(domain)
-
-        def _can_see_reports(user):
-            user_role = user.get_role()
-            return isinstance(user, CommCareUser) and user_role.permissions.view_reports
-
         url = super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
         request = kwargs.get('request')
         user = getattr(request, 'couch_user', None)
+
         if user:
-            if _is_admin(user, domain):
-                loc = SQLLocation.objects.filter(domain=domain, location_type='country')[0]
-                url = '%s?location_id=%s' % (url, loc.location_id)
-            elif _is_read_only(user, domain) or _can_see_reports(user):
-                    dm = user.get_domain_membership(domain)
-                    if dm.program_id:
-                        program_id = dm.program_id
-                    else:
-                        program_id = Program.default_for_domain(domain)
-                    url = '%s?location_id=%s&program_id=%s' % (
-                        url,
-                        dm.location_id if dm.location_id else '',
-                        program_id if program_id else ''
-                    )
+            dm = user.get_domain_membership(domain)
+            if dm.program_id:
+                program_id = dm.program_id
+            else:
+                program_id = Program.default_for_domain(domain)
+
+            url = '%s?location_id=%s&filter_by_program=%s' % (
+                url,
+                dm.location_id if dm.location_id else '',
+                program_id if program_id else ''
+            )
 
         return url
 
@@ -228,13 +215,14 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
 class ProductSelectionPane(EWSData):
     slug = 'product_selection_pane'
     show_table = True
-    title = 'Product Selection Pane'
+    title = 'Select Products'
 
     @property
     def rows(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations)
-        result = [['<input value=\"{0}\" type=\"checkbox\">{1} ({0})</input>'.format(p.code, p.name)]
+        result = [['<input value=\"{0}\" type=\"checkbox\" checked=\"checked\">{1} ({0})</input>'.format(p.code,
+                                                                                                         p.name)]
                   for p in products]
         result.append(['<button id=\"selection_pane_apply\" class=\"filters btn\">Apply</button>'])
         return result

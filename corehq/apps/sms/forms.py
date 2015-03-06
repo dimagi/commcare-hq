@@ -211,6 +211,13 @@ class SettingsForm(Form):
         label=ugettext_noop("Registration Submitter"),
     )
 
+    sms_mobile_worker_registration_enabled = ChoiceField(
+        required=False,
+        choices=ENABLED_DISABLED_CHOICES,
+        label=ugettext_noop("SMS Mobile Worker Registration"),
+    )
+
+
     @property
     def section_general(self):
         fields = [
@@ -295,6 +302,14 @@ class SettingsForm(Form):
                         "self-registration will belong to this user."),
                 ),
                 data_bind="visible: showRegistrationOptions",
+            ),
+            FieldWithHelpBubble(
+                "sms_mobile_worker_registration_enabled",
+                help_bubble_text=_("When this option is enabled, a person "
+                    "can send an SMS into the system saying 'join "
+                    "[project] worker [username]' (where [project] is your "
+                    " project space and [username] is an optional username)"
+                    ", and the system will add them as a mobile worker."),
             ),
         ]
         return crispy.Fieldset(
@@ -622,6 +637,10 @@ class SettingsForm(Form):
 
     def clean_sms_case_registration_user_id(self):
         return self._clean_registration_id_field("sms_case_registration_user_id")
+
+    def clean_sms_mobile_worker_registration_enabled(self):
+        return (self.cleaned_data.get("sms_mobile_worker_registration_enabled")
+                == ENABLED)
 
     def clean_sms_conversation_length(self):
         # Just cast to int, the ChoiceField will validate that it is an integer

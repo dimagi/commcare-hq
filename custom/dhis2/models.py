@@ -118,6 +118,12 @@ class JsonApiRequest(object):
         try:
             response = requests.get(self.baseurl + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
+            logger.exception(
+                'JSON API raised HTTP or socket error.\n'
+                'Request details: %s\n'
+                'Error: %s',
+                {'method': 'get', 'url': self.baseurl + path, 'headers': self.headers},
+                err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 
@@ -134,6 +140,12 @@ class JsonApiRequest(object):
         try:
             response = requests.post(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
+            logger.exception(
+                'JSON API raised HTTP or socket error.\n'
+                'Request details: %s\n'
+                'Error: %s',
+                {'method': 'post', 'url': self.baseurl + path, 'data': json_data, 'headers': headers},
+                err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 
@@ -149,6 +161,12 @@ class JsonApiRequest(object):
         try:
             response = requests.put(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
+            logger.exception(
+                'JSON API raised HTTP or socket error.\n'
+                'Request details: %s\n'
+                'Error: %s',
+                {'method': 'put', 'url': self.baseurl + path, 'data': json_data, 'headers': headers},
+                err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 

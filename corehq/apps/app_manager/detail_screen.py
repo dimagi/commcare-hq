@@ -157,6 +157,13 @@ class FormattedDetailColumn(object):
             sort.order = self.order
             sort.direction = self.sort_element.direction
 
+            # Flag field as index by making order "-2"
+            # this is for the CACHE_AND_INDEX toggle
+            # (I know, I know, it's hacky - blame Clayton)
+            if sort.type == 'index':
+                sort.type = 'string'
+                sort.order = -2
+
         return sort
 
     @property

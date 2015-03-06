@@ -130,6 +130,9 @@ class SQLLocation(MPTTModel):
     class Meta:
         unique_together = ('domain', 'site_code',)
 
+    def __unicode__(self):
+        return u"{} ({})".format(self.name, self.domain)
+
     def __repr__(self):
         return "<SQLLocation(domain=%s, name=%s)>" % (
             self.domain,
@@ -277,6 +280,15 @@ class Location(CachedCouchDocumentMixin, Document):
 
     def __repr__(self):
         return "%s (%s)" % (self.name, self.location_type_object.name)
+
+    def __eq__(self, other):
+        if isinstance(other, Location):
+            return self._id == other._id
+        else:
+            return False
+
+    def __hash__(self):
+        return hash(self._id)
 
     def _sync_location(self):
         properties_to_sync = [
@@ -432,17 +444,21 @@ class Location(CachedCouchDocumentMixin, Document):
         ).one()['value']
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, include_docs=True):
         relevant_ids = set([r['id'] for r in cls.get_db().view(
             'locations/by_type',
             reduce=False,
             startkey=[domain],
             endkey=[domain, {}],
         ).all()])
-        return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
-            if not l.get('is_archived', False)
-        )
+
+        if not include_docs:
+            return relevant_ids
+        else:
+            return (
+                cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
+                if not l.get('is_archived', False)
+            )
 
     @classmethod
     def site_codes_for_domain(cls, domain):

@@ -126,6 +126,11 @@ class ILSGatewayAPI(APISynchronization):
     PRODUCT_CUSTOM_FIELDS = []
 
     def prepare_commtrack_config(self):
+        """
+        Bootstraps the domain-level metadata according to the static config.
+        - Sets the proper location types hierarchy on the domain object.
+        - Sets a keyword handler for reporting receipts
+        """
         previous = None
         for loc_type in LOCATION_TYPES:
             previous, _ = LocationType.objects.get_or_create(
@@ -136,7 +141,6 @@ class ILSGatewayAPI(APISynchronization):
             )
 
         config = CommtrackConfig.for_domain(self.domain)
-        config.location_types = []
         actions = [action.keyword for action in config.actions]
         if 'delivered' not in actions:
             config.actions.append(
@@ -145,7 +149,7 @@ class ILSGatewayAPI(APISynchronization):
                     keyword='delivered',
                     caption='Delivered')
             )
-        config.save()
+            config.save()
 
     def product_sync(self, ilsgateway_product):
         from custom.ilsgateway import PRODUCTS_CODES_PROGRAMS_MAPPING
@@ -205,6 +209,7 @@ class ILSGatewayAPI(APISynchronization):
 
         if not location:
             if ilsgateway_location.parent_id:
+                # todo: this lookup is likely a source of slowness
                 loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',
                                                   key=[self.domain, str(ilsgateway_location.parent_id)],
                                                   reduce=False,
@@ -228,8 +233,16 @@ class ILSGatewayAPI(APISynchronization):
                 location.longitude = float(ilsgateway_location.longitude)
             location.location_type = ilsgateway_location.type
             location.site_code = ilsgateway_location.code
+            # todo: unicode?
             location.external_id = str(ilsgateway_location.id)
             location.save()
+
+            # todo: shouldn't this only be creating supply points for objects just at the facility level?
+            # explanation: There are some sms users in ILS that are assigned to non-facility locations.
+            # In HQ when we assign location to user supply point is automatically created.
+            # That's reason why I'm creating supply point for all locations. Not sure how it should be solved.
+            # note: I think we can now assign users to locations without making a supply point so am
+            # hoping this can get changed.
             if not SupplyPointCase.get_by_location(location):
                 SupplyPointCase.create_from_location(self.domain, location)
         else:
@@ -251,6 +264,7 @@ class ILSGatewayAPI(APISynchronization):
                     case.update_from_location(location)
                 else:
                     SupplyPointCase.create_from_location(self.domain, location)
+
         if ilsgateway_location.historical_groups:
             historical_groups = ilsgateway_location.historical_groups
         else:
@@ -258,6 +272,8 @@ class ILSGatewayAPI(APISynchronization):
             historical_groups = {}
             while counter != 5:
                 try:
+                    # todo: we may be able to avoid this call by passing the groups in as part of the original
+                    # location dict, though that may introduce slowness/timeouts
                     location_object = self.endpoint.get_location(
                         ilsgateway_location.id,
                         params=dict(with_historical_groups=1)

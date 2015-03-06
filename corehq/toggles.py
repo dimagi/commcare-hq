@@ -215,6 +215,12 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+DOUBLE_MANAGEMENT = StaticToggle(
+    'double_management',
+    'Case list actions a.k.a. double management',
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
+)
+
 BATCHED_RESTORE = PredicatablyRandomToggle(
     'batched_restore',
     'Batch OTA restore response generation',
@@ -239,11 +245,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     "Enable the stock report handler to accept both stock and receipt values "
     "in the format 'soh abc 100.20'",
     [NAMESPACE_DOMAIN]
-)
-
-COMMCARE_LOGO_UPLOADER = StaticToggle(
-    'commcare_logo_uploader',
-    'CommCare logo uploader',
 )
 
 PAGINATE_WEB_USERS = StaticToggle(
@@ -322,6 +323,11 @@ PRIME_RESTORE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+FORM_LINK_WORKFLOW = StaticToggle(
+    'form_link_workflow',
+    'Form linking workflow available on forms',
+)
+
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 VELLUM_TRANSACTION_QUESTION_TYPES = StaticToggle(
@@ -335,4 +341,11 @@ VELLUM_ITEMSETS = StaticToggle(
     "Adds dynamic (itemset) select and multi-select question types to the "
     "form builder",
     [NAMESPACE_DOMAIN]
+)
+
+CACHE_AND_INDEX = StaticToggle(
+    'cache_and_index',
+    'Enable the "Cache and Index" format option when choosing sort properties '
+    'in the app builder',
+    [NAMESPACE_DOMAIN],
 )

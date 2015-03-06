@@ -27,7 +27,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.accounting.exceptions import (
     CreditLineError, AccountingError, SubscriptionAdjustmentError,
     SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
-    SubscriptionReminderError, SubscriptionRenewalError,
+    SubscriptionReminderError, SubscriptionRenewalError, ProductPlanNotFoundError,
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.utils import (
@@ -1237,9 +1237,14 @@ class Subscription(models.Model):
         """
         domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
-            plan_version = DefaultProductPlan.objects.get(edition=SoftwarePlanEdition.COMMUNITY,
-                                                          product_type=SoftwareProductType.COMMCARE).plan.get_version()
-            return plan_version, None
+            try:
+                plan_version = DefaultProductPlan.objects.get(
+                    edition=SoftwarePlanEdition.COMMUNITY,
+                    product_type=SoftwareProductType.COMMCARE,
+                ).plan.get_version()
+                return plan_version, None
+            except DefaultProductPlan.DoesNotExist:
+                raise ProductPlanNotFoundError
         domain = domain_obj
         subscriber = Subscriber.objects.safe_get(domain=domain.name, organization=None)
         plan_version, subscription = (cls._get_plan_by_subscriber(subscriber) if subscriber
@@ -1281,7 +1286,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(_(
+            raise NewSubscriptionError(unicode(_(
                 "There is already a subscription '%(sub)s' that has an end date "
                 "that conflicts with the start and end dates of this "
                 "subscription %(start)s - %(end)s." % {
@@ -1289,7 +1294,7 @@ class Subscription(models.Model):
                     'start': date_start,
                     'end': date_end
                 }
-            ))
+            )))
 
         can_reactivate, last_subscription = cls.can_reactivate_domain_subscription(
             account, domain, plan_version, date_start=date_start

@@ -18,9 +18,10 @@ from .exceptions import (
     SuiteValidationError,
 )
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
+    CASE_ID, RETURN_TO
 from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
@@ -412,6 +413,14 @@ class Field(OrderedXmlObject):
     background = NodeField('background/text', Text)
 
 
+class Action(OrderedXmlObject):
+    ROOT_NAME = 'action'
+    ORDER = ('display', 'stack')
+
+    stack = NodeField('stack', Stack)
+    display = NodeField('display', Display)
+
+
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
     function = XPathField('@function')
@@ -449,6 +458,7 @@ class Detail(IdNode):
 
     title = NodeField('title/text', Text)
     fields = NodeListField('field', Field)
+    action = NodeField('action', Action)
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
 
@@ -614,8 +624,8 @@ def get_detail_column_infos(detail, include_sort):
         sort_elements = get_default_sort_elements(detail)
 
     # order is 1-indexed
-    sort_elements = dict((s.field, (s, i + 1))
-                         for i, s in enumerate(sort_elements))
+    sort_elements = {s.field: (s, i + 1)
+                     for i, s in enumerate(sort_elements)}
     columns = []
     for column in detail.get_columns():
         sort_element, order = sort_elements.pop(column.field, (None, None))
@@ -744,8 +754,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                 return
 
             entry = self.get_form_entry(suite, form_command)
-            entry.stack = Stack()
-            frame = CreateFrame()
+            if_clause = None
+            if not entry.stack:
+                entry.stack = Stack()
+            else:
+                # TODO: find a more general way of handling multiple contributions to the workflow
+                if_clause = '{} = 0'.format(session_var(RETURN_TO).count())
+
+            frame = CreateFrame(if_clause=if_clause)
             entry.stack.add_frame(frame)
 
             for child in frame_children:
@@ -908,6 +924,31 @@ class SuiteGenerator(SuiteGeneratorBase):
                     detail_type=detail_type, *column_info
                 ).fields
                 d.fields.extend(fields)
+
+            if module.case_list_form.form_id and detail_type.endswith('short') and \
+                    not (hasattr(module, 'parent_select') and module.parent_select.active):
+                # add form action to detail
+                form = self.app.get_form(module.case_list_form.form_id)
+                case_session_var = CASE_ID
+                if form.form_type == 'advanced_form':
+                    # match case session variable
+                    reg_action = form.get_registration_actions(module.case_type)[0]
+                    case_session_var = reg_action.case_session_var
+
+                d.action = Action(
+                    display=Display(
+                        text=Text(locale_id=self.id_strings.case_list_form_locale(module)),
+                        media_image=module.case_list_form.media_image,
+                        media_audio=module.case_list_form.media_audio,
+                    ),
+                    stack=Stack()
+                )
+                frame = PushFrame()
+                frame.add_command(XPath.string(self.id_strings.form_command(form)))
+                frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
+                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu(module))))
+                d.action.stack.add_frame(frame)
+
             try:
                 if not self.app.enable_multi_sort:
                     d.fields[0].sort = 'default'
@@ -1326,6 +1367,34 @@ class SuiteGenerator(SuiteGeneratorBase):
             'case_autoload.{0}.case_missing'.format(mode),
         )
 
+    def configure_entry_as_case_list_form(self, form, entry):
+        target_module = form.case_list_module
+        source_session_var = CASE_ID
+        if form.form_type == 'advanced_form':
+            # match case session variable
+            reg_action = form.get_registration_actions(target_module.case_type)[0]
+            source_session_var = reg_action.case_session_var
+
+        target_session_var = 'case_id'
+        if target_module.module_type == 'advanced':
+            # match case session variable for target module
+            form = target_module.forms[0]
+            target_session_var = form.actions.load_update_cases[0].case_session_var
+
+        entry.datums.append(SessionDatum(id=source_session_var, function='uuid()'))
+        entry.stack = Stack()
+        source_case_id = session_var(source_session_var)
+        case_count = CaseIDXPath(source_case_id).case().count()
+        return_to = session_var(RETURN_TO)
+        frame_case_created = CreateFrame(if_clause='{} = 1 and {} > 0'.format(return_to.count(), case_count))
+        frame_case_created.add_command(return_to)
+        frame_case_created.add_datum(StackDatum(id=target_session_var, value=source_case_id))
+        entry.stack.add_frame(frame_case_created)
+
+        frame_case_not_created = CreateFrame(if_clause='{} = 1 and {} = 0'.format(return_to.count(), case_count))
+        frame_case_not_created.add_command(return_to)
+        entry.stack.add_frame(frame_case_not_created)
+
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
@@ -1337,8 +1406,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
-        if not form or form.requires == 'case':
+        if not form or form.requires_case():
             self.configure_entry_module(module, e, use_filter=True)
+        elif form and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
@@ -1504,6 +1575,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                     ))
             except IndexError:
                 pass
+
+        if form.is_registration_form() and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
 
         if self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
