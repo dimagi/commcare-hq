@@ -74,6 +74,19 @@
             <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
             </div>
         </div>
+        <!--ko if: actionType() == 'none'-->
+        {%  if usercase_enabled %}
+            <header class="clearfix">
+                <h5 class="pull-left">{%  trans "User Case" %}</h5>
+            <span data-bind="makeHqHelp: {}"
+              data-title="{% trans "User Case" %}"
+              data-content="{% trans "The User Case allows you to store and retrieve data about the mobile worker." %}"
+            ></span>
+            </header>
+            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+            </div>
+        {%  endif %}
+        <!--/ko-->
         <!--ko if: actionType() !== 'none'-->
         <header class="clearfix" data-bind="visible: actionType() !== 'open-other'">
             <h5 class="pull-left">{% trans "Child Cases" %}</h5>
