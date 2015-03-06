@@ -479,13 +479,13 @@ Here are some sample configurations that can be used as a reference until we hav
 
 ## Report filters
 
-TODO: Report filters docs will go here.
+The documentation for report filters is still in progress. Apologies for brevity below.
 
 **A note about report filters versus data source filters**
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
 
-#### "numeric" Filters
+### Numeric Filters
 Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
 Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
 
@@ -499,7 +499,9 @@ ex:
 }
 ```
 
-Here are a few examples of report filters:
+### Date filters
+
+Date filters allow you filter on a date. They will show a datepicker in the UI.
 
 ```
 {
@@ -510,14 +512,24 @@ Here are a few examples of report filters:
   "required": false
 }
 ```
+
+### Dynamic choice lists
+
+Dynamic choice lists provide a select widget that shows all possible values for a column.
+
 ```
 {
   "type": "dynamic_choice_list",
   "slug": "village",
   "field": "village",
-  "display": "Village"
+  "display": "Village",
+  "datatype": "string"
 }
 ```
+
+### Choice lists
+
+Choice lists allow manual configuration of a fixed, specified number of choices and let you change what they look like in the UI.
 ```
 {
   "type": "choice_list",
