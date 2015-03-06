@@ -43,14 +43,15 @@ var HQReport = function (options) {
                         e.preventDefault();
                         if (self.isExportAll) {
                             $.ajax({
-                                url: get_report_render_url("export"),
+                                url: getReportBaseUrl("export"),
+                                data: getReportParams(undefined, true),
                                 type: "POST",
                                 success: function() {
                                     alert("You requested excel report will be send to your email defined in your account settings.");
                                 }
                             })
                         } else {
-                            window.location.href = get_report_render_url("export");
+                            window.location.href = getReportRenderUrl("export");
                         }
                     });
                 }
@@ -62,7 +63,7 @@ var HQReport = function (options) {
 
                 $(self.printReportButton).click(function (e) {
                     e.preventDefault();
-                    window.open(get_report_render_url("print"));
+                    window.open(getReportRenderUrl("print"));
                 });
             }
         });
@@ -154,7 +155,7 @@ var HQReport = function (options) {
         });
     };
 
-    function get_report_render_url(render_type, additionalParams) {
+    function getReportParams(additionalParams, asObject) {
         var params = window.location.search.substr(1);
         if (params.length <= 1) {
             if (self.loadDatespanFromCookie()) {
@@ -162,8 +163,29 @@ var HQReport = function (options) {
                     "&enddate="+self.datespan.enddate;
             }
         }
-        return window.location.pathname.replace(self.urlRoot,
-            self.urlRoot+render_type+"/")+"?"+params + (additionalParams == undefined ? "" : "&" + additionalParams);
+        params += (additionalParams == undefined ? "" : "&" + additionalParams);
+        if (asObject) {
+            // http://stackoverflow.com/a/8649003/835696
+            return JSON.parse('{"' +
+                decodeURI(params)
+                    .replace(/"/g, '\\"')
+                    .replace(/&/g, '","')
+                    .replace(/=/g,'":"') +
+                '"}');
+
+        }
+        return params;
+
+    }
+
+    function getReportBaseUrl(renderType) {
+        return window.location.pathname.replace(self.urlRoot, self.urlRoot+renderType+"/")
+    }
+
+    function getReportRenderUrl(renderType, additionalParams) {
+        var baseUrl = getReportBaseUrl(renderType);
+        var paramString = getReportParams(additionalParams);
+        return baseUrl + "?" + paramString;
     }
 
     function EmailReportViewModel(hqReport) {
@@ -189,7 +211,7 @@ var HQReport = function (options) {
              var $sendButton = $(hqReport.emailReportModal).find('.send-button');
              $sendButton.button('loading');
 
-            $.get(get_report_render_url("email_onceoff", $.param(self.unwrap())))
+            $.get(getReportRenderUrl("email_onceoff", $.param(self.unwrap())))
                 .done(function() {
                     $(hqReport.emailReportModal).modal('hide');
                     self.resetModal();
