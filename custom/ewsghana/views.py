@@ -9,6 +9,8 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.locations.models import SQLLocation
+from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stockout_process_user, \
+    urgent_non_reporting_process_user, urgent_stockout_process_user, report_reminder_process_user
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.reminders.reminders import first_soh_process_user, second_soh_process_user, \
@@ -45,6 +47,22 @@ class RemindersTester(BaseDomainView):
     section_url = ""
     template_name = "ewsghana/reminders_tester.html"
 
+    @property
+    def get_reminders(self):
+        return {
+            'first_soh': first_soh_process_user,
+            'second_soh': second_soh_process_user,
+            'third_soh': third_soh_process_users_and_facilities,
+            'stockout': stockout_process_user,
+            'rrirv': rrirv_process_user,
+            'visit_website': visit_website_process_user,
+            'alert_on_going_reporting': on_going_process_user,
+            'alert_on_going_stockouts': on_going_stockout_process_user,
+            'alert_urgent_non_reporting_user': urgent_non_reporting_process_user,
+            'alert_urgent_stockout': urgent_stockout_process_user,
+            'alert_report_reminder': report_reminder_process_user
+        }
+
     def get_context_data(self, **kwargs):
         context = super(RemindersTester, self).get_context_data(**kwargs)
         context['phone_number'] = kwargs.get('phone_number')
@@ -54,7 +72,7 @@ class RemindersTester(BaseDomainView):
     def main_context(self):
         main_context = super(RemindersTester, self).main_context
         main_context.update({
-            'reminders': ['first_soh', 'second_soh', 'third_soh', 'stockout', 'rrirv', 'visit_website'],
+            'reminders': sorted(self.get_reminders.keys()),
         })
         return main_context
 
@@ -69,21 +87,14 @@ class RemindersTester(BaseDomainView):
             v = VerifiedNumber.by_phone(phone_number, include_pending=True)
             if v and v.verified:
                 user = v.owner
-                if reminder == 'first_soh':
-                    first_soh_process_user(user, test=True)
-                elif reminder == 'second_soh':
-                    now = datetime.datetime.utcnow()
-                    date = now - datetime.timedelta(days=5)
-                    second_soh_process_user(user, date, test=True)
-                elif reminder == 'third_soh':
-                    if user.location:
-                        third_soh_process_users_and_facilities([user], [user.location.sql_location], test=True)
-                elif reminder == 'stockout':
-                    stockout_process_user(user, test=True)
-                elif reminder == 'rrirv':
-                    rrirv_process_user(user, test=True)
-                elif reminder == 'visit_website':
-                    visit_website_process_user(user, test=True)
+                if not user:
+                    return self.get(request, *args, **kwargs)
+                reminder_function = self.get_reminders.get(reminder)
+                if reminder_function:
+                    if reminder == 'third_soh':
+                        reminder_function([user], [user.location.sql_location], test=True)
+                    else:
+                        reminder_function(user, test=True)
         messages.success(request, "Reminder was sent successfully")
         return self.get(request, *args, **kwargs)
 
