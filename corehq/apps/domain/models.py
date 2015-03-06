@@ -349,6 +349,11 @@ class Domain(Document, SnapshotMixin):
         if 'cloudcare_releases' not in data:
             data['cloudcare_releases'] = 'nostars'  # legacy default setting
 
+        # Don't actually remove location_types yet.  We can migrate fully and
+        # remove this after everything's hunky-dory in production.  2015-03-06
+        if 'location_types' in data:
+            data['obsolete_location_types'] = data.pop('location_types')
+
         self = super(Domain, cls).wrap(data)
         if self.deployment is None:
             self.deployment = Deployment()
@@ -612,7 +617,7 @@ class Domain(Document, SnapshotMixin):
         if not include_docs:
             return domains
         else:
-            return imap(cls, iter_docs(cls.get_db(), [d['id'] for d in domains]))
+            return imap(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
     def get_all_names(cls):

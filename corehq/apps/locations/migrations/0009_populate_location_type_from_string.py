@@ -1,8 +1,6 @@
 # encoding: utf-8
 from south.v2 import DataMigration
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.couch.database import get_db, iter_docs
-from dimagi.utils.chunked import chunked
+from corehq.apps.domain.models import Domain
 
 
 EXCLUDE_DOMAINS = (
@@ -17,93 +15,75 @@ EXCLUDE_DOMAINS = (
 )
 
 
+def _couch_parent_loc(parent_code, couch_loc_types):
+    for loc_type in couch_loc_types:
+        if loc_type.get('code') == parent_code or loc_type['name'] == parent_code:
+            return loc_type
+    raise ValueError("Parent loc type {} not found on {}"
+                     .format(parent_code, domain))
+
+
 class Migration(DataMigration):
 
-    @memoized
-    def domain_loc_types(self, domain):
-        domain = get_db().view("domain/domains", key=domain, reduce=False,
-                               include_docs=True).one()
+    def make_loc_types(self, couch_loc_types, domain):
+
+        def get_or_create(couch_loc_type):
+            parents = couch_loc_type['allowed_parents']
+            if len(parents) != 1:
+                raise ValueError("Improperly configured location types on {}"
+                                 .format(domain))
+            elif parents[0] == '':
+                parent_type = None
+            else:
+                parent_type = get_or_create(
+                    _couch_parent_loc(parents[0], couch_loc_types)
+                )
+
+            return self.orm.LocationType.objects.get_or_create(
+                domain=domain,
+                code=couch_loc_type.get('code', couch_loc_type['name']),
+                defaults={
+                    'name': couch_loc_type['name'],
+                    'parent_type': parent_type,
+                    'administrative': couch_loc_type['administrative'] or False,
+                }
+            )[0]
+
         return {
-            # It looks like code is what I should use, not name
-            loc_type['code']: loc_type
-            for loc_type in domain.get('location_types', [])
+            lt.get('code', lt['name']): get_or_create(lt)
+            for lt in couch_loc_types
         }
 
-    def iter_relevant_locations(self):
-        return (self.orm.SQLLocation.objects.exclude(domain__in=EXCLUDE_DOMAINS)
-                                       .iterator())
-
-    @memoized
-    def get_loc_type(self, domain, code):
-        """
-        Get or create relevant SQL location type
-        """
-        try:
-            loc_type = self.orm.LocationType.objects.get(domain=domain, code=code)
-        except self.orm.LocationType.DoesNotExist:
-            loc_types = self.domain_loc_types(domain)
-            if not loc_types:
-                couch_loc_type = {
-                    'allowed_parents': [''],
-                    'name': 'state',
-                    'code': 'state',
-                    'administrative': False,
-                }
-            elif code in loc_types:
-                couch_loc_type = loc_types[code]
-            else:
-                couch_loc_type = loc_types.values()[0]
-
-            parents = couch_loc_type['allowed_parents']
-            if parents and parents[0]:
-                # I sure hope there are no cycles...
-                parent_type = self.get_loc_type(domain, parents[0])
-            else:
-                parent_type = None
-
-            loc_type = self.orm.LocationType(
-                domain=domain,
-                name=couch_loc_type['name'],
-                code=couch_loc_type['code'],
-                parent_type=parent_type,
-                administrative=couch_loc_type['administrative'] or False,
-            )
-            loc_type.save()
-
-        return loc_type
+    def link_locs_to_types(self, loc_types, domain):
+        for loc in (
+            self.orm.SQLLocation.objects.filter(domain=domain).iterator()
+        ):
+            if loc.tmp_location_type not in loc_types:
+                raise KeyError('loc_type {} not found on domain "{}"'
+                               .format(loc.tmp_location_type, domain))
+            loc.location_type = loc_types[loc.tmp_location_type]
+            loc.save()
 
     def forwards(self, orm):
         """
-        Get all SQLLocations, get or create the appropriate location_type,
-        based on the old location_type string, save a foreign key to it.
+        Look up the old LocationType docs, make SQL LocationTypes based on that
+        and then link to locations on the domain.
         """
         self.orm = orm
-        for loc in self.iter_relevant_locations():
-            loc_type = self.get_loc_type(loc.domain, loc.tmp_location_type)
-            loc.location_type = loc_type
-            loc.save()
+        for domain_obj in Domain.get_all():
+            domain_json = domain_obj.to_json()
+            loc_types = domain_json.get('obsolete_location_types')
+            if loc_types is None:
+                loc_types = domain_json.get('location_types')
 
-        # Clean the 'location_types' field off all domains.
-        # Note that this is not reversible
-        db = get_db()
-        all_domain_ids = [d['id'] for d in db.view("domain/not_snapshots",
-                                                   include_docs=False).all()]
-        for domain_docs in chunked(iter_docs(db, all_domain_ids), 100):
-            for domain_doc in domain_docs:
-                if 'location_types' in domain_doc:
-                    del domain_doc['location_types']
-            db.bulk_save(domain_docs)
+            if loc_types:
+                sql_loc_types = self.make_loc_types(loc_types, domain_obj.name)
+                self.link_locs_to_types(sql_loc_types, domain_obj.name)
 
     def backwards(self, orm):
         """
-        Get all SQLLocations, populate the tmp_location_type field with the
-        location_type.code
+        The forward migration is non-destructive, so no reverse is necessary.
         """
-        self.orm = orm
-        for loc in self.iter_relevant_locations():
-            if loc.location_type:
-                loc.tmp_location_type = loc.location_type.code
-                loc.save()
 
     models = {
         u'locations.locationtype': {
