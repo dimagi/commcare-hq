@@ -179,7 +179,7 @@ var HQReport = function (options) {
     }
 
     function getReportBaseUrl(renderType) {
-        return window.location.pathname.replace(self.urlRoot, self.urlRoot+renderType+"/")
+        return window.location.pathname.replace(self.urlRoot, self.urlRoot+renderType+"/");
     }
 
     function getReportRenderUrl(renderType, additionalParams) {
