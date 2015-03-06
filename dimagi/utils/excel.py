@@ -167,8 +167,9 @@ class WorksheetNotFound(Exception):
 
 
 class WorksheetJSONReader(IteratorJSONReader):
-    def __init__(self, worksheet):
+    def __init__(self, worksheet, title=None):
         width = 0
+        self.title = title
         self.worksheet = worksheet
         try:
             header_row = self.worksheet.iter_rows().next()
@@ -216,7 +217,7 @@ class WorkbookJSONReader(object):
         self.worksheets_by_title = {}
         self.worksheets = []
         for worksheet in self.wb.worksheets:
-            ws = WorksheetJSONReader(worksheet)
+            ws = WorksheetJSONReader(worksheet, title=worksheet.title)
             self.worksheets_by_title[worksheet.title] = ws
             self.worksheets.append(ws)
 
