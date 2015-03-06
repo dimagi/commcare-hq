@@ -36,7 +36,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase, get_apps_in_domain
+from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, get_apps_in_domain
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, Domain, TransferDomainRequest)
@@ -483,7 +483,12 @@ class DomainGlobalSettingsForm(forms.Form):
                         app.secure_submissions = secure_submissions
                         apps_to_save.append(app)
             if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
+                apps = [app for app in apps_to_save if isinstance(app, Application)]
+                remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
+                if apps:
+                    Application.bulk_save(apps)
+                if remote_apps:
+                    RemoteApp.bulk_save(remote_apps)
 
             domain.secure_submissions = secure_submissions
             domain.save()
