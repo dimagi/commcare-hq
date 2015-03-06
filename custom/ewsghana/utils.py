@@ -91,3 +91,10 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
         return products
     else:
         return filter_relevant(SQLLocation.objects.filter(domain=domain))
+
+
+def get_reporting_types(domain):
+    return [
+        location_type for location_type in Domain.get_by_name(domain).location_types
+        if not location_type.administrative
+    ]
