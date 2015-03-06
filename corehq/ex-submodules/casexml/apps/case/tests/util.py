@@ -19,18 +19,15 @@ from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.case.util import post_case_blocks
 
 
-def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
-                            referral_id_override=None, domain=None):
-    
+def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=None):
     starttime = utcnow_sans_milliseconds()
     
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
     with open(file_path, "rb") as f:
         xml_data = f.read()
-    doc, uid, case_id, ref_id = replace_ids_and_post(
+    doc, uid, case_id = _replace_ids_and_post(
         xml_data,
         case_id_override=case_id_override,
-        referral_id_override=referral_id_override,
     )
     if domain:
         doc.domain = domain
@@ -42,18 +39,18 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
     return case
 
 
-def replace_ids_and_post(xml_data, case_id_override=None, referral_id_override=None):
+def _replace_ids_and_post(xml_data, case_id_override=None):
     # from our test forms, replace the UIDs so we don't get id conflicts
-    uid, case_id, ref_id = (uuid.uuid4().hex for i in range(3))
+    uid, case_id = (uuid.uuid4().hex for i in range(2))
     
-    if case_id_override:      case_id = case_id_override
-    if referral_id_override:  ref_id = referral_id_override
-        
+    if case_id_override:
+        case_id = case_id_override
+
     xml_data = xml_data.replace("REPLACE_UID", uid)
     xml_data = xml_data.replace("REPLACE_CASEID", case_id)
-    xml_data = xml_data.replace("REPLACE_REFID", ref_id)
     doc = post_xform_to_couch(xml_data)
-    return (doc, uid, case_id, ref_id)
+    return (doc, uid, case_id)
+
 
 def check_xml_line_by_line(test_case, expected, actual):
     """Does what it's called, hopefully parameters are self-explanatory"""
