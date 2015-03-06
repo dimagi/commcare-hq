@@ -13,7 +13,7 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('domain', self.gf('django.db.models.fields.CharField')(max_length=255, db_index=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('code', self.gf('django.db.models.fields.SlugField')(max_length=50)),
+            ('code', self.gf('django.db.models.fields.SlugField')(max_length=50, null=True)),
             ('parent_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['locations.LocationType'], null=True)),
             ('administrative', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
@@ -36,7 +36,7 @@ class Migration(SchemaMigration):
         u'locations.locationtype': {
             'Meta': {'object_name': 'LocationType'},
             'administrative': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
+            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),

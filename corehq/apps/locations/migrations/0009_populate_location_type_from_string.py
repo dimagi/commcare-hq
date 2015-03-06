@@ -89,7 +89,7 @@ class Migration(DataMigration):
         u'locations.locationtype': {
             'Meta': {'object_name': 'LocationType'},
             'administrative': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
+            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'null': 'True'}),
             'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
