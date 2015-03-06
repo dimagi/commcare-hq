@@ -542,13 +542,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
     )
-    secure_submissions = BooleanField(
-        label=_("Only accept secure submissions"),
-        required=False,
-        help_text=_("Turn this on to prevent others from impersonating your "
-                    "mobile workers. To use, all of your deployed applications "
-                    "must be using secure submissions."),
-    )
     cloudcare_releases = ChoiceField(
         label=_("CloudCare should use"),
         initial=None,
