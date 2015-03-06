@@ -102,7 +102,7 @@ class SQLXFormsSession(models.Model):
     Keeps information about an SMS XForm session.
     """
     # generic properties
-    couch_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
+    couch_id = models.CharField(db_index=True, max_length=50)
     connection_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
     session_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
     form_xmlns = models.CharField(null=True, blank=True, max_length=100)
