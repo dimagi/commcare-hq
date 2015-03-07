@@ -22,6 +22,25 @@ class ApplicationDataSourceField(forms.MultiValueField):
     """
     A field that can be used in forms that allows you to select a data source from an application.
     Data sources can be forms and cases.
+
+    To use it you must do the following:
+
+    - Add the field to your form
+    - Call .boostrap() with the domain.
+    - Add the following knockout bindings to your template:
+
+        $(function () {
+            ko.applyBindings({
+                application: ko.observable(""),
+                sourceType: ko.observable(""),
+                sourcesMap: {{ sources_map|JSON }}
+            }, $("#FORM").get(0));
+        });
+
+    Where FORM is a selector for your form and sources_map is the .all_sources property from this field
+    (which gets set after bootstrap).
+
+    See usages for examples.
     """
     widget = ApplicationDataSourceWidget
 
@@ -64,8 +83,8 @@ class ApplicationDataSourceField(forms.MultiValueField):
         for i, widget in enumerate(self.widget.widgets):
             widget.choices = self.fields[i].choices
 
-        # NOTE: The corresponding knockout view model is defined in:
-        #       templates/userreports/create_new_report_builder.html
+        # NOTE: This corresponds to a view-model that must be initialized in your template.
+        # See the doc string of this class for more information.
         app_widget, source_type_widget, source_widget = self.widget.widgets
         app_widget.attrs = {'data-bind': 'value: application'}
         source_type_widget.attrs = {'data-bind': 'value: sourceType'}
