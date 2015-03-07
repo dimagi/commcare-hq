@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_noop as _
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from corehq.apps.app_manager.fields import ApplicationDataSourceField
+from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 
 from corehq.apps.app_manager.models import (
     Application,
@@ -235,13 +235,14 @@ class CreateNewReportForm(forms.Form):
             ('table', _("Table")),
         ],
     )
-    report_source = ApplicationDataSourceField()
 
     def __init__(self, domain, *args, **kwargs):
         super(CreateNewReportForm, self).__init__(*args, **kwargs)
-
         self.domain = domain
-        self.fields['report_source'].bootstrap(self.domain)
+        self.app_source_helper = ApplicationDataSourceUIHelper()
+        self.app_source_helper.bootstrap(self.domain)
+        report_source_fields = self.app_source_helper.get_fields()
+        self.fields.update(report_source_fields)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.form_id = "report-builder-form"
@@ -249,7 +250,7 @@ class CreateNewReportForm(forms.Form):
             crispy.Fieldset(
                 _('Create New Report'),
                 'report_type',
-                crispy.MultiWidgetField('report_source'),
+                *report_source_fields.keys()
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -263,7 +264,10 @@ class CreateNewReportForm(forms.Form):
 
     @property
     def sources_map(self):
-        return self.fields['report_source'].all_sources
+        return self.app_source_helper.all_sources
+
+    def get_selected_source(self):
+        return self.app_source_helper.get_app_source(self.cleaned_data)
 
     def clean(self):
         """

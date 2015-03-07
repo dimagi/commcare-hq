@@ -108,7 +108,7 @@ class CreateNewReportBuilderView(ReportBuilderView):
                 'table': 'configure_table_report_builder',
             }
             url_name = url_names_map[report_type]
-            app_source = self.create_new_report_builder_form.cleaned_data['report_source']
+            app_source = self.create_new_report_builder_form.get_selected_source()
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + '&'.join([
                     '%(key)s=%(value)s' % {
@@ -263,7 +263,7 @@ def create_data_source_from_app(request, domain):
         form = ConfigurableDataSourceFromAppForm(domain, request.POST)
         if form.is_valid():
             # save config
-            app_source = form.cleaned_data['app_source']
+            app_source = form.app_source_helper.get_app_source(form.cleaned_data)
             app = Application.get(app_source.application)
             if app_source.source_type == 'case':
                 data_source = get_case_data_source(app, app_source.source)
@@ -280,7 +280,7 @@ def create_data_source_from_app(request, domain):
     else:
         form = ConfigurableDataSourceFromAppForm(domain)
     context = _shared_context(domain)
-    context['sources_map'] = form.sources_map
+    context['sources_map'] = form.app_source_helper.all_sources
     context['form'] = form
     return render(request, 'userreports/data_source_from_app.html', context)
 
