@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from bootstrap3_crispy import layout as crispy
 from bootstrap3_crispy.helper import FormHelper
 from bootstrap3_crispy.layout import Submit
-from corehq.apps.app_manager.fields import ApplicationDataSourceField
+from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 from dimagi.utils.decorators.memoized import memoized
@@ -135,21 +135,16 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
 
 class ConfigurableDataSourceFromAppForm(forms.Form):
 
-    app_source = ApplicationDataSourceField()
-
     def __init__(self, domain, *args, **kwargs):
         super(ConfigurableDataSourceFromAppForm, self).__init__(*args, **kwargs)
-        self.fields['app_source'].bootstrap(domain)
+        self.app_source_helper = ApplicationDataSourceUIHelper()
+        self.app_source_helper.bootstrap(domain)
+        report_source_fields = self.app_source_helper.get_fields()
+        self.fields.update(report_source_fields)
         self.helper = FormHelper()
         self.helper.form_id = "data-source-config"
         self.helper.layout = crispy.Layout(
             crispy.Div(
-                crispy.MultiWidgetField('app_source'),
-                Submit('submit', _('Save Changes')),
+                *report_source_fields.keys() + [Submit('submit', _('Save Changes'))]
             )
         )
-
-    @property
-    @memoized
-    def sources_map(self):
-        return self.fields['app_source'].all_sources
