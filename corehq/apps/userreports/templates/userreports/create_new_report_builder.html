@@ -4,11 +4,12 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        var reportBuilderViewModel = {
-            application: ko.observable(""),
-            sourceType: ko.observable(""),
-            sourcesMap: {{ sources_map|JSON }}
-        };
-        ko.applyBindings(reportBuilderViewModel, $("#report-builder-form").get(0));
+        $(function () {
+            ko.applyBindings({
+                application: ko.observable(""),
+                sourceType: ko.observable(""),
+                sourcesMap: {{ sources_map|JSON }}
+            }, $("#report-builder-form").get(0));
+        });
     </script>
 {% endblock %}
