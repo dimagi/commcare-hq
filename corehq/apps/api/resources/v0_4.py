@@ -37,6 +37,8 @@ from no_exceptions.exceptions import Http400
 MOCK_XFORM_ES = None
 MOCK_CASE_ES = None
 
+xform_doc_types = doc_types()
+
 
 class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
 
@@ -87,8 +89,8 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
             es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
         def wrapper(doc):
-            if doc['doc_type'] in doc_types():
-                return doc_types()[doc['doc_type']].wrap(doc)
+            if doc['doc_type'] in xform_doc_types:
+                return xform_doc_types[doc['doc_type']].wrap(doc)
             else:
                 return doc
 
