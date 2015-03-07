@@ -147,8 +147,8 @@ function LocationTypeModel(data, root) {
             code: this.code(),
             allowed_parents: this.allowed_parents(),
             administrative: !this.tracks_stock(),
-            shares_cases: this.shares_cases(),
-            view_descendants: this.view_descendants()
+            shares_cases: this.shares_cases() === true,
+            view_descendants: this.view_descendants() === true
         };
     };
 }
