@@ -1116,7 +1116,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)
                     row.append(value)
-                    if denom != 'no_denom':
+                    if denom != 'no_denom' and denom != 'one':
                         denom = getattr(awc, denom)
                         row.append(denom)
                         row.append(float(value) / denom if denom != 0 else "")
