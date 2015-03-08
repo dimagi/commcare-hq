@@ -205,7 +205,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @classmethod
     def by_domain(cls, domain):
         return sorted(
-            cls.view('userreports/data_sources_by_build_info', start_key=[domain], reduce=False, include_docs=True),
+            cls.view(
+                'userreports/data_sources_by_build_info',
+                start_key=[domain],
+                end_key=[domain, {}],
+                reduce=False,
+                include_docs=True
+            ),
             key=lambda config: config.display_name
         )
 
