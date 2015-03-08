@@ -142,10 +142,14 @@ class AWCHealthStatus(object):
          _("Women 6 months pregnant who have received IFA tablets.  Exempt "
            "if IFA tablets were not available."),
          'preg_6_months'),
-        ('preg_weighed',
-         _("Pregnancy Weight Monitoring"),
-         _("Women 6 or 9 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
-         'preg_6_or_9_months'),
+        ('preg_weighed_6',
+         _("Pregnancy Weight Monitoring, 1st Trimester"),
+         _("Women 6 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
+         'preg_6_months'),
+        ('preg_weighed_9',
+         _("Pregnancy Weight Monitoring, 2nd Trimester"),
+         _("Women 9 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
+         'preg_9_months'),
         ('child_weighed',
          _("Child Weight Monitoring"),
          _("3-month-old children who have been weighed since birth"),
@@ -325,12 +329,20 @@ class AWCHealthStatus(object):
         return len([c for c in self.all_cases if c.preg_month == 6])
 
     @property
+    def preg_9_months(self):
+        return len([c for c in self.all_cases if c.preg_month == 9])
+
+    @property
     def preg_6_or_9_months(self):
         return len([c for c in self.all_cases if c.preg_month in (6, 9)])
 
     @property
-    def preg_weighed(self):
-        return len([c for c in self.all_cases if c.preg_weighed])
+    def preg_weighed_6(self):
+        return len([c for c in self.all_cases if c.preg_weighed_trimestered(6)])
+
+    @property
+    def preg_weighed_9(self):
+        return len([c for c in self.all_cases if c.preg_weighed_trimestered(9)])
 
     @property
     def child_weighed(self):
