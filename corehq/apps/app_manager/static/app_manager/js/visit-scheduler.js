@@ -8,7 +8,6 @@ var VisitScheduler = (function () {
 
         self.home = params.home;
         self.questions = params.questions;
-        self.edit = params.edit;
         self.save_url = params.save_url;
 
         self.saveButton = COMMCAREHQ.SaveButton.init({

@@ -10,52 +10,45 @@
             <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
                 <img data-bind="attr: {src: thumbnailUrl}" />
             </a>
-            {% if edit %}
-                <button type="button"
-                        class="btn btn-primary"
-                        data-toggle="modal"
-                        data-bind="attr: { 'data-hqmediapath': currentPath },
-                                   event: {
-                                        mediaUploadComplete: uploadComplete,
-                                        click: passToUploadController
-                                   }"
-                        data-target="#{{ multimedia.upload_managers.icon.slug }}">
-                    <i class="icon icon-cloud-upload"></i>
-                    <span data-bind="visible: isMediaMatched">
-                        {% trans 'Replace Icon' %}
-                    </span>
-                    <span data-bind="visible: isMediaUnmatched">
-                        {% trans 'Upload Icon' %}
-                    </span>
-                </button>
-                <button type="button"
-                        class="btn btn-danger "
-                        data-bind="
-                            visible: isMediaMatched,
-                            event: {
-                                click: removeMedia
-                            }
-                        ">
-                    <i class="icon icon-remove"></i>
-                </button>
-                <button type="button"
-                        class="btn btn-default pull-right"
-                        data-bind="
-                            visible: showDefaultPath,
-                            event: {
-                                click: setCustomPath
-                            }">
-                    <i class="icon icon-cog"></i>
-                    {% trans 'Set Icon Path...' %}
-                </button>
-            {% else %}
-                <div data-bind="visible: isMediaUnmatched">
-                    {% trans 'No Image' %}
-                </div>
-            {% endif %}
+            <button type="button"
+                    class="btn btn-primary"
+                    data-toggle="modal"
+                    data-bind="attr: { 'data-hqmediapath': currentPath },
+                               event: {
+                                    mediaUploadComplete: uploadComplete,
+                                    click: passToUploadController
+                               }"
+                    data-target="#{{ multimedia.upload_managers.icon.slug }}">
+                <i class="icon icon-cloud-upload"></i>
+                <span data-bind="visible: isMediaMatched">
+                    {% trans 'Replace Icon' %}
+                </span>
+                <span data-bind="visible: isMediaUnmatched">
+                    {% trans 'Upload Icon' %}
+                </span>
+            </button>
+            <button type="button"
+                    class="btn btn-danger "
+                    data-bind="
+                        visible: isMediaMatched,
+                        event: {
+                            click: removeMedia
+                        }
+                    ">
+                <i class="icon icon-remove"></i>
+            </button>
+            <button type="button"
+                    class="btn btn-default pull-right"
+                    data-bind="
+                        visible: showDefaultPath,
+                        event: {
+                            click: setCustomPath
+                        }">
+                <i class="icon icon-cog"></i>
+                {% trans 'Set Icon Path...' %}
+            </button>
         </div>
     </div>
-    {% if edit %}
     <div class="control-group"
          data-bind="visible: showCustomPath">
         <label for="image_custom_path" class="control-label">
@@ -83,7 +76,6 @@
             </button>
         </div>
     </div>
-    {% endif %}
 </div>
 <div id="{{ qualifier|default_if_none:"" }}media_audio">
     <div class="control-group">
@@ -96,49 +88,43 @@
                 <i class="icon icon-volume-up"></i>
                 {% trans "Preview" %}
             </a>
-            {% if edit %}
-                <button type="button"
-                        class="btn btn-primary"
-                        data-toggle="modal"
-                        data-bind="attr: { 'data-hqmediapath': currentPath },
-                                   event: {
-                                        mediaUploadComplete: uploadComplete,
-                                        click: passToUploadController
-                                   }"
-                        data-target="#{{ multimedia.upload_managers.audio.slug }}">
-                    <i class="icon icon-cloud-upload"></i>
-                    <span data-bind="visible: isMediaMatched">
-                        {% trans 'Replace Audio' %}
-                    </span>
-                    <span data-bind="visible: isMediaUnmatched">
-                        {% trans 'Upload Audio' %}
-                    </span>
-                </button>
-                <button type="button"
-                        class="btn btn-danger "
-                        data-bind="
-                            visible: isMediaMatched,
-                            event: {
-                                click: removeMedia
-                            }
-                        ">
-                    <i class="icon icon-remove"></i>
-                </button>
-                <button type="button"
-                        class="btn btn-default pull-right"
-                        data-bind="
-                            visible: showDefaultPath,
-                            event: {
-                                click: setCustomPath
-                            }">
-                    <i class="icon icon-cog"></i>
-                    {% trans 'Set Audio Path...' %}
-                </button>
-            {% else %}
-                <div data-bind="visible: isMediaUnmatched">
-                    {% trans 'No Audio' %}
-                </div>
-            {% endif %}
+            <button type="button"
+                    class="btn btn-primary"
+                    data-toggle="modal"
+                    data-bind="attr: { 'data-hqmediapath': currentPath },
+                               event: {
+                                    mediaUploadComplete: uploadComplete,
+                                    click: passToUploadController
+                               }"
+                    data-target="#{{ multimedia.upload_managers.audio.slug }}">
+                <i class="icon icon-cloud-upload"></i>
+                <span data-bind="visible: isMediaMatched">
+                    {% trans 'Replace Audio' %}
+                </span>
+                <span data-bind="visible: isMediaUnmatched">
+                    {% trans 'Upload Audio' %}
+                </span>
+            </button>
+            <button type="button"
+                    class="btn btn-danger "
+                    data-bind="
+                        visible: isMediaMatched,
+                        event: {
+                            click: removeMedia
+                        }
+                    ">
+                <i class="icon icon-remove"></i>
+            </button>
+            <button type="button"
+                    class="btn btn-default pull-right"
+                    data-bind="
+                        visible: showDefaultPath,
+                        event: {
+                            click: setCustomPath
+                        }">
+                <i class="icon icon-cog"></i>
+                {% trans 'Set Audio Path...' %}
+            </button>
             <p data-bind="visible: isMediaMatched"
                class="help-block">
                 <i class="icon icon-info-sign"></i>
@@ -149,33 +135,31 @@
             </p>
         </div>
     </div>
-    {% if edit %}
-        <div class="control-group"
-             data-bind="visible: showCustomPath">
-            <label for="image_custom_path" class="control-label">
-                {% trans "Audio Path" %}:
-            </label>
-            <div class="controls">
-                <input type="text"
-                       class="span6"
-                       data-bind="value: customPath,
-                                  valueUpdate: 'textchange'" />
-                <input type="hidden"
-                       name="{{ qualifier|default_if_none:"" }}media_audio"
-                       class="jr-resource-field"
-                       data-bind="value: savedPath" />
-                <button type="button"
-                        class="btn btn-inverse"
-                        data-bind="
-                            visible: showCustomPath,
-                            event: {
-                                click: setDefaultPath,
-                            }
-                        ">
-                    <i class="icon icon-remove"></i>
-                    {% trans 'Use Default Path' %}
-                </button>
-            </div>
+    <div class="control-group"
+         data-bind="visible: showCustomPath">
+        <label for="image_custom_path" class="control-label">
+            {% trans "Audio Path" %}:
+        </label>
+        <div class="controls">
+            <input type="text"
+                   class="span6"
+                   data-bind="value: customPath,
+                              valueUpdate: 'textchange'" />
+            <input type="hidden"
+                   name="{{ qualifier|default_if_none:"" }}media_audio"
+                   class="jr-resource-field"
+                   data-bind="value: savedPath" />
+            <button type="button"
+                    class="btn btn-inverse"
+                    data-bind="
+                        visible: showCustomPath,
+                        event: {
+                            click: setDefaultPath,
+                        }
+                    ">
+                <i class="icon icon-remove"></i>
+                {% trans 'Use Default Path' %}
+            </button>
         </div>
-        {% endif %}
+    </div>
 </div>

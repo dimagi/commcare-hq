@@ -47,7 +47,6 @@
             var details = {{ details|JSON }};
             var lang = {{ lang|JSON }};
             var langs = {{ app.langs|JSON }};
-            var edit = {{ edit|JSON }};
             var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
             var parentModules = {{ parent_modules|JSON }};
             var fixtures = {{ fixtures|JSON }};
@@ -65,7 +64,6 @@
                     properties: detail.properties,
                     lang: lang,
                     langs: langs,
-                    edit: edit,
                     saveUrl: saveUrl,
                     parentModules: parentModules,
                     childCaseTypes: detail.child_case_types,
@@ -171,7 +169,6 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    {% if edit %}
     <div class="delete-me">
         <form action="{% url "delete_module" domain app.id module.unique_id %}" method="post">
             <button type="submit" class="disable-on-submit btn btn-danger">
@@ -180,7 +177,6 @@
             </button>
         </form>
     </div>
-    {% endif %}
 
     <h3>
         <i class="icon-folder-open"></i>
@@ -214,11 +210,7 @@
                 <div class="control-group">
                     <label class="control-label">{% trans "Module Name" %}</label>
                     <div class="controls">
-                        {% if edit %}
-                            {% input_trans module.name langs %}
-                        {% else %}
-                            {{ module.name|html_trans:langs|safe }}
-                        {% endif %}
+                        {% input_trans module.name langs %}
                     </div>
                 </div>
                 {% block settings_fields %}
@@ -227,18 +219,10 @@
                         {% trans "Menu Mode" %}
                     </label>
                     <div class="controls">
-                        {% if edit %}
-                            <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
-                                <option value="false">{% trans "Display module and then forms" %}</option>
-                                <option value="true">{% trans "Display only forms" %}</option>
-                            </select>
-                        {% else %}
-                            {% if not module.put_in_root %}
-                                {% trans "Display module and then forms" %}
-                            {% else %}
-                                {% trans "Display only forms" %}
-                            {% endif %}
-                        {% endif %}
+                        <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                            <option value="false">{% trans "Display module and then forms" %}</option>
+                            <option value="true">{% trans "Display only forms" %}</option>
+                        </select>
                     </div>
                 </div>
                 <div class="control-group">
@@ -275,14 +259,10 @@
                                 ></span>
                     </label>
                     <div class="controls">
-                        {% if edit %}
-                            <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
-                            <span class="help-inline" id="case_type_error" style="display: none;">
-                                {% trans "Case types can only include the characters a-z, 0-9, and _" %}
-                            </span>
-                        {% else %}
-                            <code>{{ module.case_type }}</code>
-                        {% endif %}
+                        <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                        <span class="help-inline" id="case_type_error" style="display: none;">
+                            {% trans "Case types can only include the characters a-z, 0-9, and _" %}
+                        </span>
                     </div>
                 </div>
                 <div class="control-group">
@@ -294,11 +274,7 @@
                         ></span>
                     </label>
                     <div class="controls">
-                        {% if edit %}
-                            <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
-                        {% else %}
-                            {{ module.case_label|trans:langs }}
-                        {% endif %}
+                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
                     </div>
                 </div>
                 {% if app.application_version == '1.0' %}
@@ -307,11 +283,7 @@
                         {% trans "Label for Referrals" %}
                     </label>
                     <div class="controls">
-                        {% if edit %}
-                            <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
-                        {% else %}
-                            {{ module.referral_label|trans:langs }}
-                        {% endif %}
+                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
                     </div>
                 </div>
                 {% endif %}
