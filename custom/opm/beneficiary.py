@@ -339,6 +339,9 @@ class OPMCaseRow(object):
 
     @property
     def preg_weighed(self):
+        return self.preg_weighed_trimestered(self.preg_month)
+
+    def preg_weighed_trimestered(self, query_preg_month):
         def _from_case(property):
             return self.case_property(property, 0) == 'received'
 
@@ -348,12 +351,12 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
             )
 
-        if self.preg_month == 6:
+        if self.preg_month == 6 and query_preg_month == 6:
             if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
             return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
-        elif self.preg_month == 9:
+        elif self.preg_month == 9 and query_preg_month == 9:
             if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
