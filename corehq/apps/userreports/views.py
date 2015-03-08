@@ -7,13 +7,12 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from corehq.apps.app_manager.models import Application, Form
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.app_manager.models import get_apps_in_domain
 from corehq import Session, ConfigurableReport
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
@@ -36,7 +35,7 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
-    ConfigurableFormDataSourceFromAppForm)
+)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
@@ -86,19 +85,8 @@ class CreateNewReportBuilderView(ReportBuilderView):
     template_name = "userreports/create_new_report_builder.html"
 
     def get_context_data(self, **kwargs):
-        apps = get_apps_in_domain(self.domain, full=True, include_remote=False)
         context = {
-            "sources_map": {
-                app._id: {
-                    "case": [{"text": t, "value": t} for t in app.get_case_types()],
-                    "form": [
-                        {
-                            "text": form.default_name(),
-                            "value": form.get_unique_id()
-                        } for form in app.get_forms()
-                    ]
-                } for app in apps
-            },
+            "sources_map": self.create_new_report_builder_form.sources_map,
             "domain": self.domain,
             'report': {
                 "title": _("Create New Report"),
@@ -123,15 +111,16 @@ class CreateNewReportBuilderView(ReportBuilderView):
                 'table': 'configure_table_report_builder',
             }
             url_name = url_names_map[report_type]
+            app_source = self.create_new_report_builder_form.get_selected_source()
             return HttpResponseRedirect(
                 reverse(url_name, args=[self.domain]) + '?' + '&'.join([
                     '%(key)s=%(value)s' % {
                         'key': field,
-                        'value': escape(self.create_new_report_builder_form.cleaned_data[field]),
+                        'value': getattr(app_source, field),
                     } for field in [
                         'application',
                         'source_type',
-                        'report_source',
+                        'source',
                     ]
                 ])
             )
@@ -158,7 +147,7 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
     def report_form(self):
         app_id = self.request.GET.get('application', '')
         source_type = self.request.GET.get('source_type', '')
-        report_source = self.request.GET.get('report_source', '')
+        report_source = self.request.GET.get('source', '')
         args = [app_id, source_type, report_source]
         if self.request.method == 'POST':
             args.append(self.request.POST)
@@ -277,33 +266,25 @@ def create_data_source_from_app(request, domain):
         form = ConfigurableDataSourceFromAppForm(domain, request.POST)
         if form.is_valid():
             # save config
-            data_source = get_case_data_source(form.app, form.cleaned_data['case_type'])
-            data_source.save()
-            messages.success(request, _(u"Data source created for '{}'".format(form.cleaned_data['case_type'])))
+            app_source = form.app_source_helper.get_app_source(form.cleaned_data)
+            app = Application.get(app_source.application)
+            if app_source.source_type == 'case':
+                data_source = get_case_data_source(app, app_source.source)
+                data_source.save()
+                messages.success(request, _(u"Data source created for '{}'".format(app_source.source)))
+            else:
+                assert app_source.source_type == 'form'
+                xform = Form.get_form(app_source.source)
+                data_source = get_form_data_source(app, xform)
+                data_source.save()
+                messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
+
             return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
     else:
         form = ConfigurableDataSourceFromAppForm(domain)
     context = _shared_context(domain)
-    context['data_source_options_map'] = form.data_source_options_map
+    context['sources_map'] = form.app_source_helper.all_sources
     context['form'] = form
-    return render(request, 'userreports/data_source_from_app.html', context)
-
-
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_form_data_source_from_app(request, domain):
-    if request.method == 'POST':
-        form = ConfigurableFormDataSourceFromAppForm(domain, request.POST)
-        if form.is_valid():
-            # save config
-            data_source = get_form_data_source(form.app, form.form)
-            data_source.save()
-            messages.success(request, _(u"Data source created for '{}'".format(form.form.default_name())))
-            return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
-    else:
-        form = ConfigurableFormDataSourceFromAppForm(domain)
-    context = _shared_context(domain)
-    context['form'] = form
-    context['data_source_options_map'] = form.data_source_options_map
     return render(request, 'userreports/data_source_from_app.html', context)
 
 

@@ -6,11 +6,11 @@ from django.utils.translation import ugettext_noop as _
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
+from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 
 from corehq.apps.app_manager.models import (
     Application,
     Form,
-    get_apps_in_domain
 )
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder
 from corehq.apps.app_manager.xform import XForm
@@ -236,31 +236,13 @@ class CreateNewReportForm(forms.Form):
         ],
     )
 
-    application = forms.ChoiceField()
-    source_type = forms.ChoiceField(choices=[
-        ("case", _("Case")),
-        ("form", _("Form")),
-    ])
-    report_source = forms.ChoiceField()
-
     def __init__(self, domain, *args, **kwargs):
         super(CreateNewReportForm, self).__init__(*args, **kwargs)
-
         self.domain = domain
-        apps = get_apps_in_domain(domain, full=True, include_remote=False)
-        self.fields['application'].choices = [
-            (app._id, app.name) for app in apps
-        ]
-        self.fields['report_source'].choices = [
-            (ct, ct) for app in apps for ct in app.get_case_types()
-        ] + [
-            (form_id, form_id) for form_id in [
-                form.get_unique_id() for app in apps for form in app.get_forms()
-            ]
-        ]
-
-        # NOTE: The corresponding knockout view model is defined in:
-        #       templates/userreports/create_new_report_builder.html
+        self.app_source_helper = ApplicationDataSourceUIHelper()
+        self.app_source_helper.bootstrap(self.domain)
+        report_source_fields = self.app_source_helper.get_fields()
+        self.fields.update(report_source_fields)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.form_id = "report-builder-form"
@@ -268,13 +250,7 @@ class CreateNewReportForm(forms.Form):
             crispy.Fieldset(
                 _('Create New Report'),
                 'report_type',
-                crispy.Field('application', data_bind='value: application'),
-                crispy.Field('source_type', data_bind='value: sourceType'),
-                crispy.Field('report_source', data_bind='''
-                    options: sourcesMap[application()][sourceType()],
-                    optionsText: function(item){return item.text},
-                    optionsValue: function(item){return item.value}
-                '''),
+                *report_source_fields.keys()
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -285,6 +261,13 @@ class CreateNewReportForm(forms.Form):
                 ),
             ),
         )
+
+    @property
+    def sources_map(self):
+        return self.app_source_helper.all_sources
+
+    def get_selected_source(self):
+        return self.app_source_helper.get_app_source(self.cleaned_data)
 
     def clean(self):
         """

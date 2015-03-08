@@ -5,11 +5,12 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        $(function(){
+        $(function () {
             ko.applyBindings({
-                optionsMap: ko.observable({{ data_source_options_map|JSON }}),
-                appId: ko.observable()
-            }, $('#data-source-config').get(0));
+                application: ko.observable(""),
+                sourceType: ko.observable(""),
+                sourcesMap: {{ sources_map|JSON }}
+            }, $("#data-source-config").get(0));
         });
     </script>
 {% endblock %}
