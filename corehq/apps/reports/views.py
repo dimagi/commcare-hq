@@ -20,6 +20,7 @@ from django.core.urlresolvers import reverse
 from django.http import (HttpResponseRedirect,
     HttpResponseBadRequest, Http404, HttpResponseForbidden)
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import (require_http_methods,
@@ -28,6 +29,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
+from django.views.generic import View
 import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles, Domain
@@ -479,8 +481,6 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
-@login_and_domain_required
-@require_POST
 def add_config(request, domain=None):
     # todo: refactor this into a django form
     from datetime import datetime
@@ -538,6 +538,15 @@ def add_config(request, domain=None):
     touch_saved_reports_views(request.couch_user, domain)
 
     return json_response(config)
+
+
+class AddSavedReportConfigView(View):
+    name = 'add_report_config'
+
+    @method_decorator(login_and_domain_required)
+    def post(self, request, domain, *args, **kwargs):
+        return add_config(request, domain=domain)
+
 
 @login_and_domain_required
 @datespan_default
