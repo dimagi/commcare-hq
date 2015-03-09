@@ -2392,7 +2392,7 @@ class DownloadCCZ(DownloadMultimediaZip):
                 if name not in skip_files:
                     # TODO: make RemoteApp.create_all_files not return media files
                     extension = os.path.splitext(name)[1]
-                    data = f.encode('utf-8') if extension in text_extensions else f
+                    data = _encode_if_unicode(f) if extension in text_extensions else f
                     yield (get_name(name), data)
 
         if self.app.is_remote_app():
