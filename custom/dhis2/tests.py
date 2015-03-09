@@ -7,14 +7,16 @@ Replace this with more appropriate tests for your application.
 from contextlib import contextmanager
 from unittest import skip
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from corehq.apps.receiverwrapper.exceptions import IgnoreDocument
 from couchdbkit import ResourceNotFound
-from custom.dhis2.const import ORG_UNIT_FIXTURES
+from custom.dhis2.const import ORG_UNIT_FIXTURES, REGISTER_CHILD_XMLNS, CASE_TYPE
 from custom.dhis2.models import Dhis2OrgUnit, JsonApiRequest, JsonApiError, Dhis2Api, Dhis2ApiQueryError, \
     FixtureManager
+from custom.dhis2.payload_generators import FormRepeaterDhis2EventPayloadGenerator
 from custom.dhis2.tasks import fetch_cases, fetch_org_units
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
-from mock import patch, Mock
+from mock import patch, Mock, MagicMock
 from couchforms.models import XFormInstance
 
 
@@ -446,47 +448,52 @@ class TaskTest(SimpleTestCase):
             only_ours_mock.assert_called_with(DOMAIN)
             push_mock.assert_called_with(bar)
 
-    @skip('Finish writing this test')
-    def test_sync_forms(self):
+
+class PayloadGeneratorTest(SimpleTestCase):
+
+    def setUp(self):
+        # Mock like Charlie Hebdo
+
+        class Settings(object):
+            dhis2 = {'host': None, 'username': None, 'password': None, 'top_org_unit_name': None}
+
+        self.Dhis2SettingsPatch = patch('dhis2.payload_generators.Dhis2Settings')
+        self.Dhis2SettingsPatch.for_domain.return_value = Settings()
+
+        cases_mock = Mock()
+        case_mock = Mock()
+        case_mock.type = CASE_TYPE
+        cases_mock.iterator.side_effect = (case_mock for _ in (1,))  # Generator that returns one case mock
+
+        self.CommCareCasePatch = patch('dhis2.payload_generators.CommCareCase')
+        self.CommCareCasePatch.get_by_xform_id.return_value = cases_mock
+
+        self.push_case_patch = patch('dhis2.payload_generators.push_case')
+
+        self.Dhis2SettingsPatch.start()
+        self.CommCareCasePatch.start()
+        self.push_case_patch.start()
+
+    def tearDown(self):
+        self.Dhis2SettingsPatch.stop()
+        self.CommCareCasePatch.stop()
+        self.push_case_patch.stop()
+
+    def test_get_payload_ignores_unknown_form(self):
         """
-        send_nutrition_data should update DHIS2 with received nutrition data
+        get_payload should raise IgnoreDocument on unknown form XMLNS
         """
-        pass
+        form_mock = {'xmlns': 'unknown'}
+        repeater = FormRepeaterDhis2EventPayloadGenerator(None)
+        with self.assertRaises(IgnoreDocument):
+            repeater.get_payload(None, form_mock)
 
-
-class UtilTest(SimpleTestCase):
-
-    @skip('Finish writing this test')
-    def test_push_child_entities(self):
+    def test_get_payload_ignores_registration(self):
         """
-        push_child_entities should call the DHIS2 API for applicable child entities
+        get_payload should raise IgnoreDocument given a registration form
         """
-        pass
-
-    @skip('Finish writing this test')
-    def test_pull_child_entities(self):
-        """
-        pull_child_entities should fetch applicable child entities from the DHIS2 API
-        """
-        pass
-
-    @skip('Finish writing this test')
-    def test_get_user_by_org_unit(self):
-        pass
-
-    @skip('Finish writing this test')
-    def test_get_case_by_external_id(self):
-        pass
-
-    @skip('Finish writing this test')
-    def test_gen_children_only_ours(self):
-        pass
-
-
-# def test_nutrition_get_payload():
-#
-#     xform = XFormInstance.get('01111de1-5e36-4b7a-a4ce-19ef544710f0')  # Growth monitoring/nutrition assessment
-#     create_repeat_records(FormRepeater, xform)                     # There are no risk assessment forms atm
-#     repeat_records = RepeatRecord.all()
-#     for repeat_record in repeat_records:
-#         repeat_record.fire()
+        form_mock = MagicMock()
+        form_mock.__getitem__.return_value = REGISTER_CHILD_XMLNS
+        repeater = FormRepeaterDhis2EventPayloadGenerator(None)
+        with self.assertRaises(IgnoreDocument):
+            repeater.get_payload(None, form_mock)
