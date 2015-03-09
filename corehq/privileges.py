@@ -27,6 +27,8 @@ HIPAA_COMPLIANCE_ASSURANCE = 'hipaa_compliance_assurance'
 
 ALLOW_EXCESS_USERS = 'allow_excess_users'
 
+COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -45,6 +47,7 @@ MAX_PRIVILEGES = [
     DEIDENTIFIED_DATA,
     HIPAA_COMPLIANCE_ASSURANCE,
     ALLOW_EXCESS_USERS,
+    COMMCARE_LOGO_UPLOADER,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -76,4 +79,5 @@ class Titles(object):
             ALLOW_EXCESS_USERS: _("Add Mobile Workers Above Limit"),
             DEIDENTIFIED_DATA: _("De-Identified Data"),
             HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),
+            COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
         }.get(privilege, privilege)

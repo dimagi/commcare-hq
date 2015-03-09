@@ -159,12 +159,6 @@ def register_domain(request, domain_type=None):
                 return render(request, 'registration/confirmation_sent.html',
                         context)
             else:
-                messages.success(request, _(
-                    '<strong>The project {project} was successfully created!</strong> '
-                    'An email has been sent to {user} for your records.').format(
-                    project=requested_domain, user=request.user.username),
-                    extra_tags="html")
-
                 if nextpage:
                     return HttpResponseRedirect(nextpage)
                 if referer_url:

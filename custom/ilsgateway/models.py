@@ -15,6 +15,7 @@ class ILSGatewayConfig(Document):
     url = StringProperty(default="http://ilsgateway.com/api/v0_1")
     username = StringProperty()
     password = StringProperty()
+    steady_sync = BooleanProperty(default=False)
 
     @classmethod
     def for_domain(cls, name):
@@ -34,6 +35,13 @@ class ILSGatewayConfig(Document):
     def get_all_enabled_domains(cls):
         configs = cls.get_all_configs()
         return [c.domain for c in filter(lambda config: config.enabled, configs)]
+
+    @classmethod
+    def get_all_steady_sync_configs(cls):
+        return [
+            config for config in cls.get_all_configs()
+            if config.steady_sync
+        ]
 
     @property
     def is_configured(self):

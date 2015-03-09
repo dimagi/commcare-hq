@@ -136,6 +136,7 @@ class Command(BaseCommand):
         Role(slug=privileges.DEIDENTIFIED_DATA, name='De-identified Data', description=''),
         Role(slug=privileges.HIPAA_COMPLIANCE_ASSURANCE, name='HIPAA Compliance Assurance', description=''),
         Role(slug=privileges.ALLOW_EXCESS_USERS, name='Can Add Users Above Limit', description=''),
+        Role(slug=privileges.COMMCARE_LOGO_UPLOADER, name='Custom CommCare Logo Uploader', description='')
     ]
 
     BOOTSTRAP_PLANS = [
@@ -173,6 +174,7 @@ class Command(BaseCommand):
     advanced_plan_features = pro_plan_features + [
         privileges.CUSTOM_BRANDING,
         privileges.ACTIVE_DATA_MANAGEMENT,
+        privileges.COMMCARE_LOGO_UPLOADER,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

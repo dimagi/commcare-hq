@@ -1,5 +1,5 @@
 # coding: utf-8
-from django.test import SimpleTestCase
+from django.test import TestCase
 from corehq.apps.app_manager.commcare_settings import SETTINGS_LOOKUP, SETTINGS
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 from corehq.apps.builds.models import BuildSpec
 
 
-class ProfileTest(SimpleTestCase, TestFileMixin):
+class ProfileTest(TestCase, TestFileMixin):
     file_path = ('data',)
 
     def setUp(self):

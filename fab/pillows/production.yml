@@ -1,7 +1,6 @@
 # fab/pillows/production.yml
 ---
 include_groups:
-  - mvp
   - mvp_indicators
 include_pillows:
   - custom.bihar.models.CareBiharFluffPillow

@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from sqlagg.filters import EQFilter
+from sqlagg.filters import BasicFilter, BetweenFilter, EQFilter
 from dimagi.utils.dates import DateSpan
 
 
@@ -29,7 +29,7 @@ class DateFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return ""
-        return "{} between :startdate and :enddate".format(self.filter.field)
+        return BetweenFilter(self.filter.field, 'startdate', 'enddate')
 
     def to_sql_values(self):
         if self.value is None:
@@ -52,7 +52,9 @@ class NumericFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return ""
-        return "{0} {1} :operand".format(self.filter.field, self.value['operator'])
+        ret = BasicFilter(self.filter.field, 'operand',
+                          operator=self.value['operator'])
+        return ret
 
     def to_sql_values(self):
         if self.value is None:

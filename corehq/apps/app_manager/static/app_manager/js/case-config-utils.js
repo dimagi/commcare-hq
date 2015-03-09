@@ -1,18 +1,22 @@
 var CC_UTILS = {
-    getQuestions: function (questions, filter, excludeHidden, includeRepeat) {
+    getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i, options = [],
             q;
         excludeHidden = excludeHidden || false;
+        excludeTrigger = excludeTrigger || false;
         includeRepeat = includeRepeat || false;
-        filter = filter.split(" ").concat(["trigger"]);
+        filter = filter.split(" ");
         if (!excludeHidden) {
             filter.push('hidden');
+        }
+        if (!excludeTrigger) {
+            filter.push('trigger');
         }
         for (i = 0; i < questions.length; i += 1) {
             q = questions[i];
             if (filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
-                if (includeRepeat || !q.repeat) {
+                if ((includeRepeat || !q.repeat) && (!excludeTrigger || q.tag !== "trigger")) {
                     options.push(q);
                 }
             }

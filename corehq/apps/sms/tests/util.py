@@ -220,7 +220,8 @@ class TouchformsTestCase(LiveServerTestCase):
         return sk
 
     def create_site(self):
-        site = Site(domain=self.live_server_url, name=self.live_server_url)
+        site = Site(id=settings.SITE_ID, domain=self.live_server_url,
+            name=self.live_server_url)
         site.save()
         return site
 
@@ -302,9 +303,9 @@ class TouchformsTestCase(LiveServerTestCase):
         self.apps = []
         self.keywords = []
         self.groups = []
+        self.site = self.create_site()
         self.domain = "test-domain"
         self.domain_obj = self.create_domain(self.domain)
-        self.site = self.create_site()
         self.create_web_user("touchforms_user", "123")
 
         self.backend = TestSMSBackend(name="TEST", is_global=True)
@@ -314,7 +315,6 @@ class TouchformsTestCase(LiveServerTestCase):
         self.backend_mapping.save()
 
         settings.DEBUG = True
-        settings.SITE_ID = self.site.pk
 
     def tearDown(self):
         for user in self.users:

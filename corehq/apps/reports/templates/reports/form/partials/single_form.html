@@ -20,7 +20,7 @@ requires imports/proptable.html to be included in the main template
 </style>
 
 <style>
-.form-data-readable, .form-data-raw {
+.form-data-raw {
     display: none;
 }
 .form-data-table, .form-data-group-table {
@@ -56,13 +56,15 @@ requires imports/proptable.html to be included in the main template
             $('.form-data-readable').hide();
             $('.form-data-raw').show();
         }
-        showReadable();
         $('.showReadable').click(showReadable);
         $('.showRaw').click(showRaw);
         $('.formDisplayToggle a').click(function () {
             $(this).tab('show');
             return false;
         });
+
+        // On page load, initially set show readable
+        showReadable();
 
         function showSkipped(show) {
             if (show) {

@@ -5,7 +5,10 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq import Domain, privileges
-from corehq.apps.accounting.exceptions import AccountingError
+from corehq.apps.accounting.exceptions import (
+    AccountingError,
+    ProductPlanNotFoundError,
+)
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
@@ -105,6 +108,8 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
         privilege = roles[0].instantiate(assignment)
         if plan_version.role.has_privilege(privilege):
             return True
+    except ProductPlanNotFoundError:
+        return False
     except AccountingError:
         pass
     return False

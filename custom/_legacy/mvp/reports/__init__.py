@@ -37,10 +37,6 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
         return self.request.GET.get('debug', '').lower() == 'true'
 
     @property
-    def use_new_db(self):
-        return self.request.GET.get('new_db', '').lower() == 'true'
-
-    @property
     def partial_response(self):
         indicator_slug = self.request.GET.get('indicator')
         response = {
@@ -60,7 +56,6 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
                     self.domain,
                     indicator_slug,
                     wrap_correctly=True,
-                    use_new_db=self.use_new_db,
                 )
                 response = self.get_response_for_indicator(indicator)
                 if response is not None:

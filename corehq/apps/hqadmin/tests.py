@@ -115,7 +115,7 @@ class TestPillowTopFiltering(SimpleTestCase):
 
     def test_loading_existing_conf_file(self):
 
-        expected_action = {'include_groups': ['mvp']}
+        expected_action = {'include_groups': ['mvp_indicators']}
 
         action = get_single_pillow_action('staging')
         self.assertEqual(action.to_json(), expected_action)

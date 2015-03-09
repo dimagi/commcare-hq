@@ -1,0 +1,124 @@
+{% extends 'settings/base_template.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+<script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+<script src="{% static 'logistics/logistics.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    var settings = {{ settings|JSON }};
+
+    $(function () {
+        var _post = function (elem, url, options) {
+            var options = options || {};
+            var success = options.success || "{% trans "Sync Successful" %}";
+            var error = options.error || "{% trans "Error!" %}";
+            $(elem).prop('disabled', true).html("{% trans "Syncing..." %}");
+
+            $.ajax({
+                type: 'POST',
+                url: url,
+                success: function() {
+                    $(elem).html(success);
+                },
+                error: function() {
+                    $(elem).html(error).addClass("btn-danger");
+                }
+            });
+        };
+        $("#sync").click(function() {
+            var url = '{% url sync_url domain %}';
+            var successMessage = "{% trans "Sync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+    });
+</script>
+{% endblock %}
+
+{% block main_column %}
+
+    {% if request.couch_user.is_previewer or is_developer %}
+    <form id="settings" class="form form-horizontal" method="post">
+        <h3>{{ current_page.page_name }} {% trans "Integration" %}</h3>
+
+        <fieldset>
+            <div class="control-group" >
+                <label class="control-label" for="source_enabled">
+                    {% trans "Enable" %} {{ current_page.page_name }} {% trans "Integration?" %}
+                </label>
+                <div class="controls">
+                  <input id="source_enabled" type="checkbox" data-bind="checked: source_config().enabled">
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset data-bind="with: source_config(), visible: source_config().enabled">
+            <div class="control-group" >
+                <label class="control-label" for="steady_sync">
+                    {% trans "Steady sync?" %}
+                </label>
+                <div class="controls">
+                  <input id="steady_sync" type="checkbox" data-bind="checked: steady_sync">
+                </div>
+            </div>
+            <div class="control-group" >
+                <label class="control-label" for="source_url">
+                    {% trans "API URL" %}
+                </label>
+                <div class="controls">
+                  <input id="source_url" type="text" data-bind="value: url">
+                </div>
+            </div>
+            <div class="control-group" >
+                <label class="control-label" for="source_username">
+                    {% trans "Username" %}
+                </label>
+                <div class="controls">
+                  <input id="source_username" type="text" data-bind="value: username">
+                </div>
+            </div>
+            <div class="control-group" >
+                <label class="control-label" for="source_password">
+                    {% trans "Password" %}
+                </label>
+                <div class="controls">
+                  <input id="source_password" type="password" data-bind="value: password">
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% trans "Save Settings" %}
+            </button>
+        </div>
+
+        <input name="json" type="hidden" data-bind="value: json_payload" />
+    </form>
+    {% block enabled_section %}
+        {% if settings.source_config.enabled %}
+        <header>
+            <div class="row-fluid">
+                <div class="span8">
+                    <h2>{% trans "Sync with" %} {{ current_page.page_name }}</h2>
+                </div>
+            </div>
+        </header>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="sync">
+                        {% trans "Sync Now" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endblock %}
+    {% endif %}
+
+{% endblock %}

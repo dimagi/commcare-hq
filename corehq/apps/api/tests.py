@@ -95,6 +95,25 @@ class TestXFormInstanceResource(APIResourceTest):
     """
     resource = v0_4.XFormInstanceResource
 
+    def _test_es_query(self, url_params, expected_query):
+
+        fake_xform_es = FakeXFormES()
+
+        prior_run_query = fake_xform_es.run_query
+
+        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
+        def mock_run_query(es_query):
+            self.assertEqual(sorted(es_query['filter']['and']), expected_query)
+            return prior_run_query(es_query)
+
+        fake_xform_es.run_query = mock_run_query
+        v0_4.MOCK_XFORM_ES = fake_xform_es
+
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.get('%s?%s' % (self.list_endpoint, urlencode(url_params)))
+        self.assertEqual(response.status_code, 200)
+
     def test_get_list(self):
         """
         Any form in the appropriate domain should be in the list from the API.
@@ -144,28 +163,12 @@ class TestXFormInstanceResource(APIResourceTest):
 
         Since we not testing ElasticSearch, we only test that the proper query is generated.
         """
-
-        fake_xform_es = FakeXFormES()
-
-        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
-        prior_run_query = fake_xform_es.run_query
-        def mock_run_query(es_query):
-            self.assertEqual(
-                sorted(es_query['filter']['and']), 
-                [{'term': {'doc_type': 'xforminstance'}},
-                 {'term': {'domain.exact': 'qwerty'}},
-                 {'term': {'xmlns.exact': 'foo'}}])
-            
-
-            return prior_run_query(es_query)
-            
-        fake_xform_es.run_query = mock_run_query
-        v0_4.MOCK_XFORM_ES = fake_xform_es
-
-        self.client.login(username=self.username, password=self.password)
-
-        response = self.client.get('%s?%s' % (self.list_endpoint, urlencode({'xmlns': 'foo'})))
-        self.assertEqual(response.status_code, 200)
+        expected = [
+            {'term': {'doc_type': 'xforminstance'}},
+            {'term': {'domain.exact': 'qwerty'}},
+            {'term': {'xmlns.exact': 'foo'}}
+        ]
+        self._test_es_query({'xmlns': 'foo'}, expected)
 
     def test_get_list_received_on(self):
         """
@@ -174,34 +177,19 @@ class TestXFormInstanceResource(APIResourceTest):
         Since we not testing ElasticSearch, we only test that the proper query is generated.
         """
 
-        fake_xform_es = FakeXFormES()
         start_date = datetime(1969, 6, 14)
         end_date = datetime(2011, 1, 2)
-
-        # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
-        prior_run_query = fake_xform_es.run_query
-        def mock_run_query(es_query):
-            
-            self.assertEqual(sorted(es_query['filter']['and']), [
-                {'range': {'received_on': {'from': start_date.isoformat()}}},
-                {'range': {'received_on': {'to': end_date.isoformat()}}},
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'domain.exact': 'qwerty'}},
-            ])
-
-            return prior_run_query(es_query)
-            
-        fake_xform_es.run_query = mock_run_query
-        v0_4.MOCK_XFORM_ES = fake_xform_es
-
-        self.client.login(username=self.username, password=self.password)
-
-        response = self.client.get('%s?%s' % (self.list_endpoint, urlencode({
+        expected = [
+            {'range': {'received_on': {'from': start_date.isoformat()}}},
+            {'range': {'received_on': {'to': end_date.isoformat()}}},
+            {'term': {'doc_type': 'xforminstance'}},
+            {'term': {'domain.exact': 'qwerty'}},
+        ]
+        params = {
             'received_on_end': end_date.isoformat(),
             'received_on_start': start_date.isoformat(),
-        })))
-
-        self.assertEqual(response.status_code, 200)
+        }
+        self._test_es_query(params, expected)
 
     def test_get_list_ordering(self):
         '''
@@ -230,6 +218,16 @@ class TestXFormInstanceResource(APIResourceTest):
         response = self.client.get('%s?order_by=-received_on' % self.list_endpoint) # Runs *2* queries
         self.assertEqual(response.status_code, 200)
         self.assertEqual(queries[2]['sort'], [{'received_on': 'desc'}])
+
+    def test_get_list_archived(self):
+        expected = [
+            {'or': [
+                {'term': {'doc_type': 'xforminstance'}},
+                {'term': {'doc_type': 'xformarchived'}}
+            ]},
+            {'term': {'domain.exact': 'qwerty'}},
+        ]
+        self._test_es_query({'include_archived': 'true'}, expected)
 
 class TestCommCareCaseResource(APIResourceTest):
     """
