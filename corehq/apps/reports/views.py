@@ -489,13 +489,12 @@ class AddSavedReportConfigView(View):
     @method_decorator(login_and_domain_required)
     def post(self, request, domain, *args, **kwargs):
         from datetime import datetime
-        user_id = request.couch_user._id
 
         POST = json.loads(request.body)
         if 'name' not in POST or not POST['name']:
             return HttpResponseBadRequest()
 
-        user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
+        user_configs = ReportConfig.by_domain_and_owner(domain, self.user_id)
         if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
             return HttpResponseBadRequest()
 
@@ -523,10 +522,10 @@ class AddSavedReportConfigView(View):
 
         if config.owner_id:
             # in case a user maliciously tries to edit another user's config
-            assert config.owner_id == user_id
+            assert config.owner_id == self.user_id
         else:
             config.domain = domain
-            config.owner_id = user_id
+            config.owner_id = self.user_id
 
         for field in config.properties().keys():
             if field in POST:
@@ -548,6 +547,10 @@ class AddSavedReportConfigView(View):
     @memoized
     def savedReportConfigForm(self):
         return SavedReportConfigForm(self.request.body)
+
+    @property
+    def user_id(self):
+        return self.request.couch_user._id
 
 
 @login_and_domain_required
