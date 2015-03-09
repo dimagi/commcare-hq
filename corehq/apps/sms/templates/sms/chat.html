@@ -69,6 +69,7 @@
             #message_history_choices {
                 border-bottom: 1px solid #CCC;
                 text-align: center;
+                background-color: #FFF;
             }
             .message_history_choice {
                 cursor: pointer;
@@ -120,14 +121,14 @@
                     </tr>
                 </tbody>
             </table>
-        </div>
-        <div id="chat_messages">
             <div id="message_history_choices">
                 <span>Message History</span>
                 <span data-bind="foreach: history_choices">
                     &#8901; <span data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index(), true);}"></span>
                 </span>
             </div>
+        </div>
+        <div id="chat_messages">
             <table id="message_table">
                 <tbody data-bind="foreach: messages">
                     <tr data-bind="visible: (utc_timestamp > $parent.selected_history_choice().utc_timestamp) || (unread_message && !$parent.history_choice_selected)">
