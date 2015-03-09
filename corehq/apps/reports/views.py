@@ -501,34 +501,39 @@ class AddSavedReportConfigView(View):
         for field in exclude_filters:
             POST['filters'].pop(field, None)
 
-        config = ReportConfig.get_or_create(POST.get('_id', None))
-
-        if config.owner_id:
-            # in case a user maliciously tries to edit another user's config
-            assert config.owner_id == self.user_id
-        else:
-            config.domain = domain
-            config.owner_id = self.user_id
-
-        for field in config.properties().keys():
+        for field in self.config.properties().keys():
             if field in POST:
-                setattr(config, field, POST[field])
+                setattr(self.config, field, POST[field])
 
         # remove start and end date if the date range is "last xx days"
         if (
             self.saved_report_config_form.cleaned_data['days']
             or self.saved_report_config_form.cleaned_data['date_range'] == 'lastmonth'
         ):
-            if "start_date" in config:
-                delattr(config, "start_date")
-            if "end_date" in config:
-                delattr(config, "end_date")
+            if "start_date" in self.config:
+                delattr(self.config, "start_date")
+            if "end_date" in self.config:
+                delattr(self.config, "end_date")
 
-        config.save()
+        self.config.save()
         ReportsTab.clear_dropdown_cache(request, domain)
         touch_saved_reports_views(request.couch_user, domain)
 
-        return json_response(config)
+        return json_response(self.config)
+
+    @property
+    @memoized
+    def config(self):
+        config = ReportConfig.get_or_create(
+            self.saved_report_config_form.cleaned_data['_id']
+        )
+        if config.owner_id:
+            # in case a user maliciously tries to edit another user's config
+            assert config.owner_id == self.user_id
+        else:
+            config.domain = self.domain
+            config.owner_id = self.user_id
+        return config
 
     @property
     @memoized
