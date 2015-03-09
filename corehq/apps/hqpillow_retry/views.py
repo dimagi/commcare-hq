@@ -60,6 +60,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             DataTablesColumn('Attempts (current / total)', sortable=True),
             DataTablesColumn('Error type', sortable=True),
             DataTablesColumn('Doc type', sortable=False),
+            DataTablesColumn('Doc date', sortable=False),
             DataTablesColumn('Domain(s)', sortable=False),
             DataTablesColumn('Select', sortable=False),
         )
@@ -157,6 +158,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
                 error.doc_type,
+                error.doc_date,
                 error.domains,
                 self.make_checkbox(error)
             ]
