@@ -4,7 +4,8 @@ import tempfile
 import zipfile
 import csv
 import json
-from django.template.loader import render_to_string
+from django.template import Context
+from django.template.loader import render_to_string, get_template
 import xlwt
 
 
@@ -100,45 +101,34 @@ class CsvFileWriter(ExportFileWriter):
 
 class PartialHtmlFileWriter(ExportFileWriter):
 
+    def _write_from_template(self, context):
+        self._file.write(self.template.render(Context(context)).encode('utf-8'))
+
     def _open(self):
+        self.template = get_template("couchexport/html_export.html")
         self._on_first_row = True
 
     def write_row(self, row):
-        # TODO: Does this load the template every time?
-
         section = "row" if not self._on_first_row else "first_row"
         self._on_first_row = False
-
-        self._file.write(render_to_string(
-            "couchexport/html_export.html", {"row": row, "section": section}
-        ).encode('utf-8'))
+        self._write_from_template({"row": row, "section": section})
 
     def _end_file(self):
         if self._on_first_row:
             # There were no rows
-            self._file.write(render_to_string(
-                "couchexport/html_export.html", {"section": "no_rows"}
-            ).encode('utf-8'))
+            self._write_from_template({"section": "no_rows"})
 
 
 class HtmlFileWriter(PartialHtmlFileWriter):
 
     def _begin_file(self):
-        self._file.write(render_to_string(
-            "couchexport/html_export.html", {"section": "doc_begin"}
-        ).encode('utf-8'))
-        self._file.write(render_to_string(
-            "couchexport/html_export.html", {"section": "table_begin", "name": self.name}
-        ).encode('utf-8'))
+        self._write_from_template({"section": "doc_begin"})
+        self._write_from_template({"section": "table_begin", "name": self.name})
 
     def _end_file(self):
         super(HtmlFileWriter, self)._end_file()
-        self._file.write(render_to_string(
-            "couchexport/html_export.html", {"section": "table_end"}).encode('utf-8')
-        )
-        self._file.write(render_to_string(
-            "couchexport/html_export.html", {"section": "doc_end"}
-        ).encode('utf-8'))
+        self._write_from_template({"section": "table_end"})
+        self._write_from_template({"section": "doc_end"})
 
 
 class ExportWriter(object):
@@ -449,27 +439,21 @@ class HtmlExportWriter(OnDiskExportWriter):
 
     def _write_final_result(self):
 
-        self.file.write(render_to_string(
-            "couchexport/html_export.html", {"section": "doc_begin"}
-        ).encode("utf-8"))
+        def write(context):
+            self.file.write(
+                render_to_string(
+                    "couchexport/html_export.html", context
+                ).encode("utf-8")
+            )
 
+        write({"section": "doc_begin"})
         for index, name in self.table_names.items():
-
             table_writer = self.tables[index]
-            self.file.write(render_to_string(
-                "couchexport/html_export.html", {"section": "table_begin", "name": name}
-            ).encode("utf-8"))
-
+            write({"section": "table_begin", "name": name})
             for line in table_writer.get_file():
                 self.file.write(line)
-
-            self.file.write(render_to_string(
-                "couchexport/html_export.html", {"section": "table_end"}
-            ).encode("utf-8"))
-
-        self.file.write(render_to_string(
-            "couchexport/html_export.html", {"section": "doc_end"}
-        ).encode("utf-8"))
+            write({"section": "table_end"})
+        write({"section": "doc_end"})
 
         self.file.seek(0)
 
