@@ -1,10 +1,12 @@
 from corehq.apps.locations.models import Location, SQLLocation, LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.schema import LocationType
 from corehq.apps.locations.tests.util import make_loc
+from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 from couchdbkit import ResourceNotFound
+from corehq import toggles
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.products.models import SQLProduct
@@ -279,6 +281,8 @@ class LocationGroupTest(LocationTestBase):
             domain=self.domain.name
         )
 
+        toggles.MULTIPLE_LOCATIONS_PER_USER.set("domain:{}".format(self.domain.name), True)
+
     def test_group_name(self):
         # just location name for top level
         self.assertEqual(
@@ -384,3 +388,44 @@ class LocationGroupTest(LocationTestBase):
             },
             self.loc.sql_location.reporting_group_object().metadata
         )
+
+    def test_location_fixture_generator(self):
+        """
+        This tests the location XML fixture generator. It specifically ensures that no duplicate XML
+        nodes are generated when all locations have a parent and multiple locations are enabled.
+        """
+        self.domain.commtrack_enabled = True
+        self.domain.save()
+        self.loc.delete()
+        loc = make_loc(
+            'testregion1',
+            type='state',
+            domain=self.domain.name
+        )
+        loc2 = make_loc(
+            'testoutlet1',
+            type='outlet',
+            domain=self.domain.name,
+            parent=loc
+        )
+        loc3 = make_loc(
+            'testoutlet2',
+            type='outlet',
+            domain=self.domain.name,
+            parent=loc
+        )
+        loc4 = make_loc(
+            'testoutlet3',
+            type='outlet',
+            domain=self.domain.name,
+            parent=loc
+        )
+        self.user.set_location(loc2)
+        self.user.add_location(loc)
+        self.user.add_location(loc2)
+        self.user.add_location(loc3)
+        self.user.add_location(loc4)
+        self.user.save()
+        fixture = location_fixture_generator(self.user, '2.0')
+        self.assertEquals(len(fixture[0].findall('.//state')), 1)
+        self.assertEquals(len(fixture[0].findall('.//outlet')), 3)

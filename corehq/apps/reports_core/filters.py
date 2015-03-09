@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import datetime
+from corehq.apps.userreports.expressions.getters import transform_from_datatype
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
 
 from dimagi.utils.dates import DateSpan
@@ -218,7 +219,7 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, field, required, label, show_all, url_generator, css_id=None):
+    def __init__(self, name, field, required, datatype, label, show_all, url_generator, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -227,6 +228,7 @@ class DynamicChoiceListFilter(BaseFilter):
             FilterParam(name, True),
         ]
         super(DynamicChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        self.datatype = datatype
         self.field = field
         self.label = label
         self.show_all = show_all
@@ -236,7 +238,8 @@ class DynamicChoiceListFilter(BaseFilter):
     def value(self, **kwargs):
         choice = kwargs[self.name]
         if choice:
-            return Choice(choice, choice)
+            typed_choice = transform_from_datatype(self.datatype)(choice)
+            return Choice(typed_choice, choice)
         return Choice(SHOW_ALL_CHOICE, '')
 
     def default_value(self):

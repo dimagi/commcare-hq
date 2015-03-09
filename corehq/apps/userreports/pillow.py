@@ -57,8 +57,17 @@ class ConfigurableIndicatorPillow(PythonPillow):
         table.rebuild_table()
 
     def python_filter(self, doc):
-        # filtering is done manually per indicator set change_transport
+        # filtering is done manually per indicator see change_transport
         return True
+
+    def change_trigger(self, changes_dict):
+        if changes_dict.get('deleted', False):
+            # the changes_dict doesn't contain any info that would allow us to determine
+            # which tables this doc might be relevant to so just remove it from all
+            # tables
+            for table in self.tables:
+                table.delete(changes_dict['doc'])
+        super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
         if not self.bootstrapped:
