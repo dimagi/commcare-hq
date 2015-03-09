@@ -56,7 +56,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             DataTablesColumn('Doc ID', sortable=False),
             DataTablesColumn('Pillow Class', sortable=True),
             DataTablesColumn('Created', sortable=True),
-            DataTablesColumn('Last attempt', sortable=True),
             DataTablesColumn('Next attempt', sortable=True),
             DataTablesColumn('Attempts (current / total)', sortable=True),
             DataTablesColumn('Error type', sortable=True),
@@ -92,7 +91,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         sort_fields = [
             'pillow',
             'date_created',
-            'date_last_attempt',
             'date_next_attempt',
             'current_attempt',
             'error_type'
@@ -154,7 +152,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
                 self.make_search_link(error),
                 error.pillow.split('.')[-1],
                 naturaltime(error.date_created),
-                naturaltime(error.date_last_attempt),
                 naturaltime(error.date_next_attempt),
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
