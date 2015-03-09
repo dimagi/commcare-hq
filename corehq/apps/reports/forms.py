@@ -11,6 +11,10 @@ from .models import (
 
 class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(),
+    )
     start_date = forms.DateField(
         required=False,
     )
@@ -26,6 +30,18 @@ class SavedReportConfigForm(forms.Form):
         widget=forms.HiddenInput(),
     )
     _id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    report_slug = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    report_type = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    subreport_slug = forms.CharField(
         required=False,
         widget=forms.HiddenInput(),
     )
