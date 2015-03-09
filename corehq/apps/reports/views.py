@@ -493,7 +493,7 @@ class AddSavedReportConfigView(View):
         from datetime import datetime
 
         POST = json.loads(request.body)
-        if not self.savedReportConfigForm.is_valid():
+        if not self.saved_report_config_form.is_valid():
             return HttpResponseBadRequest()
 
         user_configs = ReportConfig.by_domain_and_owner(domain, self.user_id)
@@ -547,7 +547,7 @@ class AddSavedReportConfigView(View):
 
     @property
     @memoized
-    def savedReportConfigForm(self):
+    def saved_report_config_form(self):
         return SavedReportConfigForm(self.domain, json.loads(self.request.body))
 
     @property
