@@ -2,7 +2,7 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import BETWEEN, IN, EQ
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DataFormatter, TableDataFormat, DatabaseColumn
-from custom.tdh.reports import UNNECESSARY_FIELDS
+from custom.tdh.reports import UNNECESSARY_FIELDS, CHILD_HEADERS_MAP, INFANT_HEADERS_MAP, NEWBORN_HEADERS_MAP
 
 
 def merge_rows(classification_sql_data, enroll_sql_data, treatment_sql_data):
@@ -39,6 +39,14 @@ class BaseSqlData(SqlData):
     datatables = True
     no_value = {'sort_key': 0, 'html': 0}
 
+    def header(self, header):
+        if self.__class__.__name__[0] == 'N':
+            return NEWBORN_HEADERS_MAP[header] if header in NEWBORN_HEADERS_MAP else header
+        elif self.__class__.__name__[0] == 'I':
+            return INFANT_HEADERS_MAP[header] if header in INFANT_HEADERS_MAP else header
+        else:
+            return CHILD_HEADERS_MAP[header] if header in CHILD_HEADERS_MAP else header
+
     @property
     def filters(self):
         filters = [BETWEEN("date", "startdate", "enddate"), EQ('domain', 'domain')]
@@ -63,7 +71,7 @@ class BaseSqlData(SqlData):
 
     @property
     def headers(self):
-        return [DataTablesColumn(k) for k in self.group_by[1:]]
+        return [DataTablesColumn(self.header(k)) for k in self.group_by[1:]]
 
     @property
     def rows(self):
@@ -229,10 +237,15 @@ class InfantClassification(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'tablet_login_id', 'author_id', 'author_name', 'visit_date',
-                'weight', 'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa',
+        return ['case_id', 'bcg', 'tablet_login_id', 'author_id', 'author_name', 'visit_date', 'consultation_type',
+                'number', 'weight', 'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa',
                 'zscore_wfh', 'mean_wfh', 'classification_deshydratation', 'classification_diahree',
-                'classification_infection', 'classification_malnutrition', 'classification_vih', 'bcg']
+                'classification_infection', 'classification_malnutrition', 'classification_vih', 'inf_bac_qa',
+                'inf_bac_freq_resp', 'inf_bac_qc', 'inf_bac_qd', 'inf_bac_qe', 'inf_bac_qf', 'inf_bac_qg',
+                'inf_bac_qh', 'inf_bac_qj', 'inf_bac_qk', 'inf_bac_ql', 'inf_bac_qm', 'diarrhee_qa',
+                'alimentation_qa', 'alimentation_qb', 'alimentation_qc', 'alimentation_qd', 'alimentation_qf',
+                'alimentation_qg', 'alimentation_qh', 'vih_qa', 'vih_qb', 'vih_qc', 'vih_qd', 'vih_qe', 'vih_qf',
+                'vih_qg', 'vih_qh', 'vih_qi', 'vih_qj', 'vih_qk', 'vih_qk', 'vih_ql', 'other_comments']
 
 
 class InfantClassificationExtended(BaseSqlData):
@@ -251,7 +264,7 @@ class InfantClassificationExtended(BaseSqlData):
     def headers(self):
         from custom.tdh.models import TDHInfantClassificationFluff
 
-        return [DataTablesColumn(k) for k in TDHInfantClassificationFluff().__dict__['_obj'].keys() if
+        return [DataTablesColumn(self.header(k)) for k in TDHInfantClassificationFluff().__dict__['_obj'].keys() if
                 k not in UNNECESSARY_FIELDS + ['case_id']]
 
     @property
@@ -268,10 +281,14 @@ class NewbornClassification(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'tablet_login_id', 'author_id', 'author_name', 'visit_date',
-                'weight', 'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa',
+        return ['case_id', 'bcg', 'tablet_login_id', 'author_id', 'author_name', 'visit_date', 'consultation_type',
+                'number', 'weight', 'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa',
                 'zscore_wfh', 'mean_wfh', 'classification_infection', 'classification_malnutrition',
-                'classification_occular', 'classification_poids', 'classification_vih', 'bcg', 'opv_0']
+                'classification_occular', 'classification_poids', 'classification_vih', 'inf_bac_qa', 'inf_bac_qb',
+                'inf_bac_freq_resp', 'inf_bac_qd', 'inf_bac_qe', 'inf_bac_qf', 'inf_bac_qg', 'inf_bac_qh',
+                'inf_bac_qi', 'inf_bac_qj', 'poids_qa', 'inf_occ_qa', 'vih_qa', 'vih_qb', 'vih_qc', 'vih_qd',
+                'vih_qe', 'vih_qf', 'vih_qg', 'alimentation_qa', 'alimentation_qb', 'alimentation_qd',
+                'alimentation_qf', 'alimentation_qg', 'other_comments']
 
 
 class NewbornClassificationExtended(BaseSqlData):
@@ -290,8 +307,8 @@ class NewbornClassificationExtended(BaseSqlData):
     def headers(self):
         from custom.tdh.models import TDHNewbornClassificationFluff
 
-        return [DataTablesColumn(k) for k in TDHNewbornClassificationFluff().__dict__['_obj'].keys() if
-                k not in UNNECESSARY_FIELDS + ['case_id']]
+        return [DataTablesColumn(self.header(k)) for k in TDHNewbornClassificationFluff().__dict__['_obj'].keys()
+                if k not in UNNECESSARY_FIELDS + ['case_id']]
 
     @property
     def group_by(self):
@@ -307,14 +324,24 @@ class ChildClassification(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'tablet_login_id', 'author_id', 'author_name', 'visit_date', 'weight',
-                'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa', 'zscore_wfh',
-                'mean_wfh', 'classification_anemie', 'classification_deshydratation', 'classification_diahree',
-                'classification_dysenterie', 'classification_malnutrition', 'classification_oreille',
-                'classification_paludisme', 'classification_pneumonie', 'classification_rougeole',
-                'classification_vih', 'classifications_graves', 'bcg', 'measles_1', 'measles_2', 'opv_0', 'opv_1',
-                'opv_2', 'opv_3', 'penta_1', 'penta_2', 'penta_3', 'pneumo_1', 'pneumo_2', 'pneumo_3',
-                'rotavirus_1', 'rotavirus_2', 'rotavirus_3', 'yf']
+        return ['case_id', 'bcg', 'tablet_login_id', 'author_id', 'author_name', 'visit_date', 'consultation_type',
+                'number', 'weight', 'height', 'muac', 'temp', 'zscore_hfa', 'mean_hfa', 'zscore_wfa', 'mean_wfa',
+                'zscore_wfh', 'mean_wfh', 'measles_1', 'measles_2', 'opv_0', 'opv_1', 'opv_2', 'opv_3', 'penta_1',
+                'penta_2', 'penta_3', 'pneumo_1', 'pneumo_2', 'pneumo_3', 'rotavirus_1', 'rotavirus_2',
+                'rotavirus_3', 'yf', 'classification_anemie', 'classification_deshydratation',
+                'classification_diahree', 'classification_dysenterie', 'classification_malnutrition',
+                'classification_oreille', 'classification_paludisme', 'classification_pneumonie',
+                'classification_rougeole', 'classification_vih', 'classifications_graves', 'boire', 'vomit',
+                'convulsions_passe', 'lethargie', 'convulsions_present', 'toux_presence', 'toux_presence_duree',
+                'freq_resp', 'tirage', 'stridor', 'diarrhee', 'diarrhee_presence', 'diarrhee_presence_duree',
+                'sang_selles', 'conscience_agitation', 'yeux_enfonces', 'soif', 'pli_cutane', 'fievre_presence',
+                'fievre_presence_duree', 'fievre_presence_longue', 'tdr', 'urines_foncees', 'saignements_anormaux',
+                'raideur_nuque', 'ictere', 'choc', 'eruption_cutanee', 'ecoulement_nasal', 'yeux_rouge',
+                'ecoulement_oculaire', 'ulcerations', 'cornee', 'oreille', 'oreille_probleme', 'oreille_douleur',
+                'oreille_ecoulement', 'oreille_ecoulement_duree', 'oreille_gonflement', 'paleur_palmaire',
+                'oedemes', 'test_appetit', 'serologie_enfant', 'test_enfant', 'pneumonie_recidivante',
+                'diarrhee_dernierement', 'candidose_buccale', 'hypertrophie_ganglions_lymphatiques',
+                'augmentation_glande_parotide', 'test_mere', 'serologie_mere', 'other_comments']
 
 
 class ChildClassificationExtended(BaseSqlData):
@@ -333,7 +360,7 @@ class ChildClassificationExtended(BaseSqlData):
     def headers(self):
         from custom.tdh.models import TDHChildClassificationFluff
 
-        return [DataTablesColumn(k) for k in TDHChildClassificationFluff().__dict__['_obj'].keys() if
+        return [DataTablesColumn(self.header(k)) for k in TDHChildClassificationFluff().__dict__['_obj'].keys() if
                 k not in UNNECESSARY_FIELDS + ['case_id']]
 
     @property
@@ -354,11 +381,11 @@ class EnrollChild(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'dob', 'name', 'sex', 'village']
+        return ['case_id', 'dob', 'sex', 'village']
 
     @property
     def headers(self):
-        return [DataTablesColumn(k) for k in self.group_by]
+        return [DataTablesColumn(self.header(k)) for k in self.group_by]
 
 
 class EnrollChildExtended(BaseSqlData):
@@ -381,7 +408,7 @@ class EnrollChildExtended(BaseSqlData):
     def headers(self):
         from custom.tdh.models import TDHEnrollChildFluff
 
-        return [DataTablesColumn(k) for k in TDHEnrollChildFluff().__dict__['_obj'].keys() if
+        return [DataTablesColumn(self.header(k)) for k in TDHEnrollChildFluff().__dict__['_obj'].keys() if
                 k not in UNNECESSARY_FIELDS + ['case_id']]
 
     @property
@@ -402,10 +429,10 @@ class InfantTreatment(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'classification_vih', 'antibio', 'deshydratation_severe_sans_infection_title',
-                'incapable_nourrir_title', 'infection_grave_title', 'infection_locale_title', 'pas_infection_title'
-                , 'probleme_alimentation_title', 'signe_deshydratation_infection_title', 'vih_pas_infection_title',
-                'vih_possible_title']
+        return ['case_id', 'infection_grave_treat_0', 'infection_grave_treat_1', 'infection_grave_treat_2',
+                'infection_grave_no_ref_treat_0', 'infection_grave_no_ref_treat_1',
+                'infection_grave_no_ref_treat_2', 'infection_grave_no_ref_treat_5', 'infection_locale_treat_0',
+                'infection_locale_treat_1', 'maladie_grave_treat_0', 'maladie_grave_treat_1']
 
 
 class InfantTreatmentExtended(BaseSqlData):
@@ -428,7 +455,7 @@ class InfantTreatmentExtended(BaseSqlData):
     def headers(self):
         from custom.tdh.models import TDHInfantTreatmentFluff
 
-        return [DataTablesColumn(k) for k in TDHInfantTreatmentFluff().__dict__['_obj'].keys() if
+        return [DataTablesColumn(self.header(k)) for k in TDHInfantTreatmentFluff().__dict__['_obj'].keys() if
                 k not in UNNECESSARY_FIELDS + ['case_id']]
 
     @property
@@ -449,12 +476,9 @@ class NewbornTreatment(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'antibio', 'conjonctivite_title', 'fable_poids_title', 'incapable_nourrir_title',
-                'hypothermie_moderee_title', 'infection_grave_title', 'infection_grave_no_ref_title',
-                'infection_locale_title', 'infection_peu_probable_title', 'maladie_grave_title',
-                'pas_de_faible_poids_title', 'pas_de_probleme_alimentation_title', 'pas_infection_occulaire_title',
-                'poids_tres_faible_title', 'probleme_alimentation_title', 'vih_peu_probable_title',
-                'vih_possible_title', 'vih_probable_title']
+        return ['case_id', 'infection_grave_treat_0', 'infection_grave_treat_1', 'infection_grave_no_ref_treat_0',
+                'infection_grave_no_ref_treat_1', 'infection_locale_treat_0', 'infection_locale_treat_1',
+                'incapable_nourrir_treat_0', 'incapable_nourrir_treat_1']
 
 
 class NewbornTreatmentExtended(BaseSqlData):
@@ -477,7 +501,7 @@ class NewbornTreatmentExtended(BaseSqlData):
     def headers(self):
         from custom.tdh.models import TDHNewbornTreatmentFluff
 
-        return [DataTablesColumn(k) for k in TDHNewbornTreatmentFluff().__dict__['_obj'].keys() if
+        return [DataTablesColumn(self.header(k)) for k in TDHNewbornTreatmentFluff().__dict__['_obj'].keys() if
                 k not in UNNECESSARY_FIELDS + ['case_id']]
 
     @property
@@ -498,17 +522,48 @@ class ChildTreatment(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'antibio', 'artemether', 'deparasitage', 'perfusion_p1_b', 'perfusion_p2_b',
-                'vitamine_a', 'anemie_title', 'anemie_grave_title', 'antecedent_rougeole_title',
-                'deshydratation_severe_grave_title', 'deshydratation_severe_pas_grave_perfusion_title',
-                'diahree_persistante_title', 'dysenterie_title', 'infection_aigue_oreille_title', 'mam_title',
-                'masc_title', 'mass_title', 'mastoidite_title', 'paludisme_grave_title',
-                'paludisme_grave_no_ref_title', 'paludisme_grave_tdr_negatif_title', 'paludisme_simple_title',
-                'pas_deshydratation_title', 'pas_malnutrition_title', 'pas_pneumonie_title', 'pneumonie_title',
-                'pneumonie_grave_title', 'rougeole_title', 'rougeole_complications_title',
-                'rougeole_compliquee_title', 'signes_deshydratation_title', 'tdr_negatif_title',
-                'vih_confirmee_title', 'vih_pas_title', 'vih_peu_probable_title', 'vih_possible_title',
-                'vih_symp_confirmee_title', 'vih_symp_suspecte_title']
+        return ['case_id', 'pneumonie_grave_treat_0',
+                'pneumonie_grave_treat_1', 'pneumonie_grave_treat_4', 'pneumonie_grave_no_ref_treat_0',
+                'pneumonie_grave_no_ref_treat_1', 'pneumonie_grave_no_ref_treat_3',
+                'pneumonie_grave_no_ref_treat_5', 'pneumonie_grave_no_ref_treat_6', 'pneumonie_treat_0',
+                'pneumonie_treat_1', 'deshydratation_severe_pas_grave_perfusion_treat_3',
+                'deshydratation_severe_pas_grave_perfusion_treat_4',
+                'deshydratation_severe_pas_grave_perfusion_treat_5',
+                'deshydratation_severe_pas_grave_perfusion_treat_6',
+                'deshydratation_severe_pas_grave_perfusion_treat_8',
+                'deshydratation_severe_pas_grave_perfusion_treat_9',
+                'deshydratation_severe_pas_grave_perfusion_treat_10',
+                'deshydratation_severe_pas_grave_perfusion_treat_11',
+                'deshydratation_severe_pas_grave_perfusion_treat_15',
+                'deshydratation_severe_pas_grave_perfusion_treat_16',
+                'deshydratation_severe_pas_grave_sng_treat_2', 'deshydratation_severe_pas_grave_sng_treat_3',
+                'deshydratation_severe_pas_grave_sans_sng_sans_perfusion_treat_3',
+                'deshydratation_severe_pas_grave_sans_sng_sans_perfusion_treat_4', 'signes_deshydratation_treat_0',
+                'signes_deshydratation_treat_3', 'pas_deshydratation_treat_1', 'dysenterie_treat_1',
+                'dysenterie_treat_2', 'dysenterie_treat_3', 'diahree_persistante_treat_0',
+                'diahree_persistante_treat_1', 'paludisme_grave_treat_0', 'paludisme_grave_treat_1',
+                'paludisme_grave_treat_2', 'paludisme_grave_treat_4', 'paludisme_grave_treat_5',
+                'paludisme_grave_treat_7', 'paludisme_grave_no_ref_treat_0', 'paludisme_grave_no_ref_treat_1',
+                'paludisme_grave_no_ref_treat_2', 'paludisme_grave_no_ref_treat_3',
+                'paludisme_grave_no_ref_treat_5', 'paludisme_grave_no_ref_treat_6', 'paludisme_simple_treat_1',
+                'paludisme_simple_treat_2', 'paludisme_simple_treat_3', 'paludisme_simple_treat_4',
+                'paludisme_simple_treat_6', 'rougeole_compliquee_treat_0', 'rougeole_compliquee_treat_1',
+                'rougeole_compliquee_treat_2', 'rougeole_compliquee_treat_3', 'rougeole_complications_treat_0',
+                'rougeole_complications_treat_1', 'rougeole_treat_0', 'rougeole_treat_1', 'rougeole_treat_2',
+                'rougeole_treat_3', 'antecedent_rougeole_treat_0', 'antecedent_rougeole_treat_1',
+                'mastoidite_treat_0', 'mastoidite_treat_1', 'mastoidite_treat_2',
+                'infection_aigue_oreille_treat_0', 'infection_aigue_oreille_treat_1', 'anemie_grave_treat_0',
+                'anemie_treat_0', 'anemie_treat_1', 'anemie_treat_2', 'anemie_treat_3', 'anemie_treat_4',
+                'anemie_treat_5', 'anemie_treat_6', 'mass_treat_2', 'mass_treat_3', 'mass_treat_4', 'mass_treat_5',
+                'mass_treat_7', 'mass_treat_8', 'mam_treat_2', 'mam_treat_3', 'mam_treat_5', 'mam_treat_6',
+                'mam_treat_7', 'pas_malnutrition_treat_2', 'pas_malnutrition_treat_3',
+                'vih_symp_confirmee_treat_1', 'vih_symp_confirmee_treat_2', 'vih_symp_confirmee_treat_4',
+                'vih_confirmee_treat_1', 'vih_confirmee_treat_2', 'vih_confirmee_treat_4',
+                'vih_symp_probable_treat_1', 'vih_symp_probable_treat_2', 'vih_symp_probable_treat_3',
+                'vih_possible_treat_1', 'vih_possible_treat_2', 'vih_possible_treat_3',
+                'paludisme_grave_tdr_negatif_treat_0', 'paludisme_grave_tdr_negatif_treat_1',
+                'paludisme_grave_tdr_negatif_treat_3', 'paludisme_grave_tdr_negatif_treat_4',
+                'paludisme_grave_tdr_negatif_treat_6', 'vitamine_a']
 
 
 class ChildTreatmentExtended(BaseSqlData):
@@ -531,7 +586,7 @@ class ChildTreatmentExtended(BaseSqlData):
     def headers(self):
         from custom.tdh.models import TDHChildTreatmentFluff
 
-        return [DataTablesColumn(k) for k in TDHChildTreatmentFluff().__dict__['_obj'].keys() if
+        return [DataTablesColumn(self.header(k)) for k in TDHChildTreatmentFluff().__dict__['_obj'].keys() if
                 k not in UNNECESSARY_FIELDS + ['case_id']]
 
     @property
