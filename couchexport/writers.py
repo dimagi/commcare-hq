@@ -39,6 +39,108 @@ class UniqueHeaderGenerator(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+
+class ExportFileWriter(object):
+
+    def __init__(self,):
+        self.name = None
+        self._isopen = False
+        self._file = None
+        self._path = None
+
+    def get_path(self):
+        assert self._isopen
+        return self._path
+
+    def get_file(self):
+        assert self._isopen
+        return self._file
+
+    def open(self, name):
+        assert not self._isopen
+        self._isopen = True
+        self.name = name
+        fd, path = tempfile.mkstemp()
+        self._file = os.fdopen(fd, 'wb+')
+        self._path = path
+        self._open()
+        self._begin_file()
+
+    def _open(self):
+        pass
+
+    def _begin_file(self):
+        pass
+
+    def write_row(self, row):
+        raise NotImplementedError
+
+    def _end_file(self):
+        pass
+
+    def finish(self):
+        self._end_file()
+        self._file.seek(0)
+
+    def close(self):
+        assert self._isopen
+        self._file.close()
+        os.remove(self._path)
+        self._isopen = False
+
+
+class CsvFileWriter(ExportFileWriter):
+
+    def _open(self):
+        self._csvwriter = csv.writer(self._file, csv.excel)
+
+    def write_row(self, row):
+        self._csvwriter.writerow(row)
+
+
+class PartialHtmlFileWriter(ExportFileWriter):
+
+    def _open(self):
+        self._on_first_row = True
+
+    def write_row(self, row):
+        # TODO: Does this load the template every time?
+
+        section = "row" if not self._on_first_row else "first_row"
+        self._on_first_row = False
+
+        self._file.write(render_to_string(
+            "couchexport/html_export.html", {"row": row, "section": section}
+        ).encode('utf-8'))
+
+    def _end_file(self):
+        if self._on_first_row:
+            # There were no rows
+            self._file.write(render_to_string(
+                "couchexport/html_export.html", {"section": "no_rows"}
+            ).encode('utf-8'))
+
+
+class HtmlFileWriter(PartialHtmlFileWriter):
+
+    def _begin_file(self):
+        self._file.write(render_to_string(
+            "couchexport/html_export.html", {"section": "doc_begin"}
+        ).encode('utf-8'))
+        self._file.write(render_to_string(
+            "couchexport/html_export.html", {"section": "table_begin", "name": self.name}
+        ).encode('utf-8'))
+
+    def _end_file(self):
+        super(HtmlFileWriter, self)._end_file()
+        self._file.write(render_to_string(
+            "couchexport/html_export.html", {"section": "table_end"}).encode('utf-8')
+        )
+        self._file.write(render_to_string(
+            "couchexport/html_export.html", {"section": "doc_end"}
+        ).encode('utf-8'))
+
+
 class ExportWriter(object):
     max_table_name_size = 500
 
@@ -145,57 +247,83 @@ class ExportWriter(object):
         except AttributeError:
             return row
 
-class CsvExportWriter(ExportWriter):
+
+class OnDiskExportWriter(ExportWriter):
+    """
+    Keeps tables in temporary csv files. Subclassed by other export writers.
+    """
+    writer_class = CsvFileWriter
 
     def _init(self):
         self.tables = {}
         self.table_names = {}
-        self.table_files = {}
-
 
     def _init_table(self, table_index, table_title):
-        fd, path = tempfile.mkstemp()
-        file = os.fdopen(fd, 'wb')
-        writer = csv.writer(file, dialect=csv.excel)
+        writer = self.writer_class()
         self.tables[table_index] = writer
-        self.table_files[table_index] = (file, path)
+        writer.open(table_title)
         self.table_names[table_index] = table_title
 
     def _write_row(self, sheet_index, row):
+
         def _encode_if_needed(val):
             return val.encode("utf8") if isinstance(val, unicode) else val
-
         row = map(_encode_if_needed, self.get_data(row))
-        writer = self.tables[sheet_index]
-        writer.writerow(row)
+
+        self.tables[sheet_index].write_row(row)
 
     def _close(self):
         """
         Close any open file references, do any cleanup.
         """
+        for writer in self.tables.values():
+            writer.finish()
+
+        self._write_final_result()
+
+        for writer in self.tables.values():
+            writer.close()
+
+    def _write_final_result(self):
+        """
+        Subclasses should call this method then write to a zip file, html files, or whatever.
+        """
+        raise NotImplementedError
+
+
+class ZippedExportWriter(OnDiskExportWriter):
+    """
+    Writer that creates a zip file containing a csv for each table.
+    """
+    table_file_extension = ".csv"
+
+    def _write_final_result(self):
+
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
-            tmpfile, path = self.table_files[index]
-            tmpfile.close()
-            archive.write(path, "%s.csv" % name)
-            os.remove(path)
+            path = self.tables[index].get_path()
+            archive.write(path, "{}{}".format(name, self.table_file_extension))
         archive.close()
         self.file.seek(0)
 
 
-class UnzippedCsvExportWriter(CsvExportWriter):
+class CsvExportWriter(ZippedExportWriter):
     """
-    CSV writer that doesn't zip things up - just serves the first table as a csv
+    CSV writer that creates a zip file containing a csv for each table.
+    """
+    pass
+
+
+class UnzippedCsvExportWriter(OnDiskExportWriter):
+    """
+    Serve the first table as a csv
     """
 
-    def _close(self):
-        for i, (index, name) in enumerate(self.table_names.items()):
-            csvfile, path = self.table_files[index]
-            csvfile.close()
-            if i == 0:
-                with open(path, 'rb') as f:
-                    for line in f.readlines():
-                        self.file.write(line)
+    def _write_final_result(self):
+
+        tablefile = self.tables.values()[0].get_file()
+        for line in tablefile:
+            self.file.write(line)
         self.file.seek(0)
 
 
@@ -313,10 +441,45 @@ class JsonExportWriter(InMemoryExportWriter):
         self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
 
 
-class HtmlExportWriter(InMemoryExportWriter):
+class HtmlExportWriter(OnDiskExportWriter):
     """
-    Write tables to HTML
+    Write tables to a single HTML file.
     """
-    def _close(self):
-        rendered = render_to_string("couchexport/html_export.html", {'tables': self.tables}).encode('utf-8')
-        self.file.write(rendered)
+    writer_class = PartialHtmlFileWriter
+
+    def _write_final_result(self):
+
+        self.file.write(render_to_string(
+            "couchexport/html_export.html", {"section": "doc_begin"}
+        ).encode("utf-8"))
+
+        for index, name in self.table_names.items():
+
+            table_writer = self.tables[index]
+            self.file.write(render_to_string(
+                "couchexport/html_export.html", {"section": "table_begin", "name": index}
+                # TODO: Should name actually be name?
+                #       Existing behavior uses index
+            ).encode("utf-8"))
+
+            for line in table_writer.get_file():
+                self.file.write(line)
+
+            self.file.write(render_to_string(
+                "couchexport/html_export.html", {"section": "table_end"}
+            ).encode("utf-8"))
+
+        self.file.write(render_to_string(
+            "couchexport/html_export.html", {"section": "doc_end"}
+        ).encode("utf-8"))
+
+        self.file.seek(0)
+
+
+class ZippedHtmlExportWriter(ZippedExportWriter):
+    """
+    Write each table to an HTML file in a zipfile
+    """
+    writer_class = HtmlFileWriter
+    table_file_extension = ".html"
+

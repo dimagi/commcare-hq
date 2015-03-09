@@ -45,3 +45,6 @@ class ExportRawTest(TestCase):
                 tables[key] = itertools.chain([headers[key]], data[key])
 
             export_from_tables(tables.items(), buffer, format=Format.JSON)
+
+    def test_my_stuff(self):
+        self.assertEqual(True, False)
