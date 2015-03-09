@@ -102,7 +102,7 @@ class LocationSettingsView(BaseCommTrackManageView):
         return {
             'loc_types': map(
                 self._get_loctype_info,
-                LocationType.objects.filter(domain=self.domain).all()
+                LocationType.objects.by_domain(self.domain)
             )
         }
 
