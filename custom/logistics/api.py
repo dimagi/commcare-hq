@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import requests
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
+from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
 
@@ -234,15 +234,15 @@ class APISynchronization(object):
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
                 if "phone_numbers" in user_dict:
-                    user.set_default_phone_number(user_dict["phone_numbers"][0])
+                    user.set_default_phone_number(apply_leniency(user_dict["phone_numbers"][0]))
                     try:
-                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True,
-                                                  ilsgateway_smsuser.backend)
+                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
                     except PhoneNumberInUseException as e:
                         v = VerifiedNumber.by_phone(user_dict["phone_numbers"][0], include_pending=True)
                         v.delete()
-                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True,
-                                                  ilsgateway_smsuser.backend)
+                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
+                    except InvalidFormatException:
+                        pass
             except Exception as e:
                 logging.error(e)
         else:
@@ -258,22 +258,30 @@ class APISynchronization(object):
                                   logistics_sms_user.id)
         username = "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part)
         user = CouchUser.get_by_username(username)
-        if user and user.language != logistics_sms_user.language:
+        if not user:
+            return
+
+        if user.language != logistics_sms_user.language:
             user.language = logistics_sms_user.language
             user.save()
+
+        logistics_numbers = {apply_leniency(phone_number) for phone_number in logistics_sms_user.phone_numbers}
+        if set(user.phone_numbers) == logistics_numbers:
+            return
 
         for phone_number in user.phone_numbers:
             user.delete_phone_number(phone_number)
 
         if logistics_sms_user.phone_numbers:
             phone_number = logistics_sms_user.phone_numbers[0]
-            user.set_default_phone_number(phone_number)
             try:
-                user.save_verified_number(self.domain, phone_number, True,
-                                          logistics_sms_user.backend)
+                user.save_verified_number(self.domain, phone_number, True)
+                user.set_default_phone_number(apply_leniency(phone_number))
             except PhoneNumberInUseException:
                 v = VerifiedNumber.by_phone(phone_number, include_pending=True)
                 if v.domain in domains:
                     v.delete()
-                    user.save_verified_number(self.domain, phone_number, True,
-                                              logistics_sms_user.backend)
+                    user.save_verified_number(self.domain, phone_number, True)
+                    user.set_default_phone_number(apply_leniency(phone_number))
+            except InvalidFormatException:
+                pass
