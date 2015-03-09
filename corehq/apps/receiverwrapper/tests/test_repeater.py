@@ -1,7 +1,6 @@
 from StringIO import StringIO
 from datetime import datetime, timedelta
-from django.test.testcases import SimpleTestCase
-from mock import MagicMock, Mock
+from mock import MagicMock
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
