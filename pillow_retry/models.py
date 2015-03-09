@@ -63,6 +63,12 @@ class PillowError(models.Model):
         self.current_attempt = 0
         self.date_next_attempt = datetime.utcnow()
 
+    def has_next_attempt(self):
+        return self.current_attempt == 0 or (
+            self.total_attempts <= self.multi_attempts_cutoff() and
+            self.current_attempt <= settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
+        )
+
     @classmethod
     def get_or_create(cls, change, pillow, change_meta=None):
         pillow_path = path_from_object(pillow)
