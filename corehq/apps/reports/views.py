@@ -491,7 +491,7 @@ class AddSavedReportConfigView(View):
         from datetime import datetime
 
         POST = json.loads(request.body)
-        if 'name' not in POST or not POST['name']:
+        if not self.savedReportConfigForm.is_valid():
             return HttpResponseBadRequest()
 
         user_configs = ReportConfig.by_domain_and_owner(domain, self.user_id)

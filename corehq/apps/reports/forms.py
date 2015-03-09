@@ -7,7 +7,7 @@ from .models import ReportNotification
 
 
 class SavedReportConfigForm(forms.Form):
-    pass
+    name = forms.CharField()
 
 
 class ScheduledReportForm(forms.Form):
