@@ -490,16 +490,16 @@ class AddSavedReportConfigView(View):
     def post(self, request, domain, *args, **kwargs):
         self.domain = domain
 
-        POST = json.loads(request.body)
         if not self.saved_report_config_form.is_valid():
             return HttpResponseBadRequest()
 
+        POST = json.loads(request.body)
         POST['days'] = self.saved_report_config_form.cleaned_data['days']
-
         exclude_filters = ['startdate', 'enddate']
         for field in exclude_filters:
             POST['filters'].pop(field, None)
-
+        print POST
+        print self.saved_report_config_form.cleaned_data
         for field in self.config.properties().keys():
             if field in POST:
                 setattr(self.config, field, POST[field])
@@ -540,8 +540,12 @@ class AddSavedReportConfigView(View):
         return SavedReportConfigForm(
             self.domain,
             self.user_id,
-            json.loads(self.request.body)
+            self.post_data
         )
+
+    @property
+    def post_data(self):
+        return json.loads(self.request.body)
 
     @property
     def user_id(self):
