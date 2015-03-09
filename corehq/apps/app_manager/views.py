@@ -1467,6 +1467,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "case_list_form_media_image": None,
         "case_list_form_media_audio": None,
         "parent_module": None,
+        "root_module_id": None,
     }
 
     if attr not in attributes:
@@ -1556,6 +1557,15 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
+        if should_edit("root_module_id"):
+            if not req.POST.get("root_module_id"):
+                module["root_module_id"] = None
+            else:
+                try:
+                    app.get_module(module_id)
+                    module["root_module_id"] = req.POST.get("root_module_id")
+                except ModuleNotFoundException:
+                    messages.error(_("Unknown Module"))
 
     _handle_media_edits(req, module, should_edit, resp)
 
