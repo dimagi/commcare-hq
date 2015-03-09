@@ -8,7 +8,6 @@ from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProper
 from couchdbkit.schema.base import DocumentSchema
 from couchdbkit.schema.properties import LazyDict
 from casexml.apps.case.models import CommCareCase
-from corehq import toggles
 from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
         FormAliasIndicatorAdminCRUDManager, FormLabelIndicatorAdminCRUDManager,

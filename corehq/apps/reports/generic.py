@@ -194,7 +194,7 @@ class GenericReportView(CacheableRequestMixIn):
         request.datespan = request_data.get('datespan')
 
         try:
-            couch_user = CouchUser.get(request_data.get('couch_user'))
+            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
