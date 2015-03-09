@@ -495,13 +495,7 @@ class AddSavedReportConfigView(View):
         if not self.saved_report_config_form.is_valid():
             return HttpResponseBadRequest()
 
-        date_range = POST.get('date_range')
-        if date_range == 'last7':
-            POST['days'] = 7
-        elif date_range == 'last30':
-            POST['days'] = 30
-        elif POST.get('days'):
-            POST['days'] = int(POST['days'])
+        POST['days'] = self.saved_report_config_form.cleaned_data['days']
 
         exclude_filters = ['startdate', 'enddate']
         for field in exclude_filters:
@@ -520,7 +514,11 @@ class AddSavedReportConfigView(View):
             if field in POST:
                 setattr(config, field, POST[field])
 
-        if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
+        # remove start and end date if the date range is "last xx days"
+        if (
+            self.saved_report_config_form.cleaned_data['days']
+            or self.saved_report_config_form.cleaned_data['date_range'] == 'lastmonth'
+        ):
             if "start_date" in config:
                 delattr(config, "start_date")
             if "end_date" in config:

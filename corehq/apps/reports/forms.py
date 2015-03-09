@@ -17,6 +17,14 @@ class SavedReportConfigForm(forms.Form):
     end_date = forms.DateField(
         required=False,
     )
+    date_range = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+    days = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
     _id = forms.CharField(
         required=False,
         widget=forms.HiddenInput(),
@@ -40,6 +48,17 @@ class SavedReportConfigForm(forms.Form):
                 }
             )
 
+        date_range = self.cleaned_data['date_range']
+        if date_range == 'last7':
+            self.cleaned_data['days'] = 7
+        elif date_range == 'last30':
+            self.cleaned_data['days'] = 30
+        elif self.cleaned_data['days'] is None:
+            raise forms.ValidationError(
+                "Field 'days' was expected but not provided."
+            )
+
+        return self.cleaned_data
 
 
 class ScheduledReportForm(forms.Form):
