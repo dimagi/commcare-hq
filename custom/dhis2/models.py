@@ -37,7 +37,7 @@ class Dhis2Settings(Document):
         try:
             toggle = Toggle.get('dhis2_domain')
         except ResourceNotFound:
-            raise StopIteration
+            return
         for domain in toggle.enabled_users:
             if domain.startswith('domain:'):
                 # If the "domain" namespace is given, strip it off
