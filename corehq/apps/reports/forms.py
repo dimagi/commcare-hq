@@ -11,6 +11,12 @@ from .models import (
 
 class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
+    start_date = forms.DateField(
+        required=False,
+    )
+    end_date = forms.DateField(
+        required=False,
+    )
     _id = forms.CharField(
         required=False,
         widget=forms.HiddenInput(),

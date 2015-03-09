@@ -490,18 +490,9 @@ class AddSavedReportConfigView(View):
     @method_decorator(login_and_domain_required)
     def post(self, request, domain, *args, **kwargs):
         self.domain = domain
-        from datetime import datetime
 
         POST = json.loads(request.body)
         if not self.saved_report_config_form.is_valid():
-            return HttpResponseBadRequest()
-
-        to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-        try:
-            POST['start_date'] = to_date(POST['start_date'])
-            POST['end_date'] = to_date(POST['end_date'])
-        except ValueError:
-            # invalidly formatted date input
             return HttpResponseBadRequest()
 
         date_range = POST.get('date_range')
