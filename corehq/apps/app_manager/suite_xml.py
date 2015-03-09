@@ -1690,7 +1690,6 @@ class SuiteGenerator(SuiteGeneratorBase):
             else:
                 menu_kwargs = {
                     'id': self.id_strings.menu_id(module),
-                    'root': self.id_strings.menu_root(module),
                     'locale_id': self.id_strings.module_locale(module),
                     'media_image': module.media_image,
                     'media_audio': module.media_audio,
