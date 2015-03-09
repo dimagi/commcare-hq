@@ -412,6 +412,26 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(CHILDREN_FORMS, 3)
             )
 
+    def child_growth_calculated_in_window(self, query_age):
+        """
+            query_age - must be last month of a window, multiple of 3
+            given last month of a window, this returns if
+            the child in that window attended at least 1 growth session or not
+        """
+        # do not handle middle months of a window
+        if query_age is 0 or query_age % 3 != 0:
+            return None
+        if self.child_age in [query_age - 2, query_age - 1, query_age]:
+            months_in_window = self.child_age % 3 or 3
+            if not self.is_service_available('func_childweighmach', months=months_in_window):
+                return True
+
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
+            return any(
+                form.xpath(xpath) == '1'
+                for form in self.filtered_forms(CHILDREN_FORMS, months_in_window)
+            )
+
     @property
     def preg_received_ifa(self):
         if self.preg_month == 6:
