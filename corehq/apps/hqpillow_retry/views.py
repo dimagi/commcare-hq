@@ -145,6 +145,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         query = self.get_query()
         query = query.order_by(self.sort_field)
 
+        next_deploy = _('Next Deploy')
         errors = query[self.pagination.start:(self.pagination.start+self.pagination.count)]
         for error in errors:
             yield [
@@ -152,7 +153,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
                 self.make_search_link(error),
                 error.pillow.split('.')[-1],
                 naturaltime(error.date_created),
-                naturaltime(error.date_next_attempt),
+                naturaltime(error.date_next_attempt) if error.has_next_attempt() else next_deploy,
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
                 error.doc_type,
