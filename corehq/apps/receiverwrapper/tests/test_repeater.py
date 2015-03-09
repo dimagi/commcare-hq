@@ -1,7 +1,7 @@
 from StringIO import StringIO
 from datetime import datetime, timedelta
 from django.test.testcases import SimpleTestCase
-from mock import MagicMock
+from mock import MagicMock, Mock
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
@@ -12,7 +12,7 @@ from django.test import TestCase
 from django.test.client import Client
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 from corehq.apps.receiverwrapper.models import (
     CaseRepeater,
     FormRepeater,
@@ -203,6 +203,46 @@ class RepeaterTest(BaseRepeaterTest):
 
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now())
         self.assertEqual(len(repeat_records), 2)
+
+
+class IgnoreDocumentTest(BaseRepeaterTest):
+
+    def setUp(self):
+        self.domain = "test-domain"
+        create_domain(self.domain)
+
+        self.repeater = FormRepeater(
+            domain=self.domain,
+            url='form-repeater-url',
+            version=V1,
+            format='new_format'
+        )
+        self.repeater.save()
+
+    def tearDown(self):
+        self.repeater.delete()
+        repeat_records = RepeatRecord.all()
+        for repeat_record in repeat_records:
+            repeat_record.delete()
+
+    def test_ignore_document(self):
+        """
+        When get_payload raises IgnoreDocument, fire should call update_success
+        """
+
+        @RegisterGenerator(FormRepeater, 'new_format', 'XML')
+        class NewFormGenerator(BasePayloadGenerator):
+            def get_payload(self, repeat_record, payload_doc):
+                raise IgnoreDocument
+
+        repeat_records = RepeatRecord.all(
+            domain=self.domain,
+        )
+        for repeat_record_ in repeat_records:
+            repeat_record_.fire()
+
+            self.assertIsNone(repeat_record_.next_check)
+            self.assertTrue(repeat_record_.succeeded)
 
 
 class TestRepeaterFormat(BaseRepeaterTest):
