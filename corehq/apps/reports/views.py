@@ -485,9 +485,11 @@ def touch_saved_reports_views(user, domain):
 
 class AddSavedReportConfigView(View):
     name = 'add_report_config'
+    domain = None
 
     @method_decorator(login_and_domain_required)
     def post(self, request, domain, *args, **kwargs):
+        self.domain = domain
         from datetime import datetime
 
         POST = json.loads(request.body)
@@ -546,7 +548,7 @@ class AddSavedReportConfigView(View):
     @property
     @memoized
     def savedReportConfigForm(self):
-        return SavedReportConfigForm(self.request.body)
+        return SavedReportConfigForm(self.domain, json.loads(self.request.body))
 
     @property
     def user_id(self):

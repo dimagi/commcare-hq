@@ -9,6 +9,9 @@ from .models import ReportNotification
 class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
 
+    def __init__(self, domain, *args, **kwargs):
+        super(SavedReportConfigForm, self).__init__(*args, **kwargs)
+
 
 class ScheduledReportForm(forms.Form):
     config_ids = forms.MultipleChoiceField(
