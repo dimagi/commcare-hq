@@ -30,6 +30,10 @@ ACTION_SEND = 'send'
 ACTIONS = [ACTION_RESET, ACTION_DELETE, ACTION_SEND]
 
 
+def safe_format_date(date):
+    return date.strftime("%Y-%m-%d") if date else date
+
+
 class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     dispatcher = AdminReportDispatcher
     slug = 'pillow_errors'
@@ -158,7 +162,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
                 error.doc_type,
-                error.doc_date,
+                safe_format_date(error.doc_date),
                 error.domains,
                 self.make_checkbox(error)
             ]
