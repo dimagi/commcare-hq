@@ -544,6 +544,14 @@ class AddSavedReportConfigView(View):
         )
 
     @property
+    def filters(self):
+        filters = self.post_data.get('filters', {})
+        for field in ['startdate', 'enddate']:
+            if field in filters:
+                del filters[field]
+        return filters
+
+    @property
     def post_data(self):
         return json.loads(self.request.body)
 
