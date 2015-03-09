@@ -481,71 +481,67 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
-def add_config(request, domain=None):
-    # todo: refactor this into a django form
-    from datetime import datetime
-    user_id = request.couch_user._id
-
-    POST = json.loads(request.body)
-    if 'name' not in POST or not POST['name']:
-        return HttpResponseBadRequest()
-
-    user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
-    if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
-        return HttpResponseBadRequest()
-
-    to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    try:
-        POST['start_date'] = to_date(POST['start_date'])
-        POST['end_date'] = to_date(POST['end_date'])
-    except ValueError:
-        # invalidly formatted date input
-        return HttpResponseBadRequest()
-
-    date_range = POST.get('date_range')
-    if date_range == 'last7':
-        POST['days'] = 7
-    elif date_range == 'last30':
-        POST['days'] = 30
-    elif POST.get('days'):
-        POST['days'] = int(POST['days'])
-
-    exclude_filters = ['startdate', 'enddate']
-    for field in exclude_filters:
-        POST['filters'].pop(field, None)
-
-    config = ReportConfig.get_or_create(POST.get('_id', None))
-
-    if config.owner_id:
-        # in case a user maliciously tries to edit another user's config
-        assert config.owner_id == user_id
-    else:
-        config.domain = domain
-        config.owner_id = user_id
-
-    for field in config.properties().keys():
-        if field in POST:
-            setattr(config, field, POST[field])
-
-    if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
-        if "start_date" in config:
-            delattr(config, "start_date")
-        if "end_date" in config:
-            delattr(config, "end_date")
-
-    config.save()
-    ReportsTab.clear_dropdown_cache(request, domain)
-    touch_saved_reports_views(request.couch_user, domain)
-
-    return json_response(config)
-
-
 class AddSavedReportConfigView(View):
     name = 'add_report_config'
 
     @method_decorator(login_and_domain_required)
     def post(self, request, domain, *args, **kwargs):
-        return add_config(request, domain=domain)
+        # todo: refactor this into a django form
+        from datetime import datetime
+        user_id = request.couch_user._id
+
+        POST = json.loads(request.body)
+        if 'name' not in POST or not POST['name']:
+            return HttpResponseBadRequest()
+
+        user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
+        if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
+            return HttpResponseBadRequest()
+
+        to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
+        try:
+            POST['start_date'] = to_date(POST['start_date'])
+            POST['end_date'] = to_date(POST['end_date'])
+        except ValueError:
+            # invalidly formatted date input
+            return HttpResponseBadRequest()
+
+        date_range = POST.get('date_range')
+        if date_range == 'last7':
+            POST['days'] = 7
+        elif date_range == 'last30':
+            POST['days'] = 30
+        elif POST.get('days'):
+            POST['days'] = int(POST['days'])
+
+        exclude_filters = ['startdate', 'enddate']
+        for field in exclude_filters:
+            POST['filters'].pop(field, None)
+
+        config = ReportConfig.get_or_create(POST.get('_id', None))
+
+        if config.owner_id:
+            # in case a user maliciously tries to edit another user's config
+            assert config.owner_id == user_id
+        else:
+            config.domain = domain
+            config.owner_id = user_id
+
+        for field in config.properties().keys():
+            if field in POST:
+                setattr(config, field, POST[field])
+
+        if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
+            if "start_date" in config:
+                delattr(config, "start_date")
+            if "end_date" in config:
+                delattr(config, "end_date")
+
+        config.save()
+        ReportsTab.clear_dropdown_cache(request, domain)
+        touch_saved_reports_views(request.couch_user, domain)
+
+        return json_response(config)
 
 
 @login_and_domain_required
