@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from copy import deepcopy
 import os
 import json
 import tempfile
@@ -493,16 +494,14 @@ class AddSavedReportConfigView(View):
         if not self.saved_report_config_form.is_valid():
             return HttpResponseBadRequest()
 
-        POST = json.loads(request.body)
-        POST['days'] = self.saved_report_config_form.cleaned_data['days']
-        exclude_filters = ['startdate', 'enddate']
-        for field in exclude_filters:
-            POST['filters'].pop(field, None)
-        print POST
-        print self.saved_report_config_form.cleaned_data
+        update_config_data = deepcopy(self.saved_report_config_form.cleaned_data)
+        del update_config_data['_id']
+        update_config_data.update({
+            'filters': self.filters,
+        })
         for field in self.config.properties().keys():
-            if field in POST:
-                setattr(self.config, field, POST[field])
+            if field in update_config_data:
+                setattr(self.config, field, update_config_data[field])
 
         # remove start and end date if the date range is "last xx days"
         if (
@@ -545,7 +544,7 @@ class AddSavedReportConfigView(View):
 
     @property
     def filters(self):
-        filters = self.post_data.get('filters', {})
+        filters = deepcopy(self.post_data.get('filters', {}))
         for field in ['startdate', 'enddate']:
             if field in filters:
                 del filters[field]
