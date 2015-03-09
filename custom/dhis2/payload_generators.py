@@ -67,12 +67,13 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # enroll in the nutrition assessment programme.
             logger.debug('DHIS2: Processing Register Child form')
             push_case(case, dhis2_api)
-            # We just need to enroll. No event to create
+            return  # We just need to enroll. No event to create
 
         elif form['xmlns'] == GROWTH_MONITORING_XMLNS:
             logger.debug('DHIS2: Processing Growth Monitoring form')
             if not getattr(case, 'external_id', None):
-                raise Dhis2IntegrationError('Register Child form must be processed before Growth Monitoring form')
+                logger.info('Register Child form must be processed before Growth Monitoring form')
+                return  # Try again later
             # Update tracked entity instance
             instance = dhis2_api.get_te_inst(case['external_id'])
             instance.update({dhis2_attr: case[cchq_attr]
@@ -88,7 +89,8 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
         elif form['xmlns'] == RISK_ASSESSMENT_XMLNS:
             logger.debug('DHIS2: Processing Risk Assessment form')
             if not getattr(case, 'external_id', None):
-                raise Dhis2IntegrationError('Register Child form must be processed before Risk Assessment form')
+                logger.info('Register Child form must be processed before Risk Assessment form')
+                return  # Try again later
             # Update tracked entity instance
             instance = dhis2_api.get_te_inst(case['external_id'])
             instance.update({dhis2_attr: case[cchq_attr]
