@@ -485,7 +485,6 @@ def touch_saved_reports_views(user, domain):
 
 class AddSavedReportConfigView(View):
     name = 'add_report_config'
-    domain = None
 
     @method_decorator(login_and_domain_required)
     def post(self, request, domain, *args, **kwargs):
@@ -516,8 +515,8 @@ class AddSavedReportConfigView(View):
                 delattr(self.config, "end_date")
 
         self.config.save()
-        ReportsTab.clear_dropdown_cache(request, domain)
-        touch_saved_reports_views(request.couch_user, domain)
+        ReportsTab.clear_dropdown_cache(request, self.domain)
+        touch_saved_reports_views(request.couch_user, self.domain)
 
         return json_response(self.config)
 
