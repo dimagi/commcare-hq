@@ -22,9 +22,9 @@ def stock_category(stock, daily_consumption, understock, overstock):
     months_left = months_of_stock_remaining(stock, daily_consumption)
     if months_left is None:
         return 'nodata'
-    elif months_left < understock_threshold:
+    elif months_left < understock:
         return 'understock'
-    elif months_left > overstock_threshold:
+    elif months_left > overstock:
         return 'overstock'
     else:
         return 'adequate'
