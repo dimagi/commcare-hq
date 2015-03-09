@@ -8,6 +8,7 @@ import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
 from dateutil.parser import parse
 
@@ -37,6 +38,7 @@ from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
+from corehq.apps.reports.forms import SavedReportConfigForm
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
@@ -486,7 +488,6 @@ class AddSavedReportConfigView(View):
 
     @method_decorator(login_and_domain_required)
     def post(self, request, domain, *args, **kwargs):
-        # todo: refactor this into a django form
         from datetime import datetime
         user_id = request.couch_user._id
 
@@ -542,6 +543,11 @@ class AddSavedReportConfigView(View):
         touch_saved_reports_views(request.couch_user, domain)
 
         return json_response(config)
+
+    @property
+    @memoized
+    def savedReportConfigForm(self):
+        return SavedReportConfigForm(self.request.body)
 
 
 @login_and_domain_required

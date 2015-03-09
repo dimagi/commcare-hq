@@ -6,6 +6,10 @@ from crispy_forms.layout import Submit
 from .models import ReportNotification
 
 
+class SavedReportConfigForm(forms.Form):
+    pass
+
+
 class ScheduledReportForm(forms.Form):
     config_ids = forms.MultipleChoiceField(
         label="Saved report(s)",
