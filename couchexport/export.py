@@ -108,7 +108,6 @@ class ExportConfiguration(object):
 
 def get_writer(format):
     try:
-        # The dissymmetry between html and csv zipped/unzipped makes me sad
         return {
             Format.CSV: writers.CsvExportWriter,
             Format.HTML: writers.HtmlExportWriter,
