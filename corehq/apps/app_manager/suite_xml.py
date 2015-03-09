@@ -946,7 +946,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 frame = PushFrame()
                 frame.add_command(XPath.string(self.id_strings.form_command(form)))
                 frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
-                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu(module))))
+                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu_id(module))))
                 d.action.stack.add_frame(frame)
 
             try:
