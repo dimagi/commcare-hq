@@ -1215,7 +1215,8 @@ class TransferDomainRequest(models.Model):
 
         send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
                         self.DIMAGI_CONFIRM_ADDRESS,
-                        html_content)
+                        html_content,
+                        text_content=text_content)
 
     def as_dict(self):
         return {
