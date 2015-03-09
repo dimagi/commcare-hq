@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter
+    NumericFilter, DynamicChoiceListFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
@@ -141,3 +141,47 @@ class ChoiceListFilterTestCase(SimpleTestCase):
         for i, choice in enumerate(choices):
             self.assertEqual(filter.choices[i].value, choice['value'])
             self.assertEqual(filter.choices[i].display, choice['display'])
+
+
+class DynamicChoiceListFilterTestCase(SimpleTestCase):
+
+    def setUp(self):
+        self.filter_spec = {
+            "type": "dynamic_choice_list",
+            "slug": "dynoslug",
+            "field": "dynofield",
+            "display": "Dynamic choice list",
+            "show_all": False,
+        }
+
+    def test_choice_list_filter(self):
+        filter = ReportFilterFactory.from_spec(self.filter_spec)
+        self.assertEqual(DynamicChoiceListFilter, type(filter))
+        self.assertEqual('dynoslug', filter.name)
+        self.assertEqual('Dynamic choice list', filter.label)
+
+    def test_string_datatype(self):
+        self.filter_spec['datatype'] = 'string'
+        filter = ReportFilterFactory.from_spec(self.filter_spec)
+        tests = (
+            (1, '1'),
+            (1.2, '1.2'),
+            ('hello', 'hello'),
+        )
+        for input, expected in tests:
+            choice = filter.value(dynoslug=input)
+            self.assertEqual(expected, choice.value)
+            self.assertEqual(input, choice.display)
+
+    def test_integer_datatype(self):
+        self.filter_spec['datatype'] = 'integer'
+        filter = ReportFilterFactory.from_spec(self.filter_spec)
+        tests = (
+            (1, 1),
+            (1.2, 1),
+            ('hello', None),
+        )
+        for input, expected in tests:
+            choice = filter.value(dynoslug=input)
+            self.assertEqual(expected, choice.value)
+            self.assertEqual(input, choice.display)

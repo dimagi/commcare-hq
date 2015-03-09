@@ -35,7 +35,8 @@
             summaryApp.constant('summaryConfig', {
                 staticRoot: '{{ STATIC_URL }}',
                 vellumTypes: {{ VELLUM_TYPES|JSON }},
-                formNameMap: {{ form_name_map|JSON }}
+                formNameMap: {{ form_name_map|JSON }},
+                appLangs: {{ langs|JSON }}
             });
 
             summaryApp.config(['$routeProvider', function($routeProvider) {

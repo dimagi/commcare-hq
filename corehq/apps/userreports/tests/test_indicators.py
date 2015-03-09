@@ -212,8 +212,8 @@ class RawIndicatorTest(SingleIndicatorTestBase):
             "display_name": "raw foos",
         })
         self._check_result(indicator, dict(foo="bar"), 'bar')
-        self._check_result(indicator, dict(foo=1), 1)
-        self._check_result(indicator, dict(foo=1.2), 1.2)
+        self._check_result(indicator, dict(foo=1), '1')
+        self._check_result(indicator, dict(foo=1.2), '1.2')
         self._check_result(indicator, dict(foo=None), None)
         self._check_result(indicator, dict(nofoo='foryou'), None)
 

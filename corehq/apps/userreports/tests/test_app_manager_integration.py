@@ -53,7 +53,7 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
             category='bug',
             priority='4',
             starred='yes',
-            estimate=2,
+            estimate='2',
         )
         def _get_column_property(column):
             return column.id if column.id != 'doc_id' else '_id'

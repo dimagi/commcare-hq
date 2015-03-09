@@ -128,6 +128,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     Form,
     FormActions,
+    FormLink,
     FormNotFoundException,
     FormSchedule,
     IncompatibleFormTypeException,
@@ -984,6 +985,17 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update({
             'case_properties': get_all_case_properties(app),
         })
+
+        if toggles.FORM_LINK_WORKFLOW.enabled(req.user.username):
+            modules = filter(lambda m: m.case_type == module.case_type, app.get_modules())
+            linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))
+            context.update({
+                'linkable_forms': map(
+                    lambda f: {'unique_id': f.unique_id, 'name': trans(f.name, app.langs)},
+                    linkable_forms
+                )
+            })
+
         context.update(form_context)
     elif module:
         template, module_context = get_module_view_context_and_template(app, module)
@@ -1455,6 +1467,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "case_list_form_media_image": None,
         "case_list_form_media_audio": None,
         "parent_module": None,
+        "root_module_id": None,
     }
 
     if attr not in attributes:
@@ -1544,6 +1557,15 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
+        if should_edit("root_module_id"):
+            if not req.POST.get("root_module_id"):
+                module["root_module_id"] = None
+            else:
+                try:
+                    app.get_module(module_id)
+                    module["root_module_id"] = req.POST.get("root_module_id")
+                except ModuleNotFoundException:
+                    messages.error(_("Unknown Module"))
 
     _handle_media_edits(req, module, should_edit, resp)
 
@@ -1777,6 +1799,14 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.auto_gps_capture = req.POST['auto_gps_capture'] == 'true'
     if should_edit('no_vellum'):
         form.no_vellum = req.POST['no_vellum'] == 'true'
+    if (should_edit("form_links_xpath_expressions") and
+            should_edit("form_links_form_ids") and
+            toggles.FORM_LINK_WORKFLOW.enabled(req.user.username)):
+        form_links = zip(
+            req.POST.getlist('form_links_xpath_expressions'),
+            req.POST.getlist('form_links_form_ids')
+        )
+        form.form_links = [FormLink({'xpath': link[0], 'form_id': link[1]}) for link in form_links]
 
     _handle_media_edits(req, form, should_edit, resp)
 
@@ -2372,7 +2402,7 @@ class DownloadCCZ(DownloadMultimediaZip):
                 if name not in skip_files:
                     # TODO: make RemoteApp.create_all_files not return media files
                     extension = os.path.splitext(name)[1]
-                    data = f.encode('utf-8') if extension in text_extensions else f
+                    data = _encode_if_unicode(f) if extension in text_extensions else f
                     yield (get_name(name), data)
 
         if self.app.is_remote_app():

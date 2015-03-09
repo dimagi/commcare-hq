@@ -602,6 +602,8 @@ class SupplyPointCase(CommCareCase):
     @property
     @memoized
     def location(self):
+        if self.location_id is None:
+            return None
         try:
             return Location.get(self.location_id)
         except ResourceNotFound:

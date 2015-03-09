@@ -97,7 +97,7 @@ class FormData(BaseDataIndex):
                 "instance id %s!" % (self.instance_id, instance_id)
             )
 
-        if not instance.metadata.timeStart or not instance.metadata.timeStart:
+        if not instance.metadata.timeEnd or not instance.metadata.timeStart:
             # we don't allow these fields to be empty
             raise InvalidFormUpdateException(
                 "No timeStart or timeEnd found in instance %s!" % (

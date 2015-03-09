@@ -12,7 +12,7 @@ class LocationSet(object):
 
     def __init__(self, locations=None):
         self.by_id = {}
-        self.by_parent = defaultdict(lambda: set())
+        self.by_parent = defaultdict(set)
         if locations is not None:
             for loc in locations:
                 self.add_location(loc)

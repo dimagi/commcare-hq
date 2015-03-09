@@ -137,6 +137,10 @@
                             module specified.
                         {% case "parent cycle" %}
                             The app's parent child case selection graph contains a cycle.
+                        {% case "root cycle" %}
+                            The app's parent child module graph contains a cycle.
+                        {% case "unknown root" %}
+                            A module points to an unknown Parent Module.
                         {% case "invalid location xpath" %}
                             Case List has invalid location reference <code>{{ error.column.field_property}}</code>.
                             Details: {{ error.details }}

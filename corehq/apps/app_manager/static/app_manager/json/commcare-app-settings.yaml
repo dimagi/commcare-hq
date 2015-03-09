@@ -134,6 +134,7 @@
   widget: bool
   default: false
   since: '2.8'
+  preview: true
 
 - id: translation_strategy
   name: 'Translations Strategy'
