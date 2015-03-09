@@ -62,6 +62,19 @@ def handle(verified_contact, text, msg=None):
     return True
 
 
+def fake_sms(user, text):
+    """
+    Don't use this with a real user
+    """
+    if not user.phone_number:
+        raise ValueError("User does not have a phone number")
+    if not user.get_verified_number():
+        user.save_verified_number(user.domain, user.phone_number, True, None)
+    domain_obj = Domain.get_by_name(user.domain)
+    parser = StockReportParser(domain_obj, user.get_verified_number())
+    process(user.domain, parser.parse(text.lower()))
+
+
 def process(domain, data):
     import pprint
     logger.debug(pprint.pformat(data))
