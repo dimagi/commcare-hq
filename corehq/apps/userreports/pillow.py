@@ -69,7 +69,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
             # tables
             for table in self.tables:
                 table.delete(changes_dict['doc'])
-        super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
+        return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
 
     def change_transport(self, doc):
         for table in self.tables:
