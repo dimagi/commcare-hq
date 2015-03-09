@@ -59,7 +59,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
+from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -4186,24 +4186,6 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
     app = cls.wrap(app)
     return app
 
-EXAMPLE_DOMAIN = 'example'
-
-
-def _get_or_create_app(app_id):
-    if app_id == "example--hello-world":
-        try:
-            app = Application.get(app_id)
-        except ResourceNotFound:
-            app = Application.wrap(fixtures.hello_world_example)
-            app._id = app_id
-            app.domain = EXAMPLE_DOMAIN
-            app.save()
-            return _get_or_create_app(app_id)
-        return app
-    else:
-        return get_app(None, app_id)
-
-
 str_to_cls = {
     "Application": Application,
     "Application-Deleted": Application,
@@ -4215,7 +4197,7 @@ str_to_cls = {
 def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
-        source = _get_or_create_app(app_id)
+        source = get_app(None, app_id)
         src_dom = source['domain']
         if validate_source_domain:
             validate_source_domain(src_dom)
