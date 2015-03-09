@@ -1,21 +1,21 @@
 import json
 import os
 import tempfile
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from dimagi.utils.decorators.memoized import memoized
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
+
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.app_manager.models import get_apps_in_domain
-from corehq import Session, ConfigurableReport
-from corehq import toggles
+from corehq import ConfigurableReport, privileges, Session, toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -40,11 +40,15 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+from django_prbac.decorators import requires_privilege_raise404
+
 from dimagi.utils.web import json_response
+from dimagi.utils.decorators.memoized import memoized
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -75,8 +79,10 @@ def create_report(request, domain):
 
 
 class ReportBuilderView(TemplateView):
+
     @cls_to_view_login_and_domain
     @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
+    @method_decorator(requires_privilege_raise404(privileges.REPORT_BUILDER))
     def dispatch(self, request, domain, **kwargs):
         self.domain = domain
         return super(ReportBuilderView, self).dispatch(request, domain, **kwargs)
