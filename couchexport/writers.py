@@ -457,9 +457,7 @@ class HtmlExportWriter(OnDiskExportWriter):
 
             table_writer = self.tables[index]
             self.file.write(render_to_string(
-                "couchexport/html_export.html", {"section": "table_begin", "name": index}
-                # TODO: Should name actually be name?
-                #       Existing behavior uses index
+                "couchexport/html_export.html", {"section": "table_begin", "name": name}
             ).encode("utf-8"))
 
             for line in table_writer.get_file():
