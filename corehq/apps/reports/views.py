@@ -496,10 +496,6 @@ class AddSavedReportConfigView(View):
         if not self.saved_report_config_form.is_valid():
             return HttpResponseBadRequest()
 
-        user_configs = ReportConfig.by_domain_and_owner(domain, self.user_id)
-        if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
-            return HttpResponseBadRequest()
-
         to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
         try:
             POST['start_date'] = to_date(POST['start_date'])
@@ -548,7 +544,11 @@ class AddSavedReportConfigView(View):
     @property
     @memoized
     def saved_report_config_form(self):
-        return SavedReportConfigForm(self.domain, json.loads(self.request.body))
+        return SavedReportConfigForm(
+            self.domain,
+            self.user_id,
+            json.loads(self.request.body)
+        )
 
     @property
     def user_id(self):

@@ -3,14 +3,37 @@ from django.core.validators import MinLengthValidator
 from corehq.apps.style.forms.fields import MultiEmailField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from .models import ReportNotification
+from .models import (
+    ReportConfig,
+    ReportNotification,
+)
 
 
 class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
+    _id = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain, user_id, *args, **kwargs):
+        self.domain = domain
+        self.user_id = user_id
         super(SavedReportConfigForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        name = self.cleaned_data['name']
+        _id = self.cleaned_data['_id']
+
+        user_configs = ReportConfig.by_domain_and_owner(self.domain, self.user_id)
+        if not _id and name in [c.name for c in user_configs]:
+            raise forms.ValidationError(
+                "Invalid name=%(name)s, _id=%(_id)s" % {
+                    'name': name,
+                    '_id': _id,
+                }
+            )
+
 
 
 class ScheduledReportForm(forms.Form):
