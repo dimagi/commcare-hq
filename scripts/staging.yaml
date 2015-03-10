@@ -58,6 +58,7 @@ branches:
   - balance-icon # Daniel 3/4
   - kill-referrals  # cz 3/6
   - loc-type-stock-rates  # Ethan 3/6
+  - email-ucr # Nick P 3/10
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
