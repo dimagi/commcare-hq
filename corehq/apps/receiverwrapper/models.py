@@ -149,6 +149,7 @@ class RegisterGenerator(object):
             generator_class,
             is_default=self.is_default
         )
+        return generator_class
 
     @classmethod
     def generator_class_by_repeater_format(cls, repeater_class, format_name):

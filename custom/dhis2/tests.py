@@ -451,49 +451,35 @@ class TaskTest(SimpleTestCase):
 
 class PayloadGeneratorTest(SimpleTestCase):
 
-    def setUp(self):
-        # Mock like Charlie Hebdo
-
-        class Settings(object):
-            dhis2 = {'host': None, 'username': None, 'password': None, 'top_org_unit_name': None}
-
-        self.Dhis2SettingsPatch = patch('dhis2.payload_generators.Dhis2Settings')
-        self.Dhis2SettingsPatch.for_domain.return_value = Settings()
-
-        cases_mock = Mock()
-        case_mock = Mock()
-        case_mock.type = CASE_TYPE
-        cases_mock.iterator.side_effect = (case_mock for _ in (1,))  # Generator that returns one case mock
-
-        self.CommCareCasePatch = patch('dhis2.payload_generators.CommCareCase')
-        self.CommCareCasePatch.get_by_xform_id.return_value = cases_mock
-
-        self.push_case_patch = patch('dhis2.payload_generators.push_case')
-
-        self.Dhis2SettingsPatch.start()
-        self.CommCareCasePatch.start()
-        self.push_case_patch.start()
-
-    def tearDown(self):
-        self.Dhis2SettingsPatch.stop()
-        self.CommCareCasePatch.stop()
-        self.push_case_patch.stop()
-
     def test_get_payload_ignores_unknown_form(self):
         """
         get_payload should raise IgnoreDocument on unknown form XMLNS
         """
-        form_mock = {'xmlns': 'unknown'}
-        repeater = FormRepeaterDhis2EventPayloadGenerator(None)
+        form_mock = {'xmlns': 'unknown', 'domain': 'test-domain'}
+        payload_generator = FormRepeaterDhis2EventPayloadGenerator(None)
         with self.assertRaises(IgnoreDocument):
-            repeater.get_payload(None, form_mock)
+            payload_generator.get_payload(None, form_mock)
 
-    def test_get_payload_ignores_registration(self):
+    @patch('custom.dhis2.payload_generators.push_case')
+    @patch('casexml.apps.case.models.CommCareCase')
+    @patch('custom.dhis2.payload_generators.Dhis2Settings')
+    def test_get_payload_ignores_registration(self, Dhis2SettingsPatch, CommCareCasePatch, push_case):
         """
         get_payload should raise IgnoreDocument given a registration form
         """
+        case_mock = Mock()
+        case_mock.type = CASE_TYPE
+        cases_mock = Mock()
+        cases_mock.iterator.return_value = [case_mock]
+        CommCareCasePatch.get_by_xform_id.return_value = cases_mock
+
+        class Settings(object):
+            dhis2 = {'host': 'foo', 'username': 'foo', 'password': 'foo', 'top_org_unit_name': 'foo'}
+        Dhis2SettingsPatch.for_domain.return_value = Settings()
+
         form_mock = MagicMock()
         form_mock.__getitem__.return_value = REGISTER_CHILD_XMLNS
-        repeater = FormRepeaterDhis2EventPayloadGenerator(None)
+
+        payload_generator = FormRepeaterDhis2EventPayloadGenerator(None)
         with self.assertRaises(IgnoreDocument):
-            repeater.get_payload(None, form_mock)
+            payload_generator.get_payload(None, form_mock)
