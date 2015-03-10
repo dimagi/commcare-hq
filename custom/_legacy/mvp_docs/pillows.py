@@ -69,10 +69,12 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         try:
-            indicator_form = IndicatorXForm.get_or_create_from_dict(doc_dict)[0]
+            indicator_form = IndicatorXForm.wrap_with_right_rev(doc_dict)
             indicator_form.update_indicators_in_bulk(
-                form_indicator_defs, logger=pillow_eval_logging
+                form_indicator_defs, logger=pillow_eval_logging,
+                save_on_update=False
             )
+            indicator_form.save()
         except Exception as e:
             pillow_eval_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
@@ -81,6 +83,7 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
                     'error': e,
                 },
             )
+            raise
 
 
 class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
@@ -103,10 +106,12 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         try:
-            indicator_case = IndicatorCase.get_or_create_from_dict(doc_dict)[0]
+            indicator_case = IndicatorCase.wrap_with_right_rev(doc_dict)
             indicator_case.update_indicators_in_bulk(
-                case_indicator_defs, logger=pillow_eval_logging
+                case_indicator_defs, logger=pillow_eval_logging,
+                save_on_update=False
             )
+            indicator_case.save()
         except Exception as e:
             pillow_eval_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
@@ -115,6 +120,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
                     'error': e,
                 },
             )
+            raise
 
         # Now Update Data From Case to All Related Xforms (ewwww)
         xform_ids = doc_dict.get('xform_ids', [])
@@ -124,7 +130,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
         for xform_id in xform_ids:
             try:
                 xform_dict = XFormInstance.get_db().get(xform_id)
-                xform_doc = IndicatorXForm.get_or_create_from_dict(xform_dict)[0]
+                xform_doc = IndicatorXForm.wrap_with_right_rev(xform_dict)
             except ResourceNotFound:
                 pillow_eval_logging.error(
                     "Could not find an XFormInstance with id %(xform_id)s "
@@ -149,4 +155,6 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
             xform_doc.update_indicators_in_bulk(
                 related_xform_defs,
                 logger=pillow_eval_logging,
+                save_on_update=False
             )
+            xform_doc.save()
