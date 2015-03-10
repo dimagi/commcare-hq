@@ -16,14 +16,14 @@ import settings
 def send_supervision_reminder(domain, date):
     sp_ids = set()
     for user in CommCareUser.by_domain(domain):
-        if user.is_active and user.location and user.location.location_type == 'FACILITY':
-            sp = SupplyPointCase.get_by_location(user.location)
-            if sp and not SupplyPointStatus.objects.filter(supply_point=sp._id,
-                                                           status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
-                                                           status_date__gte=date).exists():
+        location = user.location
+        if user.is_active and location and location.location_type == 'FACILITY':
+            if not SupplyPointStatus.objects.filter(supply_point=location._id,
+                                                    status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
+                                                    status_date__gte=date).exists():
                 if user.get_verified_number():
-                        send_sms_to_verified_number(user.get_verified_number(), REMINDER_SUPERVISION)
-                        sp_ids.add(sp._id)
+                    send_sms_to_verified_number(user.get_verified_number(), REMINDER_SUPERVISION)
+                    sp_ids.add(location._id)
     update_statuses(sp_ids, SupplyPointStatusTypes.SUPERVISION_FACILITY, SupplyPointStatusValues.REMINDER_SENT)
 
 

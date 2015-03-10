@@ -21,8 +21,8 @@ def send_soh_reminder(domain, date):
             if sp and not StockTransaction.objects.filter(case_id=sp._id, report__date__gte=date,
                                                           type='stockonhand').exists():
                 if user.get_verified_number():
-                        send_sms_to_verified_number(user.get_verified_number(), REMINDER_STOCKONHAND)
-                        sp_ids.add(sp._id)
+                    send_sms_to_verified_number(user.get_verified_number(), REMINDER_STOCKONHAND)
+                    sp_ids.add(sp._id)
     update_statuses(sp_ids, SupplyPointStatusTypes.SOH_FACILITY, SupplyPointStatusValues.REMINDER_SENT)
 
 

@@ -2,14 +2,13 @@ from functools import partial
 
 from celery.schedules import crontab
 from celery.task import periodic_task
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
     DeliveryGroups
 from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, update_statuses, \
     REMINDER_R_AND_R_DISTRICT
-from custom.ilsgateway.utils import get_current_group, send_for_day, get_groups
+from custom.ilsgateway.utils import send_for_day, get_groups
 import settings
 
 
@@ -25,14 +24,14 @@ def send_ror_reminder(domain, date, loc_type='FACILITY'):
     current_group = DeliveryGroups().current_submitting_group(date.month)
     sp_ids = set()
     for user in CommCareUser.by_domain(domain):
-        if user.is_active and user.location and user.location.location_type == loc_type:
-            sp = SupplyPointCase.get_by_location(user.location)
-            if current_group in get_groups(sp.location.metadata.get('groups', None)) \
-                    and not SupplyPointStatus.objects.filter(supply_point=sp._id, status_type=status_type,
+        location = user.location
+        if user.is_active and location and location.location_type == loc_type:
+            if current_group in get_groups(location.metadata.get('groups', None)) \
+                    and not SupplyPointStatus.objects.filter(supply_point=location._id, status_type=status_type,
                                                              status_date__gte=date).exists():
                 if user.get_verified_number():
                     send_sms_to_verified_number(user.get_verified_number(), sms_text)
-                    sp_ids.add(sp._id)
+                    sp_ids.add(location._id)
     update_statuses(sp_ids, status_type, SupplyPointStatusValues.REMINDER_SENT)
 
 facility_partial = partial(send_for_day, cutoff=5, f=send_ror_reminder)
