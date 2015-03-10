@@ -20,7 +20,7 @@ class FormQuestionOption(JsonObject):
 
 class FormQuestion(JsonObject):
     label = StringProperty()
-    translations = DictProperty()
+    translations = DictProperty(exclude_if_none=True)
     tag = StringProperty()
     type = StringProperty(choices=VELLUM_TYPES.keys())
     value = StringProperty()

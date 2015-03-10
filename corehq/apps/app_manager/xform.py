@@ -762,7 +762,7 @@ class XForm(WrappedNode):
         return self.translations().keys()
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False):
+                      include_groups=False, include_translations=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -793,13 +793,14 @@ class XForm(WrappedNode):
 
             question = {
                 "label": self.get_label_text(node, langs),
-                "translations": self.get_label_translations(node, langs),
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,
                 "group": group,
                 "type": data_type,
             }
+            if include_translations:
+                question["translations"] = self.get_label_translations(node, langs)
 
             if items is not None:
                 options = []
@@ -809,11 +810,13 @@ class XForm(WrappedNode):
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
                         raise XFormException("<item> (%r) has no <value>" % translation)
-                    options.append({
+                    option = {
                         'label': translation,
-                        'translations': self.get_label_translations(item, langs),
                         'value': value
-                    })
+                    }
+                    if include_translations:
+                        option['translations'] = self.get_label_translations(item, langs)
+                    options.append(option)
                 question['options'] = options
             questions.append(question)
 
@@ -828,16 +831,18 @@ class XForm(WrappedNode):
                     ][0]
                 except IndexError:
                     matching_repeat_context = None
-                questions.append({
+                question = {
                     "label": path,
-                    "translations": {},
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
-                })
+                }
+                if include_translations:
+                    question["translations"] = {}
+                questions.append(question)
 
         return questions
 
