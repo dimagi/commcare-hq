@@ -717,18 +717,6 @@ class CaseReportMixin(object):
         return OpenCloseFilter.case_status(self.request_params)
 
     def get_rows(self, datespan):
-
-        def get_awc_filter(awcs):
-            return get_nested_terms_filter("awc_name.#value", awcs)
-
-        def get_gp_filter(gp):
-            owner_ids = [user._id for user in self.users
-                         if getattr(user, 'user_data', {}).get('gp') in self.gp]
-            return es_filters.term("owner_id", owner_ids)
-
-        def get_block_filter(block):
-            return es_filters.term("block_name.#value", block.lower())
-
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
@@ -743,14 +731,17 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
-        # TODO for consistency, we could always filter on awc using
-        # get_matching_awcs from the NewHealthStatusReport
-        if self.awcs:
-            query = query.filter(get_awc_filter(self.awcs))
-        elif self.gp:
-            query = query.filter(get_gp_filter(self.gp))
-        elif self.block:
-            query = query.filter(get_block_filter(self.block))
+        def get_owner_filter(field, selected):
+            owners = [user._id for user in self.users
+                      if getattr(user, 'user_data', {}).get(field) in selected]
+            return es_filters.term("owner_id", owners)
+
+        # TODO do we still need get_matching_awcs in the New HSR?
+        for region in ('awcs', 'gp', 'block'):
+            selected = getattr(self, region, [])
+            if selected:
+                query = query.filter(get_owner_filter(region, selected))
+                break
 
         result = query.run()
 
