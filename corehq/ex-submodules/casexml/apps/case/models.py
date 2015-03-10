@@ -349,14 +349,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
         return json
 
-    def get_json(self, lite=False, sanitize=False):
-        """
-        Returns a JSON representation of a case
-
-        Keyword arguments:
-        lite - include reverse indices (default False)
-        sanitize - replace None with "", useful for passing json to mobile (default False)
-        """
+    def get_json(self, lite=False):
         ret = {
             # referrals and actions excluded here
             "domain": self.domain,
@@ -391,15 +384,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             ret.update({
                 "reverse_indices": self.get_index_map(True),
             })
-        if sanitize:
-            def _sanitize(props):
-                for key, val in props.items():
-                    if val is None:
-                        props[key] = ''
-                    elif isinstance(val, dict):
-                        props[key] = _sanitize(val)
-                return props
-            ret = _sanitize(ret)
         return ret
 
     @memoized

@@ -75,7 +75,19 @@ class CaseAPIResult(object):
 
     @property
     def case_json(self):
-        return self.couch_doc.get_json(lite=self.lite, sanitize=self.sanitize)
+        json = self.couch_doc.get_json(lite=self.lite)
+        if self.sanitize:
+            # This ensures that any None value will be encoded as "" instead of null
+            # This fixes http://manage.dimagi.com/default.asp?158655 because mobile chokes on null
+            def _sanitize(props):
+                for key, val in props.items():
+                    if val is None:
+                        props[key] = ''
+                    elif isinstance(val, dict):
+                        props[key] = _sanitize(val)
+                return props
+            json = _sanitize(json)
+        return json
 
     def to_json(self):
         return self.id if self.id_only else self.case_json
