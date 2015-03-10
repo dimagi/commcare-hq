@@ -90,8 +90,11 @@ def location_fixture_generator(user, version, last_sync=None):
     else:
         root_locations = filter(lambda loc: loc.parent_id is None, location_db.by_id.values())
 
-    _append_children(root, location_db, root_locations, location_type_lookup)
-    return [root]
+    if not root_locations:
+        return []
+    else:
+        _append_children(root, location_db, root_locations, location_type_lookup)
+        return [root]
 
 
 def _location_footprint(locations):
