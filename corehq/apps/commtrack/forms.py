@@ -162,7 +162,7 @@ class LocationTypeStockLevels(forms.Form):
         emergency = cleaned_data.get('emergency_level')
         understock = cleaned_data.get('understock_threshold')
         overstock = cleaned_data.get('overstock_threshold')
-        if not emergency < understock < overstock:
+        if not self.errors and not (emergency < understock < overstock):
             raise forms.ValidationError(
                 "The Emergency Level must be less than the Low Stock Level, "
                 "which much must be less than the Overstock Level."
