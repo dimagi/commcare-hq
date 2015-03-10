@@ -83,7 +83,7 @@ class LocationType(models.Model):
 
     objects = LocationTypeManager()
 
-    def populate_stock_levels(self):
+    def _populate_stock_levels(self):
         from corehq.apps.commtrack.models import CommtrackConfig
         ct_config = CommtrackConfig.for_domain(self.domain)
         if (
@@ -101,7 +101,7 @@ class LocationType(models.Model):
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
-        self.populate_stock_levels()
+        self._populate_stock_levels()
         return super(LocationType, self).save(*args, **kwargs)
 
     def __unicode__(self):
