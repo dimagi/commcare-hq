@@ -926,20 +926,25 @@ class XForm(WrappedNode):
 
         return meta_blocks
 
-    def add_usercase(self, form):
-        from corehq.apps.app_manager.util import split_path
-
-        usercase_path = 'usercase/'
-        actions = form.active_actions()
-
+    def _add_usercase_bind(self, usercase_path):
         self.add_bind(
             nodeset=usercase_path + 'case/@case_id',
             calculate=SESSION_USERCASE_ID,
         )
 
+    def add_usercase(self, form):
+        from corehq.apps.app_manager.util import split_path
+
+        usercase_path = 'usercase/'
+        actions = form.active_actions()
+        usercase_bound = False
+
         if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
             usercase_updates = {k[5:]: v for k, v in actions['update_case'].update.items() if k.startswith('user:')}
             if usercase_updates:
+                if not usercase_bound:
+                    self._add_usercase_bind(usercase_path)
+                    usercase_bound = True
                 usercase_block = _make_elem('{x}usercase')
                 case_block = CaseBlock(self, usercase_path)
                 case_block.add_update_block(usercase_updates)
@@ -949,6 +954,9 @@ class XForm(WrappedNode):
         if 'case_preload' in actions:
             self.add_casedb()
             usercase_preloads = {k: v[5:] for k, v in actions['case_preload'].preload.items() if v.startswith('user:')}
+            if usercase_preloads and not usercase_bound:
+                self._add_usercase_bind(usercase_path)
+                usercase_bound = True
             for nodeset, property_ in usercase_preloads.items():
                 parent_path, property_ = split_path(property_)
                 property_xpath = {
@@ -966,10 +974,7 @@ class XForm(WrappedNode):
         from corehq.apps.app_manager.util import split_path
 
         usercase_path = 'usercase/'
-        self.add_bind(
-            nodeset=usercase_path + 'case/@case_id',
-            calculate=SESSION_USERCASE_ID,
-        )
+        usercase_bound = False
 
         for action in form.actions.load_update_cases:
             session_case_id = CaseIDXPath(session_var(action.case_session_var))
@@ -980,6 +985,9 @@ class XForm(WrappedNode):
             if action.preload:
                 self.add_casedb()
                 usercase_preloads = {k[5:]: v for k, v in action.preload.items() if k.startswith('user:')}
+                if usercase_preloads and not usercase_bound:
+                    self._add_usercase_bind(usercase_path)
+                    usercase_bound = True
                 for property_, nodeset in usercase_preloads.items():
                     parent_path, property_ = split_path(property_)
                     property_xpath = {
@@ -996,6 +1004,9 @@ class XForm(WrappedNode):
             if action.case_properties:
                 usercase_updates = {k[5:]: v for k, v in action.case_properties.items() if k.startswith('user:')}
                 if usercase_updates:
+                    if not usercase_bound:
+                        self._add_usercase_bind(usercase_path)
+                        usercase_bound = True
                     usercase_block = _make_elem('{x}usercase')
                     case_block = CaseBlock(self, usercase_path)
                     case_block.add_update_block(usercase_updates)

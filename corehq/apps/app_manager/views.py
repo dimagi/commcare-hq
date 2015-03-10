@@ -839,18 +839,18 @@ def get_module_view_context_and_template(app, module):
             'detail_label': _('Case Detail'),
             'type': 'case',
             'model': 'case',
-            # TODO: Why properties, and not case_properties? Where in the JS is "properties" used?
-            # Will it be OK to merge usercase properties into this?
-            'properties': sorted(builder.get_properties(case_type)),
             'sort_elements': module.case_details.short.sort_elements,
             'short': module.case_details.short,
             'long': module.case_details.long,
             'child_case_types': child_case_types,
         }
-        # call_center_config = Domain.get_by_name(app.domain).call_center_config
-        # if call_center_config.enabled:
-        #     usercase_type = call_center_config.case_type
-        #     item['usercase_properties'] = sorted(builder.get_properties(usercase_type))
+        call_center_config = Domain.get_by_name(app.domain).call_center_config
+        if call_center_config.enabled:
+            user_case_type = call_center_config.case_type
+            item['properties'] = sorted(builder.get_properties(case_type, usercasetype=user_case_type) |
+                                        builder.get_properties(user_case_type, usercasetype=user_case_type))
+        else:
+            item['properties'] = sorted(builder.get_properties(case_type))
 
         if isinstance(module, AdvancedModule):
             details = [item]
