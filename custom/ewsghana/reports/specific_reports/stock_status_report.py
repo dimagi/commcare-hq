@@ -280,11 +280,13 @@ class StockStatus(MultiReport):
     def report_config(self):
         program = self.request.GET.get('filter_by_program')
         products = self.request.GET.getlist('filter_by_product')
+        location_id = self.request.GET.get('location_id')
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id'),
+            location_id=location_id if location_id else SQLLocation.objects.filter(
+                domain=self.domain, location_type='country')[0].location_id,
             program=program if program != ALL_OPTION else None,
             products=products if products and products[0] != ALL_OPTION else [],
             report_type=self.request.GET.get('report_type', None)

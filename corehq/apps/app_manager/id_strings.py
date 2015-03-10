@@ -176,9 +176,21 @@ def detail(module, detail_type):
     return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
-def menu(module):
+def menu_id(module):
     put_in_root = getattr(module, 'put_in_root', False)
-    return ROOT if put_in_root else u"m{module.id}".format(module=module)
+    if put_in_root:
+        # handle circular calls, if bad module workflow setup
+        return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
+    else:
+        return u"m{module.id}".format(module=module)
+
+
+def menu_root(module):
+    put_in_root = getattr(module, 'put_in_root', False)
+    if not put_in_root and getattr(module, 'root_module', False):
+        return menu_id(module.root_module)
+    else:
+        return None
 
 
 def form_command(form):
