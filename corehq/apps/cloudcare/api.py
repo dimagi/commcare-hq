@@ -48,11 +48,12 @@ class CaseAPIResult(object):
     The result of a case API query. Useful for abstracting out the difference
     between an id-only representation and a full_blown one.
     """
-    def __init__(self, id=None, couch_doc=None, id_only=False, lite=True):
+    def __init__(self, id=None, couch_doc=None, id_only=False, lite=True, sanitize=True):
         self._id = id
         self._couch_doc = couch_doc
         self.id_only = id_only
         self.lite = lite
+        self.sanitize = sanitize
 
     def __getitem__(self, key):
         if key == 'case_id':
@@ -74,7 +75,19 @@ class CaseAPIResult(object):
 
     @property
     def case_json(self):
-        return self.couch_doc.get_json(lite=self.lite)
+        json = self.couch_doc.get_json(lite=self.lite)
+        if self.sanitize:
+            # This ensures that any None value will be encoded as "" instead of null
+            # This fixes http://manage.dimagi.com/default.asp?158655 because mobile chokes on null
+            def _sanitize(props):
+                for key, val in props.items():
+                    if val is None:
+                        props[key] = ''
+                    elif isinstance(val, dict):
+                        props[key] = _sanitize(val)
+                return props
+            json = _sanitize(json)
+        return json
 
     def to_json(self):
         return self.id if self.id_only else self.case_json
