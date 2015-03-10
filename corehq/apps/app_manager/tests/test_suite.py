@@ -301,6 +301,15 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         form.form_filter = "./edd = '123'"
         self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
+    def test_module_filter(self):
+        """
+        Ensure module filter gets added correctly
+        """
+        app = Application.wrap(self.get_json('suite-advanced'))
+        module = app.get_module(1)
+        module.module_filter = "/mod/filter = '123'"
+        self.assertXmlEqual(self.get_xml('module-filter'), app.create_suite())
+
     def test_tiered_select_with_advanced_module_as_parent(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 

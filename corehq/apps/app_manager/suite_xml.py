@@ -357,6 +357,7 @@ class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
 
     root = StringField('@root')
+    relevant = XPathField('@relevant')
     commands = NodeListField('command', Command)
 
 
@@ -1696,6 +1697,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 }
                 if self.id_strings.menu_root(module):
                     menu_kwargs['root'] = self.id_strings.menu_root(module)
+
+                if getattr(module, 'module_filter', None):
+                    menu_kwargs['relevant'] = module.module_filter
+
                 menu = Menu(**menu_kwargs)
 
                 def get_commands():
