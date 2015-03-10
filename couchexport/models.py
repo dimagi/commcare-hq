@@ -52,6 +52,7 @@ class Format(object):
     XLS = "xls"
     XLS_2007 = "xlsx"
     HTML = "html"
+    ZIPPED_HTML = "zipped-html"
     JSON = "json"
     UNZIPPED_CSV = 'unzipped-csv'
 
@@ -70,6 +71,9 @@ class Format(object):
                    HTML: {"mimetype": "text/html; charset=utf-8",
                           "extension": "html",
                           "download": False},
+                   ZIPPED_HTML: {"mimetype": "application/zip",
+                                 "extension": "zip",
+                                 "download": True},
                    JSON: {"mimetype": "application/json",
                           "extension": "json",
                           "download": False},

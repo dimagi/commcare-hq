@@ -111,6 +111,7 @@ def get_writer(format):
         return {
             Format.CSV: writers.CsvExportWriter,
             Format.HTML: writers.HtmlExportWriter,
+            Format.ZIPPED_HTML: writers.ZippedHtmlExportWriter,
             Format.JSON: writers.JsonExportWriter,
             Format.XLS: writers.Excel2003ExportWriter,
             Format.XLS_2007: writers.Excel2007ExportWriter,
