@@ -410,6 +410,83 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
 
+class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
+    "TODO - Add Case-dependency tests"
+
+    def __init__(self, args, **kwargs):
+        self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        self.module_0 = self.app.add_module(AdvancedModule.new_module('parent', None))
+        self.module_0.unique_id = 'm1'
+        self.module_1 = self.app.add_module(AdvancedModule.new_module("Untitled Module", None))
+        self.module_1.unique_id = 'm2'
+
+        for m_id in range(2):
+            self.app.new_form(m_id, "Form", None)
+        super(AdvancedModuleAsChildTest, self).__init__(args, **kwargs)
+
+    def test_basic_workflow(self):
+        # make module_1 as submenu to module_0
+        self.module_1.root_module_id = self.module_0.unique_id
+        XML = """
+        <partial>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+          </menu>
+          <menu root="m0" id="m1">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
+
+    def test_workflow_with_put_in_root(self):
+        # make module_1 as submenu to module_0
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_1.put_in_root = True
+
+        XML = """
+        <partial>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+          </menu>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
+
+    def test_deleted_parent(self):
+        self.module_1.root_module_id = "unknownmodule"
+
+        cycle_error = {
+            'type': 'unknown root',
+        }
+        errors = self.app.validate_app()
+        self.assertIn(cycle_error, errors)
+
+    def test_circular_relation(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.root_module_id = self.module_1.unique_id
+        cycle_error = {
+            'type': 'root cycle',
+        }
+        errors = self.app.validate_app()
+        self.assertIn(cycle_error, errors)
+
+
 class RegexTest(SimpleTestCase):
 
     def testRegex(self):

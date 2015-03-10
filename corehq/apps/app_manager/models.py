@@ -59,7 +59,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property
 from corehq.apps.app_manager import current_builds, app_strings, remote_app
-from corehq.apps.app_manager import fixtures, suite_xml, commcare_settings
+from corehq.apps.app_manager import suite_xml, commcare_settings
 from corehq.apps.app_manager.util import split_path, save_xform, get_correct_app_class, ParentCasePropertyBuilder
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -2020,6 +2020,7 @@ class AdvancedModule(ModuleBase):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     has_schedule = BooleanProperty()
+    root_module_id = StringProperty()
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2155,6 +2156,11 @@ class AdvancedModule(ModuleBase):
     def rename_lang(self, old_lang, new_lang):
         super(AdvancedModule, self).rename_lang(old_lang, new_lang)
         self.case_list.rename_lang(old_lang, new_lang)
+
+    @property
+    def root_module(self):
+        if self.root_module_id:
+            return self._parent.get_module_by_unique_id(self.root_module_id)
 
     def requires_case_details(self):
         if self.case_list.show:
@@ -3475,12 +3481,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'value': 'sync',
             }
 
-        if domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
-            for logo_name in self.logo_refs:
-                if logo_name in ANDROID_LOGO_PROPERTY_MAPPING:
-                    app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
-                        'value': self.logo_refs[logo_name]['path'],
-                    }
+        logo_refs = [logo_name for logo_name in self.logo_refs if logo_name in ANDROID_LOGO_PROPERTY_MAPPING]
+        if logo_refs and domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
+            for logo_name in logo_refs:
+                app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
+                    'value': self.logo_refs[logo_name]['path'],
+                }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
@@ -3851,17 +3857,28 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
 
-        if self._has_parent_child_selection_cycle({m.unique_id:m for m in self.get_modules()}):
+        modules_dict = {m.unique_id: m for m in self.get_modules()}
+
+        def _parent_select_fn(module):
+            if hasattr(module, 'parent_select') and module.parent_select.active:
+                return module.parent_select.module_id
+
+        if self._has_dependency_cycle(modules_dict, _parent_select_fn):
             errors.append({'type': 'parent cycle'})
+
+        errors.extend(self._child_module_errors(modules_dict))
 
         if not errors:
             errors = super(Application, self).validate_app()
         return errors
 
-    def _has_parent_child_selection_cycle(self, modules):
+    def _has_dependency_cycle(self, modules, neighbour_id_fn):
         """
+        Detect dependency cycles given modules and the neighbour_id_fn
+
         :param modules: A mapping of module unique_ids to Module objects
-        :return: True if there is a cycle in the parent-child selection graph
+        :neighbour_id_fn: function to get the neibour module unique_id
+        :return: True if there is a cycle in the module relationship graph
         """
         visited = set()
         completed = set()
@@ -3872,10 +3889,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     return False
                 return True
             visited.add(m.id)
-            if hasattr(m, 'parent_select') and m.parent_select.active:
-                parent = modules.get(m.parent_select.module_id, None)
-                if parent != None and cycle_helper(parent):
-                    return True
+            parent = modules.get(neighbour_id_fn(m), None)
+            if parent is not None and cycle_helper(parent):
+                return True
             completed.add(m.id)
             return False
         for module in modules.values():
@@ -3883,6 +3899,21 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 return True
         return False
 
+    def _child_module_errors(self, modules_dict):
+        module_errors = []
+
+        def _root_module_fn(module):
+            if hasattr(module, 'root_module_id'):
+                return module.root_module_id
+
+        if self._has_dependency_cycle(modules_dict, _root_module_fn):
+            module_errors.append({'type': 'root cycle'})
+
+        module_ids = set([m.unique_id for m in self.get_modules()])
+        root_ids = set([_root_module_fn(m) for m in self.get_modules() if _root_module_fn(m) is not None])
+        if not root_ids.issubset(module_ids):
+            module_errors.append({'type': 'unknown root'})
+        return module_errors
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
@@ -4155,24 +4186,6 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
     app = cls.wrap(app)
     return app
 
-EXAMPLE_DOMAIN = 'example'
-
-
-def _get_or_create_app(app_id):
-    if app_id == "example--hello-world":
-        try:
-            app = Application.get(app_id)
-        except ResourceNotFound:
-            app = Application.wrap(fixtures.hello_world_example)
-            app._id = app_id
-            app.domain = EXAMPLE_DOMAIN
-            app.save()
-            return _get_or_create_app(app_id)
-        return app
-    else:
-        return get_app(None, app_id)
-
-
 str_to_cls = {
     "Application": Application,
     "Application-Deleted": Application,
@@ -4184,7 +4197,7 @@ str_to_cls = {
 def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
-        source = _get_or_create_app(app_id)
+        source = get_app(None, app_id)
         src_dom = source['domain']
         if validate_source_domain:
             validate_source_domain(src_dom)

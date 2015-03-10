@@ -29,9 +29,7 @@ class TDHEnrollChildFluff(fluff.IndicatorDocument):
     save_direct_to_sql = True
 
     case_id = flat_field(lambda f: f.form['case_rec_child']['case']['@case_id'])
-    name = flat_field(lambda f: f.form.get('demographics', {}).get('name', ''))
     sex = flat_field(lambda f: f.form.get('demographics', {}).get('sex', ''))
-    mother_name = flat_field(lambda f: f.form.get('demographics', {}).get('mother_name', ''))
     village = flat_field(lambda f: f.form.get('demographics', {}).get('village', ''))
     last_visit_date = flat_field(lambda f: f.form['case_rec_child']['case']['update'].get('last_visit_date', ''))
     dob = flat_field(lambda f: f.form.get('age_questions', {}).get('dob', ''))
@@ -54,6 +52,8 @@ class TDHInfantClassificationFluff(fluff.IndicatorDocument):
     tablet_login_id = flat_field(lambda f: f.form['meta']['username'])
     author_id = flat_field(lambda f: f.form.get('selected_user_pin', ''))
     author_name = flat_field(lambda f: f.form.get('selected_username', ''))
+    consultation_type = flat_field(lambda f: f.form.get('consultation_type', ''))
+    other_comments = flat_field(lambda f: f.form.get('other_comments', ''))
     L_hfa = flat_field(lambda f: f.form.get('L_hfa', ''))
     L_wfa = flat_field(lambda f: f.form.get('L_wfa', ''))
     L_wfh = flat_field(lambda f: f.form.get('L_wfh', ''))
@@ -202,6 +202,8 @@ class TDHNewbornClassificationFluff(fluff.IndicatorDocument):
     tablet_login_id = flat_field(lambda f: f.form['meta']['username'])
     author_id = flat_field(lambda f: f.form.get('selected_user_pin', ''))
     author_name = flat_field(lambda f: f.form.get('selected_username', ''))
+    consultation_type = flat_field(lambda f: f.form.get('consultation_type', ''))
+    other_comments = flat_field(lambda f: f.form.get('other_comments', ''))
     L_hfa = flat_field(lambda f: f.form.get('L_hfa', ''))
     L_wfa = flat_field(lambda f: f.form.get('L_wfa', ''))
     L_wfh = flat_field(lambda f: f.form.get('L_wfh', ''))
@@ -361,6 +363,9 @@ class TDHChildClassificationFluff(fluff.IndicatorDocument):
     tablet_login_id = flat_field(lambda f: f.form['meta']['username'])
     author_id = flat_field(lambda f: f.form.get('selected_user_pin', ''))
     author_name = flat_field(lambda f: f.form.get('selected_username', ''))
+    consultation_type = flat_field(lambda f: f.form.get('consultation_type', ''))
+    number = flat_field(lambda f: f.form.get('consult_count', ''))
+    other_comments = flat_field(lambda f: f.form.get('other_comments', ''))
     L_hfa = flat_field(lambda f: f.form.get('L_hfa', ''))
     L_wfa = flat_field(lambda f: f.form.get('L_wfa', ''))
     L_wfh = flat_field(lambda f: f.form.get('L_wfh', ''))
@@ -504,14 +509,14 @@ class TDHChildClassificationFluff(fluff.IndicatorDocument):
 
     selected_user_id_and_name = flat_field(lambda f: f.form.get('selected_user_id_and_name', ''))
 
-    seriousness_anemie = flat_field(lambda f: f.form.get('seriousness_anemie', ''))
-    seriousness_danger = flat_field(lambda f: f.form.get('seriousness_danger', ''))
-    seriousness_diarrhee = flat_field(lambda f: f.form.get('seriousness_diarrhee', ''))
-    seriousness_fievre = flat_field(lambda f: f.form.get('seriousness_fievre', ''))
-    seriousness_malnutrition = flat_field(lambda f: f.form.get('seriousness_malnutrition', ''))
-    seriousness_oreille = flat_field(lambda f: f.form.get('seriousness_oreille', ''))
-    seriousness_toux = flat_field(lambda f: f.form.get('seriousness_toux', ''))
-    seriousness_vih = flat_field(lambda f: f.form.get('seriousness_vih', ''))
+    anemie = flat_field(lambda f: f.form.get('seriousness_anemie', ''))
+    danger = flat_field(lambda f: f.form.get('seriousness_danger', ''))
+    diarrhee = flat_field(lambda f: f.form.get('seriousness_diarrhee', ''))
+    fievre = flat_field(lambda f: f.form.get('seriousness_fievre', ''))
+    malnutrition = flat_field(lambda f: f.form.get('seriousness_malnutrition', ''))
+    oreille = flat_field(lambda f: f.form.get('seriousness_oreille', ''))
+    toux = flat_field(lambda f: f.form.get('seriousness_toux', ''))
+    vih = flat_field(lambda f: f.form.get('seriousness_vih', ''))
     sex = flat_field(lambda f: f.form.get('sex', ''))
     sex_loaded = flat_field(lambda f: f.form.get('sex_loaded', ''))
     signes_danger = flat_field(lambda f: f.form.get('signes_danger', ''))
@@ -735,6 +740,27 @@ class TDHInfantTreatmentFluff(fluff.IndicatorDocument):
         lambda f: f.form.get('treatments', {}).get('infection_grave', {}).get('infection_grave_treat_7', '')
         if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('infection_grave', {}) else '')
 
+    infection_grave_no_ref_title = flat_field(
+        lambda f: f.form.get('treatments', {}).get('infection_grave_no_ref', {})
+        .get('infection_grave_no_ref_title', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('infection_grave_no_ref', {}) else '')
+    infection_grave_no_ref_treat_0 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('infection_no_ref_grave', {})
+        .get('infection_no_ref_grave_treat_0', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('infection_grave_no_ref', {}) else '')
+    infection_grave_no_ref_treat_1 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('infection_no_ref_grave', {})
+        .get('infection_no_ref_grave_treat_1', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('infection_grave_no_ref', {}) else '')
+    infection_grave_no_ref_treat_2 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('infection_no_ref_grave', {})
+        .get('infection_no_ref_grave_treat_2', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('infection_grave_no_ref', {}) else '')
+    infection_grave_no_ref_treat_5 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('infection_no_ref_grave', {})
+        .get('infection_no_ref_grave_treat_5', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('infection_grave_no_ref', {}) else '')
+
     infection_locale_title = flat_field(
         lambda f: f.form.get('treatments', {}).get('infection_locale', {}).get('infection_locale_title', '')
         if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('infection_locale', {}) else '')
@@ -803,6 +829,19 @@ class TDHInfantTreatmentFluff(fluff.IndicatorDocument):
         lambda f: f.form.get('treatments', {}).get('pas_infection', {})
         .get('pas_infection_treat_1_help_0_prompt', '') if f.form.get('treatments', {}) and f.form.get(
             'treatments', {}).get('pas_infection', {}) else '')
+
+    maladie_grave_title = flat_field(
+        lambda f: f.form.get('treatments', {}).get('maladie_grave', {})
+        .get('maladie_grave_title', '') if f.form.get('treatments', {}) and f.form.get('treatments', {})
+        .get('maladie_grave', {}) else '')
+    maladie_grave_treat_0 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('maladie_grave', {})
+        .get('maladie_grave_treat_0', '') if f.form.get('treatments', {}) and f.form.get('treatments', {})
+        .get('maladie_grave', {}) else '')
+    maladie_grave_treat_1 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('maladie_grave', {})
+        .get('maladie_grave_treat_1', '') if f.form.get('treatments', {}) and f.form.get('treatments', {})
+        .get('maladie_grave', {}) else '')
 
     probleme_alimentation_title = flat_field(
         lambda f: f.form.get('treatments', {}).get('probleme_alimentation', {})
@@ -1769,6 +1808,14 @@ class TDHChildTreatmentFluff(fluff.IndicatorDocument):
     antecedent_rougeole_title = flat_field(
         lambda f: f.form.get('treatments', {}).get('antecedent_rougeole', {}).get('antecedent_rougeole_title', '')
         if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('antecedent_rougeole', {}) else '')
+    antecedent_rougeole_treat_0 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('antecedent_rougeole', {})
+        .get('antecedent_rougeole_treat_0', '') if f.form.get('treatments', {}) and f.form.get(
+            'treatments', {}).get('antecedent_rougeole', {}) else '')
+    antecedent_rougeole_treat_1 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('antecedent_rougeole', {})
+        .get('antecedent_rougeole_treat_1', '') if f.form.get('treatments', {}) and f.form.get(
+            'treatments', {}).get('antecedent_rougeole', {}) else '')
     antecedent_rougeole_treat_2 = flat_field(
         lambda f: f.form.get('treatments', {}).get('antecedent_rougeole', {})
         .get('antecedent_rougeole_treat_2', '') if f.form.get('treatments', {}) and f.form.get(
@@ -1819,9 +1866,17 @@ class TDHChildTreatmentFluff(fluff.IndicatorDocument):
         lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
         .get('deshydratation_severe_pas_grave_perfusion_treat_2', '') if f.form.get('treatments', {})
         and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
+    deshydratation_severe_pas_grave_perfusion_treat_3 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
+        .get('deshydratation_severe_pas_grave_perfusion_treat_3', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
     deshydratation_severe_pas_grave_perfusion_treat_4 = flat_field(
         lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
         .get('deshydratation_severe_pas_grave_perfusion_treat_4', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
+    deshydratation_severe_pas_grave_perfusion_treat_5 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
+        .get('deshydratation_severe_pas_grave_perfusion_treat_5', '') if f.form.get('treatments', {})
         and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
     deshydratation_severe_pas_grave_perfusion_treat_6 = flat_field(
         lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
@@ -1831,9 +1886,17 @@ class TDHChildTreatmentFluff(fluff.IndicatorDocument):
         lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
         .get('deshydratation_severe_pas_grave_perfusion_treat_7', '') if f.form.get('treatments', {})
         and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
+    deshydratation_severe_pas_grave_perfusion_treat_8 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
+        .get('deshydratation_severe_pas_grave_perfusion_treat_8', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
     deshydratation_severe_pas_grave_perfusion_treat_9 = flat_field(
         lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
         .get('deshydratation_severe_pas_grave_perfusion_treat_9', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
+    deshydratation_severe_pas_grave_perfusion_treat_10 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
+        .get('deshydratation_severe_pas_grave_perfusion_treat_10', '') if f.form.get('treatments', {})
         and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {}) else '')
     deshydratation_severe_pas_grave_perfusion_treat_11 = flat_field(
         lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
@@ -1879,6 +1942,34 @@ class TDHChildTreatmentFluff(fluff.IndicatorDocument):
         lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_perfusion', {})
         .get('show_perfusion_p2_b_iso', '') if f.form.get('treatments', {}) and f.form.get('treatments', {}).get(
             'deshydratation_severe_pas_grave_perfusion', {}) else '')
+
+    deshydratation_severe_pas_grave_sng_title = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sng', {})
+        .get('deshydratation_severe_pas_grave_sng_title', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sng', {}) else '')
+    deshydratation_severe_pas_grave_sng_treat_2 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sng', {})
+        .get('deshydratation_severe_pas_grave_sng_treat_2', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sng', {}) else '')
+    deshydratation_severe_pas_grave_sng_treat_3 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sng', {})
+        .get('deshydratation_severe_pas_grave_sng_treat_3', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sng', {}) else '')
+    deshydratation_severe_pas_grave_sans_sng_sans_perfusion_title = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion', {})
+        .get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion_title', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion', {}) else ''
+    )
+    deshydratation_severe_pas_grave_sans_sng_sans_perfusion_treat_3 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion', {})
+        .get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion_treat_3', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion', {}) else ''
+    )
+    deshydratation_severe_pas_grave_sans_sng_sans_perfusion_treat_4 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion', {})
+        .get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion_treat_4', '') if f.form.get('treatments', {})
+        and f.form.get('treatments', {}).get('deshydratation_severe_pas_grave_sans_sng_sans_perfusion', {}) else ''
+    )
 
     diahree_persistante_title = flat_field(
         lambda f: f.form.get('treatments', {}).get('diahree_persistante', {}).get('diahree_persistante_title', '')
@@ -3249,6 +3340,19 @@ class TDHChildTreatmentFluff(fluff.IndicatorDocument):
         lambda f: f.form.get('treatments', {}).get('vih_symp_confirmee', {})
         .get('vih_symp_confirmee_show_antibio_1', '') if f.form.get('treatments', {})
         and f.form.get('treatments', {}).get('vih_symp_confirmee', {}) else '')
+
+    vih_symp_probable_title = flat_field(
+        lambda f: f.form.get('treatments', {}).get('vih_symp_probable', {}).get('vih_symp_probable_title', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('vih_symp_probable', {}) else '')
+    vih_symp_probable_treat_1 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('vih_symp_probable', {}).get('vih_symp_probable_treat_1', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('vih_symp_probable', {}) else '')
+    vih_symp_probable_treat_2 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('vih_symp_probable', {}).get('vih_symp_probable_treat_2', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('vih_symp_probable', {}) else '')
+    vih_symp_probable_treat_3 = flat_field(
+        lambda f: f.form.get('treatments', {}).get('vih_symp_probable', {}).get('vih_symp_probable_treat_3', '')
+        if f.form.get('treatments', {}) and f.form.get('treatments', {}).get('vih_symp_probable', {}) else '')
 
     vih_symp_suspecte_title = flat_field(
         lambda f: f.form.get('treatments', {}).get('vih_symp_suspecte', {}).get('vih_symp_suspecte_title', '')
