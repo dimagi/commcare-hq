@@ -43,7 +43,7 @@ class UniqueHeaderGenerator(object):
 
 class ExportFileWriter(object):
 
-    def __init__(self,):
+    def __init__(self):
         self.name = None
         self._isopen = False
         self._file = None
