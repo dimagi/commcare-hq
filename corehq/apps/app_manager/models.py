@@ -1428,6 +1428,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
+    module_filter = StringProperty()
 
     @classmethod
     def wrap(cls, data):

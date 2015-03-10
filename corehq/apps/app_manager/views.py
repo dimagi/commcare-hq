@@ -1468,6 +1468,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "case_list_form_media_audio": None,
         "parent_module": None,
         "root_module_id": None,
+        "module_filter": None,
     }
 
     if attr not in attributes:
@@ -1520,6 +1521,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+
+    if should_edit('module_filter'):
+        module['module_filter'] = req.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
         module.case_list_form.form_id = req.POST.get('case_list_form_id')
