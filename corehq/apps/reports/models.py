@@ -341,7 +341,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         case.
 
         """
-        return self._dispatcher.get_report(self.domain, self.report_slug)
+        return self._dispatcher.get_report(
+            self.domain, self.report_slug, self.subreport_slug
+        )
 
     @property
     def report_name(self):

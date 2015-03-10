@@ -2,12 +2,14 @@ from django.core.urlresolvers import reverse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq.apps.reports.models import ReportConfig
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_404
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext_noop as _
 
 from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403
@@ -144,8 +146,12 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return self.report_config_id
 
     @classmethod
-    def get_report(cls, domain, slug):
-        return cls
+    def get_report(cls, domain, slug, report_config_id):
+        report = cls()
+        report.domain = domain
+        report.report_config_id = report_config_id
+        report.name = report.title
+        return report
 
     @property
     def report_type(self):
