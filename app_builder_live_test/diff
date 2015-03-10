@@ -26,3 +26,6 @@ build_apps $branch0
 build_apps $branch1
 echo "diff -r app_builder_live_test/$branch0 app_builder_live_test/$branch1"
 diff -r app_builder_live_test/$branch0 app_builder_live_test/$branch1
+
+echo "Performance Comparison ($branch0 compared to $branch1)"
+./app_builder_live_test/compare_perf_stats.py $branch0 $branch1
