@@ -307,10 +307,19 @@
                     self.update_messages_timeout = function() {
                         self.update_messages(true);
                     };
+                    self.get_max_message_length = function() {
+                        var msg = $("#text_box").val();
+                        var is_ascii = /^[\x00-\x7F]*$/.test(msg);
+                        if(is_ascii) {
+                            return 160;
+                        } else {
+                            return 70;
+                        }
+                    };
                     self.update_message_length = function(event) {
                         setTimeout(function() {
                             len = $("#text_box").val().length;
-                            max_len = 160;
+                            max_len = self.get_max_message_length();
                             self.message_length(len + " / " + max_len);
                             if(len > max_len) {
                                 $("#message_length_label").css("background-color", "#F00");
