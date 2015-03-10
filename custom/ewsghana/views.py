@@ -1,11 +1,9 @@
 import json
-import datetime
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from corehq.apps.domain.decorators import domain_admin_required
-from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.locations.models import SQLLocation
@@ -22,7 +20,7 @@ from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix
 from custom.logistics.tasks import stock_data_task
-from custom.logistics.views import BaseConfigView
+from custom.logistics.views import BaseConfigView, BaseRemindersTester
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -43,39 +41,22 @@ class EWSConfigView(BaseConfigView):
     source = 'ewsghana'
 
 
-class RemindersTester(BaseDomainView):
-    section_name = 'Reminders tester'
-    section_url = ""
-    template_name = "ewsghana/reminders_tester.html"
+class RemindersTester(BaseRemindersTester):
+    post_url = 'reminders_tester'
 
-    @property
-    def get_reminders(self):
-        return {
-            'first_soh': first_soh_process_user,
-            'second_soh': second_soh_process_user,
-            'third_soh': third_soh_process_users_and_facilities,
-            'stockout': stockout_process_user,
-            'rrirv': rrirv_process_user,
-            'visit_website': visit_website_process_user,
-            'alert_on_going_reporting': on_going_process_user,
-            'alert_on_going_stockouts': on_going_stockout_process_user,
-            'alert_urgent_non_reporting_user': urgent_non_reporting_process_user,
-            'alert_urgent_stockout': urgent_stockout_process_user,
-            'alert_report_reminder': report_reminder_process_user
-        }
-
-    def get_context_data(self, **kwargs):
-        context = super(RemindersTester, self).get_context_data(**kwargs)
-        context['phone_number'] = kwargs.get('phone_number')
-        return context
-
-    @property
-    def main_context(self):
-        main_context = super(RemindersTester, self).main_context
-        main_context.update({
-            'reminders': sorted(self.get_reminders.keys()),
-        })
-        return main_context
+    reminders = {
+        'first_soh': first_soh_process_user,
+        'second_soh': second_soh_process_user,
+        'third_soh': third_soh_process_users_and_facilities,
+        'stockout': stockout_process_user,
+        'rrirv': rrirv_process_user,
+        'visit_website': visit_website_process_user,
+        'alert_on_going_reporting': on_going_process_user,
+        'alert_on_going_stockouts': on_going_stockout_process_user,
+        'alert_urgent_non_reporting_user': urgent_non_reporting_process_user,
+        'alert_urgent_stockout': urgent_stockout_process_user,
+        'alert_report_reminder': report_reminder_process_user
+    }
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -90,7 +71,7 @@ class RemindersTester(BaseDomainView):
                 user = v.owner
                 if not user:
                     return self.get(request, *args, **kwargs)
-                reminder_function = self.get_reminders.get(reminder)
+                reminder_function = self.reminders.get(reminder)
                 if reminder_function:
                     if reminder == 'third_soh':
                         reminder_function([user], [user.location.sql_location], test=True)
