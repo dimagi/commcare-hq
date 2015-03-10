@@ -71,9 +71,7 @@ def parse_normalize(xml, to_string=True, is_html=False):
         parser_class = lxml.etree.HTMLParser
         markup_class = lxml.etree.HTML
         meth = "html"
-
     parser = parser_class(remove_blank_text=True)
-
     parse = lambda *args: normalize_attributes(markup_class(*args))
     parsed = parse(xml, parser)
     return lxml.etree.tostring(parsed, pretty_print=True, method=meth) if to_string else parsed
