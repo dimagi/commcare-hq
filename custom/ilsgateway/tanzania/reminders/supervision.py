@@ -2,9 +2,9 @@ import datetime
 
 from celery.schedules import crontab
 from celery.task import periodic_task
+from custom.ewsghana.utils import send_test_message
 
 from dimagi.utils.dates import get_business_day_of_month
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.api import send_sms_to_verified_number
 from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues, SupplyPointStatus
@@ -13,17 +13,21 @@ from custom.ilsgateway.utils import send_for_all_domains
 import settings
 
 
-def send_supervision_reminder(domain, date):
+def send_supervision_reminder(domain, date, test_list=None):
     sp_ids = set()
-    for user in CommCareUser.by_domain(domain):
+    users = CommCareUser.by_domain(domain) if not test_list else test_list
+    for user in users:
         location = user.location
         if user.is_active and location and location.location_type == 'FACILITY':
             if not SupplyPointStatus.objects.filter(supply_point=location._id,
                                                     status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY,
                                                     status_date__gte=date).exists():
                 if user.get_verified_number():
-                    send_sms_to_verified_number(user.get_verified_number(), REMINDER_SUPERVISION)
-                    sp_ids.add(location._id)
+                    if not test_list:
+                        send_sms_to_verified_number(user.get_verified_number(), REMINDER_SUPERVISION)
+                        sp_ids.add(location._id)
+                    else:
+                        send_test_message(user.get_verified_number(), REMINDER_SUPERVISION)
     update_statuses(sp_ids, SupplyPointStatusTypes.SUPERVISION_FACILITY, SupplyPointStatusValues.REMINDER_SENT)
 
 
