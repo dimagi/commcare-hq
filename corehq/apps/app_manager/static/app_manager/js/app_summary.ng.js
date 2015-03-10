@@ -227,7 +227,7 @@
                 $scope.getIcon = utils.getIcon;
                 $scope.getQuestionLabel = function(question) {
                    return utils.translateName(question.translations, $scope.lang, question.label);
-                }
+                };
             }
         };
     }]);
