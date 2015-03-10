@@ -65,7 +65,8 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # enroll in the nutrition assessment programme.
             logger.debug('DHIS2: Processing Register Child form')
             push_case(case, dhis2_api)
-            return  # We just need to enroll. No event to create
+            #  We just need to enroll. No event to create
+            raise IgnoreDocument
 
         elif form['xmlns'] == GROWTH_MONITORING_XMLNS:
             logger.debug('DHIS2: Processing Growth Monitoring form')
