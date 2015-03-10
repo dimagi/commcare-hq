@@ -215,7 +215,7 @@ def get_all_case_properties(app):
     call_center_config = Domain.get_by_name(app.domain).call_center_config
     if call_center_config.enabled:
         # Add user case type
-        case_types |= call_center_config.case_type
+        case_types.add(call_center_config.case_type)
         usercasetype = call_center_config.case_type
     else:
         usercasetype = None
