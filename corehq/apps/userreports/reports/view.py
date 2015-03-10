@@ -18,6 +18,8 @@ from corehq.apps.reports.datatables import DataTablesHeader
 class ConfigurableReport(JSONResponseMixin, TemplateView):
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
+    prefix = slug
+    emailable = True
 
     @property
     @memoized
@@ -132,3 +134,19 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         from django.conf.urls import url
         pattern = r'^{slug}/(?P<report_config_id>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
+
+    @property
+    def type(self):
+        return self.prefix
+
+    @property
+    def sub_slug(self):
+        return self.report_config_id
+
+    @classmethod
+    def get_report(cls, domain, slug):
+        return cls
+
+    @property
+    def report_type(self):
+        return self.type

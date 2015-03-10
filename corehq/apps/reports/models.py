@@ -240,10 +240,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def _dispatcher(self):
+        from corehq.apps.userreports.reports.view import ConfigurableReport
 
-        dispatchers = [ProjectReportDispatcher,
-                       CustomProjectReportDispatcher,
-                       ADMSectionDispatcher]
+        dispatchers = [
+            ProjectReportDispatcher,
+            CustomProjectReportDispatcher,
+            ADMSectionDispatcher,
+            ConfigurableReport,
+        ]
 
         for dispatcher in dispatchers:
             if dispatcher.prefix == self.report_type:
