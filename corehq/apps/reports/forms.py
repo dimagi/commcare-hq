@@ -58,9 +58,8 @@ class SavedReportConfigForm(forms.Form):
         user_configs = ReportConfig.by_domain_and_owner(self.domain, self.user_id)
         if not _id and name in [c.name for c in user_configs]:
             raise forms.ValidationError(
-                "Invalid name=%(name)s, _id=%(_id)s" % {
+                "A saved report with the name '%(name)s' already exists." % {
                     'name': name,
-                    '_id': _id,
                 }
             )
 
