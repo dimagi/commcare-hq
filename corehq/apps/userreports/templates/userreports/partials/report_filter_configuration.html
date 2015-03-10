@@ -1,0 +1,81 @@
+{% load i18n %}
+{% comment %}
+It might not be imediately obvious where this snippet is used because it is
+injected into a template through crispy forms. It's "parent" html is found
+here: apps/userreports/templates/userreports/partials/report_builder_configure_report.html
+{% endcomment %}
+
+{% comment %}
+TODO:
+- Move the fade stuff into an option for the `sortable` binding.
+- The span1's don't give the best look...
+- Move grip and delete icons into their own widgets/templates
+{% endcomment%}
+
+
+{# Is it bad to inline this style? #}
+<table class="table table-condensed" style="display: inline-block">
+
+    <thead data-bind="visible: columns().length > 0">
+        <tr>
+            <th></th>
+            <th>{% trans "Property" %}</th>
+            <th>{% trans "Display Text" %}</th>
+            <!--ko if: $data.hasFormatCol -->
+            <th>{% trans "Format" %}</th>
+            <!--/ko-->
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody data-bind="sortable: {
+        data: columns,
+        afterAdd: function (elem) { $(elem).hide().fadeIn() },
+        beforeRemove: function (elem) { $(elem).fadeOut() }
+    }"
+    {# there must be no whitespace between <tbody> and <tr> #}
+    {# the .hide().fadeIn() will fail badly on FireFox #}
+    ><tr data-bind="attr: {'data-order': _sortableOrder}">
+        <td class="span1">
+            <i class="grip sortable-handle" style="cursor: move;" data-bind="
+                css: COMMCAREHQ.icons.GRIP
+            "></i>
+        </td>
+
+        <td class="control-group" data-bind="css:{'error': $parent.showWarnings() && !isValid()}">
+            <input type="text" data-bind="select2: $parent.propertyOptions, value: property">
+            <label class="help-block" data-bind="if: $parent.showWarnings() && !isValid()">Property may not be blank!</label>
+        </td>
+        <td class="control-group">
+            <input type="text" data-bind="value: displayText">
+        </td>
+        <!--ko if: $parent.hasFormatCol -->
+        <td>
+            <select data-bind="options: $parent.formatOptions, value: format"></select>
+        </td>
+        <!--/ko-->
+
+        <td class="span1">
+            <i style="cursor: pointer;"
+               title="Delete"
+               data-bind="
+                click: function(){$parent.columns.remove($data)},
+                css: COMMCAREHQ.icons.DELETE
+            "></i>
+        </td>
+    {# there must be no whitespace between <tbody> and <tr> #}
+    {# the .hide().fadeIn() will fail badly on FireFox #}
+    </tr></tbody>
+    <tbody data-bind="visible: columns().length < 10" class="add-prop">
+        <tr>
+            <td></td>
+            <td colspan="4">
+                <button class="btn" data-bind="
+                    click: function(){columns.push(new PropertyListItem());}
+                ">
+                    Add Property
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>

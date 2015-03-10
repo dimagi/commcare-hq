@@ -1,6 +1,5 @@
-{% extends "userreports/userreports_base.html" %}
+{% extends "userreports/base_report_builder.html" %}
 {% load i18n %}
-{% load crispy_forms_tags_b3 %}
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
@@ -10,10 +9,7 @@
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
                 sourcesMap: {{ sources_map|JSON }}
-            }, $("#data-source-config").get(0));
+            }, $("#report-builder-form").get(0));
         });
     </script>
-{% endblock %}
-{% block main_column %}
-    {% crispy_b3 form %}
 {% endblock %}

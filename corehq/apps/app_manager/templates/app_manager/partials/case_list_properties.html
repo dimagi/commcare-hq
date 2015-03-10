@@ -23,21 +23,20 @@
         {# there must be no whitespace between <tbody> and <tr> #}
         {# the .hide().fadeIn() will fail badly on FireFox #}
         ><tr data-bind="
-                css: {info: isTab},
+                css: {info: $data.isTab},
                 attr: {'data-order': _sortableOrder, 'tabindex': 1000 + $index()},
                 copy: function () { return copyCallback(); },
                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
-            ">
-                <td data-bind="visible: $root.edit">
-                    <span class="sort-disabled" data-bind="ifnot: grip"></span>
-                    <i class="grip sortable-handle" data-bind="
-                        if: grip,
-                        css: COMMCAREHQ.icons.GRIP,
-                        style: {cursor: 'move'},
-                        event: {mousedown: function(){ $(':focus').blur(); }}
-                    "></i>
-                </td>
-
+        ">
+            <td data-bind="visible: $root.edit">
+                <span class="sort-disabled" data-bind="ifnot: grip"></span>
+                <i class="grip sortable-handle" data-bind="
+                    if: grip,
+                    css: COMMCAREHQ.icons.GRIP,
+                    style: {cursor: 'move'},
+                    event: {mousedown: function(){ $(':focus').blur(); }}
+                "></i>
+            </td>
                 <!--ko if: !isTab -->
                     <td class="control-group"
                         data-bind="css: {error: showWarning}">
@@ -77,6 +76,8 @@
                         attr: {title: DetailScreenConfig.message.DELETE_COLUMN}
                     "></i>
                 </td>
+            {# there must be no whitespace between <tbody> and <tr> #}
+            {# the .hide().fadeIn() will fail badly on FireFox #}
             </tr></tbody>
         <tbody data-bind="visible: columns().length > 0">
             <tr>

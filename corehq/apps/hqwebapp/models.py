@@ -18,6 +18,7 @@ from corehq.apps.hqadmin.reports import (
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
 )
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import (
     dropdown_dict,
     sidebar_to_dropdown
@@ -262,11 +263,23 @@ class ProjectReportsTab(UITab):
              'show_in_dropdown': True}
         ])]
 
+        user_reports = []
+        if (toggle_enabled(self._request, toggles.USER_CONFIGURABLE_REPORTS)
+                and has_privilege(self._request, privileges.REPORT_BUILDER)):
+            user_reports = [(
+                _("Create Reports"),
+                [{
+                    "title": _('Create new report'),
+                    "url": reverse("create_new_report_builder", args=[self.domain]),
+                    "icon": "icon-plus"
+                }]
+            )]
+
         project_reports = ProjectReportDispatcher.navigation_sections(context)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             context)
 
-        return tools + project_reports + custom_reports
+        return tools + user_reports + project_reports + custom_reports
 
 
 class ADMReportsTab(UITab):
