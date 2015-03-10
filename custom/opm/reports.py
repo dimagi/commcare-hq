@@ -1071,14 +1071,18 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     totals[col][i] = total + num if total is not None else num
 
         rows = []
-        for awc in [AWCHealthStatus(awc, cases)
-                    for awc, cases in self.awc_data().items()]:
+        awc_rows = [AWCHealthStatus(awc, cases)
+                    for awc, cases in self.awc_data().items()]
+        for awc in awc_rows:
             row = []
             for col, (method, __, __, denom) in enumerate(self.model.method_map):
                 val = getattr(awc, method)
-                denominator = getattr(awc, denom)
+                denominator = getattr(awc, denom, None)
                 row.append(self.format_cell(val, denominator))
-                add_to_totals(col, val, denominator)
+                if denom is 'one':
+                    add_to_totals(col, val, 1)
+                else:
+                    add_to_totals(col, val, denominator)
             rows.append(row)
 
         self.total_row = [self.format_cell(v, d) for v, d in totals]
@@ -1112,7 +1116,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)
                     row.append(value)
-                    if denom != 'no_denom':
+                    if denom != 'no_denom' and denom != 'one':
                         denom = getattr(awc, denom)
                         row.append(denom)
                         row.append(float(value) / denom if denom != 0 else "")
