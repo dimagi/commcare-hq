@@ -132,12 +132,14 @@
                                     questions="form.load_questions"
                                     show-conditions="showConditions"
                                     show-calculations="showCalculations"
-                                    show-labels="showLabels"></form-questions></td>
+                                    show-labels="showLabels"
+                                    lang="lang"></form-questions></td>
                             <td><form-questions
                                     questions="form.save_questions"
                                     show-conditions="showConditions"
                                     show-calculations="showCalculations"
-                                    show-labels="showLabels"></form-questions></td>
+                                    show-labels="showLabels"
+                                    lang="lang"></form-questions></td>
                         </tr>
                     </tbody>
                 </table>
@@ -186,7 +188,7 @@
 <ul class="fa-ul">
     <li ng-repeat="question in questions">
         {% verbatim %}<i class="fa-li fcc {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
-        <span ng-show="showLabels">{{ question.question.label }}</span>
+        {% verbatim %}<span ng-show="showLabels">{{ getQuestionLabel(question.question) }}</span>{% endverbatim %}
         <span ng-hide="showLabels">{{ question.question.value }}</span>
         <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
             <li>
