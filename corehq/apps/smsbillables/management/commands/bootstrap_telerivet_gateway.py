@@ -13,7 +13,7 @@ logger = logging.getLogger('accounting')
 
 
 def bootstrap_telerivet_gateway(orm):
-    default_currency, _ = (orm['accounting.Currency'] if orm else Currency).get_default()
+    default_currency = (orm['accounting.Currency'] if orm else Currency).get_default()
     sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
     sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
 
