@@ -91,6 +91,7 @@ def _check_shared(expected, actual, checker, extension):
             message += line
         raise AssertionError(message)
 
+
 def extract_xml_partial(xml, xpath):
     actual = parse_normalize(xml, to_string=False)
     nodes = actual.findall(xpath)
