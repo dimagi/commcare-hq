@@ -226,6 +226,7 @@ class CaseAPITest(TestCase):
 
         json = res_unsanitized.case_json
         self.assertEqual(json['properties']['case_type'], None)
+        case.delete()
 
 
 def _child_case_type(type):
