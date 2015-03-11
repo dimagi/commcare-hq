@@ -24,6 +24,8 @@ class TestGatewayFee(TestCase):
         self.country_code_fees = generator.arbitrary_fees_by_country()
         self.instance_fees = generator.arbitrary_fees_by_backend_instance(self.backend_ids)
         self.most_specific_fees = generator.arbitrary_fees_by_all(self.backend_ids)
+        self.country_code_and_prefixes = generator.arbitrary_country_code_and_prefixes()
+        self.prefix_fees = generator.arbitrary_fees_by_prefix(self.backend_ids, self.country_code_and_prefixes)
 
         self.other_currency = generator.arbitrary_currency()
 
@@ -54,6 +56,21 @@ class TestGatewayFee(TestCase):
                 for country_code, (backend_instance, amount) in country.items():
                     SmsGatewayFee.create_new(backend_api_id, direction, amount,
                                              country_code=country_code, backend_instance=backend_instance)
+
+    def create_prefix_gateway_fees(self):
+        for direction, backend in self.prefix_fees.items():
+            for backend_api_id, country in backend.items():
+                for country_code, prfx in country.items():
+                    for prefix, backend_instance_and_amount in prfx.items():
+                        for backend_instance, amount in backend_instance_and_amount.items():
+                            SmsGatewayFee.create_new(
+                                backend_api_id,
+                                direction,
+                                amount,
+                                country_code=country_code,
+                                prefix=prefix,
+                                backend_instance=backend_instance,
+                            )
 
     def test_least_specific_fees(self):
         self.create_least_specific_gateway_fees()
@@ -135,6 +152,37 @@ class TestGatewayFee(TestCase):
                     [int(phone_number[:-10])]
                     [1]
                 )
+
+    def test_prefix_fees(self):
+        self.create_prefix_gateway_fees()
+
+        for phone_number, prefix in generator.arbitrary_phone_numbers_and_prefixes(
+                self.country_code_and_prefixes
+        ):
+            messages = generator.arbitrary_messages_by_backend_and_direction(
+                self.backend_ids,
+                phone_number=phone_number,
+            )
+
+            for msg_log in messages:
+                billable = SmsBillable.create(msg_log)
+                self.assertIsNotNone(billable)
+                try:
+                    self.assertEqual(
+                        billable.gateway_charge,
+                        self.prefix_fees
+                        [billable.direction]
+                        [billable.gateway_fee.criteria.backend_api_id]
+                        [phone_number[:-10]]
+                        [prefix]
+                        [msg_log.backend_id]
+                    )
+                except AssertionError:
+                    raise Exception(
+                        "Phone number: %s, " % phone_number
+                        + "given prefix: %s, " % prefix
+                        + "found prefix: %s" % billable.gateway_fee.criteria.prefix
+                    )
 
     def test_no_matching_fee(self):
         self.create_least_specific_gateway_fees()

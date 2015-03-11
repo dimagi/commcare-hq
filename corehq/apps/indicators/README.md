@@ -36,7 +36,7 @@ that have already been processed. This comes from `update_computed_namespace`.
 #### Pillowtop
 
 As `XFormInstance` or `CommCareCase` documents are created or updated (by processes not related to indicator updates)
-they will get picked up in the changes feed by the `FormIndicatorPillow` or `CaseIndicatorPillow`, respectively.
+they will get picked up in the changes feed by the `MVPFormIndicatorPillow` or `MVPCaseIndicatorPillow`, respectively.
 
 #### Retrospectively with `mvp_force_update`
 
@@ -138,7 +138,7 @@ and add a new Form Label Indicator. (You'll need the XMLNS from step 2.)
 4. Run
 
     ```bash
-    ./manage.py run_ptop --pillow-name=FormIndicatorPillow
+    ./manage.py run_ptop --pillow-name=MVPFormIndicatorPillow
     ```
 5. Submit a form with that XMLNS to your domain. (Can even do from commandline with something like
 

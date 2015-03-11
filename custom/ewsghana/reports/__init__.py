@@ -105,7 +105,7 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
             if dm.program_id:
                 program_id = dm.program_id
             else:
-                program_id = Program.default_for_domain(domain)
+                program_id = Program.default_for_domain(domain)._id
 
             url = '%s?location_id=%s&filter_by_program=%s' % (
                 url,

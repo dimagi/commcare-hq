@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from lxml import etree
 import copy
 from openpyxl.shared.exc import InvalidFileException
@@ -147,6 +148,29 @@ def process_bulk_app_translation_upload(app, f):
     return msgs
 
 
+def make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
+                               media_image, media_audio, unique_id):
+    """
+    assemble the various pieces of data that make up a row in the
+    "Modules_and_forms" sheet into a single row (a flat tuple).
+
+    This function is meant as the single point of truth for the
+    column ordering of Modules_and_forms
+
+    """
+    assert row_type is not None
+    assert sheet_name is not None
+    assert isinstance(languages, list)
+    assert isinstance(case_labels, list)
+    assert isinstance(media_image, (type(None), basestring))
+    assert isinstance(media_audio, (type(None), basestring))
+    assert isinstance(unique_id, basestring)
+
+    return [item if item is not None else ""
+            for item in ([row_type, sheet_name] + languages + case_labels
+                         + [media_image, media_audio, unique_id])]
+
+
 def expected_bulk_app_sheet_headers(app):
     '''
     Returns lists representing the expected structure of bulk app translation
@@ -169,12 +193,18 @@ def expected_bulk_app_sheet_headers(app):
     headers = []
 
     # Add headers for the first sheet
-    headers.append(
-        ["Modules_and_forms",
-            ['Type', 'sheet_name'] + languages_list +
-            ['label_for_cases_%s' % l for l in app.langs] +
-            ['icon_filepath', 'audio_filepath', 'unique_id']]
-    )
+    headers.append([
+        "Modules_and_forms",
+        make_modules_and_forms_row(
+            row_type='Type',
+            sheet_name='sheet_name',
+            languages=languages_list,
+            case_labels=['label_for_cases_%s' % l for l in app.langs],
+            media_image='icon_filepath',
+            media_audio='audio_filepath',
+            unique_id='unique_id',
+        )
+    ])
 
     for mod_index, module in enumerate(app.get_modules()):
 
@@ -189,6 +219,140 @@ def expected_bulk_app_sheet_headers(app):
                                                              + video_lang_list
             ])
     return headers
+
+
+def expected_bulk_app_sheet_rows(app):
+
+    # keys are the names of sheets, values are lists of tuples representing rows
+    rows = {"Modules_and_forms": []}
+
+    for mod_index, module in enumerate(app.get_modules()):
+        # This is duplicated logic from expected_bulk_app_sheet_headers,
+        # which I don't love.
+        module_string = "module" + str(mod_index + 1)
+
+        # Add module to the first sheet
+        row_data = make_modules_and_forms_row(
+            row_type="Module",
+            sheet_name=module_string,
+            languages=[module.name.get(lang) for lang in app.langs],
+            case_labels=[module.case_label.get(lang) for lang in app.langs],
+            media_image=module.media_image,
+            media_audio=module.media_audio,
+            unique_id=module.unique_id,
+        )
+        rows["Modules_and_forms"].append(row_data)
+
+        # Populate module sheet
+        rows[module_string] = []
+
+        for list_or_detail, case_properties in [
+            ("list", module.case_details.short.get_columns()),
+            ("detail", module.case_details.long.get_columns())
+        ]:
+            for detail in case_properties:
+
+                field_name = detail.field
+                if detail.format == "enum":
+                    field_name += " (ID Mapping Text)"
+                elif detail.format == "graph":
+                    field_name += " (graph)"
+
+                # Add a row for this case detail
+                rows[module_string].append(
+                    (field_name, list_or_detail) +
+                    tuple(detail.header.get(lang, "") for lang in app.langs)
+                )
+
+                # Add a row for any mapping pairs
+                if detail.format == "enum":
+                    for mapping in detail.enum:
+                        rows[module_string].append(
+                            (
+                                mapping.key + " (ID Mapping Value)",
+                                list_or_detail
+                            ) + tuple(
+                                mapping.value.get(lang, "")
+                                for lang in app.langs
+                            )
+                        )
+
+                # Add rows for graph configuration
+                if detail.format == "graph":
+                    for key, val in detail.graph_configuration.locale_specific_config.iteritems():
+                        rows[module_string].append(
+                            (
+                                key + " (graph config)",
+                                list_or_detail
+                            ) + tuple(val.get(lang, "") for lang in app.langs)
+                        )
+                    for i, annotation in enumerate(detail.graph_configuration.annotations):
+                        rows[module_string].append(
+                            (
+                                "graph annotation {}".format(i + 1),
+                                list_or_detail
+                            ) + tuple(
+                                annotation.display_text.get(lang, "")
+                                for lang in app.langs
+                            )
+                        )
+
+        for form_index, form in enumerate(module.get_forms()):
+            form_string = module_string + "_form" + str(form_index + 1)
+            xform = form.wrapped_xform()
+
+            # Add row for this form to the first sheet
+            # This next line is same logic as above :(
+            first_sheet_row = make_modules_and_forms_row(
+                row_type="Form",
+                sheet_name=form_string,
+                languages=[form.name.get(lang) for lang in app.langs],
+                # leave all
+                case_labels=[None] * len(app.langs),
+                media_image=form.media_image,
+                media_audio=form.media_audio,
+                unique_id=form.unique_id
+            )
+
+            # Add form to the first street
+            rows["Modules_and_forms"].append(first_sheet_row)
+
+            # Populate form sheet
+            rows[form_string] = []
+
+            itext_items = OrderedDict()
+            try:
+                nodes = xform.itext_node.findall("./{f}translation")
+            except XFormException:
+                nodes = []
+
+            for translation_node in nodes:
+                lang = translation_node.attrib['lang']
+                for text_node in translation_node.findall("./{f}text"):
+                    text_id = text_node.attrib['id']
+                    itext_items[text_id] = itext_items.get(text_id, {})
+
+                    for value_node in text_node.findall("./{f}value"):
+                        value_form = value_node.attrib.get("form", "default")
+                        value = value_node.text
+                        itext_items[text_id][(lang, value_form)] = value
+
+            for text_id, values in itext_items.iteritems():
+                row = [text_id]
+                for value_form in ["default", "audio", "image", "video"]:
+                    # Get the fallback value for this form
+                    fallback = ""
+                    for lang in app.langs:
+                        fallback = values.get((lang, value_form), fallback)
+                        if fallback:
+                            break
+                    # Populate the row
+                    for lang in app.langs:
+                        row.append(values.get((lang, value_form), fallback))
+                # Don't add empty rows:
+                if any(row[1:]):
+                    rows[form_string].append(row)
+    return rows
 
 
 def process_modules_and_forms_sheet(rows, app):

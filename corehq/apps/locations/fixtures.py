@@ -12,7 +12,7 @@ class LocationSet(object):
 
     def __init__(self, locations=None):
         self.by_id = {}
-        self.by_parent = defaultdict(lambda: set())
+        self.by_parent = defaultdict(set)
         if locations is not None:
             for loc in locations:
                 self.add_location(loc)
@@ -90,8 +90,11 @@ def location_fixture_generator(user, version, last_sync=None):
     else:
         root_locations = filter(lambda loc: loc.parent_id is None, location_db.by_id.values())
 
-    _append_children(root, location_db, root_locations, location_type_lookup)
-    return [root]
+    if not root_locations:
+        return []
+    else:
+        _append_children(root, location_db, root_locations, location_type_lookup)
+        return [root]
 
 
 def _location_footprint(locations):

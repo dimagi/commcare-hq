@@ -160,6 +160,11 @@
                             <option value="double">
                                 {% trans "Decimal" %}
                             </option>
+                            {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
+                                <option value="index">
+                                    {% trans "Cache and Index" %}
+                                </option>
+                            {% endif %}
                         </select>
                     </td>
 

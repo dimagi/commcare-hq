@@ -1,3 +1,4 @@
+import contextlib
 import json
 from django.core.management.base import BaseCommand
 from lxml import etree
@@ -8,6 +9,23 @@ _parser = etree.XMLParser(remove_blank_text=True)
 def normalize_xml(xml):
     xml = etree.fromstring(xml, parser=_parser)
     return etree.tostring(xml, pretty_print=True)
+
+
+@contextlib.contextmanager
+def record_performance_stats(filepath, slug):
+    from guppy import hpy
+    import time
+    hp = hpy()
+    before = hp.heap()
+    start = time.clock()
+    try:
+        yield
+    finally:
+        end = time.clock()
+        after = hp.heap()
+        leftover = after - before
+        with open(filepath, 'a') as f:
+            f.write('{},{},{}\n'.format(slug, leftover.size, end - start))
 
 
 class Command(BaseCommand):
@@ -24,6 +42,10 @@ class Command(BaseCommand):
         path, build_slug = args
 
         app_slugs = []
+        perfpath = os.path.join(path, '{}-performance.txt'.format(build_slug))
+        if os.path.exists(perfpath):
+            os.remove(perfpath)
+
         for name in os.listdir(os.path.join(path, 'src')):
             _JSON = '.json'
             if name.endswith(_JSON):
@@ -42,10 +64,12 @@ class Command(BaseCommand):
             app.version = 1
             build_path = os.path.join(path, build_slug, slug)
             print ' Creating files...'
-            self.create_files(app, build_path)
+            with record_performance_stats(perfpath, slug):
+                files = app.create_all_files()
 
-    def create_files(self, app, path):
-        files = app.create_all_files()
+            self.write_files(files, build_path)
+
+    def write_files(self, files, path):
         for filename, payload in files.items():
             filepath = os.path.join(path, filename)
             dirpath, filename = os.path.split(filepath)
