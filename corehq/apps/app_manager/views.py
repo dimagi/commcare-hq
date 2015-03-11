@@ -29,7 +29,6 @@ from corehq.apps.app_manager.exceptions import (
     RearrangeError,
 )
 
-from corehq.apps.app_manager.xpath_grammar import CommcareExpression
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans

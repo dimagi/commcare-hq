@@ -1699,7 +1699,18 @@ class SuiteGenerator(SuiteGeneratorBase):
                     menu_kwargs['root'] = self.id_strings.menu_root(module)
 
                 if self.app.enable_module_filtering and getattr(module, 'module_filter', None):
-                    menu_kwargs['relevant'] = module.module_filter
+                    PREFIX = './'
+                    USER_REF = 'user'
+                    DATA_REF = 'data'
+
+                    relevant = module.module_filter
+                    if module.module_filter.startswith("{}{}".format(PREFIX, USER_REF)):
+                        relevant = session_var(relevant[len("{}{}".format(PREFIX, USER_REF)):],
+                                               subref=USER_REF)
+                    elif module.module_filter.startswith("{}{}".format(PREFIX, DATA_REF)):
+                        relevant = session_var(relevant[len("{}{}".format(PREFIX, DATA_REF)):])
+
+                    menu_kwargs['relevant'] = relevant
 
                 menu = Menu(**menu_kwargs)
 
