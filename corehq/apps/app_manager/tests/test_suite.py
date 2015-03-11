@@ -5,7 +5,7 @@ from corehq.apps.app_manager.models import (
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
     Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement,
-    MappingItem,
+    MappingItem, UpdateCaseAction
 )
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
@@ -474,18 +474,17 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
-    "TODO - Add Case-dependency tests"
+    file_path = ('data', 'suite')
 
-    def __init__(self, args, **kwargs):
+    def setUp(self):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        self.module_0 = self.app.add_module(AdvancedModule.new_module('parent', None))
+        self.module_0 = self.app.add_module(Module.new_module('parent', None))
         self.module_0.unique_id = 'm1'
         self.module_1 = self.app.add_module(AdvancedModule.new_module("Untitled Module", None))
         self.module_1.unique_id = 'm2'
 
         for m_id in range(2):
             self.app.new_form(m_id, "Form", None)
-        super(AdvancedModuleAsChildTest, self).__init__(args, **kwargs)
 
     def test_basic_workflow(self):
         # make module_1 as submenu to module_0
@@ -530,6 +529,26 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
         </partial>
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
+
+    def test_child_module_adjust_session_datums(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.case_type = 'gold-fish'
+        m0f0 = self.module_0.get_form(0)
+        m0f0.requires = 'case'
+        m0f0.actions.update_case = UpdateCaseAction(update={'question1': '/data/question1'})
+        m0f0.actions.update_case.condition.type = 'always'
+
+        self.module_1.case_type = 'guppy'
+        m1f0 = self.module_1.get_form(0)
+        m1f0.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='gold-fish',
+            case_type='gold-fish'
+        ))
+        m1f0.actions.load_update_cases.append(LoadUpdateAction(
+            case_tag='guppy',
+            case_type='guppy'
+        ))
+        self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums'), self.app.create_suite(), "./entry")
 
     def test_deleted_parent(self):
         self.module_1.root_module_id = "unknownmodule"

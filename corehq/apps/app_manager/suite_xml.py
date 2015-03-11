@@ -1425,7 +1425,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                ...
             ]
         """
-        if not (module or module.module_type == 'basic'):
+        if not (module and module.module_type == 'basic'):
             return []
 
         select_chain = self.get_select_chain(module)
@@ -1516,7 +1516,9 @@ class SuiteGenerator(SuiteGeneratorBase):
                         "Module with case type %s in app %s not found" % (case_type, self.app)
                     )
 
-        for action in form.actions.load_update_cases:
+        root_module_datums = self._get_datums_meta(module.root_module)
+
+        for i, action in enumerate(form.actions.load_update_cases):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
                 if auto_select.mode == AUTO_SELECT_USER:
@@ -1567,11 +1569,20 @@ class SuiteGenerator(SuiteGeneratorBase):
                 else:
                     parent_filter = ''
 
-                referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
+                case_session_var = action.case_session_var
+                try:
+                    root_datum = root_module_datums[i]
+                except IndexError:
+                    pass
+                else:
+                    child_case_type = action.case_type
+                    if root_datum['case_type'] == child_case_type:
+                        case_session_var = root_datum['session_var']
 
                 target_module = get_target_module(action.case_type, action.details_module)
+                referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
                 e.datums.append(SessionDatum(
-                    id=action.case_session_var,
+                    id=case_session_var,
                     nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(target_module, 'case_short'),
