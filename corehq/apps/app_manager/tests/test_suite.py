@@ -4,7 +4,9 @@ from corehq.apps.app_manager.models import (
     Application, AutoSelectCase,
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
-    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction)
+    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement,
+    MappingItem,
+)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -55,6 +57,22 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_sort_only_value_suite(self):
         self._test_generic_suite('sort-only-value', 'sort-only-value')
         self._test_app_strings('sort-only-value')
+
+    def test_sort_cache_suite(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        detail = app.modules[0].case_details.short
+        detail.sort_elements.append(
+            SortElement(
+                field=detail.columns[0].field,
+                type='index',
+                direction='descending',
+            )
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('sort-cache'),
+            app.create_suite(),
+            "./detail[@id='m0_case_short']"
+        )
 
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
@@ -392,6 +410,144 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
+
+    def test_case_tile_pull_down(self):
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.use_case_tiles = True
+        module.case_details.short.persist_tile_on_forms = True
+        module.case_details.short.pull_down_tile = True
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+            DetailColumn(
+                header={'en': 'b'},
+                model='case',
+                field='b',
+                format='plain',
+                case_tile_field='top_left'
+            ),
+            DetailColumn(
+                header={'en': 'c'},
+                model='case',
+                field='c',
+                format='enum',
+                enum=[
+                    MappingItem(key='male', value={'en': 'Male'}),
+                    MappingItem(key='female', value={'en': 'Female'}),
+                ],
+                case_tile_field='sex'
+            ),
+            DetailColumn(
+                header={'en': 'd'},
+                model='case',
+                field='d',
+                format='plain',
+                case_tile_field='bottom_left'
+            ),
+            DetailColumn(
+                header={'en': 'e'},
+                model='case',
+                field='e',
+                format='date',
+                case_tile_field='date'
+            ),
+        ]
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m0-f0'
+        form.requires = 'case'
+
+        self.assertXmlPartialEqual(
+            self.get_xml('case_tile_pulldown_session'),
+            app.create_suite(),
+            "./entry/session"
+        )
+
+
+class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
+    "TODO - Add Case-dependency tests"
+
+    def __init__(self, args, **kwargs):
+        self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        self.module_0 = self.app.add_module(AdvancedModule.new_module('parent', None))
+        self.module_0.unique_id = 'm1'
+        self.module_1 = self.app.add_module(AdvancedModule.new_module("Untitled Module", None))
+        self.module_1.unique_id = 'm2'
+
+        for m_id in range(2):
+            self.app.new_form(m_id, "Form", None)
+        super(AdvancedModuleAsChildTest, self).__init__(args, **kwargs)
+
+    def test_basic_workflow(self):
+        # make module_1 as submenu to module_0
+        self.module_1.root_module_id = self.module_0.unique_id
+        XML = """
+        <partial>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+          </menu>
+          <menu root="m0" id="m1">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
+
+    def test_workflow_with_put_in_root(self):
+        # make module_1 as submenu to module_0
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_1.put_in_root = True
+
+        XML = """
+        <partial>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+          </menu>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m1"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        </partial>
+        """
+        self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
+
+    def test_deleted_parent(self):
+        self.module_1.root_module_id = "unknownmodule"
+
+        cycle_error = {
+            'type': 'unknown root',
+        }
+        errors = self.app.validate_app()
+        self.assertIn(cycle_error, errors)
+
+    def test_circular_relation(self):
+        self.module_1.root_module_id = self.module_0.unique_id
+        self.module_0.root_module_id = self.module_1.unique_id
+        cycle_error = {
+            'type': 'root cycle',
+        }
+        errors = self.app.validate_app()
+        self.assertIn(cycle_error, errors)
 
 
 class RegexTest(SimpleTestCase):

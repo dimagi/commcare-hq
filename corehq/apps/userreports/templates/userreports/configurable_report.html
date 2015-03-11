@@ -1,7 +1,37 @@
 {% extends "reports_core/base_template_new.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            // Poll the status of the data source
+            (function poll() {
+                $.ajax({
+                    url: "{% url 'configurable_data_source_status' domain report.spec.config_id %}",
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.isBuilt){
+                            $('#built-warning').addClass('hide');
+                            $('#report-filters').submit();
+                        } else {
+                            $('#built-warning').removeClass('hide');
+                            setTimeout(poll, 5000);
+                        }
+                    }
+                });
+            })();
+        });
+    </script>
+{% endblock %}
 {% block main_column %}
+    {# TODO: Use the site wide message system instead? #}
+    <div id="built-warning" class="alert alert-info hide">
+        {% blocktrans %}
+        Warning! Your report is still being populated.
+        What you are seeing now is just a preview, and does not contain all of your data.
+        The report will refresh automatically when the data is finished being populated.
+        {% endblocktrans %}
+    </div>
     {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" %}
         <a class="btn btn-primary pull-right" href="{% url 'edit_configurable_report' domain report.report_config_id %}">{% trans "Edit Report" %}</a>
     {% endif %}

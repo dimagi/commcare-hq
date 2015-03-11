@@ -1177,8 +1177,8 @@ def do_update_django_locales():
 def reset_mvp_pillows():
     _require_target()
     mvp_pillows = [
-        'FormIndicatorPillow',
-        'CaseIndicatorPillow',
+        'MVPFormIndicatorPillow',
+        'MVPCaseIndicatorPillow',
     ]
     for pillow in mvp_pillows:
         reset_pillow(pillow)

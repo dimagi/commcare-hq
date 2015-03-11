@@ -2,7 +2,12 @@ import json
 from couchdbkit.exceptions import ResourceNotFound
 from jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGetter
+from corehq.apps.userreports.expressions.getters import (
+    DictGetter,
+    NestedDictGetter,
+    TransformedGetter,
+    transform_from_datatype)
+from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
@@ -19,10 +24,13 @@ class ConstantGetterSpec(JsonObject):
 class PropertyNameGetterSpec(JsonObject):
     type = TypeProperty('property_name')
     property_name = StringProperty(required=True)
+    datatype = DataTypeProperty(required=False)
 
     @property
     def expression(self):
-        return DictGetter(self.property_name)
+        transform = transform_from_datatype(self.datatype)
+        getter = DictGetter(self.property_name)
+        return TransformedGetter(getter, transform)
 
     def __call__(self, item, context=None):
         return self.expression(item, context)
@@ -31,10 +39,13 @@ class PropertyNameGetterSpec(JsonObject):
 class PropertyPathGetterSpec(JsonObject):
     type = TypeProperty('property_path')
     property_path = ListProperty(unicode, required=True)
+    datatype = DataTypeProperty(required=False)
 
     @property
     def expression(self):
-        return NestedDictGetter(self.property_path)
+        transform = transform_from_datatype(self.datatype)
+        getter = NestedDictGetter(self.property_path)
+        return TransformedGetter(getter, transform)
 
     def __call__(self, item, context=None):
         return self.expression(item, context)

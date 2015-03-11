@@ -34,6 +34,10 @@
         <input type="checkbox" data-bind="checked: persistTileOnForms">
         Use this case list tile persistently in forms
     </label>
+    <label class="checkbox" data-bind="visible: useCaseTiles() == 'yes' && persistTileOnForms()">
+        <input type="checkbox" data-bind="checked: enableTilePullDown">
+        Embed case details in case tile pull-down
+    </label>
     {% endif %}
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
@@ -160,6 +164,11 @@
                             <option value="double">
                                 {% trans "Decimal" %}
                             </option>
+                            {% if request|toggle_enabled:'CACHE_AND_INDEX' %}
+                                <option value="index">
+                                    {% trans "Cache and Index" %}
+                                </option>
+                            {% endif %}
                         </select>
                     </td>
 

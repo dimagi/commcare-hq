@@ -10,6 +10,7 @@ CUSTOM_BRANDING = 'custom_branding'
 
 CROSS_PROJECT_REPORTS = 'cross_project_reports'
 CUSTOM_REPORTS = 'custom_reports'
+REPORT_BUILDER = 'user_configurable_report_builder'
 
 ROLE_BASED_ACCESS = 'role_based_access'
 
@@ -26,6 +27,8 @@ DEIDENTIFIED_DATA = 'deidentified_data'
 HIPAA_COMPLIANCE_ASSURANCE = 'hipaa_compliance_assurance'
 
 ALLOW_EXCESS_USERS = 'allow_excess_users'
+
+COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -45,6 +48,8 @@ MAX_PRIVILEGES = [
     DEIDENTIFIED_DATA,
     HIPAA_COMPLIANCE_ASSURANCE,
     ALLOW_EXCESS_USERS,
+    COMMCARE_LOGO_UPLOADER,
+    REPORT_BUILDER,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -76,4 +81,6 @@ class Titles(object):
             ALLOW_EXCESS_USERS: _("Add Mobile Workers Above Limit"),
             DEIDENTIFIED_DATA: _("De-Identified Data"),
             HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),
+            COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
+            REPORT_BUILDER: _('User Configurable Report Builder')
         }.get(privilege, privilege)

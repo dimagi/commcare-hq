@@ -4,6 +4,7 @@ import json
 import logging
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.cache import cache_core
 import requests
@@ -33,7 +34,10 @@ class Dhis2Settings(Document):
         """
         Yields settings of all domains for which "enabled" is true
         """
-        toggle = Toggle.get('dhis2_domain')
+        try:
+            toggle = Toggle.get('dhis2_domain')
+        except ResourceNotFound:
+            return
         for domain in toggle.enabled_users:
             if domain.startswith('domain:'):
                 # If the "domain" namespace is given, strip it off
@@ -118,6 +122,12 @@ class JsonApiRequest(object):
         try:
             response = requests.get(self.baseurl + path, headers=self.headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
+            logger.exception(
+                'JSON API raised HTTP or socket error.\n'
+                'Request details: %s\n'
+                'Error: %s',
+                {'method': 'get', 'url': self.baseurl + path, 'headers': self.headers},
+                err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 
@@ -134,6 +144,12 @@ class JsonApiRequest(object):
         try:
             response = requests.post(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
+            logger.exception(
+                'JSON API raised HTTP or socket error.\n'
+                'Request details: %s\n'
+                'Error: %s',
+                {'method': 'post', 'url': self.baseurl + path, 'data': json_data, 'headers': headers},
+                err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 
@@ -149,6 +165,12 @@ class JsonApiRequest(object):
         try:
             response = requests.put(self.baseurl + path, json_data, headers=headers, auth=self.auth, **kwargs)
         except requests.RequestException as err:
+            logger.exception(
+                'JSON API raised HTTP or socket error.\n'
+                'Request details: %s\n'
+                'Error: %s',
+                {'method': 'put', 'url': self.baseurl + path, 'data': json_data, 'headers': headers},
+                err)
             raise JsonApiError(str(err))
         return JsonApiRequest.json_or_error(response)
 

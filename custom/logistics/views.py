@@ -3,6 +3,9 @@ from corehq import toggles
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import cls_require_superuser_or_developer
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.models import ReportRun
 from custom.logistics.models import MigrationCheckpoint, StockDataCheckpoint
 
@@ -66,3 +69,28 @@ class BaseConfigView(BaseCommTrackManageView):
         config.steady_sync = payload['source_config'].get('steady_sync')
         config.save()
         return self.get(request, *args, **kwargs)
+
+
+class BaseRemindersTester(BaseDomainView):
+    section_name = 'Reminders tester'
+    section_url = ""
+    template_name = "logistics/reminders_tester.html"
+    post_url = None
+
+    reminders = {}
+
+    def get_context_data(self, **kwargs):
+        context = super(BaseRemindersTester, self).get_context_data(**kwargs)
+        context['phone_number'] = kwargs.get('phone_number')
+        verified_number = VerifiedNumber.by_phone(context['phone_number'])
+        context['phone_user'] = CommCareUser.get(verified_number.owner_id) if verified_number else None
+        return context
+
+    @property
+    def main_context(self):
+        main_context = super(BaseRemindersTester, self).main_context
+        main_context.update({
+            'reminders': sorted(self.reminders.keys()),
+            'post_url': self.post_url
+        })
+        return main_context

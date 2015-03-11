@@ -236,7 +236,7 @@ class Instance(IdNode, OrderedXmlObject):
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
-    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm', 'detail_persistent')
+    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline')
 
     nodeset = XPathField('@nodeset')
     value = StringField('@value')
@@ -244,6 +244,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
+    detail_inline = StringField('@detail-inline')
 
 
 class StackDatum(IdNode):
@@ -624,8 +625,8 @@ def get_detail_column_infos(detail, include_sort):
         sort_elements = get_default_sort_elements(detail)
 
     # order is 1-indexed
-    sort_elements = dict((s.field, (s, i + 1))
-                         for i, s in enumerate(sort_elements))
+    sort_elements = {s.field: (s, i + 1)
+                     for i, s in enumerate(sort_elements)}
     columns = []
     for column in detail.get_columns():
         sort_element, order = sort_elements.pop(column.field, (None, None))
@@ -779,7 +780,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if form.post_form_workflow != WORKFLOW_DEFAULT:
                     form_command = self.id_strings.form_command(form)
                     module_id, form_id = form_command.split('-')
-                    module_command = self.id_strings.menu(module)
+                    module_command = self.id_strings.menu_id(module)
 
                     frame_children = [module_command] if module_command != self.id_strings.ROOT else []
                     if form.post_form_workflow == WORKFLOW_ROOT:
@@ -946,7 +947,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 frame = PushFrame()
                 frame.add_command(XPath.string(self.id_strings.form_command(form)))
                 frame.add_datum(StackDatum(id=case_session_var, value='uuid()'))
-                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu(module))))
+                frame.add_datum(StackDatum(id=RETURN_TO, value=XPath.string(self.id_strings.menu_id(module))))
                 d.action.stack.add_frame(frame)
 
             try:
@@ -1430,9 +1431,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                 parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
 
             detail_persistent = None
+            detail_inline = False
             for detail_type, detail, enabled in module.get_details():
                 if detail.persist_tile_on_forms and detail.use_case_tiles and enabled:
                     detail_persistent = self.id_strings.detail(module, detail_type)
+                    if detail.pull_down_tile:
+                        detail_inline = True
                     break
 
             e.datums.append(SessionDatum(
@@ -1445,7 +1449,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     self.get_detail_id_safe(module, 'case_long')
                     if i == 0 else None
                 ),
-                detail_persistent=detail_persistent
+                detail_persistent=detail_persistent,
+                detail_inline=self.get_detail_id_safe(module, 'case_long') if detail_inline else None
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
@@ -1618,19 +1623,19 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if not module.display_separately:
                     open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
                     frame.if_clause = '{count} = 1'.format(count=open_goal.count())
-                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
+                    frame.add_command(XPath.string(self.id_strings.menu_id(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(XPath.string(self.id_strings.menu(module)))
+                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
                 else:
-                    frame.add_command(XPath.string(self.id_strings.menu(module)))
+                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
             elif form.case_type == CAREPLAN_TASK:
                 if not module.display_separately:
-                    frame.add_command(XPath.string(self.id_strings.menu(parent_module)))
+                    frame.add_command(XPath.string(self.id_strings.menu_id(parent_module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                    frame.add_command(XPath.string(self.id_strings.menu(module)))
+                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
                     if form.mode == 'update':
                         count = CaseTypeXpath(CAREPLAN_TASK).case().select(
@@ -1642,7 +1647,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                             self.id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
                         ))
                 else:
-                    frame.add_command(XPath.string(self.id_strings.menu(module)))
+                    frame.add_command(XPath.string(self.id_strings.menu_id(module)))
                     frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
 
                 if form.mode == 'create':
@@ -1661,7 +1666,7 @@ class SuiteGenerator(SuiteGeneratorBase):
         for module in self.modules:
             if isinstance(module, CareplanModule):
                 update_menu = Menu(
-                    id=self.id_strings.menu(module),
+                    id=self.id_strings.menu_id(module),
                     locale_id=self.id_strings.module_locale(module),
                 )
 
@@ -1669,13 +1674,13 @@ class SuiteGenerator(SuiteGeneratorBase):
                     parent = self.get_module_by_id(module.parent_select.module_id)
                     create_goal_form = module.get_form_by_type(CAREPLAN_GOAL, 'create')
                     create_menu = Menu(
-                        id=self.id_strings.menu(parent),
+                        id=self.id_strings.menu_id(parent),
                         locale_id=self.id_strings.module_locale(parent),
                     )
                     create_menu.commands.append(Command(id=self.id_strings.form_command(create_goal_form)))
                     menus.append(create_menu)
 
-                    update_menu.root = self.id_strings.menu(parent)
+                    update_menu.root = self.id_strings.menu_id(parent)
                 else:
                     update_menu.commands.extend([
                         Command(id=self.id_strings.form_command(module.get_form_by_type(CAREPLAN_GOAL, 'create'))),
@@ -1688,12 +1693,15 @@ class SuiteGenerator(SuiteGeneratorBase):
                 ])
                 menus.append(update_menu)
             else:
-                menu = Menu(
-                    id=self.id_strings.menu(module),
-                    locale_id=self.id_strings.module_locale(module),
-                    media_image=module.media_image,
-                    media_audio=module.media_audio,
-                )
+                menu_kwargs = {
+                    'id': self.id_strings.menu_id(module),
+                    'locale_id': self.id_strings.module_locale(module),
+                    'media_image': module.media_image,
+                    'media_audio': module.media_audio,
+                }
+                if self.id_strings.menu_root(module):
+                    menu_kwargs['root'] = self.id_strings.menu_root(module)
+                menu = Menu(**menu_kwargs)
 
                 def get_commands():
                     for form in module.get_forms():

@@ -302,7 +302,6 @@ HQ_APPS = (
     'custom.apps.gsid',
     'hsph',
     'mvp',
-    'mvp_apps',
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',
@@ -1220,10 +1219,6 @@ PILLOWTOPS = {
         'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
         'custom.tdh.models.TDHChildClassificationFluffPillow',
         'custom.tdh.models.TDHChildTreatmentFluffPillow',
-    ],
-    'mvp': [
-        'corehq.apps.indicators.pillows.FormIndicatorPillow',
-        'corehq.apps.indicators.pillows.CaseIndicatorPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',

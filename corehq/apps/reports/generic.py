@@ -88,7 +88,7 @@ class GenericReportView(CacheableRequestMixIn):
     printable = False
 
     exportable = False
-    exportable_all = False
+    exportable_all = False  # also requires overriding self.get_all_rows
     mobile_enabled = False
     export_format_override = None
     icon = None
@@ -125,7 +125,7 @@ class GenericReportView(CacheableRequestMixIn):
             raise ValueError("Class property dispatcher should point to a subclass of ReportDispatcher.")
 
         self.request = request
-        self.request_params = json_request(self.request.GET)
+        self.request_params = json_request(self.request.GET if self.request.method == 'GET' else self.request.POST)
         self.domain = domain
         self.context = base_context or {}
         self._update_initial_context()
@@ -150,7 +150,7 @@ class GenericReportView(CacheableRequestMixIn):
         # pickle only what the report needs from the request object
 
         request = dict(
-            GET=self.request.GET,
+            GET=self.request.GET if self.request.method == 'GET' else self.request.POST,
             META=dict(
                 QUERY_STRING=self.request.META.get('QUERY_STRING'),
                 PATH_INFO=self.request.META.get('PATH_INFO')
@@ -194,7 +194,7 @@ class GenericReportView(CacheableRequestMixIn):
         request.datespan = request_data.get('datespan')
 
         try:
-            couch_user = CouchUser.get(request_data.get('couch_user'))
+            couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %

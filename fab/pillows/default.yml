@@ -21,6 +21,5 @@
 # are still excluded (because that's the default given in this file).
 ---
 exclude_groups:
-  - mvp
   - mvp_indicators
   - fluff
