@@ -79,12 +79,13 @@ class ILSData(object):
 
     @property
     def charts(self):
-        data = self.rows[0]
+        data = self.rows
 
         ret = []
         sum_all = 0
         colors = []
         if data:
+            data = data[0]
             for key in self.vals_config[data.title]:
                 if getattr(data, key, None):
                     sum_all = sum_all + getattr(data, key)

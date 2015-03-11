@@ -3,6 +3,7 @@ from functools import partial
 import itertools
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway import TEST
 from custom.ilsgateway.models import ILSGatewayConfig
@@ -85,6 +86,11 @@ def sms_users_fix(api):
     synchronization(None, endpoint.get_smsusers, partial(api.add_language_to_user, domains=enabled_domains),
                     None, None, 100, 0)
 
+@task
+def sms_users_fix_2(domain):
+    for user in CommCareUser.by_domain(domain=domain):
+        loc = Location.get(user.domain_membership.location_id)
+        user.set_location(loc)
 
 @task
 def locations_fix(domain):

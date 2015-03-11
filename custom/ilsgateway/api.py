@@ -196,7 +196,6 @@ class ILSGatewayAPI(APISynchronization):
         return web_user
 
     def sms_user_sync(self, ilsgateway_smsuser, **kwargs):
-        from custom.logistics.commtrack import add_location
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
@@ -206,10 +205,7 @@ class ILSGatewayAPI(APISynchronization):
                                   include_docs=True,
                                   limit=1).first()
         location_id = sp.location_id if sp else None
-        dm = sms_user.get_domain_membership(self.domain)
-        dm.location_id = location_id
-        sms_user.save()
-        add_location(sms_user, location_id)
+        sms_user.set_location(location_id)
         return sms_user
 
     def location_sync(self, ilsgateway_location, fetch_groups=False):

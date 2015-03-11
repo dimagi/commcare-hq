@@ -29,7 +29,7 @@ from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_re
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
     get_delivery_group_reports, ILS_FACILITIES
 from casexml.apps.stock.models import StockTransaction
-from custom.logistics.tasks import sms_users_fix
+from custom.logistics.tasks import sms_users_fix, sms_users_fix_2
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
@@ -287,4 +287,10 @@ def ils_sms_users_fix(request, domain):
 def delete_reports_runs(request, domain):
     runs = ReportRun.objects.filter(domain=domain)
     runs.delete()
+    return HttpResponse('OK')
+
+@domain_admin_required
+@require_POST
+def ils_move_location_id_from_user_domain_membership(request, domain):
+    sms_users_fix_2.delay(domain)
     return HttpResponse('OK')

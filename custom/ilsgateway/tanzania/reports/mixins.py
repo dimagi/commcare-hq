@@ -16,8 +16,18 @@ class RandRSubmissionData(ILSData):
         rr_data = []
         if self.config['org_summary']:
             try:
-                rr_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                                   org_summary=self.config['org_summary'])
+                rr = GroupSummary.objects.filter(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                                 org_summary__in=self.config['org_summary'])\
+                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+
+                rr_data.append(GroupSummary(
+                    title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                    responded=rr['responded__avg'],
+                    on_time=rr['on_time__avg'],
+                    complete=rr['complete__avg'],
+                    total=rr['total__max']
+                ))
+
             except GroupSummary.DoesNotExist:
                 return rr_data
         return rr_data

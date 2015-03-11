@@ -131,13 +131,12 @@ def reporting_window(year, month):
     return last_bd_of_last_month, last_bd_of_the_month
 
 
-def latest_status(location_id, type, value=None, month=None, year=None):
+def latest_status(location_id, type, value=None, start_date=None, end_date=None):
     qs = SupplyPointStatus.objects.filter(supply_point=location_id, status_type=type)
     if value:
         qs = qs.filter(status_value=value)
-    if month and year:
-        rw = reporting_window(year, month)
-        qs = qs.filter(status_date__gt=rw[0], status_date__lte=rw[1])
+    if start_date and end_date:
+        qs = qs.filter(status_date__gt=start_date, status_date__lte=end_date)
     if qs.exclude(status_value="reminder_sent").exists():
         # HACK around bad data.
         qs = qs.exclude(status_value="reminder_sent")
@@ -145,19 +144,19 @@ def latest_status(location_id, type, value=None, month=None, year=None):
     return qs[0] if qs.count() else None
 
 
-def latest_status_or_none(location_id, type, month, year, value=None):
+def latest_status_or_none(location_id, type, start_date, end_date, value=None):
     t = latest_status(location_id, type,
-                      month=month,
-                      year=year,
+                      start_date=start_date,
+                      end_date=end_date,
                       value=value)
     return t
 
 
-def randr_value(location_id, month, year):
+def randr_value(location_id, start_date, end_date):
     latest_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                          month, year, value=SupplyPointStatusValues.SUBMITTED)
+                                          start_date, end_date, value=SupplyPointStatusValues.SUBMITTED)
     latest_not_submit = latest_status_or_none(location_id, SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                              month, year, value=SupplyPointStatusValues.NOT_SUBMITTED)
+                                              start_date, end_date, value=SupplyPointStatusValues.NOT_SUBMITTED)
     if latest_submit:
         return latest_submit.status_date
     else:
