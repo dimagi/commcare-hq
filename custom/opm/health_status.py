@@ -130,7 +130,7 @@ class AWCHealthStatus(object):
          _("New mothers who attended a VHND this month or were exempt.  "
            "Beneficiaries are exempt during the 1st month after childbirth, "
            "and when there is no VHND"),
-         'mothers'),
+         'children'),
         ('beneficiary_vhnd',
          _("Beneficiary VHND Attendance"),
          _("Total beneficiaries who attended a VHND this month or were exempt.  "
@@ -142,10 +142,14 @@ class AWCHealthStatus(object):
          _("Women 6 months pregnant who have received IFA tablets.  Exempt "
            "if IFA tablets were not available."),
          'preg_6_months'),
-        ('preg_weighed',
-         _("Pregnancy Weight Monitoring"),
-         _("Women 6 or 9 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
-         'preg_6_or_9_months'),
+        ('preg_weighed_6',
+         _("Pregnancy Weight Monitoring, 1st Trimester"),
+         _("Women 6 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
+         'preg_6_months'),
+        ('preg_weighed_9',
+         _("Pregnancy Weight Monitoring, 2nd Trimester"),
+         _("Women 9 months pregnant whose weight gain was monitored this trimester.  Exempt if no VHND."),
+         'preg_9_months'),
         ('child_weighed',
          _("Child Weight Monitoring"),
          _("3-month-old children who have been weighed since birth"),
@@ -154,12 +158,54 @@ class AWCHealthStatus(object):
          _("Births Registered"),
          _("6-month-old children whose birth was registered.  Exempt if no VHND."),
          'child_6_months'),
-        ('child_growth_monitored',
-         _("Child Growth Monitored"),
-        _("Number of children whose age is a multiple of 3 months who have "
-          "attended at least one growth monitoring session in the last 3 "
-          "months.  Exempt if no scale was available at the VHND."),
-         'child_mult_3_months'),
+        ('child_growth_monitored_0_3',
+         _("Child Growth Monitored 0-3 months"),
+         _("Number of children aged 0-3 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_0_3_months'),
+        ('child_growth_monitored_4_6',
+         _("Child Growth Monitored 4-6 months"),
+         _("Number of children aged 4-6 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_4_6_months'),
+        ('child_growth_monitored_7_9',
+         _("Child Growth Monitored 7-9 months"),
+         _("Number of children aged 7-9 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_7_9_months'),
+        ('child_growth_monitored_10_12',
+         _("Child Growth Monitored 10-12 months"),
+         _("Number of children aged 10-12 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_10_12_months'),
+        ('child_growth_monitored_13_15',
+         _("Child Growth Monitored 13-15 months"),
+         _("Number of children aged 13-15 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_13_15_months'),
+        ('child_growth_monitored_16_18',
+         _("Child Growth Monitored 16-18 months"),
+         _("Number of children aged 16-18 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_16_18_months'),
+        ('child_growth_monitored_19_21',
+         _("Child Growth Monitored 19-21 months"),
+         _("Number of children aged 19-21 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_19_21_months'),
+        ('child_growth_monitored_22_24',
+         _("Child Growth Monitored 22-24 months"),
+         _("Number of children aged 22-24 months who have "
+           "attended at least one growth monitoring session in that window. "
+           "Exempt if no scale was available at the VHND."),
+         'child_22_24_months'),
         ('ors_received',
          _("ORS received"),
          _("Number of children who contracted diarrhea and received ORS and "
@@ -177,51 +223,51 @@ class AWCHealthStatus(object):
         ('vhnd_held',
          _("VHND"),
          _("VHND organized at AWC"),
-         'no_denom'),
+         'one'),
         ('adult_scale_available',
          _("Adult Weighing Machine Available"),
          _("Adult weighing machine available at vhnd"),
-         'no_denom'),
+         'one'),
         ('adult_scale_functional',
          _("Adult Weighing Machine Functional"),
          _("Adult weighing machine functional at vhnd"),
-         'no_denom'),
+         'one'),
         ('child_scale_available',
          _("Child Weighing Machine Available"),
          _("Child weighing machine available at vhnd"),
-         'no_denom'),
+         'one'),
         ('child_scale_functional',
          _("Child Weighing Machine Functional"),
          _("Child weighing machine functional at vhnd"),
-         'no_denom'),
+         'one'),
         ('anm_present',
          _("ANM Present"),
          _("ANM Present at VHND"),
-         'no_denom'),
+         'one'),
         ('asha_present',
          _("ASHA Present"),
          _("ASHA Present at VHND"),
-         'no_denom'),
+         'one'),
         ('cmg_present',
          _("CMG Present"),
          _("CMG Present at VHND"),
-         'no_denom'),
+         'one'),
         ('ifa_stock_available',
          _("Stock of IFA tablets"),
          _("AWC has enough Stock of IFA tablets"),
-         'no_denom'),
+         'one'),
         ('ors_stock_available',
          _("Stock of ORS packets"),
          _("AWC has enough Stock of ORS packets"),
-         'no_denom'),
+         'one'),
         ('zinc_stock_available',
          _("Stock of ZINC tablets"),
          _("AWC has enough Stock of ZINC tablets"),
-         'no_denom'),
+         'one'),
         ('measles_stock_available',
          _("Stock of Measles Vaccine"),
          _("AWC has enough Stock of Measles Vaccine"),
-         'no_denom'),
+         'one'),
         ('birth_spacing_bonus',
          _("Eligilble for Birth Spacing bonus"),
          _("Number of Beneficiaries eligilble for Birth Spacing bonus"),
@@ -325,12 +371,20 @@ class AWCHealthStatus(object):
         return len([c for c in self.all_cases if c.preg_month == 6])
 
     @property
+    def preg_9_months(self):
+        return len([c for c in self.all_cases if c.preg_month == 9])
+
+    @property
     def preg_6_or_9_months(self):
         return len([c for c in self.all_cases if c.preg_month in (6, 9)])
 
     @property
-    def preg_weighed(self):
-        return len([c for c in self.all_cases if c.preg_weighed])
+    def preg_weighed_6(self):
+        return len([c for c in self.all_cases if c.preg_weighed_trimestered(6)])
+
+    @property
+    def preg_weighed_9(self):
+        return len([c for c in self.all_cases if c.preg_weighed_trimestered(9)])
 
     @property
     def child_weighed(self):
@@ -357,14 +411,77 @@ class AWCHealthStatus(object):
         return len([c for c in self.all_cases if c.child_age == 6])
 
     @property
-    def child_growth_monitored(self):
-        return len([c for c in self.all_cases if c.child_growth_calculated])
+    def child_growth_monitored_0_3(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(3)])
 
     @property
-    def child_mult_3_months(self):
+    def child_0_3_months(self):
         # number of children whose age is a multiple of 3 months
         return len([c for c in self.all_cases
-                    if c.child_age and c.child_age % 3 == 0])
+                    if c.child_age and c.child_age in range(0, 4)])
+
+    @property
+    def child_growth_monitored_4_6(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(6)])
+
+    @property
+    def child_4_6_months(self):
+        return len([c for c in self.all_cases
+                    if c.child_age and c.child_age in range(4, 7)])
+
+    @property
+    def child_growth_monitored_7_9(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(9)])
+
+    @property
+    def child_7_9_months(self):
+        return len([c for c in self.all_cases
+                    if c.child_age and c.child_age in range(7, 10)])
+
+    @property
+    def child_growth_monitored_10_12(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(12)])
+
+    @property
+    def child_10_12_months(self):
+        return len([c for c in self.all_cases
+                    if c.child_age and c.child_age in range(10, 13)])
+
+    @property
+    def child_growth_monitored_13_15(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(15)])
+
+    @property
+    def child_13_15_months(self):
+        return len([c for c in self.all_cases
+                    if c.child_age and c.child_age in range(13, 16)])
+
+    @property
+    def child_growth_monitored_16_18(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(18)])
+
+    @property
+    def child_16_18_months(self):
+        return len([c for c in self.all_cases
+                    if c.child_age and c.child_age in range(16, 19)])
+
+    @property
+    def child_growth_monitored_19_21(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(21)])
+
+    @property
+    def child_19_21_months(self):
+        return len([c for c in self.all_cases
+                    if c.child_age and c.child_age in range(19, 22)])
+
+    @property
+    def child_growth_monitored_22_24(self):
+        return len([c for c in self.all_cases if c.child_growth_calculated_in_window(24)])
+
+    @property
+    def child_22_24_months(self):
+        return len([c for c in self.all_cases
+                    if c.child_age and c.child_age in range(22, 25)])
 
     @property
     def child_breastfed(self):

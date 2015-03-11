@@ -563,6 +563,7 @@ var DetailScreenConfig = (function () {
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
             this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
+            this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
             this.allowsEmptyColumns = options.allowsEmptyColumns;
 
             this.fireChange = function() {
@@ -638,6 +639,9 @@ var DetailScreenConfig = (function () {
                 that.saveButton.fire('change');
             });
             this.persistTileOnForms.subscribe(function(){
+                that.saveButton.fire('change');
+            });
+            this.enableTilePullDown.subscribe(function(){
                 that.saveButton.fire('change');
             });
             ko.computed(function () {
@@ -724,6 +728,7 @@ var DetailScreenConfig = (function () {
 
                 data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
                 data.persistTileOnForms = this.persistTileOnForms();
+                data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
                 if (this.containsParentConfiguration) {
                     var parentSelect;

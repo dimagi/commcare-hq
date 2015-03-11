@@ -1,0 +1,22 @@
+{% extends 'logistics/reminders_tester.html' %}
+
+{% block user_table %}
+    <h4>{{ current_groups }}</h4>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Location</th>
+            <th>Groups</th>
+        </tr>
+        </thead>
+        <tr>
+            <td>{{ phone_user.username }}</td>
+            <td>{{ phone_user.email }}</td>
+            <td>{{ phone_user.location }}</td>
+            <td>{{ phone_user.location.metadata.groups | join:", " }}</td>
+        </tr>
+    </table>
+{% endblock %}
+
