@@ -82,7 +82,6 @@ def user_data_as_hierarchy():
         block = location['block']
         gp = location['gp']
         awc = location['doc_id']
-        awc_name = location['awc']
         if not (awc and gp and block):
             continue
         hierarchy[block] = hierarchy.get(block, {})
