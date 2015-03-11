@@ -1415,42 +1415,61 @@ class SuiteGenerator(SuiteGeneratorBase):
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
 
-    def configure_entry_module(self, module, e, use_filter=False):
+    def _get_datums_meta(self, module):
+        """
+            return list of dicts containing dataum IDs and case types
+            [
+               ('parent_parent_id', 'case_type_grandparent'),
+               ('parent_id', 'case_type_parent')
+               ('child_id', 'case_type_child'),
+               ...
+            ]
+        """
+        if not (module or module.module_type == 'basic'):
+            return []
+
         select_chain = self.get_select_chain(module)
-        # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
-        datum_ids = [('parent_' * i or 'case_') + 'id'
-                     for i in range(len(select_chain))]
-        # iterate backwards like
-        # [..., (2, 'parent_parent_id'), (1, 'parent_id'), (0, 'child_id')]
-        for i, module in reversed(list(enumerate(select_chain))):
-            try:
-                parent_id = datum_ids[i + 1]
-            except IndexError:
-                parent_filter = ''
+        return [
+            {
+                'session_var': ('parent_' * i or 'case_') + 'id',
+                'case_type': mod.case_type,
+                'module': mod,
+                'index': i
+            }
+            for i, mod in reversed(list(enumerate(select_chain)))
+        ]
+
+    def configure_entry_module(self, module, e, use_filter=False):
+        datums_meta = self._get_datums_meta(module)
+        for i, datum in enumerate(datums_meta):
+            # get the session var for the previous datum if there is one
+            parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
+            if parent_id:
+                parent_filter = self.get_parent_filter(datum['module'].parent_select.relationship, parent_id)
             else:
-                parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
+                parent_filter = ''
 
             detail_persistent = None
             detail_inline = False
-            for detail_type, detail, enabled in module.get_details():
+            for detail_type, detail, enabled in datum['module'].get_details():
                 if detail.persist_tile_on_forms and detail.use_case_tiles and enabled:
-                    detail_persistent = self.id_strings.detail(module, detail_type)
+                    detail_persistent = self.id_strings.detail(datum['module'], detail_type)
                     if detail.pull_down_tile:
                         detail_inline = True
                     break
 
             e.datums.append(SessionDatum(
-                id=datum_ids[i],
-                nodeset=(self.get_nodeset_xpath(module.case_type, module, use_filter)
+                id=datum['session_var'],
+                nodeset=(self.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
                          + parent_filter),
                 value="./@case_id",
-                detail_select=self.get_detail_id_safe(module, 'case_short'),
+                detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                 detail_confirm=(
-                    self.get_detail_id_safe(module, 'case_long')
-                    if i == 0 else None
+                    self.get_detail_id_safe(datum['module'], 'case_long')
+                    if datum['index'] == 0 else None
                 ),
                 detail_persistent=detail_persistent,
-                detail_inline=self.get_detail_id_safe(module, 'case_long') if detail_inline else None
+                detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
