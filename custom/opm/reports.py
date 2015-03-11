@@ -48,7 +48,7 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (get_hierarchy, HierarchyFilter, MetHierarchyFilter,
+from .filters import (user_data_as_hierarchy, user_data_by_id, HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -1043,7 +1043,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 
     def get_matching_awcs(self):
         filter_on = 'awc' if self.awcs else 'gp' if self.gp else 'block'
-        for block, gps in get_hierarchy().items():
+        for block, gps in user_data_as_hierarchy().items():
             if not filter_on == 'block' or block == self.block:
                 for gp, awcs in gps.items():
                     if not filter_on == 'gp' or gp in self.gp:
@@ -1057,7 +1057,8 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         # populate awcs with cases from that awc
         for case_object in case_objects:
             awc = case_object.awc_name
-            awcs[awc] = awcs.get(awc, []) + [case_object]
+            awc_uid = case_object.owner_id
+            awcs[awc_uid] = awcs.get(awc_uid, []) + [case_object]
         return awcs
 
     @property
@@ -1071,7 +1072,8 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     totals[col][i] = total + num if total is not None else num
 
         rows = []
-        awc_rows = [AWCHealthStatus(awc, cases)
+        users_data = user_data_by_id()
+        awc_rows = [AWCHealthStatus(awc, cases, users_data)
                     for awc, cases in self.awc_data().items()]
         for awc in awc_rows:
             row = []
@@ -1110,8 +1112,9 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             return DataTablesHeader(*headers)
 
         def rows():
+            users_data = user_data_by_id()
             for awc_name, cases in self.awc_data().items():
-                awc = AWCHealthStatus(awc_name, cases)
+                awc = AWCHealthStatus(awc_name, cases, users_data)
                 row = []
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)
