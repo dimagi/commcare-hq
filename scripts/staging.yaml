@@ -69,4 +69,5 @@ submodules:
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - speed-up
