@@ -466,7 +466,11 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         form.xmlns = 'http://id_m0-f0'
         form.requires = 'case'
 
-        self.assertXmlPartialEqual(self.get_xml('case_tile_pulldown_session'), app.create_suite(), "./entry/session")
+        self.assertXmlPartialEqual(
+            self.get_xml('case_tile_pulldown_session'),
+            app.create_suite(),
+            "./entry/session"
+        )
 
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
