@@ -774,7 +774,9 @@ class ConditionsMet(OPMCaseRow):
         self.serial_number = child_index
         self.payment_last_month = "Rs.%d" % self.last_month_row.total_cash if self.last_month_row else 0
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        self.awc_code = CommCareUser.get_by_user_id(case.user_id).user_data.get('awc_code', EMPTY_FIELD)
+        self.awc_code = CommCareUser.get_by_user_id(case.user_id).user_data.get('awc_code', EMPTY_FIELD) if \
+            case.user_id else EMPTY_FIELD
+
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
             self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
