@@ -305,7 +305,10 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         """
         Ensure module filter gets added correctly
         """
-        app = Application.wrap(self.get_json('suite-advanced'))
+        json = self.get_json('suite-workflow')
+        json['build_spec']['version'] = '2.20.0'
+
+        app = Application.wrap(json)
         module = app.get_module(1)
         module.module_filter = "/mod/filter = '123'"
         self.assertXmlPartialEqual(
@@ -315,7 +318,10 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         )
 
     def test_module_filter_with_references(self):
-        app = Application.wrap(self.get_json('suite-advanced'))
+        json = self.get_json('suite-workflow')
+        json['build_spec']['version'] = '2.20.0'
+
+        app = Application.wrap(json)
         module = app.get_module(1)
         module.module_filter = "./user/mod/filter = '123'"
         self.assertXmlPartialEqual(
