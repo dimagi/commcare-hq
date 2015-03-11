@@ -507,12 +507,19 @@ class CaseCustomExportHelper(CustomExportHelper):
         dont_show_cols = {"sync_log_id"}
         for table in table_conf:
             if table.get("index", "") == "#.actions.#":
-                for col in table.get("column_configuration", []):
+                column_configuration = table.get("column_configuration", [])
+                for col in column_configuration:
                     index = col.get("index", "")
                     if index not in dont_show_cols:
                         col["show"] = True
                     else:
                         dont_show_cols.discard(index)
+
+                    # Remove attachements - This is specfically in response to
+                    # http://manage.dimagi.com/default.asp?160461
+                    if index.split('.')[0] == 'attachments':
+                        column_configuration.remove(col)
+
                 break
 
         return table_conf
