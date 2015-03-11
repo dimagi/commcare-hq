@@ -122,8 +122,17 @@ class DeliverySubmissionData(ILSData):
         del_data = []
         if self.config['org_summary']:
             try:
-                del_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
-                                                    org_summary=self.config['org_summary'])
+                data = GroupSummary.objects.get(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                                                org_summary__in=self.config['org_summary'])\
+                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+
+                del_data.append(GroupSummary(
+                    title=SupplyPointStatusTypes.SOH_FACILITY,
+                    responded=data['responded__avg'],
+                    on_time=data['on_time__avg'],
+                    complete=data['complete__avg'],
+                    total=data['total__max']
+                ))
             except GroupSummary.DoesNotExist:
                 return del_data
         return del_data
