@@ -16,7 +16,7 @@
             {% if edit %}
                 <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
 				<option value="">{% trans "No Parent" %}</option>
-                {% for module in app.modules %}
+                {% for module in valid_parent_modules %}
 					<option value="{{module.unique_id}}">{{ module.name|trans:langs }}</option>
                 {% endfor %}
                 </select>
