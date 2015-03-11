@@ -1,10 +1,17 @@
+from datetime import datetime, timedelta
+from dateutil import rrule
+from dateutil.relativedelta import relativedelta
+import pytz
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from couchexport.models import Format
 from custom.common import ALL_OPTION
+from custom.ilsgateway.filters import MonthAndQuarterFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
+from dimagi.utils.dates import DateSpan, DEFAULT_DATE_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 from custom.ilsgateway.tanzania.reports.utils import make_url
 from django.utils import html
@@ -72,7 +79,7 @@ class ILSData(object):
 
     @property
     def charts(self):
-        data = self.rows
+        data = self.rows[0]
 
         ret = []
         sum_all = 0
@@ -106,7 +113,72 @@ class ILSMixin(object):
     report_delivery_url = None
 
 
-class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin):
+class ILSDateSpan(DateSpan):
+
+    @classmethod
+    def from_month_or_quarter(cls, month_or_quarter=None, year=None, format=DEFAULT_DATE_FORMAT,
+        inclusive=True, timezone=pytz.utc):
+        """
+        Generate a DateSpan object given a numerical month and year.
+        Both are optional and default to the current month/year.
+
+            april = DateSpan.from_month(04, 2013)
+        """
+        if month_or_quarter is None:
+            month_or_quarter = datetime.datetime.date.today().month
+        if year is None:
+            year = datetime.datetime.date.today().year
+        assert isinstance(month_or_quarter, int) and isinstance(year, int)
+        if month_or_quarter < 0:
+            quarters = list(rrule.rrule(rrule.MONTHLY,
+                               bymonth=(1,4,7,10),
+                               bysetpos=-1,
+                               dtstart=datetime(year,1,1),
+                               count=5))
+
+            start = quarters[month_or_quarter*-1-1]
+            end = quarters[month_or_quarter*-1] - relativedelta(days=1)
+        else:
+            start = datetime(year, month_or_quarter, 1)
+            end = start + relativedelta(months=1) - relativedelta(days=1)
+        return DateSpan(start, end, format, inclusive, timezone)
+
+
+class MonthQuarterYearMixin(object):
+    """
+        Similar to DatespanMixin, but works with MonthAndQuarterFilter and YearField
+        months = 1:12
+        quaters = -1:-4
+    """
+    fields = [MonthAndQuarterFilter, YearFilter]
+
+    _datespan = None
+    @property
+    def datespan(self):
+        if self._datespan is None:
+            datespan = ILSDateSpan.from_month_or_quarter(self.month_or_quater, self.year)
+            self.request.datespan = datespan
+            self.context.update(dict(datespan=datespan))
+            self._datespan = datespan
+        return self._datespan
+
+    @property
+    def month_or_quater(self):
+        if 'month' in self.request_params:
+            return int(self.request_params['month'])
+        else:
+            return datetime.now().month
+
+    @property
+    def year(self):
+        if 'year' in self.request_params:
+            return int(self.request_params['year'])
+        else:
+            return datetime.now().year
+
+
+class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
+                  ProjectReportParametersMixin, MonthQuarterYearMixin):
     title = ''
     report_template_path = "ilsgateway/multi_report.html"
     flush_layout = True
@@ -133,7 +205,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
 
         config = dict(
             domain=self.domain,
-            org_summary=org_summary[0] if len(org_summary) > 0 else None,
+            org_summary=org_summary if len(org_summary) > 0 else None,
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
             month=self.request_params['month'] if 'month' in self.request_params else '',
@@ -158,7 +230,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
                     prd_part_url = "".join(["&filter_by_product=%s" % product for product in products_list])
 
             else:
-                products = SQLProduct.objects.all().values_list('product_id', flat=True)
+                products = SQLProduct.objects.filter(domain=self.domain).values_list('product_id', flat=True)
                 prd_part_url = ""
             config.update(dict(products=products, program=program, prd_part_url=prd_part_url))
 

@@ -1,8 +1,11 @@
+from datetime import datetime
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.select import MonthFilter
 from custom.common import ALL_OPTION
+from dimagi.utils.decorators.memoized import memoized
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
@@ -74,3 +77,22 @@ class MSDZoneFilter(BaseSingleOptionFilter):
             ('DM', 'Dodoma'),
             ('TG', 'Tanga'),
         ]
+
+
+class MonthAndQuarterFilter(MonthFilter):
+
+    @property
+    def options(self):
+        options = super(MonthAndQuarterFilter, self).options
+        options.extend([
+            ('-1', 'Quarter 1'),
+            ('-2', 'Quarter 2'),
+            ('-3', 'Quarter 3'),
+            ('-4', 'Quarter 4')
+        ])
+        return options
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "%02d" % datetime.now().month
