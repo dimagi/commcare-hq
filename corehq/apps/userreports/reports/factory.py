@@ -4,7 +4,11 @@ from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, C
     NumericFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, dynamic_choice_list_url
+from corehq.apps.userreports.reports.filters import(
+    dynamic_choice_list_url,
+    NONE_CHOICE,
+    SHOW_ALL_CHOICE,
+)
 from corehq.apps.userreports.reports.specs import FilterSpec, ChoiceListFilterSpec, PieChartSpec, \
     MultibarAggregateChartSpec, MultibarChartSpec, ReportFilter, ReportColumn, DynamicChoiceListFilterSpec, \
     NumericFilterSpec
@@ -30,7 +34,10 @@ def _build_numeric_filter(spec):
 
 def _build_choice_list_filter(spec):
     wrapped = ChoiceListFilterSpec.wrap(spec)
-    choices = [Choice(fc.value, fc.get_display()) for fc in wrapped.choices]
+    choices = [Choice(
+        fc.value if fc.value is not None else NONE_CHOICE,
+        fc.get_display()
+    ) for fc in wrapped.choices]
     if wrapped.show_all:
         choices.insert(0, Choice(SHOW_ALL_CHOICE, _('Show all')))
     return ChoiceListFilter(
