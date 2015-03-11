@@ -4,7 +4,9 @@ from corehq.apps.app_manager.models import (
     Application, AutoSelectCase,
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
-    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement)
+    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement,
+    MappingItem,
+)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -409,8 +411,62 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
-    def test_case_tile_pull_down_suite(self):
-        self._test_generic_suite("app_pulldown", "suite-pulldown")
+    def test_case_tile_pull_down(self):
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.use_case_tiles = True
+        module.case_details.short.persist_tile_on_forms = True
+        module.case_details.short.pull_down_tile = True
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+            DetailColumn(
+                header={'en': 'b'},
+                model='case',
+                field='b',
+                format='plain',
+                case_tile_field='top_left'
+            ),
+            DetailColumn(
+                header={'en': 'c'},
+                model='case',
+                field='c',
+                format='enum',
+                enum=[
+                    MappingItem(key='male', value={'en': 'Male'}),
+                    MappingItem(key='female', value={'en': 'Female'}),
+                ],
+                case_tile_field='sex'
+            ),
+            DetailColumn(
+                header={'en': 'd'},
+                model='case',
+                field='d',
+                format='plain',
+                case_tile_field='bottom_left'
+            ),
+            DetailColumn(
+                header={'en': 'e'},
+                model='case',
+                field='e',
+                format='date',
+                case_tile_field='date'
+            ),
+        ]
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m0-f0'
+        form.requires = 'case'
+
+        self.assertXmlPartialEqual(self.get_xml('case_tile_pulldown_session'), app.create_suite(), "./entry/session")
 
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):

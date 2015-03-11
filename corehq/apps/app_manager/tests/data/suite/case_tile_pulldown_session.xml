@@ -1,0 +1,5 @@
+<partial>
+ <session>
+   <datum detail-inline="m0_case_long" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='patient'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long" detail-persistent="m0_case_short"/>
+ </session>
+</partial>
