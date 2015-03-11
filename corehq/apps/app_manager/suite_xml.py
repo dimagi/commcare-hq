@@ -1417,12 +1417,11 @@ class SuiteGenerator(SuiteGeneratorBase):
 
     def _get_datums_meta(self, module):
         """
-            return list of dicts containing dataum IDs and case types
+            return list of dicts containing datum IDs and case types
             [
-               ('parent_parent_id', 'case_type_grandparent'),
-               ('parent_id', 'case_type_parent')
-               ('child_id', 'case_type_child'),
-               ...
+               {'session_var': 'parent_parent_id', ... },
+               {'session_var': 'parent_id', ...}
+               {'session_var': 'child_id', ...},
             ]
         """
         if not (module and module.module_type == 'basic'):
