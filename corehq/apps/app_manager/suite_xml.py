@@ -1472,10 +1472,49 @@ class SuiteGenerator(SuiteGeneratorBase):
                 detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
             ))
 
-    def configure_entry_advanced_form(self, module, e, form, **kwargs):
+    def add_auto_select_datums_to_entry(self, action, auto_select, e, form):
         from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
             AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+        if auto_select.mode == AUTO_SELECT_USER:
+            xpath = session_var(auto_select.value_key, subref='user')
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ))
+            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+        elif auto_select.mode == AUTO_SELECT_CASE:
+            try:
+                ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
+                sess_var = ref.case_session_var
+            except KeyError:
+                raise ValueError("Case tag not found: %s" % auto_select.value_source)
+            xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ))
+            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+        elif auto_select.mode == AUTO_SELECT_FIXTURE:
+            xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
+            xpath = xpath_base.slash(auto_select.value_key)
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ))
+            self.add_assertion(
+                e,
+                "{0} = 1".format(xpath_base.count()),
+                'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
+                [auto_select.value_source]
+            )
+            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+        elif auto_select.mode == AUTO_SELECT_RAW:
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=auto_select.value_key
+            ))
 
+    def configure_entry_advanced_form(self, module, e, form, **kwargs):
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
             for action in actions:
@@ -1518,47 +1557,32 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         root_module_datums = self._get_datums_meta(module.root_module)
 
-        for i, action in enumerate(form.actions.load_update_cases):
+        def get_datum_session_var(action, action_index):
+            """
+            If this form's module is a child of another module then we want
+            to make the session variables match up.
+
+            This is a naive approach that just matches the datums based on
+            their order and the case types of the case that's being loaded.
+            If there is a match then we make the session variable in the child
+            module form equal to the parent.
+            """
+            case_session_var = action.case_session_var
+            try:
+                root_datum = root_module_datums[action_index]
+            except IndexError:
+                pass
+            else:
+                child_case_type = action.case_type
+                if root_datum['case_type'] == child_case_type:
+                    case_session_var = root_datum['session_var']
+
+            return case_session_var
+
+        for index, action in enumerate(form.actions.load_update_cases):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
-                if auto_select.mode == AUTO_SELECT_USER:
-                    xpath = session_var(auto_select.value_key, subref='user')
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_CASE:
-                    try:
-                        ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
-                        sess_var = ref.case_session_var
-                    except KeyError:
-                        raise ValueError("Case tag not found: %s" % auto_select.value_source)
-                    xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_FIXTURE:
-                    xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
-                    xpath = xpath_base.slash(auto_select.value_key)
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_assertion(
-                        e,
-                        "{0} = 1".format(xpath_base.count()),
-                        'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
-                        [auto_select.value_source]
-                    )
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_RAW:
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=auto_select.value_key
-                    ))
+                self.add_auto_select_datums_to_entry(action, auto_select, e, form)
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
@@ -1569,20 +1593,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 else:
                     parent_filter = ''
 
-                case_session_var = action.case_session_var
-                try:
-                    root_datum = root_module_datums[i]
-                except IndexError:
-                    pass
-                else:
-                    child_case_type = action.case_type
-                    if root_datum['case_type'] == child_case_type:
-                        case_session_var = root_datum['session_var']
-
                 target_module = get_target_module(action.case_type, action.details_module)
                 referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
                 e.datums.append(SessionDatum(
-                    id=case_session_var,
+                    id=get_datum_session_var(action, index),
                     nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(target_module, 'case_short'),

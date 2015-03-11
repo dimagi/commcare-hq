@@ -531,6 +531,9 @@ class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
     def test_child_module_adjust_session_datums(self):
+        """
+        Test that session datum id's in child module match those in parent module
+        """
         self.module_1.root_module_id = self.module_0.unique_id
         self.module_0.case_type = 'gold-fish'
         m0f0 = self.module_0.get_form(0)
