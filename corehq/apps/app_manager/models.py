@@ -1361,6 +1361,7 @@ class Detail(IndexedSchema):
     custom_xml = StringProperty()
     use_case_tiles = BooleanProperty()
     persist_tile_on_forms = BooleanProperty()
+    pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
         '''

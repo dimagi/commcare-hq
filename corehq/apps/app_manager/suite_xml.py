@@ -244,6 +244,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
+    detail_inline = StringField('@detail-inline')
 
 
 class StackDatum(IdNode):
@@ -1430,9 +1431,12 @@ class SuiteGenerator(SuiteGeneratorBase):
                 parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
 
             detail_persistent = None
+            detail_inline = False
             for detail_type, detail, enabled in module.get_details():
                 if detail.persist_tile_on_forms and detail.use_case_tiles and enabled:
                     detail_persistent = self.id_strings.detail(module, detail_type)
+                    if detail.pull_down_tile:
+                        detail_inline = True
                     break
 
             e.datums.append(SessionDatum(
@@ -1445,7 +1449,8 @@ class SuiteGenerator(SuiteGeneratorBase):
                     self.get_detail_id_safe(module, 'case_long')
                     if i == 0 else None
                 ),
-                detail_persistent=detail_persistent
+                detail_persistent=detail_persistent,
+                detail_inline=self.get_detail_id_safe(module, 'case_long') if detail_inline else None
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):

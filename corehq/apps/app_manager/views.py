@@ -1592,6 +1592,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     sort_elements = params.get('sort_elements', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
+    pull_down_tile = params.get("enableTilePullDown", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1614,6 +1615,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
+        if pull_down_tile is not None:
+            detail.short.pull_down_tile = pull_down_tile
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
         if tabs is not None:
