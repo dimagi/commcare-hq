@@ -117,15 +117,24 @@ class APISynchronization(object):
             fields_definitions = CustomDataFieldsDefinition.get_or_create(self.domain, definition_name)
             need_save = False
             for custom_field in custom_fields:
-                if not filter(lambda field: field.slug == custom_field, fields_definitions.fields):
+                name = custom_field.get('name')
+                choices = custom_field.get('choices') or []
+                existing_fields = filter(lambda field: field.slug == name, fields_definitions.fields)
+                if not existing_fields:
                     need_save = True
                     fields_definitions.fields.append(
                         CustomDataField(
-                            slug=custom_field,
-                            label=custom_field,
+                            slug=name,
+                            label=name,
                             is_required=False,
                         )
                     )
+                else:
+                    existing_field = existing_fields[0]
+                    if set(existing_field.choices) != set(choices):
+                        existing_field.choices = choices
+                        need_save = True
+
             if need_save:
                 fields_definitions.save()
 
