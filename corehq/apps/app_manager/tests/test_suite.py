@@ -409,6 +409,9 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
+    def test_case_tile_pull_down_suite(self):
+        self._test_generic_suite("app_pulldown", "suite-pulldown")
+
 
 class AdvancedModuleAsChildTest(SimpleTestCase, TestFileMixin):
     "TODO - Add Case-dependency tests"
