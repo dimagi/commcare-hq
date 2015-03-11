@@ -411,8 +411,13 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
-            response = self._dispatcher.dispatch(request, render_as='email',
-                **self.view_kwargs)
+            from corehq.apps.userreports.reports.view import ConfigurableReport
+            if type(self._dispatcher) == ConfigurableReport:
+                response = self._dispatcher.dispatch(request, self.subreport_slug, render_as='email',
+                    **self.view_kwargs)
+            else:
+                response = self._dispatcher.dispatch(request, render_as='email',
+                    **self.view_kwargs)
             if attach_excel is True:
                 file_obj = self._dispatcher.dispatch(request, render_as='excel',
                 **self.view_kwargs)

@@ -1,4 +1,6 @@
+import json
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.views.generic.base import TemplateView
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -66,15 +68,18 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return self.spec.ui_filters
 
     @cls_to_view_login_and_domain
-    def dispatch(self, request, domain, report_config_id, **kwargs):
-        self.domain = domain
+    def dispatch(self, request, report_config_id, **kwargs):
+        self.request = request
+        self.domain = request.domain
         self.report_config_id = report_config_id
         user = request.couch_user
-        if self.has_permissions(domain, user):
+        if self.has_permissions(self.domain, user):
+            if kwargs.get('render_as') == 'email':
+                return self.email_response
             if request.is_ajax() or request.GET.get('format', None) == 'json':
-                return self.get_ajax(request, domain, **kwargs)
+                return self.get_ajax(request, **kwargs)
             self.content_type = None
-            return super(ConfigurableReport, self).dispatch(request, domain, **kwargs)
+            return super(ConfigurableReport, self).dispatch(request, self.domain, **kwargs)
         else:
             raise Http403()
 
@@ -86,8 +91,8 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             'domain': self.domain,
             'report': self,
             'filter_context': self.filter_context,
-            'url': reverse(self.slug, args=[self.domain, self.report_config_id]),
-            'headers': self.headers,
+            'url': self.url,
+            'headers': self.headers
         }
         context.update(self.saved_report_context_data)
         return context
@@ -156,3 +161,11 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
     @property
     def report_type(self):
         return self.type
+
+    @property
+    def url(self):
+        return reverse(self.slug, args=[self.domain, self.report_config_id])
+
+    @property
+    def email_response(self):
+        raise NotImplementedError
