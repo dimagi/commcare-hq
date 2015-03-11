@@ -721,14 +721,11 @@ def paginate_releases(request, domain, app_id):
 @require_deploy_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
-    latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
     context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
     context.update({
         'release_manager': True,
-        'saved_apps': [],
-        'latest_release': latest_release,
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
