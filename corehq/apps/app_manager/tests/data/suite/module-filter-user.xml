@@ -1,0 +1,11 @@
+<partial>
+    <menu id="m1" relevant="instance('commcaresession')/session/user/data/mod/filter = '123'">
+        <text>
+            <locale id="modules.m1"/>
+        </text>
+        <command id="m1-f0"/>
+        <command id="m1-f1"/>
+        <command id="m1-f2"/>
+        <command id="m1-case-list"/>
+    </menu>
+</partial>

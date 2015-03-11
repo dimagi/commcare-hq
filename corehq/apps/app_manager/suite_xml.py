@@ -1704,11 +1704,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                     DATA_REF = 'data'
 
                     relevant = module.module_filter
-                    if module.module_filter.startswith("{}{}".format(PREFIX, USER_REF)):
-                        relevant = session_var(relevant[len("{}{}".format(PREFIX, USER_REF)):],
+                    if module.module_filter.startswith("{}{}/".format(PREFIX, USER_REF)):
+                        relevant = session_var(relevant[len("{}{}/".format(PREFIX, USER_REF)):],
                                                subref=USER_REF)
-                    elif module.module_filter.startswith("{}{}".format(PREFIX, DATA_REF)):
-                        relevant = session_var(relevant[len("{}{}".format(PREFIX, DATA_REF)):])
+                    elif module.module_filter.startswith("{}{}/".format(PREFIX, DATA_REF)):
+                        relevant = session_var(relevant[len("{}{}/".format(PREFIX, DATA_REF)):])
 
                     menu_kwargs['relevant'] = relevant
 

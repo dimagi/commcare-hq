@@ -314,6 +314,23 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./menu[@id='m1']"
         )
 
+    def test_module_filter_with_references(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        module = app.get_module(1)
+        module.module_filter = "./user/mod/filter = '123'"
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter-user'),
+            app.create_suite(),
+            "./menu[@id='m1']"
+        )
+
+        module.module_filter = "./data/mod/filter = '123'"
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter-data'),
+            app.create_suite(),
+            "./menu[@id='m1']"
+        )
+
     def test_tiered_select_with_advanced_module_as_parent(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 
