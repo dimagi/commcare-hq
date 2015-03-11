@@ -1698,7 +1698,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 if self.id_strings.menu_root(module):
                     menu_kwargs['root'] = self.id_strings.menu_root(module)
 
-                if getattr(module, 'module_filter', None):
+                if self.app.enable_module_filtering and getattr(module, 'module_filter', None):
                     menu_kwargs['relevant'] = module.module_filter
 
                 menu = Menu(**menu_kwargs)

@@ -29,6 +29,7 @@ from corehq.apps.app_manager.exceptions import (
     RearrangeError,
 )
 
+from corehq.apps.app_manager.xpath_grammar import CommcareExpression
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -1522,7 +1523,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
 
-    if should_edit('module_filter'):
+    if app.enable_module_filtering and should_edit('module_filter'):
         module['module_filter'] = req.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
