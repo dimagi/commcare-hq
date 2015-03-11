@@ -891,8 +891,8 @@ def get_module_view_context_and_template(app, module):
             'case_list_form_options': case_list_form_options(case_type),
             'case_list_form_allowed': module.all_forms_require_a_case,
             'valid_parent_modules': [
-                module for module in app.modules
-                if not getattr(module, 'root_module_id', None)
+                parent_module for parent_module in app.modules
+                if not getattr(parent_module, 'root_module_id', None)
             ]
 
         }
