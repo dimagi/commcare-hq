@@ -1219,11 +1219,7 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                case_id = 'uuid()'
-                if not (hasattr(module, 'parent_select') and module.parent_select.active) and \
-                        form.is_case_list_form:
-                    case_id = session_var(CASE_ID)
-
+                case_id = session_var(form.session_var_for_action('open_case'))
                 case_block.add_create_block(
                     relevance=self.action_relevance(open_case_action.condition),
                     case_name=open_case_action.name_path,
@@ -1280,10 +1276,12 @@ class XForm(WrappedNode):
                         '/{x}'.join(subcase.repeat_context.split('/'))[1:]
                     )
                     nest = repeat_contexts[subcase.repeat_context] > 1
+                    case_id = 'uuid()'
                 else:
                     base_path = ''
                     parent_node = self.data_node
                     nest = True
+                    case_id = session_var(form.session_var_for_action('subcase', i))
 
                 if nest:
                     name = 'subcase_%s' % i
@@ -1303,6 +1301,7 @@ class XForm(WrappedNode):
                     delay_case_id=bool(subcase.repeat_context),
                     autoset_owner_id=autoset_owner_id_for_subcase(subcase),
                     has_case_sharing=form.get_app().case_sharing,
+                    case_id=case_id
                 )
 
                 subcase_block.add_update_block(subcase.case_properties)
@@ -1461,16 +1460,10 @@ class XForm(WrappedNode):
 
             return path, subcase_node
 
-        case_registration_action = None
-        if form.is_case_list_form:
-            case_registration_action = form.get_registration_actions()[0]
-
         for action in form.actions.get_open_actions():
             check_case_type(action)
 
-            case_id = 'uuid()'
-            if case_registration_action == action:
-                case_id = session_var(action.case_session_var)
+            case_id = 'uuid()' if action.repeat_context else session_var(action.case_session_var)
 
             path, subcase_node = get_action_path(action)
 

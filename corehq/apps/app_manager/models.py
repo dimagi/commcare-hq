@@ -338,10 +338,6 @@ class AdvancedAction(IndexedSchema):
         return set(self.case_properties.keys())
 
     @property
-    def case_session_var(self):
-        return 'case_id_{0}'.format(self.case_tag)
-
-    @property
     def is_subcase(self):
         return self.parent_tag
 
@@ -390,6 +386,10 @@ class LoadUpdateAction(AdvancedAction):
         names.update(self.preload.keys())
         return names
 
+    @property
+    def case_session_var(self):
+        return 'case_id_{0}'.format(self.case_tag)
+
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_path = StringProperty()
@@ -405,6 +405,10 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
         if self.open_condition.type == 'if':
             yield self.open_condition.question
+
+    @property
+    def case_session_var(self):
+        return 'case_id_new_{}_{}'.format(self.case_type, self.id)
 
 
 class AdvancedFormActions(DocumentSchema):
@@ -987,6 +991,17 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def all_other_forms_require_a_case(self):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
+
+    def session_var_for_action(self, action_type, subcase_index=None):
+        module_case_type = self.get_module().case_type
+        if action_type == 'open_case':
+            return 'case_id_new_{}_0'.format(module_case_type)
+        if action_type == 'subcase':
+            opens_case = 'open_case' in self.active_actions()
+            subcase_type = self.actions.subcases[subcase_index].case_type
+            if opens_case and subcase_type == module_case_type:
+                subcase_index += 1  # make sure we don't get two ids: case_id_new_type_0
+            return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
 
     def _get_active_actions(self, types):
         actions = {}
