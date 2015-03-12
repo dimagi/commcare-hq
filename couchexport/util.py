@@ -47,7 +47,7 @@ def clear_attachments(schema_or_doc):
         del schema_or_doc['case_attachments']
     if schema_or_doc:
         for action in schema_or_doc.get('actions', []):
-            if 'attachments' in action:
+            if 'attachments' in action and 'updated_unknown_properties' in action:
                 del action['attachments']
     return schema_or_doc
 
