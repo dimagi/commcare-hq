@@ -99,25 +99,44 @@ class APISynchronization(object):
         self.endpoint = endpoint
 
     def prepare_commtrack_config(self):
+        """
+        Bootstraps the domain-level metadata according to the static config.
+        """
         raise NotImplemented("Not implemented yet")
 
     def prepare_custom_fields(self):
+        """
+        Sets the proper custom user data/location/product fields on the domain.
+        """
         self.save_custom_fields('LocationFields', self.LOCATION_CUSTOM_FIELDS)
         self.save_custom_fields('UserFields', self.SMS_USER_CUSTOM_FIELDS)
         self.save_custom_fields('ProductFields', self.PRODUCT_CUSTOM_FIELDS)
 
     def save_custom_fields(self, definition_name, custom_fields):
-        fields_definitions = CustomDataFieldsDefinition.get_or_create(self.domain, definition_name)
-        for custom_field in custom_fields:
-            if not filter(lambda field: field.slug == custom_field, fields_definitions.fields):
-                fields_definitions.fields.append(
-                    CustomDataField(
-                        slug=custom_field,
-                        label=custom_field,
-                        is_required=False,
+        if custom_fields:
+            fields_definitions = CustomDataFieldsDefinition.get_or_create(self.domain, definition_name)
+            need_save = False
+            for custom_field in custom_fields:
+                name = custom_field.get('name')
+                choices = custom_field.get('choices') or []
+                existing_fields = filter(lambda field: field.slug == name, fields_definitions.fields)
+                if not existing_fields:
+                    need_save = True
+                    fields_definitions.fields.append(
+                        CustomDataField(
+                            slug=name,
+                            label=name,
+                            is_required=False,
+                        )
                     )
-                )
-        fields_definitions.save()
+                else:
+                    existing_field = existing_fields[0]
+                    if set(existing_field.choices) != set(choices):
+                        existing_field.choices = choices
+                        need_save = True
+
+            if need_save:
+                fields_definitions.save()
 
     def location_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")

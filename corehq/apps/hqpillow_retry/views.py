@@ -30,6 +30,10 @@ ACTION_SEND = 'send'
 ACTIONS = [ACTION_RESET, ACTION_DELETE, ACTION_SEND]
 
 
+def safe_format_date(date):
+    return date.strftime("%Y-%m-%d") if date else date
+
+
 class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     dispatcher = AdminReportDispatcher
     slug = 'pillow_errors'
@@ -52,15 +56,14 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('Error ID', sortable=False),
-            DataTablesColumn('Doc ID', sortable=False),
+            DataTablesColumn('Error', sortable=False),
             DataTablesColumn('Pillow Class', sortable=True),
             DataTablesColumn('Created', sortable=True),
-            DataTablesColumn('Last attempt', sortable=True),
             DataTablesColumn('Next attempt', sortable=True),
             DataTablesColumn('Attempts (current / total)', sortable=True),
             DataTablesColumn('Error type', sortable=True),
             DataTablesColumn('Doc type', sortable=False),
+            DataTablesColumn('Doc date', sortable=False),
             DataTablesColumn('Domain(s)', sortable=False),
             DataTablesColumn('Select', sortable=False),
         )
@@ -92,7 +95,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         sort_fields = [
             'pillow',
             'date_created',
-            'date_last_attempt',
             'date_next_attempt',
             'current_attempt',
             'error_type'
@@ -147,28 +149,21 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         query = self.get_query()
         query = query.order_by(self.sort_field)
 
+        next_deploy = _('Next Deploy')
         errors = query[self.pagination.start:(self.pagination.start+self.pagination.count)]
         for error in errors:
             yield [
-                self.make_traceback_link(error),
                 self.make_search_link(error),
                 error.pillow.split('.')[-1],
                 naturaltime(error.date_created),
-                naturaltime(error.date_last_attempt),
-                naturaltime(error.date_next_attempt),
+                naturaltime(error.date_next_attempt) if error.has_next_attempt() else next_deploy,
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
                 error.doc_type,
+                safe_format_date(error.doc_date),
                 error.domains,
                 self.make_checkbox(error)
             ]
-
-    def make_traceback_link(self, error):
-        return '<a href="{0}?error={1}" target="_blank">{2}</a>'.format(
-            reverse(EditPillowError.urlname),
-            error.id,
-            error.id
-        )
 
     def make_search_link(self, error):
         return (
@@ -176,6 +171,8 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             '<i class="icon-search"></i></a>'
             '&nbsp;<a href="{raw_url}?id={doc_id}" target="_blank" title="{raw_title}">'
             '<i class="icon-file"></i></a>'
+            '&nbsp;<a href="{error_url}?error={error_id}" target="_blank" title="{error_title}">'
+            '<i class="icon-share"></i></a>'
         ).format(
             text='{}...'.format(error.doc_id[:5]),
             search_url=reverse("global_quick_find"),
@@ -183,6 +180,9 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             search_title=_("Search HQ for this document: %(doc_id)s") % {'doc_id': error.doc_id},
             raw_url=reverse("doc_in_es"),
             raw_title=_("Open the raw document: %(doc_id)s") % {'doc_id': error.doc_id},
+            error_url=reverse(EditPillowError.urlname),
+            error_id=error.id,
+            error_title=_("View the details of this error: %(error_id)s") % {'error_id': error.id}
         )
 
     def make_checkbox(self, error):

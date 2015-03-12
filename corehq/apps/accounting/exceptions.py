@@ -52,3 +52,7 @@ class BillingContactInfoError(Exception):
 
 class CreateAccountingAdminError(Exception):
     pass
+
+
+class ProductPlanNotFoundError(Exception):
+    pass

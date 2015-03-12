@@ -339,6 +339,9 @@ class OPMCaseRow(object):
 
     @property
     def preg_weighed(self):
+        return self.preg_weighed_trimestered(self.preg_month)
+
+    def preg_weighed_trimestered(self, query_preg_month):
         def _from_case(property):
             return self.case_property(property, 0) == 'received'
 
@@ -348,12 +351,12 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
             )
 
-        if self.preg_month == 6:
+        if self.preg_month == 6 and query_preg_month == 6:
             if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
             return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
-        elif self.preg_month == 9:
+        elif self.preg_month == 9 and query_preg_month == 9:
             if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
@@ -407,6 +410,26 @@ class OPMCaseRow(object):
             return any(
                 form.xpath(xpath) == '1'
                 for form in self.filtered_forms(CHILDREN_FORMS, 3)
+            )
+
+    def child_growth_calculated_in_window(self, query_age):
+        """
+            query_age - must be last month of a window, multiple of 3
+            given last month of a window, this returns if
+            the child in that window attended at least 1 growth session or not
+        """
+        # do not handle middle months of a window
+        if query_age is 0 or query_age % 3 != 0:
+            return None
+        if self.child_age in [query_age - 2, query_age - 1, query_age]:
+            months_in_window = self.child_age % 3 or 3
+            if not self.is_service_available('func_childweighmach', months=months_in_window):
+                return True
+
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
+            return any(
+                form.xpath(xpath) == '1'
+                for form in self.filtered_forms(CHILDREN_FORMS, months_in_window)
             )
 
     @property

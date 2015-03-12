@@ -9,7 +9,7 @@ from tastypie.exceptions import BadRequest
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
     _safe_bool
 
-from couchforms.models import XFormInstance
+from couchforms.models import doc_types
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
@@ -36,6 +36,8 @@ from no_exceptions.exceptions import Http400
 # can be set to provide a mock.
 MOCK_XFORM_ES = None
 MOCK_CASE_ES = None
+
+xform_doc_types = doc_types()
 
 
 class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResource, DomainSpecificResourceMixin):
@@ -73,15 +75,28 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         return MOCK_XFORM_ES or XFormES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
+        include_archived = 'include_archived' in bundle.request.GET
         try:
-            es_query = es_search(bundle.request, domain)
+            es_query = es_search(bundle.request, domain, ['include_archived'])
         except Http400 as e:
             raise BadRequest(e.message)
-        es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
+        if include_archived:
+            es_query['filter']['and'].append({'or': [
+                {'term': {'doc_type': 'xforminstance'}},
+                {'term': {'doc_type': 'xformarchived'}},
+            ]})
+        else:
+            es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
+
+        def wrapper(doc):
+            if doc['doc_type'] in xform_doc_types:
+                return xform_doc_types[doc['doc_type']].wrap(doc)
+            else:
+                return doc
 
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload = es_query,
-                          model = XFormInstance,
+        return ESQuerySet(payload=es_query,
+                          model=wrapper,
                           es_client=self.xform_es(domain)).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):

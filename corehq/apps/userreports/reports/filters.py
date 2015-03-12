@@ -1,9 +1,10 @@
 from django.core.urlresolvers import reverse
-from sqlagg.filters import BasicFilter, BetweenFilter, EQFilter
+from sqlagg.filters import BasicFilter, BetweenFilter, EQFilter, ISNULLFilter
 from dimagi.utils.dates import DateSpan
 
 
 SHOW_ALL_CHOICE = '_all'  # todo: if someone wants to name an actually choice "_all" this will break
+NONE_CHOICE = u"\u2400"
 
 
 class FilterValue(object):
@@ -74,13 +75,19 @@ class ChoiceListFilterValue(FilterValue):
     def show_all(self):
         return self.value.value == SHOW_ALL_CHOICE
 
+    @property
+    def is_null(self):
+        return self.value.value == NONE_CHOICE
+
     def to_sql_filter(self):
         if self.show_all:
             return ''
+        if self.is_null:
+            return ISNULLFilter(self.filter.field)
         return EQFilter(self.filter.field, self.filter.field)
 
     def to_sql_values(self):
-        if self.show_all:
+        if self.show_all or self.is_null:
             return {}
         return {
             self.filter.field: self.value.value,

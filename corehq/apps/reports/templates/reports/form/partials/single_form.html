@@ -63,6 +63,9 @@ requires imports/proptable.html to be included in the main template
             return false;
         });
 
+        // On page load, initially set show readable
+        showReadable();
+
         function showSkipped(show) {
             if (show) {
                 $('.form-data-skipped').show();

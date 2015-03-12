@@ -245,3 +245,10 @@ class ProductsReportHelper(object):
             for transaction in self.transactions
             if transaction.action == 'receipts' and transaction.quantity != '0'
         ]
+
+
+def get_reporting_types(domain):
+    return [
+        location_type for location_type in Domain.get_by_name(domain).location_types
+        if not location_type.administrative
+    ]
