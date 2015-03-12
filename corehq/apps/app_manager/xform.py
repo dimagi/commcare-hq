@@ -594,6 +594,10 @@ class XForm(WrappedNode):
 
         return node_groups
 
+    def _reset_translations_cache(self):
+        self.translations.reset_cache(self)
+        self.itext_node_groups.reset_cache(self)
+
     @requires_itext()
     def normalize_itext(self):
         """
@@ -641,8 +645,7 @@ class XForm(WrappedNode):
 
         self.xml = parse_xml(xf_string)
 
-        self.translations.reset_cache(self)
-        self.itext_node_groups.reset_cache(self)
+        self._reset_translations_cache()
 
     def strip_vellum_ns_attributes(self):
         # vellum_ns is wrapped in braces i.e. '{http...}'
@@ -664,7 +667,7 @@ class XForm(WrappedNode):
             raise XFormException("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
-        self.translations.reset_cache(self)
+        self._reset_translations_cache()
 
     def exclude_languages(self, whitelist):
         changes = False
@@ -674,7 +677,7 @@ class XForm(WrappedNode):
                 changes = True
 
         if changes:
-            self.translations.reset_cache(self)
+            self._reset_translations_cache()
 
     def _normalize_itext_id(self, id):
         pre = 'jr:itext('
