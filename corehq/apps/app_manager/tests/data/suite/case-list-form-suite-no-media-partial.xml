@@ -6,7 +6,7 @@
         <stack>
             <push>
                 <command value="'m1-f0'"/>
-                <datum id="case_id" value="uuid()"/>
+                <datum id="case_id_new_suite_test_0" value="uuid()"/>
                 <datum id="return_to" value="'m0'"/>
             </push>
         </stack>
