@@ -1451,10 +1451,13 @@ class SuiteGenerator(SuiteGeneratorBase):
             detail_persistent = None
             detail_inline = False
             for detail_type, detail, enabled in datum['module'].get_details():
-                if detail.persist_tile_on_forms and detail.use_case_tiles and enabled:
+                if (
+                    detail.persist_tile_on_forms
+                    and (detail.use_case_tiles or detail.custom_xml)
+                    and enabled
+                ):
                     detail_persistent = self.id_strings.detail(datum['module'], detail_type)
-                    if detail.pull_down_tile:
-                        detail_inline = True
+                    detail_inline = bool(detail.pull_down_tile)
                     break
 
             e.datums.append(SessionDatum(
