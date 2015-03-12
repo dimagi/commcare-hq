@@ -39,16 +39,17 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColu
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.util import make_form_couch_key
-from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
-from .utils import BaseMixin, normal_format, format_percent
+
+from .utils import BaseMixin, normal_format, format_percent, get_matching_users
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (user_data_by_id, HierarchyFilter, MetHierarchyFilter,
+from .filters import (HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -716,11 +717,16 @@ class CaseReportMixin(object):
     def case_status(self):
         return OpenCloseFilter.case_status(self.request_params)
 
+    @property
+    @memoized
+    def users_matching_filter(self):
+        return get_matching_users(self.awcs, self.gp, self.block)
+
     def get_rows(self, datespan):
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
-                .term("type.exact", self.default_case_type)
+                .case_type(self.default_case_type)
         query.index = 'report_cases'
 
         if self.case_status == 'open':
@@ -731,37 +737,13 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
-        def get_owner_filter(field, selected):
-            owners = [user._id for user in self.users
-                      if getattr(user, 'user_data', {}).get(field) in selected]
-            return es_filters.term("owner_id", owners)
-
-        # TODO do we still need get_matching_awcs in the New HSR?
-        for region in ('awcs', 'gp', 'block'):
-            selected = getattr(self, region, [])
-            if selected:
-                query = query.filter(get_owner_filter(region, selected))
-                break
+        query = query.owner([user['doc_id'] for user in self.users_matching_filter])
 
         result = query.run()
 
-        def _final_filter(case_doc):
-            """
-            Because the ES filters are tokenized, we do a final in-memory filter ensuring exact matches.
-            This prevents issues with "Tetua Pasi Tola" cases showing up in "Tetua"
-
-            We can't do this in ES because we don't want to bother modifying the report_cases mapping.
-            See: http://www.elasticsearch.org/guide/en/elasticsearch/guide/current/_finding_exact_values.html
-            """
-            if self.awcs and case_doc.get('awc_name') not in self.awcs:
-                return False
-            elif self.block and case_doc.get('block_name') != self.block:
-                return False
-            return True
-
         return [
-            CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), result.ids)
-            if _final_filter(doc)
+            CommCareCase.wrap(doc)
+            for doc in iter_docs(CommCareCase.get_db(), result.ids)
         ]
 
     @property
@@ -1032,18 +1014,27 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
+    @property
+    @memoized
     def awc_data(self):
         case_objects = self.row_objects + self.extra_row_objects
-        cases_by_awcs = {}
+        cases_by_owner = {}
         for case_object in case_objects:
-            awc = case_object.awc_name
-            awc_uid = case_object.owner_id
-            cases_by_awcs[awc_uid] = cases_by_awcs.get(awc_uid, []) + [case_object]
-        return cases_by_awcs
+            owner_id = case_object.owner_id
+            cases_by_owner[owner_id] = cases_by_owner.get(owner_id, []) + [case_object]
+        return cases_by_owner
+
+    def iter_awcs(self):
+        for user in self.users_matching_filter:
+            yield AWCHealthStatus(
+                cases=self.awc_data.get(user['doc_id'], []),
+                awc=user['awc'],
+                awc_code=user['awc_code'],
+                gp=user['gp'],
+            )
 
     @property
     def rows(self):
-
         totals = [[None, None] for i in range(len(self.model.method_map))]
         def add_to_totals(col, val, denom):
             for i, num in enumerate([val, denom]):
@@ -1052,10 +1043,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     totals[col][i] = total + num if total is not None else num
 
         rows = []
-        users_data = user_data_by_id()
-        awc_rows = [AWCHealthStatus(awc, cases, users_data)
-                    for awc, cases in self.awc_data().items()]
-        for awc in awc_rows:
+        for awc in self.iter_awcs():
             row = []
             for col, (method, __, __, denom) in enumerate(self.model.method_map):
                 val = getattr(awc, method)
@@ -1092,9 +1080,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             return DataTablesHeader(*headers)
 
         def rows():
-            users_data = user_data_by_id()
-            for awc_name, cases in self.awc_data().items():
-                awc = AWCHealthStatus(awc_name, cases, users_data)
+            for awc in self.iter_awcs():
                 row = []
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)

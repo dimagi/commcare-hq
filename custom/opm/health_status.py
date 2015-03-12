@@ -306,14 +306,14 @@ class AWCHealthStatus(object):
     # subclass OPMCaseRow specifically for this report, and add in indicators to
     # our hearts' content.  This would allow us to override definitions of
     # indicators based on their meanings in THIS report.
-    def __init__(self, owner_id, cases, users_data):
+    def __init__(self, cases, awc, awc_code, gp):
         # Some of the cases are second or third children of the same mother
         # include that distinction here
         self.all_cases = cases
         self.primary_cases = [c for c in cases if not c.is_secondary]
-        self.awc_name = users_data.get(owner_id, None).get('awc_name', '')
-        self.gp = users_data.get(owner_id, None).get('gp', '')
-        self.awc_code = users_data.get(owner_id, None).get('awc_code', '')
+        self.awc_name = awc
+        self.awc_code = awc_code
+        self.gp = gp
 
     @property
     def no_denom(self):

@@ -31,25 +31,6 @@ class HierarchySqlData(SqlData):
         ]
 
 
-class UserSqlData(SqlData):
-    table_name = "fluff_OpmUserFluff"
-    group_by = ['doc_id', 'awc', 'awc_code', 'gp', 'block']
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('doc_id', SimpleColumn('doc_id')),
-            DatabaseColumn('awc', SimpleColumn('awc')),
-            DatabaseColumn('awc_code', SimpleColumn('awc_code')),
-            DatabaseColumn('gp', SimpleColumn('gp')),
-            DatabaseColumn('block', SimpleColumn('block')),
-        ]
-
-
 def get_hierarchy():
     """
     Creates a location hierarchy structured as follows:
@@ -68,35 +49,6 @@ def get_hierarchy():
         hierarchy[block][gp] = hierarchy[block].get(gp, {})
         hierarchy[block][gp][awc] = None
     return hierarchy
-
-
-def user_data_by_id():
-    """
-    Creates user-id -> awc-info dict
-    data = {
-        '<owner_id>': {
-            'awc_name': awc_name,
-            'gp': gp,
-            'block': block,
-            'awc_code': awc_code,
-        }
-        ...
-    }
-    """
-    data = {}
-    for location in UserSqlData().get_data():
-        block = location['block']
-        gp = location['gp']
-        owner_id = location['doc_id']
-        awc_name = location['awc']
-        awc_code = location['awc_code']
-        data[owner_id] = {
-            'awc_name': awc_name,
-            'gp': gp,
-            'block': block,
-            'awc_code': awc_code,
-        }
-    return data
 
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
