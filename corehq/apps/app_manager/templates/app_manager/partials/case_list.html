@@ -31,18 +31,16 @@
         <option value="yes">Use Case Tiles</option>
     </select>
     {% endif %}
-    {% if request|toggle_enabled:'CASE_LIST_TILE' or request|toggle_enabled:'CASE_LIST_CUSTOM_XML'%}
     <div data-bind="visible: useCaseTiles() == 'yes' || window.toggles.CASE_LIST_CUSTOM_XML">
-    <label class="checkbox">
-        <input type="checkbox" data-bind="checked: persistTileOnForms">
-        Use this case list tile persistently in forms
-    </label>
-    <label class="checkbox" data-bind="visible: persistTileOnForms()">
-        <input type="checkbox" data-bind="checked: enableTilePullDown">
-        Embed case details in case tile pull-down
-    </label>
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: persistTileOnForms">
+            Use this case list tile persistently in forms
+        </label>
+        <label class="checkbox" data-bind="visible: persistTileOnForms()">
+            <input type="checkbox" data-bind="checked: enableTilePullDown">
+            Embed case details in case tile pull-down
+        </label>
     </div>
-    {% endif %}
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
 
