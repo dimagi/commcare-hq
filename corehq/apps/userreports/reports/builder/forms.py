@@ -223,33 +223,38 @@ class DataSourceBuilder(object):
         ).one()
 
 
-class CreateNewReportForm(forms.Form):
-    """
-    A form for the first page of the report builder.
-    Allows user to specify report type, application, and source.
-    """
-    report_type = forms.ChoiceField(
+class DataSourceForm(forms.Form):
+    report_name = forms.CharField()
+    chart_type = forms.ChoiceField(
         choices=[
-            ('bar_chart', _("Bar Chart")),
-            ('pie_chart', _("Pie Chart")),
-            ('table', _("Table")),
+            ('bar', _('Bar')),
+            ('pie', _("Pie")),
         ],
     )
 
-    def __init__(self, domain, *args, **kwargs):
-        super(CreateNewReportForm, self).__init__(*args, **kwargs)
+    def __init__(self, domain, report_type, *args, **kwargs):
+        super(DataSourceForm, self).__init__(*args, **kwargs)
         self.domain = domain
+        self.report_type = report_type
+
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         self.fields.update(report_source_fields)
+
+        self.fields['chart_type'].required = self.report_type == "chart"
+
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.form_id = "report-builder-form"
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Create New Report'),
-                'report_type',
+                _('{} Report'.format(self.report_type.capitalize())),
+                'report_name',
+                'chart_type' if self.report_type == 'chart' else None
+            ),
+            crispy.Fieldset(
+                _('Data'),
                 *report_source_fields.keys()
             ),
             FormActions(
@@ -258,6 +263,7 @@ class CreateNewReportForm(forms.Form):
                         'create_new_report_builder_btn',
                         _('Next'),
                     )
+                    # TODO: Add a back button here maybe
                 ),
             ),
         )
@@ -274,7 +280,7 @@ class CreateNewReportForm(forms.Form):
         Raise a validation error if there are already 5 data sources and this
         report won't be able to use one of the existing ones.
         """
-        cleaned_data = super(CreateNewReportForm, self).clean()
+        cleaned_data = super(DataSourceForm, self).clean()
         source_type = cleaned_data.get('source_type')
         report_source = cleaned_data.get('report_source')
         app_id = cleaned_data.get('application')

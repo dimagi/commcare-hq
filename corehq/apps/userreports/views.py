@@ -8,7 +8,11 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models import(
+    Application,
+    Form,
+    get_apps_in_domain
+)
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
@@ -22,7 +26,7 @@ from corehq.apps.userreports.reports.builder.forms import (
     ConfigureNewBarChartReport,
     ConfigureNewPieChartReport,
     ConfigureNewTableReport,
-    CreateNewReportForm,
+    DataSourceForm,
 )
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -87,51 +91,76 @@ class ReportBuilderView(TemplateView):
         return super(ReportBuilderView, self).dispatch(request, domain, **kwargs)
 
 
-class CreateNewReportBuilderView(ReportBuilderView):
-    template_name = "userreports/create_new_report_builder.html"
+class ReportBuilderTypeSelect(ReportBuilderView):
+    template_name = "userreports/builder_report_type_select.html"
+
+    def get_context_data(self, **kwargs):
+        return {
+            "has_apps": len(get_apps_in_domain(self.domain)) > 0,
+            "domain": self.domain,
+            "report": {
+                "title": _("Create New Report")
+            }
+        }
+
+
+class ReportBuilderDataSourceSelect(ReportBuilderView):
+    template_name = 'userreports/builder_data_source_select.html'
+
+    def dispatch(self, request, domain, report_type, **kwargs):
+        self.report_type = report_type
+        return super(ReportBuilderDataSourceSelect, self).dispatch(request, domain, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = {
-            "sources_map": self.create_new_report_builder_form.sources_map,
+            "sources_map": self.form.sources_map,
             "domain": self.domain,
-            'report': {
-                "title": _("Create New Report"),
-            },
-            'form': self.create_new_report_builder_form,
+            'report': {"title": _("Create New Report")},
+            'form': self.form,
         }
         return context
 
     @property
     @memoized
-    def create_new_report_builder_form(self):
+    def form(self):
         if self.request.method == 'POST':
-            return CreateNewReportForm(self.domain, self.request.POST)
-        return CreateNewReportForm(self.domain)
+            return DataSourceForm(self.domain, self.report_type, self.request.POST)
+        return DataSourceForm(self.domain, self.report_type)
 
     def post(self, request, *args, **kwargs):
-        if self.create_new_report_builder_form.is_valid():
-            report_type = self.create_new_report_builder_form.cleaned_data['report_type']
+        if self.form.is_valid():
+            app_source = self.form.get_selected_source()
             url_names_map = {
-                'bar_chart': 'configure_bar_chart_report_builder',
-                'pie_chart': 'configure_pie_chart_report_builder',
-                'table': 'configure_table_report_builder',
+                'list': 'configure_list_report',
+                'chart': 'configure_chart_report',
+                'table': 'configure_table_report',
+                'worker': 'configure_worker_report',
             }
-            url_name = url_names_map[report_type]
-            app_source = self.create_new_report_builder_form.get_selected_source()
+            url_name = url_names_map[self.report_type]
+            url_args = [
+                (f, self.form.cleaned_data[f])
+                for f in ['report_name', 'chart_type']
+            ] + [
+                (f, getattr(app_source, f))
+                for f in ['application', 'source_type', 'source']
+            ]
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain]) + '?' + '&'.join([
-                    '%(key)s=%(value)s' % {
-                        'key': field,
-                        'value': getattr(app_source, field),
-                    } for field in [
-                        'application',
-                        'source_type',
-                        'source',
-                    ]
-                ])
+                reverse(url_name, args=[self.domain]) + '?' + '&'.join(
+                    ["{}={}".format(k, v) for k, v in url_args]
+                )
             )
         else:
             return self.get(request, *args, **kwargs)
+
+
+class ConfigureChartReport(ReportBuilderView):
+    pass
+class ConfigureListReport(ReportBuilderView):
+    pass
+class ConfigureTableReport(ReportBuilderView):
+    pass
+class ConfigureWorkerReport(ReportBuilderView):
+    pass
 
 
 class ConfigureBarChartReportBuilderView(ReportBuilderView):
