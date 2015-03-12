@@ -1,7 +1,6 @@
 import dateutil
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.loading import get_db
-import pytz
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 
@@ -25,25 +24,23 @@ class IndicatorDocument(object):
         return db
 
     @classmethod
-    def get_or_create_from_dict(cls, doc_dict):
-        if '_rev' in doc_dict:
-            del doc_dict['_rev']
-        if '_attachments' in doc_dict:
-            doc_dict['_attachments'] = {}
+    def wrap_with_right_rev(cls, doc_dict):
+        """
+        like wrap, set _rev to whatever it needs to be in order to be saved
+        to the indicator db without an update conflict
 
+        The use case is that doc_dict is from the main db
+        and we want to return something that can be saved in the indicator db
+
+        """
         try:
-            existing_doc = cls.get_db().get(doc_dict['_id'])
-            is_existing = True
-            doc_instance = cls.wrap(existing_doc)
-            if doc_instance.is_update(doc_dict):
-                doc_instance._doc.update(doc_dict)
-                doc_instance.save()
+            current_rev = cls.get_db().get(doc_dict['_id'])['_rev']
         except ResourceNotFound:
-            doc_instance = cls.wrap(doc_dict)
-            doc_instance.save()
-            is_existing = False
+            del doc_dict['_rev']
+        else:
+            doc_dict['_rev'] = current_rev
 
-        return doc_instance, is_existing
+        return cls.wrap(doc_dict)
 
 
 class IndicatorXForm(IndicatorDocument, XFormInstance):
