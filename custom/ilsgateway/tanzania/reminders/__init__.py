@@ -1,6 +1,6 @@
 from datetime import datetime
 from custom.ilsgateway.models import SupplyPointStatus
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 
 REGISTER_HELP = _("To register send reg <name> <msd code> or reg <name> at <district name>. Example:reg john patel d34002 or reg john patel : tandahimba")

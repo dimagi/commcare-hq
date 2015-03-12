@@ -1,4 +1,5 @@
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.util.translation import localize
 
 
 class KeywordHandler(object):
@@ -17,4 +18,6 @@ class KeywordHandler(object):
         raise NotImplementedError("Not implemented yet")
 
     def respond(self, message, **kwargs):
-        send_sms_to_verified_number(self.verified_contact, message % kwargs)
+        owner = self.verified_contact.owner
+        with localize(owner.get_language_code()):
+            send_sms_to_verified_number(self.verified_contact, message % kwargs)
