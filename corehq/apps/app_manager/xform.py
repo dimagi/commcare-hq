@@ -1397,7 +1397,7 @@ class XForm(WrappedNode):
 
         has_schedule = form.get_module().has_schedule and form.schedule and form.schedule.anchor
 
-        for action in form.actions.load_update_cases:
+        for action in form.actions.get_load_update_actions():
             session_case_id = CaseIDXPath(session_var(action.case_session_var))
             if action.preload:
                 self.add_casedb()
@@ -1465,7 +1465,7 @@ class XForm(WrappedNode):
         if form.is_case_list_form:
             case_registration_action = form.get_registration_actions()[0]
 
-        for action in form.actions.open_cases:
+        for action in form.actions.get_open_actions():
             check_case_type(action)
 
             case_id = 'uuid()'

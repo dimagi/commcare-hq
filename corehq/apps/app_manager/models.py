@@ -17,6 +17,7 @@ from urllib2 import urlopen
 from urlparse import urljoin
 
 from couchdbkit import ResourceConflict, MultipleResultsFound
+import itertools
 from lxml import etree
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
@@ -317,7 +318,7 @@ class FormActions(DocumentSchema):
         return names
 
 
-class AdvancedAction(DocumentSchema):
+class AdvancedAction(IndexedSchema):
     case_type = StringProperty()
     case_tag = StringProperty()
     case_properties = DictProperty()
@@ -410,8 +411,11 @@ class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
+    get_load_update_actions = IndexedSchema.Getter('load_update_cases')
+    get_open_actions = IndexedSchema.Getter('open_cases')
+
     def get_all_actions(self):
-        return self.load_update_cases + self.open_cases
+        return itertools.chain(self.get_load_update_actions(), self.get_open_actions())
 
     def get_subcase_actions(self):
         return (a for a in self.get_all_actions() if a.parent_tag)
@@ -485,8 +489,8 @@ class AdvancedFormActions(DocumentSchema):
                 if type == 'load' and action.auto_select and action.auto_select.mode:
                     meta['by_auto_select_mode'][action.auto_select.mode].append(action)
 
-        add_actions('load', self.load_update_cases)
-        add_actions('open', self.open_cases)
+        add_actions('load', self.get_load_update_actions())
+        add_actions('open', self.get_open_actions())
 
         return meta
 
@@ -1840,7 +1844,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_registration_actions(self, case_type=None):
         return [
-            action for action in self.actions.open_cases
+            action for action in self.actions.get_open_actions()
             if not action.is_subcase and (not case_type or action.case_type == case_type)
         ]
 
