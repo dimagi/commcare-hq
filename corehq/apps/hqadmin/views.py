@@ -214,7 +214,7 @@ def contact_email(request):
         subject=description[:60],
         body=message,
         from_email="",
-        to=(settings.CONTACT_EMAIL),
+        to=[settings.CONTACT_EMAIL],
         headers={'Reply-To': request.POST['email']},
     ).send()
     response = HttpResponse('success')
