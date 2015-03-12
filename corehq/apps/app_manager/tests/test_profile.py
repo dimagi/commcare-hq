@@ -1,5 +1,5 @@
 # coding: utf-8
-from django.test import TestCase
+from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import SETTINGS_LOOKUP, SETTINGS
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 from corehq.apps.builds.models import BuildSpec
 
 
-class ProfileTest(TestCase, TestFileMixin):
+class ProfileTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
 
     def setUp(self):
@@ -61,6 +61,17 @@ class ProfileTest(TestCase, TestFileMixin):
                 '"force" incorrect for property "{}"'.format(key)
             )
 
+    def _test_custom_property(self, profile, key, value):
+        node = self._get_node(profile, key, "./property[@key='{}']")
+        self.assertEqual(node.get('value'), value, 'Property "{}"'.format(key))
+
+        force_actual = node.get('force')
+        self.assertEqual(
+            force_actual,
+            'true',
+            '"force" should always be true for custom properties"{}"'.format(key)
+        )
+
     def test_profile_properties(self):
         for setting in SETTINGS:
             if setting['id'] == 'users':
@@ -72,6 +83,17 @@ class ProfileTest(TestCase, TestFileMixin):
                     }
                 }
                 self._test_profile(self.app)
+
+
+        # custom properties do not rely on SETTINGS so need to be tested separately
+        self.app.profile = {
+            'custom_properties': {
+                'random': 'value'
+            }
+        }
+        profile = self.app.create_profile()
+        self._test_profile(self.app)
+        self._test_custom_property(ET.fromstring(profile), 'random', 'value')
 
     def test_version(self):
         profile_xml = ET.fromstring(self.app.create_profile())
