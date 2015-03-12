@@ -313,7 +313,7 @@ class AWCHealthStatus(object):
         self.primary_cases = [c for c in cases if not c.is_secondary]
         self.awc_name = users_data.get(owner_id, None).get('awc_name', '')
         self.gp = users_data.get(owner_id, None).get('gp', '')
-        self.awc_code = users_data.get(owner_id, None).get('awc_code', '')
+        self.awc_code = owner_id
 
     @property
     def no_denom(self):

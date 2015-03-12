@@ -70,26 +70,6 @@ def get_hierarchy():
     return hierarchy
 
 
-def user_data_as_hierarchy():
-    """
-    Creates a location hierarchy structured as follows:
-    hierarchy = {"Atri": {
-                    "Sahora": {
-                        "<doc_id of awc>": None}}}
-    """
-    hierarchy = {}
-    for location in UserSqlData().get_data():
-        block = location['block']
-        gp = location['gp']
-        awc = location['doc_id']
-        if not (awc and gp and block):
-            continue
-        hierarchy[block] = hierarchy.get(block, {})
-        hierarchy[block][gp] = hierarchy[block].get(gp, {})
-        hierarchy[block][gp][awc] = None
-    return hierarchy
-
-
 def user_data_by_id():
     """
     Creates user-id -> awc-info dict

@@ -48,7 +48,7 @@ from .utils import BaseMixin, normal_format, format_percent
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (user_data_as_hierarchy, user_data_by_id, HierarchyFilter, MetHierarchyFilter,
+from .filters import (user_data_by_id, HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -743,8 +743,6 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
-        # TODO for consistency, we could always filter on awc using
-        # get_matching_awcs from the NewHealthStatusReport
         if self.awcs:
             query = query.filter(get_awc_filter(self.awcs))
         elif self.gp:
@@ -1041,25 +1039,14 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
-    def get_matching_awcs(self):
-        filter_on = 'awc' if self.awcs else 'gp' if self.gp else 'block'
-        for block, gps in user_data_as_hierarchy().items():
-            if not filter_on == 'block' or block == self.block:
-                for gp, awcs in gps.items():
-                    if not filter_on == 'gp' or gp in self.gp:
-                        for awc in awcs.keys():
-                            if not filter_on == 'awc' or awc in self.awcs:
-                                yield awc
-
     def awc_data(self):
         case_objects = self.row_objects + self.extra_row_objects
-        awcs = {awc: [] for awc in self.get_matching_awcs()}
-        # populate awcs with cases from that awc
+        cases_by_awcs = {}
         for case_object in case_objects:
             awc = case_object.awc_name
             awc_uid = case_object.owner_id
-            awcs[awc_uid] = awcs.get(awc_uid, []) + [case_object]
-        return awcs
+            cases_by_awcs[awc_uid] = cases_by_awcs.get(awc_uid, []) + [case_object]
+        return cases_by_awcs
 
     @property
     def rows(self):
