@@ -43,14 +43,12 @@
 trunk: master
 name: autostaging
 branches:
-  - gevent-subprocess.communicate-fix  # Danny 3/11
   - subscription-no-contact-info # bb 8/4
   - revert-4205-revert-3841-86347-2 # Daniel 9/11
   - vellum-staging # J$ 11/13
   - locations-as-groups # tw 1/20
   - fixtures-spike  # cz 1/29
   - static-updates # Biyeun 2/9
-  - dhis2 # Norman 2/6
   # - project-settings-update # sravan 1/30
   - upgrade-celery # SK 2/27
   - balance-icon # Daniel 3/4
