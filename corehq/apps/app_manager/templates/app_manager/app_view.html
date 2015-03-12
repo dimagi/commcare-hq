@@ -21,6 +21,7 @@
             settings: {
                 sections: {{ settings_layout|JSON }},
                 values: {{ settings_values|JSON }},
+                customProperties: {{ custom_properties|JSON }},
                 urls: {
                     save: '{% url "edit_commcare_settings" domain app.id %}'
                 },

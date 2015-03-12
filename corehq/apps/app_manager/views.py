@@ -544,9 +544,15 @@ def get_app_view_context(request, app):
             new_settings.append(setting)
         section['settings'] = new_settings
 
+    custom_properties_array = []
+    if 'custom_properties' in app.profile:
+        custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
+                                      app.profile.get('custom_properties').items())
+
     context = {
         'settings_layout': settings_layout,
         'settings_values': get_settings_values(app),
+        'custom_properties': custom_properties_array,
         'is_cloudcare_allowed': is_cloudcare_allowed,
     }
 
@@ -1963,16 +1969,18 @@ def edit_commcare_profile(request, domain, app_id):
     except TypeError:
         return HttpResponseBadRequest(json.dumps({
             'reason': 'POST body must be of the form:'
-                      '{"properties": {...}, "features": {...}}'
+            '{"properties": {...}, "features": {...}, "custom_properties": {...}}'
         }))
     app = get_app(domain, app_id)
     changed = defaultdict(dict)
-    for type in ["features", "properties"]:
-        for name, value in settings.get(type, {}).items():
-            if type not in app.profile:
-                app.profile[type] = {}
-            app.profile[type][name] = value
-            changed[type][name] = value
+    for settings_type in ["features", "properties", "custom_properties"]:
+        if settings_type == "custom_properties":
+            app.profile[settings_type] = {}
+        for name, value in settings.get(settings_type, {}).items():
+            if settings_type not in app.profile:
+                app.profile[settings_type] = {}
+            app.profile[settings_type][name] = value
+            changed[settings_type][name] = value
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)
