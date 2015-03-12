@@ -24,13 +24,16 @@ class IndicatorDocument(object):
         return db
 
     @classmethod
-    def wrap_with_right_rev(cls, doc_dict):
+    def wrap_for_indicator_db(cls, doc_dict):
         """
-        like wrap, set _rev to whatever it needs to be in order to be saved
-        to the indicator db without an update conflict
+        wrap a doc that was pulled from the main db
+        modifying it so that it can be saved in the indicator db
 
-        The use case is that doc_dict is from the main db
-        and we want to return something that can be saved in the indicator db
+        like wrap, but also:
+        - sets _rev to whatever it needs to be in order to be saved
+          to the indicator db without an update conflict
+        - strips _attachments, because we don't care about them
+          and having the stub in JSON without the attachment will fail
 
         """
         try:
@@ -39,6 +42,9 @@ class IndicatorDocument(object):
             del doc_dict['_rev']
         else:
             doc_dict['_rev'] = current_rev
+
+        if '_attachments' in doc_dict:
+            del doc_dict['_attachments']
 
         return cls.wrap(doc_dict)
 

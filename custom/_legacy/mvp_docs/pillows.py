@@ -69,7 +69,7 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         try:
-            indicator_form = IndicatorXForm.wrap_with_right_rev(doc_dict)
+            indicator_form = IndicatorXForm.wrap_for_indicator_db(doc_dict)
             indicator_form.update_indicators_in_bulk(
                 form_indicator_defs, logger=pillow_eval_logging,
                 save_on_update=False
@@ -106,7 +106,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         try:
-            indicator_case = IndicatorCase.wrap_with_right_rev(doc_dict)
+            indicator_case = IndicatorCase.wrap_for_indicator_db(doc_dict)
             indicator_case.update_indicators_in_bulk(
                 case_indicator_defs, logger=pillow_eval_logging,
                 save_on_update=False
@@ -130,7 +130,7 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
         for xform_id in xform_ids:
             try:
                 xform_dict = XFormInstance.get_db().get(xform_id)
-                xform_doc = IndicatorXForm.wrap_with_right_rev(xform_dict)
+                xform_doc = IndicatorXForm.wrap_for_indicator_db(xform_dict)
             except ResourceNotFound:
                 pillow_eval_logging.error(
                     "Could not find an XFormInstance with id %(xform_id)s "
