@@ -1,17 +1,26 @@
 import os
+import json
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from corehq.apps.app_manager.tests import add_build
 
+from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.app_manager.models import Application, APP_V1, Module
+from corehq.apps.app_manager.models import Application, APP_V1, APP_V2, Module
 
 
 class TestViews(TestCase):
     def setUp(self):
-        self.domain = 'app_manager-TestViews-domain'
-        create_domain(self.domain)
+        self.domain = 'app-manager-testviews-domain'
+        self.username = 'cornelius'
+        self.password = 'fudge'
+        self.user = WebUser.create(self.domain, self.username, self.password, is_active=True)
+        self.user.is_superuser = True
+        self.user.save()
+
+    def tearDown(self):
+        self.user.delete()
 
     def test_download_file_bad_xform_404(self):
         '''
@@ -39,3 +48,39 @@ class TestViews(TestCase):
                                                                             app_id=app.get_id,
                                                                             path='modules-0/forms-0.xml')))
         self.assertEqual(response.status_code, 404)
+
+    def test_edit_commcare_profile(self):
+        app = Application.new_app(self.domain, "TestApp", application_version=APP_V2)
+        app.save()
+        data = {
+            "custom_properties": {
+                "random": "value",
+                "another": "value"
+            }
+        }
+        self.client.login(username=self.username, password=self.password)
+
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]), 
+                                    json.dumps(data),
+                                    content_type='application/json')
+
+        content = json.loads(response.content)
+        custom_properties = content["changed"]["custom_properties"]
+
+        self.assertEqual(custom_properties["random"], "value")
+        self.assertEqual(custom_properties["another"], "value")
+
+        data = {
+            "custom_properties": {
+                "random": "changed",
+            }
+        }
+
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]), 
+                                    json.dumps(data),
+                                    content_type='application/json')
+
+        content = json.loads(response.content)
+        custom_properties = content["changed"]["custom_properties"]
+
+        self.assertEqual(custom_properties["random"], "changed")
