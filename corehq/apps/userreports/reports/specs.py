@@ -75,7 +75,7 @@ class ReportColumn(JsonObject):
 
 
 class FilterChoice(JsonObject):
-    value = DefaultProperty(required=True)
+    value = DefaultProperty()
     display = StringProperty()
 
     def get_display(self):

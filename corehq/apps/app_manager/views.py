@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -721,14 +722,12 @@ def paginate_releases(request, domain, app_id):
 @require_deploy_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
-    latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
     context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
 
     context.update({
         'release_manager': True,
-        'saved_apps': [],
-        'latest_release': latest_release,
+        'can_send_sms': domain_has_privilege(domain, privileges.OUTBOUND_SMS),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -889,7 +888,12 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(),
             'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case
+            'case_list_form_allowed': module.all_forms_require_a_case,
+            'valid_parent_modules': [
+                parent_module for parent_module in app.modules
+                if not getattr(parent_module, 'root_module_id', None)
+            ]
+
         }
     else:
         case_type = module.case_type

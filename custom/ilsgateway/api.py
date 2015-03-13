@@ -122,8 +122,25 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
 class ILSGatewayAPI(APISynchronization):
 
-    LOCATION_CUSTOM_FIELDS = ['groups']
-    SMS_USER_CUSTOM_FIELDS = ['role', 'backend']
+    LOCATION_CUSTOM_FIELDS = [
+        {'name': 'groups'},
+    ]
+    SMS_USER_CUSTOM_FIELDS = [
+        {
+            'name': 'role',
+            'choices': [
+                "district supervisor",
+                "MSD",
+                "imci coordinator",
+                "Facility in-charge",
+                "MOHSW",
+                "RMO",
+                "District Pharmacist",
+                "DMO",
+            ]
+        },
+        {'name': 'backend'},
+    ]
     PRODUCT_CUSTOM_FIELDS = []
 
     def prepare_commtrack_config(self):
