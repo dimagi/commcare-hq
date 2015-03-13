@@ -3504,7 +3504,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
 
-        if "custom_properties" in self__profile:
+        if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
         return render_to_string(template, {

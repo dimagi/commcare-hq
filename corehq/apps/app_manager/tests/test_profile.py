@@ -1,22 +1,25 @@
 # coding: utf-8
-from django.test import SimpleTestCase
+from django.test import TestCase
 from corehq.apps.app_manager.commcare_settings import SETTINGS_LOOKUP, SETTINGS
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
 import xml.etree.ElementTree as ET
 
 from corehq.apps.builds.models import BuildSpec
+from corehq import toggles
 
 
-class ProfileTest(SimpleTestCase, TestFileMixin):
+class ProfileTest(TestCase, TestFileMixin):
     file_path = ('data',)
 
     def setUp(self):
         self.app = Application(build_spec=BuildSpec(
             version='2.7.0'
             ),
-            name=u"TÉST ÁPP"
+            name=u"TÉST ÁPP",
+            domain="potter"
         )
+        toggles.CUSTOM_PROPERTIES.set('domain:potter', True)
 
     def _test_profile(self, app):
         profile = app.create_profile()
