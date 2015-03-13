@@ -251,9 +251,7 @@ class APISynchronization(object):
                     try:
                         user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
                     except PhoneNumberInUseException as e:
-                        v = VerifiedNumber.by_phone(user_dict["phone_numbers"][0], include_pending=True)
-                        v.delete()
-                        user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
+                        self._reassign_number(user, user_dict["phone_numbers"][0])
                     except InvalidFormatException:
                         pass
             except Exception as e:
@@ -268,7 +266,6 @@ class APISynchronization(object):
         if v.domain in self._get_logistics_domains():
             v.delete()
             user.save_verified_number(self.domain, phone_number, True)
-            user.set_default_phone_number(apply_leniency(phone_number))
 
     def add_language_to_user(self, logistics_sms_user):
         domain_part = "%s.commcarehq.org" % self.domain
