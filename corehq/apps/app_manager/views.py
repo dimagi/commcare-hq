@@ -529,6 +529,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 def get_app_view_context(request, app):
 
     is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
+    context = {}
 
     settings_layout = copy.deepcopy(
         commcare_settings.LAYOUT[app.get_doc_type()])
@@ -544,17 +545,18 @@ def get_app_view_context(request, app):
             new_settings.append(setting)
         section['settings'] = new_settings
 
-    custom_properties_array = []
-    if 'custom_properties' in app.profile:
+
+    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
+        custom_properties_array = []
         custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
                                       app.profile.get('custom_properties').items())
+        context.update({'custom_properties': custom_properties_array })
 
-    context = {
+    context.update({
         'settings_layout': settings_layout,
         'settings_values': get_settings_values(app),
-        'custom_properties': custom_properties_array,
         'is_cloudcare_allowed': is_cloudcare_allowed,
-    }
+    })
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
@@ -1973,7 +1975,12 @@ def edit_commcare_profile(request, domain, app_id):
         }))
     app = get_app(domain, app_id)
     changed = defaultdict(dict)
-    for settings_type in ["features", "properties", "custom_properties"]:
+    types = ["features", "properties"]
+
+    if toggles.CUSTOM_PROPERTIES.enabled(domain):
+        types.append("custom_properties")
+
+    for settings_type in types:
         if settings_type == "custom_properties":
             app.profile[settings_type] = {}
         for name, value in settings.get(settings_type, {}).items():

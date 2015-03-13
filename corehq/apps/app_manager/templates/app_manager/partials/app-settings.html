@@ -211,6 +211,7 @@ todo fix
                 </div>
             </fieldset>
         </div>
+        {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
         <fieldset>
             <legend>
                 <a
@@ -251,6 +252,7 @@ todo fix
                 </div>
             </div>
         </fieldset>
+        {% endif %}
     </form>
 </div>
 

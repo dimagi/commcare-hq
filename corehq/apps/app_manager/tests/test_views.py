@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from corehq.apps.app_manager.tests import add_build
 
+from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.app_manager.models import Application, APP_V1, APP_V2, Module
@@ -18,6 +19,7 @@ class TestViews(TestCase):
         self.user = WebUser.create(self.domain, self.username, self.password, is_active=True)
         self.user.is_superuser = True
         self.user.save()
+        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=self.domain), True)
 
     def tearDown(self):
         self.user.delete()
