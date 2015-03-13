@@ -768,13 +768,14 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups'])
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False):
+                      include_groups=False, include_translations=False):
         return XForm(self.source).get_questions(
             langs=langs,
             include_triggers=include_triggers,
             include_groups=include_groups,
+            include_translations=include_translations,
         )
 
     @memoized
@@ -1137,7 +1138,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
         for type_, action in self.active_actions().items():
@@ -1361,6 +1365,7 @@ class Detail(IndexedSchema):
     custom_xml = StringProperty()
     use_case_tiles = BooleanProperty()
     persist_tile_on_forms = BooleanProperty()
+    pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
         '''
@@ -1965,7 +1970,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
                 self.add_property_save(
@@ -2318,7 +2326,10 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         meta = app_case_meta.get_type(self.case_type)
         for name, question_path in self.case_updates().items():
             self.add_property_save(

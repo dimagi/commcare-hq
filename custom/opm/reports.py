@@ -479,6 +479,7 @@ class SharedDataProvider(object):
             # case_id might be for a deleted case :(
             if case_id in self.case_owners:
                 owner_id = self.case_owners[case_id]
+                owner_id = owner_id[0] if isinstance(owner_id, list) else owner_id
                 results[owner_id]['vhnd_available'].add(vhnd_date)
                 for prop in self.vhnd_form_props:
                     if source.get(prop, None) == '1':
@@ -867,9 +868,11 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
+        awc_codes = {user.user_data.get('awc'): user.user_data.get('awc_code')
+                     for user in CommCareUser.by_domain(self.domain)}
         for index, row in enumerate(self.get_rows(self.datespan), 1):
             try:
-                rows.append(self.get_row_data(row, index=1))
+                rows.append(self.get_row_data(row, index=1, awc_codes=awc_codes))
             except InvalidRow as e:
                 if self.debug:
                     import sys
@@ -883,7 +886,7 @@ class MetReport(CaseReportMixin, BaseReport):
         return rows
 
     def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 1))
+        return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
 
     def get_rows(self, datespan):
         result = super(MetReport, self).get_rows(datespan)
@@ -950,8 +953,7 @@ class MetReport(CaseReportMixin, BaseReport):
             if link_text:
                 row[self.column_index('name')] = link_text.group(1)
 
-        if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
-            rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])
+        rows.sort(key=lambda r: r[self.column_index('serial_number')])
 
         self.context['report_table'].update(
             rows=rows
