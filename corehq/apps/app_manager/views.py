@@ -546,7 +546,6 @@ def get_app_view_context(request, app):
         section['settings'] = new_settings
 
     if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
-        custom_properties_array = []
         custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
                                       app.profile.get('custom_properties').items())
         context.update({'custom_properties': custom_properties_array})

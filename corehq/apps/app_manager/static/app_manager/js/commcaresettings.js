@@ -10,6 +10,9 @@ function CommcareSettings(options) {
     self.customProperties = ko.observableArray(_.map(options.customProperties, function(d) {
         return ko.mapping.fromJS(d);
     }));
+    self.customProperties.sort(function(left, right) {
+        return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
+    });
 
     self.settings = [];
     self.settingsIndex = {};
