@@ -8,10 +8,7 @@ function CommcareSettings(options) {
 
     self.customPropertyType = 'custom_properties';
     self.customProperties = ko.observableArray(_.map(options.customProperties, function(d) {
-        return {
-            key: ko.observable(d.key),
-            value: ko.observable(d.value)
-        };
+        return ko.mapping.fromJS(d);
     }));
 
     self.settings = [];
