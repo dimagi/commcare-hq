@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
+from corehq.apps.cachehq.invalidate import invalidate_document
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -221,7 +222,11 @@ def archive_location(request, domain, loc_id):
 
 @domain_admin_required
 def unarchive_location(request, domain, loc_id):
-    loc = Location.get(loc_id)
+    # hack for circumventing cache
+    # which was found to be out of date, at least in one case
+    # http://manage.dimagi.com/default.asp?161454
+    # todo: find the deeper reason for invalid cache
+    loc = Location.get(loc_id, db=Location.get_db())
     loc.unarchive()
     return json_response({
         'success': True,
