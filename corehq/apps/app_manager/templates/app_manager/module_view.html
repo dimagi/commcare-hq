@@ -303,7 +303,7 @@
             </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
                 {% include 'app_manager/partials/case_list_form_setting.html' %}
                 {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
