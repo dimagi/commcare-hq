@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -726,6 +727,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
 
     context.update({
         'release_manager': True,
+        'can_send_sms': domain_has_privilege(domain, privileges.OUTBOUND_SMS),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
