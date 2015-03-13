@@ -302,11 +302,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def query_string(self):
         from urllib import urlencode
+        from corehq.apps.userreports.reports.view import ConfigurableReport
 
-        params = self.filters.copy()
+        params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
-        params.update(self.get_date_range())
+        if type(self._dispatcher) != ConfigurableReport:
+            params.update(self.filters)
+            params.update(self.get_date_range())
 
         return urlencode(params, True)
 
@@ -329,9 +332,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             from corehq.apps.userreports.reports.view import ConfigurableReport
 
             if type(self._dispatcher) == ConfigurableReport:
-                return reverse(ConfigurableReport.slug, args=[self.domain, self.subreport_slug])
-            return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
-                    + '?' + self.query_string
+                url_base = reverse(ConfigurableReport.slug, args=[self.domain, self.subreport_slug])
+            else:
+                url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
+            return url_base + '?' + self.query_string
         except Exception:
             return "#"
 
