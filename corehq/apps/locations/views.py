@@ -12,7 +12,6 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
-from corehq.apps.cachehq.invalidate import invalidate_document
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
