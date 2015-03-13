@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-13 13:51+0000\n"
+"POT-Creation-Date: 2015-03-13 14:22+0000\n"
 "PO-Revision-Date: 2014-12-11 19:53+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/projects/p/commcare-hq/"
@@ -2926,9 +2926,7 @@ msgid "Label for Cases"
 msgstr "Étiquette pour dossiers"
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:278
-msgid ""
-"This label will appear on Java Phones and newer versions of Android at the "
-"top of the case select screen."
+msgid "This label will appear at the top of the phone's case select screen."
 msgstr ""
 "Cette étiquette apparaîtra sur les téléphones Java et les versions plus "
 "récentes d'Android dans le haut de l'écran de sélection de dossier."
@@ -3186,7 +3184,7 @@ msgstr "Inclure multimédia"
 
 #: corehq/apps/app_manager/templates/app_manager/releases.html:376
 #: corehq/apps/app_manager/templates/app_manager/releases.html:468
-msgid "Only supported for builds made after 2013-10-15"
+msgid "Only supported for versions made after 2013-10-15"
 msgstr ""
 "Pris en charge seulement pour les conceptions effectuées après le 15 octobre "
 "2013"
@@ -3265,7 +3263,7 @@ msgstr ""
 "concevoir à nouveau."
 
 #: corehq/apps/app_manager/templates/app_manager/releases.html:499
-#: corehq/apps/hqmedia/templates/hqmedia/references.html:50
+#: corehq/apps/hqmedia/templates/hqmedia/references.html:52
 #: corehq/apps/reports/templates/reports/partials/saved_custom_exports.html:13
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:202
 msgid "Download Multimedia"
@@ -3574,42 +3572,37 @@ msgstr "Êtes-vous certain de vouloir supprimer ce sous-dossier ?"
 msgid "Remove Subcase"
 msgstr "Supprimer le sous-dossier"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:38
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:40
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_advanced.html:109
 msgid "Close this case when the form is complete"
 msgstr "Fermer ce dossier une fois le formulaire complété"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:41
-#: corehq/apps/reports/templates/reports/reportdata/case_details.html:90
-msgid "Close Case"
-msgstr "Fermer le dossier"
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:55
+msgid "This form: "
+msgstr "Choisir un type de formulaire: "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:56
-msgid "Choose a type of form: "
-msgstr "Choisir un type de formulaire : "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:57
 msgid "Does not use cases"
 msgstr "N'utilise pas de dossiers"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:58
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:57
 msgid "Registers a new case"
 msgstr "Inscrit un nouveau dossier"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:59
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:58
 msgid "Updates or closes a case"
 msgstr "Met à jour ou ferme un dossier"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:60
-msgid "Registers a case (different module)"
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:59
+msgid "Registers a case for a different module"
 msgstr "Inscrit un dossier (module différent)"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:79
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:81
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:78
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:80
 msgid "Child Cases"
 msgstr "Dossiers d'enfants"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:82
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:81
 msgid ""
 "Child Cases let you open other types of cases for use in other modules. When "
 "possible, they'll be linked to the current case so you'll always know where "
@@ -3622,11 +3615,11 @@ msgstr ""
 "des utilisations pratiques des dossiers d'enfants consiste à faire le suivi "
 "d'un nouveau-né indépendamment de sa mère."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:89
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:88
 msgid "Opens a case for a different case list:"
 msgstr "Ouvre un dossier pour une liste de dossier différent :"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:98
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:97
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_shared.html:45
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:110
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:112
@@ -3637,15 +3630,15 @@ msgstr "Ouvre un dossier pour une liste de dossier différent :"
 msgid "Required"
 msgstr "requise"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:100
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:99
 msgid "Override reference id: "
 msgstr "Écraser l'identifiant de référence : "
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:106
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:105
 msgid "Remove case"
 msgstr "Supprimer le dossier"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:114
+#: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:113
 msgid "Opens a case for a different case list..."
 msgstr "Ouvre un dossier pour une liste de dossier différent..."
 
@@ -9789,30 +9782,32 @@ msgstr ""
 msgid "Go to Bulk Upload"
 msgstr "Aller au Téléversement en bloc"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html:44
-msgid "This application references no multimedia."
+#: corehq/apps/hqmedia/templates/hqmedia/references.html:45
+msgid ""
+"This application references no multimedia. Add multimedia to your forms and "
+"menus to use the reference checker and manage media in bulk."
 msgstr "Cette application ne référence aucun fichier multimédia."
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html:51
+#: corehq/apps/hqmedia/templates/hqmedia/references.html:53
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html:11
 msgid "Download ZIP"
 msgstr "Télécharger le fichier ZIP"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html:53
+#: corehq/apps/hqmedia/templates/hqmedia/references.html:55
 msgid "References"
 msgstr "Références"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html:104
+#: corehq/apps/hqmedia/templates/hqmedia/references.html:106
 msgid "View Larger"
 msgstr "Agrandir l’affichage"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html:111
+#: corehq/apps/hqmedia/templates/hqmedia/references.html:113
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/details_multi.html:52
 #: corehq/apps/hqmedia/templates/hqmedia/uploader/preview_audio_single.html:6
 msgid "Hear Audio"
 msgstr "Entendre l'audio"
 
-#: corehq/apps/hqmedia/templates/hqmedia/references.html:118
+#: corehq/apps/hqmedia/templates/hqmedia/references.html:120
 msgid "View Video"
 msgstr "Visionner la vidéo"
 
@@ -16726,6 +16721,10 @@ msgstr "Non disponible"
 #: corehq/apps/reports/templates/reports/reportdata/case_details.html:85
 msgid "Rebuild Case"
 msgstr ""
+
+#: corehq/apps/reports/templates/reports/reportdata/case_details.html:90
+msgid "Close Case"
+msgstr "Fermer le dossier"
 
 #: corehq/apps/reports/templates/reports/reportdata/case_export_data.html:46
 msgid "Download Settings"
@@ -25234,6 +25233,9 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
+#~ msgid "Choose a type of form: "
+#~ msgstr "Choisir un type de formulaire : "
+
 #, fuzzy
 #~ msgid "Add Logo"
 #~ msgstr "Ajouter icône"
@@ -25430,20 +25432,6 @@ msgstr ""
 
 #~ msgid "Inactive Reminders"
 #~ msgstr "Rappels non actifs"
-
-#~ msgid ""
-#~ "\n"
-#~ "                       The day to which to send each event in the "
-#~ "reminder.\n"
-#~ "                       Day 1 indicates the day that the reminder was "
-#~ "triggered.\n"
-#~ "                       "
-#~ msgstr ""
-#~ "\n"
-#~ "                       Le jour auquel envoyer chaque événement dans le "
-#~ "rappel.\n"
-#~ "                       Jour 1 indique le jour où le rappel a été "
-#~ "déclenché."
 
 #~ msgid "HTML Preview"
 #~ msgstr "Aperçu HTML"
