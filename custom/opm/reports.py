@@ -45,7 +45,8 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
-from .utils import BaseMixin, normal_format, format_percent, get_matching_users
+from .utils import (BaseMixin, normal_format, format_percent,
+                    get_matching_users, UserSqlData)
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
@@ -868,8 +869,8 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user.user_data.get('awc'): user.user_data.get('awc_code')
-                     for user in CommCareUser.by_domain(self.domain)}
+        awc_codes = {user['awc']: user['awc_code']
+                     for user in UserSqlData().get_data()}
         for index, row in enumerate(self.get_rows(self.datespan), 1):
             try:
                 rows.append(self.get_row_data(row, index=1, awc_codes=awc_codes))
