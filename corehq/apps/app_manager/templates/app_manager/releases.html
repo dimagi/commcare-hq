@@ -436,7 +436,7 @@
                             </div>
                         </div>
                     </div>
-
+                    {% if can_send_sms %}
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
@@ -490,6 +490,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                     {% if multimedia %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
