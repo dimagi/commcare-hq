@@ -4162,20 +4162,23 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
         if target and target == 'build':
             # get latest-build regardless of star
-            latest_app = get_db().view('app_manager/saved_app',
-                                       startkey=[domain, parent_app_id, {}],
-                                       endkey=[domain, parent_app_id],
-                                       descending=True,
-                                       limit=1,
-                                       include_docs=True).one()
+            couch_view = 'app_manager/saved_app'
+            startkey = [domain, parent_app_id, {}]
+            endkey = [domain, parent_app_id]
         else:
             # get latest starred-build
-            latest_app = get_db().view('app_manager/applications',
-                                       startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-                                       endkey=['^ReleasedApplications', domain, parent_app_id, min_version],
-                                       limit=1,
-                                       descending=True,
-                                       include_docs=True).one()
+            couch_view = 'app_manager/applications'
+            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
+            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
+
+        latest_app = get_db().view(
+            couch_view,
+            startkey=startkey,
+            endkey=endkey,
+            limit=1,
+            descending=True,
+            include_docs=True
+        ).one()
 
         try:
             app = latest_app['doc']
