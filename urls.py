@@ -139,5 +139,6 @@ if 'rosetta' in settings.INSTALLED_APPS:
 if settings.DEBUG:
     urlpatterns += patterns('django.contrib.staticfiles.views',
         url(r'^static/(?P<path>.*)$', 'serve'),
+        (r'^silk/', include('silk.urls', namespace='silk')),
     )
 
