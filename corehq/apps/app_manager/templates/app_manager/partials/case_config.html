@@ -35,10 +35,9 @@
         </div>
     </div>
     <div class="well">
-        <em>{% trans "Close this case when the form is complete" %}</em>
         <label>
             <input type="checkbox" data-bind="checked: close_case"/>
-            {% trans "Close Case" %}
+            {% trans "Close this case when the form is complete" %}
         </label>
         <div data-bind="template: {
             name: 'case-config:condition',
