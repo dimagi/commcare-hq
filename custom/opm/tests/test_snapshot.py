@@ -1,6 +1,7 @@
 from datetime import date
 from unittest import TestCase
-
+from mock import patch
+from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 
 from ..constants import *
@@ -34,7 +35,8 @@ class TestGetReportUtil(TestCase):
         report = get_report(report_class, month=6, year=2014, block="Atri")
         report.rows
 
-    def test_basic_CMR(self):
+    @patch.object(CommCareUser, 'by_domain', return_value=[])
+    def test_basic_CMR(self, user_mock):
         report_class = self.get_report_class(MetReport)
         report = get_report(report_class, month=6, year=2014, block="Atri")
         report.rows
