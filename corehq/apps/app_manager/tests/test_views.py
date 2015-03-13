@@ -62,7 +62,7 @@ class TestViews(TestCase):
         }
         self.client.login(username=self.username, password=self.password)
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]), 
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 
@@ -78,7 +78,7 @@ class TestViews(TestCase):
             }
         }
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]), 
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain, app._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 

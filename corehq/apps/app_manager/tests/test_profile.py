@@ -84,7 +84,6 @@ class ProfileTest(SimpleTestCase, TestFileMixin):
                 }
                 self._test_profile(self.app)
 
-
         # custom properties do not rely on SETTINGS so need to be tested separately
         self.app.profile = {
             'custom_properties': {
