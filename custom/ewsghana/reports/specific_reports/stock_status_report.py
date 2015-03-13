@@ -14,7 +14,7 @@ from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, Inven
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
-from custom.ewsghana.utils import get_supply_points, make_url, get_second_week
+from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id
 
 
 def link_format(text, url):
@@ -285,8 +285,7 @@ class StockStatus(MultiReport):
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=location_id if location_id else SQLLocation.objects.filter(
-                domain=self.domain, location_type='country')[0].location_id,
+            location_id=location_id if location_id else get_country_id(self.domain),
             program=program if program != ALL_OPTION else None,
             products=products if products and products[0] != ALL_OPTION else [],
             report_type=self.request.GET.get('report_type', None)
