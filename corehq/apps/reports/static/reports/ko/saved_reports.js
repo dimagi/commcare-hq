@@ -170,6 +170,13 @@ var ReportConfigsViewModel = function (options) {
         }
     };
 
+    self.setUserConfigurableConfigBeingViewed = function (config) {
+        var filters = config.filters;
+        for (var filter_name in filters) {
+            $('[name="' + filter_name + '"]').attr('value', filters[filter_name]);
+        }
+    };
+
     // edit the config currently being viewed
     self.setConfigBeingEdited = function (config) {
 
@@ -270,7 +277,7 @@ $.fn.reportConfigEditor = function (options) {
         var viewModel = new ReportConfigsViewModel(options);
 
         ko.applyBindings(viewModel, $(this).get(i));
-        
+
         viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
     });
 };
