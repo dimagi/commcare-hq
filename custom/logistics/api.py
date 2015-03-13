@@ -1,8 +1,11 @@
 import logging
+from corehq import Domain
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 
 from corehq.apps.products.models import Product
+from custom.ewsghana.models import EWSGhanaConfig
+from custom.ilsgateway.models import ILSGatewayConfig
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -12,6 +15,7 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
+from dimagi.utils.decorators.memoized import memoized
 
 
 class MigrationException(Exception):
@@ -128,6 +132,15 @@ class APISynchronization(object):
                     )
             if need_save:
                 fields_definitions.save()
+
+    @memoized
+    def _get_logistics_domains(self):
+        return ILSGatewayConfig.get_all_enabled_domains() + EWSGhanaConfig.get_all_enabled_domains()
+
+    def set_default_backend(self):
+        domain_object = Domain.get_by_name(self.domain)
+        domain_object.default_sms_backend_id = "MOBILE_BACKEND_TEST"
+        domain_object.save()
 
     def location_sync(self, ilsgateway_location):
         raise NotImplemented("Not implemented yet")
@@ -250,9 +263,14 @@ class APISynchronization(object):
                 user.save()
         return user
 
-    def add_language_to_user(self, logistics_sms_user, domains=None):
-        if not domains:
-            domains = []
+    def _reassign_number(self, user, phone_number):
+        v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+        if v.domain in self._get_logistics_domains():
+            v.delete()
+            user.save_verified_number(self.domain, phone_number, True)
+            user.set_default_phone_number(apply_leniency(phone_number))
+
+    def add_language_to_user(self, logistics_sms_user):
         domain_part = "%s.commcarehq.org" % self.domain
         username_part = "%s%d" % (logistics_sms_user.name.strip().replace(' ', '.').lower(),
                                   logistics_sms_user.id)
@@ -278,10 +296,6 @@ class APISynchronization(object):
                 user.save_verified_number(self.domain, phone_number, True)
                 user.set_default_phone_number(apply_leniency(phone_number))
             except PhoneNumberInUseException:
-                v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-                if v.domain in domains:
-                    v.delete()
-                    user.save_verified_number(self.domain, phone_number, True)
-                    user.set_default_phone_number(apply_leniency(phone_number))
+                self._reassign_number(user, phone_number)
             except InvalidFormatException:
                 pass

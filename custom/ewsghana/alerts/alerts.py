@@ -66,7 +66,7 @@ def on_going_process_user(user, test=False):
             send_sms_to_verified_number(verified_number, message)
         else:
             send_test_message(verified_number, message)
-        if user.email:
+        if user.email and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO':
             email = str(user.email)
             send_mail('ONGOING NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -111,17 +111,19 @@ def on_going_stockout_process_user(user, test=False):
     if fac and user.get_verified_number():
         if user_location.location_type == 'district':
             message = ONGOING_STOCKOUT_AT_SDP % " \n".join(fac)
-            send_sms_to_verified_number(user.get_verified_number(), message)
-            if user.email:
+            verified_number = user.get_verified_number()
+            send_sms_to_verified_number(verified_number, message)
+            if user.email and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO':
                 email = str(user.email)
                 send_mail('ONGOING STOCKOUT AT SDP', message, 'commcarehq-noreply@dimagi.com', [email])
         elif user_location.location_type == 'region':
             message = ONGOING_STOCKOUT_AT_RMS % " \n".join(fac)
+            verified_number = user.get_verified_number()
             if not test:
-                send_sms_to_verified_number(user.get_verified_number(), message)
+                send_sms_to_verified_number(verified_number, message)
             else:
-                send_test_message(user.get_verified_number(), message)
-            if user.email:
+                send_test_message(verified_number, message)
+            if user.email and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO':
                 email = str(user.email)
                 send_mail('ONGOING STOCKOUT AT RMS', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -165,11 +167,12 @@ def urgent_non_reporting_process_user(user, test=False):
             no_rep += 1
     if fac and no_rep >= len(facilities) / 2 and user.get_verified_number():
         message = URGENT_NON_REPORTING % user.location.name
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
-        if user.email:
+            send_test_message(verified_number, message)
+        if user.email and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO':
             email = str(user.email)
             send_mail('URGENT NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -219,12 +222,13 @@ def urgent_stockout_process_user(user, test=False):
             [unicode(product) for product in stocked_out_products]
         ))
         message = URGENT_STOCKOUT % (user_location.name, stockout_str)
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
+            send_test_message(verified_number, message)
 
-        if user.email:
+        if user.email and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO':
             email = str(user.email)
             send_mail('URGENT STOCKOUT', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -240,8 +244,9 @@ def reminder_to_visit_website():
             if user.location and user.last_login < thirteen_days_ago and user.get_verified_number()\
                     and user.location.location_type in ['district', 'region', 'country']:
                     message = WEB_REMINDER % user.name
-                    send_sms_to_verified_number(user.get_verified_number(), message)
-                    if user.email:
+                    verified_number = user.get_verified_number()
+                    send_sms_to_verified_number(verified_number, message)
+                    if user.email and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO':
                         email = str(user.email)
                         send_mail('REMINDER TO VISIT WEBSITE', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -272,12 +277,13 @@ def report_reminder_process_user(user, test=False):
     ).exists()
     if sp and not transaction_exists and user.get_verified_number():
         message = REPORT_REMINDER % (user.name, user.location.name)
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
+            send_test_message(verified_number, message)
 
-        if user.email:
+        if user.email and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO':
             email = str(user.email)
             send_mail('REPORT REMINDER', message, 'commcarehq-noreply@dimagi.com', [email])
 
