@@ -3,7 +3,6 @@ import datetime
 from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import (
@@ -11,6 +10,7 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
 )
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
 
