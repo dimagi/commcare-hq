@@ -17,7 +17,6 @@ from dimagi.utils.decorators import datespan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
-from corehq.apps.users.models import CommCareUser
 from corehq.util.translation import localize
 
 
@@ -769,13 +768,12 @@ class ConditionsMet(OPMCaseRow):
         ('cash_received_last_month', _("Cash received last month"), True),
     ]
 
-    def __init__(self, case, report, child_index=1, **kwargs):
+    def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
         self.serial_number = child_index
         self.payment_last_month = "Rs.%d" % self.last_month_row.total_cash if self.last_month_row else 0
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
-        self.awc_code = CommCareUser.get_by_user_id(case.user_id).user_data.get('awc_code', EMPTY_FIELD) if \
-            case.user_id else EMPTY_FIELD
+        self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
 
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)

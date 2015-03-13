@@ -895,9 +895,11 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
+        awc_codes = {user.user_data.get('awc'): user.user_data.get('awc_code')
+                     for user in CommCareUser.by_domain(self.domain)}
         for index, row in enumerate(self.get_rows(self.datespan), 1):
             try:
-                rows.append(self.get_row_data(row, index=1))
+                rows.append(self.get_row_data(row, index=1, awc_codes=awc_codes))
             except InvalidRow as e:
                 if self.debug:
                     import sys
@@ -911,7 +913,7 @@ class MetReport(CaseReportMixin, BaseReport):
         return rows
 
     def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 1))
+        return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
 
     def get_rows(self, datespan):
         result = super(MetReport, self).get_rows(datespan)
