@@ -602,6 +602,10 @@ class XForm(WrappedNode):
 
         return node_groups
 
+    def _reset_translations_cache(self):
+        self.translations.reset_cache(self)
+        self.itext_node_groups.reset_cache(self)
+
     @requires_itext()
     def normalize_itext(self):
         """
@@ -649,8 +653,7 @@ class XForm(WrappedNode):
 
         self.xml = parse_xml(xf_string)
 
-        self.translations.reset_cache(self)
-        self.itext_node_groups.reset_cache(self)
+        self._reset_translations_cache()
 
     def strip_vellum_ns_attributes(self):
         # vellum_ns is wrapped in braces i.e. '{http...}'
@@ -672,7 +675,7 @@ class XForm(WrappedNode):
             raise XFormException("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
-        self.translations.reset_cache(self)
+        self._reset_translations_cache()
 
     def exclude_languages(self, whitelist):
         changes = False
@@ -682,7 +685,7 @@ class XForm(WrappedNode):
                 changes = True
 
         if changes:
-            self.translations.reset_cache(self)
+            self._reset_translations_cache()
 
     def _normalize_itext_id(self, id):
         pre = 'jr:itext('
@@ -719,15 +722,28 @@ class XForm(WrappedNode):
 
         return text
 
-    def get_label_text(self, prompt, langs, form=None):
+    def get_label_translations(self, prompt, langs):
         if prompt.tag_name == 'repeat':
-            return self.get_label_text(prompt.find('..'), langs, form)
+            return self.get_label_translations(prompt.find('..'), langs)
+        label_node = prompt.find('{f}label')
+        translations = {}
+        if label_node.exists() and 'ref' in label_node.attrib:
+            for lang in langs:
+                label = self.localize(label_node.attrib['ref'], lang)
+                if label:
+                    translations[lang] = label
+
+        return translations
+
+    def get_label_text(self, prompt, langs):
+        if prompt.tag_name == 'repeat':
+            return self.get_label_text(prompt.find('..'), langs)
         label_node = prompt.find('{f}label')
         label = ""
         if label_node.exists():
             if 'ref' in label_node.attrib:
                 for lang in langs + [None]:
-                    label = self.localize(label_node.attrib['ref'], lang, form)
+                    label = self.localize(label_node.attrib['ref'], lang)
                     if label is not None:
                         break
             elif label_node.text:
@@ -757,7 +773,7 @@ class XForm(WrappedNode):
         return self.translations().keys()
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False):
+                      include_groups=False, include_translations=False):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -794,6 +810,8 @@ class XForm(WrappedNode):
                 "group": group,
                 "type": data_type,
             }
+            if include_translations:
+                question["translations"] = self.get_label_translations(node, langs)
 
             if items is not None:
                 options = []
@@ -803,10 +821,13 @@ class XForm(WrappedNode):
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
                         raise XFormException("<item> (%r) has no <value>" % translation)
-                    options.append({
+                    option = {
                         'label': translation,
                         'value': value
-                    })
+                    }
+                    if include_translations:
+                        option['translations'] = self.get_label_translations(item, langs)
+                    options.append(option)
                 question['options'] = options
             questions.append(question)
 
@@ -821,7 +842,7 @@ class XForm(WrappedNode):
                     ][0]
                 except IndexError:
                     matching_repeat_context = None
-                questions.append({
+                question = {
                     "label": path,
                     "tag": "hidden",
                     "value": path,
@@ -829,7 +850,10 @@ class XForm(WrappedNode):
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
-                })
+                }
+                if include_translations:
+                    question["translations"] = {}
+                questions.append(question)
 
         return questions
 

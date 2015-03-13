@@ -98,3 +98,7 @@ def get_reporting_types(domain):
         location_type for location_type in Domain.get_by_name(domain).location_types
         if not location_type.administrative
     ]
+
+
+def get_country_id(domain):
+    return SQLLocation.objects.filter(domain=domain, location_type='country')[0].location_id

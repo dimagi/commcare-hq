@@ -16,6 +16,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     title = ''
     flush_layout = True
     export_format_override = 'csv'
+    printable = True
 
     @property
     @memoized
@@ -184,7 +185,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
             chart1.rotateLabels = -45
             chart2.rotateLabels = -45
             chart1.marginBottom = 150
-            chart2.marginBottom = 20
+            chart2.marginBottom = 150
             chart1.marginLeft = 20
             chart2.marginLeft = 45
             chart1.marginRight = 0

@@ -24,6 +24,7 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
 )
+from couchexport.models import Format
 
 
 class SMSBillablesInterface(GenericTabularReport):
@@ -36,6 +37,7 @@ class SMSBillablesInterface(GenericTabularReport):
     ajax_pagination = True
     exportable = True
     exportable_all = True
+    export_format_override = Format.UNZIPPED_CSV
     fields = [
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
