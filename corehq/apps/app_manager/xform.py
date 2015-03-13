@@ -408,7 +408,7 @@ class CaseBlock(object):
                 key = 'case_name'
             elif key.startswith('user:'):
                 # Skip usercase keys. They are handled by the usercase block.
-                # cf. _get_usercase_updates()
+                # cf. add_usercase and add_usercase_advanced
                 continue
             if self.is_attachment(value):
                 attachments[key] = value

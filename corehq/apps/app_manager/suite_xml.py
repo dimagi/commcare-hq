@@ -1396,6 +1396,14 @@ class SuiteGenerator(SuiteGeneratorBase):
         frame_case_not_created.add_command(return_to)
         entry.stack.add_frame(frame_case_not_created)
 
+    def configure_entry_usercase(self, e):
+        e.datums.append(SessionDatum(
+            id='usercase_id',
+            function=("instance('casedb')/casedb/"
+                      "case[user_id=instance('commcaresession')/session/context/userid]/@case_id")
+        ))
+        # Check out session var
+
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
             actions = form.active_actions()
@@ -1407,10 +1415,25 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
+        def updates_usercase(form):
+            actions = form.active_actions()
+            if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
+                return any(k.startswith('user:') for k in actions['update_case'].update.keys())
+            return False
+
+        def preloads_usercase(form):
+            actions = form.active_actions()
+            if 'case_preload' in actions:
+                return any(v.startswith('user:') for v in actions['case_preload'].preload.values())
+            return False
+
         if not form or form.requires_case():
             self.configure_entry_module(module, e, use_filter=True)
         elif form and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)
+
+        if form and (updates_usercase(form) or preloads_usercase(form)):
+            self.configure_entry_usercase(e)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
@@ -1496,6 +1519,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                     raise ParentModuleReferenceError(
                         "Module with case type %s in app %s not found" % (case_type, self.app)
                     )
+
+        def uses_usercase(form):
+            for action in form.actions.load_update_cases:
+                if action.preload:
+                    return any(k.startswith('user:') for k in action.preload.keys())
+                if action.case_properties:
+                    return any(k.startswith('user:') for k in action.preload.keys())
+            return False
 
         for action in form.actions.load_update_cases:
             auto_select = action.auto_select
@@ -1586,6 +1617,9 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         if self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
+
+        if uses_usercase(form):
+            self.configure_entry_usercase(e)
 
     def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
             parent_module = self.get_module_by_id(module.parent_select.module_id)

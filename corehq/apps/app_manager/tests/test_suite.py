@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import (
     Application, AutoSelectCase,
     AUTO_SELECT_USER, AUTO_SELECT_CASE, LoadUpdateAction, AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW, WORKFLOW_MODULE, DetailColumn, ScheduleVisit, FormSchedule,
-    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement)
+    Module, AdvancedModule, WORKFLOW_ROOT, AdvancedOpenCaseAction, SortElement, UpdateCaseAction, PreloadAction)
 from corehq.apps.app_manager.tests.util import TestFileMixin
 from corehq.apps.app_manager.suite_xml import dot_interpolate
 
@@ -321,6 +321,37 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
 
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
 
+# Just use AdvancedModule
+
+
+    def test_usercase_id_added_update(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        child_module = app.add_module(Module.new_module("Untitled Module", None))
+        child_module.case_type = 'child'
+
+        child_form = app.new_form(0, "Untitled Form", None)
+        child_form.xmlns = 'http://id_m1-f0'
+        child_form.requires = 'case'
+        child_form.actions.update_case = UpdateCaseAction(update={'user:name': '/data/question1'})
+        child_form.actions.update_case.condition.type = 'always'
+
+        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
+
+    def test_usercase_id_added_preload(self):
+        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+
+        child_module = app.add_module(Module.new_module("Untitled Module", None))
+        child_module.case_type = 'child'
+
+        child_form = app.new_form(0, "Untitled Form", None)
+        child_form.xmlns = 'http://id_m1-f0'
+        child_form.requires = 'case'
+        child_form.actions.case_preload = PreloadAction(preload={'/data/question1': 'user:name'})
+        child_form.actions.case_preload.condition.type = 'always'
+
+        self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
+
     def test_graphing(self):
         self._test_generic_suite('app_graphing', 'suite-graphing')
 
@@ -391,7 +422,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         case_module.case_type = 'dugong'
         update_form = app.new_form(1, 'Update Case', lang='en')
         update_form.unique_id = 'update_case_form'
-        update_form.actions.load_update_cases.append(LoadUpdateAction(
+        update_form.actions.load_update_cases.append(LoadUpdateAction(  # <-- e.g.
             case_type='dugong',
             case_tag='load_dugong',
             details_module=case_module.unique_id
