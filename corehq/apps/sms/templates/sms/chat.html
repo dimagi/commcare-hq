@@ -196,7 +196,22 @@
                     self.first_update = true;
                     self.last_read_message_utc_timestamp = null;
                     self.allow_highlights_to_disappear = false;
-                    
+
+                    //After we send a message, we need to wait for it to actually be sent
+                    //before it shows up in the history. Normally, we update the chat
+                    //history every regular_update_interval milliseconds. But right after
+                    //we send a message, we'll update the chat history every
+                    //quick_update_interval milliseconds (and do it the number of times
+                    //specified by quick_update_cycles), and then go back to updating on the
+                    //regular_update_interval. This makes messages show up faster in the
+                    //chat history after you click Send.
+                    self.quick_update_countdown = 0;
+                    self.quick_update_cycles = 15;
+                    self.regular_update_interval = 15000;
+                    self.quick_update_interval = 1000;
+                    self.update_messages_timeout_handle = null;
+                    self.update_in_progress = false;
+
                     self.history_choices = ko.observableArray([]);
                     {% for description, timestamp in history_choices %}
                     self.history_choices.push(new MessageHistoryChoice("{{ description }}", "{{ timestamp }}"));
@@ -221,6 +236,7 @@
                     self.update_history_choice(0, false);
                     
                     self.update_messages = function(set_next_timeout) {
+                        self.update_in_progress = true;
                         payload = {
                             contact_id : "{{ contact_id }}"
                         };
@@ -277,8 +293,14 @@
                             },
                             complete : function(jqXHR, textStatus) {
                                 if(set_next_timeout) {
-                                    setTimeout(self.update_messages_timeout, 15000);
+                                    var time_to_wait = self.regular_update_interval;
+                                    if(self.quick_update_countdown > 0) {
+                                        self.quick_update_countdown--;
+                                        time_to_wait = self.quick_update_interval;
+                                    }
+                                    self.update_messages_timeout_handle = setTimeout(self.update_messages_timeout, time_to_wait);
                                 }
+                                self.update_in_progress = false;
                             },
                         });
                     };
@@ -297,6 +319,13 @@
                             if(response == "OK") {
                                 $("#text_box").val("");
                                 self.update_message_length(null);
+                                self.quick_update_countdown = self.quick_update_cycles;
+                                if(!self.update_in_progress) {
+                                    //If the update is not in progress, then force a new
+                                    //update to start immediately.
+                                    clearTimeout(self.update_messages_timeout_handle);
+                                    self.update_messages_timeout();
+                                }
                             } else {
                             }
                         });
