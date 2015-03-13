@@ -3,6 +3,7 @@ import datetime
 from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq import Domain, privileges
 from corehq.apps.accounting.exceptions import (
@@ -98,6 +99,7 @@ def get_change_status(from_plan_version, to_plan_version):
     return adjustment_reason, downgraded_privs, upgraded_privs
 
 
+@memoized
 def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:
