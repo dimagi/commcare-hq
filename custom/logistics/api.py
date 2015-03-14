@@ -12,7 +12,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 import requests
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException
+from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException, \
+    MobileBackend
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
 from dimagi.utils.decorators.memoized import memoized
@@ -139,7 +140,7 @@ class APISynchronization(object):
 
     def set_default_backend(self):
         domain_object = Domain.get_by_name(self.domain)
-        domain_object.default_sms_backend_id = "MOBILE_BACKEND_TEST"
+        domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
         domain_object.save()
 
     def location_sync(self, ilsgateway_location):
@@ -289,9 +290,9 @@ class APISynchronization(object):
 
         if logistics_sms_user.phone_numbers:
             phone_number = logistics_sms_user.phone_numbers[0]
+            user.set_default_phone_number(apply_leniency(phone_number))
             try:
                 user.save_verified_number(self.domain, phone_number, True)
-                user.set_default_phone_number(apply_leniency(phone_number))
             except PhoneNumberInUseException:
                 self._reassign_number(user, phone_number)
             except InvalidFormatException:

@@ -98,3 +98,7 @@ def get_reporting_types(domain):
         location_type for location_type in Domain.get_by_name(domain).location_types
         if not location_type.administrative
     ]
+
+
+def can_receive_email(user, verified_number):
+    return user.email and verified_number.backend_id and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO'
