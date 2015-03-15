@@ -311,6 +311,7 @@ class DataSourceForm(forms.Form):
 class ConfigureNewReportBase(forms.Form):
     filters = FilterField(required=False)
     button_text = 'Done'
+    # TODO: Add back button
 
     def __init__(self, report_name, app_id, source_type, report_source_id, *args, **kwargs):
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
@@ -413,6 +414,34 @@ class ConfigureNewReportBase(forms.Form):
         report.validate()
         report.save()
         return report
+
+    @property
+    def initial_filters(self):
+        if self.source_type == 'case':
+            return [
+                # TODO: Make this not a dynamic choice (the interface doesn't currently suppose regular choice filters
+                {
+                    'property': 'closed',
+                    'display_text': 'closed',
+                    'format': 'Choice'
+                },
+                # TODO: Make this owner, not owner_id. There also isn't a way to do this in the interface yet.
+                #       The answer might be to convert these filters after submission as special cases.
+                {
+                    'property': 'owner_id',
+                    'display_text': 'owner id',
+                    'format': 'Choice'
+                }
+            ]
+        else:
+            # self.source_type == 'form'
+            return [
+                {
+                    'property': 'timeEnd',
+                    'display_text': 'Form completion time',
+                    'format': 'Date'
+                }
+            ]
 
     @property
     def _report_aggregation_cols(self):

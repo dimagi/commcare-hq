@@ -169,13 +169,14 @@ class ConfigureChartReport(ReportBuilderView):
                 )
             },
             'form': self.report_form,
-            'property_options': self.report_form.data_source_properties.values()
+            'property_options': self.report_form.data_source_properties.values(),
+            'initial_filters': self.report_form.initial_filters
         }
         return context
 
     @property
     @memoized
-    def configuration_form(self):
+    def configuration_form_class(self):
         if self.request.GET.get('chart_type') == "bar":
             return ConfigureBarChartReportForm
         else:
@@ -187,7 +188,7 @@ class ConfigureChartReport(ReportBuilderView):
         args = [self.request.GET.get(f, '') for f in self.url_args]
         if self.request.method == 'POST':
             args.append(self.request.POST)
-        return self.configuration_form(*args)
+        return self.configuration_form_class(*args)
 
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
@@ -206,7 +207,7 @@ class ConfigureListReport(ConfigureChartReport):
 
     @property
     @memoized
-    def configuration_form(self):
+    def configuration_form_class(self):
         return ConfigureListReportForm
 
 
@@ -215,7 +216,7 @@ class ConfigureTableReport(ConfigureChartReport):
 
     @property
     @memoized
-    def configuration_form(self):
+    def configuration_form_class(self):
         return ConfigureTableReportForm
 
 
@@ -224,7 +225,7 @@ class ConfigureWorkerReport(ConfigureChartReport):
 
     @property
     @memoized
-    def configuration_form(self):
+    def configuration_form_class(self):
         return ConfigureWorkerReportForm
 
 

@@ -54,6 +54,14 @@
                 return that.property() != "";
             });
         };
+        PropertyListItem.wrap = function(o){
+            var i = new PropertyListItem();
+            i.property = ko.observable(o.property);
+            i.displayText = ko.observable(o.display_text);
+            i.format = ko.observable(o.format);
+            return i;
+        };
+
         /**
          * Knockout view model controlling the filter property list.
          */
@@ -63,7 +71,7 @@
             this.hasFormatCol = ko.observable(options.hasFormatCol != undefined ? options.hasFormatCol : true);
             this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
-            this.columns = ko.observableArray([]);
+            this.columns = ko.observableArray(options.initialCols != undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
                     _.map(that.columns(), function(c){return c.toJS()})
@@ -78,7 +86,10 @@
 
         var configForm = function(){
             var that = this;
-            this.filtersList = new propertyList({hasFormatCol: true});
+            var initialFilters = _.map({{ initial_filters|JSON }}, function(i){
+                return PropertyListItem.wrap(i);
+            });
+            this.filtersList = new propertyList({hasFormatCol: true, initialCols: initialFilters});
             this.columnsList = new propertyList({hasFormatCol:false});
             this.submitHandler = function(){
                 var isValid = true;
