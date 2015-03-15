@@ -36,6 +36,9 @@ from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
 
+#TODO: Makes sure filter/column/aggregate fields are all in the order specified in the spec
+
+
 class FilterField(JsonField):
     """
     A form field with a little bit of validation for report builder report
@@ -306,14 +309,13 @@ class DataSourceForm(forms.Form):
 
 
 class ConfigureNewReportBase(forms.Form):
-    report_name = forms.CharField()
     filters = FilterField(required=False)
-    form_title = 'Configure Report'
-    button_text = 'Save Report'
+    button_text = 'Done'
 
-    def __init__(self, app_id, source_type, report_source_id, *args, **kwargs):
+    def __init__(self, report_name, app_id, source_type, report_source_id, *args, **kwargs):
         super(ConfigureNewReportBase, self).__init__(*args, **kwargs)
 
+        self.report_name = report_name
         assert source_type in ['case', 'form']
         self.source_type = source_type
         self.report_source_id = report_source_id
@@ -348,15 +350,13 @@ class ConfigureNewReportBase(forms.Form):
     def column_config_template(self):
         return render_to_string('userreports/partials/report_filter_configuration.html')
 
-    # TODO: I don't love the name of this property...
     @property
     def top_fieldset(self):
         """
         Return the first fieldset in the form.
         """
         return crispy.Fieldset(
-            _(self.form_title),
-            'report_name',
+            "",
             self.configuration_tables
         )
 
@@ -367,7 +367,7 @@ class ConfigureNewReportBase(forms.Form):
         report filters.
         """
         return crispy.Fieldset(
-            _("Filters Available in this Report"),
+            _("Filters"),
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="filters-table", data_bind='with: filtersList'
             ),
@@ -404,7 +404,7 @@ class ConfigureNewReportBase(forms.Form):
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,
-            title=self.cleaned_data['report_name'],
+            title=self.report_name,
             aggregation_columns=self._report_aggregation_cols,
             columns=self._report_columns,
             filters=self._report_filters,
@@ -451,19 +451,17 @@ class ConfigureNewReportBase(forms.Form):
         return []
 
 
-class ConfigureNewBarChartReport(ConfigureNewReportBase):
-    group_by = forms.ChoiceField()
-    form_title = "Configure Bar Chart Report"
+class ConfigureBarChartReportForm(ConfigureNewReportBase):
+    group_by = forms.ChoiceField(label="Property")
 
-    def __init__(self, app_id, source_type, report_source_id, *args, **kwargs):
-        super(ConfigureNewBarChartReport, self).__init__(app_id, source_type, report_source_id, *args, **kwargs)
+    def __init__(self, report_name, app_id, source_type, report_source_id, *args, **kwargs):
+        super(ConfigureBarChartReportForm, self).__init__(report_name, app_id, source_type, report_source_id, *args, **kwargs)
         self.fields['group_by'].choices = self._group_by_choices
 
     @property
     def top_fieldset(self):
         return crispy.Fieldset(
-            _(self.form_title),
-            'report_name',
+            _('Categories'),
             'group_by',
             self.configuration_tables
         )
@@ -511,8 +509,7 @@ class ConfigureNewBarChartReport(ConfigureNewReportBase):
         return [(p['id'], p['text']) for p in self.data_source_properties.values()]
 
 
-class ConfigureNewPieChartReport(ConfigureNewBarChartReport):
-    form_title = "Configure Pie Chart Report"
+class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
     @property
     def _report_charts(self):
@@ -524,18 +521,17 @@ class ConfigureNewPieChartReport(ConfigureNewBarChartReport):
         }]
 
 
-class ConfigureNewTableReport(ConfigureNewReportBase):
-    form_title = "Configure Table Report"
+class ConfigureListReportForm(ConfigureNewReportBase):
     columns = JsonField(required=True)
 
     @property
     def configuration_tables(self):
-        parent_tables = super(ConfigureNewTableReport, self).configuration_tables
+        parent_tables = super(ConfigureListReportForm, self).configuration_tables
 
         return crispy.Layout(
             parent_tables,
             crispy.Fieldset(
-                _("Columns to Display"),
+                _("Columns"),
                 crispy.Div(
                     crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
                 ),
@@ -558,3 +554,50 @@ class ConfigureNewTableReport(ConfigureNewReportBase):
     @property
     def _report_aggregation_cols(self):
         return ['doc_id']
+
+
+class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
+
+    @property
+    def top_fieldset(self):
+        # Override the behavior in ConfigureBarChartReportForm. We want to title
+        # to be "Rows" not "Categories" for this form.
+        return crispy.Fieldset(
+            _('Rows'),
+            'group_by',
+            self.configuration_tables
+        )
+
+    @property
+    def _report_charts(self):
+        # Override the behavior inherited from ConfigureBarChartReportForm
+        return []
+
+    @property
+    def _report_columns(self):
+        # TODO: Make columns "expand" (will probably involve adding a new attribute to Report Column specs)
+        columns = super(ConfigureTableReportForm, self)._report_charts
+        agg_id = self.cleaned_data["group_by"]
+        agg_col_id = self.data_source_properties[agg_id]['column_id']
+        agg_disp = self.data_source_properties[agg_id]['text']
+        return columns + [
+            {
+                "format": "default",
+                "aggregation": "simple",
+                "field": agg_col_id,
+                "type": "field",
+                "display": agg_disp
+            }
+        ]
+
+
+class ConfigureWorkerReportForm(ConfigureTableReportForm):
+    # It's a ConfigureTableReportForm, but where the group by has been chosen.
+    # TODO: Set the group_by to worker or whatever
+
+    @property
+    def top_fieldset(self):
+        return crispy.Fieldset(
+            "",
+            self.configuration_tables
+        )

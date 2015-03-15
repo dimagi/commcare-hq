@@ -23,10 +23,12 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.builder.forms import (
-    ConfigureNewBarChartReport,
-    ConfigureNewPieChartReport,
-    ConfigureNewTableReport,
+    ConfigurePieChartReportForm,
+    ConfigureTableReportForm,
     DataSourceForm,
+    ConfigureBarChartReportForm,
+    ConfigureListReportForm,
+    ConfigureWorkerReportForm
 )
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -154,24 +156,18 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
 
 
 class ConfigureChartReport(ReportBuilderView):
-    pass
-class ConfigureListReport(ReportBuilderView):
-    pass
-class ConfigureTableReport(ReportBuilderView):
-    pass
-class ConfigureWorkerReport(ReportBuilderView):
-    pass
-
-
-class ConfigureBarChartReportBuilderView(ReportBuilderView):
     template_name = "userreports/partials/report_builder_configure_report.html"
-    configure_report_form_class = ConfigureNewBarChartReport
-    report_title = _("Create New Report > Configure Bar Chart Report")
+    url_args = ['report_name', 'application', 'source_type', 'source']
+    report_title = _("Chart Report: {}")
 
     def get_context_data(self, **kwargs):
         context = {
             "domain": self.domain,
-            'report': {"title": self.report_title},
+            'report': {
+                "title": self.report_title.format(
+                    self.request.GET.get('report_name', '')
+                )
+            },
             'form': self.report_form,
             'property_options': self.report_form.data_source_properties.values()
         }
@@ -179,14 +175,19 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
 
     @property
     @memoized
+    def configuration_form(self):
+        if self.request.GET.get('chart_type') == "bar":
+            return ConfigureBarChartReportForm
+        else:
+            return ConfigurePieChartReportForm
+
+    @property
+    @memoized
     def report_form(self):
-        app_id = self.request.GET.get('application', '')
-        source_type = self.request.GET.get('source_type', '')
-        report_source = self.request.GET.get('source', '')
-        args = [app_id, source_type, report_source]
+        args = [self.request.GET.get(f, '') for f in self.url_args]
         if self.request.method == 'POST':
             args.append(self.request.POST)
-        return self.configure_report_form_class(*args)
+        return self.configuration_form(*args)
 
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
@@ -200,14 +201,31 @@ class ConfigureBarChartReportBuilderView(ReportBuilderView):
         return self.get(*args, **kwargs)
 
 
-class ConfigurePieChartReportBuilderView(ConfigureBarChartReportBuilderView):
-    configure_report_form_class = ConfigureNewPieChartReport
-    report_title = _("Create New Report > Configure Pie Chart Report")
+class ConfigureListReport(ConfigureChartReport):
+    report_title = _("List Report: {}")
+
+    @property
+    @memoized
+    def configuration_form(self):
+        return ConfigureListReportForm
 
 
-class ConfigureTableReportBuilderView(ConfigureBarChartReportBuilderView):
-    configure_report_form_class = ConfigureNewTableReport
-    report_title = _("Create New Report > Configure Table Report")
+class ConfigureTableReport(ConfigureChartReport):
+    report_title = _("Table Report: {}")
+
+    @property
+    @memoized
+    def configuration_form(self):
+        return ConfigureTableReportForm
+
+
+class ConfigureWorkerReport(ConfigureChartReport):
+    report_title = _("Worker Report: {}")
+
+    @property
+    @memoized
+    def configuration_form(self):
+        return ConfigureWorkerReportForm
 
 
 def _edit_report_shared(request, domain, config):
