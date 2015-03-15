@@ -1468,7 +1468,7 @@ class SuiteGenerator(SuiteGeneratorBase):
                 detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                 detail_confirm=(
                     self.get_detail_id_safe(datum['module'], 'case_long')
-                    if datum['index'] == 0 else None
+                    if datum['index'] == 0 and not detail_inline else None
                 ),
                 detail_persistent=detail_persistent,
                 detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
