@@ -17,6 +17,13 @@
         {# TODO: Make this look nice #}
         <div class="row-fluid">
             <div class="span2">
+                <a href="{% url "report_builder_select_source" domain "chart" %}">
+                    <button class="btn btn-primary btn-new-app">
+                        {% trans 'Chart' %}
+                    </button>
+                </a>
+            </div>
+            <div class="span2">
                 <a href="{% url "report_builder_select_source" domain "list" %}">
                     <button class="btn btn-primary btn-new-app">
                         {% trans 'Form or Case List' %}
@@ -24,23 +31,16 @@
                 </a>
             </div>
             <div class="span2">
-                <a href="#">
+                <a href="{% url "report_builder_select_source" domain "worker" %}">
                     <button class="btn btn-primary btn-new-app">
-                        {% trans 'Form or Case List' %}
+                        {% trans 'Worker Report' %}
                     </button>
                 </a>
             </div>
             <div class="span2">
-                <a href="#">
+                <a href="{% url "report_builder_select_source" domain "table" %}">
                     <button class="btn btn-primary btn-new-app">
-                        {% trans 'Form or Case List' %}
-                    </button>
-                </a>
-            </div>
-            <div class="span2">
-                <a href="#">
-                    <button class="btn btn-primary btn-new-app">
-                        {% trans 'Form or Case List' %}
+                        {% trans 'Data Table' %}
                     </button>
                 </a>
             </div>
