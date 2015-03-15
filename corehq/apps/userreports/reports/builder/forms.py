@@ -180,7 +180,7 @@ class DataSourceBuilder(object):
 
         if self.source_type == 'form':
             ret = {}
-            questions = self.source_xform.get_questions([])
+            questions = self.source_xform.get_questions([self.app.langs])
             ret.update({
                 q['value']: {
                     "type": "question",
