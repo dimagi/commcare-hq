@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from StringIO import StringIO
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.views.generic.base import TemplateView
@@ -80,7 +81,9 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         if self.has_permissions(self.domain, user):
             if kwargs.get('render_as') == 'email':
                 return self.email_response
-            if request.is_ajax() or request.GET.get('format', None) == 'json':
+            elif kwargs.get('render_as') == 'excel':
+                return self.excel_response
+            elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(request, **kwargs)
             self.content_type = None
             return super(ConfigurableReport, self).dispatch(request, self.domain, **kwargs)
@@ -206,3 +209,10 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
             return HttpResponse(json.dumps({
                 'report': f.read(),
             }))
+
+    @property
+    @memoized
+    def excel_response(self):
+        file = StringIO()
+        export_from_tables(self.export_table, file, Format.XLS_2007)
+        return file
