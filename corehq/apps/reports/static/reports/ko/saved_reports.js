@@ -171,6 +171,7 @@ var ReportConfigsViewModel = function (options) {
     };
 
     self.setUserConfigurableConfigBeingViewed = function (config) {
+        self.configBeingViewed(config);
         var filters = config.filters;
         for (var filter_name in filters) {
             $('[name="' + filter_name + '"]').attr('value', filters[filter_name]);
@@ -279,6 +280,17 @@ $.fn.reportConfigEditor = function (options) {
         ko.applyBindings(viewModel, $(this).get(i));
 
         viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
+    });
+};
+
+$.fn.reportUserConfigurableConfigEditor = function (options) {
+    this.each(function(i, v) {
+        options.filterForm = options.filterForm || $(v);
+        var viewModel = new ReportConfigsViewModel(options);
+
+        ko.applyBindings(viewModel, $(this).get(i));
+
+        viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
     });
 };
 

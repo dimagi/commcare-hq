@@ -103,13 +103,16 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     @property
     def saved_report_context_data(self):
+        current_config_id = self.request.GET.get('config_id')
         return {
             'report_configs': ReportConfig.by_domain_and_owner(
                 self.domain, self.request.couch_user._id, report_slug=self.slug
             ),
-            'current_config_id': self.request.GET.get('config_id', ''),
-            # TODO: Figure out if current_config_id would ever be set.
-            'default_config': ReportConfig.default()
+            'default_config': (
+                ReportConfig.get(current_config_id)
+                if current_config_id
+                else ReportConfig.default()
+            ),
         }
 
     @property

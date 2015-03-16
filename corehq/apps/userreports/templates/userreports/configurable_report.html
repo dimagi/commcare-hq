@@ -61,7 +61,7 @@
         {% else %}
             defaultConfig.date_range = null;
         {% endif %}
-        $("#savedReports").reportConfigEditor({
+        $("#savedReports").reportUserConfigurableConfigEditor({
             filterForm: $("#report-filters"),
             items: {{ report_configs|JSON }},
             initialItemID: '{{ current_config_id }}',
