@@ -22392,7 +22392,7 @@ msgstr "शर्त 5"
 
 #: custom/opm/beneficiary.py:692
 msgid "Payment amount received last month"
-msgstr "भुगतान राशि पिछले महीने प्राप्त"
+msgstr "भुगतान राशि पिछले महीने प्राप्त (Rs)"
 
 #: custom/opm/beneficiary.py:693
 msgid "Cash received last month"

@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -722,10 +723,15 @@ def paginate_releases(request, domain, app_id):
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
-    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
+    can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
 
     context.update({
         'release_manager': True,
+        'can_send_sms': can_send_sms,
+        'sms_contacts': (
+            get_sms_autocomplete_context(request, domain)['sms_contacts']
+            if can_send_sms else []
+        ),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
