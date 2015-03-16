@@ -575,7 +575,7 @@
                                                 "/>
                                                     <option data-bind="value: value, text: label"></option>
                                                 </select>
-                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', 'placement': 'left'}"></span>
+                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left', trigger: 'click'}"></span>
                                                 <div data-bind="if: doc_type() === 'SplitColumn'">
                                                     <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
                                                     </select>
