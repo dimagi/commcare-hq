@@ -4146,7 +4146,7 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
     return filter(remote_app_filter, wrapped_apps)
 
 
-def get_app(domain, app_id, wrap_cls=None, latest=False):
+def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
@@ -4171,17 +4171,30 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             parent_app_id = original_app['_id']
             min_version = -1
 
-        latest_app = get_db().view('app_manager/applications',
-            startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id, min_version],
+        if target == 'build':
+            # get latest-build regardless of star
+            couch_view = 'app_manager/saved_app'
+            startkey = [domain, parent_app_id, {}]
+            endkey = [domain, parent_app_id]
+        else:
+            # get latest starred-build
+            couch_view = 'app_manager/applications'
+            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
+            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
+
+        latest_app = get_db().view(
+            couch_view,
+            startkey=startkey,
+            endkey=endkey,
             limit=1,
             descending=True,
             include_docs=True
         ).one()
+
         try:
             app = latest_app['doc']
         except TypeError:
-            # If no starred builds, return act as if latest=False
+            # If no builds/starred-builds, return act as if latest=False
             app = original_app
     else:
         try:
