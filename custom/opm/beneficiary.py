@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Fluff calculators that pertain to specific cases/beneficiaries (mothers)
 These are used in the Beneficiary Payment Report and Conditions Met Report
@@ -7,6 +8,8 @@ import datetime
 from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
+from custom.opm.constants import InvalidRow, BIRTH_PREP_XMLNS, CHILDREN_FORMS, CFU1_XMLNS, DOMAIN, CFU2_XMLNS, \
+    MONTH_AMT, TWO_YEAR_AMT, THREE_YEAR_AMT
 from dimagi.utils.dates import months_between, first_of_next_month, add_months_to_date
 
 from dimagi.utils.dates import add_months
@@ -15,8 +18,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
 from corehq.util.translation import localize
-
-from .constants import *
 
 
 EMPTY_FIELD = "---"
@@ -60,9 +61,11 @@ class OPMCaseRow(object):
         self.is_secondary = is_secondary
 
         if not report.is_rendered_as_email:
-            self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s"></div>'
+            self.img_elem = '<div style="width:160px !important;"><img src="/static/opm/img/%s">' \
+                            '<text class="image-descriptor" style="display:none">%s</text></div>'
         else:
-            self.img_elem = '<div><img src="/static/opm/img/%s"></div>'
+            self.img_elem = '<div><img src="/static/opm/img/%s"><text class="image-descriptor" ' \
+                            'style="display:none">%s</text></div>'
 
         self.set_case_properties()
         self.last_month_row = None
@@ -282,13 +285,13 @@ class OPMCaseRow(object):
         return closed_date >= self.reporting_window_start and\
             closed_date < self.reporting_window_end
 
-    def condition_image(self, image_y, image_n, condition):
+    def condition_image(self, image_y, image_n, descriptor_y, descriptor_n, condition):
         if condition is None:
             return ''
         elif condition is True:
-            return self.img_elem % image_y
+            return self.img_elem % (image_y, descriptor_y)
         elif condition is False:
-            return self.img_elem % image_n
+            return self.img_elem % (image_n, descriptor_n)
 
     @property
     def preg_attended_vhnd(self):
@@ -339,6 +342,9 @@ class OPMCaseRow(object):
 
     @property
     def preg_weighed(self):
+        return self.preg_weighed_trimestered(self.preg_month)
+
+    def preg_weighed_trimestered(self, query_preg_month):
         def _from_case(property):
             return self.case_property(property, 0) == 'received'
 
@@ -348,12 +354,12 @@ class OPMCaseRow(object):
                 for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
             )
 
-        if self.preg_month == 6:
+        if self.preg_month == 6 and query_preg_month == 6:
             if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
             return _from_case('weight_tri_1') or _from_forms({'explicit_start': self.preg_first_eligible_datetime})
-        elif self.preg_month == 9:
+        elif self.preg_month == 9 and query_preg_month == 9:
             if not self.is_service_available('func_bigweighmach', months=3):
                 return True
 
@@ -407,6 +413,26 @@ class OPMCaseRow(object):
             return any(
                 form.xpath(xpath) == '1'
                 for form in self.filtered_forms(CHILDREN_FORMS, 3)
+            )
+
+    def child_growth_calculated_in_window(self, query_age):
+        """
+            query_age - must be last month of a window, multiple of 3
+            given last month of a window, this returns if
+            the child in that window attended at least 1 growth session or not
+        """
+        # do not handle middle months of a window
+        if query_age is 0 or query_age % 3 != 0:
+            return None
+        if self.child_age in [query_age - 2, query_age - 1, query_age]:
+            months_in_window = self.child_age % 3 or 3
+            if not self.is_service_available('func_childweighmach', months=months_in_window):
+                return True
+
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
+            return any(
+                form.xpath(xpath) == '1'
+                for form in self.filtered_forms(CHILDREN_FORMS, months_in_window)
             )
 
     @property
@@ -508,11 +534,12 @@ class OPMCaseRow(object):
     def child_image_four(self):
         if self.block == 'atri':
             if self.child_age == 3:
-                return (CHILD_WEIGHT_Y, CHILD_WEIGHT_N)
+                return (CHILD_WEIGHT_Y, CHILD_WEIGHT_N, "जन्म के समय वजन तौला गया",
+                        "जन्म के समय वजन नहीं तौला गया")
             if self.child_age == 6:
-                return (C_REGISTER_Y, C_REGISTER_N)
+                return (C_REGISTER_Y, C_REGISTER_N, "जन्म पंजीकृत", "जन्म पंजीकृत नहीं")
             if self.child_age == 12:
-                return (MEASLEVACC_Y, MEASLEVACC_N)
+                return (MEASLEVACC_Y, MEASLEVACC_N, "खसरे का टिका लगाया", "खसरे का टिका नहीं लगाया")
 
     @property
     def child_breastfed(self):
@@ -744,6 +771,7 @@ class ConditionsMet(OPMCaseRow):
         ('serial_number', _("Serial number"), True),
         ('name', _("List of Beneficiaries"), True),
         ('awc_name', _("AWC Name"), True),
+        ('awc_code', _("AWC Code"), True),
         ('block_name', _("Block Name"), True),
         ('husband_name', _("Husband Name"), True),
         ('readable_status', _("Current status"), True),
@@ -759,33 +787,43 @@ class ConditionsMet(OPMCaseRow):
         ('cash', _("Payment Amount"), True),
         ('case_id', _('Case ID'), True),
         ('closed_date', _("Closed On"), True),
-        ('payment_last_month', _("Payment amount received last month"), True),
+        ('payment_last_month', _("Payment amount received last month (Rs.)"), True),
         ('cash_received_last_month', _("Cash received last month"), True),
     ]
 
-    def __init__(self, case, report, child_index=1, **kwargs):
+    def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
         self.serial_number = child_index
-        self.payment_last_month = self.last_month_row.total_cash if self.last_month_row else 0
+        self.payment_last_month = "Rs.%d" % self.last_month_row.total_cash if self.last_month_row else 0
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
+        self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
+
         if self.status == 'mother':
             self.child_name = self.case_property(self.child_xpath("child{num}_name"), EMPTY_FIELD)
-            self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, self.child_attended_vhnd)
-            self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, self.child_growth_calculated)
-            self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, self.child_received_ors)
+            self.one = self.condition_image(C_ATTENDANCE_Y, C_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
+                                            "पोषण दिवस में उपस्थित नही", self.child_attended_vhnd)
+            self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, "विकास की निगरानी रखी",
+                                            "विकास की निगरानी नहीं रखी", self.child_growth_calculated)
+            self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस लेना",
+                                              "दस्त होने पर ओ.आर.एस नही लिया", self.child_received_ors)
             if self.child_condition_four is not None:
-                self.four = self.condition_image(self.child_image_four[0], self.child_image_four[1], self.child_condition_four)
+                self.four = self.condition_image(self.child_image_four[0], self.child_image_four[1],
+                                                 self.child_image_four[2], self.child_image_four[3],
+                                                 self.child_condition_four)
             else:
                 self.four = ''
-            self.five = self.condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, self.child_breastfed)
+            self.five = self.condition_image(EXCBREASTFED_Y, EXCBREASTFED_N, "केवल माँ का दूध खिलाया गया",
+                                             "केवल माँ का दूध नहीं खिलाया गया", self.child_breastfed)
         elif self.status == 'pregnant':
             self.child_name = EMPTY_FIELD
-            self.one = self.condition_image(M_ATTENDANCE_Y, M_ATTENDANCE_N, self.preg_attended_vhnd)
-            self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, self.preg_weighed)
-            self.three = self.condition_image(IFA_Y, IFA_N, self.preg_received_ifa)
+            self.one = self.condition_image(M_ATTENDANCE_Y, M_ATTENDANCE_N, "पोषण दिवस में उपस्थित",
+                                            "पोषण दिवस में उपस्थित नही", self.preg_attended_vhnd)
+            self.two = self.condition_image(M_WEIGHT_Y, M_WEIGHT_N, "गर्भवती का वज़न लेना",
+                                            "गर्भवती का वज़न नहीं लेना", self.preg_weighed)
+            self.three = self.condition_image(IFA_Y, IFA_N, "तीस आयरन की गोलियां लेना",
+                                              "तीस आयरन की गोलियां नही लिया", self.preg_received_ifa)
             self.four = ''
             self.five = ''
-
         if self.child_age in (24, 36):
             if self.block == 'atri':
                 met, pos, neg = self.weight_grade_normal, GRADE_NORMAL_Y, GRADE_NORMAL_N
@@ -793,14 +831,14 @@ class ConditionsMet(OPMCaseRow):
                 met, pos, neg = self.birth_spacing_years, SPACING_PROMPT_Y, SPACING_PROMPT_N
 
             if met:
-                self.five = self.img_elem % pos
+                self.five = self.img_elem % (pos, "")
             elif met is False:
-                self.five = self.img_elem % neg
+                self.five = self.img_elem % (neg, "")
             else:
                 self.five = ''
 
         if not self.vhnd_available:
-            self.one = self.img_elem % VHND_NO
+            self.one = self.img_elem % (VHND_NO, "पोषण दिवस का आयोजन नहीं हुआ")
 
 
 class Beneficiary(OPMCaseRow):

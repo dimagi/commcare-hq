@@ -107,8 +107,8 @@ def process_cases_with_casedb(xform, case_db, config=None):
         mismatched_forms = action_xforms ^ set(case.xform_ids)
         if mismatched_forms:
             logging.warning(
-                "XFORM ID MISMATCH: action xform_ids don't match case xform_ids: "
-                "case_id: {}".format(
+                "CASE XFORM MISMATCH /a/{},{}".format(
+                    domain,
                     case.case_id
                 )
             )

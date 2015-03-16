@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -34,8 +35,8 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.translations import (
     expected_bulk_app_sheet_headers,
-    process_bulk_app_translation_upload
-)
+    process_bulk_app_translation_upload,
+    expected_bulk_app_sheet_rows)
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.programs.models import Program
@@ -721,14 +722,16 @@ def paginate_releases(request, domain, app_id):
 @require_deploy_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
-    latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
-    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
+    can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
 
     context.update({
         'release_manager': True,
-        'saved_apps': [],
-        'latest_release': latest_release,
+        'can_send_sms': can_send_sms,
+        'sms_contacts': (
+            get_sms_autocomplete_context(request, domain)['sms_contacts']
+            if can_send_sms else []
+        ),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -889,7 +892,12 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(),
             'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case
+            'case_list_form_allowed': module.all_forms_require_a_case,
+            'valid_parent_modules': [
+                parent_module for parent_module in app.modules
+                if not getattr(parent_module, 'root_module_id', None)
+            ]
+
         }
     else:
         case_type = module.case_type
@@ -1467,6 +1475,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "case_list_form_media_image": None,
         "case_list_form_media_audio": None,
         "parent_module": None,
+        "root_module_id": None,
     }
 
     if attr not in attributes:
@@ -1556,6 +1565,15 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             for form in module.get_forms():
                 if not form.schedule:
                     form.schedule = FormSchedule()
+        if should_edit("root_module_id"):
+            if not req.POST.get("root_module_id"):
+                module["root_module_id"] = None
+            else:
+                try:
+                    app.get_module(module_id)
+                    module["root_module_id"] = req.POST.get("root_module_id")
+                except ModuleNotFoundException:
+                    messages.error(_("Unknown Module"))
 
     _handle_media_edits(req, module, should_edit, resp)
 
@@ -1582,6 +1600,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     sort_elements = params.get('sort_elements', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
+    pull_down_tile = params.get("enableTilePullDown", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1604,6 +1623,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
+        if pull_down_tile is not None:
+            detail.short.pull_down_tile = pull_down_tile
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
         if tabs is not None:
@@ -2392,7 +2413,7 @@ class DownloadCCZ(DownloadMultimediaZip):
                 if name not in skip_files:
                     # TODO: make RemoteApp.create_all_files not return media files
                     extension = os.path.splitext(name)[1]
-                    data = f.encode('utf-8') if extension in text_extensions else f
+                    data = _encode_if_unicode(f) if extension in text_extensions else f
                     yield (get_name(name), data)
 
         if self.app.is_remote_app():
@@ -2951,141 +2972,9 @@ def upload_bulk_ui_translations(request, domain, app_id):
 
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
-
-    def cleaned_row(row):
-        '''
-        :param row: A tuple representing a row in the spreadsheet
-        Returns a cleaned version of row with all instances of None
-        changed to ""
-        '''
-        return tuple(item if item is not None else "" for item in row)
-
     app = get_app(domain, app_id)
     headers = expected_bulk_app_sheet_headers(app)
-
-    # keys are the names of sheets, values are lists of tuples representing rows
-    rows = {"Modules_and_forms": []}
-
-    for mod_index, module in enumerate(app.get_modules()):
-        # This is duplicated logic from expected_bulk_app_sheet_headers,
-        # which I don't love.
-        module_string = "module" + str(mod_index + 1)
-
-        # Add module to the first sheet
-        row_data = cleaned_row(
-            ("Module", module_string) +
-            tuple(module.name.get(lang, "") for lang in app.langs) +
-            tuple(module.case_label.get(lang, "") for lang in app.langs) +
-            (module.media_image, module.media_audio, module.unique_id)
-        )
-        rows["Modules_and_forms"].append(row_data)
-
-        # Populate module sheet
-        rows[module_string] = []
-
-        for list_or_detail, case_properties in [
-            ("list", module.case_details.short.get_columns()),
-            ("detail", module.case_details.long.get_columns())
-        ]:
-            for detail in case_properties:
-
-                field_name = detail.field
-                if detail.format == "enum":
-                    field_name += " (ID Mapping Text)"
-                elif detail.format == "graph":
-                    field_name += " (graph)"
-
-                # Add a row for this case detail
-                rows[module_string].append(
-                    (field_name, list_or_detail) +
-                    tuple(detail.header.get(lang, "") for lang in app.langs)
-                )
-
-                # Add a row for any mapping pairs
-                if detail.format == "enum":
-                    for mapping in detail.enum:
-                        rows[module_string].append(
-                            (
-                                mapping.key + " (ID Mapping Value)",
-                                list_or_detail
-                            ) + tuple(
-                                mapping.value.get(lang, "")
-                                for lang in app.langs
-                            )
-                        )
-
-                # Add rows for graph configuration
-                if detail.format == "graph":
-                    for key, val in detail.graph_configuration.locale_specific_config.iteritems():
-                        rows[module_string].append(
-                            (
-                                key + " (graph config)",
-                                list_or_detail
-                            ) + tuple(val.get(lang, "") for lang in app.langs)
-                        )
-                    for i, annotation in enumerate(detail.graph_configuration.annotations):
-                        rows[module_string].append(
-                            (
-                                "graph annotation {}".format(i + 1),
-                                list_or_detail
-                            ) + tuple(
-                                annotation.display_text.get(lang, "")
-                                for lang in app.langs
-                            )
-                        )
-
-        for form_index, form in enumerate(module.get_forms()):
-            form_string = module_string + "_form" + str(form_index + 1)
-            xform = form.wrapped_xform()
-
-            # Add row for this form to the first sheet
-            # This next line is same logic as above :(
-            first_sheet_row = cleaned_row(
-                ("Form", form_string) +
-                tuple(form.name.get(lang, "") for lang in app.langs) +
-                tuple("" for lang in app.langs) +
-                (form.media_image, form.media_audio, form.unique_id)
-            )
-
-            # Add form to the first street
-            rows["Modules_and_forms"].append(first_sheet_row)
-
-            # Populate form sheet
-            rows[form_string] = []
-
-            itext_items = OrderedDict()
-            try:
-                nodes = xform.itext_node.findall("./{f}translation")
-            except XFormException:
-                nodes = []
-
-            for translation_node in nodes:
-                lang = translation_node.attrib['lang']
-                for text_node in translation_node.findall("./{f}text"):
-                    text_id = text_node.attrib['id']
-                    itext_items[text_id] = itext_items.get(text_id, {})
-
-                    for value_node in text_node.findall("./{f}value"):
-                        value_form = value_node.attrib.get("form", "default")
-                        value = value_node.text
-                        itext_items[text_id][(lang, value_form)] = value
-
-            for text_id, values in itext_items.iteritems():
-                row = [text_id]
-                for value_form in ["default", "audio", "image", "video"]:
-                    # Get the fallback value for this form
-                    fallback = ""
-                    for lang in app.langs:
-                        fallback = values.get((lang, value_form), fallback)
-                        if fallback:
-                            break
-                    # Populate the row
-                    for lang in app.langs:
-                        row.append(values.get((lang, value_form), fallback))
-                # Don't add empty rows:
-                if any(row[1:]):
-                    rows[form_string].append(row)
-
+    rows = expected_bulk_app_sheet_rows(app)
     temp = StringIO()
     data = [(k, v) for k, v in rows.iteritems()]
     export_raw(headers, data, temp)

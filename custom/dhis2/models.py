@@ -4,6 +4,7 @@ import json
 import logging
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FieldList, FixtureItemField
+from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.couch.cache import cache_core
 import requests
@@ -33,7 +34,10 @@ class Dhis2Settings(Document):
         """
         Yields settings of all domains for which "enabled" is true
         """
-        toggle = Toggle.get('dhis2_domain')
+        try:
+            toggle = Toggle.get('dhis2_domain')
+        except ResourceNotFound:
+            return
         for domain in toggle.enabled_users:
             if domain.startswith('domain:'):
                 # If the "domain" namespace is given, strip it off

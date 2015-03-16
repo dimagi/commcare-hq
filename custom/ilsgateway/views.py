@@ -1,5 +1,7 @@
 import base64
 import StringIO
+from datetime import datetime
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http.response import HttpResponseRedirect, Http404
@@ -9,7 +11,9 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
@@ -17,6 +21,10 @@ from django.views.decorators.http import require_POST
 from corehq import Domain
 from corehq.apps.domain.decorators import domain_admin_required
 from custom.ilsgateway.forms import SupervisionDocumentForm
+from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
+from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
+from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
+from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
 
 from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
     get_delivery_group_reports, ILS_FACILITIES
@@ -25,10 +33,10 @@ from custom.logistics.tasks import sms_users_fix
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
-from custom.logistics.views import BaseConfigView
+from custom.logistics.views import BaseConfigView, BaseRemindersTester
 
 
 class GlobalStats(BaseDomainView):
@@ -176,6 +184,45 @@ class SupervisionDocumentDeleteView(TemplateView, DomainViewMixin):
         return HttpResponseRedirect(
             reverse(SupervisionDocumentListView.urlname, args=[self.domain])
         )
+
+
+class RemindersTester(BaseRemindersTester):
+    post_url = 'ils_reminders_tester'
+    template_name = 'ilsgateway/reminders_tester.html'
+
+    reminders = {
+        'delivery_reminder': send_delivery_reminder,
+        'randr_reminder': send_ror_reminder,
+        'soh_reminder': send_soh_reminder,
+        'supervision_reminder': send_supervision_reminder
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super(RemindersTester, self).get_context_data(**kwargs)
+        context['current_groups'] = "Submiting group: %s, Processing group: %s, Delivering group: %s" % (
+            DeliveryGroups().current_submitting_group(),
+            DeliveryGroups().current_processing_group(),
+            DeliveryGroups().current_delivering_group(),
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+
+        reminder = request.POST.get('reminder')
+        phone_number = context.get('phone_number')
+
+        if reminder and phone_number:
+            phone_number = clean_phone_number(phone_number)
+            v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+            if v and v.verified:
+                user = v.owner
+                if not user:
+                    return self.get(request, *args, **kwargs)
+                reminder_function = self.reminders.get(reminder)
+                reminder_function(self.domain, datetime.now(), test_list=[user])
+        messages.success(request, "Reminder was sent successfully")
+        return self.get(request, *args, **kwargs)
 
 
 @domain_admin_required
