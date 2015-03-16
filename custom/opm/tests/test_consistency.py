@@ -38,3 +38,17 @@ class TestConsistency(OPMCaseReportTestBase):
         self.assertFalse(row.all_conditions_met)
         self.assertFalse(row.child_followup)
         self.assertConsistent(row)
+
+    def test_wazirganj_block(self):
+        row = make_case_row(
+            form_props=[
+                'child1_attendance_vhnd',
+                'child1_child_register',
+                'child1_child_excbreastfed'
+                # 'child1_child_weight'  # This should be only for Atri block
+            ],
+            vhnd_props=['vhnd_available'],
+            child_age=3,
+            block="Wazirganj",
+        )
+        self.assertConsistent(row)

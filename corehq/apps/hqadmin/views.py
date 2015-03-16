@@ -208,10 +208,9 @@ def message_log_report(request):
 @require_POST
 @csrf_exempt
 def contact_email(request):
-    description = request.POST['description']
     message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
     EmailMessage(
-        subject=description[:60],
+        subject="Incoming Contact CommCare Request",
         body=message,
         from_email="",
         to=[settings.CONTACT_EMAIL],

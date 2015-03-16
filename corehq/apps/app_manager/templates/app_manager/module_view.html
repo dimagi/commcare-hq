@@ -275,7 +275,7 @@
                         {% trans "Label for Cases" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Label for Cases" %}"
-                              data-content="{% trans "This label will appear on Java Phones and newer versions of Android at the top of the case select screen." %}"
+                              data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
                         ></span>
                     </label>
                     <div class="controls">
@@ -303,7 +303,7 @@
             </fieldset>
             <fieldset>
                 <legend>{% trans "Advanced" %}</legend>
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="Whether to have an item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
+                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List Menu Item" DESC="An item in the module's menu that lets you browse the case list without moving on to fill out a form." SLUG="case_list" case_list=module.case_list %}
                 {% include 'app_manager/partials/case_list_form_setting.html' %}
                 {% if app.application_version == '2.0' and module.module_type == 'basic' and request.project.survey_management_enabled %}
                     {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}

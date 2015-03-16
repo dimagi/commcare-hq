@@ -181,7 +181,10 @@ class Group(UndoableDocument):
             groups.extend([
                 location.case_sharing_group_object() for location in
                 SQLLocation.objects.filter(domain=domain)
-                if location.couch_location().location_type_object.shares_cases
+                # location_type_object is sometimes None
+                # fixes http://manage.dimagi.com/default.asp?158564
+                if getattr(location.couch_location().location_type_object,
+                           'shares_cases', None)
             ])
             return groups
         else:
