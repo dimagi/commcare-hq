@@ -234,6 +234,7 @@
                             niceField['field'] = special;
                         }
                         column._niceField = niceField;
+                        column.showOptions = ko.observable(false);
                         column.newOption = ko.observable("");
                         column.addOption = function(e) {
                             if (this.newOption() != "") {
@@ -577,11 +578,14 @@
                                                 </select>
                                                 <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left', trigger: 'click'}"></span>
                                                 <div data-bind="if: doc_type() === 'SplitColumn'">
-                                                    <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
-                                                    </select>
-                                                    <br/>
-                                                    <input class="input input-small" type="text" data-bind="value: newOption"/>
-                                                    <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                                    <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
+                                                    <div data-bind="visible: showOptions">
+                                                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                                                        </select>
+                                                        <br/>
+                                                        <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
