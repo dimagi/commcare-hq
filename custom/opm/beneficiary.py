@@ -483,7 +483,7 @@ class OPMCaseRow(object):
 
     @property
     def child_weighed_once(self):
-        if self.child_age == 3:
+        if self.child_age == 3 and self.block == 'atri':
             # This doesn't depend on a VHND - it should happen at the hospital
             def _test(form):
                 return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
@@ -495,7 +495,7 @@ class OPMCaseRow(object):
 
     @property
     def child_birth_registered(self):
-        if self.child_age == 6:
+        if self.child_age == 6 and self.block == 'atri':
             if not self.is_vhnd_last_three_months:
                 return True
 
@@ -508,7 +508,7 @@ class OPMCaseRow(object):
 
     @property
     def child_received_measles_vaccine(self):
-        if self.child_age == 12:
+        if self.child_age == 12 and self.block == 'atri':
             if not self.is_service_available('stock_measlesvacc', months=3):
                 return True
 
@@ -635,20 +635,9 @@ class OPMCaseRow(object):
     @property
     def all_conditions_met(self):
         if self.status == 'mother':
-            relevant_conditions = [
-                self.child_attended_vhnd,
-                self.child_growth_calculated,
-                self.child_received_ors,
-                self.child_condition_four,
-                self.child_breastfed,
-            ]
+            return self.child_followup
         else:
-            relevant_conditions = [
-                self.preg_attended_vhnd,
-                self.preg_weighed,
-                self.preg_received_ifa,
-            ]
-        return False not in relevant_conditions
+            return self.bp_conditions
 
     @property
     def month_amt(self):
@@ -760,10 +749,12 @@ class OPMCaseRow(object):
 
     @property
     def total_cash(self):
-        return min(
+        amount = min(
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.child_cash
         ) + self.year_end_bonus_cash
+        assert amount == self.cash_amt
+        return amount
 
 
 class ConditionsMet(OPMCaseRow):
