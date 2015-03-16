@@ -388,7 +388,7 @@ class Dhis2Api(object):
                     'links': 'false',
                     'trackedEntity': te_id,
                     'ou': top_ou['id'],
-                    # 'ouMode': 'DESCENDANTS',  # Causes SQL error in DHIS2 2.16. Fixed in 2.18
+                    'ouMode': 'DESCENDANTS',
                     'attribute': attr_id
                 })
             instances = self.entities_to_dicts(response)
@@ -421,7 +421,7 @@ class Dhis2Api(object):
                     'links': 'false',
                     'trackedEntity': te_id,
                     'ou': top_ou['id'],
-                    # 'ouMode': 'DESCENDANTS',  # Causes SQL error in DHIS2 2.16. Fixed in 2.18
+                    'ouMode': 'DESCENDANTS',
                     'attribute': attr_id + ':EQ:' + attr_value
                 })
             instances = self.entities_to_dicts(response)
@@ -447,7 +447,7 @@ class Dhis2Api(object):
                     'page': page,
                     'links': 'false',
                     'ou': top_ou['id'],
-                    # 'ouMode': 'DESCENDANTS',  # Causes SQL error in DHIS2 2.16. Fixed in 2.18
+                    'ouMode': 'DESCENDANTS',
                     'program': program_id
                 })
             instances = self.entities_to_dicts(response)
