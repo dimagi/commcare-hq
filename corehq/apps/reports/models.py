@@ -303,10 +303,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def query_string(self):
         from urllib import urlencode
 
-        params = self.filters.copy()
+        params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
         if not self.is_configurable_report:
+            params.update(self.filters)
             params.update(self.get_date_range())
 
         return urlencode(params, True)
@@ -403,6 +404,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except Exception:
             pass
 
+        from urllib import urlencode
         from django.http import HttpRequest, QueryDict
         request = HttpRequest()
         request.couch_user = self.owner
@@ -410,7 +412,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         request.domain = self.domain
         request.couch_user.current_domain = self.domain
 
-        request.GET = QueryDict(self.query_string + '&filterSet=true')
+        request.GET = QueryDict(
+            self.query_string
+            + '&filterSet=true'
+            + ('&' + urlencode(self.filters, True) if self.is_configurable_report else '')
+        )
 
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(request)
