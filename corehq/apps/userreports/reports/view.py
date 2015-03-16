@@ -16,7 +16,6 @@ from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_noop as _
 
 from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403
