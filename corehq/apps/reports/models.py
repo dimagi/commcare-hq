@@ -303,11 +303,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def query_string(self):
         from urllib import urlencode
 
-        params = {}
+        params = self.filters.copy()
         if self._id != 'dummy':
             params['config_id'] = self._id
         if not self.is_configurable_report:
-            params.update(self.filters)
             params.update(self.get_date_range())
 
         return urlencode(params, True)
