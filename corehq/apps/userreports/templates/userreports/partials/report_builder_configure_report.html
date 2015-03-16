@@ -56,9 +56,9 @@
         };
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
-            i.property = ko.observable(o.property);
-            i.displayText = ko.observable(o.display_text);
-            i.format = ko.observable(o.format);
+            i.property(o.property);
+            i.displayText(o.display_text);
+            i.format(o.format);
             return i;
         };
 
