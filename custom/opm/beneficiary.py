@@ -759,7 +759,7 @@ class OPMCaseRow(object):
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.child_cash
         ) + self.year_end_bonus_cash
-        assert amount == self.cash_amt
+        assert amount == self.cash_amt, "The CMR and BPR disagree on payment!"
         return amount
 
 
@@ -791,7 +791,7 @@ class ConditionsMet(OPMCaseRow):
     def __init__(self, case, report, child_index=1, awc_codes={}, **kwargs):
         super(ConditionsMet, self).__init__(case, report, child_index=child_index, **kwargs)
         self.serial_number = child_index
-        self.payment_last_month = "Rs.%d" % self.last_month_row.total_cash if self.last_month_row else 0
+        self.payment_last_month = "Rs.%d" % self.last_month_row.cash_amt if self.last_month_row else 0
         self.cash_received_last_month = self.last_month_row.vhnd_available_display if self.last_month_row else 'no'
         self.awc_code = awc_codes.get(self.awc_name, EMPTY_FIELD)
 
