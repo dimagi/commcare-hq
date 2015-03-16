@@ -157,6 +157,9 @@ MAPS_LAYERS = {
 }
 
 FORMTRANSLATE_TIMEOUT = 5
+LOCAL_MIDDLEWARE_CLASSES = [
+#    'silk.middleware.SilkyMiddleware',
+]
 LOCAL_APPS = (
 #    'django_coverage', # Adds `python manage.py test_coverage` (settings below)
 #    'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
@@ -164,6 +167,7 @@ LOCAL_APPS = (
 #    'devserver',       # Adds improved dev server that also prints SQL on the console (for AJAX, etc, when you cannot use debug_toolbar)
 #    'django_cpserver', # Another choice for a replacement server
 #    'dimagi.utils'     
+#    'silk'             # Adds profiling to every request
 )
 
 # list of domains to enable ADM reporting on
