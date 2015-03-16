@@ -3295,7 +3295,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
-    # profile's schema is {'features': {}, 'properties': {}}
+    # profile's schema is {'features': {}, 'properties': {}, 'custom_properties': {}}
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
@@ -3503,6 +3503,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
         else:
             profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
+
+        if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
+            app_profile['custom_properties'].update(self__profile['custom_properties'])
 
         return render_to_string(template, {
             'is_odk': is_odk,
