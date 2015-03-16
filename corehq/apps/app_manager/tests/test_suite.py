@@ -317,7 +317,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
             "./menu[@id='m1']"
         )
 
-    def test_module_filter_with_references(self):
+    def test_module_filter_with_session(self):
         json = self.get_json('suite-workflow')
         json['build_spec']['version'] = '2.20.0'
 
@@ -326,13 +326,6 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         module.module_filter = "./user/mod/filter = '123'"
         self.assertXmlPartialEqual(
             self.get_xml('module-filter-user'),
-            app.create_suite(),
-            "./menu[@id='m1']"
-        )
-
-        module.module_filter = "./data/mod/filter = '123'"
-        self.assertXmlPartialEqual(
-            self.get_xml('module-filter-data'),
             app.create_suite(),
             "./menu[@id='m1']"
         )
