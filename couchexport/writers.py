@@ -292,7 +292,7 @@ class ZippedExportWriter(OnDiskExportWriter):
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
             path = self.tables[index].get_path()
-            archive.write(path, "{}{}".format(name, self.table_file_extension))
+            archive.write(path, u"{}{}".format(name, self.table_file_extension))
         archive.close()
         self.file.seek(0)
 
