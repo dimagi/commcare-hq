@@ -6,6 +6,14 @@ function CommcareSettings(options) {
     self.user = options.user;
     self.permissions = options.permissions;
 
+    self.customPropertyType = 'custom_properties';
+    self.customProperties = ko.observableArray(_.map(options.customProperties, function(d) {
+        return ko.mapping.fromJS(d);
+    }));
+    self.customProperties.sort(function(left, right) {
+        return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
+    });
+
     self.settings = [];
     self.settingsIndex = {};
     (function () {
@@ -260,6 +268,13 @@ function CommcareSettings(options) {
                 blob[setting.type][setting.id] = setting.valueToSave();
             }
         });
+
+        blob[self.customPropertyType] = {};
+        _(self.customProperties()).each(function (customProperty) {
+            if (customProperty.key() && customProperty.value()) {
+                blob[self.customPropertyType][customProperty.key()] = customProperty.value();
+            }
+        });
         return blob;
     });
 
@@ -280,6 +295,14 @@ function CommcareSettings(options) {
             }
         };
     });
+
+    self.onAddCustomProperty = function() {
+        self.customProperties.push({ key: ko.observable(), value: ko.observable() });
+    };
+
+    self.onDestroyCustomProperty = function(customProperty) {
+        self.customProperties.remove(customProperty);
+    };
 
 }
 CommcareSettings.widgets = {};

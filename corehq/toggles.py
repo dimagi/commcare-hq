@@ -349,3 +349,9 @@ CACHE_AND_INDEX = StaticToggle(
     'in the app builder',
     [NAMESPACE_DOMAIN],
 )
+
+CUSTOM_PROPERTIES = StaticToggle(
+    'custom_properties',
+    'Allow users to add arbitrary custom properties to their appliation',
+    [NAMESPACE_DOMAIN]
+)

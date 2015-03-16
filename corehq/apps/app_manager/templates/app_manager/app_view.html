@@ -9,6 +9,7 @@
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -21,6 +22,9 @@
             settings: {
                 sections: {{ settings_layout|JSON }},
                 values: {{ settings_values|JSON }},
+                {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+                customProperties: {{ custom_properties|JSON }},
+                {% endif %}
                 urls: {
                     save: '{% url "edit_commcare_settings" domain app.id %}'
                 },

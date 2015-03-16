@@ -41,7 +41,9 @@
                 <p>{% blocktrans %}Alternatively, you can upload files in <strong>bulk</strong> in a ZIP file{% endblocktrans %}:</p>
                 <p><a href="{% url "hqmedia_bulk_upload" domain app.get_id %}" class="btn btn-inverse"><i class="icon icon-cloud-upload"></i> {% trans 'Go to Bulk Upload' %}</a></p>
             {% else %}
-                <div class="alert alert-info">{% blocktrans %}This application references no multimedia.{% endblocktrans %}</div>
+                <div class="alert alert-info">
+                    {% blocktrans %}This application references no multimedia. Add multimedia to your forms and menus to use the reference checker and manage media in bulk.{% endblocktrans %}
+                </div>
             {% endif %}
         </div>
         <div class="span5">

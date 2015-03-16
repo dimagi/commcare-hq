@@ -202,8 +202,11 @@ def process_sms(message_id):
             return
 
         if msg.direction == OUTGOING:
-            domain_object = Domain.get_by_name(msg.domain, strict=True)
-            if handle_domain_specific_delays(msg, domain_object, utcnow):
+            if msg.domain:
+                domain_object = Domain.get_by_name(msg.domain, strict=True)
+            else:
+                domain_object = None
+            if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
                 message_lock.release()
                 return
 
