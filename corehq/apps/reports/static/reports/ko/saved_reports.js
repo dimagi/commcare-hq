@@ -172,9 +172,20 @@ var ReportConfigsViewModel = function (options) {
 
     self.setUserConfigurableConfigBeingViewed = function (config) {
         self.configBeingViewed(config);
+
         var filters = config.filters;
-        for (var filter_name in filters) {
-            $('[name="' + filter_name + '"]').attr('value', filters[filter_name]);
+        update_filters = function() {
+            for (var filter_name in filters) {
+                $('[name="' + filter_name + '"]').val(filters[filter_name]);
+            }
+        };
+
+        if(self.initialLoad) {
+            self.initialLoad = false;
+            update_filters();
+        } else {
+            update_filters();
+            window.location.href = "?config_id=" + config._id();
         }
     };
 
