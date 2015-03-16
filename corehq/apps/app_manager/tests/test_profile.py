@@ -1,5 +1,5 @@
 # coding: utf-8
-from django.test import TestCase
+from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import SETTINGS_LOOKUP, SETTINGS
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestFileMixin
@@ -7,9 +7,10 @@ import xml.etree.ElementTree as ET
 
 from corehq.apps.builds.models import BuildSpec
 from corehq import toggles
+from toggle.shortcuts import update_toggle_cache
 
 
-class ProfileTest(TestCase, TestFileMixin):
+class ProfileTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
 
     def setUp(self):
@@ -19,7 +20,8 @@ class ProfileTest(TestCase, TestFileMixin):
             name=u"TÉST ÁPP",
             domain="potter"
         )
-        toggles.CUSTOM_PROPERTIES.set('domain:potter', True)
+
+        update_toggle_cache(toggles.CUSTOM_PROPERTIES.slug, 'potter', True, 'domain')
 
     def _test_profile(self, app):
         profile = app.create_profile()
