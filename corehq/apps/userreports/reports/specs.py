@@ -20,6 +20,7 @@ SQLAGG_COLUMN_MAP = {
     'sum': SumColumn,
     'simple': SimpleColumn,
     'year': YearColumn,
+    'expand': SimpleColumn,
 }
 
 

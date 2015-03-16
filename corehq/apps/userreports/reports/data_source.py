@@ -1,13 +1,51 @@
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
+    SumWhen,
 )
+import sqlalchemy
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.reports.sqlreport import SqlData
+from corehq.db import Session
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name
 from dimagi.utils.decorators.memoized import memoized
+
+
+def get_expanded_columns(table_name, filters, filter_values, column_config):
+
+    session = Session()
+    connection = session.connection()
+    metadata = sqlalchemy.MetaData()
+    metadata.reflect(bind=connection)
+
+    column = metadata.tables[table_name].c[column_config.get_sql_column().view.name]
+    query = sqlalchemy.select([column]).distinct()
+
+    result = connection.execute(query, filter_values).fetchall()
+    distinct_values = [x[0] for x in result]
+
+    columns = []
+    for val in distinct_values:
+        columns.append(DatabaseColumn(
+            u"{}-{}".format(column_config.display, val),
+            SumWhen(
+                column_config.field,
+                whens={val: 1},
+                else_=0,
+                # TODO: What is the proper alias?
+                # It looks like this alias needs to match data_slug
+                alias=u"{}-{}".format(column_config.field, val),
+            ),
+            sortable=False,
+            # TODO: Should this be column_config.report_column_id?
+            # It looks like this data_slug needs to match alias
+            data_slug=u"{}-{}".format(column_config.field, val),
+            format_fn=column_config.get_format_fn(),
+            help_text=column_config.description
+        ))
+    return columns
 
 
 class ConfigurableReportDataSource(SqlData):
@@ -56,7 +94,13 @@ class ConfigurableReportDataSource(SqlData):
     @property
     @memoized
     def columns(self):
-        return [col.get_sql_column() for col in self.column_configs]
+        ret = []
+        for conf in self.column_configs:
+            if conf.aggregation == "expand":
+                ret += get_expanded_columns(self.table_name, self.filters, self.filter_values, conf)
+            else:
+                ret.append(conf.get_sql_column())
+        return ret
 
     @memoized
     def get_data(self, slugs=None):
