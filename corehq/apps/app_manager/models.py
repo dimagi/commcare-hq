@@ -4160,7 +4160,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             parent_app_id = original_app['_id']
             min_version = -1
 
-        if target and target == 'build':
+        if target == 'build':
             # get latest-build regardless of star
             couch_view = 'app_manager/saved_app'
             startkey = [domain, parent_app_id, {}]
