@@ -2,6 +2,7 @@ import logging
 from corehq import Domain
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
+from corehq.apps.locations.models import SQLLocation
 
 from corehq.apps.products.models import Product
 from custom.ewsghana.models import EWSGhanaConfig
@@ -189,12 +190,11 @@ class APISynchronization(object):
             'date_joined': force_to_datetime(ilsgateway_webuser.date_joined),
             'password_hashed': True,
         }
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(ilsgateway_webuser.location)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
-        location_id = sp.location_id if sp else None
+        try:
+            sql_location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_webuser.location)
+            location_id = sql_location.location_id
+        except SQLLocation.DoesNotExist:
+            location_id = None
 
         if user is None:
             try:
