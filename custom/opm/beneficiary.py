@@ -674,6 +674,7 @@ class OPMCaseRow(object):
             return self.bp_conditions
 
     @property
+    @memoized
     def bp_conditions(self):
         if self.status == "pregnant":
             return False not in [
@@ -683,6 +684,7 @@ class OPMCaseRow(object):
             ]
 
     @property
+    @memoized
     def child_followup(self):
         """
         wazirganj - total_soft_conditions = 1
@@ -749,6 +751,10 @@ class OPMCaseRow(object):
 
     @property
     def total_cash(self):
+        """
+        This exists as a function separate from cash_amt only to be certain
+        that it's consistent with the values being summed
+        """
         amount = min(
             MONTH_AMT,
             self.bp1_cash + self.bp2_cash + self.child_cash
