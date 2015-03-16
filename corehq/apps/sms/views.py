@@ -68,8 +68,6 @@ from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
 
 
-DEFAULT_MESSAGE_COUNT_THRESHOLD = 50
-
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
     (ugettext_noop("Yesterday"), 1),
@@ -716,12 +714,13 @@ def chat(request, domain, contact_id):
     )
 
     context = {
-        "domain" : domain,
-        "contact_id" : contact_id,
-        "contact" : get_contact(contact_id),
-        "message_count_threshold" : domain_obj.chat_message_count_threshold or DEFAULT_MESSAGE_COUNT_THRESHOLD,
-        "custom_case_username" : domain_obj.custom_case_username,
-        "history_choices" : history_choices,
+        "domain": domain,
+        "contact_id": contact_id,
+        "contact": get_contact(contact_id),
+        "use_message_counter": domain_obj.chat_message_count_threshold is not None,
+        "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
+        "custom_case_username": domain_obj.custom_case_username,
+        "history_choices": history_choices,
     }
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)

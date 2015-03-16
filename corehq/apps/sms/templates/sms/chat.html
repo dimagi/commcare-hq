@@ -117,7 +117,7 @@
                 <tbody>
                     <tr>
                         <td>{% block chat_header %}{% endblock %}</td>
-                        <td><div id="message_counter_container"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
+                        <td><div id="message_counter_container" data-bind="visible: {{ use_message_counter|JSON }}"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
                     </tr>
                 </tbody>
             </table>
@@ -156,7 +156,6 @@
                     chat_footer_height = $("#chat_footer").height();
                     $("#chat_messages").height(body_height - chat_header_height - chat_footer_height);
                 }
-                resize_messages();
                 function MessageHistoryChoice(description, utc_timestamp) {
                     var self = this;
                     self.description = description;
@@ -445,6 +444,7 @@
                 chat_window_view_model.update_messages_timeout();
                 $("#text_box").bind("paste", chat_window_view_model.update_message_length);
                 $("#text_box").keyup(chat_window_view_model.update_message_length);
+                resize_messages();
             });
         </script>
     </body>
