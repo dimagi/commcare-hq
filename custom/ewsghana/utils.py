@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from corehq import Domain
 from corehq.apps.locations.models import SQLLocation
 from datetime import timedelta, datetime
@@ -17,7 +18,9 @@ def get_supply_points(location_id, domain):
     if loc.location_type == 'district':
         locations = SQLLocation.objects.filter(parent=loc)
     elif loc.location_type == 'region':
-        locations = SQLLocation.objects.filter(parent__parent=loc)
+        locations = SQLLocation.objects.filter(
+            Q(parent__parent=loc) | Q(parent=loc, location_type__in=location_types)
+        )
     elif loc.location_type in location_types:
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
