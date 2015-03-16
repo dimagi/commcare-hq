@@ -11,6 +11,7 @@ from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue, \
     NumericFilterValue
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.sql import ExpandColumn
 from corehq.apps.userreports.transforms.factory import TransformFactory
 
 
@@ -20,6 +21,7 @@ SQLAGG_COLUMN_MAP = {
     'sum': SumColumn,
     'simple': SimpleColumn,
     'year': YearColumn,
+    'expand': ExpandColumn,
 }
 
 
