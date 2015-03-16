@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 from corehq.apps.builds.models import BuildSpec
 from corehq import toggles
-from toggle.shortcuts import update_toggle_cache
+from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
 class ProfileTest(SimpleTestCase, TestFileMixin):
@@ -21,7 +21,10 @@ class ProfileTest(SimpleTestCase, TestFileMixin):
             domain="potter"
         )
 
-        update_toggle_cache(toggles.CUSTOM_PROPERTIES.slug, 'potter', True, 'domain')
+        update_toggle_cache(toggles.CUSTOM_PROPERTIES.slug, 'potter', True, toggles.NAMESPACE_DOMAIN)
+
+    def tearDown(self):
+        clear_toggle_cache(toggles.CUSTOM_PROPERTIES.slug, 'potter', toggles.NAMESPACE_DOMAIN)
 
     def _test_profile(self, app):
         profile = app.create_profile()
