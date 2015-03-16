@@ -302,12 +302,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def query_string(self):
         from urllib import urlencode
-        from corehq.apps.userreports.reports.view import ConfigurableReport
 
         params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
-        if type(self._dispatcher) != ConfigurableReport:
+        if not self.is_configurable_report:
             params.update(self.filters)
             params.update(self.get_date_range())
 
@@ -331,7 +330,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             from django.core.urlresolvers import reverse
             from corehq.apps.userreports.reports.view import ConfigurableReport
 
-            if type(self._dispatcher) == ConfigurableReport:
+            if self.is_configurable_report:
                 url_base = reverse(ConfigurableReport.slug, args=[self.domain, self.subreport_slug])
             else:
                 url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
@@ -418,8 +417,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         CCHQPRBACMiddleware.apply_prbac(request)
 
         try:
-            from corehq.apps.userreports.reports.view import ConfigurableReport
-            if type(self._dispatcher) == ConfigurableReport:
+            if self.is_configurable_report:
                 response = self._dispatcher.dispatch(request, self.subreport_slug, render_as='email',
                     **self.view_kwargs)
             else:
@@ -458,6 +456,11 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'report config': self.get_id
             })
             return _("An error occurred while generating this report."), None
+
+    @property
+    def is_configurable_report(self):
+        from corehq.apps.userreports.reports.view import ConfigurableReport
+        return type(self._dispatcher) == ConfigurableReport
 
 
 class UnsupportedScheduledReportError(Exception):
