@@ -289,7 +289,10 @@ class Dhis2Api(object):
             'orgUnit': ou_id,
             'attributes': self._data_to_attributes(instance_data)
         }
-        return self._request.put('trackedEntityInstances/' + te_inst_id, request_data)
+        response = self._request.put('trackedEntityInstances/' + te_inst_id, request_data)
+        if response['status'] != 'SUCCESS':
+            logger.error('Failed to update instance of tracked entity "%s". DHIS2 API error: %s',
+                         te_inst_id, response)
 
     def get_top_org_unit(self):
         """
