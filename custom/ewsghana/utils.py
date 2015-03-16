@@ -100,5 +100,9 @@ def get_reporting_types(domain):
     ]
 
 
+def can_receive_email(user, verified_number):
+    return user.email and verified_number.backend_id and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO'
+
+
 def get_country_id(domain):
     return SQLLocation.objects.filter(domain=domain, location_type='country')[0].location_id
