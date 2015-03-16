@@ -568,9 +568,6 @@
                                                 </select>
                                             </div>
                                             <div data-bind="if: allOptions">
-                                                <span data-bind="if: hasNewOptions" class="pull-right">
-                                                    <span class="icon-asterisk" title="{% trans "New options available" %}"></span>
-                                                </span>
                                                 <select data-bind="
                                                     value: doc_type,
                                                     foreach: $root.column_type_options
