@@ -202,10 +202,9 @@ class ILSGatewayAPI(APISynchronization):
         try:
             location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_smsuser.supply_point)
             sms_user.location_id = location.location_id
-            sms_user.save()
         except SQLLocation.DoesNotExist:
             pass
-
+        sms_user.save()
         return sms_user
 
     def location_sync(self, ilsgateway_location, fetch_groups=False):
