@@ -631,7 +631,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                     type, exc, tb = sys.exc_info()
                     self._debug_data.append({
                         'case_id': row._id,
-                        'message': e,
+                        'message': repr(e),
                         'traceback': ''.join(traceback.format_tb(tb)),
                     })
         return rows
@@ -907,7 +907,7 @@ class MetReport(CaseReportMixin, BaseReport):
                     type, exc, tb = sys.exc_info()
                     self._debug_data.append({
                         'case_id': row._id,
-                        'message': e,
+                        'message': repr(e),
                         'traceback': ''.join(traceback.format_tb(tb)),
                     })
         return rows
