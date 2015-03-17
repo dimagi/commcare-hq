@@ -96,7 +96,7 @@ def build_vellum(path, branch, test=True):
 
 
 def get_old_vellum_rev(git):
-    commit = str(git('log', '--oneline', '--grep', 'vellum', '-n', '1'))
+    commit = str(git('log', '--oneline', '--grep', 'vellum:', '-n', '1'))
     return re.search('[0-9a-f]+ vellum:([0-9a-f]+)', commit).group(1)
 
 
