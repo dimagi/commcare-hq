@@ -9,7 +9,6 @@ from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ilsgateway.tasks import sync_product_stocks
 from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
 from custom.logistics.tasks import stock_data_task, sync_stock_transactions
@@ -45,7 +44,6 @@ def migration_task():
             endpoint = GhanaEndpoint.from_config(config)
             ews_bootstrap_domain(EWSApi(config.domain, endpoint))
             apis = (
-                ('product_stock', sync_product_stocks),
                 ('stock_transaction', sync_stock_transactions),
             )
             stock_data_task.delay(config.domain, endpoint, apis, EWS_FACILITIES)
