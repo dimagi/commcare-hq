@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq import Domain, privileges
+from corehq.util.quickcache import quickcache
 from corehq.apps.accounting.exceptions import (
     AccountingError,
     ProductPlanNotFoundError,
@@ -98,6 +99,7 @@ def get_change_status(from_plan_version, to_plan_version):
     return adjustment_reason, downgraded_privs, upgraded_privs
 
 
+@quickcache(timeout=10)
 def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:

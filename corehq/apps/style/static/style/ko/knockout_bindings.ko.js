@@ -518,12 +518,14 @@ ko.bindingHandlers.makeHqHelp = {
             name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
             description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
+            trigger = ko.utils.unwrapObservable(opts.trigger || $(element).data('trigger')),
             format = ko.utils.unwrapObservable(opts.format);
         COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',
-            placement: placement || 'right'
+            placement: placement || 'right',
+            trigger: trigger || 'hover'
         }).appendTo(element);
     }
 };

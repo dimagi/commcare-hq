@@ -2,7 +2,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 import datetime
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.models import SupplyPointCase, StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
@@ -12,7 +12,7 @@ from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SD
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
 from django.core.mail import send_mail
 from custom.ewsghana.utils import ProductsReportHelper
-from custom.ewsghana.utils import send_test_message, get_reporting_types
+from custom.ewsghana.utils import send_test_message, get_reporting_types, can_receive_email
 import settings
 from custom.ewsghana.models import EWSGhanaConfig
 from django.utils.translation import ugettext as _
@@ -67,7 +67,7 @@ def on_going_process_user(user, test=False):
             send_sms_to_verified_number(verified_number, message)
         else:
             send_test_message(verified_number, message)
-        if user.email:
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('ONGOING NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -106,23 +106,25 @@ def on_going_stockout_process_user(user, test=False):
             type="stockonhand",
             report__date__gte=date
         )
-        if stockouts.exists() and not stockouts.filter(stock_on_hand__ne=0).exists():
+        if stockouts.exists() and not stockouts.exclude(stock_on_hand=0).exists():
             fac.add(unicode(facility.name))
 
     if fac and user.get_verified_number():
         if user_location.location_type == 'district':
             message = ONGOING_STOCKOUT_AT_SDP % " \n".join(fac)
-            send_sms_to_verified_number(user.get_verified_number(), message)
-            if user.email:
+            verified_number = user.get_verified_number()
+            send_sms_to_verified_number(verified_number, message)
+            if can_receive_email(user, verified_number):
                 email = str(user.email)
                 send_mail('ONGOING STOCKOUT AT SDP', message, 'commcarehq-noreply@dimagi.com', [email])
         elif user_location.location_type == 'region':
             message = ONGOING_STOCKOUT_AT_RMS % " \n".join(fac)
+            verified_number = user.get_verified_number()
             if not test:
-                send_sms_to_verified_number(user.get_verified_number(), message)
+                send_sms_to_verified_number(verified_number, message)
             else:
-                send_test_message(user.get_verified_number(), message)
-            if user.email:
+                send_test_message(verified_number, message)
+            if can_receive_email(user, verified_number):
                 email = str(user.email)
                 send_mail('ONGOING STOCKOUT AT RMS', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -166,11 +168,12 @@ def urgent_non_reporting_process_user(user, test=False):
             no_rep += 1
     if fac and no_rep >= len(facilities) / 2 and user.get_verified_number():
         message = URGENT_NON_REPORTING % user.location.name
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
-        if user.email:
+            send_test_message(verified_number, message)
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('URGENT NON REPORTING', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -220,12 +223,13 @@ def urgent_stockout_process_user(user, test=False):
             [unicode(product) for product in stocked_out_products]
         ))
         message = URGENT_STOCKOUT % (user_location.name, stockout_str)
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
+            send_test_message(verified_number, message)
 
-        if user.email:
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('URGENT STOCKOUT', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -241,8 +245,9 @@ def reminder_to_visit_website():
             if user.location and user.last_login < thirteen_days_ago and user.get_verified_number()\
                     and user.location.location_type in ['district', 'region', 'country']:
                     message = WEB_REMINDER % user.name
-                    send_sms_to_verified_number(user.get_verified_number(), message)
-                    if user.email:
+                    verified_number = user.get_verified_number()
+                    send_sms_to_verified_number(verified_number, message)
+                    if can_receive_email(user, verified_number):
                         email = str(user.email)
                         send_mail('REMINDER TO VISIT WEBSITE', message, 'commcarehq-noreply@dimagi.com', [email])
 
@@ -273,12 +278,13 @@ def report_reminder_process_user(user, test=False):
     ).exists()
     if sp and not transaction_exists and user.get_verified_number():
         message = REPORT_REMINDER % (user.name, user.location.name)
+        verified_number = user.get_verified_number()
         if not test:
-            send_sms_to_verified_number(user.get_verified_number(), message)
+            send_sms_to_verified_number(verified_number, message)
         else:
-            send_test_message(user.get_verified_number(), message)
+            send_test_message(verified_number, message)
 
-        if user.email:
+        if can_receive_email(user, verified_number):
             email = str(user.email)
             send_mail('REPORT REMINDER', message, 'commcarehq-noreply@dimagi.com', [email])
 

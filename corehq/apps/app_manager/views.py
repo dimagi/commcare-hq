@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -529,6 +530,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 def get_app_view_context(request, app):
 
     is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
+    context = {}
 
     settings_layout = copy.deepcopy(
         commcare_settings.LAYOUT[app.get_doc_type()])
@@ -544,11 +546,16 @@ def get_app_view_context(request, app):
             new_settings.append(setting)
         section['settings'] = new_settings
 
-    context = {
+    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
+        custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
+                                      app.profile.get('custom_properties').items())
+        context.update({'custom_properties': custom_properties_array})
+
+    context.update({
         'settings_layout': settings_layout,
         'settings_values': get_settings_values(app),
         'is_cloudcare_allowed': is_cloudcare_allowed,
-    }
+    })
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
@@ -722,10 +729,15 @@ def paginate_releases(request, domain, app_id):
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
-    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
+    can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
 
     context.update({
         'release_manager': True,
+        'can_send_sms': can_send_sms,
+        'sms_contacts': (
+            get_sms_autocomplete_context(request, domain)['sms_contacts']
+            if can_send_sms else []
+        ),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -1963,16 +1975,23 @@ def edit_commcare_profile(request, domain, app_id):
     except TypeError:
         return HttpResponseBadRequest(json.dumps({
             'reason': 'POST body must be of the form:'
-                      '{"properties": {...}, "features": {...}}'
+            '{"properties": {...}, "features": {...}, "custom_properties": {...}}'
         }))
     app = get_app(domain, app_id)
     changed = defaultdict(dict)
-    for type in ["features", "properties"]:
-        for name, value in settings.get(type, {}).items():
-            if type not in app.profile:
-                app.profile[type] = {}
-            app.profile[type][name] = value
-            changed[type][name] = value
+    types = ["features", "properties"]
+
+    if toggles.CUSTOM_PROPERTIES.enabled(domain):
+        types.append("custom_properties")
+
+    for settings_type in types:
+        if settings_type == "custom_properties":
+            app.profile[settings_type] = {}
+        for name, value in settings.get(settings_type, {}).items():
+            if settings_type not in app.profile:
+                app.profile[settings_type] = {}
+            app.profile[settings_type][name] = value
+            changed[settings_type][name] = value
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)

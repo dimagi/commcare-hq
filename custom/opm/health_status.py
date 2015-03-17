@@ -81,8 +81,16 @@ class AWCHealthStatus(object):
     """
     method_map = [
         # method, header, help_text, count_method
+        ('awc_code',
+         _("AWC Code"),
+         "",
+         'no_denom'),
         ('awc_name',
          _("AWC Name"),
+         "",
+         'no_denom'),
+        ('gp',
+         _("Gram Panchayat"),
          "",
          'no_denom'),
         ('beneficiaries',
@@ -298,12 +306,14 @@ class AWCHealthStatus(object):
     # subclass OPMCaseRow specifically for this report, and add in indicators to
     # our hearts' content.  This would allow us to override definitions of
     # indicators based on their meanings in THIS report.
-    def __init__(self, awc_name, cases):
+    def __init__(self, cases, awc, awc_code, gp):
         # Some of the cases are second or third children of the same mother
         # include that distinction here
         self.all_cases = cases
         self.primary_cases = [c for c in cases if not c.is_secondary]
-        self.awc_name = awc_name
+        self.awc_name = awc
+        self.awc_code = awc_code
+        self.gp = gp
 
     @property
     def no_denom(self):

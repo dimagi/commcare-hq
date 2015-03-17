@@ -2,7 +2,7 @@
 {% block filter-controls %}
     <select name="{{ filter.name }}">
         {% for choice in filter.choices %}
-            <option value="{{ choice.value|escapejs }}">{{ choice.display }}</option>
+            <option value="{{ choice.value }}">{{ choice.display }}</option>
         {% endfor %}
     </select>
 {% endblock %}
