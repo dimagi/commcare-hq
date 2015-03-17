@@ -65,7 +65,7 @@ class EmailReportData(EWSData):
                 p_name = state.sql_product.name
                 row_data[p_name]['total_fac'] += 1
                 if state.stock_on_hand:
-                    row_data[p_name]['total_stock'] += state.stock_on_hand
+                    row_data[p_name]['total_stock'] += int(state.stock_on_hand)
                 else:
                     row_data[p_name]['fac_with_stockout'] += 1
                 if state.get_monthly_consumption():
@@ -163,11 +163,12 @@ class StockSummaryReport(MultiReport):
 
     @property
     def report_config(self):
+        location_id = self.request.GET.get('location_id')
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id'),
+            location_id=location_id if location_id else get_country_id(self.domain),
             program='',
             products=''
         )
