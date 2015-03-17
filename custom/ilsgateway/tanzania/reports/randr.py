@@ -1,4 +1,5 @@
 from functools import partial
+from dateutil import rrule
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
@@ -11,7 +12,8 @@ from custom.ilsgateway.tanzania.reports.utils import randr_value, get_span, \
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
-from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
+from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
+    RegistrationData, RandRHistory
 from django.utils.translation import ugettext as _
 
 
@@ -105,7 +107,11 @@ class RRReportingHistory(ILSData):
         rows = []
         locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'],
                                                site_code__icontains=self.config['msd_code'])
-        dg = DeliveryGroups().submitting(locations, int(self.config['month']))
+        dg = []
+        for date in list(rrule.rrule(rrule.MONTHLY, dtstart=self.config['startdate'],
+                                     until=self.config['enddate'])):
+            dg.extend(DeliveryGroups().submitting(locations, date.month))
+
         for child in dg:
             total_responses = 0
             total_possible = 0
@@ -166,10 +172,21 @@ class RRReportingHistory(ILSData):
 class RRreport(DetailsReport):
     slug = "rr_report"
     name = 'R & R'
-    title = 'R & R'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+    @property
+    def title(self):
+        title = _('R & R')
+        if self.location and self.location.location_type == 'FACILITY':
+            title = _('Facility Details')
+        return title
+
+    @property
+    def fields(self):
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+        if self.location and self.location.location_type == 'FACILITY':
+            fields = [AsyncLocationFilter, ProductByProgramFilter]
+        return fields
 
     @property
     @memoized
@@ -181,6 +198,14 @@ class RRreport(DetailsReport):
             location = Location.get(config['location_id'])
             if location.location_type in ['REGION', 'MOHSW']:
                 data_providers.append(RRStatus(config=config, css_class='row_chart_all'))
+            elif location.location_type == 'FACILITY':
+                return [
+                    InventoryHistoryData(config=config),
+                    RandRHistory(config=config),
+                    RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
+                    RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
+                    RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')
+                ]
             else:
                 data_providers.append(RRReportingHistory(config=config, css_class='row_chart_all'))
         return data_providers

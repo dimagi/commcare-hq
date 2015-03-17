@@ -4,8 +4,9 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.filters import ProductByProgramFilter
+from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
 from custom.ilsgateway.tanzania import ILSData, MultiReport
-from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format
+from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format, latest_status
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -70,18 +71,80 @@ class RegistrationData(ILSData):
 
     @property
     def rows(self):
-        users_in_domain = CommCareUser.by_domain(domain=self.config['domain'])
         location = SQLLocation.objects.get(location_id=self.config['location_id'])
         if self.config['loc_type'] == 'DISTRICT':
             location = location.parent
         elif self.config['loc_type'] == 'REGION':
             location = location.parent.parent
 
-        users = [user for user in users_in_domain if user.get_domain_membership(self.config['domain']).location_id
-                 == location.location_id]
+        users = CommCareUser.get_db().view(
+            'locations/users_by_location_id',
+            startkey=[location.location_id],
+            endkey=[location.location_id, {}],
+            include_docs=True
+        ).all()
         if users:
-            return [[u.full_name, u.user_data['role'], u.phone_number, u.email] for u in users]
+            for user in users:
+                u = user['doc']
+                yield [
+                    '{0} {1}'.format(u['first_name'], u['last_name']),
+                    u['user_data']['role'],
+                    u['phone_numbers'][0] if u['phone_numbers'] else '',
+                    u['email']
+                ]
 
+
+class RandRHistory(ILSData):
+    slug = 'randr_history'
+    title = 'R & R History'
+    show_chart = False
+    show_table = True
+
+    @property
+    def rows(self):
+        return latest_status(self.config['location_id'], SupplyPointStatusTypes.R_AND_R_FACILITY)
+
+
+class Notes(ILSData):
+    slug = 'ils_notes'
+    title = 'Notes'
+    show_chart = False
+    show_table = True
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[
+            DataTablesColumn(_('Name')),
+            DataTablesColumn(_('Role')),
+            DataTablesColumn(_('Date')),
+            DataTablesColumn(_('Phone')),
+            DataTablesColumn(_('Text'))
+        ])
+
+    @property
+    def rows(self):
+        location = SQLLocation.objects.get(location_id=self.config['location_id'])
+        rows = ILSNotes.objects.filter(domain=self.config['domain'], location=location).order_by('date')
+        for row in rows:
+            yield [
+                row.user_name,
+                row.user_role,
+                row.date.strftime('%Y-%m-%d %H:%M'),
+                row.user_phone,
+                row.text
+            ]
+
+class RecentMessages(ILSData):
+    slug = 'ils_notes'
+    title = 'Recent messages'
+    show_chart = False
+    show_table = True
+
+    @property
+    def headers(self):
+        return DataTablesHeader(*[
+            DataTablesColumn()
+        ])
 
 class FacilityDetailsReport(MultiReport):
 
@@ -97,7 +160,9 @@ class FacilityDetailsReport(MultiReport):
         config = self.report_config
 
         return [
-            InventoryHistoryData(config=config, css_class='row_chart_all'),
+            InventoryHistoryData(config=config),
+            RandRHistory(config=config),
+            Notes(config=config),
             RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
             RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
             RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')

@@ -4,6 +4,7 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from django.db import models
 
 from casexml.apps.stock.models import DocDomainMapping
+from django.db.models.fields.related import OneToOneField
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.dates import force_to_datetime
@@ -447,3 +448,13 @@ class SupervisionDocument(models.Model):
     domain = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=100)
+
+
+class ILSNotes(models.Model):
+    location = models.ForeignKey(SQLLocation)
+    domain = models.CharField(max_length=100, null=False)
+    user_name = models.CharField(max_length=128, null=False)
+    user_role = models.CharField(max_length=100, null=True)
+    user_phone = models.CharField(max_length=20, null=True)
+    date = models.DateTimeField()
+    text = models.TextField()

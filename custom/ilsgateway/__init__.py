@@ -15,7 +15,6 @@ CUSTOM_REPORTS = (
         AlertReport,
         StockOnHandReport,
         RRreport,
-        FacilityDetailsReport,
         DeliveryReport,
         SupervisionReport,
         ProductsCompareReport,

@@ -1,6 +1,7 @@
 import base64
 import StringIO
 from datetime import datetime
+import json
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db.models import Count
@@ -33,7 +34,7 @@ from custom.logistics.tasks import sms_users_fix, sms_users_fix_2
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups, ILSNotes
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
@@ -294,3 +295,29 @@ def delete_reports_runs(request, domain):
 def ils_move_location_id_from_user_domain_membership(request, domain):
     sms_users_fix_2.delay(domain)
     return HttpResponse('OK')
+
+@require_POST
+def save_ils_note(request, domain):
+    post_data = request.POST
+    user = request.couch_user
+    location = SQLLocation.objects.get(id=int(post_data['location']))
+    ILSNotes(
+        location=location,
+        domain=domain,
+        user_name=user.username,
+        user_role=user.user_data['role'] if 'role' in user.user_data else '',
+        user_phone=user.default_phone_number,
+        date=datetime.now(),
+        text=post_data['text']
+    ).save()
+    data = []
+    for row in ILSNotes.objects.filter(domain=domain, location=location).order_by('date'):
+        data.append([
+            row.user_name,
+            row.user_role,
+            row.date.strftime('%Y-%m-%d %H:%M'),
+            row.user_phone,
+            row.text
+        ])
+
+    return HttpResponse(json.dumps(data), content_type='application/json')

@@ -79,6 +79,15 @@ class MSDZoneFilter(BaseSingleOptionFilter):
         ]
 
 
+class ProgramFilter(BaseSingleOptionFilter):
+    slug = 'filter_by_program'
+    label = 'Program'
+
+    @property
+    def options(self):
+        return [(p._id, p.name) for p in Program.by_domain(self.domain)]
+
+
 class MonthAndQuarterFilter(MonthFilter):
 
     @property

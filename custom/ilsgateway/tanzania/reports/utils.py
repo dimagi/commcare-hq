@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime, time
+from django.db.models.aggregates import Avg
 from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues, \
     OrganizationSummary
@@ -7,7 +8,7 @@ from dimagi.utils.dates import get_business_day_of_month
 from django.utils.translation import ugettext as _
 
 
-def calc_lead_time(supply_point, year=None, month=None):
+def calc_lead_time(supply_point, start_date=None, end_date=None):
     """
     The days elapsed from the day they respond "submitted" to the day they
     respond "delivered". Only include the last period for now
@@ -19,8 +20,8 @@ def calc_lead_time(supply_point, year=None, month=None):
                          SupplyPointStatusTypes.DELIVERY_DISTRICT],
         status_value=SupplyPointStatusValues.RECEIVED
     ).order_by("-status_date")
-    if year and month:
-        deliveries = deliveries.filter(status_date__month=month, status_date__year=year)
+    if start_date and end_date:
+        deliveries = deliveries.filter(status_date__range=(start_date, end_date))
     ret = None
 
     if deliveries:
@@ -40,19 +41,19 @@ def calc_lead_time(supply_point, year=None, month=None):
     return ret
 
 
-def get_this_lead_time(supply_point_id, month, year):
-    lead_time = calc_lead_time(supply_point_id, month=month, year=year)
+def get_this_lead_time(supply_point_id, start_date, end_date):
+    lead_time = calc_lead_time(supply_point_id, start_date=start_date, end_date=end_date)
     if lead_time and timedelta(days=30) < lead_time < timedelta(days=100):
         return '%.1f' % lead_time.days
     return "None"
 
 
-def get_avg_lead_time(supply_point_id, month, year):
-    date = datetime(year, month, 1)
-    org_sum = OrganizationSummary.objects.filter(supply_point=supply_point_id, date=date)
+def get_avg_lead_time(supply_point_id, start_date, end_date):
+    org_sum = OrganizationSummary.objects.filter(supply_point=supply_point_id, date__range=(start_date, end_date))\
+        .aggregate(average_lead_time_in_days=Avg('average_lead_time_in_days'))
     if org_sum:
-        if org_sum[0].average_lead_time_in_days:
-            return org_sum[0].average_lead_time_in_days
+        if org_sum['average_lead_time_in_days']:
+            return org_sum['average_lead_time_in_days']
     return "None"
 
 

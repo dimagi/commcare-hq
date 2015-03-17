@@ -7,7 +7,8 @@ from custom.ilsgateway.filters import ProductByProgramFilter, MSDZoneFilter, Mon
 from custom.ilsgateway.models import GroupSummary, SupplyPointStatusTypes, OrganizationSummary
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
-from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
+from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
+    RegistrationData, RandRHistory
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 
@@ -149,10 +150,21 @@ class DistrictSupervisionData(ILSData):
 class SupervisionReport(DetailsReport):
     slug = "supervision_report"
     name = 'Supervision'
-    title = 'Supervision'
     use_datatables = True
 
-    fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+    @property
+    def title(self):
+        title = _('Supervision')
+        if self.location and self.location.location_type == 'FACILITY':
+            title = _('Facility Details')
+        return title
+
+    @property
+    def fields(self):
+        fields = [AsyncLocationFilter, MonthAndQuarterFilter, YearFilter, ProductByProgramFilter, MSDZoneFilter]
+        if self.location and self.location.location_type == 'FACILITY':
+            fields = [AsyncLocationFilter, ProductByProgramFilter]
+        return fields
 
     @property
     @memoized
@@ -168,6 +180,14 @@ class SupervisionReport(DetailsReport):
 
             if location.location_type.upper() == 'DISTRICT':
                 data_providers.append(DistrictSupervisionData(config=config, css_class='row_chart_all'))
+            elif location.location_type == 'FACILITY':
+                return [
+                    InventoryHistoryData(config=config),
+                    RandRHistory(config=config),
+                    RegistrationData(config=dict(loc_type='FACILITY', **config), css_class='row_chart_all'),
+                    RegistrationData(config=dict(loc_type='DISTRICT', **config), css_class='row_chart_all'),
+                    RegistrationData(config=dict(loc_type='REGION', **config), css_class='row_chart_all')
+                ]
             else:
                 data_providers.append(SupervisionData(config=config, css_class='row_chart_all'))
         return data_providers

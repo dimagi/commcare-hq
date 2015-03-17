@@ -23,4 +23,5 @@ urlpatterns = patterns('custom.ilsgateway.views',
         name='delete_supervision_document'),
     url(r'^supervision/(?P<document_id>\d+)/$', SupervisionDocumentView.as_view(), name='supervision_document'),
     url(r'^reminder_test/(?P<phone_number>\d+)/$', RemindersTester.as_view(), name='ils_reminders_tester'),
+    url(r'save_ils_note', 'save_ils_note', name='save_ils_note')
 )

@@ -88,9 +88,15 @@ def sms_users_fix(api):
 
 @task
 def sms_users_fix_2(domain):
+    users = []
     for user in CommCareUser.by_domain(domain=domain):
-        loc = Location.get(user.domain_membership.location_id)
-        user.set_location(loc)
+        print "Processing user: {0}, {1}".format(user.username, user._id)
+        if user.domain_membership.location_id:
+            loc = Location.get(user.domain_membership.location_id)
+            user.set_location(loc)
+            users.append(user)
+    print len(users)
+
 
 @task
 def locations_fix(domain):

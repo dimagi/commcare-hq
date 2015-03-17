@@ -50,7 +50,7 @@ class DistrictSummaryData(ILSData):
                     'complete': 0
                 }
 
-            org_summary = self.config['org_summary']
+            org_summary = self.config['org_summary'][0]
             total = org_summary.total_orgs
             avg_lead_time = org_summary.average_lead_time_in_days
             if avg_lead_time:
@@ -59,8 +59,8 @@ class DistrictSummaryData(ILSData):
             endmonth = self.config['enddate'].month
             dg = DeliveryGroups(month=endmonth)
 
-            rr_data = RandRSubmissionData(config=self.config).rows
-            delivery_data = DeliverySubmissionData(config=self.config).rows
+            rr_data = RandRSubmissionData(config=self.config).rows[0]
+            delivery_data = DeliverySubmissionData(config=self.config).rows[0]
 
             submitting_group = dg.current_submitting_group(month=endmonth)
             processing_group = dg.current_processing_group(month=endmonth)
@@ -122,12 +122,12 @@ class DeliverySubmissionData(ILSData):
         del_data = []
         if self.config['org_summary']:
             try:
-                data = GroupSummary.objects.get(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                data = GroupSummary.objects.filter(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
                                                 org_summary__in=self.config['org_summary'])\
                     .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
 
                 del_data.append(GroupSummary(
-                    title=SupplyPointStatusTypes.SOH_FACILITY,
+                    title=SupplyPointStatusTypes.DELIVERY_FACILITY,
                     responded=data['responded__avg'],
                     on_time=data['on_time__avg'],
                     complete=data['complete__avg'],
@@ -136,6 +136,10 @@ class DeliverySubmissionData(ILSData):
             except GroupSummary.DoesNotExist:
                 return del_data
         return del_data
+
+
+class ILSMultiBarChart(MultiBarChart):
+    template_partial = 'ilsgateway/partials/ils_multibar_chart.html'
 
 
 class ProductAvailabilitySummary(ILSData):
@@ -178,7 +182,7 @@ class ProductAvailabilitySummary(ILSData):
                 ret_data.append({'color': chart_config.label_color[k], 'label': k, 'data': datalist})
             return ret_data
 
-        chart = MultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
+        chart = ILSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
         chart.rotateLabels = -45
         chart.marginBottom = 120
         chart.stacked = self.chart_stacked
