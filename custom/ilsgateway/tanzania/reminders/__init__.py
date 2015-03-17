@@ -1,11 +1,11 @@
 from datetime import datetime
 from custom.ilsgateway.models import SupplyPointStatus
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 
-REGISTER_HELP = _("To register send reg <name> <msd code> or reg <name> at <district name>."
+REGISTER_HELP = _("To register send reg <name> <msd code> or reg <name> at <district name>. "
                   "Example:reg john patel d34002 or reg john patel : tandahimba")
-REGISTER_BAD_CODE = _("I didn't recognize your msd code. "
+REGISTER_BAD_CODE = _("I didn't recognize your msd code.  "
                       "To register, send register <name> <msd code>. example: register Peter Juma d34002")
 REGISTER_UNKNOWN_CODE = _("Sorry, can't find the location with MSD CODE %(msd_code)s")
 REGISTER_UNKNOWN_DISTRICT = _("Sorry, can't find the location with the name %(name)s")

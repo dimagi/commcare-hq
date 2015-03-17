@@ -1,3 +1,4 @@
+from django.db.models.aggregates import Avg, Max
 from custom.ilsgateway.tanzania import ILSData
 
 from corehq.apps.commtrack.models import SQLProduct
@@ -15,8 +16,18 @@ class RandRSubmissionData(ILSData):
         rr_data = []
         if self.config['org_summary']:
             try:
-                rr_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
-                                                   org_summary=self.config['org_summary'])
+                rr = GroupSummary.objects.filter(title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                                                 org_summary__in=self.config['org_summary'])\
+                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+
+                rr_data.append(GroupSummary(
+                    title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                    responded=rr['responded__avg'],
+                    on_time=rr['on_time__avg'],
+                    complete=rr['complete__avg'],
+                    total=rr['total__max']
+                ))
+
             except GroupSummary.DoesNotExist:
                 return rr_data
         return rr_data
@@ -39,7 +50,7 @@ class DistrictSummaryData(ILSData):
                     'complete': 0
                 }
 
-            org_summary = self.config['org_summary']
+            org_summary = self.config['org_summary'][0]
             total = org_summary.total_orgs
             avg_lead_time = org_summary.average_lead_time_in_days
             if avg_lead_time:
@@ -48,8 +59,8 @@ class DistrictSummaryData(ILSData):
             endmonth = self.config['enddate'].month
             dg = DeliveryGroups(month=endmonth)
 
-            rr_data = RandRSubmissionData(config=self.config).rows
-            delivery_data = DeliverySubmissionData(config=self.config).rows
+            rr_data = RandRSubmissionData(config=self.config).rows[0]
+            delivery_data = DeliverySubmissionData(config=self.config).rows[0]
 
             submitting_group = dg.current_submitting_group(month=endmonth)
             processing_group = dg.current_processing_group(month=endmonth)
@@ -86,8 +97,17 @@ class SohSubmissionData(ILSData):
         soh_data = []
         if self.config['org_summary']:
             try:
-                soh_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.SOH_FACILITY,
-                                                    org_summary=self.config['org_summary'])
+                sohs = GroupSummary.objects.filter(title=SupplyPointStatusTypes.SOH_FACILITY,
+                                                   org_summary__in=self.config['org_summary'])\
+                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+
+                soh_data.append(GroupSummary(
+                    title=SupplyPointStatusTypes.SOH_FACILITY,
+                    responded=sohs['responded__avg'],
+                    on_time=sohs['on_time__avg'],
+                    complete=sohs['complete__avg'],
+                    total=sohs['total__max']
+                ))
             except GroupSummary.DoesNotExist:
                 return soh_data
         return soh_data
@@ -102,11 +122,24 @@ class DeliverySubmissionData(ILSData):
         del_data = []
         if self.config['org_summary']:
             try:
-                del_data = GroupSummary.objects.get(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
-                                                    org_summary=self.config['org_summary'])
+                data = GroupSummary.objects.filter(title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                                                org_summary__in=self.config['org_summary'])\
+                    .aggregate(Avg('responded'), Avg('on_time'), Avg('complete'), Max('total'))
+
+                del_data.append(GroupSummary(
+                    title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                    responded=data['responded__avg'],
+                    on_time=data['on_time__avg'],
+                    complete=data['complete__avg'],
+                    total=data['total__max']
+                ))
             except GroupSummary.DoesNotExist:
                 return del_data
         return del_data
+
+
+class ILSMultiBarChart(MultiBarChart):
+    template_partial = 'ilsgateway/partials/ils_multibar_chart.html'
 
 
 class ProductAvailabilitySummary(ILSData):
@@ -123,8 +156,14 @@ class ProductAvailabilitySummary(ILSData):
         if self.config['org_summary']:
             product_availability = ProductAvailabilityData.objects.filter(
                 date__range=(self.config['startdate'], self.config['enddate']),
-                supply_point=self.config['org_summary'].supply_point,
-                product__in=self.config['products'])
+                supply_point=self.config['org_summary'][0].supply_point,
+                product__in=self.config['products']).values('product')\
+                .annotate(
+                    with_stock=Avg('with_stock'),
+                    without_data=Avg('without_data'),
+                    without_stock=Avg('without_stock'),
+                    total=Max('total')
+            )
         return product_availability
 
     @property
@@ -137,17 +176,17 @@ class ProductAvailabilitySummary(ILSData):
             for k in ['Stocked out', 'Not Stocked out', 'No Stock Data']:
                 datalist = []
                 for product in rows:
-                    prd_code = SQLProduct.objects.get(product_id=product.product).code
+                    prd_code = SQLProduct.objects.get(product_id=product['product']).code
                     if k == 'No Stock Data':
-                        datalist.append([prd_code, product.without_data])
+                        datalist.append([prd_code, product['without_data']])
                     elif k == 'Stocked out':
-                        datalist.append([prd_code, product.without_stock])
+                        datalist.append([prd_code, product['without_stock']])
                     elif k == 'Not Stocked out':
-                        datalist.append([prd_code, product.with_stock])
+                        datalist.append([prd_code, product['with_stock']])
                 ret_data.append({'color': chart_config.label_color[k], 'label': k, 'data': datalist})
             return ret_data
 
-        chart = MultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
+        chart = ILSMultiBarChart('', x_axis=Axis('Products'), y_axis=Axis(''))
         chart.rotateLabels = -45
         chart.marginBottom = 120
         chart.stacked = self.chart_stacked
