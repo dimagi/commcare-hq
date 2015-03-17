@@ -1,0 +1,27 @@
+{% load i18n %}
+
+{% blocktrans %}
+Hello,
+{% endblocktrans %}
+
+{% blocktrans %}
+{{ from_username }} has initiatied a transfer of ownership for a CommCareHQ project space. To accept ownership of this project space, please follow this link: {{ activate_url }}.  If you do not already have a CommCare user account, you will be required to create one in order to accept ownership of this project space.
+{% endblocktrans %}
+
+{% blocktrans %}
+After you accept the transfer, someone from Dimagi will contact you to verify that the transfer of ownership is complete.
+{% endblocktrans %}
+
+{% blocktrans %}
+All project settings, user accounts, and permissions will remain in their current settings after transfer of ownership.  If you wish to alter any of this settings, please do so after accepting ownership of the project space form the Project space settings menu.
+{% endblocktrans %}
+
+{% blocktrans %}
+If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.
+{% endblocktrans %}
+
+{% blocktrans %}
+Thanks for using our site!
+{% endblocktrans %}
+-The CommCareHQ team
+

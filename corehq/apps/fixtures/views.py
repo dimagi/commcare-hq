@@ -70,7 +70,7 @@ def tables(request, domain):
         return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
 
 @require_can_edit_fixtures
-def update_tables(request, domain, data_type_id, test_patch={}):
+def update_tables(request, domain, data_type_id, test_patch=None):
     """
     receives a JSON-update patch like following
     {
@@ -81,6 +81,8 @@ def update_tables(request, domain, data_type_id, test_patch={}):
         "fields":{"genderr":{"update":"gender"},"grade":{}}
     }
     """
+    if test_patch is None:
+        test_patch = {}
     if data_type_id:
         try:
             data_type = FixtureDataType.get(data_type_id)

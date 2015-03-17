@@ -7,6 +7,7 @@ from sqlagg.columns import (
     YearColumn,
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue, \
     NumericFilterValue
 from corehq.apps.userreports.specs import TypeProperty
@@ -74,7 +75,7 @@ class ReportColumn(JsonObject):
 
 
 class FilterChoice(JsonObject):
-    value = DefaultProperty(required=True)
+    value = DefaultProperty()
     display = StringProperty()
 
     def get_display(self):
@@ -105,6 +106,7 @@ class ChoiceListFilterSpec(FilterSpec):
 class DynamicChoiceListFilterSpec(FilterSpec):
     type = TypeProperty('dynamic_choice_list')
     show_all = BooleanProperty(default=True)
+    datatype = DataTypeProperty(default='string')
 
     @property
     def choices(self):

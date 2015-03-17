@@ -195,7 +195,7 @@ class ESView(View):
         More powerful ES querying using POST params.
         """
         try:
-            raw_post = request.raw_post_data
+            raw_post = request.body
             raw_query = simplejson.loads(raw_post)
         except Exception, ex:
             content_response = dict(message="Error parsing query request", exception=ex.message)
@@ -616,12 +616,13 @@ RESERVED_QUERY_PARAMS=set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {
-    'xmlns': lambda v: {'term':{'xmlns.exact':v}},
-    'received_on_start': lambda v: {'range':{'received_on': {'from': validate_date(v)}}},
-    'received_on_end': lambda v: {'range':{'received_on': {'to': validate_date(v)}}},
+    'xmlns': lambda v: {'term': {'xmlns.exact': v}},
+    'received_on_start': lambda v: {'range': {'received_on': {'from': validate_date(v)}}},
+    'received_on_end': lambda v: {'range': {'received_on': {'to': validate_date(v)}}},
 }
 
-def es_search(request, domain):
+
+def es_search(request, domain, reserved_query_params=None):
     payload = {
         "filter": {
             "and": [
@@ -648,7 +649,8 @@ def es_search(request, domain):
         payload['query']['query_string'] = {'query': request.GET['q']} # A bit indirect?
 
     # filters are actually going to be a more common case
-    for key in set(request.GET.keys()) - RESERVED_QUERY_PARAMS:
+    reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
+    for key in set(request.GET.keys()) - reserved_query_params:
         if key.endswith('__full'): continue
         
         value = request.GET[key]

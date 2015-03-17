@@ -122,23 +122,42 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
 class ILSGatewayAPI(APISynchronization):
 
-    LOCATION_CUSTOM_FIELDS = ['groups']
-    SMS_USER_CUSTOM_FIELDS = ['role', 'backend']
+    LOCATION_CUSTOM_FIELDS = [
+        {'name': 'groups'},
+    ]
+    SMS_USER_CUSTOM_FIELDS = [
+        {
+            'name': 'role',
+            'choices': [
+                "district supervisor",
+                "MSD",
+                "imci coordinator",
+                "Facility in-charge",
+                "MOHSW",
+                "RMO",
+                "District Pharmacist",
+                "DMO",
+            ]
+        },
+        {'name': 'backend'},
+    ]
     PRODUCT_CUSTOM_FIELDS = []
 
     def prepare_commtrack_config(self):
+        """
+        Bootstraps the domain-level metadata according to the static config.
+        - Sets the proper location types hierarchy on the domain object.
+        - Sets a keyword handler for reporting receipts
+        """
         domain = Domain.get_by_name(self.domain)
         domain.location_types = []
         for i, value in enumerate(LOCATION_TYPES):
-            if not any(lt.name == value
-                       for lt in domain.location_types):
-                allowed_parents = [LOCATION_TYPES[i - 1]] if i > 0 else [""]
-                domain.location_types.append(
-                    LocationType(name=value, allowed_parents=allowed_parents,
-                                 administrative=(value.lower() != 'facility')))
+            allowed_parents = [LOCATION_TYPES[i - 1]] if i > 0 else [""]
+            domain.location_types.append(
+                LocationType(name=value, allowed_parents=allowed_parents,
+                             administrative=(value.lower() != 'facility')))
         domain.save()
         config = CommtrackConfig.for_domain(self.domain)
-        config.location_types = []
         actions = [action.keyword for action in config.actions]
         if 'delivered' not in actions:
             config.actions.append(
@@ -147,7 +166,7 @@ class ILSGatewayAPI(APISynchronization):
                     keyword='delivered',
                     caption='Delivered')
             )
-        config.save()
+            config.save()
 
     def product_sync(self, ilsgateway_product):
         from custom.ilsgateway import PRODUCTS_CODES_PROGRAMS_MAPPING
@@ -177,20 +196,15 @@ class ILSGatewayAPI(APISynchronization):
         return web_user
 
     def sms_user_sync(self, ilsgateway_smsuser, **kwargs):
-        from custom.logistics.commtrack import add_location
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
-        sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                  key=[self.domain, str(ilsgateway_smsuser.supply_point)],
-                                  reduce=False,
-                                  include_docs=True,
-                                  limit=1).first()
-        location_id = sp.location_id if sp else None
-        dm = sms_user.get_domain_membership(self.domain)
-        dm.location_id = location_id
+        try:
+            location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_smsuser.supply_point)
+            sms_user.location_id = location.location_id
+        except SQLLocation.DoesNotExist:
+            pass
         sms_user.save()
-        add_location(sms_user, location_id)
         return sms_user
 
     def location_sync(self, ilsgateway_location, fetch_groups=False):
@@ -207,15 +221,15 @@ class ILSGatewayAPI(APISynchronization):
 
         if not location:
             if ilsgateway_location.parent_id:
-                loc_parent = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                                  key=[self.domain, str(ilsgateway_location.parent_id)],
-                                                  reduce=False,
-                                                  include_docs=True).first()
-                if not loc_parent:
+                try:
+                    sql_loc_parent = SQLLocation.objects.get(
+                        domain=self.domain,
+                        external_id=ilsgateway_location.parent_id
+                    )
+                    loc_parent = sql_loc_parent.couch_location()
+                except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
                     loc_parent = self.location_sync(Location(parent))
-                else:
-                    loc_parent = loc_parent.location
                 location = Loc(parent=loc_parent)
             else:
                 location = Loc()
@@ -230,10 +244,12 @@ class ILSGatewayAPI(APISynchronization):
                 location.longitude = float(ilsgateway_location.longitude)
             location.location_type = ilsgateway_location.type
             location.site_code = ilsgateway_location.code
-            location.external_id = str(ilsgateway_location.id)
+            location.external_id = unicode(ilsgateway_location.id)
             location.save()
-            if not SupplyPointCase.get_by_location(location):
+
+            if ilsgateway_location.type == 'FACILITY' and not SupplyPointCase.get_by_location(location):
                 SupplyPointCase.create_from_location(self.domain, location)
+                location.save()
         else:
             location_dict = {
                 'name': ilsgateway_location.name,
@@ -253,6 +269,7 @@ class ILSGatewayAPI(APISynchronization):
                     case.update_from_location(location)
                 else:
                     SupplyPointCase.create_from_location(self.domain, location)
+
         if ilsgateway_location.historical_groups:
             historical_groups = ilsgateway_location.historical_groups
         else:
@@ -260,6 +277,8 @@ class ILSGatewayAPI(APISynchronization):
             historical_groups = {}
             while counter != 5:
                 try:
+                    # todo: we may be able to avoid this call by passing the groups in as part of the original
+                    # location dict, though that may introduce slowness/timeouts
                     location_object = self.endpoint.get_location(
                         ilsgateway_location.id,
                         params=dict(with_historical_groups=1)

@@ -40,6 +40,10 @@ $(function() {
         $.post(post_url, {note_id: note_id});
         $(this).parents('.alert').hide(150);
     });
+
+    $(document).on('click', '.no-click', function (e) {
+        e.preventDefault();
+    });
 });
 
 var oldHide = $.fn.popover.Constructor.prototype.hide;

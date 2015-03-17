@@ -373,7 +373,7 @@
                                                     <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
                                                     {% trans "Include Multimedia" %}
                                                     <span data-bind="visible: !mm_supported()" class="label">
-                                                        {% trans "Only supported for builds made after 2013-10-15" %}
+                                                        {% trans "Only supported for versions made after 2013-10-15" %}
                                                     </span>
                                                 </label>
                                                 <p>
@@ -436,7 +436,7 @@
                             </div>
                         </div>
                     </div>
-
+                    {% if can_send_sms %}
                     <div class="accordion-group">
                         <div class="accordion-heading">
                             <a class="accordion-toggle" data-bind="
@@ -465,7 +465,7 @@
                                                         <input type="checkbox" data-bind="checked: $parent.include_media, enable: $parent.mm_supported()">
                                                         {% trans "Include Multimedia" %}
                                                         <span data-bind="visible: !$parent.mm_supported()" class="label">
-                                                            {% trans "Only supported for builds made after 2013-10-15" %}
+                                                            {% trans "Only supported for versions made after 2013-10-15" %}
                                                         </span>
                                                     </label>
                                                     <form method="post" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}">
@@ -490,6 +490,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                     {% if multimedia %}
                         <div class="accordion-group">
                             <div class="accordion-heading">

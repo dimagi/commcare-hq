@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
@@ -6,10 +7,10 @@ from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location, SQLLocation
-from custom.ewsghana.utils import get_supply_points
+from custom.ewsghana.utils import get_supply_points, calculate_last_period
+from casexml.apps.stock.models import StockTransaction
 
 REORDER_LEVEL = 1.5
 MAXIMUM_LEVEL = 3
@@ -49,8 +50,31 @@ class EWSData(object):
         return []
 
     @property
+    def location_id(self):
+        return self.config.get('location_id')
+
+    @property
+    def location(self):
+        location_id = self.location_id
+        if not location_id:
+            return None
+        return SQLLocation.objects.get(location_id=location_id)
+
+    @property
     def rows(self):
         raise NotImplementedError
+
+    @property
+    def domain(self):
+        return self.config.get('domain')
+
+    @memoized
+    def reporting_types(self):
+        return [
+            location_type.name
+            for location_type in Domain.get_by_name(self.domain).location_types
+            if not location_type.administrative
+        ]
 
     @property
     def sublocations(self):
@@ -59,13 +83,6 @@ class EWSData(object):
             return location.children
         else:
             return [location]
-
-    @property
-    def location_types(self):
-        return [loc_type.name for loc_type in filter(
-                lambda loc_type: not loc_type.administrative,
-                Domain.get_by_name(self.config['domain']).location_types
-                )]
 
     @property
     @memoized
@@ -84,6 +101,46 @@ class EWSData(object):
         return sorted(set(products), key=lambda p: p.code)
 
 
+class ReportingRatesData(EWSData):
+    def get_supply_points(self, location_id=None):
+        location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
+        location_types = self.reporting_types()
+        if location.location_type == 'district':
+            locations = SQLLocation.objects.filter(parent=location)
+        elif location.location_type == 'region':
+            locations = SQLLocation.objects.filter(
+                Q(parent__parent=location) | Q(parent=location, location_type__in=location_types)
+            )
+        elif location.location_type in location_types:
+            locations = SQLLocation.objects.filter(id=location.id)
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                location_type__in=location_types,
+                parent=location
+            )
+        return locations.exclude(supply_point_id__isnull=True)
+
+    def supply_points_list(self, location_id=None):
+        return self.get_supply_points(location_id).values_list('supply_point_id')
+
+    def reporting_supply_points(self, supply_points=None):
+        all_supply_points = self.get_supply_points().values_list('supply_point_id', flat=True)
+        supply_points = supply_points if supply_points else all_supply_points
+        last_period_st, last_period_end = calculate_last_period(self.config['enddate'])
+        return StockTransaction.objects.filter(
+            case_id__in=supply_points,
+            report__date__range=[last_period_st, last_period_end]
+        ).distinct('case_id').values_list('case_id', flat=True)
+
+    @memoized
+    def all_reporting_locations(self):
+        return SQLLocation.objects.filter(
+            domain=self.domain,
+            location_type__in=self.reporting_types()
+        ).values_list('supply_point_id', flat=True)
+
+
 class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParametersMixin, DatespanMixin):
     title = ''
     report_template_path = "ewsghana/multi_report.html"
@@ -96,35 +153,22 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
 
-        def _is_admin(user, domain):
-            return isinstance(user, WebUser) and user.get_domain_membership(domain).is_admin
-
-        def _is_read_only(user, domain):
-            user_role = user.get_role()
-            return isinstance(user, WebUser) and user_role == UserRole.get_read_only_role_by_domain(domain)
-
-        def _can_see_reports(user):
-            user_role = user.get_role()
-            return isinstance(user, CommCareUser) and user_role.permissions.view_reports
-
         url = super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
         request = kwargs.get('request')
         user = getattr(request, 'couch_user', None)
+
         if user:
-            if _is_admin(user, domain):
-                loc = SQLLocation.objects.filter(domain=domain, location_type='country')[0]
-                url = '%s?location_id=%s' % (url, loc.location_id)
-            elif _is_read_only(user, domain) or _can_see_reports(user):
-                    dm = user.get_domain_membership(domain)
-                    if dm.program_id:
-                        program_id = dm.program_id
-                    else:
-                        program_id = Program.default_for_domain(domain)
-                    url = '%s?location_id=%s&program_id=%s' % (
-                        url,
-                        dm.location_id if dm.location_id else '',
-                        program_id if program_id else ''
-                    )
+            dm = user.get_domain_membership(domain)
+            if dm.program_id:
+                program_id = dm.program_id
+            else:
+                program_id = Program.default_for_domain(domain)._id
+
+            url = '%s?location_id=%s&filter_by_program=%s' % (
+                url,
+                dm.location_id if dm.location_id else '',
+                program_id if program_id else ''
+            )
 
         return url
 
@@ -228,13 +272,14 @@ class MultiReport(CustomProjectReport, CommtrackReportMixin, ProjectReportParame
 class ProductSelectionPane(EWSData):
     slug = 'product_selection_pane'
     show_table = True
-    title = 'Product Selection Pane'
+    title = 'Select Products'
 
     @property
     def rows(self):
         locations = get_supply_points(self.config['location_id'], self.config['domain'])
         products = self.unique_products(locations)
-        result = [['<input value=\"{0}\" type=\"checkbox\">{1} ({0})</input>'.format(p.code, p.name)]
+        result = [['<input value=\"{0}\" type=\"checkbox\" checked=\"checked\">{1} ({0})</input>'.format(p.code,
+                                                                                                         p.name)]
                   for p in products]
         result.append(['<button id=\"selection_pane_apply\" class=\"filters btn\">Apply</button>'])
         return result

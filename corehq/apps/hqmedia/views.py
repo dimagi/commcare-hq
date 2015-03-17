@@ -14,6 +14,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
 
 from django.shortcuts import render
+from corehq import privileges
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
@@ -30,6 +31,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
 from soil.util import expose_download
 from django.utils.translation import ugettext as _
+from django_prbac.decorators import requires_privilege_raise404
 
 
 class BaseMultimediaView(ApplicationViewMixin, View):
@@ -363,6 +365,10 @@ class ProcessImageFileUploadView(BaseProcessFileUploadView):
 class ProcessLogoFileUploadView(ProcessImageFileUploadView):
     name = "hqmedia_uploader_logo"
 
+    @method_decorator(requires_privilege_raise404(privileges.COMMCARE_LOGO_UPLOADER))
+    def post(self, request, *args, **kwargs):
+        return super(ProcessLogoFileUploadView, self).post(request, *args, **kwargs)
+
     @property
     def form_path(self):
         return ("jr://file/commcare/logo/data/%s%s"
@@ -400,6 +406,22 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
     def valid_base_types(cls):
         return ['video']
 
+
+class RemoveLogoView(BaseMultimediaView):
+    name = "hqmedia_remove_logo"
+
+    @property
+    def logo_slug(self):
+        if self.request.method == 'POST':
+            return self.request.POST.get('logo_slug')
+        return None
+
+    @method_decorator(requires_privilege_raise404(privileges.COMMCARE_LOGO_UPLOADER))
+    def post(self, *args, **kwargs):
+        if self.logo_slug in self.app.logo_refs:
+            del self.app.logo_refs[self.logo_slug]
+            self.app.save()
+        return HttpResponse()
 
 class CheckOnProcessingFile(BaseMultimediaView):
     name = "hqmedia_check_processing"

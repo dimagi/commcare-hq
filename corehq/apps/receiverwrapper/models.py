@@ -13,7 +13,7 @@ import hashlib
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
 
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
@@ -149,6 +149,7 @@ class RegisterGenerator(object):
             generator_class,
             is_default=self.is_default
         )
+        return generator_class
 
     @classmethod
     def generator_class_by_repeater_format(cls, repeater_class, format_name):
@@ -242,7 +243,7 @@ class Repeater(Document, UnicodeMixIn):
             if doc_type in repeater_types:
                 return repeater_types[doc_type].wrap(data)
             else:
-                raise ResourceNotFound('Unknown repeater type: %s', data)
+                raise ResourceNotFound('Unknown repeater type: %s' % data)
         else:
             return super(Repeater, cls).wrap(data)
 
@@ -458,6 +459,13 @@ class RepeatRecord(Document, LockableMixIn):
             ))
             self.doc_type = self.doc_type + '-Failed'
             self.save()
+        except IgnoreDocument:
+            # this repeater is pointing at a document with no payload
+            logging.info('Repeater {} in domain {} references a document with no payload'.format(
+                self._id, self.domain,
+            ))
+            # Mark it succeeded so that we don't try again
+            self.update_success()
         else:
             post_fn = post_fn or simple_post_with_cached_timeout
             headers = self.repeater.get_headers(self)

@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <profile version="{{ app.version }}"
          update="{{ profile_url }}"
          requiredMajor="{{ app.build_spec.major_release }}"
@@ -23,6 +24,14 @@
     {% endif %}{% endfor %}
 
     <!-- end -->
+
+    {% if app_profile.custom_properties %}
+    <!-- Custom Properties added in HQ -->
+    {% for key, value in app_profile.custom_properties.items %}{% if value != None %}
+        <property key="{{ key }}" value="{{ value }}" force="true"/>
+    {% endif %}{% endfor %}
+    <!-- end -->
+    {% endif %}
 
     <features>
         <checkoff active="{% if is_odk %}true{% else %}false{% endif %}"/>

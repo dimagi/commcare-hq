@@ -13,7 +13,7 @@
             margin-bottom: 1em;
         }
 
-        .video-container iframe {
+        #video-container iframe {
             position: absolute;
             top: 0;
             left: 0;
@@ -50,6 +50,10 @@
                 $('#agree-button').attr('data-form', new_form);
             });
             $('#agree-button').click(function() {
+                $('#download-new-project').removeAttr('data-toggle');
+                $('#download-new-project').removeAttr('href');
+                $('#import-into-button').removeAttr('data-toggle');
+                $('#import-into-button').removeAttr('href');
                 var form = $("#" + $(this).attr('data-form'));
                 form.submit();
             });
@@ -206,6 +210,18 @@
             {{ project.copied_from.total_downloads }}
         {% endif %}
     </dd>
+
+    {% if request|toggle_enabled:"DOCUMENTATION_FILE" %}
+        {% if project.documentation_file_path %}
+            <dt>{% trans 'Project Documentation' %}</dt>
+            <dd>
+                <a href="{% url "appstore_project_documentation_file" project.get_id %}" 
+                    download="{{ project.documentation_file_path }}">
+                    {{ project.documentation_file_path }}
+                </a>
+            </dd>
+        {% endif %}
+    {% endif %}
     {% if project.multimedia_included and project.has_media %}
         <dd>
             <a class="btn" style="margin-top: .4em" href="{% url "media_files" project %}">{% trans "Browse Multimedia" %}</a>

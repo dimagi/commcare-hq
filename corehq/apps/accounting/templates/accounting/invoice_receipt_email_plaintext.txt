@@ -21,7 +21,7 @@ Date Due: {{ date_due }}{% endblocktrans %}{% endif %}
 
 {% blocktrans %}
 Thank you for using {{ product }}. If you have any questions, please don't
-hesitate to contact accounts@dimagi.com.
+hesitate to contact {{ invoicing_contact_email }}.
 
 Best Regards,
 The {{ product }} HQ Team

@@ -190,7 +190,7 @@ class BaseEditUserView(BaseUserSettingsView):
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
-        return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain), initial={'supply_point': linked_loc, 'program_id': linked_prog})
+        return CommtrackUserForm(domain=self.domain, is_admin=self.request.couch_user.is_domain_admin(self.domain), initial={'location': linked_loc, 'program_id': linked_prog})
 
     def update_user(self):
         if self.form_user_update.is_valid():
@@ -208,7 +208,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['supply_point']
+            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['location']
             if self.request.project.commtrack_enabled:
                 self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
             self.editable_user.save()
@@ -632,7 +632,7 @@ def undo_remove_web_user(request, domain, record_id):
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
-    role_data = json.loads(request.raw_post_data)
+    role_data = json.loads(request.body)
     role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
     role = UserRole.wrap(role_data)
     role.domain = domain

@@ -9,6 +9,7 @@
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -21,6 +22,9 @@
             settings: {
                 sections: {{ settings_layout|JSON }},
                 values: {{ settings_values|JSON }},
+                {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+                customProperties: {{ custom_properties|JSON }},
+                {% endif %}
                 urls: {
                     save: '{% url "edit_commcare_settings" domain app.id %}'
                 },
@@ -89,6 +93,12 @@
             image_refs[slug].upload_controller = HQMediaUploaders[slug];
             image_refs[slug].setObjReference(media_info[slug]);
         }
+        function urlFromLogo(slug) {
+            return image_refs[slug].url;
+        }
+        function thumbUrlFromLogo(slug) {
+            return image_refs[slug].thumb_url;
+        }
         function triggerUploadForLogo(slug) {
             if(image_refs[slug]) {
                 image_refs[slug].triggerUpload();
@@ -101,6 +111,19 @@
         }
         function getPathFromSlug(slug) {
             return image_refs[slug].path;
+        }
+        function removeLogo(slug) {
+            $.post(
+                '{% url "hqmedia_remove_logo" domain app.id %}',
+                {
+                    logo_slug: slug
+                },
+                function(data, status) {
+                    if(status == 'success'){
+                        image_refs[slug].url("");
+                    }
+                }
+            );
         }
     </script>
     <script>

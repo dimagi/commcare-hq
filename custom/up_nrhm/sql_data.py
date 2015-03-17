@@ -184,7 +184,7 @@ class ASHAFacilitatorsData(SqlData):
                 FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Total number of ASHAs who are functional on at least 6/10 tasks",
+                "<b>Total number of ASHAs who are functional on at least 6/10 tasks</b>",
                 FunctionalityChecklistColumn(
                     whens={'hv_percent_functionality >= 60': 1},
                     alias='percent_functionality'),
@@ -207,14 +207,11 @@ class ASHAFunctionalityChecklistData(SqlData):
     def table_name(self):
         return get_table_name(self.config['domain'], TABLE_ID)
 
-    def _qualify_column(self, column):
-        return '"{}".{}'.format(self.table_name, column)
-
     @property
     def columns(self):
         return [
-            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("case_id",)),
-            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("hv_asha_name",)),
+            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("doc_id",)),
+            DatabaseColumn("ASHA name", SimpleColumn("hv_asha_name",)),
             DatabaseColumn("Date of last for submission", SimpleColumn("date",)),
         ]
 
@@ -224,7 +221,7 @@ class ASHAFunctionalityChecklistData(SqlData):
 
     @property
     def group_by(self):
-        return ['case_id', 'date', 'hv_asha_name']
+        return ['doc_id', 'date', 'hv_asha_name']
 
 
 class ASHAAFChecklistData(SqlData):
@@ -233,9 +230,6 @@ class ASHAAFChecklistData(SqlData):
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], TABLE_ID)
-
-    def _qualify_column(self, column):
-        return '"{}".{}'.format(self.table_name, column)
 
     @property
     def columns(self):
@@ -274,7 +268,7 @@ class ASHAAFChecklistData(SqlData):
 
     @property
     def filters(self):
-        return [EQ("date", "date"), EQ('case_id', 'case_id')]
+        return [EQ('doc_id', 'doc_id')]
 
     @property
     def group_by(self):

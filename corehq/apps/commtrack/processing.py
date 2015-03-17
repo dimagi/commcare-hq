@@ -26,7 +26,6 @@ def process_stock(xform, case_db=None):
         return []
 
     domain = xform.domain
-
     config = CommtrackConfig.for_domain(domain)
 
     # these are the raw stock report objects from the xml

@@ -2,6 +2,7 @@ from alembic.autogenerate.api import compare_metadata
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.models import DataSourceConfiguration, CustomDataSourceConfiguration
 from corehq.apps.userreports.sql import get_engine, IndicatorSqlAdapter, metadata
+from corehq.apps.userreports.tasks import rebuild_indicators
 from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.listener import PythonPillow
@@ -48,18 +49,29 @@ class ConfigurableIndicatorPillow(PythonPillow):
             diffs = compare_metadata(migration_context, metadata)
 
         tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
-
         for table_name in tables_to_rebuild:
             table = table_map[table_name]
-            table.rebuild_table()
+            self.rebuild_table(table)
+
+    def rebuild_table(self, table):
+        table.rebuild_table()
 
     def python_filter(self, doc):
-        # filtering is done manually per indicator set change_transport
+        # filtering is done manually per indicator see change_transport
         return True
 
-    def change_transport(self, doc):
+    def change_trigger(self, changes_dict):
         if not self.bootstrapped:
             self.bootstrap()
+        if changes_dict.get('deleted', False):
+            # the changes_dict doesn't contain any info that would allow us to determine
+            # which tables this doc might be relevant to so just remove it from all
+            # tables
+            for table in self.tables:
+                table.delete(changes_dict['doc'])
+        return super(ConfigurableIndicatorPillow, self).change_trigger(changes_dict)
+
+    def change_transport(self, doc):
         for table in self.tables:
             if table.config.filter(doc):
                 table.save(doc)
@@ -78,3 +90,7 @@ class CustomDataSourcePillow(ConfigurableIndicatorPillow):
 
     def get_all_configs(self):
         return CustomDataSourceConfiguration.all()
+
+    def rebuild_table(self, table):
+        super(CustomDataSourcePillow, self).rebuild_table(table)
+        rebuild_indicators.delay(table.config.get_id)

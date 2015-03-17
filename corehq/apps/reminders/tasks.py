@@ -42,9 +42,8 @@ def case_changed(case_id, handler_ids, retry_num=0):
                     message="Error processing reminder rule updates for case %s" %
                     case_id)
         else:
-            notify_exception(None,
-                message="Error processing reminder rule updates for case %s" %
-                case_id)
+            notify_exception(None, message="Error processing reminder rule updates for case %s" % case_id)
+
 
 def _case_changed(case_id, handler_ids):
     subcases = None

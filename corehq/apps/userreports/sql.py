@@ -1,6 +1,7 @@
 import hashlib
 import sqlalchemy
 from django.conf import settings
+from sqlalchemy.exc import IntegrityError
 from dimagi.utils.decorators.memoized import memoized
 from fluff.util import get_column_type
 
@@ -35,7 +36,13 @@ class IndicatorSqlAdapter(object):
                     connection.execute(delete)
                     all_values = {i.column.id: i.value for i in indicator_row}
                     insert = table.insert().values(**all_values)
-                    connection.execute(insert)
+                    try:
+                        connection.execute(insert)
+                    except IntegrityError:
+                        # Someone beat us to it. Concurrent inserts can happen
+                        # when a doc is processed by the celery rebuild task
+                        # at the same time as the pillow.
+                        pass
 
     def delete(self, doc):
         table = self.get_table()
@@ -77,8 +84,20 @@ def rebuild_table(engine, table):
     engine.dispose()
 
 
+def get_column_name(path):
+    parts = path.split("/")
+
+    def _hash(parts):
+        front = "/".join(parts[:-1])
+        end = parts[-1]
+        return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end)).hexdigest()[:8]
+
+    return "_".join(parts + [_hash(parts)])
+
+
 def get_table_name(domain, table_id):
     def _hash(domain, table_id):
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
 
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
+

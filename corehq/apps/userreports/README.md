@@ -102,6 +102,7 @@ This expression returns `doc["age"]`:
     "property_name": "age"
 }
 ```
+An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 ##### Property Path Expression
 
 This expression returns `doc["child"]["age"]`:
@@ -111,6 +112,7 @@ This expression returns `doc["child"]["age"]`:
     "property_path": ["child", "age"]
 }
 ```
+An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 ##### Conditional Expression
 
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
@@ -122,6 +124,7 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
         "expression": {
             "type": "property_name",
             "property_name": "age"
+            "datatype": "integer"
         },
         "type": "boolean_expression",
         "property_value": 21
@@ -137,6 +140,8 @@ This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 }
 ```
 Note that this expression contains other expressions inside it! This is why expressions are powerful. (It also contains a filter, but we haven't covered those yet - if you find the `"test"` section confusing, keep reading...)
+
+Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results! 
 
 #### Related document expressions
 
@@ -168,6 +173,7 @@ Here is a sample JSON format for simple `boolean_expression` filter:
     "expression": {
         "type": "property_name",
         "property_name": "age",
+        "datatype": "integer"
     },
     "operator": "gt",
     "property_value": 21
@@ -206,6 +212,7 @@ The following filter represents the statement: `doc["age"] < 21 and doc["nationa
             "expression": {
                 "type": "property_name",
                 "property_name": "age",
+                "datatype": "integer"
             },
             "operator": "lt",
             "property_value": 21
@@ -234,6 +241,7 @@ The following filter represents the statement: `doc["age"] > 21 or doc["national
             "expression": {
                 "type": "property_name",
                 "property_name": "age",
+                "datatype": "integer",
             },
             "operator": "gt",
             "property_value": 21
@@ -471,13 +479,13 @@ Here are some sample configurations that can be used as a reference until we hav
 
 ## Report filters
 
-TODO: Report filters docs will go here.
+The documentation for report filters is still in progress. Apologies for brevity below.
 
 **A note about report filters versus data source filters**
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
 
-#### "numeric" Filters
+### Numeric Filters
 Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
 Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
 
@@ -491,7 +499,9 @@ ex:
 }
 ```
 
-Here are a few examples of report filters:
+### Date filters
+
+Date filters allow you filter on a date. They will show a datepicker in the UI.
 
 ```
 {
@@ -502,14 +512,24 @@ Here are a few examples of report filters:
   "required": false
 }
 ```
+
+### Dynamic choice lists
+
+Dynamic choice lists provide a select widget that shows all possible values for a column.
+
 ```
 {
   "type": "dynamic_choice_list",
   "slug": "village",
   "field": "village",
-  "display": "Village"
+  "display": "Village",
+  "datatype": "string"
 }
 ```
+
+### Choice lists
+
+Choice lists allow manual configuration of a fixed, specified number of choices and let you change what they look like in the UI.
 ```
 {
   "type": "choice_list",
@@ -544,7 +564,7 @@ Here's an example report column that shows the owner name from an associated `ow
 
 ### Transforms
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are only two supported transform types. These are shown below:
+Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:
 
 #### Displaying username instead of user ID
 
@@ -555,12 +575,30 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
+#### Displaying username minus @domain.commcarehq.org instead of user ID
+
+```
+{
+    "type": "custom",
+    "custom_type": "user_without_domain_display"
+}
+```
+
 #### Displaying owner name instead of owner ID
 
 ```
 {
     "type": "custom",
     "custom_type": "owner_display"
+}
+```
+
+#### Displaying month name instead of month index
+
+```
+{
+    "type": "custom",
+    "custom_type": "month_display"
 }
 ```
 

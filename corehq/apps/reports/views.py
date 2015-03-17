@@ -486,7 +486,7 @@ def add_config(request, domain=None):
     from datetime import datetime
     user_id = request.couch_user._id
 
-    POST = json.loads(request.raw_post_data)
+    POST = json.loads(request.body)
     if 'name' not in POST or not POST['name']:
         return HttpResponseBadRequest()
 

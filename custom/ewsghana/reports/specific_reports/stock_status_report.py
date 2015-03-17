@@ -1,6 +1,7 @@
 from corehq import Domain
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
@@ -13,7 +14,7 @@ from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, Inven
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
 from django.db.models import Q
-from custom.ewsghana.utils import get_supply_points, make_url, get_second_week
+from custom.ewsghana.utils import get_supply_points, make_url, get_second_week, get_country_id
 
 
 def link_format(text, url):
@@ -279,11 +280,12 @@ class StockStatus(MultiReport):
     def report_config(self):
         program = self.request.GET.get('filter_by_program')
         products = self.request.GET.getlist('filter_by_product')
+        location_id = self.request.GET.get('location_id')
         return dict(
             domain=self.domain,
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id'),
+            location_id=location_id if location_id else get_country_id(self.domain),
             program=program if program != ALL_OPTION else None,
             products=products if products and products[0] != ALL_OPTION else [],
             report_type=self.request.GET.get('report_type', None)
@@ -334,11 +336,11 @@ class StockStatus(MultiReport):
 
         report_type = self.request.GET.get('report_type', None)
         if report_type == 'stockouts' or not report_type:
-            r = self.report_context['reports'][1]['report_table']
+            r = self.report_context['reports'][2]['report_table']
             return [self._export(r['title'], r['headers'], r['rows'])]
         else:
-            reports = [self.report_context['reports'][1]['report_table'],
-                       self.report_context['reports'][3]['report_table']]
+            reports = [self.report_context['reports'][2]['report_table'],
+                       self.report_context['reports'][4]['report_table']]
             return [self._export(r['title'], r['headers'], r['rows']) for r in reports]
 
     def _export(self, export_sheet_name, headers, formatted_rows, total_row=None):
@@ -347,6 +349,8 @@ class StockStatus(MultiReport):
 
         table = headers.as_export_table
         rows = [_unformat_row(row) for row in formatted_rows]
+        for row in rows:
+            row[0] = GenericTabularReport._strip_tags(row[0])
         replace = ''
 
         for k, v in enumerate(table[0]):

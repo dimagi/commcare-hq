@@ -602,6 +602,8 @@ class SupplyPointCase(CommCareCase):
     @property
     @memoized
     def location(self):
+        if self.location_id is None:
+            return None
         try:
             return Location.get(self.location_id)
         except ResourceNotFound:
@@ -616,11 +618,11 @@ class SupplyPointCase(CommCareCase):
         return cls.get(caseblock._id)
 
     @classmethod
-    def create_from_location(cls, domain, location, owner_id=None):
+    def create_from_location(cls, domain, location):
         # a supply point is currently just a case with a special type
         id = uuid.uuid4().hex
         user_id = const.get_commtrack_user_id(domain)
-        owner_id = owner_id or user_id
+        owner_id = location.group_id
         kwargs = {'external_id': location.external_id} if location.external_id else {}
         caseblock = CaseBlock(
             case_id=id,

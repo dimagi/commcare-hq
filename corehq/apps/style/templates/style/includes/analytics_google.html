@@ -25,6 +25,7 @@
         ga('set', 'dimension2', '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}');
         ga('set', 'dimension3', '{% if request.couch_user.is_commcare_user %}yes{% else %}no{% endif %}');
         ga('set', 'dimension4', '{% if domain %}{{ domain|escapejs }}{% else %}none{% endif %}');
+        ga('set', 'dimension5', '{% if request.couch_user.has_built_app %}yes{% else %}no{% endif %}')
         ga('send', 'pageview');
 
         function gaTrackLink($link_or_selector, eventCategory, eventAction, eventLabel, eventValue) {
@@ -75,8 +76,8 @@
         // rather than the 3rd or 4th from the left, because it's variable
         // https://developers.google.com/analytics/devguides/collection/analyticsjs/events#overview
         var lastArg = arguments[arguments.length - 1];
-        if (lastArg && lastArg.hitCallback) {
-            event.preventDefault();
+        if (lastArg && lastArg.hitCallback && window.event) {
+            window.event.preventDefault();
         }
         ga.apply(null, args);
     }

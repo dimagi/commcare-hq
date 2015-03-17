@@ -119,8 +119,20 @@ class GhanaEndpoint(LogisticsEndpoint):
 
 
 class EWSApi(APISynchronization):
-    LOCATION_CUSTOM_FIELDS = ['created_at', 'supervised_by']
-    SMS_USER_CUSTOM_FIELDS = ['to']
+    LOCATION_CUSTOM_FIELDS = [
+        {'name': 'created_at'},
+        {'name': 'supervised_by'}
+    ]
+    SMS_USER_CUSTOM_FIELDS = [
+        {'name': 'to'},
+        {'name': 'backend'},
+        {
+            'name': 'role',
+            'choices': [
+                'In Charge', 'Nurse', 'Pharmacist', 'Laboratory Staff', 'Other', 'Facility Manager'
+            ]
+        }
+    ]
     PRODUCT_CUSTOM_FIELDS = []
 
     def _create_location_type_if_not_exists(self, supply_point, location):
@@ -148,7 +160,7 @@ class EWSApi(APISynchronization):
                 new_location.metadata['supervised_by'] = supply_point.supervised_by
             new_location.save()
             sql_loc = new_location.sql_location
-            sql_loc.products = SQLProduct.objects.filter(code__in=supply_point.products)
+            sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
             sql_loc.save()
             return new_location
 
@@ -158,7 +170,7 @@ class EWSApi(APISynchronization):
                 location.metadata['supervised_by'] = supply_point.supervised_by
                 location.save()
                 sql_loc = location.sql_location
-                sql_loc.products = SQLProduct.objects.filter(code__in=supply_point.products)
+                sql_loc.products = SQLProduct.objects.filter(domain=self.domain, code__in=supply_point.products)
                 sql_loc.save()
             SupplyPointCase.get_or_create_by_location(Loc(_id=location._id,
                                                           name=supply_point.name,
@@ -200,7 +212,16 @@ class EWSApi(APISynchronization):
                          administrative=False)
         ]
         domain.save()
-        role = UserRole(domain=self.domain, permissions=Permissions(), name='Facility manager')
+        role = UserRole(
+            domain=self.domain,
+            permissions=Permissions(
+                view_reports=True,
+                edit_web_users=True,
+                edit_commcare_users=True,
+                edit_data=True
+            ),
+            name='Facility manager'
+        )
         role.save()
 
     def product_sync(self, ews_product):
@@ -285,25 +306,27 @@ class EWSApi(APISynchronization):
 
             if apply_updates(location, location_dict):
                 location.save()
-            for loc in ews_location.supply_points:
-                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                          key=[self.domain, str(loc.id)],
-                                          reduce=False,
-                                          include_docs=True,
-                                          limit=1).first()
-                if sp:
-                    sqlloc = sp.location.sql_location
-                    sqlloc.stocks_all_products = False
-                    if not sqlloc.products:
-                        sqlloc.products = SQLProduct.objects.filter(domain=self.domain, code__in=loc.products)
-                        sqlloc.save()
+        for supply_point in ews_location.supply_points:
+            sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                      key=[self.domain, str(supply_point.id)],
+                                      reduce=False,
+                                      include_docs=True,
+                                      limit=1).first()
+            if sp:
+                sql_location = sp.location.sql_location
+                sql_location.stocks_all_products = False
+                if not sql_location.products:
+                    sql_location.products = SQLProduct.objects.filter(
+                        domain=self.domain,
+                        code__in=supply_point.products
+                    )
+                    sql_location.save()
         return location
 
     def convert_web_user_to_sms_user(self, ews_webuser):
         sms_user = SMSUser()
         sms_user.username = ews_webuser.username
         sms_user.email = ews_webuser.email
-        sms_user.role = 'facility_manager'
 
         if ews_webuser.contact and ews_webuser.contact.supply_point:
             sms_user.supply_point = ews_webuser.contact.supply_point
@@ -403,10 +426,8 @@ class EWSApi(APISynchronization):
             else:
                 couch_location_id = None
             if couch_location_id:
-                dm = sms_user.get_domain_membership(self.domain)
-                dm.location_id = couch_location_id
+                sms_user.location_id = couch_location_id
                 sms_user.save()
-                add_location(sms_user, couch_location_id)
 
         if ews_smsuser.role == 'facility_manager':
             role = UserRole.by_domain_and_name(self.domain, 'Facility manager')

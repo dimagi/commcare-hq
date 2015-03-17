@@ -14,7 +14,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.test_backend import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMSLog, CallLog
-from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
     RECIPIENT_SENDER, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS, METHOD_SMS)
@@ -220,7 +220,8 @@ class TouchformsTestCase(LiveServerTestCase):
         return sk
 
     def create_site(self):
-        site = Site(domain=self.live_server_url, name=self.live_server_url)
+        site = Site(id=settings.SITE_ID, domain=self.live_server_url,
+            name=self.live_server_url)
         site.save()
         return site
 
@@ -283,7 +284,7 @@ class TouchformsTestCase(LiveServerTestCase):
         return call
 
     def get_open_session(self, contact):
-        return XFormsSession.get_open_sms_session(self.domain, contact._id)
+        return SQLXFormsSession.get_open_sms_session(self.domain, contact._id)
 
     def assertLastOutboundSMSEquals(self, contact, message):
         sms = self.get_last_outbound_sms(contact)
@@ -302,9 +303,9 @@ class TouchformsTestCase(LiveServerTestCase):
         self.apps = []
         self.keywords = []
         self.groups = []
+        self.site = self.create_site()
         self.domain = "test-domain"
         self.domain_obj = self.create_domain(self.domain)
-        self.site = self.create_site()
         self.create_web_user("touchforms_user", "123")
 
         self.backend = TestSMSBackend(name="TEST", is_global=True)
@@ -314,7 +315,6 @@ class TouchformsTestCase(LiveServerTestCase):
         self.backend_mapping.save()
 
         settings.DEBUG = True
-        settings.SITE_ID = self.site.pk
 
     def tearDown(self):
         for user in self.users:

@@ -80,6 +80,11 @@
         <code>Remove Overlap</code>.
     </p>
     <p>
+        Update: <code>Remove Overlap</code> caused the bottom half of the
+        CommCare flower to be removed. Un-checking that setting seemed to
+        generate better results. YMMV
+    </p>
+    <p>
         Save the final <code>*.otf</code> font to
         <code>corehq/apps/style/static/style/font/CommCareHQFont-Regular.otf</code>.
     </p>
@@ -96,7 +101,11 @@
         <strong>Expert Mode</strong>:
     </p>
     <ul>
-        <li><a href="{% new_static 'styleguide/img/font_docs/font_squirrel_settings.jpg' %}">Settings</a></li>
+        <li><a href="{% new_static 'styleguide/img/font_docs/font_squirrel_settings.jpg' %}">Settings</a><br />
+            NOTE: unlike in this settings image, select <strong>No Subsetting</strong>.
+            Otherwise the private use glyphs will be removed
+            (<a href="http://graphicdesign.stackexchange.com/a/17426">source</a>).
+        </li>
     </ul>
     <p>
         Copy the resulting <code>eot</code>, <code>svg</code>, <code>ttf</code>,

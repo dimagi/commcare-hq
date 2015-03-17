@@ -1,7 +1,11 @@
 from jsonobject import JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.custom.date import get_month_display
-from corehq.apps.userreports.transforms.custom.users import get_user_display, get_owner_display
+from corehq.apps.userreports.transforms.custom.users import (
+    get_user_display,
+    get_owner_display,
+    get_user_without_domain_display,
+)
 
 
 class Transform(JsonObject):
@@ -15,7 +19,8 @@ class Transform(JsonObject):
 _CUSTOM_TRANSFORM_MAP = {
     'month_display': get_month_display,
     'user_display': get_user_display,
-    'owner_display': get_owner_display
+    'owner_display': get_owner_display,
+    'user_without_domain_display': get_user_without_domain_display,
 }
 
 

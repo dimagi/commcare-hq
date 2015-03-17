@@ -7,7 +7,7 @@ import io
 from PIL import Image
 import uuid
 from django.contrib.auth import get_user_model
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
@@ -36,10 +36,10 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.app_manager.models import Application, FormBase, ApplicationBase, get_apps_in_domain
+from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, get_apps_in_domain
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, Domain)
+    AREA_CHOICES, SUB_AREA_CHOICES, Domain, TransferDomainRequest)
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
@@ -169,9 +169,13 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
     video = CharField(label=ugettext_noop("Youtube Video"), required=False,
         help_text=ugettext_noop("An optional youtube clip to tell users about your app. Please copy and paste a URL to a youtube video"))
+    documentation_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
+        help_text=ugettext_noop("An optional file to tell users more about your app."))
     cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
 
     def __init__(self, *args, **kw):
+        self.dom = kw.pop("domain", None)
+        user = kw.pop("user", None)
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
         self.fields.keyOrder = [
             'title',
@@ -184,6 +188,10 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'share_reminders',
             'license',
             'cda_confirmed',]
+
+        if self.dom and toggles.DOCUMENTATION_FILE.enabled(user):
+            self.fields.keyOrder.insert(5, 'documentation_file')
+
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
                 'extra': _("All un-licensed multimedia files in "
@@ -274,6 +282,61 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         return app_ids
 
 ########################################################################################################
+
+
+class TransferDomainFormErrors(object):
+    USER_DNE = _(u'The user being transferred to does not exist')
+    DOMAIN_MISMATCH = _(u'Mismatch in domains when confirming')
+
+
+class TransferDomainForm(forms.ModelForm):
+
+    class Meta:
+        model = TransferDomainRequest
+        fields = ['domain', 'to_username']
+
+    def __init__(self, domain, from_username, *args, **kwargs):
+        super(TransferDomainForm, self).__init__(*args, **kwargs)
+        self.current_domain = domain
+        self.from_username = from_username
+
+        self.fields['domain'].label = _(u'Type the name of the project to confirm')
+        self.fields['to_username'].label = _(u'New owner\'s CommCare username')
+
+        self.helper = FormHelper()
+        self.helper.layout = crispy.Layout(
+            'domain',
+            'to_username',
+            StrictButton(
+                _("Transfer Project"),
+                type="submit",
+                css_class='btn-danger',
+            )
+        )
+
+    def save(self, commit=True):
+        instance = super(TransferDomainForm, self).save(commit=False)
+        instance.from_username = self.from_username
+        if commit:
+            instance.save()
+        return instance
+
+    def clean_domain(self):
+        domain = self.cleaned_data['domain']
+
+        if domain != self.current_domain:
+            raise forms.ValidationError(TransferDomainFormErrors.DOMAIN_MISMATCH)
+
+        return domain
+
+    def clean_to_username(self):
+        username = self.cleaned_data['to_username']
+
+        if not WebUser.get_by_username(username):
+            raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
+
+        return username
+
 
 class SubAreaMixin():
     def clean_sub_area(self):
@@ -419,10 +482,16 @@ class DomainGlobalSettingsForm(forms.Form):
                     if app.secure_submissions != secure_submissions:
                         app.secure_submissions = secure_submissions
                         apps_to_save.append(app)
+            if apps_to_save:
+                apps = [app for app in apps_to_save if isinstance(app, Application)]
+                remote_apps = [app for app in apps_to_save if isinstance(app, RemoteApp)]
+                if apps:
+                    Application.bulk_save(apps)
+                if remote_apps:
+                    RemoteApp.bulk_save(remote_apps)
+
             domain.secure_submissions = secure_submissions
             domain.save()
-            if apps_to_save:
-                ApplicationBase.bulk_save(apps_to_save)
             return True
         except Exception:
             return False
@@ -477,13 +546,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         required=False,
         help_text=_("If access to a domain is restricted only users added " +
                     "to the domain and staff members will have access.")
-    )
-    secure_submissions = BooleanField(
-        label=_("Only accept secure submissions"),
-        required=False,
-        help_text=_("Turn this on to prevent others from impersonating your "
-                    "mobile workers. To use, all of your deployed applications "
-                    "must be using secure submissions."),
     )
     cloudcare_releases = ChoiceField(
         label=_("CloudCare should use"),

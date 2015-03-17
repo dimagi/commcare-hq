@@ -1,27 +1,27 @@
 ├── MediaUploader#170f4b63c7
 ├── XMLWriter#ab8760d6e0
-├── almond#0.2.9 (latest is 0.3.0)
+├── almond#0.2.9 (latest is 0.3.1)
 ├── bootstrap-better-typeahead#26036ce250
-├── chai#1.10.0
+├── chai#2.1.0 (2.1.1 available)
 ├── classy#1.4 incompatible with 1.4
 ├── equivalent-xml-js#7de21be295
 ├── jquery#1.11.2 (latest is 2.1.3)
-├─┬ jquery-ui#1.11.2
+├─┬ jquery-ui#1.11.3
 │ └── jquery#1.11.2 (2.1.3 available)
-├── jquery.ui#1.8.16 extraneous (latest is 1.11.2)
-├── jsdiff#1.2.2
+├── jquery.ui#1.8.16 extraneous (latest is 1.11.4)
+├── jsdiff#1.2.2 (1.3.0 available)
 ├─┬ jstree#110b6681ff
 │ └── jquery#1.11.2 (2.1.3 available)
 ├── langcodes#4804f8f687
 ├── less#1.3.3 extraneous (latest is 2.4.0)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
-├── requirejs#2.1.15 (2.1.16 available)
+├── requirejs#2.1.16
 ├── requirejs-plugins#1.0.3
-├── requirejs-text#2.0.13
+├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f
-├── sinonjs#1.10.2 extraneous
-├── underscore#1.5.2 (latest is 1.7.0)
+├── sinonjs#1.10.2 extraneous (1.12.2 available)
+├── underscore#1.5.2 (latest is 1.8.2)
 ├── when#2.8.0 (latest is 3.7.2)
 ├── xpath#1926d1ebd2
 └── xrayquire#2a0861abd7

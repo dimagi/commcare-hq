@@ -202,25 +202,19 @@ def apps_update_calculated_properties():
 @task
 def export_all_rows_task(ReportClass, report_state):
     report = object.__new__(ReportClass)
-
-    # Somehow calling generic _init function or __setstate__ is raising AttributeError
-    # on '_update_initial_context' function call...
-    try:
-        report.__setstate__(report_state)
-    except AttributeError:
-        pass
+    report.__setstate__(report_state)
 
     # need to set request
     setattr(report.request, 'REQUEST', {})
 
     file = report.excel_response
     hash_id = _store_excel_in_redis(file)
-    user = WebUser.get(report_state["request"]["couch_user"])
-    _send_email(user.get_email(), report, hash_id)
+    _send_email(report.request.couch_user, report, hash_id)
 
 
-def _send_email(to, report, hash_id):
-    link = absolute_reverse("export_report", args=[report.domain, str(hash_id),
+def _send_email(user, report, hash_id):
+    domain = report.domain or user.get_domains()[0]
+    link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
     title = "%s: Requested export excel data"
@@ -228,8 +222,13 @@ def _send_email(to, report, hash_id):
            "You can download the data at the following link: %s<br><br>" \
            "Please remember that this link will only be active for 24 hours."
 
-    send_HTML_email(_(title) % report.name, to, _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
-                    email_from=settings.DEFAULT_FROM_EMAIL)
+    send_HTML_email(
+        _(title) % report.name,
+        user.get_email(),
+        _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
+        email_from=settings.DEFAULT_FROM_EMAIL
+    )
+
 
 def _store_excel_in_redis(file):
     hash_id = uuid.uuid4().hex
