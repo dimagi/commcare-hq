@@ -134,6 +134,7 @@ class Notes(ILSData):
                 row.text
             ]
 
+
 class RecentMessages(ILSData):
     slug = 'ils_notes'
     title = 'Recent messages'
@@ -146,6 +147,7 @@ class RecentMessages(ILSData):
             DataTablesColumn()
         ])
 
+
 class FacilityDetailsReport(MultiReport):
 
     title = "Facility Details Report"
@@ -153,6 +155,10 @@ class FacilityDetailsReport(MultiReport):
     name = "Facility Details"
     slug = 'facility_details'
     use_datatables = True
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False
 
     @property
     @memoized

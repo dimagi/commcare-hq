@@ -103,7 +103,7 @@ class DeliveryStatus(ILSData):
                 self.config['enddate']
             )
             status_name = latest.name if latest else ""
-            status_date = format(latest.status_date, "d M Y") if latest else "None"
+            status_date = latest.status_date.strftime("%d-%m-%Y") if latest else "None"
 
             url = make_url(FacilityDetailsReport, self.config['domain'],
                            '?location_id=%s&filter_by_program=%s%s',
