@@ -77,68 +77,6 @@ def get_locations(api_object, facilities):
         api_object.location_sync(api_object.endpoint.models_map['location'](location))
 
 
-def sync_product_stock_for_facility(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
-    """
-    Syncs ProductStock objects in ILSGateway to StockState objects in CommTrack
-    """
-    has_next = True
-    next_url = ""
-    supply_point = facility
-    case = get_supply_point_by_external_id(domain, supply_point)
-    if case:
-        while has_next:
-            meta, product_stocks = endpoint.get_productstocks(
-                next_url_params=next_url,
-                limit=limit,
-                offset=offset,
-                filters=dict(supply_point=supply_point, last_modified__gte=date)
-            )
-            # set the checkpoint right before the data we are about to process
-            save_stock_data_checkpoint(checkpoint,
-                                       'product_stock',
-                                       meta.get('limit') or limit,
-                                       meta.get('offset') or offset,
-                                       date, facility, True)
-            for product_stock in product_stocks:
-                # this logic updates the StockState object based on data from the current ProductStock
-                # todo: It seems a little bit odd/wrong that we would have this in the migration code at all
-                # Shouldn't we be able to rely on the stock transaction logic loading the right data
-                # into the StockState?
-
-                # todo: should figure out a way to cache this lookup, will hit every at least once per location
-                product = SQLProduct.objects.get(domain=domain, code=product_stock.product)
-                try:
-                    stock_state = StockState.objects.get(section_id='stock',
-                                                         case_id=case._id,
-                                                         product_id=product.product_id)
-                    stock_state.last_modified_date = product_stock.last_modified
-                    stock_state.stock_on_hand = product_stock.quantity or 0
-                except StockState.DoesNotExist:
-                    stock_state = StockState(section_id='stock',
-                                             case_id=case._id,
-                                             product_id=product.product_id,
-                                             stock_on_hand=product_stock.quantity or 0,
-                                             last_modified_date=product_stock.last_modified,
-                                             sql_product=product)
-
-                if product_stock.auto_monthly_consumption:
-                    stock_state.daily_consumption = product_stock.auto_monthly_consumption / DAYS_IN_MONTH
-                else:
-                    stock_state.daily_consumption = None
-                stock_state.save()
-
-            if not meta.get('next', False):
-                has_next = False
-            else:
-                next_url = meta['next'].split('?')[1]
-
-
-def sync_product_stocks(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
-    for facility in facilities:
-        sync_product_stock_for_facility(domain, endpoint, facility, checkpoint, date, limit, offset)
-        offset = 0  # reset offset for each facility, is only set in the context of a checkpoint resume
-
-
 def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
     has_next = True
     next_url = ""
