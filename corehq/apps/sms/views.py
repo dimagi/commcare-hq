@@ -45,7 +45,12 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.groups.models import Group
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required, require_superuser
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_digest_ex,
+    domain_admin_required,
+    require_superuser,
+)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
