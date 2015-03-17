@@ -9,7 +9,7 @@ from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
 
 
-def get_or_create_checkpoint(domain):
+def get_or_create_checkpoint(domain, default_api):
     try:
         checkpoint = StockDataCheckpoint.objects.get(domain=domain)
         if not checkpoint.start_date:
@@ -21,7 +21,7 @@ def get_or_create_checkpoint(domain):
             domain=domain,
             date=None,
             start_date=datetime.today(),
-            api='product_stock',
+            api=default_api,
             limit=100,
             offset=0,
             location=None,
@@ -40,8 +40,9 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
 
     facilities_copy = list(facilities)
 
+    default_api = apis[0][0]
     # checkpoint logic
-    checkpoint, created = get_or_create_checkpoint(domain)
+    checkpoint, created = get_or_create_checkpoint(domain, default_api)
     if not created:
         # filter apis, location, etc. form checkpoint data
         apis = itertools.dropwhile(lambda x: x[0] != checkpoint.api, apis)
@@ -73,7 +74,7 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
         # todo: see if we can avoid modifying the list of facilities in place
         if idx == 0:
             facilities = facilities_copy
-    save_stock_data_checkpoint(checkpoint, 'product_stock', 100, 0, None, None)
+    save_stock_data_checkpoint(checkpoint, default_api, 100, 0, None, None)
 
 
 @task
