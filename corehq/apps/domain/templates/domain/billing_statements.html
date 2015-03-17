@@ -58,6 +58,10 @@
 {% endblock %}
 
 {% block paginated_list_top %}
+    <h2>{% trans 'Current Balance' %}</h2>
+    <p>
+        {% trans 'Total Due:' %} <strong>{{ total_balance }}</strong>
+    </p>
     <h2>{% trans 'Billing Statements' %} <span data-bind="visible: showUnpaidBills">({% trans 'Unpaid' %})</span></h2>
     <p>
         <button type="button"
