@@ -9,10 +9,10 @@ from custom.ewsghana.api import GhanaEndpoint
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ilsgateway.tasks import sync_stock_transactions, sync_product_stocks
+from custom.ilsgateway.tasks import sync_product_stocks
 from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
-from custom.logistics.tasks import stock_data_task
+from custom.logistics.tasks import stock_data_task, sync_stock_transactions
 import settings
 
 
