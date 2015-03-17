@@ -29,12 +29,7 @@ def migration_task():
         if config.enabled:
             endpoint = ILSGatewayEndpoint.from_config(config)
             ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
-            apis = (
-                ('product_stock', sync_product_stocks),
-                ('stock_transaction', sync_stock_transactions),
-                ('supply_point_status', get_supply_point_statuses),
-                ('delivery_group', get_delivery_group_reports)
-            )
+            apis = get_ilsgateway_data_migrations()
             stock_data_task.delay(config.domain, endpoint, apis, ILS_FACILITIES)
 
 
@@ -42,6 +37,19 @@ def migration_task():
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
     return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
+
+
+def get_ilsgateway_data_migrations():
+    """
+    Returns a tuple of (api_name, migration_function) tuples relevant to the ILSGateway migration
+    for use in the stock_data_task.
+    """
+    return (
+        ('product_stock', sync_product_stocks),
+        ('stock_transaction', sync_stock_transactions),
+        ('supply_point_status', get_supply_point_statuses),
+        ('delivery_group', get_delivery_group_reports)
+    )
 
 # Region KILIMANJARO
 ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
