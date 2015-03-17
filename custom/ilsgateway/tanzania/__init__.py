@@ -119,7 +119,7 @@ class ILSDateSpan(DateSpan):
 
     @classmethod
     def from_month_or_quarter(cls, month_or_quarter=None, year=None, format=DEFAULT_DATE_FORMAT,
-        inclusive=True, timezone=pytz.utc):
+                              inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan object given a numerical month and year.
         Both are optional and default to the current month/year.
@@ -139,8 +139,8 @@ class ILSDateSpan(DateSpan):
                                         dtstart=datetime(year, 1, 1),
                                         count=5))
 
-            start = quarters[month_or_quarter*-1-1]
-            end = quarters[month_or_quarter*-1] - relativedelta(days=1)
+            start = quarters[month_or_quarter * (-1) - 1]
+            end = quarters[month_or_quarter * (-1)] - relativedelta(days=1)
         else:
             start = datetime(year, month_or_quarter, 1)
             end = start + relativedelta(months=1) - relativedelta(days=1)
