@@ -15,7 +15,7 @@
             </li>
             <li>
                 <div class="report">Group {{ report_table.rows.submitting_group }}: {% trans 'Submitting' %}</div>
-                <div class="caption">{% blocktrans with report_table.rows.submitting_complete as submitted and report_table.rows.submitting_total as count %}{{ submitted }} of {{ count }}{% endblocktrans %} {% trans 'submitted' %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.submitting_complete as submitted and report_table.rows.submitting_total as count %}{{ submitted }} of {{ count }}{% endblocktrans %} <a href="{{ report_facilities_url }}">{% trans 'submitted' %}</a></div>
             </li>
             <li>
                 <div class="report">Group {{ report_table.rows.processing_group }}: {% trans 'Processing' %}</div>
@@ -23,7 +23,7 @@
             </li>
             <li>
                 <div class="report">Group {{ report_table.rows.delivery_group }}: {% trans "Deliveries" %}</div>
-                <div class="caption">{% blocktrans with report_table.rows.delivery_complete as delivered and report_table.rows.delivery_total as count %}{{ delivered }} of {{ count }}{% endblocktrans %} {% trans 'delivered' %}</div>
+                <div class="caption">{% blocktrans with report_table.rows.delivery_complete as delivered and report_table.rows.delivery_total as count %}{{ delivered }} of {{ count }}{% endblocktrans %} <a href="{{ report_facilities_url }}">{% trans 'delivered' %}</a></div>
             </li>
             <li>
                 <div class="report">Average Lead Time</div>
