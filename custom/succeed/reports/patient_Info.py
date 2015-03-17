@@ -101,7 +101,8 @@ class PatientInfoDisplay(object):
                                                      ]}
 
         general_info['key_notes'] = {'label': _('Key Notes'), 'value': getattr(self.case, 'notes', EMPTY_FIELD)}
-
+        general_info['cdsmp_notes'] = {'label': _('CDSMP Notes'),
+                                       'value': getattr(self.case, 'cdsmp_notes', EMPTY_FIELD)}
         return general_info
 
     @property

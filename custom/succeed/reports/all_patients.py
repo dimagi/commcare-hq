@@ -44,9 +44,8 @@ class PatientListReportDisplay(CaseDisplay):
         self.next_visit = next_visit
         if last_inter:
             self.last_interaction = last_inter['date']
-        self.app_dict = None
-        # get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
-        # self.latest_build = get_app_build(self.app_dict)
+        self.app_dict = get_cloudcare_app(report.domain, SUCCEED_CM_APPNAME)
+        self.latest_build = get_app_build(self.app_dict)
         super(PatientListReportDisplay, self).__init__(report, case_dict)
 
     def get_property(self, key):
@@ -69,15 +68,14 @@ class PatientListReportDisplay(CaseDisplay):
 
     @property
     def edit_link(self):
-        # module = self.app_dict['modules'][CM_APP_CM_MODULE]
-        # form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
-        return "Edit"
-            # html.mark_safe("<a target='_blank' class='ajax_dialog' href='%s'>Edit</a>") \
-            # % html.escape(get_cloudcare_form_url(domain=self.app_dict['domain'],
-            #                                      app_build_id=self.latest_build,
-            #                                      module_id=CM_APP_CM_MODULE,
-            #                                      form_id=form_idx,
-            #                                      case_id=self.case_id) + '/enter/')
+        module = self.app_dict['modules'][CM_APP_CM_MODULE]
+        form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
+        return html.mark_safe("<a target='_blank' class='ajax_dialog' href='%s'>Edit</a>") \
+            % html.escape(get_cloudcare_form_url(domain=self.app_dict['domain'],
+                                                 app_build_id=self.latest_build,
+                                                 module_id=CM_APP_CM_MODULE,
+                                                 form_id=form_idx,
+                                                 case_id=self.case_id) + '/enter/')
 
     @property
     def case_detail_url(self):
