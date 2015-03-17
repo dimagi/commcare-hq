@@ -4,7 +4,8 @@ import json
 import itertools
 from couchdbkit.exceptions import DocTypeError
 from corehq import Domain
-from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX
+from corehq.apps.app_manager.const import CT_REQUISITION_MODE_3, CT_LEDGER_STOCK, CT_LEDGER_REQUESTED, \
+    CT_REQUISITION_MODE_4, CT_LEDGER_APPROVED, CT_LEDGER_PREFIX, USERCASE_PREFIX
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 import re
 from dimagi.utils.decorators.memoized import memoized
@@ -153,7 +154,7 @@ class ParentCasePropertyBuilder(object):
                 )
 
         # prefix user case properties with "user:".
-        prefix_user = lambda p: 'user:' + p if case_type == usercasetype else p
+        prefix_user = lambda p: USERCASE_PREFIX + p if case_type == usercasetype else p
 
         # .. note:: if the user case type has a parent case type, its
         #           properties will be returned as `user:parent/property`
@@ -353,3 +354,17 @@ def commtrack_ledger_sections(mode):
         sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
 
     return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
+
+
+def get_usercase_keys(items):
+    n = len(USERCASE_PREFIX)
+    return {k[n:]: v for k, v in items if k.startswith(USERCASE_PREFIX)}
+
+
+def get_usercase_values(items):
+    n = len(USERCASE_PREFIX)
+    return {k: v[n:] for k, v in items if v.startswith(USERCASE_PREFIX)}
+
+
+def any_usercase_items(items):
+    return any(i.startswith(USERCASE_PREFIX) for i in items)

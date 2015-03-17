@@ -21,8 +21,9 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import UnknownInstanceError, ScheduleError
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK, SCHEDULE_LAST_VISIT, SCHEDULE_PHASE, \
-    CASE_ID, RETURN_TO
-from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping
+    CASE_ID, RETURN_TO, USERCASE_PREFIX
+from corehq.apps.app_manager.util import split_path, create_temp_sort_column, languages_mapping, \
+    any_usercase_items
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
@@ -1418,13 +1419,13 @@ class SuiteGenerator(SuiteGeneratorBase):
         def updates_usercase(form):
             actions = form.active_actions()
             if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
-                return any(k.startswith('user:') for k in actions['update_case'].update.keys())
+                return any_usercase_items(actions['update_case'].update.keys())
             return False
 
         def preloads_usercase(form):
             actions = form.active_actions()
             if 'case_preload' in actions:
-                return any(v.startswith('user:') for v in actions['case_preload'].preload.values())
+                return any_usercase_items(actions['case_preload'].preload.values())
             return False
 
         if not form or form.requires_case():
@@ -1606,10 +1607,8 @@ class SuiteGenerator(SuiteGeneratorBase):
 
         def uses_usercase(form):
             for action in form.actions.load_update_cases:
-                if action.preload:
-                    return any(k.startswith('user:') for k in action.preload.keys())
-                if action.case_properties:
-                    return any(k.startswith('user:') for k in action.preload.keys())
+                if action.preload or action.case_properties:
+                    return any_usercase_items(action.preload.keys())
             return False
 
         for index, action in enumerate(form.actions.load_update_cases):
