@@ -1,3 +1,4 @@
+from itertools import ifilter
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from django.http import HttpResponse
 import json
@@ -228,6 +229,20 @@ class LucenePaginator(object):
                 'handler': "_fti/_design",
             }
 
+    def get_results(self, search_query, limit, skip):
+        results = self.database.search(
+            q=search_query,
+            limit=limit,
+            skip=skip,
+            **self.get_search_params()
+        )
+        rows = (self._generator_func(row) for row in results)
+        try:
+            return results.total_rows, ifilter(None, rows)
+        except RequestFailed:
+            # just ignore poorly formatted search terms for now
+            return 0, []
+
 
     def get_ajax_response(self, request, search_query, extras={}):
         """
@@ -239,24 +254,8 @@ class LucenePaginator(object):
         """
         query = request.POST if request.method == "POST" else request.GET
         params = DatatablesParams.from_request_dict(query)
+        total_rows, all_json = self.get_results(search_query, params.count, params.start)
 
-
-
-        results = self.database.search(q=search_query, limit=params.count, skip=params.start,
-                                       **self.get_search_params())
-
-        all_json = []
-        try:
-            for row in results:
-                row = self._generator_func(row)
-                if row is not None:
-                    all_json.append(row)
-            total_rows = results.total_rows
-        except RequestFailed:
-            # just ignore poorly formatted search terms for now
-            total_rows = 0
-            
-        
         to_return = {"sEcho": params.echo,
                      "iTotalDisplayRecords": total_rows,
                      "aaData": all_json}
