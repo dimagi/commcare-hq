@@ -152,8 +152,8 @@ class PatientListReportDisplay(CaseDisplay):
     @property
     def tasks(self):
         url = html.escape(
-                PatientTaskListReport.get_url(*[self.case["domain"]]) +
-                "?patient_id=%s&task_status=open" % self.case["_id"])
+            PatientTaskListReport.get_url(*[self.case["domain"]]) +
+            "?patient_id=%s&task_status=open" % self.case["_id"])
         if url:
             return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>Tasks</a>" % url)
         else:
