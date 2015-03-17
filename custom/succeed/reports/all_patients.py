@@ -360,21 +360,13 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             ids_and_names = {}
             user_ids = {}
 
-            # print len(Group.by_domain(SUCCEED_DOMAIN))
             users = []
             for g in Group.by_domain(SUCCEED_DOMAIN):
                 ids_and_names.update({g.get_id: g.name})
                 for user in g.users:
-                    # print type(user)
-                    # print user
                     users.append(user)
                     if user not in user_ids:
-                        user_ids.update({user:g.name})
-            # print Group.by_domain(SUCCEED_DOMAIN)
-            # print users
-            # print len(user_ids.keys())
-            # print len(users)
-            # print len(set(users))
+                        user_ids.update({user: g.name})
             sort = {
                 "_script": {
                     "script":

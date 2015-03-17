@@ -112,8 +112,8 @@ class PatientInteractionsReport(PatientDetailsReport):
                                                          CM_APP_APPOINTMENTS_MODULE, AP2,
                                                          parent_id=ret['patient'].get_case_property('parent'))
         ret['add_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
-                                                         CM_APP_PD_MODULE, AP1,
-                                                         case_id=ret['patient']['_id'])
+                                                        CM_APP_PD_MODULE, AP1,
+                                                        case_id=ret['patient']['_id'])
 
         # Risk Factor Table
         rows = []
