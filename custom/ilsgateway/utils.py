@@ -2,7 +2,6 @@ from datetime import datetime
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.util.translation import localize
-from custom.ewsghana.utils import send_test_message
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
 from dimagi.utils.dates import get_business_day_of_month_before
 from django.db.models.aggregates import Max
