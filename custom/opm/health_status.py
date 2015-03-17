@@ -280,6 +280,18 @@ class AWCHealthStatus(object):
          _("Eligilble for Birth Spacing bonus"),
          _("Number of Beneficiaries eligilble for Birth Spacing bonus"),
          'beneficiaries'),
+        ('nutritional_status_sam',
+         _("Children Severly Underweight"),
+         _("Number of Children whose Nutritional status is SAM"),
+         'children'),
+        ('nutritional_status_mam',
+         _("Children Moderately Underweight"),
+         _("Number of Children whose Nutritional status is MAM"),
+         'children'),
+        ('nutritional_status_normal',
+         _("Children Normal"),
+         _("Number of Children whose Nutritional status is normal"),
+         'children'),
         ('nutritional_bonus',
          _("Eligilble for Nutritional status bonus"),
          _("Number of Beneficiaries eligilble for Nutritional status bonus"),
@@ -564,6 +576,18 @@ class AWCHealthStatus(object):
     @property
     def nutritional_bonus(self):
         return len([c for c in self.all_cases if c.weight_grade_normal])
+
+    @property
+    def nutritional_status_sam(self):
+        return len([c for c in self.all_cases if c.weight_grade_status('SAM')])
+
+    @property
+    def nutritional_status_mam(self):
+        return len([c for c in self.all_cases if c.weight_grade_status('MAM')])
+
+    @property
+    def nutritional_status_normal(self):
+        return len([c for c in self.all_cases if c.weight_grade_status('normal')])
 
     @property
     def closed_pregnants(self):
