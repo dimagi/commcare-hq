@@ -13,7 +13,8 @@ def dot_interpolate(string, replacement):
 
 
 def session_var(var, subref=None, data=u'data'):
-    return XPath(u"instance('commcaresession')/session/{0}{1}/{2}".format(subref + '/' if subref else '', data, var))
+    return XPath(u"instance('commcaresession')/session/{0}{1}/{2}".format(
+        subref + '/' if subref else '', data, var))
 
 
 class XPath(unicode):

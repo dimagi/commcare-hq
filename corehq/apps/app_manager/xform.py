@@ -994,7 +994,9 @@ class XForm(WrappedNode):
         usercase_bound = False
 
         if 'update_case' in actions and hasattr(actions['update_case'], 'update'):
-            usercase_updates = {k[5:]: v for k, v in actions['update_case'].update.items() if k.startswith('user:')}
+            usercase_updates = {k[5:]: v
+                                for k, v in actions['update_case'].update.items()
+                                if k.startswith('user:')}
             if usercase_updates:
                 if not usercase_bound:
                     self._add_usercase_bind(usercase_path)
@@ -1007,7 +1009,9 @@ class XForm(WrappedNode):
 
         if 'case_preload' in actions:
             self.add_casedb()
-            usercase_preloads = {k: v[5:] for k, v in actions['case_preload'].preload.items() if v.startswith('user:')}
+            usercase_preloads = {k: v[5:]
+                                 for k, v in actions['case_preload'].preload.items()
+                                 if v.startswith('user:')}
             if usercase_preloads and not usercase_bound:
                 self._add_usercase_bind(usercase_path)
                 usercase_bound = True
@@ -1038,7 +1042,9 @@ class XForm(WrappedNode):
 
             if action.preload:
                 self.add_casedb()
-                usercase_preloads = {k[5:]: v for k, v in action.preload.items() if k.startswith('user:')}
+                usercase_preloads = {k[5:]: v
+                                     for k, v in action.preload.items()
+                                     if k.startswith('user:')}
                 if usercase_preloads and not usercase_bound:
                     self._add_usercase_bind(usercase_path)
                     usercase_bound = True
@@ -1056,7 +1062,9 @@ class XForm(WrappedNode):
                     )
 
             if action.case_properties:
-                usercase_updates = {k[5:]: v for k, v in action.case_properties.items() if k.startswith('user:')}
+                usercase_updates = {k[5:]: v
+                                    for k, v in action.case_properties.items()
+                                    if k.startswith('user:')}
                 if usercase_updates:
                     if not usercase_bound:
                         self._add_usercase_bind(usercase_path)
