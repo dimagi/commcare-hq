@@ -156,15 +156,6 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="ils_move_location_id_from_user_domain_membership">
-                        {% trans "Move location id from user domain mambership" %}
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="row-fluid">
-            <div class="span12">
-                <div class="btn-toolbar">
                     <button class="btn" id="delete_runs">
                         {% trans "Delete reports runs" %}
                     </button>
@@ -216,12 +207,6 @@
 
         $("#ils_sms_users_fix").click(function() {
             var url = '{% url 'ils_sms_users_fix' domain %}';
-            var successMessage = "{% trans "Resync started" %}";
-            _post(this, url, {success: successMessage});
-        });
-
-        $("#ils_move_location_id_from_user_domain_membership").click(function() {
-            var url = '{% url 'ils_move_location_id_from_user_domain_membership' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

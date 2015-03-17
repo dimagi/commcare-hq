@@ -3,7 +3,6 @@ from functools import partial
 import itertools
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import SQLLocation, Location
-from corehq.apps.users.models import CommCareUser
 from custom.ilsgateway import TEST
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
@@ -83,17 +82,6 @@ def sms_users_fix(api):
     api.set_default_backend()
     synchronization(None, endpoint.get_smsusers, partial(api.add_language_to_user),
                     None, None, 100, 0)
-
-@task
-def sms_users_fix_2(domain):
-    users = []
-    for user in CommCareUser.by_domain(domain=domain):
-        print "Processing user: {0}, {1}".format(user.username, user._id)
-        if user.domain_membership.location_id:
-            loc = Location.get(user.domain_membership.location_id)
-            user.set_location(loc)
-            users.append(user)
-    print len(users)
 
 
 @task

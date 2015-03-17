@@ -157,8 +157,12 @@ class ProductAvailabilitySummary(ILSData):
             product_availability = ProductAvailabilityData.objects.filter(
                 date__range=(self.config['startdate'], self.config['enddate']),
                 supply_point=self.config['org_summary'][0].supply_point,
-                product__in=self.config['products']).values('product').annotate(
-                with_stock=Avg('with_stock'), without_data=Avg('without_data'), without_stock=Avg('without_stock'), total=Max('total')
+                product__in=self.config['products']).values('product')\
+                .annotate(
+                    with_stock=Avg('with_stock'),
+                    without_data=Avg('without_data'),
+                    without_stock=Avg('without_stock'),
+                    total=Max('total')
             )
         return product_availability
 

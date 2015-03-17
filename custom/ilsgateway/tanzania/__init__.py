@@ -14,7 +14,7 @@ from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
 from dimagi.utils.dates import DateSpan, DEFAULT_DATE_FORMAT
 from dimagi.utils.decorators.memoized import memoized
-from custom.ilsgateway.tanzania.reports.utils import make_url, latest_status
+from custom.ilsgateway.tanzania.reports.utils import make_url
 from django.utils import html
 
 
@@ -125,6 +125,7 @@ class ILSDateSpan(DateSpan):
         Both are optional and default to the current month/year.
 
             april = DateSpan.from_month(04, 2013)
+            First Quarter: DateSpan.from_month(-1, 2015)
         """
         if month_or_quarter is None:
             month_or_quarter = datetime.datetime.date.today().month
@@ -133,10 +134,10 @@ class ILSDateSpan(DateSpan):
         assert isinstance(month_or_quarter, int) and isinstance(year, int)
         if month_or_quarter < 0:
             quarters = list(rrule.rrule(rrule.MONTHLY,
-                               bymonth=(1,4,7,10),
-                               bysetpos=-1,
-                               dtstart=datetime(year,1,1),
-                               count=5))
+                                        bymonth=(1, 4, 7, 10),
+                                        bysetpos=-1,
+                                        dtstart=datetime(year, 1, 1),
+                                        count=5))
 
             start = quarters[month_or_quarter*-1-1]
             end = quarters[month_or_quarter*-1] - relativedelta(days=1)
@@ -150,11 +151,11 @@ class MonthQuarterYearMixin(object):
     """
         Similar to DatespanMixin, but works with MonthAndQuarterFilter and YearField
         months = 1:12
-        quaters = -1:-4
+        quarters = -1:-4
     """
     fields = [MonthAndQuarterFilter, YearFilter]
-
     _datespan = None
+
     @property
     def datespan(self):
         if self._datespan is None:

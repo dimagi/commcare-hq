@@ -138,7 +138,7 @@ class DeliveryData(ILSData):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_('Category'),sort_direction="desc"),
+            DataTablesColumn(_('Category'), sort_direction="desc"),
             DataTablesColumn(_('# Facilities')),
             DataTablesColumn(_('% of total')),
         )

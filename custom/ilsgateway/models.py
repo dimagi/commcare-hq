@@ -4,7 +4,6 @@ from couchdbkit.ext.django.schema import Document, BooleanProperty, StringProper
 from django.db import models
 
 from casexml.apps.stock.models import DocDomainMapping
-from django.db.models.fields.related import OneToOneField
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.dates import force_to_datetime
