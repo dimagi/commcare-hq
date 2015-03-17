@@ -16,9 +16,9 @@ from custom.ewsghana.reminders.reminders import first_soh_process_user, second_s
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     EWS_FACILITIES
-from custom.ilsgateway.tasks import sync_product_stocks, sync_stock_transactions
+from custom.ilsgateway.tasks import sync_product_stocks
 from custom.ilsgateway.views import GlobalStats
-from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix
+from custom.logistics.tasks import sms_users_fix, add_products_to_loc, locations_fix, sync_stock_transactions
 from custom.logistics.tasks import stock_data_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
 from dimagi.utils.dates import force_to_datetime
