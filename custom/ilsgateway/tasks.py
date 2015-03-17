@@ -165,13 +165,17 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
             transactions_to_add = []
             with transaction.commit_on_success():
                 for stocktransaction in stocktransactions:
-                    report = StockReport(
+                    params = dict(
                         form_id=xform._id,
                         date=force_to_datetime(stocktransaction.date),
                         type='balance',
-                        domain=domain
+                        domain=domain,
                     )
-                    report.save()
+                    try:
+                        report, _ = StockReport.objects.get_or_create(**params)
+                    except StockReport.MultipleObjectsReturned:
+                        # legacy
+                        report = StockReport.objects.filter(**params)[0]
                     try:
                         sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
                     except SQLProduct.DoesNotExist:
