@@ -143,7 +143,7 @@ class MockDataTest(OPMCaseReportTestBase):
         row = MockCaseRow(case, report)
 
 
-def make_case_row(form_props=None, vhnd_props=None):
+def make_case_row(form_props=None, vhnd_props=None, block='Atri', child_age=6):
     """
     Accepts lists of properties available in form and at the vhnd
     and returns a corresponding case row
@@ -151,7 +151,7 @@ def make_case_row(form_props=None, vhnd_props=None):
     report_year = 2014
     report_month = 6
     date_in_month = datetime(2014, 6, 10)
-    child_age = 6
+    child_age = child_age
     owner_id = 'mock_owner_id'
 
     forms = [XFormInstance(
@@ -177,7 +177,7 @@ def make_case_row(form_props=None, vhnd_props=None):
     report = Report(
         month=report_month,
         year=report_year,
-        block='Atri',
+        block=block,
     )
 
     row = MockCaseRow(case, report, data_provider=data_provider)

@@ -420,18 +420,9 @@ class SetupTab(UITab):
         )
         from corehq.apps.programs.views import ProgramListView
         from corehq.apps.products.views import ProductListView
-        from corehq.apps.locations.views import (
-            LocationsListView,
-            LocationSettingsView,
-        )
 
         dropdown_items = []
 
-        if self.project.locations_enabled:
-            dropdown_items += [(_(view.page_title), view) for view in (
-                LocationsListView,
-                LocationSettingsView,
-            )]
 
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
@@ -451,10 +442,8 @@ class SetupTab(UITab):
 
     @property
     def is_viewable(self):
-        return self.couch_user.is_domain_admin() and (
-            self.project.commtrack_enabled or
-            self.project.locations_enabled
-        )
+        return (self.couch_user.is_domain_admin() and
+                self.project.commtrack_enabled)
 
     @property
     def sidebar_items(self):
@@ -476,47 +465,7 @@ class SetupTab(UITab):
             EditProductView,
             ProductFieldsView,
         )
-        from corehq.apps.locations.views import (
-            LocationsListView,
-            NewLocationView,
-            EditLocationView,
-            FacilitySyncView,
-            LocationImportView,
-            LocationImportStatusView,
-            LocationSettingsView,
-            LocationFieldsView,
-        )
-
-        locations_config = {
-            'title': LocationsListView.page_title,
-            'url': reverse(LocationsListView.urlname, args=[self.domain]),
-            'subpages': [
-                {
-                    'title': NewLocationView.page_title,
-                    'urlname': NewLocationView.urlname,
-                },
-                {
-                    'title': EditLocationView.page_title,
-                    'urlname': EditLocationView.urlname,
-                },
-                {
-                    'title': LocationImportView.page_title,
-                    'urlname': LocationImportView.urlname,
-                },
-                {
-                    'title': LocationImportStatusView.page_title,
-                    'urlname': LocationImportStatusView.urlname,
-                },
-                {
-                    'title': LocationFieldsView.page_name(),
-                    'urlname': LocationFieldsView.urlname,
-                },
-            ]
-        }
-        advanced_locations_config = {
-            'title': LocationSettingsView.page_title,
-            'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
-        }
+        from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
             return [[_('CommTrack Setup'), [
@@ -539,8 +488,6 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                locations_config,
-                advanced_locations_config,
                 # programs
                 {
                     'title': ProgramListView.page_title,
@@ -581,12 +528,6 @@ class SetupTab(UITab):
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
-            ]]]
-
-        if self.project.locations_enabled:
-            return [[_('Setup'), [
-                locations_config,
-                advanced_locations_config,
             ]]]
 
 
@@ -1117,6 +1058,55 @@ class ProjectUsersTab(UITab):
                     'show_in_dropdown': True,
                 }
             ]))
+
+            if self.project.locations_enabled:
+                from corehq.apps.locations.views import (
+                    LocationsListView,
+                    NewLocationView,
+                    EditLocationView,
+                    LocationImportView,
+                    LocationImportStatusView,
+                    LocationFieldsView,
+                    LocationSettingsView,
+                )
+
+                locations_config = {
+                    'title': LocationsListView.page_title,
+                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                    'subpages': [
+                        {
+                            'title': NewLocationView.page_title,
+                            'urlname': NewLocationView.urlname,
+                        },
+                        {
+                            'title': EditLocationView.page_title,
+                            'urlname': EditLocationView.urlname,
+                        },
+                        {
+                            'title': LocationImportView.page_title,
+                            'urlname': LocationImportView.urlname,
+                        },
+                        {
+                            'title': LocationImportStatusView.page_title,
+                            'urlname': LocationImportStatusView.urlname,
+                        },
+                        {
+                            'title': LocationFieldsView.page_name(),
+                            'urlname': LocationFieldsView.urlname,
+                        },
+                    ]
+                }
+                advanced_locations_config = {
+                    'title': LocationSettingsView.page_title,
+                    'url': reverse(LocationSettingsView.urlname, args=[self.domain]),
+                    'show_in_dropdown': True,
+                }
+
+                items.append((_('Locations'), [
+                    locations_config,
+                    advanced_locations_config,
+                ]))
 
         return items
 

@@ -1,0 +1,93 @@
+.mother_report .table-nonfluid, .child_report .table-nonfluid{
+   width: 55%;
+}
+
+.mother_report .table tr td:nth-child(1), .child_report .table tr td:nth-child(1) {width:150px;}
+.mother_report .table tr td:nth-child(n + 2), .child_report .table tr td:nth-child(n + 2) {width:100px;}
+
+.mother_report table, .child_report table {
+    display: inline-block;
+    float: left;
+    margin-bottom: 30px;
+}
+
+.mother_report .row ~ table, .child_report .row ~ table {
+    margin-top: 200px;
+    display: inline-block;
+}
+
+.accordion-inner {
+    width: 100%;
+}
+.mother_report table + .row, .mother_report .row + .row, .child_report table + .row, .child_report .row + .row {
+    width: 45%;
+    float:right;
+    display: inline-block;
+}
+
+svg {
+    overflow: visible;
+}
+
+.mother_child_report .table-nonfluid {
+    width: 30%;
+}
+
+.mother_child_report table, .mother_child_report .row {
+    width: 30%;
+    margin-left: 10px;
+    margin-bottom: 5px;
+    float:left;
+    display: inline-block;
+}
+@media print {
+    .mother_child_report #report_table_children_deaths {
+        margin-top: 100px;
+    }
+    .mother_child_report .row:last-of-type {
+        margin-top: -70px;
+    }
+    .nv-controlsWrap, .icon-question-sign, .accordion-heading, br, .row h4 {
+        display: none;
+    }
+    th {
+        font-weight: bold;
+    }
+    .mother_report .row, .mother_report .table-nonfluid,
+    .child_report .row, .child_report .table-nonfluid{
+        display: inline-block;
+        float: left;
+        margin: 0;
+        page-break-inside: avoid;
+    }
+
+    .mother_report, .mother_report .accordion, .mother_report .accordion-inner, .mother_report .accordion-body,
+    .child_report, .child_report .accordion, .child_report .accordion-inner, .child_report .accordion-body {
+        display: inline-block;
+        float: left;
+        margin: 0;
+    }
+
+    .mother_report #report_table_closed_mother_cases-breakdown ~ div {
+        margin-top: -2cm;
+        margin-left: -3cm;
+    }
+
+    .mother_report #report_table_pregnant_mother_by_trimester ~ div {
+        margin-top: -2cm;
+    }
+
+    .child_report #report_table_immunization_second_year_overview  ~ div {
+        margin-top: -3cm;
+    }
+
+    .child_report #report_table_children_birth_details_2  ~ div,
+    .child_report #report_table_children_death_by_month ~ div {
+        margin-top: -1.5cm;
+    }
+
+    .child_report #report_table_children_death_by_month,
+    .child_report #report_table_children_feeding_details {
+        margin-top: 1cm;
+    }
+}

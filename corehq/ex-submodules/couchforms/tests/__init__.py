@@ -1,4 +1,6 @@
 import logging
+from couchforms.jsonobject_extensions import GeoPointProperty
+
 try:
     from .test_archive import *
     from .test_meta import *
@@ -14,3 +16,7 @@ except ImportError, e:
     # otherwise debugging is a pain
     logging.error(e)
     raise(e)
+
+__test__ = {
+    'GeoPointProperty': GeoPointProperty,
+}

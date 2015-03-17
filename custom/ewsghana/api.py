@@ -306,18 +306,21 @@ class EWSApi(APISynchronization):
 
             if apply_updates(location, location_dict):
                 location.save()
-            for loc in ews_location.supply_points:
-                sp = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                          key=[self.domain, str(loc.id)],
-                                          reduce=False,
-                                          include_docs=True,
-                                          limit=1).first()
-                if sp:
-                    sqlloc = sp.location.sql_location
-                    sqlloc.stocks_all_products = False
-                    if not sqlloc.products:
-                        sqlloc.products = SQLProduct.objects.filter(domain=self.domain, code__in=loc.products)
-                        sqlloc.save()
+        for supply_point in ews_location.supply_points:
+            sp = SupplyPointCase.view('hqcase/by_domain_external_id',
+                                      key=[self.domain, str(supply_point.id)],
+                                      reduce=False,
+                                      include_docs=True,
+                                      limit=1).first()
+            if sp:
+                sql_location = sp.location.sql_location
+                sql_location.stocks_all_products = False
+                if not sql_location.products:
+                    sql_location.products = SQLProduct.objects.filter(
+                        domain=self.domain,
+                        code__in=supply_point.products
+                    )
+                    sql_location.save()
         return location
 
     def convert_web_user_to_sms_user(self, ews_webuser):
@@ -423,10 +426,8 @@ class EWSApi(APISynchronization):
             else:
                 couch_location_id = None
             if couch_location_id:
-                dm = sms_user.get_domain_membership(self.domain)
-                dm.location_id = couch_location_id
+                sms_user.location_id = couch_location_id
                 sms_user.save()
-                add_location(sms_user, couch_location_id)
 
         if ews_smsuser.role == 'facility_manager':
             role = UserRole.by_domain_and_name(self.domain, 'Facility manager')
