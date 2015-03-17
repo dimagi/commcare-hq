@@ -99,7 +99,7 @@ def get_change_status(from_plan_version, to_plan_version):
     return adjustment_reason, downgraded_privs, upgraded_privs
 
 
-@quickcache(timeout=10)
+@quickcache(['domain', 'privilege_slug'], timeout=10)
 def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:
