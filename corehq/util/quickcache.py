@@ -1,6 +1,7 @@
 import functools
 import hashlib
 import inspect
+from inspect import isfunction
 import logging
 from django.core.cache import get_cache
 
@@ -54,14 +55,15 @@ class QuickCache(object):
         )
 
         arg_names = inspect.getargspec(self.fn).args
-        vary_on = [part.split('.') for part in vary_on]
-        vary_on = [(part[0], tuple(part[1:])) for part in vary_on]
-        for arg, attrs in vary_on:
-            if arg not in arg_names:
-                raise ValueError(
-                    'We cannot vary on "{}" because the function {} has '
-                    'no such argument'.format(arg, self.fn.__name__)
-                )
+        if not isfunction(vary_on):
+            vary_on = [part.split('.') for part in vary_on]
+            vary_on = [(part[0], tuple(part[1:])) for part in vary_on]
+            for arg, attrs in vary_on:
+                if arg not in arg_names:
+                    raise ValueError(
+                        'We cannot vary on "{}" because the function {} has '
+                        'no such argument'.format(arg, self.fn.__name__)
+                    )
 
         self.vary_on = vary_on
 
@@ -109,11 +111,14 @@ class QuickCache(object):
     def get_cache_key(self, *args, **kwargs):
         callargs = inspect.getcallargs(self.fn, *args, **kwargs)
         values = []
-        for arg_name, attrs in self.vary_on:
-            value = callargs[arg_name]
-            for attr in attrs:
-                value = getattr(value, attr)
-            values.append(value)
+        if isfunction(self.vary_on):
+            values = self.vary_on(*args, **kwargs)
+        else:
+            for arg_name, attrs in self.vary_on:
+                value = callargs[arg_name]
+                for attr in attrs:
+                    value = getattr(value, attr)
+                values.append(value)
         args_string = ','.join(self._serialize_for_key(value)
                                for value in values)
         if len(args_string) > 150:
