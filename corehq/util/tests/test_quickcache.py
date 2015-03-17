@@ -169,3 +169,14 @@ class QuickcacheTest(SimpleTestCase):
                .get_cache_key())
         self.assertEqual(
             len(key), len('quickcache.' + 'a' * 40 + '...xxxxxxxx/'), key)
+
+    def test_vary_on_func(self):
+        def vary_on(data):
+            return [data['name']]
+
+        @quickcache(vary_on=vary_on)
+        def cached_fn(data):
+            pass
+
+        key = cached_fn.get_cache_key({'name': 'a1'})
+        self.assertRegex(key, 'quickcache.cached_fn.[a-z0-9]{8}/sa1')
