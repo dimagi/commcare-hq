@@ -10,7 +10,7 @@ from psycopg2._psycopg import DatabaseError
 from couchforms.models import XFormInstance
 
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState, SupplyPointCase
+from corehq.apps.commtrack.models import StockState, SupplyPointCase, update_stock_state_for_transaction
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
@@ -46,7 +46,6 @@ def get_ilsgateway_data_migrations():
     for use in the stock_data_task.
     """
     return (
-        ('product_stock', sync_product_stocks),
         ('stock_transaction', sync_stock_transactions),
         ('supply_point_status', get_supply_point_statuses),
         ('delivery_group', get_delivery_group_reports)
@@ -145,9 +144,11 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
     """
     has_next = True
     next_url = ""
+    section_id = 'stock'
     supply_point = facility
     case = get_supply_point_by_external_id(domain, supply_point)
     if case:
+        products_saved = set()
         while has_next:
             meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
                                                                      limit=limit,
@@ -186,18 +187,28 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                         case_id=case._id,
                         product_id=sql_product.product_id,
                         sql_product=sql_product,
-                        section_id='stock',
+                        section_id=section_id,
                         type='stockonhand',
                         stock_on_hand=Decimal(stocktransaction.ending_balance),
                         report=report
                     ))
+                    products_saved.add(sql_product.product_id)
 
-            # Doesn't send signal
-            StockTransaction.objects.bulk_create(transactions_to_add)
+
+            if transactions_to_add:
+                # Doesn't send signal
+                StockTransaction.objects.bulk_create(transactions_to_add)
+
             if not meta.get('next', False):
                 has_next = False
             else:
                 next_url = meta['next'].split('?')[1]
+
+        for product in products_saved:
+            # if we saved anything rebuild the stock state object by firing the signal
+            # on the last transaction for each product
+            last_st = StockTransaction.latest(case._id, section_id, product)
+            update_stock_state_for_transaction(last_st)
 
 
 def sync_product_stocks(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
