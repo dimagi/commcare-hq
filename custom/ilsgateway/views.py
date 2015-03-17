@@ -27,7 +27,7 @@ from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
 
-from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
+from custom.ilsgateway.tasks import sync_product_stocks, sync_stock_transactions, get_supply_point_statuses, \
     get_delivery_group_reports, ILS_FACILITIES
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import sms_users_fix
@@ -240,8 +240,8 @@ def ils_sync_stock_data(request, domain):
     domain = config.domain
     endpoint = ILSGatewayEndpoint.from_config(config)
     apis = (
-        ('product_stock', get_product_stock),
-        ('stock_transaction', get_stock_transaction),
+        ('product_stock', sync_product_stocks),
+        ('stock_transaction', sync_stock_transactions),
         ('supply_point_status', get_supply_point_statuses),
         ('delivery_group', get_delivery_group_reports)
     )

@@ -30,8 +30,8 @@ def migration_task():
             endpoint = ILSGatewayEndpoint.from_config(config)
             ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
             apis = (
-                ('product_stock', get_product_stock),
-                ('stock_transaction', get_stock_transaction),
+                ('product_stock', sync_product_stocks),
+                ('stock_transaction', sync_stock_transactions),
                 ('supply_point_status', get_supply_point_statuses),
                 ('delivery_group', get_delivery_group_reports)
             )
@@ -195,13 +195,13 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
                 next_url = meta['next'].split('?')[1]
 
 
-def get_product_stock(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
+def sync_product_stocks(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     for facility in facilities:
         sync_product_stock(domain, endpoint, facility, checkpoint, date, limit, offset)
         offset = 0  # reset offset for each facility, is only set in the context of a checkpoint resume
 
 
-def get_stock_transaction(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
+def sync_stock_transactions(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     # todo: should figure out whether there's a better thing to be doing than faking this global form
     try:
         xform = XFormInstance.get(docid='ilsgateway-xform')
