@@ -78,13 +78,15 @@ class CouchTransaction(object):
             self.commit()
 
 
-def get_docs(db, keys):
+def get_docs(db, keys, **query_params):
     payload = json.dumps({'keys': filter(None, keys)})
-    url = db.uri + '/_all_docs?include_docs=true'
+    url = db.uri + '/_all_docs'
 
+    query_params['include_docs'] = True
     r = requests.post(url, data=payload,
                       headers={'content-type': 'application/json'},
-                      auth=get_auth(url))
+                      auth=get_auth(url),
+                      params=query_params)
 
     try:
         return r.json()['rows']

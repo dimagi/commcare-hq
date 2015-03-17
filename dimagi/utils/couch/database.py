@@ -50,9 +50,9 @@ def get_view_names(database):
             views.append("%s/%s" % (doc.name, view_name))
     return views
 
-def iter_docs(database, ids, chunksize=100):
+def iter_docs(database, ids, chunksize=100, **query_params):
     for doc_ids in chunked(ids, chunksize):
-        for doc in get_docs(database, keys=doc_ids):
+        for doc in get_docs(database, keys=doc_ids, **query_params):
             doc_dict = doc.get('doc')
             if doc_dict:
                 yield doc_dict
