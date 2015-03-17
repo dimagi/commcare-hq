@@ -14,6 +14,7 @@ from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
+from custom.ilsgateway.utils import get_supply_point_by_external_id
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
@@ -29,12 +30,7 @@ def migration_task():
         if config.enabled:
             endpoint = ILSGatewayEndpoint.from_config(config)
             ils_bootstrap_domain(ILSGatewayAPI(config.domain, endpoint))
-            apis = (
-                ('product_stock', sync_product_stocks),
-                ('stock_transaction', sync_stock_transactions),
-                ('supply_point_status', get_supply_point_statuses),
-                ('delivery_group', get_delivery_group_reports)
-            )
+            apis = get_ilsgateway_data_migrations()
             stock_data_task.delay(config.domain, endpoint, apis, ILS_FACILITIES)
 
 
@@ -42,6 +38,19 @@ def migration_task():
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
     return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
+
+
+def get_ilsgateway_data_migrations():
+    """
+    Returns a tuple of (api_name, migration_function) tuples relevant to the ILSGateway migration
+    for use in the stock_data_task.
+    """
+    return (
+        ('product_stock', sync_product_stocks),
+        ('stock_transaction', sync_stock_transactions),
+        ('supply_point_status', get_supply_point_statuses),
+        ('delivery_group', get_delivery_group_reports)
+    )
 
 # Region KILIMANJARO
 ILS_FACILITIES = [948, 998, 974, 1116, 971, 1122, 921, 658, 995, 1057,
@@ -80,11 +89,7 @@ def sync_product_stock_for_facility(domain, endpoint, facility, checkpoint, date
     has_next = True
     next_url = ""
     supply_point = facility
-    case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                key=[domain, str(supply_point)],
-                                reduce=False,
-                                include_docs=True,
-                                limit=1).first()
+    case = get_supply_point_by_external_id(domain, supply_point)
     if case:
         while has_next:
             meta, product_stocks = endpoint.get_productstocks(
@@ -141,11 +146,7 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
     has_next = True
     next_url = ""
     supply_point = facility
-    case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                key=[domain, str(supply_point)],
-                                reduce=False,
-                                include_docs=True,
-                                limit=1).first()
+    case = get_supply_point_by_external_id(domain, supply_point)
     if case:
         while has_next:
             meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
