@@ -10,10 +10,10 @@ from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.products.models import SQLProduct
 from couchforms.models import XFormInstance
 from custom.ilsgateway import TEST
-from custom.ilsgateway.utils import get_supply_point_by_external_id
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
+from custom.logistics.utils import get_supply_point_by_external_id
 from dimagi.utils.dates import force_to_datetime
 
 

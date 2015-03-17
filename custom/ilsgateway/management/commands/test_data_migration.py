@@ -5,7 +5,7 @@ from corehq.apps.commtrack.models import StockState
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tasks import get_ilsgateway_data_migrations
-from custom.ilsgateway.utils import get_supply_point_by_external_id
+from custom.logistics.utils import get_supply_point_by_external_id
 from custom.logistics.tasks import stock_data_task
 
 

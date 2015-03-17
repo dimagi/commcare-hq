@@ -11,7 +11,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
-from custom.ilsgateway.utils import get_supply_point_by_external_id
+from custom.logistics.utils import get_supply_point_by_external_id
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
