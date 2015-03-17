@@ -394,7 +394,7 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         form.actions.open_case = OpenCaseAction(name_path="/data/question1")
         form.actions.open_case.condition.type = 'always'
         form.actions.subcases.append(OpenSubCaseAction(
-            case_type=module.case_type,
+            case_type='tablet',
             case_name="/data/question1",
             condition=FormActionCondition(type='always')
         ))

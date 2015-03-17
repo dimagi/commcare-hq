@@ -999,8 +999,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         if action_type == 'subcase':
             opens_case = 'open_case' in self.active_actions()
             subcase_type = self.actions.subcases[subcase_index].case_type
-            if opens_case and subcase_type == module_case_type:
-                subcase_index += 1  # make sure we don't get two ids: case_id_new_type_0
+            if opens_case:
+                subcase_index += 1
             return 'case_id_new_{}_{}'.format(subcase_type, subcase_index)
 
     def _get_active_actions(self, types):

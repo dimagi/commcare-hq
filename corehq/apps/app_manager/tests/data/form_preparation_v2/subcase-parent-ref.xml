@@ -58,7 +58,7 @@
 			<bind calculate="/data/meta/userID" nodeset="/data/case/create/owner_id"/>
 			<bind calculate="/data/meta/timeEnd" nodeset="/data/subcase_0/case/@date_modified" type="xsd:dateTime"/>
 			<bind calculate="/data/meta/userID" nodeset="/data/subcase_0/case/@user_id"/>
-			<setvalue event="xforms-ready" ref="/data/subcase_0/case/@case_id" value="instance('commcaresession')/session/data/case_id_new_cc_bihar_pregnancy_0"/>
+			<setvalue event="xforms-ready" ref="/data/subcase_0/case/@case_id" value="instance('commcaresession')/session/data/case_id_new_cc_bihar_pregnancy_1"/>
 			<bind calculate="/data/parent" nodeset="/data/subcase_0/case/create/case_name"/>
 			<bind calculate="/data/meta/userID" nodeset="/data/subcase_0/case/create/owner_id"/>
 			<bind calculate="/data/case/@case_id" nodeset="/data/subcase_0/case/index/mother_id"/>

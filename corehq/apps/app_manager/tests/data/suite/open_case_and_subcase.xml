@@ -8,7 +8,7 @@
     </command>
     <session>
       <datum id="case_id_new_phone_0" function="uuid()"/>
-      <datum id="case_id_new_phone_1" function="uuid()"/>
+      <datum id="case_id_new_tablet_1" function="uuid()"/>
     </session>
   </entry>
 </partial>
