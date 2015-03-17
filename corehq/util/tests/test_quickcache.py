@@ -179,4 +179,4 @@ class QuickcacheTest(SimpleTestCase):
             pass
 
         key = cached_fn.get_cache_key({'name': 'a1'})
-        self.assertRegex(key, 'quickcache.cached_fn.[a-z0-9]{8}/sa1')
+        self.assertRegexpMatches(key, 'quickcache.cached_fn.[a-z0-9]{8}/sa1')
