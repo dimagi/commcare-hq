@@ -73,7 +73,7 @@ def get_locations(api_object, facilities):
         api_object.location_sync(api_object.endpoint.models_map['location'](location))
 
 
-def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
+def sync_product_stock_for_facility(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
     """
     Syncs ProductStock objects in ILSGateway to StockState objects in CommTrack
     """
@@ -133,7 +133,7 @@ def sync_product_stock(domain, endpoint, facility, checkpoint, date, limit=100, 
                 next_url = meta['next'].split('?')[1]
 
 
-def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
+def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, checkpoint,
                            date, limit=100, offset=0):
     """
     Syncs stock data from StockTransaction objects in ILSGateway to StockTransaction objects in HQ
@@ -197,7 +197,7 @@ def sync_stock_transaction(domain, endpoint, facility, xform, checkpoint,
 
 def sync_product_stocks(domain, endpoint, facilities, checkpoint, date, limit=100, offset=0):
     for facility in facilities:
-        sync_product_stock(domain, endpoint, facility, checkpoint, date, limit, offset)
+        sync_product_stock_for_facility(domain, endpoint, facility, checkpoint, date, limit, offset)
         offset = 0  # reset offset for each facility, is only set in the context of a checkpoint resume
 
 
@@ -209,7 +209,7 @@ def sync_stock_transactions(domain, endpoint, facilities, checkpoint, date, limi
         xform = XFormInstance(_id='ilsgateway-xform')
         xform.save()
     for facility in facilities:
-        sync_stock_transaction(domain, endpoint, facility, xform, checkpoint, date, limit, offset)
+        sync_stock_transactions_for_facility(domain, endpoint, facility, xform, checkpoint, date, limit, offset)
         offset = 0  # reset offset for each facility, is only set in the context of a checkpoint resume
 
 
