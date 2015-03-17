@@ -11,9 +11,9 @@ def dot_interpolate(string, replacement):
     repl = '\g<1>%s\g<2>' % replacement
     return re.sub(pattern, repl, string)
 
-### vvv maybe fix not to assume /data
-def session_var(var, subref=None):
-    return XPath(u"instance('commcaresession')/session/{0}data/{1}".format(subref + '/' if subref else '', var))
+
+def session_var(var, subref=None, data=u'data'):
+    return XPath(u"instance('commcaresession')/session/{0}{1}/{2}".format(subref + '/' if subref else '', data, var))
 
 
 class XPath(unicode):
@@ -97,7 +97,6 @@ class XPath(unicode):
 class CaseSelectionXPath(XPath):
     selector = ''
 
-    # vvv look for e.g.s
     def case(self):
         return CaseXPath(u"instance('casedb')/casedb/case[%s=%s]" % (self.selector, self))
 
@@ -111,6 +110,10 @@ class CaseTypeXpath(CaseSelectionXPath):
 
     def case(self):
         return CaseXPath(u"instance('casedb')/casedb/case[%s='%s']" % (self.selector, self))
+
+
+class UserCaseXPath(CaseSelectionXPath):
+    selector = 'user_id'
 
 
 class CaseXPath(XPath):

@@ -26,7 +26,7 @@ from corehq.apps.app_manager.util import split_path, create_temp_sort_column, la
 from corehq.apps.app_manager.xform import SESSION_CASE_ID, autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase
 from corehq.apps.app_manager.xpath import dot_interpolate, CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath
+    CaseTypeXpath, ItemListFixtureXpath, ScheduleFixtureInstance, XPath, ProductInstanceXpath, UserCaseXPath
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_url_base
@@ -1397,12 +1397,12 @@ class SuiteGenerator(SuiteGeneratorBase):
         entry.stack.add_frame(frame_case_not_created)
 
     def configure_entry_usercase(self, e):
+        userid = session_var(var='userid', data='context')
+        usercase_xpath = UserCaseXPath(userid)
         e.datums.append(SessionDatum(
             id='usercase_id',
-            function=("instance('casedb')/casedb/"
-                      "case[user_id=instance('commcaresession')/session/context/userid]/@case_id")
+            function=('%s/@case_id' % usercase_xpath.case())
         ))
-        # Check out session var
 
     def configure_entry_module_form(self, module, e, form=None, use_filter=True, **kwargs):
         def case_sharing_requires_assertion(form):
