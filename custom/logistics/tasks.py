@@ -46,12 +46,7 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
     apis_from_checkpoint = itertools.dropwhile(lambda x: x[0] != api, apis)
     facilities_copy = list(facilities)
     if location:
-        supply_point = SupplyPointCase.view(
-            'commtrack/supply_point_by_loc',
-            key=[location.domain, location.location_id],
-            include_docs=True,
-            classes={'CommCareCase': SupplyPointCase},
-        ).one()
+        supply_point = SupplyPointCase.get_by_location_id(domain, location.location_id)
         external_id = supply_point.external_id if supply_point else None
         if external_id:
             facilities = itertools.dropwhile(lambda x: int(x) != int(external_id), facilities)
