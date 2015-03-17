@@ -14,6 +14,7 @@ from corehq.apps.commtrack.models import StockState, SupplyPointCase
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
+from custom.ilsgateway.utils import get_supply_point_by_external_id
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun
 from custom.ilsgateway.tanzania.warehouse_updater import populate_report_data
@@ -88,11 +89,7 @@ def sync_product_stock_for_facility(domain, endpoint, facility, checkpoint, date
     has_next = True
     next_url = ""
     supply_point = facility
-    case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                key=[domain, str(supply_point)],
-                                reduce=False,
-                                include_docs=True,
-                                limit=1).first()
+    case = get_supply_point_by_external_id(domain, supply_point)
     if case:
         while has_next:
             meta, product_stocks = endpoint.get_productstocks(
@@ -149,11 +146,7 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
     has_next = True
     next_url = ""
     supply_point = facility
-    case = SupplyPointCase.view('hqcase/by_domain_external_id',
-                                key=[domain, str(supply_point)],
-                                reduce=False,
-                                include_docs=True,
-                                limit=1).first()
+    case = get_supply_point_by_external_id(domain, supply_point)
     if case:
         while has_next:
             meta, stocktransactions = endpoint.get_stocktransactions(next_url_params=next_url,
