@@ -168,10 +168,6 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
         return report
 
     @property
-    def report_type(self):
-        return self.type
-
-    @property
     def url(self):
         return reverse(self.slug, args=[self.domain, self.report_config_id])
 
