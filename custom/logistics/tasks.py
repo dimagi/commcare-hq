@@ -167,11 +167,8 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                     except StockReport.MultipleObjectsReturned:
                         # legacy
                         report = StockReport.objects.filter(**params)[0]
-                    try:
-                        sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
-                    except SQLProduct.DoesNotExist:
-                        # todo: kkrampa what's the deal with this logic? this should never be true
-                        continue
+
+                    sql_product = SQLProduct.objects.get(code=stocktransaction.product, domain=domain)
                     if stocktransaction.quantity != 0:
                         transactions_to_add.append(StockTransaction(
                             case_id=case._id,
