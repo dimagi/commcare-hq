@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+from urllib import urlencode
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import html
@@ -301,8 +302,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def query_string(self):
-        from urllib import urlencode
-
         params = {}
         if self._id != 'dummy':
             params['config_id'] = self._id
@@ -404,7 +403,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except Exception:
             pass
 
-        from urllib import urlencode
         from django.http import HttpRequest, QueryDict
         request = HttpRequest()
         request.couch_user = self.owner
