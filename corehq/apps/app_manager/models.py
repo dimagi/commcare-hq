@@ -768,13 +768,14 @@ class FormBase(DocumentSchema):
         self.add_stuff_to_xform(xform)
         return xform.render()
 
-    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups'])
+    @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False):
+                      include_groups=False, include_translations=False):
         return XForm(self.source).get_questions(
             langs=langs,
             include_triggers=include_triggers,
             include_groups=include_groups,
+            include_translations=include_translations,
         )
 
     @memoized
@@ -1137,7 +1138,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
         for type_, action in self.active_actions().items():
@@ -1361,6 +1365,7 @@ class Detail(IndexedSchema):
     custom_xml = StringProperty()
     use_case_tiles = BooleanProperty()
     persist_tile_on_forms = BooleanProperty()
+    pull_down_tile = BooleanProperty()
 
     def get_tab_spans(self):
         '''
@@ -1428,6 +1433,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin):
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
+    module_filter = StringProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1965,7 +1971,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
                 self.add_property_save(
@@ -2318,7 +2327,10 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {q['value']: FormQuestionResponse(q) for q in self.get_questions(self.get_app().langs)}
+        questions = {
+            q['value']: FormQuestionResponse(q)
+            for q in self.get_questions(self.get_app().langs, include_translations=True)
+        }
         meta = app_case_meta.get_type(self.case_type)
         for name, question_path in self.case_updates().items():
             self.add_property_save(
@@ -3284,7 +3296,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
-    # profile's schema is {'features': {}, 'properties': {}}
+    # profile's schema is {'features': {}, 'properties': {}, 'custom_properties': {}}
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
@@ -3492,6 +3504,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
         else:
             profile_url = self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true')
+
+        if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
+            app_profile['custom_properties'].update(self__profile['custom_properties'])
 
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -4135,7 +4150,7 @@ def get_apps_in_domain(domain, full=False, include_remote=True):
     return filter(remote_app_filter, wrapped_apps)
 
 
-def get_app(domain, app_id, wrap_cls=None, latest=False):
+def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
@@ -4160,17 +4175,30 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             parent_app_id = original_app['_id']
             min_version = -1
 
-        latest_app = get_db().view('app_manager/applications',
-            startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id, min_version],
+        if target == 'build':
+            # get latest-build regardless of star
+            couch_view = 'app_manager/saved_app'
+            startkey = [domain, parent_app_id, {}]
+            endkey = [domain, parent_app_id]
+        else:
+            # get latest starred-build
+            couch_view = 'app_manager/applications'
+            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
+            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
+
+        latest_app = get_db().view(
+            couch_view,
+            startkey=startkey,
+            endkey=endkey,
             limit=1,
             descending=True,
             include_docs=True
         ).one()
+
         try:
             app = latest_app['doc']
         except TypeError:
-            # If no starred builds, return act as if latest=False
+            # If no builds/starred-builds, return act as if latest=False
             app = original_app
     else:
         try:

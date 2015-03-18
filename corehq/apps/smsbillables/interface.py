@@ -24,6 +24,7 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
 )
+from couchexport.models import Format
 
 
 class SMSBillablesInterface(GenericTabularReport):
@@ -36,6 +37,7 @@ class SMSBillablesInterface(GenericTabularReport):
     ajax_pagination = True
     exportable = True
     exportable_all = True
+    export_format_override = Format.UNZIPPED_CSV
     fields = [
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -178,6 +180,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Specific Gateway"),
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
+            DataTablesColumn("Prefix"),
             DataTablesColumn("Fee (Amount, Currency)")
         )
 
@@ -197,6 +200,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
                 criteria.direction,
                 (criteria.country_code
                  if criteria.country_code is not None else "Any"),
+                criteria.prefix or "Any",
                 "%(amount)s %(currency)s" % {
                     'amount': str(gateway_fee.amount),
                     'currency': gateway_fee.currency.code,

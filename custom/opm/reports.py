@@ -39,16 +39,18 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColu
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
 from corehq.apps.reports.standard.maps import ElasticSearchMapReport
 from corehq.apps.reports.util import make_form_couch_key
-from corehq.apps.users.models import CommCareCase, CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.elastic import es_query
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
-from .utils import BaseMixin, normal_format, format_percent
+
+from .utils import (BaseMixin, normal_format, format_percent,
+                    get_matching_users, UserSqlData)
 from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
 from .health_status import HealthStatus, AWCHealthStatus
 from .incentive import Worker
-from .filters import (get_hierarchy, HierarchyFilter, MetHierarchyFilter,
+from .filters import (HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
 
@@ -478,6 +480,7 @@ class SharedDataProvider(object):
             # case_id might be for a deleted case :(
             if case_id in self.case_owners:
                 owner_id = self.case_owners[case_id]
+                owner_id = owner_id[0] if isinstance(owner_id, list) else owner_id
                 results[owner_id]['vhnd_available'].add(vhnd_date)
                 for prop in self.vhnd_form_props:
                     if source.get(prop, None) == '1':
@@ -630,7 +633,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                     type, exc, tb = sys.exc_info()
                     self._debug_data.append({
                         'case_id': row._id,
-                        'message': e,
+                        'message': repr(e),
                         'traceback': ''.join(traceback.format_tb(tb)),
                     })
         return rows
@@ -716,23 +719,16 @@ class CaseReportMixin(object):
     def case_status(self):
         return OpenCloseFilter.case_status(self.request_params)
 
+    @property
+    @memoized
+    def users_matching_filter(self):
+        return get_matching_users(self.awcs, self.gp, self.block)
+
     def get_rows(self, datespan):
-
-        def get_awc_filter(awcs):
-            return get_nested_terms_filter("awc_name.#value", awcs)
-
-        def get_gp_filter(gp):
-            owner_ids = [user._id for user in self.users
-                         if getattr(user, 'user_data', {}).get('gp') in self.gp]
-            return es_filters.term("owner_id", owner_ids)
-
-        def get_block_filter(block):
-            return es_filters.term("block_name.#value", block.lower())
-
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
-                .term("type.exact", self.default_case_type)
+                .case_type(self.default_case_type)
         query.index = 'report_cases'
 
         if self.case_status == 'open':
@@ -743,34 +739,13 @@ class CaseReportMixin(object):
         elif self.case_status == 'closed':
             query = query.filter(case_es.closed_range(lte=self.datespan.enddate_utc))
 
-        # TODO for consistency, we could always filter on awc using
-        # get_matching_awcs from the NewHealthStatusReport
-        if self.awcs:
-            query = query.filter(get_awc_filter(self.awcs))
-        elif self.gp:
-            query = query.filter(get_gp_filter(self.gp))
-        elif self.block:
-            query = query.filter(get_block_filter(self.block))
+        query = query.owner([user['doc_id'] for user in self.users_matching_filter])
 
         result = query.run()
 
-        def _final_filter(case_doc):
-            """
-            Because the ES filters are tokenized, we do a final in-memory filter ensuring exact matches.
-            This prevents issues with "Tetua Pasi Tola" cases showing up in "Tetua"
-
-            We can't do this in ES because we don't want to bother modifying the report_cases mapping.
-            See: http://www.elasticsearch.org/guide/en/elasticsearch/guide/current/_finding_exact_values.html
-            """
-            if self.awcs and case_doc.get('awc_name') not in self.awcs:
-                return False
-            elif self.block and case_doc.get('block_name') != self.block:
-                return False
-            return True
-
         return [
-            CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), result.ids)
-            if _final_filter(doc)
+            CommCareCase.wrap(doc)
+            for doc in iter_docs(CommCareCase.get_db(), result.ids)
         ]
 
     @property
@@ -894,9 +869,11 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
+        awc_codes = {user['awc']: user['awc_code']
+                     for user in UserSqlData().get_data()}
         for index, row in enumerate(self.get_rows(self.datespan), 1):
             try:
-                rows.append(self.get_row_data(row, index=1))
+                rows.append(self.get_row_data(row, index=1, awc_codes=awc_codes))
             except InvalidRow as e:
                 if self.debug:
                     import sys
@@ -904,17 +881,20 @@ class MetReport(CaseReportMixin, BaseReport):
                     type, exc, tb = sys.exc_info()
                     self._debug_data.append({
                         'case_id': row._id,
-                        'message': e,
+                        'message': repr(e),
                         'traceback': ''.join(traceback.format_tb(tb)),
                     })
         return rows
 
     def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 1))
+        return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
 
     def get_rows(self, datespan):
         result = super(MetReport, self).get_rows(datespan)
-        result.sort(key=lambda case: [case.block_name, case.village_name, case.awc_name])
+        result.sort(key=lambda case: [
+            case.get_case_property(prop)
+            for prop in ['block_name', 'village_name', 'awc_name']
+        ])
         return result
 
     @property
@@ -977,8 +957,7 @@ class MetReport(CaseReportMixin, BaseReport):
             if link_text:
                 row[self.column_index('name')] = link_text.group(1)
 
-        if 'hierarchy_awc' in self.request_params and self.request_params['hierarchy_awc'] != ['0']:
-            rows.sort(key=lambda r: [r[self.column_index('awc_name')], r[self.column_index('name')]])
+        rows.sort(key=lambda r: r[self.column_index('serial_number')])
 
         self.context['report_table'].update(
             rows=rows
@@ -1041,28 +1020,27 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             headers.append(DataTablesColumn(name=title, help_text=text))
         return DataTablesHeader(*headers)
 
-    def get_matching_awcs(self):
-        filter_on = 'awc' if self.awcs else 'gp' if self.gp else 'block'
-        for block, gps in get_hierarchy().items():
-            if not filter_on == 'block' or block == self.block:
-                for gp, awcs in gps.items():
-                    if not filter_on == 'gp' or gp in self.gp:
-                        for awc in awcs.keys():
-                            if not filter_on == 'awc' or awc in self.awcs:
-                                yield awc
-
+    @property
+    @memoized
     def awc_data(self):
         case_objects = self.row_objects + self.extra_row_objects
-        awcs = {awc: [] for awc in self.get_matching_awcs()}
-        # populate awcs with cases from that awc
+        cases_by_owner = {}
         for case_object in case_objects:
-            awc = case_object.awc_name
-            awcs[awc] = awcs.get(awc, []) + [case_object]
-        return awcs
+            owner_id = case_object.owner_id
+            cases_by_owner[owner_id] = cases_by_owner.get(owner_id, []) + [case_object]
+        return cases_by_owner
+
+    def iter_awcs(self):
+        for user in self.users_matching_filter:
+            yield AWCHealthStatus(
+                cases=self.awc_data.get(user['doc_id'], []),
+                awc=user['awc'],
+                awc_code=user['awc_code'],
+                gp=user['gp'],
+            )
 
     @property
     def rows(self):
-
         totals = [[None, None] for i in range(len(self.model.method_map))]
         def add_to_totals(col, val, denom):
             for i, num in enumerate([val, denom]):
@@ -1071,9 +1049,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     totals[col][i] = total + num if total is not None else num
 
         rows = []
-        awc_rows = [AWCHealthStatus(awc, cases)
-                    for awc, cases in self.awc_data().items()]
-        for awc in awc_rows:
+        for awc in self.iter_awcs():
             row = []
             for col, (method, __, __, denom) in enumerate(self.model.method_map):
                 val = getattr(awc, method)
@@ -1110,8 +1086,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
             return DataTablesHeader(*headers)
 
         def rows():
-            for awc_name, cases in self.awc_data().items():
-                awc = AWCHealthStatus(awc_name, cases)
+            for awc in self.iter_awcs():
                 row = []
                 for method, __, __, denom in self.model.method_map:
                     value = getattr(awc, method)
@@ -1202,82 +1177,6 @@ def this_month_if_none(month, year):
     else:
         this_month = datetime.datetime.now()
         return this_month.month, this_month.year
-
-
-def get_report(ReportClass, month=None, year=None, block=None, lang=None):
-    """
-    Utility method to run a report for an arbitrary month without a request
-    """
-    month, year = this_month_if_none(month, year)
-    class Report(ReportClass):
-        report_class = ReportClass
-        _visible_cols = []
-
-        def __init__(self, *args, **kwargs):
-            if ReportClass.__name__ in ["MetReport", "BeneficiaryPaymentReport"]:
-                self._slugs, self._headers, self._visible_cols = [
-                    list(tup) for tup in zip(*self.model.method_map)
-                ]
-                for idx, val in enumerate(self._headers):
-                    with localize(self.lang):
-                        self._headers[idx] = _(self._headers[idx])
-            elif ReportClass.__name__ == "IncentivePaymentReport":
-                self._slugs, self._headers, self._visible_cols = [list(tup) for tup in zip(*self.model.method_map)]
-            else:
-                self._slugs, self._headers = [list(tup) for tup in zip(*self.model.method_map)]
-
-        @property
-        def domain(self):
-            return DOMAIN
-
-        @property
-        def slugs(self):
-            return self._slugs
-
-        @property
-        def visible_cols(self):
-            return self._visible_cols
-
-        @property
-        def month(self):
-            return month
-
-        @property
-        def year(self):
-            return year
-
-        @property
-        def block(self):
-            return block
-
-        @property
-        def headers(self):
-            return self._headers
-
-        @property
-        def lang(self):
-            return lang
-
-        @property
-        def datespan(self):
-            return DateSpan.from_month(self.month, self.year)
-
-        @property
-        def filter_data(self):
-            return {}
-
-        @property
-        def request(self):
-            request = HttpRequest()
-            request.GET = QueryDict(None)
-            request.REQUEST = QueryDict(None)
-            return request
-
-        @property
-        def request_params(self):
-            return json_request({})
-
-    return Report()
 
 
 class HealthStatusReport(DatespanMixin, BaseReport):

@@ -85,9 +85,8 @@
                         <!-- make sure multiple references to the same property in one message get replaced -->
                         <!-- make sure output ref gets recognized as well as output value, from legacy handmade forms -->
                         <value>label es <output value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property" />
-                            <output value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property" />
-                            <output ref="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1" />
-                        </value>
+<output value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/nonexistent_child_property" />
+<output ref="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1" /></value>
 					</text>
 					<text id="question1-hint">
 						<value>hint message</value>

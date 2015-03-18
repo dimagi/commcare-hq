@@ -231,6 +231,8 @@ class NewLocationView(BaseLocationView):
 @domain_admin_required
 def archive_location(request, domain, loc_id):
     loc = Location.get(loc_id)
+    if loc.domain != domain:
+        raise Http404()
     loc.archive()
     return json_response({
         'success': True,
@@ -243,7 +245,13 @@ def archive_location(request, domain, loc_id):
 
 @domain_admin_required
 def unarchive_location(request, domain, loc_id):
-    loc = Location.get(loc_id)
+    # hack for circumventing cache
+    # which was found to be out of date, at least in one case
+    # http://manage.dimagi.com/default.asp?161454
+    # todo: find the deeper reason for invalid cache
+    loc = Location.get(loc_id, db=Location.get_db())
+    if loc.domain != domain:
+        raise Http404()
     loc.unarchive()
     return json_response({
         'success': True,
@@ -266,9 +274,13 @@ class EditLocationView(NewLocationView):
     @memoized
     def location(self):
         try:
-            return Location.get(self.location_id)
+            location = Location.get(self.location_id)
+            if location.domain != self.domain:
+                raise Http404()
         except ResourceNotFound:
             raise Http404()
+        else:
+            return location
 
     @property
     @memoized
@@ -363,7 +375,7 @@ class EditLocationView(NewLocationView):
               and toggles.PRODUCTS_PER_LOCATION.enabled(request.domain)):
             return self.products_form_post(request, *args, **kwargs)
         else:
-            raise Http404
+            raise Http404()
 
 
 class BaseSyncView(BaseLocationView):

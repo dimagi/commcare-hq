@@ -12,6 +12,7 @@ class CaseES(HQESQuery):
             closed_range,
             is_closed,
             case_type,
+            owner,
         ] + super(CaseES, self).builtin_filters
 
 
@@ -29,3 +30,7 @@ def is_closed(closed=True):
 
 def case_type(type_):
     return filters.term('type.exact', type_)
+
+
+def owner(owner_id):
+    return filters.term('owner_id', owner_id)

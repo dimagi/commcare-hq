@@ -15,7 +15,7 @@ is done using FormRepeater payload generators. See payload_generators.py for
 details.
 
 """
-from datetime import date
+from datetime import date, timedelta
 import logging
 import uuid
 from xml.etree import ElementTree
@@ -247,12 +247,10 @@ def gen_children_only_ours(domain):
             yield CommCareCase.wrap(doc)
 
 
-@periodic_task(run_every=crontab(minute=2, hour=2))  # Run daily at 02h02
+@periodic_task(run_every=timedelta(hours=6))  # Check for new cases on DHIS2 every 6 hours
 def fetch_cases():
     """
-    Create new child cases in CommCare for nutrition tracking, and associate
-    CommCare child cases with DHIS2 child entities and enroll them in the
-    Pediatric Nutrition Assessment and Underlying Risk Assessment programs.
+    Import new child cases from DHIS2 for nutrition tracking
     """
     for settings in Dhis2Settings.all_enabled():
         logger.info('DHIS2: Fetching cases for domain "%s" from "%s"', settings.domain, settings.dhis2['host'])

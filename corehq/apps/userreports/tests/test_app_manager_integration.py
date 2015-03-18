@@ -2,8 +2,8 @@ import json
 import os
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
-from corehq.apps.userreports.app_manager import get_case_data_sources, \
-    get_default_case_property_datatypes, get_form_data_sources
+from corehq.apps.userreports.app_manager import get_case_data_sources, get_form_data_sources
+from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
 
 
 class AppManagerDataSourceConfigTest(SimpleTestCase):
@@ -55,11 +55,11 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
             starred='yes',
             estimate='2',
         )
+
         def _get_column_property(column):
             return column.id if column.id != 'doc_id' else '_id'
 
-
-        default_case_property_datatypes = get_default_case_property_datatypes()
+        default_case_property_datatypes = DEFAULT_CASE_PROPERTY_DATATYPES
         [row] = data_source.get_all_values(sample_doc)
         for result in row:
             self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)

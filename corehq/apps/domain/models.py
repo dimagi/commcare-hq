@@ -1218,10 +1218,14 @@ class TransferDomainRequest(models.Model):
         html_content = render_to_string(
             "{template}.html".format(template=self.DIMAGI_CONFIRM_EMAIL),
             self.as_dict())
+        text_content = render_to_string(
+            "{template}.txt".format(template=self.DIMAGI_CONFIRM_EMAIL),
+            self.as_dict())
 
         send_HTML_email(_(u'There has been a transfer of ownership of {domain}').format(domain=self.domain),
                         self.DIMAGI_CONFIRM_ADDRESS,
-                        html_content)
+                        html_content,
+                        text_content=text_content)
 
     def as_dict(self):
         return {
