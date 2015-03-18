@@ -119,6 +119,8 @@ def get_expanded_columns(data_source_configuration, column_config):
     except:
         session.rollback()
         raise
+    finally:
+        session.close()
 
     columns = []
     for val in distinct_values:
