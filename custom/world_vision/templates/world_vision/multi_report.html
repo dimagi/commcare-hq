@@ -5,7 +5,11 @@
 
 {% block js %}{{ block.super }}
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="{% static "world_vision/css/world_vision.css" %}">
+    {% if rendered_as == 'print' %}
+        <link rel="stylesheet" href="{% static "world_vision/css/world_vision_print.css" %}">
+    {% else %}
+        <link rel="stylesheet" href="{% static "world_vision/css/world_vision.css" %}">
+    {% endif %}
     <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
 {% endblock %}
