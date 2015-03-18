@@ -426,7 +426,7 @@ class EWSApi(APISynchronization):
             else:
                 couch_location_id = None
             if couch_location_id:
-                sms_user.location_id = couch_location_id
+                sms_user.set_location(couch_location_id)
                 sms_user.save()
 
         if ews_smsuser.role == 'facility_manager':
