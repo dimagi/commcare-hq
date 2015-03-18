@@ -73,8 +73,12 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
         # todo: see if we can avoid modifying the list of facilities in place
         if idx == 0:
             facilities = facilities_copy
-    save_stock_data_checkpoint(checkpoint, 'product_stock', 100, 0, None, None)
 
+    # reset the checkpoint for the next migration
+    save_stock_data_checkpoint(checkpoint, 'product_stock', offset=100, limit=0, date=checkpoint.start_date,
+                               external_id=None, commit=False)
+    checkpoint.start_date = None
+    checkpoint.save()
 
 @task
 def sms_users_fix(api):
