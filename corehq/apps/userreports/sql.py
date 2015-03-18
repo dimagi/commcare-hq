@@ -1,5 +1,4 @@
 import hashlib
-from sqlagg import CustomQueryColumn, QueryMeta, SimpleSqlColumn, SumWhen
 import sqlalchemy
 from django.conf import settings
 from sqlalchemy.exc import IntegrityError
@@ -101,66 +100,4 @@ def get_table_name(domain, table_id):
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
 
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
-
-
-class ExpandColumnMeta(QueryMeta):
-
-    def __init__(self, table_name, filters, group_by):
-        super(ExpandColumnMeta, self).__init__(table_name, filters, group_by)
-        self.columns = []
-
-    def append_column(self, column):
-        self.columns.append(column.sql_column)
-
-    @property
-    def group_columns(self):
-        group_cols = []
-        if self.group_by:
-            groups = list(self.group_by)
-            for g in groups:
-                group_cols.append(SimpleSqlColumn(g, aggregate_fn=None, alias=g))
-        return group_cols
-
-    def execute(self, metadata, connection, filter_values):
-        # TODO: Do it all in one query
-        # TODO: Should I be using the column aliases anywhere here?
-
-        table = metadata.tables[self.table_name]
-
-        distinct_values = {}
-        for c in self.columns:
-            query = sqlalchemy.select().distinct()
-            query.append_column(c.build_column(table))
-            result = connection.execute(query, **filter_values).fetchall()
-            distinct_values[c.column_name] = [v[0] for v in result]
-
-        query = sqlalchemy.select()
-
-        for c in self.columns:
-            for val in distinct_values[c.column_name]:
-                query.append_column(SumWhen(
-                    c.column_name,
-                    whens={val: 1},
-                    alias="{}-{}".format(c.alias, val),
-                    else_=0
-                ).sql_column.build_column(table))
-
-        for c in self.group_columns:
-            query.append_column(c.build_column(table))
-        for grp in self.group_by:
-            query.append_group_by(table.c[grp])
-
-        return connection.execute(query, **filter_values).fetchall()
-
-
-class ExpandColumn(CustomQueryColumn):
-    """
-    Custom Column that "expands".
-    """
-    query_cls = ExpandColumnMeta
-    name = "expand"
-
-    # TODO: overwrite self.sql_column ??
-    # TODO: overwrite self.column_key ??
-
 
