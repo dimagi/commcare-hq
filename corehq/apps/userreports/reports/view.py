@@ -153,10 +153,16 @@ class ConfigurableReport(JSONResponseMixin, TemplateView):
 
     @property
     def type(self):
+        """
+        Used to populate ReportConfig.report_type
+        """
         return self.prefix
 
     @property
     def sub_slug(self):
+        """
+        Used to populate ReportConfig.subreport_slug
+        """
         return self.report_config_id
 
     @classmethod
