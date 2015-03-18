@@ -108,13 +108,17 @@ def get_table_name(domain, table_id):
 def get_expanded_columns(data_source_configuration, column_config):
 
     session = Session()
-    connection = session.connection()
-    table = get_indicator_table(data_source_configuration)
-    column = table.c[column_config.field]
-    query = sqlalchemy.select([column]).distinct()
+    try:
+        connection = session.connection()
+        table = get_indicator_table(data_source_configuration)
+        column = table.c[column_config.field]
 
-    result = connection.execute(query).fetchall()
-    distinct_values = [x[0] for x in result]
+        query = sqlalchemy.select([column]).distinct()
+        result = connection.execute(query).fetchall()
+        distinct_values = [x[0] for x in result]
+    except:
+        session.rollback()
+        raise
 
     columns = []
     for val in distinct_values:
