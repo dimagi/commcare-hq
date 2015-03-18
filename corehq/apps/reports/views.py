@@ -683,11 +683,17 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
 
     user_id = request.couch_user._id
 
-    configs = ReportConfig.by_domain_and_owner(domain, user_id)
-    config_choices = [(c._id, c.full_name) for c in configs if c.report and c.report.emailable]
+    configs = [
+        c for c in ReportConfig.by_domain_and_owner(domain, user_id)
+        if c.report and c.report.emailable
+    ]
 
-    if not config_choices:
+    if not configs:
         return render(request, template, context)
+
+    display_privacy_disclaimer = any(c.is_configurable_report for c in configs)
+
+    config_choices = [(c._id, c.full_name) for c in configs]
 
     web_users = WebUser.view('users/web_users_by_domain', reduce=False,
                                key=domain, include_docs=True).all()
@@ -713,7 +719,11 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
     initial['recipient_emails'] = ', '.join(initial['recipient_emails'])
 
     kwargs = {'initial': initial}
-    args = (request.POST,) if request.method == "POST" else ()
+    args = (
+        (display_privacy_disclaimer, request.POST)
+        if request.method == "POST"
+        else (display_privacy_disclaimer,)
+    )
     form = ScheduledReportForm(*args, **kwargs)
 
     form.fields['config_ids'].choices = config_choices

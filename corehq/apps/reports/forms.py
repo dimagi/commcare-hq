@@ -1,8 +1,9 @@
 from django import forms
 from django.core.validators import MinLengthValidator
+from django.template.loader import render_to_string
 from corehq.apps.style.forms.fields import MultiEmailField
+from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from .models import (
     ReportConfig,
     ReportNotification,
@@ -110,11 +111,25 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, display_privacy_disclaimer, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
-        self.helper.add_input(Submit('submit_btn', 'Submit'))
+        self.helper.add_layout(
+            crispy.Layout(
+                'config_ids',
+                'interval',
+                'day',
+                'hour',
+                'send_to_owner',
+                'attach_excel',
+                'recipient_emails',
+                crispy.HTML(
+                    render_to_string('reports/partials/privacy_disclaimer.html')
+                ) if display_privacy_disclaimer else None
+            )
+        )
+        self.helper.add_input(crispy.Submit('submit_btn', 'Submit'))
 
         super(ScheduledReportForm, self).__init__(*args, **kwargs)
 
