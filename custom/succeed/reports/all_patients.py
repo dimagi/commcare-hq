@@ -244,6 +244,11 @@ class PatientListReport(CustomProjectReport, CaseListReport):
 
     @property
     @memoized
+    def groups(self):
+        return Group.by_domain(SUCCEED_DOMAIN)
+
+    @property
+    @memoized
     def es_results(self):
         q = { "query": {
                 "filtered": {
@@ -361,7 +366,7 @@ class PatientListReport(CustomProjectReport, CaseListReport):
             user_ids = {}
 
             users = []
-            for g in Group.by_domain(SUCCEED_DOMAIN):
+            for g in self.groups:
                 ids_and_names.update({g.get_id: g.name})
                 for user in g.users:
                     users.append(user)

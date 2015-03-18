@@ -122,14 +122,10 @@ class PatientInteractionsReport(PatientDetailsReport):
             for v in val:
                 case_data = ret['patient'][v] if v in ret['patient'] else ''
                 if key == 'Status:':
-                    if case_data == 'at-goal':
-                        case_data = 'At Goal'
-                    elif case_data == 'not-at-goal':
-                        case_data = 'Not at Goal'
-                    elif case_data == 'not-relevant':
-                        case_data == 'Not Relevant'
+                    if case_data:
+                        case_data = case_data.replace('-', ' ').title()
                     else:
-                        case_data == EMPTY_FIELD
+                        case_data = EMPTY_FIELD
                 data.append(case_data)
             rows.append(data)
 
