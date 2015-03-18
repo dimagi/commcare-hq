@@ -445,7 +445,7 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def _report_aggregation_cols(self):
-        return []
+        return ['doc_id']
 
     @property
     def _report_columns(self):
@@ -496,15 +496,18 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         )
 
     @property
+    def aggregation_field(self):
+        return self.cleaned_data["group_by"]
+
+    @property
     def _report_aggregation_cols(self):
-        agg = self.cleaned_data["group_by"]
         return [
-            self.data_source_properties[agg]['column_id']
+            self.data_source_properties[self.aggregation_field]['column_id']
         ]
 
     @property
     def _report_charts(self):
-        agg_col = self.data_source_properties[self.cleaned_data["group_by"]]['column_id']
+        agg_col = self.data_source_properties[self.aggregation_field]['column_id']
         return [{
             "type": "multibar",
             "x_axis_column": agg_col,
@@ -513,9 +516,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        agg_id = self.cleaned_data["group_by"]
-        agg_col_id = self.data_source_properties[agg_id]['column_id']
-        agg_disp = self.data_source_properties[agg_id]['text']
+        agg_col_id = self.data_source_properties[self.aggregation_field]['column_id']
+        agg_disp = self.data_source_properties[self.aggregation_field]['text']
         return [
             {
                 "format": "default",
@@ -542,7 +544,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
     @property
     def _report_charts(self):
-        agg = self.data_source_properties[self.cleaned_data["group_by"]]['column_id']
+        agg = self.data_source_properties[self.aggregation_field]['column_id']
         return [{
             "type": "pie",
             "aggregation_column": agg,
@@ -604,25 +606,29 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_columns(self):
-        # TODO: Make columns "expand" (will probably involve adding a new attribute to Report Column specs)
-        columns = super(ConfigureTableReportForm, self)._report_charts
-        agg_id = self.cleaned_data["group_by"]
-        agg_col_id = self.data_source_properties[agg_id]['column_id']
-        agg_disp = self.data_source_properties[agg_id]['text']
-        return columns + [
-            {
-                "format": "default",
-                "aggregation": "simple",
-                "field": agg_col_id,
-                "type": "field",
-                "display": agg_disp
-            }
-        ]
+        agg_col_id = self.data_source_properties[self.aggregation_field]['column_id']
+
+        columns = super(ConfigureTableReportForm, self)._report_columns
+        # Expand all columns except for the column being used for aggregation.
+        for c in columns:
+            if c['field'] != agg_col_id:
+                c['aggregation'] = "expand"
+        return columns
 
 
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
-    # It's a ConfigureTableReportForm, but where the group by has been chosen.
-    # TODO: Set the group_by to worker or whatever
+    # It's a ConfigureTableReportForm, but with a predetermined aggregation
+
+    def __init__(self, *args, **kwargs):
+        super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
+        self.fields.pop('group_by')
+
+    @property
+    def aggregation_field(self):
+        if self.source_type == "form":
+            return "username"
+        if self.source_type == "case":
+            return "user_id"
 
     @property
     def top_fieldset(self):
