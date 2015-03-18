@@ -126,14 +126,10 @@ def get_expanded_columns(table_name, column_config):
                 column_config.field,
                 whens={val: 1},
                 else_=0,
-                # TODO: What is the proper alias?
-                # It looks like this alias needs to match data_slug
-                alias=u"{}-{}".format(column_config.field, val),
+                alias=u"{}-{}".format(column_config.report_column_id, val),
             ),
             sortable=False,
-            # TODO: Should this be column_config.report_column_id?
-            # It looks like this data_slug needs to match alias
-            data_slug=u"{}-{}".format(column_config.field, val),
+            data_slug=u"{}-{}".format(column_config.report_column_id, val),
             format_fn=column_config.get_format_fn(),
             help_text=column_config.description
         ))
