@@ -59,7 +59,7 @@ class ConfigurableReportDataSource(SqlData):
         ret = []
         for conf in self.column_configs:
             if conf.aggregation == "expand":
-                ret += get_expanded_columns(self.table_name, self.filters, self.filter_values, conf)
+                ret += get_expanded_columns(self.table_name, conf)
             else:
                 ret.append(conf.get_sql_column())
         return ret

@@ -105,7 +105,7 @@ def get_table_name(domain, table_id):
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
 
 
-def get_expanded_columns(table_name, filters, filter_values, column_config):
+def get_expanded_columns(table_name, column_config):
 
     session = Session()
     connection = session.connection()
@@ -115,7 +115,7 @@ def get_expanded_columns(table_name, filters, filter_values, column_config):
     column = metadata.tables[table_name].c[column_config.get_sql_column().view.name]
     query = sqlalchemy.select([column]).distinct()
 
-    result = connection.execute(query, filter_values).fetchall()
+    result = connection.execute(query).fetchall()
     distinct_values = [x[0] for x in result]
 
     columns = []
