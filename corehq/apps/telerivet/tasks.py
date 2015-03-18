@@ -1,8 +1,9 @@
-from corehq.apps.telerivet.models import TelerivetBackend
+from corehq.apps.telerivet.models import TelerivetBackend, IncomingRequest
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.ivr.api import incoming as incoming_ivr
 from celery.task import task
+from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
 EVENT_INCOMING = "incoming_message"
@@ -16,6 +17,28 @@ CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
 
 @task(queue=CELERY_QUEUE)
 def process_incoming_message(*args, **kwargs):
+    try:
+        log = IncomingRequest(
+            event=kwargs["event"],
+            message_id=kwargs["message_id"],
+            message_type=kwargs["message_type"],
+            content=kwargs["content"],
+            from_number=kwargs["from_number"],
+            from_number_e164=kwargs["from_number_e164"],
+            to_number=kwargs["to_number"],
+            time_created=kwargs["time_created"],
+            time_sent=kwargs["time_sent"],
+            contact_id=kwargs["contact_id"],
+            phone_id=kwargs["phone_id"],
+            service_id=kwargs["service_id"],
+            project_id=kwargs["project_id"],
+            secret=kwargs["secret"],
+        )
+        log.save()
+    except Exception as e:
+        notify_exception(None, "Could not save Telerivet log entry")
+        pass
+
     backend = TelerivetBackend.by_webhook_secret(kwargs["secret"])
     if backend is None:
         # Ignore the message if the webhook secret is not recognized
