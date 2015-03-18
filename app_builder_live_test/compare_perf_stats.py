@@ -13,7 +13,7 @@ def get_stats(path, build_slug):
 
 
 def avg(vals):
-    return float(sum(vals))/len(vals)
+    return float(sum(vals)) / len(vals)
 
 
 def avg_dict(data):
@@ -54,7 +54,7 @@ def compare_stats(stats1, stats2):
             return 100
 
         stats_item2 = stats2[slug]
-        diff =  stats_item2[stat] - stats_item1[stat]
+        diff = stats_item2[stat] - stats_item1[stat]
         percent = float(diff) / stats_item1[stat]
         return {
             '%': percent,
