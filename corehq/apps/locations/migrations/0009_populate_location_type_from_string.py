@@ -85,8 +85,13 @@ class Migration(DataMigration):
 
     def backwards(self, orm):
         """
-        The forward migration is non-destructive, so no reverse is necessary.
+        Populate the tmp_location_type field based on the location_type object
         """
+        for loc in orm.SQLLocation.objects.iterator():
+            loc_type_str = loc.location_type.name if loc.location_type else ''
+            if loc_type_str and loc_type_str != loc.tmp_location_type:
+                loc.tmp_location_type = loc_type_str
+                loc.save()
 
     models = {
         u'locations.locationtype': {
