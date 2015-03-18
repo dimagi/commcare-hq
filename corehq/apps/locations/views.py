@@ -148,7 +148,7 @@ class LocationSettingsView(BaseCommTrackManageView):
                 messages.warning(request,
                                  err.format(code=code, new_code=cleaned_code))
 
-            location_type.code = code
+            location_type.code = cleaned_code
             location_type.administrative = administrative
             location_type.parent_type = parent
             location_type.shares_cases = shares_cases
