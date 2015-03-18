@@ -109,7 +109,7 @@ class DataSourceBuilder(object):
         for prop in self.data_source_properties.values():
             if prop['type'] == 'meta':
                 ret.append(make_form_meta_block_indicator(
-                    prop['source'][0], prop['source'][1]
+                    prop['source'], prop['column_id']
                 ))
             elif prop['type'] == "question":
                 ret.append(make_form_question_indicator(
