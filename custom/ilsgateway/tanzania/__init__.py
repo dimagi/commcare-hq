@@ -1,11 +1,19 @@
+from datetime import datetime
+from dateutil import rrule
+from dateutil.relativedelta import relativedelta
+import pytz
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.sqlreport import SqlTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from couchexport.models import Format
 from custom.common import ALL_OPTION
+from custom.ilsgateway.filters import MonthAndQuarterFilter
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
+from dimagi.utils.dates import DateSpan, DEFAULT_DATE_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 from custom.ilsgateway.tanzania.reports.utils import make_url
 from django.utils import html
@@ -79,6 +87,7 @@ class ILSData(object):
         sum_all = 0
         colors = []
         if data:
+            data = data[0]
             for key in self.vals_config[data.title]:
                 if getattr(data, key, None):
                     sum_all = sum_all + getattr(data, key)
@@ -107,7 +116,73 @@ class ILSMixin(object):
     report_delivery_url = None
 
 
-class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin):
+class ILSDateSpan(DateSpan):
+
+    @classmethod
+    def from_month_or_quarter(cls, month_or_quarter=None, year=None, format=DEFAULT_DATE_FORMAT,
+                              inclusive=True, timezone=pytz.utc):
+        """
+        Generate a DateSpan object given a numerical month and year.
+        Both are optional and default to the current month/year.
+
+            april = DateSpan.from_month(04, 2013)
+            First Quarter: DateSpan.from_month(-1, 2015)
+        """
+        if month_or_quarter is None:
+            month_or_quarter = datetime.datetime.date.today().month
+        if year is None:
+            year = datetime.datetime.date.today().year
+        assert isinstance(month_or_quarter, int) and isinstance(year, int)
+        if month_or_quarter < 0:
+            quarters = list(rrule.rrule(rrule.MONTHLY,
+                                        bymonth=(1, 4, 7, 10),
+                                        bysetpos=-1,
+                                        dtstart=datetime(year, 1, 1),
+                                        count=5))
+
+            start = quarters[month_or_quarter * (-1) - 1]
+            end = quarters[month_or_quarter * (-1)] - relativedelta(days=1)
+        else:
+            start = datetime(year, month_or_quarter, 1)
+            end = start + relativedelta(months=1) - relativedelta(days=1)
+        return DateSpan(start, end, format, inclusive, timezone)
+
+
+class MonthQuarterYearMixin(object):
+    """
+        Similar to DatespanMixin, but works with MonthAndQuarterFilter and YearField
+        months = 1:12
+        quarters = -1:-4
+    """
+    fields = [MonthAndQuarterFilter, YearFilter]
+    _datespan = None
+
+    @property
+    def datespan(self):
+        if self._datespan is None:
+            datespan = ILSDateSpan.from_month_or_quarter(self.month_or_quater, self.year)
+            self.request.datespan = datespan
+            self.context.update(dict(datespan=datespan))
+            self._datespan = datespan
+        return self._datespan
+
+    @property
+    def month_or_quater(self):
+        if 'month' in self.request_params:
+            return int(self.request_params['month'])
+        else:
+            return datetime.now().month
+
+    @property
+    def year(self):
+        if 'year' in self.request_params:
+            return int(self.request_params['year'])
+        else:
+            return datetime.now().year
+
+
+class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
+                  ProjectReportParametersMixin, MonthQuarterYearMixin):
     title = ''
     report_template_path = "ilsgateway/multi_report.html"
     flush_layout = True
@@ -115,6 +190,13 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
     use_datatables = False
     exportable = False
     base_template = 'ilsgateway/base_template.html'
+
+    @property
+    def location(self):
+        if hasattr(self, 'request') and self.request.GET.get('location_id', ''):
+            return SQLLocation.objects.get(location_id=self.request.GET.get('location_id', ''))
+        else:
+            return None
 
     @property
     @memoized
@@ -134,7 +216,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
 
         config = dict(
             domain=self.domain,
-            org_summary=org_summary[0] if len(org_summary) > 0 else None,
+            org_summary=org_summary if len(org_summary) > 0 else None,
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
             month=self.request_params['month'] if 'month' in self.request_params else '',
@@ -152,15 +234,20 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
             if program and program != ALL_OPTION:
                 products_list = self.request.GET.getlist('filter_by_product')
                 if products_list and products_list[0] == ALL_OPTION:
-                    products = SQLProduct.objects.filter(program_id=program).values_list('product_id', flat=True)
+                    products = SQLProduct.objects.filter(program_id=program, is_archived=False)\
+                        .order_by('code')\
+                        .values_list('product_id', flat=True)
                     prd_part_url = '&filter_by_product=%s' % ALL_OPTION
                 else:
-                    products = [SQLProduct.objects.get(pk=product).product_id for product in products_list]
+                    products = [SQLProduct.objects.get(pk=product, is_archived=False).order_by('code').product_id
+                                for product in products_list]
                     prd_part_url = "".join(["&filter_by_product=%s" % product for product in products_list])
 
             else:
-                products = SQLProduct.objects.all().values_list('product_id', flat=True)
-                prd_part_url = ""
+                products = SQLProduct.objects.filter(domain=self.domain, is_archived=False)\
+                    .values_list('product_id', flat=True)\
+                    .order_by('code')
+                prd_part_url = "&filter_by_product="
             config.update(dict(products=products, program=program, prd_part_url=prd_part_url))
 
         return config
@@ -197,6 +284,7 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport, ProjectReport
                 total_row=total_row,
                 start_at_row=0,
                 subtitle=data_provider.subtitle,
+                location=self.location.id if self.location else '',
             ),
             show_table=data_provider.show_table,
             show_chart=data_provider.show_chart,
@@ -251,6 +339,10 @@ class DetailsReport(MultiReport):
         return True
 
     @property
+    def with_tabs(self):
+        return self.location and self.location.location_type == 'FACILITY'
+
+    @property
     def report_context(self):
         context = super(DetailsReport, self).report_context
         if 'location_id' in self.request_params:
@@ -265,42 +357,34 @@ class DetailsReport(MultiReport):
             )
         return context
 
+    def ils_make_url(self, cls):
+        params = '?location_id=%s&month=%s&year=%s&filter_by_program=%s&msd=%s&'
+        return make_url(cls, self.domain, params, (
+            self.request.GET.get('location_id'),
+            self.request.GET.get('month'),
+            self.request.GET.get('year'),
+            self.request.GET.get('filter_by_program'),
+            self.request.GET.get('msd')
+        )
+        ) + self.report_config['prd_part_url']
+
+
     @property
     def report_stockonhand_url(self):
         from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
-        return html.escape(make_url(StockOnHandReport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
+        return html.escape(self.ils_make_url(StockOnHandReport))
 
     @property
     def report_rand_url(self):
         from custom.ilsgateway.tanzania.reports.randr import RRreport
-        return html.escape(make_url(RRreport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
+        return html.escape(self.ils_make_url(RRreport))
 
     @property
     def report_supervision_url(self):
         from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-        return html.escape(make_url(SupervisionReport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
+        return html.escape(self.ils_make_url(SupervisionReport))
 
     @property
     def report_delivery_url(self):
         from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
-        return html.escape(make_url(DeliveryReport,
-                                    self.domain,
-                                    '?location_id=%s&month=%s&year=%s',
-                                    (self.request_params['location_id'],
-                                     self.request_params['month'],
-                                     self.request_params['year'])))
+        return html.escape(self.ils_make_url(DeliveryReport))

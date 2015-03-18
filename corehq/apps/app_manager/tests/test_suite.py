@@ -303,6 +303,35 @@ class SuiteTest(SimpleTestCase, TestFileMixin):
         form.form_filter = "./edd = '123'"
         self.assertXmlEqual(self.get_xml('form-filter'), app.create_suite())
 
+    def test_module_filter(self):
+        """
+        Ensure module filter gets added correctly
+        """
+        json = self.get_json('suite-workflow')
+        json['build_spec']['version'] = '2.20.0'
+
+        app = Application.wrap(json)
+        module = app.get_module(1)
+        module.module_filter = "/mod/filter = '123'"
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter'),
+            app.create_suite(),
+            "./menu[@id='m1']"
+        )
+
+    def test_module_filter_with_session(self):
+        json = self.get_json('suite-workflow')
+        json['build_spec']['version'] = '2.20.0'
+
+        app = Application.wrap(json)
+        module = app.get_module(1)
+        module.module_filter = "./user/mod/filter = '123'"
+        self.assertXmlPartialEqual(
+            self.get_xml('module-filter-user'),
+            app.create_suite(),
+            "./menu[@id='m1']"
+        )
+
     def test_tiered_select_with_advanced_module_as_parent(self):
         app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
 

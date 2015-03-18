@@ -891,7 +891,10 @@ class MetReport(CaseReportMixin, BaseReport):
 
     def get_rows(self, datespan):
         result = super(MetReport, self).get_rows(datespan)
-        result.sort(key=lambda case: [case.block_name, case.village_name, case.awc_name])
+        result.sort(key=lambda case: [
+            case.get_case_property(prop)
+            for prop in ['block_name', 'village_name', 'awc_name']
+        ])
         return result
 
     @property
