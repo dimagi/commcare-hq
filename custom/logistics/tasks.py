@@ -170,7 +170,17 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                     except SQLProduct.DoesNotExist:
                         # todo: kkrampa what's the deal with this logic? this should never be true
                         continue
-
+                    if stocktransaction.quantity != 0:
+                        transactions_to_add.append(StockTransaction(
+                            case_id=case._id,
+                            product_id=sql_product.product_id,
+                            sql_product=sql_product,
+                            section_id=section_id,
+                            type='receipts' if stocktransaction.quantity > 0 else 'consumption',
+                            stock_on_hand=Decimal(stocktransaction.ending_balance),
+                            quantity=Decimal(stocktransaction.quantity),
+                            report=report
+                        ))
                     transactions_to_add.append(StockTransaction(
                         case_id=case._id,
                         product_id=sql_product.product_id,
