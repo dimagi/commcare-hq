@@ -691,6 +691,7 @@ class FluffPillow(PythonPillow):
     domains = None
     doc_type = None
     save_direct_to_sql = False
+    delete_filtered = False  # delete docs not matching filter
 
     # see explanation in IndicatorDocument for how this is used
     deleted_types = ()
@@ -726,7 +727,10 @@ class FluffPillow(PythonPillow):
         doc = ReadOnlyObject(doc)
 
         if self.document_filter and not self.document_filter.filter(doc):
-            return None
+            if self.delete_filtered:
+                delete = True
+            else:
+                return None
 
         indicator_id = '%s-%s' % (self.indicator_class.__name__, doc.get_id)
 
