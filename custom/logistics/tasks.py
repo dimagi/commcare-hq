@@ -13,7 +13,8 @@ from custom.ilsgateway import TEST
 from custom.logistics.commtrack import save_stock_data_checkpoint, synchronization
 from custom.logistics.models import StockDataCheckpoint
 from celery.task.base import task
-from custom.logistics.utils import get_supply_point_by_external_id
+from custom.logistics.utils import get_supply_point_by_external_id, get_reporting_types
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import force_to_datetime
 
 
@@ -41,10 +42,11 @@ def stock_data_task(domain, endpoint, apis, test_facilities=None):
     if TEST:
         facilities = test_facilities
     else:
-        facilities = SQLLocation.objects.filter(
+        supply_points_ids = SQLLocation.objects.filter(
             domain=domain,
-            location_type__iexact='FACILITY'
-        ).order_by('created_at').values_list('external_id', flat=True)
+            location_type__in=get_reporting_types(domain)
+        ).order_by('created_at').values_list('supply_point_id', flat=True)
+        facilities = [doc['external_id'] for doc in iter_docs(SupplyPointCase.get_db(), supply_points_ids)]
 
     facilities_copy = list(facilities)
 
