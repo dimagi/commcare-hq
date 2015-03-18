@@ -1368,6 +1368,27 @@ class SuiteGenerator(SuiteGeneratorBase):
             'case_autoload.{0}.case_missing'.format(mode),
         )
 
+    def get_new_case_id_datums(self, form):
+        if not form:
+            return []
+
+        datums = []
+        if form.form_type == 'module_form':
+            actions = form.active_actions()
+            if 'open_case' in actions:
+                datums.append(SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'))
+
+            if 'subcases' in actions:
+                non_repeat_actions = [a for a in actions['subcases'] if not a.repeat_context]
+                for i, subcase in enumerate(non_repeat_actions):
+                    datums.append(SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'))
+        elif form.form_type == 'advanced_form':
+            for action in form.actions.get_open_actions():
+                if not action.repeat_context:
+                    datums.append(SessionDatum(id=action.case_session_var, function='uuid()'))
+
+        return datums
+
     def configure_entry_as_case_list_form(self, form, entry):
         target_module = form.case_list_module
         if form.form_type == 'module_form':
@@ -1407,24 +1428,14 @@ class SuiteGenerator(SuiteGeneratorBase):
                         return True
             return False
 
-        def add_subcase_datums(form):
-            actions = form.active_actions()
-            if 'subcases' in actions:
-                non_repeat_actions = [a for a in actions['subcases'] if not a.repeat_context]
-                for i, subcase in enumerate(non_repeat_actions):
-                    e.datums.append(SessionDatum(id=form.session_var_for_action('subcase', i), function='uuid()'))
-
         if not form or form.requires_case():
             self.configure_entry_module(module, e, use_filter=True)
-            add_subcase_datums(form)
-        elif form:
-            opens_case = 'open_case' in form.active_actions()
-            if opens_case:
-                e.datums.append(SessionDatum(id=form.session_var_for_action('open_case'), function='uuid()'))
-                if form.is_case_list_form:
-                    self.configure_entry_as_case_list_form(form, e)
+        elif form and 'open_case' in form.active_actions() and form.is_case_list_form:
+            self.configure_entry_as_case_list_form(form, e)
 
-            add_subcase_datums(form)
+        datums = self.get_new_case_id_datums(form)
+        for datum in datums:
+            e.datums.append(datum)
 
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
@@ -1641,9 +1652,9 @@ class SuiteGenerator(SuiteGeneratorBase):
             except IndexError:
                 pass
 
-        for action in form.actions.get_open_actions():
-            if not action.repeat_context:
-                e.datums.append(SessionDatum(id=action.case_session_var, function='uuid()'))
+        datums = self.get_new_case_id_datums(form)
+        for datum in datums:
+            e.datums.append(datum)
 
         if form.is_registration_form() and form.is_case_list_form:
             self.configure_entry_as_case_list_form(form, e)
