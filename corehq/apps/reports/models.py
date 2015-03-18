@@ -469,7 +469,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReport
-        return type(self._dispatcher) == ConfigurableReport
+        return isinstance(self._dispatcher, ConfigurableReport)
 
 
 class UnsupportedScheduledReportError(Exception):
