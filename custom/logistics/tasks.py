@@ -182,7 +182,6 @@ def sync_stock_transactions_for_facility(domain, endpoint, facility, xform, chec
                     ))
                     products_saved.add(sql_product.product_id)
 
-
             if transactions_to_add:
                 # Doesn't send signal
                 StockTransaction.objects.bulk_create(transactions_to_add)
