@@ -75,3 +75,10 @@ class CommCareFeatureSupportMixin(object):
         Post form workflow is supported by apps version 2.9 or higher
         """
         return self._require_minimum_version('2.9')
+
+    @property
+    def enable_module_filtering(self):
+        """
+        Filtering modules is supported by apps version 2.20 or higher
+        """
+        return self._require_minimum_version('2.20')
