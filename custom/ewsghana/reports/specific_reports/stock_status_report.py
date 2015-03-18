@@ -95,7 +95,7 @@ class ProductAvailabilityData(EWSData):
             chart.rotateLabels = -45
             chart.marginBottom = 120
             chart.stacked = False
-            chart.tooltipFormat=" on "
+            chart.tooltipFormat = " on "
             chart.forceY = [0, 1]
             for row in convert_product_data_to_stack_chart(product_availability, self.chart_config):
                 chart.add_dataset(row['label'], [
