@@ -1,5 +1,5 @@
 from StringIO import StringIO
-from copy import deepcopy
+from copy import copy
 import os
 import json
 import tempfile
@@ -494,7 +494,7 @@ class AddSavedReportConfigView(View):
         if not self.saved_report_config_form.is_valid():
             return HttpResponseBadRequest()
 
-        update_config_data = deepcopy(self.saved_report_config_form.cleaned_data)
+        update_config_data = copy(self.saved_report_config_form.cleaned_data)
         del update_config_data['_id']
         update_config_data.update({
             'filters': self.filters,
@@ -544,7 +544,7 @@ class AddSavedReportConfigView(View):
 
     @property
     def filters(self):
-        filters = deepcopy(self.post_data.get('filters', {}))
+        filters = copy(self.post_data.get('filters', {}))
         for field in ['startdate', 'enddate']:
             if field in filters:
                 del filters[field]
