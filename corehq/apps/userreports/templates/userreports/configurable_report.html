@@ -56,6 +56,7 @@
 
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = {{ default_config|JSON }};
+        defaultConfig.date_range = null;
         $("#savedReports").reportUserConfigurableConfigEditor({
             filterForm: $("#report-filters"),
             items: {{ report_configs|JSON }},
