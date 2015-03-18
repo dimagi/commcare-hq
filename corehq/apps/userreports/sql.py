@@ -112,7 +112,7 @@ def get_expanded_columns(table_name, column_config):
     metadata = sqlalchemy.MetaData()
     metadata.reflect(bind=connection)
 
-    column = metadata.tables[table_name].c[column_config.get_sql_column().view.name]
+    column = metadata.tables[table_name].c[column_config.field]
     query = sqlalchemy.select([column]).distinct()
 
     result = connection.execute(query).fetchall()
