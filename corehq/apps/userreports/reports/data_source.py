@@ -6,7 +6,7 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.sql import get_table_name, get_expanded_columns
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -56,7 +56,13 @@ class ConfigurableReportDataSource(SqlData):
     @property
     @memoized
     def columns(self):
-        return [col.get_sql_column() for col in self.column_configs]
+        ret = []
+        for conf in self.column_configs:
+            if conf.aggregation == "expand":
+                ret += get_expanded_columns(self.table_name, conf)
+            else:
+                ret.append(conf.get_sql_column())
+        return ret
 
     @memoized
     def get_data(self, slugs=None):

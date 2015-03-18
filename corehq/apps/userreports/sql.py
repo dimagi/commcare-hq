@@ -1,7 +1,10 @@
 import hashlib
+from sqlagg import SumWhen
 import sqlalchemy
 from django.conf import settings
 from sqlalchemy.exc import IntegrityError
+from corehq.db import Session
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from dimagi.utils.decorators.memoized import memoized
 from fluff.util import get_column_type
 
@@ -101,3 +104,33 @@ def get_table_name(domain, table_id):
 
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
 
+
+def get_expanded_columns(table_name, column_config):
+
+    session = Session()
+    connection = session.connection()
+    metadata = sqlalchemy.MetaData()
+    metadata.reflect(bind=connection)
+
+    column = metadata.tables[table_name].c[column_config.field]
+    query = sqlalchemy.select([column]).distinct()
+
+    result = connection.execute(query).fetchall()
+    distinct_values = [x[0] for x in result]
+
+    columns = []
+    for val in distinct_values:
+        columns.append(DatabaseColumn(
+            u"{}-{}".format(column_config.display, val),
+            SumWhen(
+                column_config.field,
+                whens={val: 1},
+                else_=0,
+                alias=u"{}-{}".format(column_config.report_column_id, val),
+            ),
+            sortable=False,
+            data_slug=u"{}-{}".format(column_config.report_column_id, val),
+            format_fn=column_config.get_format_fn(),
+            help_text=column_config.description
+        ))
+    return columns
