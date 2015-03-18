@@ -18,6 +18,10 @@ th {
     font-weight: bold;
 }
 
+td {
+    font-size: small !important;
+}
+
 .mother_child_report table, .mother_child_report .row {
     width: 8cm !important;
     margin-left: 0.5cm;
