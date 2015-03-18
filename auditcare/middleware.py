@@ -25,11 +25,15 @@ class AuditMiddleware(object):
         if not getattr(settings, 'AUDIT_ALL_VIEWS', False):
             if not hasattr(settings, "AUDIT_VIEWS"):
                 logging.warning("You do not have the AUDIT_VIEWS settings variable setup.  If you want to setup central view call audit events, please add the property and populate it with fully qualified view names.")
-                self.active=False
+            elif not hasattr(settings, "AUDIT_MODULES"):
+                logging.warning("You do not have the AUDIT_MODULES settings variable setup.  If you want to setup central module audit events, please add the property and populate it with module names.")
+
+            if hasattr(settings, "AUDIT_VIEWS") or hasattr(settings, "AUDIT_MODULES"):
+                self.active = True
             else:
-                self.active=True
+                self.active = False
         else:
-            self.active=True
+            self.active = True
 
 
         #from django-axes
@@ -59,7 +63,10 @@ class AuditMiddleware(object):
 
     @staticmethod
     def do_process_view(request, view_func, view_args, view_kwargs, extra={}):
-        if getattr(settings, 'AUDIT_ALL_VIEWS', False) or getattr(settings, "AUDIT_VIEWS", False):
+        if (getattr(settings, 'AUDIT_MODULES', False) or
+                getattr(settings, 'AUDIT_ALL_VIEWS', False) or
+                getattr(settings, "AUDIT_VIEWS", False)):
+
             if hasattr(view_func, 'func_name'): #is this just a plain jane __builtin__.function
                 fqview = "%s.%s" % (view_func.__module__, view_func.func_name)
             else:
@@ -68,13 +75,17 @@ class AuditMiddleware(object):
             if fqview == "django.contrib.staticfiles.views.serve" or fqview == "debug_toolbar.views.debug_media":
                 return None
 
+            def check_modules(view, audit_modules):
+                return any((view.startswith(m) for m in audit_modules))
+
             audit_doc = None
+
             if (fqview.startswith('django.contrib.admin') or fqview.startswith('reversion.admin')) and getattr(settings, "AUDIT_ADMIN_VIEWS", True):
                 audit_doc = AuditEvent.audit_view(request, request.user, view_func, view_kwargs)
-            else:
-                user = request.user
-                if settings.AUDIT_VIEWS.__contains__(fqview) or getattr(settings, 'AUDIT_ALL_VIEWS', False):
-                    audit_doc = AuditEvent.audit_view(request, request.user, view_func, view_kwargs, extra=extra)
+            elif (check_modules(fqview, settings.AUDIT_MODULES) or
+                  fqview in settings.AUDIT_VIEWS or
+                  getattr(settings, 'AUDIT_ALL_VIEWS', False)):
+                audit_doc = AuditEvent.audit_view(request, request.user, view_func, view_kwargs, extra=extra)
             if audit_doc:
                 setattr(request, 'audit_doc', audit_doc)
         return None
