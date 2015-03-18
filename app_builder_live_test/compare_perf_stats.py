@@ -54,7 +54,7 @@ def compare_stats(stats1, stats2):
             return 100
 
         stats_item2 = stats2[slug]
-        diff = stats_item1[stat] - stats_item2[stat]
+        diff =  stats_item2[stat] - stats_item1[stat]
         percent = float(diff) / stats_item1[stat]
         return {
             '%': percent,
