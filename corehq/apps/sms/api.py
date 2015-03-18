@@ -45,6 +45,7 @@ class MessageMetadata(object):
         self.reminder_id = kwargs.get("reminder_id", None)
         self.chat_user_id = kwargs.get("chat_user_id", None)
         self.ignore_opt_out = kwargs.get("ignore_opt_out", False)
+        self.location_id = kwargs.get('location_id', None)
 
 
 def add_msg_tags(msg, metadata):
@@ -54,6 +55,7 @@ def add_msg_tags(msg, metadata):
         msg.reminder_id = metadata.reminder_id
         msg.chat_user_id = metadata.chat_user_id
         msg.ignore_opt_out = metadata.ignore_opt_out
+        msg.location_id = metadata.location_id
         msg.save()
 
 
@@ -397,6 +399,9 @@ def process_incoming(msg, delay=True):
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
+        user = CommCareUser.get(v.owner_id)
+        if 'location_id' in user:
+            add_msg_tags(msg, metadata=MessageMetadata(location_id=user.location_id, workflow=msg.workflow))
         msg.save()
 
     if msg.domain_scope:
