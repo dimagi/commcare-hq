@@ -8,7 +8,7 @@ All audits events inherit from the AuditEvent model which contains some basic au
 
 What It does
 ============
-- Log Views (NavigationEventAudit)
+- Log Views and Modules (NavigationEventAudit)
    - Directly with a view decorator
    - Centrally with a middelware and a settings parameter listing the fully qualified view names
 - Centrally log model saves (ModelActionAudit) via attaching signals from a settings parameter
@@ -51,11 +51,13 @@ COUCH_SERVER = get_server_url(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD)
 
 COUCH_DATABASE = "%(server)s/%(database)s" % {"server": COUCH_SERVER, "database": COUCH_DATABASE_NAME }
 
-View Audits
+View/Module Audits
 ===========
 To your MIDDLEWARE_CLASSES, add 'auditcare.middleware.AuditMiddleware', to the END of the list.
 
 Add an array, AUDIT_VIEWS = [].  The elements of this list should be the fully qualified viewnames of the views you want to log and audit.
+
+You can also add AUDIT_MODULES = [], where each entry is a module starting from root.
 
 Alternatively, AUDIT_ALL_VIEWS is another settings parameter you can set to explicitly audit ALL views.  This skips staticfiles (if used in development) as well as the debug toolbar for local development.
 
