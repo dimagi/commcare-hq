@@ -105,18 +105,22 @@ def get_table_name(domain, table_id):
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
 
 
-def get_expanded_columns(table_name, column_config):
+def get_expanded_columns(data_source_configuration, column_config):
 
     session = Session()
-    connection = session.connection()
-    metadata = sqlalchemy.MetaData()
-    metadata.reflect(bind=connection)
+    try:
+        connection = session.connection()
+        table = get_indicator_table(data_source_configuration)
+        column = table.c[column_config.field]
 
-    column = metadata.tables[table_name].c[column_config.field]
-    query = sqlalchemy.select([column]).distinct()
-
-    result = connection.execute(query).fetchall()
-    distinct_values = [x[0] for x in result]
+        query = sqlalchemy.select([column]).distinct()
+        result = connection.execute(query).fetchall()
+        distinct_values = [x[0] for x in result]
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
     columns = []
     for val in distinct_values:

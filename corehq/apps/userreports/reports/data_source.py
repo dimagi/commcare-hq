@@ -57,11 +57,11 @@ class ConfigurableReportDataSource(SqlData):
     @memoized
     def columns(self):
         ret = []
-        for conf in self.column_configs:
-            if conf.aggregation == "expand":
-                ret += get_expanded_columns(self.table_name, conf)
+        for col in self.column_configs:
+            if col.aggregation == "expand":
+                ret += get_expanded_columns(self.config, col)
             else:
-                ret.append(conf.get_sql_column())
+                ret.append(col.get_sql_column())
         return ret
 
     @memoized
