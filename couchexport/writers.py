@@ -353,7 +353,8 @@ class Excel2007ExportWriter(ExportWriter):
         sheet.append(
             [dirty_chars.sub(
                 u'?',
-                unicode(v, encoding="utf-8") if isinstance(v, str) else unicode(v))
+                unicode(v, encoding="utf-8")
+                if isinstance(v, str) else unicode(v) if v is not None else u'')
              for v in self.get_data(row)]
         )
 
