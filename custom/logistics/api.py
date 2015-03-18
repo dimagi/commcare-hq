@@ -242,8 +242,10 @@ class APISynchronization(object):
             user_dict['user_data']['role'] = ilsgateway_smsuser.role
 
         if ilsgateway_smsuser.phone_numbers:
-            user_dict['phone_numbers'] = [ilsgateway_smsuser.phone_numbers[0].replace('+', '')]
-            user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
+            cleaned_number = apply_leniency(ilsgateway_smsuser.phone_numbers[0])
+            if cleaned_number:
+                user_dict['phone_numbers'] = [cleaned_number]
+                user_dict['user_data']['backend'] = ilsgateway_smsuser.backend
 
         if user is None and username_part:
             try:
@@ -257,7 +259,7 @@ class APISynchronization(object):
                 user.is_active = bool(ilsgateway_smsuser.is_active)
                 user.user_data = user_dict["user_data"]
                 if "phone_numbers" in user_dict:
-                    user.set_default_phone_number(apply_leniency(user_dict["phone_numbers"][0]))
+                    user.set_default_phone_number(user_dict["phone_numbers"][0])
                     try:
                         user.save_verified_number(self.domain, user_dict["phone_numbers"][0], True)
                     except PhoneNumberInUseException as e:
@@ -298,8 +300,10 @@ class APISynchronization(object):
             user.delete_phone_number(phone_number)
 
         if logistics_sms_user.phone_numbers:
-            phone_number = logistics_sms_user.phone_numbers[0]
-            user.set_default_phone_number(apply_leniency(phone_number))
+            phone_number = apply_leniency(logistics_sms_user.phone_numbers[0])
+            if not phone_number:
+                return
+            user.set_default_phone_number(phone_number)
             try:
                 user.save_verified_number(self.domain, phone_number, True)
             except PhoneNumberInUseException:
