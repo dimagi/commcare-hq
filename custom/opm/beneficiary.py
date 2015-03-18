@@ -564,6 +564,24 @@ class OPMCaseRow(object):
                     return self.child_age/12
                 return False
 
+    def weight_grade_status(self, status):
+        if self.status == 'pregnant':
+            return False
+        if self.child_index == 1:
+            form_prop = 'interpret_grade'
+        else:
+            form_prop = 'interpret_grade_{}'.format(self.child_index)
+
+        forms = self.filtered_forms(CHILDREN_FORMS, 1)
+        if len(forms) == 0:
+            return False
+        form = sorted(forms, key=lambda form: form.received_on)[-1]
+        # callers' responsibility to pass acceptable statuses
+        # status can be one of SAM, MAM, normal, overweight
+        if form.form.get(form_prop) == status:
+            return True
+        return False
+
     @property
     def birth_spacing_years(self):
         """
