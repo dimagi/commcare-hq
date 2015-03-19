@@ -128,7 +128,7 @@ def get_expanded_columns(data_source_configuration, column_config, column_warnin
             return []
         column = table.c[column_config.field]
 
-        query = sqlalchemy.select([column], limit=MAXIMUM_EXPANSION+1).distinct()
+        query = sqlalchemy.select([column], limit=MAXIMUM_EXPANSION + 1).distinct()
         result = connection.execute(query).fetchall()
         distinct_values = [x[0] for x in result]
         if len(distinct_values) > MAXIMUM_EXPANSION:
