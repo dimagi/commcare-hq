@@ -196,13 +196,14 @@ class ILSGatewayAPI(APISynchronization):
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)
         if not sms_user:
             return None
+
+        sms_user.save()
         if ilsgateway_smsuser.supply_point:
             try:
                 location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_smsuser.supply_point)
-                sms_user.set_location(location.location_id)
+                sms_user.set_location(location.couch_location())
             except SQLLocation.DoesNotExist:
                 pass
-        sms_user.save()
         return sms_user
 
     def location_sync(self, ilsgateway_location, fetch_groups=False):
