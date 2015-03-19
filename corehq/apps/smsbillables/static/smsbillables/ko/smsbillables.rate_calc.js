@@ -93,7 +93,6 @@ var PublicSMSRateCalculator = function (form_data) {
                 },
                 success: function (response) {
                     self.calculatingRate(false);
-                    debugger;
                     self.rate_table(response.data);
                     self.hasError(false);
                 },
