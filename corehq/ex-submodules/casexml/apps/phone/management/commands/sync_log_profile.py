@@ -33,7 +33,7 @@ class Command(BaseCommand):
                 dependent_cases = len(sync_log_dict.get('dependent_cases_on_phone', []))
                 total_cases = cases + dependent_cases
                 if duration and total_cases:
-                    average_time = float(duration) * 1000 / float(total_cases) if total_cases else 0
+                    average_time = float(duration) * 1000 / float(total_cases)
                     writer.writerow([
                         sync_log_dict.get('domain'),
                         sync_log_dict.get('user_id'),
