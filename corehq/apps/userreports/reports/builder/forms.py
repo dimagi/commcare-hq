@@ -336,7 +336,7 @@ class ConfigureNewReportBase(forms.Form):
         self.helper.form_id = "report-config-form"
 
         self.helper.layout = crispy.Layout(
-            self.top_fieldset,
+            self.container_fieldset,
             FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit(
@@ -352,17 +352,17 @@ class ConfigureNewReportBase(forms.Form):
         return render_to_string('userreports/partials/report_filter_configuration.html')
 
     @property
-    def top_fieldset(self):
+    def container_fieldset(self):
         """
         Return the first fieldset in the form.
         """
         return crispy.Fieldset(
             "",
-            self.configuration_tables
+            self.filter_fieldset
         )
 
     @property
-    def configuration_tables(self):
+    def filter_fieldset(self):
         """
         Return a fieldset representing the markup used for configuring the
         report filters.
@@ -488,11 +488,11 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         self.fields['group_by'].choices = self._group_by_choices
 
     @property
-    def top_fieldset(self):
+    def container_fieldset(self):
         return crispy.Fieldset(
             _('Categories'),
             'group_by',
-            self.configuration_tables
+            self.filter_fieldset
         )
 
     @property
@@ -556,18 +556,21 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     columns = JsonField(required=True)
 
     @property
-    def configuration_tables(self):
-        parent_tables = super(ConfigureListReportForm, self).configuration_tables
+    def container_fieldset(self):
+        return crispy.Fieldset(
+            "",
+            self.column_fieldset,
+            self.filter_fieldset
+        )
 
-        return crispy.Layout(
-            parent_tables,
-            crispy.Fieldset(
-                _("Columns"),
-                crispy.Div(
-                    crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
-                ),
-                crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
-            )
+    @property
+    def column_fieldset(self):
+        return crispy.Fieldset(
+            _("Columns"),
+            crispy.Div(
+                crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
+            ),
+            crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
         )
 
     @property
@@ -590,13 +593,15 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
 
     @property
-    def top_fieldset(self):
-        # Override the behavior in ConfigureBarChartReportForm. We want to title
-        # to be "Rows" not "Categories" for this form.
+    def container_fieldset(self):
         return crispy.Fieldset(
-            _('Rows'),
-            'group_by',
-            self.configuration_tables
+            "",
+            self.column_fieldset,
+            crispy.Fieldset(
+                _('Rows'),
+                'group_by',
+            ),
+            self.filter_fieldset
         )
 
     @property
@@ -631,8 +636,9 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
             return "user_id"
 
     @property
-    def top_fieldset(self):
+    def container_fieldset(self):
         return crispy.Fieldset(
             "",
-            self.configuration_tables
+            self.column_fieldset,
+            self.filter_fieldset
         )
