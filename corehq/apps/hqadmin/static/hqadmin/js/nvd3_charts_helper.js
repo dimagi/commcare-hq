@@ -83,9 +83,9 @@ function fill_in_spaces(vals, start, end, interval) {
         }
     }
 
-    // if there are any values left over then tack them on to the end
-    // this should 
-    if (cur_index < vals.length) {
+    // if there are any real values left over then tack them on to the end
+    // this should not happen
+    if (cur_index < _.filter(vals, function(n) {return n.y > 0;}).length) {
         ret.concat(vals.slice(cur_index));
         console.log("There were extra values in a response");
     }
