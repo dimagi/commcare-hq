@@ -2,6 +2,7 @@ from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
 from corehq.apps.style.forms.fields import MultiEmailField
+from corehq.apps.userreports.reports.view import ConfigurableReport
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from .models import (
@@ -69,7 +70,7 @@ class SavedReportConfigForm(forms.Form):
             self.cleaned_data['days'] = 7
         elif date_range == 'last30':
             self.cleaned_data['days'] = 30
-        elif self.cleaned_data['days'] is None:
+        elif self.cleaned_data['days'] is None and self.cleaned_data['report_type'] != ConfigurableReport.prefix:
             raise forms.ValidationError(
                 "Field 'days' was expected but not provided."
             )
