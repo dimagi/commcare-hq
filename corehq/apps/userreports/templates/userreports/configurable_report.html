@@ -5,6 +5,7 @@
     <script type="text/javascript">
         $(function(){
             // Poll the status of the data source
+            var retrying = false;
             (function poll() {
                 $.ajax({
                     url: "{% url 'configurable_data_source_status' domain report.spec.config_id %}",
@@ -12,8 +13,13 @@
                     success: function(data) {
                         if (data.isBuilt){
                             $('#built-warning').addClass('hide');
-                            $('#report-filters').submit();
+                            if (retrying){
+                                location.reload();
+                            } else {
+                                $('#report-filters').submit();
+                            }
                         } else {
+                            retrying = true;
                             $('#built-warning').removeClass('hide');
                             setTimeout(poll, 5000);
                         }
