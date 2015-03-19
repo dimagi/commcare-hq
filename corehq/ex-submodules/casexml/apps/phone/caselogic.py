@@ -555,18 +555,18 @@ def filter_cases_modified_elsewhere_since_sync(cases, last_sync):
     if not last_sync:
         return cases
     else:
+        # todo: if this case list is huge i'm guessing this query is pretty expensive
         case_ids = [case['_id'] for case in cases]
         case_log_map = CommCareCase.get_db().view(
             'phone/cases_to_sync_logs',
             keys=case_ids,
             reduce=False,
         )
-        # incoming format is a list of objects that look like this:
-        # {
-        #   'value': '[log id]',
-        #   'key': '[case id]',
-        # }
+
+        # create a set of tuples of the format (case_id, log_id)
         unique_combinations = set((row['key'], row['value']) for row in case_log_map)
+
+        # todo: and this could arguably be even worse
         modification_dates = CommCareCase.get_db().view(
             'phone/case_modification_status',
             keys=[list(combo) for combo in unique_combinations],
