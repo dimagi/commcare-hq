@@ -156,22 +156,37 @@ function formatDataForCumGraphs(data, init_val) {
 
 function findEnds(data, starting_time, ending_time) {
     var start = ending_time, end = starting_time;
+
+    function real_data(value) {
+        return value.count > 0;
+    }
+
     for (var key in data) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
-                if (start > data[key][0].time ){
-                    start = data[key][0].time;
-                }
-                if (end < data[key][data[key].length-1].time ){
-                    end = data[key][data[key].length-1].time;
+                var filteredData = _.filter(data[key], real_data);
+                if (filteredData.length > 0) {
+                    if (start > filteredData[0].time){
+                        start = filteredData[0].time;
+                    }
+                    if (end < filteredData[filteredData.length-1].time) {
+                        end = filteredData[filteredData.length-1].time;
+                    }
                 }
             }
         }
     }
+
+    // If there isn't any real data here then reset end and start times
+    if (start === ending_time && end === starting_time) {
+        start = starting_time;
+        end = ending_time;
+    }
+
     return {
         start: start,
         end: end
-    }
+    };
 }
 
 function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
