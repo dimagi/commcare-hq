@@ -92,7 +92,7 @@ class ReportDispatcher(View):
                     for name, group in self.get_reports(domain)
                     for report in group)
 
-    def get_report(self, domain, report_slug):
+    def get_report(self, domain, report_slug, *args):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.

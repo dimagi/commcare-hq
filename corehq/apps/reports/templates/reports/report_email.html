@@ -21,7 +21,9 @@ td.null-entry {
         This is a scheduled report from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
     </p>
     <p>
-        Date range: {{ startdate }} - {{ enddate }}
+        {% if startdate %}
+            Date range: {{ startdate }} - {{ enddate }}
+        {% endif %}
     </p>
     {% endif %}
 
