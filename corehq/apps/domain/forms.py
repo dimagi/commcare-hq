@@ -474,12 +474,6 @@ class DomainGlobalSettingsForm(forms.Form):
 
 
 class DomainMetadataForm(DomainGlobalSettingsForm):
-    is_test = ChoiceField(
-        label=_("Real Project"),
-        choices=(('true', _('Test')),
-                 ('false', _('Real')),
-                 ('none', _('Not Sure')))
-    )
 
     cloudcare_releases = ChoiceField(
         label=_("CloudCare should use"),
@@ -511,7 +505,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
         if not res:
             return False
         try:
-            domain.is_test = self.cleaned_data['is_test']
             cloudcare_releases = self.cleaned_data.get('cloudcare_releases')
             if cloudcare_releases and domain.cloudcare_releases != 'default':
                 # you're never allowed to change from default
