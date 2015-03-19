@@ -1,0 +1,82 @@
+{% load i18n %}
+<div id="services-capacity" class="section section-default section-detail section-services-capacity">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-8 col-sm-offset-8">
+                <h2 class="text-center">
+                    {% trans 'Capacity Services' %}
+                </h2>
+                <p class="lead text-center">
+                    {% blocktrans %}
+                        Improve the program or technology for an existing
+                        mobile system.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                        Each package includes approximately two weeks of time
+                        on-site by a Dimagi Services Team member, with one or
+                        two weeks of preparatory time. The implementation
+                        bundles above include many of these packages.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-5 col-sm-offset-1">
+                <h3 class="capacity-header
+                           capacity-header-program">
+                    {% trans 'Program' %}
+                </h3>
+                <p class="lead capacity-price capacity-price-program">
+                    {% blocktrans %}
+                        $10,000 per capacity service
+                    {% endblocktrans %}
+                </p>
+                <ul class="capacity-options">
+                    <li>{% trans 'Worker Performance Monitoring' %}</li>
+                    <li>{% trans 'Training of Trainers' %}</li>
+                    <li>{% trans 'Capacity for Technical Support' %}</li>
+                    <li>{% trans 'Capacity to Build Applications' %}</li>
+                    <li class="capacity-more">
+                        <a href="#">
+                            {% trans 'See More...' %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-sm-5 col-sm-offset-1">
+                <h3 class="capacity-header
+                           capacity-header-tech">
+                    {% trans 'Technology' %}
+                </h3>
+                <p class="lead capacity-price capacity-price-tech">
+                    {% blocktrans %}
+                        $10,000 per capacity service
+                    {% endblocktrans %}
+                </p>
+                <ul class="capacity-options">
+                    <li>{% trans 'Technology for Outcomes Monitoring' %}</li>
+                    <li>{% trans 'Apps for Supportive Supervision' %}</li>
+                    <li>{% trans 'App Refinement by Dimagi' %}</li>
+                    <li>{% trans 'Technology for Reminder Messages' %}</li>
+                    <li class="capacity-more">
+                        <a href="#">
+                            {% trans 'See More...' %}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <p class="text-center">
+                    <a href="#"
+                       class="btn btn-primary-dark">
+                        {% trans "Inquire About Dimagi's Capacity Services" %}
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
