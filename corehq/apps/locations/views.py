@@ -110,7 +110,7 @@ class LocationSettingsView(BaseCommTrackManageView):
         return {
             'name': loctype.name,
             'code': loctype.code,
-            'allowed_parents': [loctype.parent_type.code
+            'allowed_parents': [loctype.parent_type.name
                                 if loctype.parent_type else None],
             'administrative': loctype.administrative,
             'shares_cases': loctype.shares_cases,
@@ -118,27 +118,19 @@ class LocationSettingsView(BaseCommTrackManageView):
         }
 
     def post(self, request, *args, **kwargs):
+        # This is really ugly, it needs a refactor.
+        # There are some changes coming to this UI, so I'm just gonna wait
+        # for that.  I intend to remove "code" from the UI altogether, and
+        # use the actual location_type pk to reference it, not the name.
         payload = json.loads(request.POST.get('json'))
+        sql_loc_types = {}
 
         def mk_loctype(name, code, allowed_parents, administrative,
                        shares_cases, view_descendants):
-            parents = allowed_parents
-            if len(parents) > 1:
-                messages.warning(request, _("Location types cannot have "
-                                            "multiple parent types, using {}"
-                                            .format(parents[0])))
-            if parents and parents[0]:
-                parent, __ = LocationType.objects.get_or_create(
-                    domain=self.domain,
-                    name=parents[0],
-                )
+            if allowed_parents and allowed_parents[0]:
+                parent = sql_loc_types[allowed_parents[0]]
             else:
                 parent = None
-
-            location_type, __ = LocationType.objects.get_or_create(
-                domain=self.domain,
-                name=name,
-            )
 
             cleaned_code = unicode_slug(code)
             if cleaned_code != code:
@@ -148,17 +140,80 @@ class LocationSettingsView(BaseCommTrackManageView):
                 messages.warning(request,
                                  err.format(code=code, new_code=cleaned_code))
 
-            location_type.code = cleaned_code
-            location_type.administrative = administrative
-            location_type.parent_type = parent
-            location_type.shares_cases = shares_cases
-            location_type.view_descendants = view_descendants
-            location_type.save()
+            try:
+                loc_type = LocationType.objects.get(domain=self.domain, name=name)
+            except LocationType.DoesNotExist:
+                loc_type = LocationType(domain=self.domain, name=name)
+            loc_type.code = cleaned_code
+            loc_type.administrative = administrative
+            loc_type.parent_type = parent
+            loc_type.shares_cases = shares_cases
+            loc_type.view_descendants = view_descendants
+            loc_type.save()
+            sql_loc_types[name] = loc_type
 
-        for loc_type in payload['loc_types']:
+        loc_types = payload['loc_types']
+        for loc_type in loc_types:
+            for prop in ['name', 'code', 'allowed_parents', 'administrative',
+                         'shares_cases', 'view_descendants']:
+                assert prop in loc_type, "Missing a location type property!"
+
+        heirarchy = self.get_heirarchy(loc_types)
+        for loc_type in heirarchy:
             mk_loctype(**loc_type)
 
         return self.get(request, *args, **kwargs)
+
+    # This is largely copy-pasted from the LocationTypeManager
+    def get_heirarchy(self, loc_types):
+        """
+        Return loc types in order from parents to
+        """
+        lt_dict = {lt['name']: lt for lt in loc_types}
+
+        # Make sure there are no cycles
+        for loc_type in loc_types:
+            visited = set()
+
+            def step(lt):
+                assert lt['name'] not in visited, \
+                    "There's a loc type cycle, we need to prohibit that"
+                visited.add(lt['name'])
+                parents = lt['allowed_parents']
+                if parents and parents[0]:
+                    step(lt_dict.get(parents[0]))
+            step(loc_type)
+
+        heirarchy = {}
+
+        def insert_loc_type(loc_type):
+            """
+            Get parent location's heirarchy, insert loc_type into it,
+            and return heirarchy below loc_type
+            """
+            name = loc_type['name']
+            parents = loc_type['allowed_parents']
+            parent = lt_dict.get(parents[0], None) if parents else None
+            if not parent:
+                lt_heirarchy = heirarchy
+            else:
+                lt_heirarchy = insert_loc_type(parent)
+            if name not in lt_heirarchy:
+                lt_heirarchy[name] = (loc_type, {})
+            return lt_heirarchy[name][1]
+
+        for loc_type in loc_types:
+            insert_loc_type(loc_type)
+
+        ordered_loc_types = []
+
+        def step_through_graph(heirarchy):
+            for name, (loc_type, children) in heirarchy.items():
+                ordered_loc_types.append(loc_type)
+                step_through_graph(children)
+
+        step_through_graph(heirarchy)
+        return ordered_loc_types
 
 
 class NewLocationView(BaseLocationView):
