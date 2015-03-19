@@ -70,6 +70,8 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     # phone number has opted-out. Should only be used to send opt-out
     # replies or other info-related queries while opted-out.
     ignore_opt_out = BooleanProperty(default=False)
+    location_id = StringProperty()
+
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
