@@ -52,10 +52,11 @@
         </tr>
     </tbody>
 </table>
-<button class="btn" data-bind="click: addLanguage, visible: editing">
+<button class="btn" data-bind="click: addLanguage, visible: editing, disable: addLanguageDisabled">
     <i class="icon-plus"></i>
-    Add Language
+    {% trans "Add Language" %}
 </button>
+<span class='label label-warning' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
 <div data-bind="if: removedLanguages().length">
     <h6>Deleting Languages:</h6>
     <table class="table">
