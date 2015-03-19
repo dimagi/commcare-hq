@@ -25,6 +25,11 @@ from corehq import toggles
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.excel import alphanumeric_sort_key
 
+
+class GroupNotFoundException(Exception):
+    pass
+
+
 def _get_sorted_groups(domain):
     return sorted(
         Group.by_domain(domain),
@@ -35,10 +40,10 @@ def _get_sorted_groups(domain):
 def get_group_or_404(domain, group_id):
     try:
         group = Group.get(group_id)
-        assert group.doc_type.startswith('Group')
-        assert group.domain == domain
+        if not group.doc_type.startswith('Group') or group.domain != domain:
+            raise GroupNotFoundException()
         return group
-    except (ResourceNotFound, AssertionError):
+    except (ResourceNotFound, GroupNotFoundException):
         raise Http404("Group %s does not exist" % group_id)
 
 
