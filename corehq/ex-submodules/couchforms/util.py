@@ -413,9 +413,8 @@ class SubmissionPost(object):
             )
             return self.get_exception_response(e.error_log), None, []
         else:
-            from casexml.apps.case import process_cases_with_casedb
             from casexml.apps.case.models import CommCareCase
-            from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache
+            from casexml.apps.case.xform import get_and_check_xform_domain, CaseDbCache, process_cases_with_casedb
             from casexml.apps.case.signals import case_post_save
             from casexml.apps.case.exceptions import IllegalCaseId
             from corehq.apps.commtrack.processing import process_stock
