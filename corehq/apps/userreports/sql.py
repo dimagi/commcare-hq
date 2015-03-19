@@ -105,17 +105,40 @@ def get_table_name(domain, table_id):
     return 'config_report_{0}_{1}_{2}'.format(domain, table_id, _hash(domain, table_id))
 
 
-def get_expanded_columns(data_source_configuration, column_config):
+def get_expanded_columns(data_source_configuration, column_config, column_warnings):
+    '''
+    Given a ReportColumn, return a list of DatabaseColumn objects. Each DatabaseColumn
+    is configured to show the number of occurences of one of the values present for
+    the ReportColumn's field.
+
+    This function also adds warnings to the column_warnings parameter.
+
+    :param data_source_configuration:
+    :param column_config:
+    :param column_warnings:
+    :return:
+    '''
+    MAXIMUM_EXPANSION = 10
 
     session = Session()
     try:
         connection = session.connection()
         table = get_indicator_table(data_source_configuration)
+        if not table.exists(bind=connection):
+            return []
         column = table.c[column_config.field]
 
-        query = sqlalchemy.select([column]).distinct()
+        query = sqlalchemy.select([column], limit=MAXIMUM_EXPANSION+1).distinct()
         result = connection.execute(query).fetchall()
         distinct_values = [x[0] for x in result]
+        if len(distinct_values) > MAXIMUM_EXPANSION:
+            distinct_values = distinct_values[:MAXIMUM_EXPANSION]
+            column_warnings.append(
+                'The "{}" column had too many values to expand! '
+                'Expansion limited to {} distinct values.'.format(
+                    column_config.display, MAXIMUM_EXPANSION
+                )
+            )
     except:
         session.rollback()
         raise

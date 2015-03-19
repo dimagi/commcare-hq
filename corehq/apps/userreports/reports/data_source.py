@@ -56,13 +56,23 @@ class ConfigurableReportDataSource(SqlData):
     @property
     @memoized
     def columns(self):
+        self._column_warnings = []
         ret = []
         for col in self.column_configs:
             if col.aggregation == "expand":
-                ret += get_expanded_columns(self.config, col)
+                ret += get_expanded_columns(self.config, col, self._column_warnings)
             else:
                 ret.append(col.get_sql_column())
         return ret
+
+    @property
+    @memoized
+    def column_warnings(self):
+        # self.columns is a property, and self._column_warnings is not computed
+        # until the body of self.columns is executed. Therefore, we access the
+        # property first to insure that self._column_warnings has been calculated.
+        self.columns
+        return self._column_warnings
 
     @memoized
     def get_data(self, slugs=None):
