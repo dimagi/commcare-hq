@@ -7,7 +7,8 @@ from .views import (DefaultProjectUserSettingsView, EditWebUserView,
     NewListWebUsersView,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
-from .views.mobile.groups import EditGroupsView, EditGroupMembersView
+from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
+    BulkSMSVerificationView)
 from .views.mobile.users import (UploadCommCareUsers, EditCommCareUserView,
     ListCommCareUsersView, AsyncListCommCareUsersView, CreateCommCareUserView,
     ConfirmBillingAccountForExtraUsersView, UserUploadStatusView)
@@ -73,4 +74,6 @@ patterns("corehq.apps.users.views.mobile.users",
 patterns("corehq.apps.users.views.mobile.groups",
     url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
+    url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
+        name=BulkSMSVerificationView.urlname),
 )
