@@ -13,12 +13,10 @@
     <script type="text/javascript">
         Stripe.setPublishableKey('{{ stripe_public_key }}');
 
-        var paymentHandler = new PaymentMethodHandler({
-            400: "{% trans "Your request was not formatted properly." %}",
-            403: "{% trans "Forbidden." %}",
-            404: "{% trans 'Page not found.' %}",
-            500: "{% blocktrans %}There was an error processing your request. We're working quickly to fix the issue. Please try again shortly.{% endblocktrans %}"
-        }, "{% trans "Buy Credits" %}");
+        var paymentHandler = new PaymentMethodHandler(
+            {{ payment_error_messages|JSON }},
+            "{% trans "Buy Credits" %}"
+        );
         {% if plan.cards %}
             paymentHandler.loadCards({{ plan.cards|JSON }});
         {% endif %}
