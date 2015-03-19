@@ -236,7 +236,7 @@ class Instance(IdNode, OrderedXmlObject):
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
-    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm', 'detail_persistent')
+    ORDER = ('id', 'nodeset', 'value', 'function', 'detail_select', 'detail_confirm', 'detail_persistent', 'detail_inline')
 
     nodeset = XPathField('@nodeset')
     value = StringField('@value')
@@ -244,6 +244,7 @@ class SessionDatum(IdNode, OrderedXmlObject):
     detail_select = StringField('@detail-select')
     detail_confirm = StringField('@detail-confirm')
     detail_persistent = StringField('@detail-persistent')
+    detail_inline = StringField('@detail-inline')
 
 
 class StackDatum(IdNode):
@@ -357,6 +358,7 @@ class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
 
     root = StringField('@root')
+    relevant = XPathField('@relevant')
     commands = NodeListField('command', Command)
 
 
@@ -1414,44 +1416,108 @@ class SuiteGenerator(SuiteGeneratorBase):
         if form and self.app.case_sharing and case_sharing_requires_assertion(form):
             self.add_case_sharing_assertion(e)
 
-    def configure_entry_module(self, module, e, use_filter=False):
+    def _get_datums_meta(self, module):
+        """
+            return list of dicts containing datum IDs and case types
+            [
+               {'session_var': 'parent_parent_id', ... },
+               {'session_var': 'parent_id', ...}
+               {'session_var': 'child_id', ...},
+            ]
+        """
+        if not (module and module.module_type == 'basic'):
+            return []
+
         select_chain = self.get_select_chain(module)
-        # generate names ['child_id', 'parent_id', 'parent_parent_id', ...]
-        datum_ids = [('parent_' * i or 'case_') + 'id'
-                     for i in range(len(select_chain))]
-        # iterate backwards like
-        # [..., (2, 'parent_parent_id'), (1, 'parent_id'), (0, 'child_id')]
-        for i, module in reversed(list(enumerate(select_chain))):
-            try:
-                parent_id = datum_ids[i + 1]
-            except IndexError:
-                parent_filter = ''
+        return [
+            {
+                'session_var': ('parent_' * i or 'case_') + 'id',
+                'case_type': mod.case_type,
+                'module': mod,
+                'index': i
+            }
+            for i, mod in reversed(list(enumerate(select_chain)))
+        ]
+
+    def configure_entry_module(self, module, e, use_filter=False):
+        datums_meta = self._get_datums_meta(module)
+        for i, datum in enumerate(datums_meta):
+            # get the session var for the previous datum if there is one
+            parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
+            if parent_id:
+                parent_filter = self.get_parent_filter(datum['module'].parent_select.relationship, parent_id)
             else:
-                parent_filter = self.get_parent_filter(module.parent_select.relationship, parent_id)
+                parent_filter = ''
 
             detail_persistent = None
-            for detail_type, detail, enabled in module.get_details():
-                if detail.persist_tile_on_forms and detail.use_case_tiles and enabled:
-                    detail_persistent = self.id_strings.detail(module, detail_type)
+            detail_inline = False
+            for detail_type, detail, enabled in datum['module'].get_details():
+                if (
+                    detail.persist_tile_on_forms
+                    and (detail.use_case_tiles or detail.custom_xml)
+                    and enabled
+                ):
+                    detail_persistent = self.id_strings.detail(datum['module'], detail_type)
+                    detail_inline = bool(detail.pull_down_tile)
                     break
 
             e.datums.append(SessionDatum(
-                id=datum_ids[i],
-                nodeset=(self.get_nodeset_xpath(module.case_type, module, use_filter)
+                id=datum['session_var'],
+                nodeset=(self.get_nodeset_xpath(datum['case_type'], datum['module'], use_filter)
                          + parent_filter),
                 value="./@case_id",
-                detail_select=self.get_detail_id_safe(module, 'case_short'),
+                detail_select=self.get_detail_id_safe(datum['module'], 'case_short'),
                 detail_confirm=(
-                    self.get_detail_id_safe(module, 'case_long')
-                    if i == 0 else None
+                    self.get_detail_id_safe(datum['module'], 'case_long')
+                    if datum['index'] == 0 and not detail_inline else None
                 ),
-                detail_persistent=detail_persistent
+                detail_persistent=detail_persistent,
+                detail_inline=self.get_detail_id_safe(datum['module'], 'case_long') if detail_inline else None
+            ))
+
+    def add_auto_select_datums_to_entry(self, action, auto_select, e, form):
+        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
+            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
+        if auto_select.mode == AUTO_SELECT_USER:
+            xpath = session_var(auto_select.value_key, subref='user')
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ))
+            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+        elif auto_select.mode == AUTO_SELECT_CASE:
+            try:
+                ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
+                sess_var = ref.case_session_var
+            except KeyError:
+                raise ValueError("Case tag not found: %s" % auto_select.value_source)
+            xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ))
+            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+        elif auto_select.mode == AUTO_SELECT_FIXTURE:
+            xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
+            xpath = xpath_base.slash(auto_select.value_key)
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=xpath
+            ))
+            self.add_assertion(
+                e,
+                "{0} = 1".format(xpath_base.count()),
+                'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
+                [auto_select.value_source]
+            )
+            self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
+        elif auto_select.mode == AUTO_SELECT_RAW:
+            e.datums.append(SessionDatum(
+                id=action.case_session_var,
+                function=auto_select.value_key
             ))
 
     def configure_entry_advanced_form(self, module, e, form, **kwargs):
-        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW
-
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
             for action in actions:
@@ -1492,47 +1558,34 @@ class SuiteGenerator(SuiteGeneratorBase):
                         "Module with case type %s in app %s not found" % (case_type, self.app)
                     )
 
-        for action in form.actions.load_update_cases:
+        root_module_datums = self._get_datums_meta(module.root_module)
+
+        def get_datum_session_var(action, action_index):
+            """
+            If this form's module is a child of another module then we want
+            to make the session variables match up.
+
+            This is a naive approach that just matches the datums based on
+            their order and the case types of the case that's being loaded.
+            If there is a match then we make the session variable in the child
+            module form equal to the parent.
+            """
+            case_session_var = action.case_session_var
+            try:
+                root_datum = root_module_datums[action_index]
+            except IndexError:
+                pass
+            else:
+                child_case_type = action.case_type
+                if root_datum['case_type'] == child_case_type:
+                    case_session_var = root_datum['session_var']
+
+            return case_session_var
+
+        for index, action in enumerate(form.actions.load_update_cases):
             auto_select = action.auto_select
             if auto_select and auto_select.mode:
-                if auto_select.mode == AUTO_SELECT_USER:
-                    xpath = session_var(auto_select.value_key, subref='user')
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_CASE:
-                    try:
-                        ref = form.actions.actions_meta_by_tag[auto_select.value_source]['action']
-                        sess_var = ref.case_session_var
-                    except KeyError:
-                        raise ValueError("Case tag not found: %s" % auto_select.value_source)
-                    xpath = CaseIDXPath(session_var(sess_var)).case().index_id(auto_select.value_key)
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_FIXTURE:
-                    xpath_base = ItemListFixtureXpath(auto_select.value_source).instance()
-                    xpath = xpath_base.slash(auto_select.value_key)
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=xpath
-                    ))
-                    self.add_assertion(
-                        e,
-                        "{0} = 1".format(xpath_base.count()),
-                        'case_autoload.{0}.exactly_one_fixture'.format(auto_select.mode),
-                        [auto_select.value_source]
-                    )
-                    self.add_auto_select_assertion(e, xpath, auto_select.mode, [auto_select.value_key])
-                elif auto_select.mode == AUTO_SELECT_RAW:
-                    e.datums.append(SessionDatum(
-                        id=action.case_session_var,
-                        function=auto_select.value_key
-                    ))
+                self.add_auto_select_datums_to_entry(action, auto_select, e, form)
             else:
                 if action.parent_tag:
                     parent_action = form.actions.actions_meta_by_tag[action.parent_tag]['action']
@@ -1543,11 +1596,10 @@ class SuiteGenerator(SuiteGeneratorBase):
                 else:
                     parent_filter = ''
 
-                referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
-
                 target_module = get_target_module(action.case_type, action.details_module)
+                referenced_by = form.actions.actions_meta_by_parent_tag.get(action.case_tag)
                 e.datums.append(SessionDatum(
-                    id=action.case_session_var,
+                    id=get_datum_session_var(action, index),
                     nodeset=(self.get_nodeset_xpath(action.case_type, target_module, True) + parent_filter),
                     value="./@case_id",
                     detail_select=self.get_detail_id_safe(target_module, 'case_short'),
@@ -1696,6 +1748,11 @@ class SuiteGenerator(SuiteGeneratorBase):
                 }
                 if self.id_strings.menu_root(module):
                     menu_kwargs['root'] = self.id_strings.menu_root(module)
+
+                if self.app.enable_module_filtering and getattr(module, 'module_filter', None):
+                    menu_kwargs['relevant'] = dot_interpolate(module.module_filter,
+                                                              "instance('commcaresession')/session")
+
                 menu = Menu(**menu_kwargs)
 
                 def get_commands():

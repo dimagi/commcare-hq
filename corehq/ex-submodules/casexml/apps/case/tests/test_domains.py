@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case import process_cases
+from casexml.apps.case.xform import process_cases
 from couchforms.tests.testutils import post_xform_to_couch
 
 ALICE_XML = """<?xml version='1.0' ?>

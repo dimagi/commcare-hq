@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from copy import copy
 import os
 import json
 import tempfile
@@ -8,6 +9,7 @@ import cStringIO
 import itertools
 from datetime import datetime, timedelta, date
 from urllib2 import URLError
+from dimagi.utils.decorators.memoized import memoized
 from unidecode import unidecode
 from dateutil.parser import parse
 
@@ -20,6 +22,7 @@ from django.core.urlresolvers import reverse
 from django.http import (HttpResponseRedirect,
     HttpResponseBadRequest, Http404, HttpResponseForbidden)
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import (require_http_methods,
@@ -28,6 +31,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
+from django.views.generic import View
 import pytz
 from casexml.apps.stock.models import StockTransaction
 from corehq import toggles, Domain
@@ -35,6 +39,7 @@ from casexml.apps.case.cleanup import rebuild_case, close_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.reports.display import FormType
+from corehq.apps.reports.forms import SavedReportConfigForm
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
@@ -479,65 +484,80 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
-@login_and_domain_required
-@require_POST
-def add_config(request, domain=None):
-    # todo: refactor this into a django form
-    from datetime import datetime
-    user_id = request.couch_user._id
+class AddSavedReportConfigView(View):
+    name = 'add_report_config'
 
-    POST = json.loads(request.body)
-    if 'name' not in POST or not POST['name']:
-        return HttpResponseBadRequest()
+    @method_decorator(login_and_domain_required)
+    def post(self, request, domain, *args, **kwargs):
+        self.domain = domain
 
-    user_configs = ReportConfig.by_domain_and_owner(domain, user_id)
-    if not POST.get('_id') and POST['name'] in [c.name for c in user_configs]:
-        return HttpResponseBadRequest()
+        if not self.saved_report_config_form.is_valid():
+            return HttpResponseBadRequest()
 
-    to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
-    try:
-        POST['start_date'] = to_date(POST['start_date'])
-        POST['end_date'] = to_date(POST['end_date'])
-    except ValueError:
-        # invalidly formatted date input
-        return HttpResponseBadRequest()
+        update_config_data = copy(self.saved_report_config_form.cleaned_data)
+        del update_config_data['_id']
+        update_config_data.update({
+            'filters': self.filters,
+        })
+        for field in self.config.properties().keys():
+            if field in update_config_data:
+                setattr(self.config, field, update_config_data[field])
 
-    date_range = POST.get('date_range')
-    if date_range == 'last7':
-        POST['days'] = 7
-    elif date_range == 'last30':
-        POST['days'] = 30
-    elif POST.get('days'):
-        POST['days'] = int(POST['days'])
+        # remove start and end date if the date range is "last xx days"
+        if (
+            self.saved_report_config_form.cleaned_data['days']
+            or self.saved_report_config_form.cleaned_data['date_range'] == 'lastmonth'
+        ):
+            if "start_date" in self.config:
+                delattr(self.config, "start_date")
+            if "end_date" in self.config:
+                delattr(self.config, "end_date")
 
-    exclude_filters = ['startdate', 'enddate']
-    for field in exclude_filters:
-        POST['filters'].pop(field, None)
+        self.config.save()
+        ReportsTab.clear_dropdown_cache(request, self.domain)
+        touch_saved_reports_views(request.couch_user, self.domain)
 
-    config = ReportConfig.get_or_create(POST.get('_id', None))
+        return json_response(self.config)
 
-    if config.owner_id:
-        # in case a user maliciously tries to edit another user's config
-        assert config.owner_id == user_id
-    else:
-        config.domain = domain
-        config.owner_id = user_id
+    @property
+    @memoized
+    def config(self):
+        config = ReportConfig.get_or_create(
+            self.saved_report_config_form.cleaned_data['_id']
+        )
+        if config.owner_id:
+            # in case a user maliciously tries to edit another user's config
+            assert config.owner_id == self.user_id
+        else:
+            config.domain = self.domain
+            config.owner_id = self.user_id
+        return config
 
-    for field in config.properties().keys():
-        if field in POST:
-            setattr(config, field, POST[field])
+    @property
+    @memoized
+    def saved_report_config_form(self):
+        return SavedReportConfigForm(
+            self.domain,
+            self.user_id,
+            self.post_data
+        )
 
-    if POST.get('days') or date_range == 'lastmonth':  # remove start and end date if the date range is "last xx days"
-        if "start_date" in config:
-            delattr(config, "start_date")
-        if "end_date" in config:
-            delattr(config, "end_date")
+    @property
+    def filters(self):
+        filters = copy(self.post_data.get('filters', {}))
+        for field in ['startdate', 'enddate']:
+            if field in filters:
+                del filters[field]
+        return filters
 
-    config.save()
-    ReportsTab.clear_dropdown_cache(request, domain)
-    touch_saved_reports_views(request.couch_user, domain)
+    @property
+    def post_data(self):
+        return json.loads(self.request.body)
 
-    return json_response(config)
+    @property
+    def user_id(self):
+        return self.request.couch_user._id
+
 
 @login_and_domain_required
 @datespan_default

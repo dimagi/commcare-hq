@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from corehq import Domain
 from corehq.apps.locations.models import SQLLocation
 from datetime import timedelta, datetime
@@ -17,7 +18,9 @@ def get_supply_points(location_id, domain):
     if loc.location_type == 'district':
         locations = SQLLocation.objects.filter(parent=loc)
     elif loc.location_type == 'region':
-        locations = SQLLocation.objects.filter(parent__parent=loc)
+        locations = SQLLocation.objects.filter(
+            Q(parent__parent=loc) | Q(parent=loc, location_type__in=location_types)
+        )
     elif loc.location_type in location_types:
         locations = SQLLocation.objects.filter(id=loc.id)
     else:
@@ -98,3 +101,11 @@ def get_reporting_types(domain):
         location_type for location_type in Domain.get_by_name(domain).location_types
         if not location_type.administrative
     ]
+
+
+def can_receive_email(user, verified_number):
+    return user.email and verified_number.backend_id and verified_number.backend_id == 'MOBILE_BACKEND_TWILIO'
+
+
+def get_country_id(domain):
+    return SQLLocation.objects.filter(domain=domain, location_type='country')[0].location_id

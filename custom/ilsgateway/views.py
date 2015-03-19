@@ -1,6 +1,7 @@
 import base64
 import StringIO
 from datetime import datetime
+import json
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db.models import Count
@@ -26,14 +27,13 @@ from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
 from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
 
-from custom.ilsgateway.tasks import get_product_stock, get_stock_transaction, get_supply_point_statuses, \
-    get_delivery_group_reports, ILS_FACILITIES
+from custom.ilsgateway.tasks import ILS_FACILITIES, get_ilsgateway_data_migrations
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.tasks import sms_users_fix
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups, ILSNotes
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.views import BaseConfigView, BaseRemindersTester
@@ -238,12 +238,7 @@ def ils_sync_stock_data(request, domain):
     config = ILSGatewayConfig.for_domain(domain)
     domain = config.domain
     endpoint = ILSGatewayEndpoint.from_config(config)
-    apis = (
-        ('product_stock', get_product_stock),
-        ('stock_transaction', get_stock_transaction),
-        ('supply_point_status', get_supply_point_statuses),
-        ('delivery_group', get_delivery_group_reports)
-    )
+    apis = get_ilsgateway_data_migrations()
     stock_data_task.delay(domain, endpoint, apis, ILS_FACILITIES)
     return HttpResponse('OK')
 
@@ -288,3 +283,30 @@ def delete_reports_runs(request, domain):
     runs = ReportRun.objects.filter(domain=domain)
     runs.delete()
     return HttpResponse('OK')
+
+
+@require_POST
+def save_ils_note(request, domain):
+    post_data = request.POST
+    user = request.couch_user
+    location = SQLLocation.objects.get(id=int(post_data['location']))
+    ILSNotes(
+        location=location,
+        domain=domain,
+        user_name=user.username,
+        user_role=user.user_data['role'] if 'role' in user.user_data else '',
+        user_phone=user.default_phone_number,
+        date=datetime.now(),
+        text=post_data['text']
+    ).save()
+    data = []
+    for row in ILSNotes.objects.filter(domain=domain, location=location).order_by('date'):
+        data.append([
+            row.user_name,
+            row.user_role,
+            row.date.strftime('%Y-%m-%d %H:%M'),
+            row.user_phone,
+            row.text
+        ])
+
+    return HttpResponse(json.dumps(data), content_type='application/json')

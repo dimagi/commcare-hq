@@ -61,7 +61,7 @@ def reprocess_form_cases(form, config=None, case_db=None):
     correctly inject the update into the case history if the form was NOT
     successfully processed.
     """
-    from casexml.apps.case import process_cases, process_cases_with_casedb
+    from casexml.apps.case.xform import process_cases, process_cases_with_casedb
 
     if case_db:
         process_cases_with_casedb(form, case_db, config=config)

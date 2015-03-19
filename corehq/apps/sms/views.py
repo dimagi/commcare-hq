@@ -45,7 +45,12 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.groups.models import Group
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required, require_superuser
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_digest_ex,
+    domain_admin_required,
+    require_superuser,
+)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
@@ -335,7 +340,7 @@ def message_test(request, domain, phone_number):
     return render(request, "sms/message_tester.html", context)
 
 @csrf_exempt
-@login_or_digest
+@login_or_digest_ex(allow_cc_users=True)
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """

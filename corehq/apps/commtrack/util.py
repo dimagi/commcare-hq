@@ -93,7 +93,6 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
     Create a new CommtrackConfig object for a domain
     if it does not already exist.
 
-
     This adds some collection of default products, programs,
     SMS keywords, etc.
     """

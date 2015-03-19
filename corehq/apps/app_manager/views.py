@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, get_language, ugettext_noop
 from django.views.decorators.cache import cache_control
 from corehq import ApplicationsTab, toggles, privileges, feature_previews
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import commcare_settings
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -529,6 +530,7 @@ def get_form_view_context_and_template(request, form, langs, is_user_registratio
 def get_app_view_context(request, app):
 
     is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
+    context = {}
 
     settings_layout = copy.deepcopy(
         commcare_settings.LAYOUT[app.get_doc_type()])
@@ -544,11 +546,16 @@ def get_app_view_context(request, app):
             new_settings.append(setting)
         section['settings'] = new_settings
 
-    context = {
+    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
+        custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
+                                      app.profile.get('custom_properties').items())
+        context.update({'custom_properties': custom_properties_array})
+
+    context.update({
         'settings_layout': settings_layout,
         'settings_values': get_settings_values(app),
         'is_cloudcare_allowed': is_cloudcare_allowed,
-    }
+    })
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
@@ -721,14 +728,16 @@ def paginate_releases(request, domain, app_id):
 @require_deploy_apps
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
-    latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
-    context['sms_contacts'] = get_sms_autocomplete_context(request, domain)['sms_contacts']
+    can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
 
     context.update({
         'release_manager': True,
-        'saved_apps': [],
-        'latest_release': latest_release,
+        'can_send_sms': can_send_sms,
+        'sms_contacts': (
+            get_sms_autocomplete_context(request, domain)['sms_contacts']
+            if can_send_sms else []
+        ),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -889,7 +898,12 @@ def get_module_view_context_and_template(app, module):
             'fixtures': fixtures,
             'details': get_details(),
             'case_list_form_options': case_list_form_options(case_type),
-            'case_list_form_allowed': module.all_forms_require_a_case
+            'case_list_form_allowed': module.all_forms_require_a_case,
+            'valid_parent_modules': [
+                parent_module for parent_module in app.modules
+                if not getattr(parent_module, 'root_module_id', None)
+            ]
+
         }
     else:
         case_type = module.case_type
@@ -1468,6 +1482,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "case_list_form_media_audio": None,
         "parent_module": None,
         "root_module_id": None,
+        "module_filter": None,
     }
 
     if attr not in attributes:
@@ -1520,6 +1535,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = req.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+
+    if app.enable_module_filtering and should_edit('module_filter'):
+        module['module_filter'] = req.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
         module.case_list_form.form_id = req.POST.get('case_list_form_id')
@@ -1592,6 +1610,7 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
     sort_elements = params.get('sort_elements', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
+    pull_down_tile = params.get("enableTilePullDown", None)
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -1614,6 +1633,8 @@ def edit_module_detail_screens(req, domain, app_id, module_id):
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
+        if pull_down_tile is not None:
+            detail.short.pull_down_tile = pull_down_tile
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
         if tabs is not None:
@@ -1958,16 +1979,23 @@ def edit_commcare_profile(request, domain, app_id):
     except TypeError:
         return HttpResponseBadRequest(json.dumps({
             'reason': 'POST body must be of the form:'
-                      '{"properties": {...}, "features": {...}}'
+            '{"properties": {...}, "features": {...}, "custom_properties": {...}}'
         }))
     app = get_app(domain, app_id)
     changed = defaultdict(dict)
-    for type in ["features", "properties"]:
-        for name, value in settings.get(type, {}).items():
-            if type not in app.profile:
-                app.profile[type] = {}
-            app.profile[type][name] = value
-            changed[type][name] = value
+    types = ["features", "properties"]
+
+    if toggles.CUSTOM_PROPERTIES.enabled(domain):
+        types.append("custom_properties")
+
+    for settings_type in types:
+        if settings_type == "custom_properties":
+            app.profile[settings_type] = {}
+        for name, value in settings.get(settings_type, {}).items():
+            if settings_type not in app.profile:
+                app.profile[settings_type] = {}
+            app.profile[settings_type][name] = value
+            changed[settings_type][name] = value
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)

@@ -1716,7 +1716,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 new_domain.image_type = old.image_type
             new_domain.save()
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
                 documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
                 if documentation_file:
                     new_domain.documentation_file_path = documentation_file.name
@@ -1741,7 +1741,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
 
-            if toggles.DOCUMENTATION_FILE.enabled(request.user):
+            if toggles.DOCUMENTATION_FILE.enabled(request.user.username):
                 if documentation_file:
                     new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
                 elif request.POST.get('old_documentation_file', False):

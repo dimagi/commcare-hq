@@ -25,6 +25,14 @@
 
     <!-- end -->
 
+    {% if app_profile.custom_properties %}
+    <!-- Custom Properties added in HQ -->
+    {% for key, value in app_profile.custom_properties.items %}{% if value != None %}
+        <property key="{{ key }}" value="{{ value }}" force="true"/>
+    {% endif %}{% endfor %}
+    <!-- end -->
+    {% endif %}
+
     <features>
         <checkoff active="{% if is_odk %}true{% else %}false{% endif %}"/>
         <reminders active="false">

@@ -658,20 +658,16 @@ AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
     'corehq.apps.app_manager.RemoteApp',
 ]
+
 AUDIT_VIEWS = [
-    'corehq.apps.domain.views.registration_request',
-    'corehq.apps.domain.views.registration_confirm',
-    'corehq.apps.domain.views.password_change',
-    'corehq.apps.domain.views.password_change_done',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.active_cases',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.default',
-    'corehq.apps.reports.views.submission_log',
-    'corehq.apps.reports.views.form_data',
-    'corehq.apps.reports.views.export_data',
-    'corehq.apps.reports.views.excel_report_data',
-    'corehq.apps.reports.views.daily_submissions',
+    'corehq.apps.settings.views.ChangeMyPasswordView',
+]
+
+AUDIT_MODULES = [
+    'corehq.apps.reports',
+    'corehq.apps.userreports',
+    'corehq.apps.data',
+    'corehq.apps.registration',
 ]
 
 # Don't use google analytics unless overridden in localsettings

@@ -447,3 +447,13 @@ class SupervisionDocument(models.Model):
     domain = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=100)
+
+
+class ILSNotes(models.Model):
+    location = models.ForeignKey(SQLLocation)
+    domain = models.CharField(max_length=100, null=False)
+    user_name = models.CharField(max_length=128, null=False)
+    user_role = models.CharField(max_length=100, null=True)
+    user_phone = models.CharField(max_length=20, null=True)
+    date = models.DateTimeField()
+    text = models.TextField()

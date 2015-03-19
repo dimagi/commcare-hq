@@ -58,7 +58,7 @@ if __name__ == "__main__":
     )
     if len(sys.argv) > 1 and sys.argv[1] in GEVENT_COMMANDS:
         from restkit.session import set_session; set_session("gevent")
-        from gevent.monkey import patch_all; patch_all()
+        from gevent.monkey import patch_all; patch_all(subprocess=True)
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
     from django.core.management import execute_from_command_line

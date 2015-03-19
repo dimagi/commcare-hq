@@ -189,4 +189,13 @@
             });
         });
     </script>
+    <script>
+        var report_slug = "{{ report.slug | safe }}";
+        if ( report_slug === 'stock_summary_report' || report_slug === 'cms_rms_summary_report') {
+            var headings = $("#report-content > h4");
+            $(headings[0]).text($(headings[2]).text());
+            $(headings[2]).remove();
+            $('.dataTables_filter').remove();
+        }
+    </script>
 {% endblock %}
