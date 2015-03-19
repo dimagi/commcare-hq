@@ -39,9 +39,6 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
     def indices(case):
         return case['indices'] if search_up else reverse_indices(CommCareCase.get_db(), case, wrap=False)
 
-    def related(case_db, case):
-        return [case_db.get(index['referenced_id']) for index in indices(case)]
-
     relevant_cases = {}
     relevant_deleted_case_ids = []
 
@@ -51,13 +48,23 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
           for case in initial_cases]
     )
     case_db.populate(directly_referenced_indices)
+
+    def process_queue():
+        new_relations = set()
+        while queue:
+            case = queue.pop()
+            if case and case['_id'] not in relevant_cases:
+                relevant_cases[case['_id']] = case
+                if case['doc_type'] == 'CommCareCase-Deleted':
+                    relevant_deleted_case_ids.append(case['_id'])
+                new_relations.update(index['referenced_id'] for index in indices(case))
+
+        if new_relations:
+            case_db.populate(new_relations)
+            queue.extend(case_db.get(related_case) for related_case in new_relations)
+
     while queue:
-        case = queue.pop()
-        if case and case['_id'] not in relevant_cases:
-            relevant_cases[case['_id']] = case
-            if case['doc_type'] == 'CommCareCase-Deleted':
-                relevant_deleted_case_ids.append(case['_id'])
-            queue.extend(related(case_db, case))
+        process_queue()
 
     if relevant_deleted_case_ids:
         logging.info('deleted cases included in footprint (restore): %s' % (
