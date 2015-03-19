@@ -2454,6 +2454,30 @@ class DeactivateTransferDomainView(View):
         return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
 
 
+from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
+from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
+
+
+class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
+    urlname = 'domain_sms_rates_view'
+    page_title = ugettext_noop("SMS Rate Calculator")
+    template_name = 'domain/admin/global_sms_rates.html'
+    async_handlers = [PublicSMSRatesAsyncHandler]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'rate_calc_form': PublicSMSRateCalculatorForm()
+        }
+
+    def post(self, request, *args, **kwargs):
+        return self.async_response or self.get(request, *args, **kwargs)
+
+
 class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
     urlname = 'domain_sms_rates_view'
     page_title = ugettext_noop("SMS Rate Calculator")
