@@ -5,6 +5,7 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.telerivet.forms import TelerivetBackendForm
 from django.conf import settings
+from django.db import models
 
 MESSAGE_TYPE_SMS = "sms"
 
@@ -65,3 +66,24 @@ class TelerivetBackend(SMSBackend):
     def by_webhook_secret(cls, webhook_secret):
         return cls.view("telerivet/backend_by_secret", key=[webhook_secret],
                         include_docs=True).one()
+
+
+class IncomingRequest(models.Model):
+    """
+    A log of all requests that Telerivet makes to CommCareHQ,
+    to be used for debugging.
+    """
+    event = models.CharField(max_length=255, null=True)
+    message_id = models.CharField(max_length=255, null=True)
+    message_type = models.CharField(max_length=255, null=True)
+    content = models.CharField(max_length=255, null=True)
+    from_number = models.CharField(max_length=255, null=True)
+    from_number_e164 = models.CharField(max_length=255, null=True)
+    to_number = models.CharField(max_length=255, null=True)
+    time_created = models.CharField(max_length=255, null=True)
+    time_sent = models.CharField(max_length=255, null=True)
+    contact_id = models.CharField(max_length=255, null=True)
+    phone_id = models.CharField(max_length=255, null=True)
+    service_id = models.CharField(max_length=255, null=True)
+    project_id = models.CharField(max_length=255, null=True)
+    secret = models.CharField(max_length=255, null=True)
