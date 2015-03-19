@@ -3,7 +3,7 @@
 {% load xforms_extras %}{% if build_errors %}
     <div class="alert alert-warning alert-block">
         {% if not_actual_build %}
-            <p>{% trans "Build errors in this form:" %}</p>
+            <p>{% trans "Errors making a new version:" %}</p>
         {% else %}
             <p>{% trans "Build Failed!" %}</p>
         {% endif %}
@@ -172,7 +172,9 @@
                         {% case "path error" %}
                             {% if error.path %}
                                 The case management in form {% include "app_manager/partials/form_error_message.html" %}
-                                contains the invalid path "{{ error.path }}", or the form element at that path is not a question.
+                                references a question that no longer exists: "{{ error.path }}". It is likely that
+                                this question has been renamed or deleted. Please update or delete this question
+                                reference before you make a new version.
                             {% else %}
                                 {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
                             {% endif %}
